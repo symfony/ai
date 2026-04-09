@@ -16,8 +16,11 @@ use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Bridge\Replicate\LlamaResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -84,5 +87,20 @@ final class LlamaResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('', $result->getContent());
+    }
+
+    public function testConvertThrowsOnHttpError()
+    {
+        $mockResponse = new MockResponse('{"detail": "Invalid version or not permitted"}', ['http_code' => 404]);
+        $httpClient = new MockHttpClient($mockResponse);
+        $response = $httpClient->request('POST', 'https://api.replicate.com/test');
+        $rawResult = new RawHttpResult($response);
+
+        $converter = new LlamaResultConverter();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Replicate API error (HTTP 404)');
+
+        $converter->convert($rawResult);
     }
 }

@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Replicate\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Replicate\Client;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -73,5 +74,50 @@ final class ClientTest extends TestCase
 
         $client = new Client($httpClient, new MockClock(), 'test-key');
         $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'test']);
+    }
+
+    public function testRequestThrowsOnApiError()
+    {
+        $httpClient = new MockHttpClient(new MockResponse(
+            '{"detail": "Invalid version or not permitted"}',
+            ['http_code' => 404],
+        ));
+
+        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Replicate API error: "Invalid version or not permitted".');
+
+        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
+    }
+
+    public function testRequestThrowsOnFailedPrediction()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('{"id": "pred-123", "status": "starting"}'),
+            new MockResponse('{"id": "pred-123", "status": "failed", "error": "Out of memory"}'),
+        ]);
+
+        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Replicate prediction "failed": "Out of memory".');
+
+        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
+    }
+
+    public function testRequestThrowsOnCanceledPrediction()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('{"id": "pred-123", "status": "starting"}'),
+            new MockResponse('{"id": "pred-123", "status": "canceled", "error": "Canceled by user"}'),
+        ]);
+
+        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Replicate prediction "canceled": "Canceled by user".');
+
+        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
     }
 }

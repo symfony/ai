@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Replicate;
 
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -40,13 +41,21 @@ final class Client
             'auth_bearer' => $this->apiKey,
             'json' => ['input' => $body],
         ]);
-        $data = $response->toArray();
+        $data = $response->toArray(false);
+
+        if (isset($data['detail'])) {
+            throw new RuntimeException(\sprintf('Replicate API error: "%s".', $data['detail']));
+        }
 
         while (!\in_array($data['status'], ['succeeded', 'failed', 'canceled'], true)) {
             $this->clock->sleep(1); // we need to wait until the prediction is ready
 
             $response = $this->getResponse($data['id']);
-            $data = $response->toArray();
+            $data = $response->toArray(false);
+        }
+
+        if ('failed' === $data['status'] || 'canceled' === $data['status']) {
+            throw new RuntimeException(\sprintf('Replicate prediction "%s": "%s".', $data['status'], $data['error'] ?? 'Unknown error'));
         }
 
         return $response;
