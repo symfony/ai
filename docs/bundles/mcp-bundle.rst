@@ -237,7 +237,7 @@ Unauthenticated users receive an empty tool list::
         #[IsGranted('ROLE_ADMIN')]
         public function deleteAccount(string $id): array
         {
-            // Only visible and executable by users with ROLE_ADMIN
+            // Only visible in tool lists to users with ROLE_ADMIN
         }
     }
 
