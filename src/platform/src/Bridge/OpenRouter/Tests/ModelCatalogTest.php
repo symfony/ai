@@ -35,6 +35,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
                 Capability::OUTPUT_STREAMING,
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
             ],
         ];
 
@@ -47,6 +48,46 @@ final class ModelCatalogTest extends ModelCatalogTestCase
                 Capability::INPUT_IMAGE,
                 Capability::INPUT_PDF,
                 Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
+            ],
+        ];
+
+        yield 'google/gemini-2.5-flash structured' => [
+            'google/gemini-2.5-flash',
+            CompletionsModel::class,
+            [
+                Capability::OUTPUT_STREAMING,
+                Capability::INPUT_TEXT,
+                Capability::INPUT_IMAGE,
+                Capability::INPUT_PDF,
+                Capability::INPUT_AUDIO,
+                Capability::INPUT_MULTIMODAL,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
+            ],
+        ];
+
+        yield 'openai/gpt-4.1 structured' => [
+            'openai/gpt-4.1',
+            CompletionsModel::class,
+            [
+                Capability::OUTPUT_STREAMING,
+                Capability::INPUT_TEXT,
+                Capability::INPUT_IMAGE,
+                Capability::INPUT_PDF,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
+            ],
+        ];
+
+        yield 'mistralai/mistral-large-2411 structured' => [
+            'mistralai/mistral-large-2411',
+            CompletionsModel::class,
+            [
+                Capability::OUTPUT_STREAMING,
+                Capability::INPUT_TEXT,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
             ],
         ];
 
@@ -59,6 +100,20 @@ final class ModelCatalogTest extends ModelCatalogTestCase
                 Capability::INPUT_IMAGE,
                 Capability::INPUT_PDF,
                 Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
+            ],
+        ];
+
+        yield 'openai/gpt-5-mini' => [
+            'openai/gpt-5-mini',
+            CompletionsModel::class,
+            [
+                Capability::OUTPUT_STREAMING,
+                Capability::INPUT_TEXT,
+                Capability::INPUT_IMAGE,
+                Capability::INPUT_PDF,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
             ],
         ];
 
@@ -71,6 +126,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_IMAGE,
                 Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
             ],
         ];
 
