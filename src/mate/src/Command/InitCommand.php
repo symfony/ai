@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Command;
 
+use HelgeSverre\Toon\Toon;
 use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -145,6 +146,13 @@ class InitCommand extends Command
             'If you want this package to BE a Mate extension, set "extension: true" or remove',
             'the "extension" field from extra.ai-mate configuration.',
         ]);
+
+        if (!class_exists(Toon::class)) {
+            $io->note([
+                'For reduced token consumption in tool responses, consider installing the "helgesverre/toon" package:',
+                '  composer require helgesverre/toon',
+            ]);
+        }
 
         return Command::SUCCESS;
     }
