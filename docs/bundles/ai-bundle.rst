@@ -56,10 +56,8 @@ Advanced Example with Multiple Agents
                 default: ~
                 eu:
                     bedrock_runtime_client: 'async_aws.client.bedrock_runtime_eu'
-            eleven_labs:
-                host: '%env(ELEVEN_LABS_HOST)%'
+            elevenlabs:
                 api_key: '%env(ELEVEN_LABS_API_KEY)%'
-                output_path: '%env(ELEVEN_LABS_OUTPUT_PATH)%'
             gemini:
                 api_key: '%env(GEMINI_API_KEY)%'
             perplexity:
@@ -100,7 +98,7 @@ Advanced Example with Multiple Agents
                       description: 'Can research on Wikipedia'
             research:
                 platform: 'ai.platform.anthropic'
-                model: 'claude-3-7-sonnet'
+                model: 'claude-3-7-sonnet-latest'
                 tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
                     - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
@@ -109,7 +107,7 @@ Advanced Example with Multiple Agents
                 model: 'sonar'
                 tools: false
             audio:
-                platform: 'ai.platform.eleven_labs'
+                platform: 'ai.platform.elevenlabs'
                 model: 'text-to-speech'
                 tools: false
             nova:

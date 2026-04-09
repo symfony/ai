@@ -69,7 +69,7 @@ More info can be found at https://cloud.google.com/vertex-ai/generative-ai/docs/
         Message::ofUser('Write Python code to calculate the 50th Fibonacci number and run it')
     );
 
-    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', $messages, [
+    $result = $platform->invoke('gemini-2.5-pro', $messages, [
         'server_tools' => [
             'code_execution' => true,
         ],
@@ -85,7 +85,7 @@ You can enable multiple tools in a single request::
         Message::ofUser('Write Python code to calculate the 50th Fibonacci number and run it')
     );
 
-    $result = $platform->invoke('gemini-2.5-pro-preview-03-25', $messages, [
+    $result = $platform->invoke('gemini-2.5-pro', $messages, [
         'server_tools' => [
             'google_search' => true,
             'code_execution' => true,

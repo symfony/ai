@@ -29,7 +29,7 @@ Basic text embedding usage example::
         it. The country was very peaceful and prosperous. The people lived happily ever after.
         TEXT);
 
-    echo $result->getContent();
+    $vectors = $result->asVectors();
 
 Voyage AI supports text, base64 image data, and image URLs in its multimodal embedding model. It also allows for
 multiple data types per vector embedding. To do this, wrap the data in a `Collection` as shown in the example below.
@@ -49,7 +49,7 @@ Basic multimodal embedding usage example::
         new Collection(new Text('Hello, world!'), new ImageUrl('https://example.com/image2.jpg'))
     );
 
-    echo $result->getContent();
+    $vectors = $result->asVectors();
 
 
 Examples

@@ -99,9 +99,9 @@ Platform
    `TextDelta` instead:
    - `is_string($chunk)` → `$chunk instanceof TextDelta`, then use `$chunk->getText()`
  * New streaming delta types in `Symfony\AI\Platform\Result\Stream\Delta\`:
-   `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ToolCallStart`,
-   `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`, `ToolCallComplete`,
-   `ThinkingComplete`. These are yielded by bridge converters during streaming.
+   `TextDelta`, `ThinkingDelta`, `ThinkingSignature`, `ThinkingStart`,
+   `ToolCallStart`, `ToolInputDelta`, `BinaryDelta`, `ChoiceDelta`,
+   `ToolCallComplete`, `ThinkingComplete`. These are yielded by bridge converters during streaming.
  * `Symfony\AI\Platform\Bridge\Ollama\OllamaMessageChunk` has been removed.
    Ollama streams now yield semantic deltas like the other bridges:
    - text content → `TextDelta`

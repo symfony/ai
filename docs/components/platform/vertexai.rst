@@ -61,7 +61,7 @@ Basic usage example::
     );
 
     $result = $platform->invoke('gemini-2.5-flash', $messages);
-    echo $result->getContent();
+    echo $result->asText();
 
 2. Service Account Key
 ......................

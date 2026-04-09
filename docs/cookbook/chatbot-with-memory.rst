@@ -59,7 +59,7 @@ The :class:`Symfony\\AI\\Agent\\Memory\\MemoryInputProcessor` handles the inject
 
     use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 
-    $memoryProcessor = new MemoryInputProcessor($personalFacts);
+    $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
 
 This processor works alongside other input processors like :class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor`
 to build a complete context for the agent.
