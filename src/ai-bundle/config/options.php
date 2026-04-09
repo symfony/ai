@@ -37,6 +37,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/cerebras'))
                     ->append($import('platform/cohere'))
                     ->append($import('platform/decart'))
+                    ->append($import('platform/deepgram'))
                     ->append($import('platform/deepseek'))
                     ->append($import('platform/dockermodelrunner'))
                     ->append($import('platform/elevenlabs'))

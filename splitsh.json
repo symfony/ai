@@ -53,6 +53,7 @@
         "ai-codex-platform": "src/platform/src/Bridge/Codex",
         "ai-cohere-platform": "src/platform/src/Bridge/Cohere",
         "ai-decart-platform": "src/platform/src/Bridge/Decart",
+        "ai-deepgram-platform": "src/platform/src/Bridge/Deepgram",
         "ai-deep-seek-platform": "src/platform/src/Bridge/DeepSeek",
         "ai-docker-model-runner-platform": "src/platform/src/Bridge/DockerModelRunner",
         "ai-eleven-labs-platform": "src/platform/src/Bridge/ElevenLabs",
