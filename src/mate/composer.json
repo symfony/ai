@@ -39,9 +39,6 @@
         "symfony/ai-mate-composer-plugin": "self.version",
         "symfony/finder": "^5.4|^6.4|^7.3|^8.0"
     },
-    "suggest": {
-        "helgesverre/toon": "Required for TOON format encoding to reduce token consumption in tool responses"
-    },
     "require-dev": {
         "ext-simplexml": "*",
         "helgesverre/toon": "^3.1",
