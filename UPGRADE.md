@@ -82,10 +82,10 @@ Platform
 --------
 
  * `ModelCatalog` in `Ollama` has been replaced by `OllamaApiCatalog`
- * `OllamaApiCatalog` in `Ollama` has been replaced to `ModelCatalog`
+ * `OllamaApiCatalog` in `Ollama` has been renamed to `ModelCatalog`
  * `Ollama` model is now `final`
  * `ModelCatalog` in `ElevenLabs` has been replaced by `ElevenLabsApiCatalog`
- * `ElevenLabsApiCatalog` in `ElevenLabs` has been replaced to `ModelCatalog`
+ * `ElevenLabsApiCatalog` in `ElevenLabs` has been renamed to `ModelCatalog`
  * `ChunkEvent` has been replaced by `DeltaEvent`. The `onChunk(ChunkEvent)` method
    on `ListenerInterface` is now `onDelta(DeltaEvent)`. Update all implementations:
    - `onChunk(ChunkEvent $event)` → `onDelta(DeltaEvent $event)`
@@ -279,7 +279,8 @@ Store
    For indexing documents directly:
 
    ```php
-   use Symfony\AI\Store\Document\TextDocument;use Symfony\AI\Store\Indexer\DocumentIndexer;
+   use Symfony\AI\Store\Document\TextDocument;
+   use Symfony\AI\Store\Indexer\DocumentIndexer;
 
    $indexer = new DocumentIndexer($processor);
    $indexer->index(new TextDocument($id, 'content'));

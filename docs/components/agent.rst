@@ -418,9 +418,9 @@ To react to the result of a tool, you can implement an EventListener, that liste
 tool calls and enables you to skip the next LLM call by setting a result yourself::
 
     $eventDispatcher->addListener(ToolCallsExecuted::class, function (ToolCallsExecuted $event): void {
-        foreach ($event->toolCallResults as $toolCallResult) {
-            if (str_starts_with($toolCallResult->toolCall->name, 'weather_')) {
-                $event->result = new ObjectResult($toolCallResult->result);
+        foreach ($event->getToolResults() as $toolResult) {
+            if (str_starts_with($toolResult->getToolCall()->getName(), 'weather_')) {
+                $event->setResult(new ObjectResult($toolResult->getResult()));
             }
         }
     });
@@ -439,15 +439,15 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
     });
 
     $eventDispatcher->addListener(ToolCallArgumentsResolved::class, function (ToolCallArgumentsResolved $event): void {
-        // Let the client know, that the tool $event->toolCall->name was executed
+        // Let the client know, that the tool $event->getMetadata()->getName() was executed
     });
 
     $eventDispatcher->addListener(ToolCallSucceeded::class, function (ToolCallSucceeded $event): void {
-        // Let the client know, that the tool $event->toolCall->name successfully returned the result $event->result
+        // Let the client know, that the tool $event->getMetadata()->getName() successfully returned the result $event->getResult()
     });
 
     $eventDispatcher->addListener(ToolCallFailed::class, function (ToolCallFailed $event): void {
-        // Let the client know, that the tool $event->toolCall->name failed with the exception: $event->exception
+        // Let the client know, that the tool $event->getMetadata()->getName() failed with the exception: $event->getException()
     });
 
 See the :doc:`/cookbook/human-in-the-loop` cookbook article for a complete guide on building a human-in-the-loop
@@ -570,7 +570,7 @@ and are able to mutate both on top of the :class:`Symfony\\AI\\Agent\\Input` ins
             $input->setOptions($options);
 
             // mutate MessageBag
-            $input->messages->append(new AssistantMessage(sprintf('Please answer using the locale %s', $this->locale)));
+            $input->getMessageBag()->append(new AssistantMessage(sprintf('Please answer using the locale %s', $this->locale)));
         }
     }
 
@@ -588,8 +588,8 @@ or replace the given result::
         public function processOutput(Output $output): void
         {
             // mutate result
-            if (str_contains($output->result->getContent(), self::STOP_WORD)) {
-                $output->result = new TextResult('Sorry, we were unable to find relevant information.')
+            if (str_contains($output->getResult()->getContent(), self::STOP_WORD)) {
+                $output->setResult(new TextResult('Sorry, we were unable to find relevant information.'));
             }
         }
     }
