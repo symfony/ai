@@ -16,7 +16,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\WithAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\IOException;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\WithAttributeRefDto;
 
 final class WithAttributeDescriberTest extends TestCase
 {
@@ -27,6 +30,7 @@ final class WithAttributeDescriberTest extends TestCase
     #[TestWith([['const' => 42], new PropertySubject('value2', new \ReflectionParameter([ToolWithObjectAccessors::class, 'setValue2'], 0))], 'setter')]
     #[TestWith([['pattern' => '^foo$'], new PropertySubject('value3', new \ReflectionParameter([ToolWithObjectAccessors::class, '__construct'], 'value3'))], 'constructor')]
     #[TestWith([['description' => 'The quantity of the ingredient', 'example' => '2 cups'], new PropertySubject('quantity', new \ReflectionParameter([ExampleDto::class, '__construct'], 'quantity'))], 'example')]
+    #[TestWith([['type' => 'string', 'description' => 'This is a test schema from a ref file.'], new PropertySubject('schemaFromFile', new \ReflectionParameter([WithAttributeRefDto::class, '__construct'], 'schemaFromFile'))], 'schema from file')]
     public function testDescribeProperty(array $expectedSchema, PropertySubject $property)
     {
         $describer = new WithAttributeDescriber();
@@ -35,5 +39,25 @@ final class WithAttributeDescriberTest extends TestCase
         $describer->describeProperty($property, $schema);
 
         $this->assertSame($expectedSchema, $schema);
+    }
+
+    public function testDescribePropertyWithNonExistentFile()
+    {
+        $describer = new WithAttributeDescriber();
+        $property = new PropertySubject('nonExistentSchema', new \ReflectionParameter([WithAttributeRefDto::class, '__construct'], 'nonExistentSchema'));
+        $schema = null;
+
+        $this->expectException(InvalidArgumentException::class);
+        $describer->describeProperty($property, $schema);
+    }
+
+    public function testDescribePropertyWithInvalidJson()
+    {
+        $describer = new WithAttributeDescriber();
+        $property = new PropertySubject('nonJsonSchema', new \ReflectionParameter([WithAttributeRefDto::class, '__construct'], 'nonJsonSchema'));
+        $schema = null;
+
+        $this->expectException(IOException::class);
+        $describer->describeProperty($property, $schema);
     }
 }

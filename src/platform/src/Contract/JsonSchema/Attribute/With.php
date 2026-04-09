@@ -22,6 +22,7 @@ final class With
     /**
      * @param list<int|float|string|null>|null $enum
      * @param string|int|string[]|null         $const
+     * @param string|null                      $ref   A path to external schema file. This is mutually exclusive with all the other arguments.
      */
     public function __construct(
         // can be used by many types
@@ -53,7 +54,22 @@ final class With
         public readonly ?int $minProperties = null,
         public readonly ?int $maxProperties = null,
         public readonly ?bool $dependentRequired = null,
+
+        // a reference to a schema file
+        public readonly ?string $ref = null,
     ) {
+        if ($this->ref) {
+            if (\count(array_filter((array) $this, static fn (mixed $value) => null !== $value)) > 1) {
+                throw new InvalidArgumentException('When "ref" is defined, no other arguments are allowed.');
+            }
+
+            if (!is_readable($this->ref)) {
+                throw new InvalidArgumentException(\sprintf('The provided schema file "%s" is not readable', $this->ref));
+            }
+
+            return;
+        }
+
         if (\is_array($enum)) {
             /* @phpstan-ignore-next-line function.alreadyNarrowedType */
             if (array_filter($enum, static fn (mixed $item) => null === $item || \is_int($item) || \is_float($item) || \is_string($item)) !== $enum) {
