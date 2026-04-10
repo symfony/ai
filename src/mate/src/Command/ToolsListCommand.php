@@ -33,6 +33,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *     description: string|null,
  *     handler: string,
  *     input_schema: array<string, mixed>|null,
+ *     output_schema: array<string, mixed>|null,
  *     extension: string
  * }
  *
