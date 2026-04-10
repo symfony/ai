@@ -17,8 +17,8 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\VectorQuery;
-use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\Uid\Uuid;
@@ -107,9 +107,8 @@ final class SearchStoreTest extends TestCase
         $uuid = Uuid::v4();
         $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned');
-        $this->expectExceptionCode(400);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Azure Search request failed:');
 
         $store->add($document);
     }
@@ -205,9 +204,8 @@ final class SearchStoreTest extends TestCase
 
         $store = new SearchStore($httpClient, 'test-index');
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned');
-        $this->expectExceptionCode(400);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Azure Search request failed:');
 
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
     }
@@ -351,9 +349,8 @@ final class SearchStoreTest extends TestCase
 
         $store = new SearchStore($httpClient, 'test-index');
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 404 returned');
-        $this->expectExceptionCode(404);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Azure Search request failed:');
 
         $store->remove('nonexistent-doc');
     }
