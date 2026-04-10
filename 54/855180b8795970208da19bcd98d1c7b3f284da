@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-10T08:32:12Z
+
+Maybe it's also an issue in the Azure SearchStore implementation and metadata keys should never go into the primary level of a schema.
+
+Compare:
+
+```json
+{
+  "id": 1234,
+  "vector": [0.123, 0.567, ...],
+  "_text": "Abcdefgh"
+}
+```
+
+vs
+
+```json
+{
+  "id": 1234,
+  "vector": [0.123, 0.567, ...],
+  "metadata": {"_text": "Abcdefgh"}
+}
+```
