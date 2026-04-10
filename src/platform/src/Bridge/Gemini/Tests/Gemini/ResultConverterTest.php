@@ -26,6 +26,9 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -306,5 +309,31 @@ final class ResultConverterTest extends TestCase
                 ],
             ],
         ], ChoiceDelta::class, []];
+    }
+
+    public function testStreamingWithRawHttpResult()
+    {
+        $sseData = "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Hello\"}]}}]}\n\n"
+            ."data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" world\"}]}}]}\n\n"
+            ."data: [DONE]\n\n";
+
+        $mockHttpClient = new MockHttpClient([
+            new MockResponse($sseData, ['response_headers' => ['content-type' => 'text/event-stream']]),
+        ]);
+        $response = (new EventSourceHttpClient($mockHttpClient))->request('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent');
+        $rawResult = new RawHttpResult($response);
+
+        $converter = new ResultConverter();
+        $result = $converter->convert($rawResult, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $items = iterator_to_array($result->getContent());
+
+        $this->assertCount(2, $items);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Hello', $items[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $items[1]);
+        $this->assertSame(' world', $items[1]->getText());
     }
 }

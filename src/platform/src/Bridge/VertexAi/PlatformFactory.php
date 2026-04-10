@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -52,7 +52,7 @@ final class PlatformFactory
             throw new RuntimeException('For using the project-scoped Vertex AI endpoint, google/auth package is required for authentication via application default credentials. Try running "composer require google/auth".');
         }
 
-        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+        $httpClient = $httpClient ?? HttpClient::create();
 
         return new Platform(
             [new GeminiModelClient($httpClient, $location, $projectId, $apiKey), new EmbeddingsModelClient($httpClient, $location, $projectId, $apiKey)],
