@@ -204,6 +204,13 @@ final class DeferredResult
     {
         $result = $this->getResult();
 
+        if ($result instanceof MultiPartResult) {
+            $parts = array_filter($result->getContent(), static fn (ResultInterface $part) => $part instanceof $type);
+            if (1 === \count($parts)) {
+                $result = array_first($parts);
+            }
+        }
+
         if (!$result instanceof $type) {
             throw new UnexpectedResultTypeException($type, $result::class);
         }
