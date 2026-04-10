@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -142,6 +143,34 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame($image->asBinary(), $result->getContent());
         $this->assertNull($result->getMimeType());
+    }
+
+    public function testReturnsTextResultForMultipleTextContentParts()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => 'Hello',
+                            ],
+                            [
+                                'text' => ' World',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello World', $result->getContent());
     }
 
     public function testStreamSkipsCandidatesWithoutContentParts()
