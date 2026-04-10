@@ -783,6 +783,99 @@ This platform can also be configured when using the bundle::
 
     Platforms are executed in the order they're injected into :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform`.
 
+Model Overrides
+~~~~~~~~~~~~~~~
+
+By default, the model name passed to ``invoke()`` is forwarded to every platform.
+This means that all platforms must support the same model name.
+
+To enable cross-provider failover (e.g. OpenAI GPT → Anthropic Claude), you can assign
+a specific model name to each platform by using the ``model`` key. Reusing the ``$rateLimiter``
+from the example above::
+
+    use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
+
+    $platform = new FailoverPlatform([
+        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create()),
+        ['platform' => AnthropicPlatformFactory::create(env('ANTHROPIC_API_KEY'), HttpClient::create()), 'model' => 'claude-sonnet-4-20250514'],
+    ], $rateLimiter);
+
+    // OpenAI receives the model passed to invoke(), if it fails, Anthropic receives 'claude-sonnet-4-20250514'
+    $result = $platform->invoke('gpt-4o', new MessageBag(
+        Message::forSystem('You are a helpful assistant.'),
+        Message::ofUser('What is the capital of France?'),
+    ));
+
+When using the bundle, use the ``model`` key in the ``platforms`` configuration::
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                # ...
+            anthropic:
+                # ...
+            failover:
+                cross_provider:
+                    platforms:
+                        - { platform: 'ai.platform.openai', model: 'gpt-4o' }
+                        - { platform: 'ai.platform.anthropic', model: 'claude-sonnet-4-20250514' }
+                    rate_limiter: 'limiter.failover_platform'
+
+When no model override is needed, platforms can be configured using the simple string format::
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            failover:
+                same_provider:
+                    platforms:
+                        - 'ai.platform.ollama'
+                        - 'ai.platform.openai'
+                    rate_limiter: 'limiter.failover_platform'
+
+.. note::
+
+    Platforms without a ``model`` key use the model name passed to ``invoke()``, which
+    allows mixing overridden and non-overridden platforms in the same configuration.
+
+Multiple Model Fallbacks
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``model`` key also accepts an array of model names. When multiple models are configured
+for a single platform, they are tried in order. The failover proceeds to the next platform
+only when all models on the current platform have been exhausted.
+
+Reusing the ``$rateLimiter`` from the example above::
+
+    use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
+
+    $platform = new FailoverPlatform([
+        ['platform' => OpenRouterPlatformFactory::create(env('OPENROUTER_API_KEY'), HttpClient::create()), 'model' => ['minimax/minimax-m2.5:free', 'openai/gpt-oss-120b:free']],
+        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create()),
+    ], $rateLimiter);
+
+When using the bundle::
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openrouter:
+                # ...
+            openai:
+                # ...
+            failover:
+                resilient:
+                    platforms:
+                        - { platform: 'ai.platform.openrouter', model: ['minimax/minimax-m2.5:free', 'openai/gpt-oss-120b:free'] }
+                        - { platform: 'ai.platform.openai', model: 'gpt-4o' }
+                    rate_limiter: 'limiter.failover_platform'
+
+.. note::
+
+    Model-level failures are logged at ``warning`` level, while platform-level failures
+    (when all models on a platform are exhausted) are logged at ``error`` level.
+
 Testing Tools
 -------------
 
