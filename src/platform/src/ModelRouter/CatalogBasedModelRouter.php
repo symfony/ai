@@ -9,21 +9,21 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\ModelResolver;
+namespace Symfony\AI\Platform\ModelRouter;
 
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
-use Symfony\AI\Platform\ModelResolverInterface;
+use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\ProviderInterface;
 
 /**
  * Routes to the first provider whose model catalog contains the requested model.
  *
- * This is the default, zero-configuration resolver. It iterates through all
+ * This is the default, zero-configuration router. It iterates through all
  * registered providers and returns the first one that supports the model name.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class CatalogBasedModelResolver implements ModelResolverInterface
+final class CatalogBasedModelRouter implements ModelRouterInterface
 {
     public function resolve(string $model, iterable $providers, array|string|object $input, array $options = []): ProviderInterface
     {

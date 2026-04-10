@@ -16,7 +16,7 @@ namespace Symfony\AI\Platform;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-interface ModelResolverInterface
+interface ModelRouterInterface
 {
     /**
      * @param non-empty-string            $model     The model name to resolve

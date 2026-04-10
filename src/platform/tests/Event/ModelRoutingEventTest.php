@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Event;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Event\ModelRoutingEvent;
+use Symfony\AI\Platform\ProviderInterface;
 
 final class ModelRoutingEventTest extends TestCase
 {
@@ -50,5 +51,22 @@ final class ModelRoutingEventTest extends TestCase
         $event->setOptions(['max_tokens' => 100]);
 
         $this->assertSame(['max_tokens' => 100], $event->getOptions());
+    }
+
+    public function testProviderIsNullByDefault()
+    {
+        $event = new ModelRoutingEvent('gpt-4o', 'Hello');
+
+        $this->assertNull($event->getProvider());
+    }
+
+    public function testSetProvider()
+    {
+        $event = new ModelRoutingEvent('gpt-4o', 'Hello');
+        $provider = $this->createStub(ProviderInterface::class);
+
+        $event->setProvider($provider);
+
+        $this->assertSame($provider, $event->getProvider());
     }
 }
