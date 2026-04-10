@@ -14,7 +14,8 @@ namespace Symfony\AI\Platform\Bridge\OpenAi;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
-use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
+use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -22,7 +23,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class PlatformFactory
+final class ProviderFactory
 {
     public const REGION_EU = 'EU';
     public const REGION_US = 'US';
@@ -34,10 +35,11 @@ final class PlatformFactory
         ?Contract $contract = null,
         ?string $region = null,
         ?EventDispatcherInterface $eventDispatcher = null,
-    ): Platform {
+    ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Provider(
+            'openai',
             [
                 new Gpt\ModelClient($httpClient, $apiKey, $region),
                 new Embeddings\ModelClient($httpClient, $apiKey, $region),
