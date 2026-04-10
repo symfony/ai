@@ -1,0 +1,388 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require __DIR__.'/vendor/autoload.php';
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\SingleCommandApplication;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Process\Process;
+
+/*
+ * Posts comments on open PRs in symfony/ai that have CHANGELOG.md or UPGRADE.md entries
+ * under a released version heading, asking authors to move entries to the next version.
+ *
+ * Usage:
+ *   ./changelog-bump-comment              # Auto-detect version from latest git tag
+ *   ./changelog-bump-comment 0.7          # Specify released version explicitly
+ *   ./changelog-bump-comment 0.7 --dry-run # Preview without posting comments
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
+
+(new SingleCommandApplication())
+    ->setName('Changelog Bump Comment')
+    ->setDescription('Posts comments on open PRs that have changelog entries under a released version heading.')
+    ->addArgument('version', InputArgument::OPTIONAL, 'The released version (e.g., 0.7). Auto-detected from latest git tag if omitted.')
+    ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Preview affected PRs without posting comments')
+    ->addOption('repo', null, InputOption::VALUE_REQUIRED, 'GitHub repository', 'symfony/ai')
+    ->setCode(static function (InputInterface $input, OutputInterface $output): int {
+        $io = new SymfonyStyle($input, $output);
+        $repo = $input->getOption('repo');
+        $dryRun = $input->getOption('dry-run');
+
+        // Step 1: Determine versions
+        $releasedVersion = $input->getArgument('version');
+        if (null === $releasedVersion) {
+            $releasedVersion = detectVersionFromTag($io);
+            if (null === $releasedVersion) {
+                return Command::FAILURE;
+            }
+        }
+
+        if (!preg_match('/^(\d+)\.(\d+)$/', $releasedVersion, $matches)) {
+            $io->error(sprintf('Invalid version format "%s". Expected format: X.Y (e.g., 0.7)', $releasedVersion));
+
+            return Command::FAILURE;
+        }
+
+        $nextVersion = sprintf('%d.%d', (int) $matches[1], (int) $matches[2] + 1);
+
+        $io->title('Changelog Bump Comment');
+        $io->writeln(sprintf('Released version: <info>%s</info>', $releasedVersion));
+        $io->writeln(sprintf('Next version:     <info>%s</info>', $nextVersion));
+        $io->newLine();
+
+        if ($dryRun) {
+            $io->note('Dry-run mode — no comments will be posted.');
+            $io->newLine();
+        }
+
+        // Step 2: List open PRs
+        $io->section('Scanning open PRs');
+        $prs = ghJson($repo, 'pr', 'list', '--state', 'open', '--json', 'number,title', '--limit', '300');
+        if (null === $prs) {
+            $io->error('Failed to list open PRs.');
+
+            return Command::FAILURE;
+        }
+
+        $io->writeln(sprintf('Found <info>%d</info> open PRs', count($prs)));
+
+        // Step 3: Find candidate PRs (touching CHANGELOG.md or UPGRADE.md)
+        $io->section('Finding PRs that touch CHANGELOG.md or UPGRADE.md');
+        $candidates = [];
+        $progressBar = $io->createProgressBar(count($prs));
+        $progressBar->start();
+
+        foreach ($prs as $pr) {
+            $number = $pr['number'];
+            $files = ghExec($repo, 'pr', 'diff', (string) $number, '--name-only');
+            if (null !== $files) {
+                $changelogFiles = [];
+                foreach (explode("\n", trim($files)) as $file) {
+                    if (str_ends_with($file, 'CHANGELOG.md') || 'UPGRADE.md' === $file) {
+                        $changelogFiles[] = $file;
+                    }
+                }
+                if ([] !== $changelogFiles) {
+                    $candidates[] = [
+                        'number' => $number,
+                        'title' => $pr['title'],
+                        'files' => $changelogFiles,
+                    ];
+                }
+            }
+            $progressBar->advance();
+        }
+
+        $progressBar->finish();
+        $io->newLine(2);
+        $io->writeln(sprintf('Found <info>%d</info> candidate PRs', count($candidates)));
+
+        if ([] === $candidates) {
+            $io->success('No PRs touch CHANGELOG.md or UPGRADE.md. Nothing to do.');
+
+            return Command::SUCCESS;
+        }
+
+        // Step 4: Analyze diffs for entries under released version
+        $io->section('Analyzing diffs for entries under '.$releasedVersion.' heading');
+        $affected = [];
+        $progressBar = $io->createProgressBar(count($candidates));
+        $progressBar->start();
+
+        foreach ($candidates as $candidate) {
+            $diff = ghExec($repo, 'pr', 'diff', (string) $candidate['number']);
+            if (null === $diff) {
+                $progressBar->advance();
+                continue;
+            }
+
+            $affectedFiles = analyzeChangelog($diff, $releasedVersion);
+            $affectedUpgrade = analyzeUpgrade($diff, $releasedVersion);
+            $allAffected = array_merge($affectedFiles, $affectedUpgrade);
+
+            if ([] !== $allAffected) {
+                $affected[] = [
+                    'number' => $candidate['number'],
+                    'title' => $candidate['title'],
+                    'affected_files' => $allAffected,
+                ];
+            }
+
+            $progressBar->advance();
+        }
+
+        $progressBar->finish();
+        $io->newLine(2);
+
+        if ([] === $affected) {
+            $io->success('No PRs have entries under the '.$releasedVersion.' heading. Nothing to do.');
+
+            return Command::SUCCESS;
+        }
+
+        $io->writeln(sprintf('Found <info>%d</info> affected PRs:', count($affected)));
+        $io->newLine();
+
+        foreach ($affected as $pr) {
+            $io->writeln(sprintf('  <info>#%d</info> %s', $pr['number'], $pr['title']));
+            foreach ($pr['affected_files'] as $file) {
+                $io->writeln(sprintf('    - %s', $file));
+            }
+        }
+        $io->newLine();
+
+        if ($dryRun) {
+            $io->success(sprintf('Dry-run complete. %d PRs would receive a comment.', count($affected)));
+
+            return Command::SUCCESS;
+        }
+
+        // Step 5: Check for duplicates and post comments
+        $io->section('Posting comments');
+        $marker = sprintf('<!-- changelog-version-bump:%s -->', $releasedVersion);
+        $commented = 0;
+        $skippedDuplicate = 0;
+
+        foreach ($affected as $pr) {
+            $number = $pr['number'];
+
+            // Check for existing comment
+            $existingComments = ghExec($repo, 'pr', 'view', (string) $number, '--json', 'comments');
+            if (null !== $existingComments && str_contains($existingComments, 'changelog-version-bump:'.$releasedVersion)) {
+                $io->writeln(sprintf('  <comment>⊘</comment> #%d — already commented, skipping', $number));
+                ++$skippedDuplicate;
+                continue;
+            }
+
+            // Build file list
+            $fileList = implode("\n", array_map(static fn (string $f) => sprintf('- `%s`', $f), $pr['affected_files']));
+
+            $body = <<<COMMENT
+            {$marker}
+
+            Hi! Version **{$releasedVersion}** has been released. This PR has changelog/upgrade entries under the `{$releasedVersion}` heading, which is now a released version.
+
+            Please update the following files to place your entries under the next version **{$nextVersion}**:
+
+            {$fileList}
+
+            **For `CHANGELOG.md` files**: change the version heading from `{$releasedVersion}` to `{$nextVersion}`
+            **For `UPGRADE.md`**: place entries under `UPGRADE FROM {$releasedVersion} to {$nextVersion}`
+
+            Thank you!
+
+            ---
+            <sub>🤖 This comment was generated automatically.</sub>
+            COMMENT;
+
+            $result = ghExec($repo, 'pr', 'comment', (string) $number, '--body', $body);
+            if (null !== $result) {
+                $io->writeln(sprintf('  <info>✓</info> #%d — commented', $number));
+                ++$commented;
+            } else {
+                $io->writeln(sprintf('  <error>✗</error> #%d — failed to post comment', $number));
+            }
+        }
+
+        // Step 6: Summary
+        $io->newLine();
+        $io->success(sprintf(
+            "Done!\n  Affected PRs: %d\n  Comments posted: %d\n  Skipped (already commented): %d",
+            count($affected),
+            $commented,
+            $skippedDuplicate,
+        ));
+
+        return Command::SUCCESS;
+    })
+    ->run();
+
+function detectVersionFromTag(SymfonyStyle $io): ?string
+{
+    $process = new Process(['git', 'tag', '--sort=-v:refname']);
+    $process->run();
+
+    if (!$process->isSuccessful()) {
+        $io->error('Failed to list git tags.');
+
+        return null;
+    }
+
+    $tags = array_filter(explode("\n", trim($process->getOutput())));
+    if ([] === $tags) {
+        $io->error('No git tags found.');
+
+        return null;
+    }
+
+    $latestTag = $tags[0];
+    if (!preg_match('/^v?(\d+)\.(\d+)/', $latestTag, $matches)) {
+        $io->error(sprintf('Could not parse version from tag "%s".', $latestTag));
+
+        return null;
+    }
+
+    return sprintf('%d.%d', (int) $matches[1], (int) $matches[2]);
+}
+
+/**
+ * Analyze diff for CHANGELOG.md files with entries under the released version heading.
+ *
+ * @return list<string> List of affected file paths
+ */
+function analyzeChangelog(string $diff, string $releasedVersion): array
+{
+    $affected = [];
+    $currentFile = null;
+    $inReleasedSection = false;
+    $escapedVersion = preg_quote($releasedVersion, '/');
+
+    foreach (explode("\n", $diff) as $line) {
+        // Track current file
+        if (preg_match('#^diff --git a/(.+) b/#', $line, $m)) {
+            $currentFile = $m[1];
+            $inReleasedSection = false;
+            continue;
+        }
+
+        if (null === $currentFile || !str_ends_with($currentFile, 'CHANGELOG.md')) {
+            continue;
+        }
+
+        // Strip diff prefix for heading detection (context lines start with ' ', added with '+')
+        $stripped = ltrim($line, ' +-');
+
+        // Detect version headings
+        if (preg_match('/^'.$escapedVersion.'\s*$/', $stripped)) {
+            $inReleasedSection = true;
+            continue;
+        }
+
+        if (preg_match('/^\d+\.\d+\s*$/', $stripped) && !preg_match('/^'.$escapedVersion.'\s*$/', $stripped)) {
+            $inReleasedSection = false;
+            continue;
+        }
+
+        // Check for added bullet entries under released version
+        if ($inReleasedSection && str_starts_with($line, '+') && !str_starts_with($line, '+++') && preg_match('/^\+\s+\*\s/', $line)) {
+            if (!in_array($currentFile, $affected, true)) {
+                $affected[] = $currentFile;
+            }
+        }
+    }
+
+    return $affected;
+}
+
+/**
+ * Analyze diff for UPGRADE.md entries under the released version heading.
+ *
+ * @return list<string> List of affected file paths (will be ['UPGRADE.md'] or empty)
+ */
+function analyzeUpgrade(string $diff, string $releasedVersion): array
+{
+    $inUpgradeFile = false;
+    $inReleasedSection = false;
+    $escapedVersion = preg_quote($releasedVersion, '/');
+
+    foreach (explode("\n", $diff) as $line) {
+        if (preg_match('#^diff --git a/(.+) b/#', $line, $m)) {
+            $inUpgradeFile = 'UPGRADE.md' === $m[1];
+            $inReleasedSection = false;
+            continue;
+        }
+
+        if (!$inUpgradeFile) {
+            continue;
+        }
+
+        $stripped = ltrim($line, ' +-');
+
+        // Detect UPGRADE headings
+        if (preg_match('/^UPGRADE FROM .+ to '.$escapedVersion.'\s*$/', $stripped)) {
+            $inReleasedSection = true;
+            continue;
+        }
+
+        if (preg_match('/^UPGRADE FROM /', $stripped) && !preg_match('/to '.$escapedVersion.'\s*$/', $stripped)) {
+            $inReleasedSection = false;
+            continue;
+        }
+
+        // Check for added content under released version
+        if ($inReleasedSection && str_starts_with($line, '+') && !str_starts_with($line, '+++') && '' !== trim(substr($line, 1))) {
+            return ['UPGRADE.md'];
+        }
+    }
+
+    return [];
+}
+
+/**
+ * Execute a gh CLI command and return stdout.
+ */
+function ghExec(string $repo, string ...$args): ?string
+{
+    $command = array_merge(['gh'], $args, ['--repo', $repo]);
+    $process = new Process($command);
+    $process->setTimeout(60);
+    $process->run();
+
+    if (!$process->isSuccessful()) {
+        return null;
+    }
+
+    return $process->getOutput();
+}
+
+/**
+ * Execute a gh CLI command and return parsed JSON.
+ *
+ * @return list<array<string, mixed>>|null
+ */
+function ghJson(string $repo, string ...$args): ?array
+{
+    $output = ghExec($repo, ...$args);
+    if (null === $output) {
+        return null;
+    }
+
+    $data = json_decode($output, true);
+
+    return is_array($data) ? $data : null;
+}
