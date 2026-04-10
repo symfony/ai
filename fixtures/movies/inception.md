@@ -26,3 +26,5 @@ A skilled thief is given a chance at redemption if he can successfully perform i
 Now Cobb is being offered a chance at redemption. One last job could give him his life back but only if he can accomplish the impossible - **inception**. Instead of the perfect heist, Cobb and his team of specialists have to pull off the reverse: their task is not to steal an idea but to plant one. If they succeed, it could be the perfect crime.
 
 The film explores themes of *reality*, *dreams*, *memory*, and the nature of consciousness through multiple layers of dream states, creating a complex narrative structure that challenges both characters and audience to question what is real.
+
+**Connections**: Directed by Christopher Nolan, who also directed *Interstellar*, *The Prestige*, *The Dark Knight*, and *Memento*. Michael Caine also appears in *Interstellar*, *The Prestige*, and *The Dark Knight*.
