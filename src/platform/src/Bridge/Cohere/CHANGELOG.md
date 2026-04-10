@@ -5,3 +5,4 @@ CHANGELOG
 ---
 
  * Add the bridge
+ * Add speech-to-text transcription support
