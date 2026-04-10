@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
+
 0.7
 ---
 

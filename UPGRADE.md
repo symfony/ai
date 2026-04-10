@@ -1,3 +1,16 @@
+UPGRADE FROM 0.7 to 0.8
+=======================
+
+AI Bundle
+---------
+
+ * The service ID `ai.agent.response_format_factory` has been renamed to `ai.platform.response_format_factory`:
+
+   ```diff
+   -$container->get('ai.agent.response_format_factory');
+   +$container->get('ai.platform.response_format_factory');
+   ```
+
 UPGRADE FROM 0.6 to 0.7
 =======================
 
