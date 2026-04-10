@@ -28,6 +28,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-3.5-turbo' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -37,6 +38,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-3.5-turbo-instruct' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -46,6 +48,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -55,6 +58,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4-turbo' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -66,6 +70,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4o' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -78,6 +83,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4o-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -90,6 +96,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4o-audio-preview' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -106,6 +113,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'o3' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -116,6 +124,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'o3-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -128,6 +137,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'o3-mini-high' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -137,6 +147,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4.5-preview' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -149,6 +160,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4.1' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -161,6 +173,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4.1-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -173,6 +186,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4.1-nano' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -185,6 +199,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-5' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -197,6 +212,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-5-chat-latest' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
@@ -207,6 +223,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-5-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
                     Capability::OUTPUT_TEXT,
@@ -219,6 +236,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-5-nano' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
                     Capability::OUTPUT_TEXT,
@@ -231,6 +249,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-5.2' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_IMAGE,
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_PDF,
