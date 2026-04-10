@@ -88,7 +88,7 @@ final class ContractTest extends TestCase
         yield 'with tool use' => [
             new MessageBag(
                 Message::ofUser('Hello there, what is the time?'),
-                Message::ofAssistant(toolCalls: [new ToolCall('123456', 'clock', [])]),
+                Message::ofAssistant(new ToolCall('123456', 'clock', [])),
                 Message::ofToolCall(new ToolCall('123456', 'clock', []), '2023-10-01T10:00:00+00:00'),
                 Message::ofAssistant('It is 10:00 AM.'),
             ),

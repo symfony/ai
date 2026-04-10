@@ -20,6 +20,8 @@ $platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
+    Message::ofAssistant('Ahoy there, a software framework.'),
+    Message::ofUser('Could you elaborate, which language??'),
 );
 $result = $platform->invoke('gemini-2.5-flash', $messages);
 

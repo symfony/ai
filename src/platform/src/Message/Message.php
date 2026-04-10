@@ -35,12 +35,18 @@ final class Message
         return new SystemMessage($content instanceof \Stringable ? (string) $content : $content);
     }
 
-    /**
-     * @param ?ToolCall[] $toolCalls
-     */
-    public static function ofAssistant(?string $content = null, ?array $toolCalls = null): AssistantMessage
+    public static function ofAssistant(\Stringable|string|ContentInterface ...$content): AssistantMessage
     {
-        return new AssistantMessage($content, $toolCalls);
+        $content = array_map(
+            static fn (\Stringable|string|ContentInterface $entry) => match (true) {
+                $entry instanceof ContentInterface => $entry,
+                \is_string($entry) => new Text($entry),
+                default => new Text((string) $entry),
+            },
+            $content,
+        );
+
+        return new AssistantMessage(...$content);
     }
 
     public static function ofUser(\Stringable|string|ContentInterface ...$content): UserMessage

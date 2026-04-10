@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Message;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tests\Helper\UuidAssertionTrait;
@@ -31,7 +32,7 @@ final class AssistantMessageTest extends TestCase
 
     public function testConstructionWithoutToolCallIsPossible()
     {
-        $message = new AssistantMessage('foo');
+        $message = new AssistantMessage($content = new Text('foo'));
 
         $this->assertSame('foo', $message->getContent());
         $this->assertNull($message->getToolCalls());
@@ -40,7 +41,7 @@ final class AssistantMessageTest extends TestCase
     public function testConstructionWithoutContentIsPossible()
     {
         $toolCall = new ToolCall('foo', 'foo');
-        $message = new AssistantMessage(toolCalls: [$toolCall]);
+        $message = new AssistantMessage($toolCall);
 
         $this->assertNull($message->getContent());
         $this->assertSame([$toolCall], $message->getToolCalls());
@@ -49,15 +50,15 @@ final class AssistantMessageTest extends TestCase
 
     public function testMessageHasUid()
     {
-        $message = new AssistantMessage('foo');
+        $message = new AssistantMessage(new Text('foo'));
 
         $this->assertInstanceOf(UuidV7::class, $message->getId());
     }
 
     public function testDifferentMessagesHaveDifferentUids()
     {
-        $message1 = new AssistantMessage('foo');
-        $message2 = new AssistantMessage('bar');
+        $message1 = new AssistantMessage(new Text('foo'));
+        $message2 = new AssistantMessage(new Text('bar'));
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
         $this->assertIsUuidV7($message1->getId()->toRfc4122());
@@ -66,8 +67,8 @@ final class AssistantMessageTest extends TestCase
 
     public function testSameMessagesHaveDifferentUids()
     {
-        $message1 = new AssistantMessage('foo');
-        $message2 = new AssistantMessage('foo');
+        $message1 = new AssistantMessage(new Text('foo'));
+        $message2 = new AssistantMessage(new Text('foo'));
 
         $this->assertNotSame($message1->getId()->toRfc4122(), $message2->getId()->toRfc4122());
         $this->assertIsUuidV7($message1->getId()->toRfc4122());
@@ -76,7 +77,7 @@ final class AssistantMessageTest extends TestCase
 
     public function testMessageIdImplementsRequiredInterfaces()
     {
-        $message = new AssistantMessage('test');
+        $message = new AssistantMessage(new Text('test'));
 
         $this->assertInstanceOf(AbstractUid::class, $message->getId());
         $this->assertInstanceOf(TimeBasedUidInterface::class, $message->getId());

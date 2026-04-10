@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\Contract\Normalizer\Message;
 
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\ThinkingContent;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -47,12 +49,14 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
             'content' => $data->getContent(),
         ];
 
-        if ($data->hasToolCalls()) {
-            $array['tool_calls'] = $this->normalizer->normalize($data->getToolCalls(), $format, $context);
-        }
+        foreach ($data as $content) {
+            if ($content instanceof ToolCall) {
+                $array['tool_calls'][] = $this->normalizer->normalize($content, $format, $context);
+            }
 
-        if ($data->hasThinkingContent()) {
-            $array['reasoning_content'] = $data->getThinkingContent();
+            if ($content instanceof ThinkingContent) {
+                $array['reasoning_content'] = $content->getContent();
+            }
         }
 
         return $array;

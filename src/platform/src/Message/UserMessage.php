@@ -22,8 +22,10 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
+ *
+ * @extends \IteratorAggregate<int, ContentInterface>
  */
-final class UserMessage implements MessageInterface
+final class UserMessage implements MessageInterface, \IteratorAggregate
 {
     use IdentifierAwareTrait;
     use MetadataAwareTrait;
@@ -51,6 +53,11 @@ final class UserMessage implements MessageInterface
     public function getContent(): array
     {
         return $this->content;
+    }
+
+    public function getIterator(): \Traversable
+    {
+        yield from $this->content;
     }
 
     public function hasAudioContent(): bool

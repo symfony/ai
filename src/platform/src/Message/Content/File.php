@@ -19,7 +19,7 @@ use function Symfony\Component\String\u;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class File implements ContentInterface
+class File extends Content
 {
     final public function __construct(
         private readonly string|\Closure $data,

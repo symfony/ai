@@ -157,7 +157,7 @@ final class ContractTest extends TestCase
                 Message::forSystem('My amazing system prompt.'),
                 Message::ofAssistant('It is time to sleep.'),
                 Message::ofUser('Hello, world!'),
-                new AssistantMessage('Hello User!'),
+                new AssistantMessage(new Text('Hello User!')),
                 Message::ofUser('My hint for how to analyze an image.', new ImageUrl('http://image-generator.local/my-fancy-image.png')),
             ),
             'expected' => [

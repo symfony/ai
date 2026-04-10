@@ -52,7 +52,7 @@ final class MessageTest extends TestCase
             new ToolCall('call_123456', 'my_tool', ['foo' => 'bar']),
             new ToolCall('call_456789', 'my_faster_tool'),
         ];
-        $message = Message::ofAssistant(toolCalls: $toolCalls);
+        $message = Message::ofAssistant(...$toolCalls);
 
         $this->assertCount(2, $message->getToolCalls());
         $this->assertTrue($message->hasToolCalls());

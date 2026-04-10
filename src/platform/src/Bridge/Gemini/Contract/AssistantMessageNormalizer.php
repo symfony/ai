@@ -14,38 +14,46 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Contract;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class AssistantMessageNormalizer extends ModelContractNormalizer
+final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use NormalizerAwareTrait;
+
     /**
      * @param AssistantMessage $data
      *
-     * @return array{array{text: string}}
+     * @return array{text?: string, functionCall?: array<string, mixed>}[]
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $normalized = [];
 
-        if (null !== $data->getContent()) {
-            $normalized['text'] = $data->getContent();
-        }
+        foreach ($data as $i => $content) {
+            if ($content instanceof Text) {
+                $normalized[$i]['text'] = $content->getText();
+            }
 
-        if ($data->hasToolCalls()) {
-            $normalized['functionCall'] = [
-                'id' => $data->getToolCalls()[0]->getId(),
-                'name' => $data->getToolCalls()[0]->getName(),
-            ];
+            if ($content instanceof ToolCall) {
+                $normalized[$i]['functionCall'] = [
+                    'id' => $content->getId(),
+                    'name' => $content->getName(),
+                ];
 
-            if ($data->getToolCalls()[0]->getArguments()) {
-                $normalized['functionCall']['args'] = $data->getToolCalls()[0]->getArguments();
+                if ($content->getArguments()) {
+                    $normalized[$i]['functionCall']['args'] = $content->getArguments();
+                }
             }
         }
 
-        return [$normalized];
+        return $normalized;
     }
 
     protected function supportedDataClass(): string
