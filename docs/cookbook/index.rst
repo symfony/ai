@@ -11,6 +11,7 @@ Getting Started Guides
     :maxdepth: 1
 
     chatbot-with-memory
+    context-compression
     dynamic-tools
     human-in-the-loop
     rag-implementation
@@ -20,6 +21,7 @@ Memory & Context Management
 ---------------------------
 
 * :doc:`chatbot-with-memory` - Build chatbots that remember user preferences and conversation history
+* :doc:`context-compression` - Manage long conversations with automatic context compression
 
 Tools
 -----
