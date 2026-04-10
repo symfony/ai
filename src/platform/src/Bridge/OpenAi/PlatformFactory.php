@@ -11,21 +11,21 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
-use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
-use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ *
+ * @deprecated since 0.8, use ProviderFactory instead
  */
 final class PlatformFactory
 {
-    public const REGION_EU = 'EU';
-    public const REGION_US = 'US';
+    public const REGION_EU = ProviderFactory::REGION_EU;
+    public const REGION_US = ProviderFactory::REGION_US;
 
     public static function create(
         #[\SensitiveParameter] string $apiKey,
@@ -35,26 +35,8 @@ final class PlatformFactory
         ?string $region = null,
         ?EventDispatcherInterface $eventDispatcher = null,
     ): Platform {
-        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+        $provider = ProviderFactory::create($apiKey, $httpClient, $modelCatalog, $contract, $region, $eventDispatcher);
 
-        return new Platform(
-            [
-                new Gpt\ModelClient($httpClient, $apiKey, $region),
-                new Embeddings\ModelClient($httpClient, $apiKey, $region),
-                new DallE\ModelClient($httpClient, $apiKey, $region),
-                new TextToSpeech\ModelClient($httpClient, $apiKey, $region),
-                new Whisper\ModelClient($httpClient, $apiKey, $region),
-            ],
-            [
-                new Gpt\ResultConverter(),
-                new Embeddings\ResultConverter(),
-                new DallE\ResultConverter(),
-                new TextToSpeech\ResultConverter(),
-                new Whisper\ResultConverter(),
-            ],
-            $modelCatalog,
-            $contract ?? OpenAiContract::create(),
-            $eventDispatcher,
-        );
+        return Platform::create($provider);
     }
 }

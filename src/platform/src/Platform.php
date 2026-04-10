@@ -11,86 +11,84 @@
 
 namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Event\InvocationEvent;
-use Symfony\AI\Platform\Event\ResultEvent;
-use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Event\ModelRoutingEvent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\ModelResolver\CatalogBasedModelResolver;
 use Symfony\AI\Platform\Result\DeferredResult;
-use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
+ * Routes model invocations to the appropriate provider.
+ *
+ * Platform is the user-facing entry point that holds one or more providers
+ * and uses a ModelResolver to determine which provider handles each request.
+ *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class Platform implements PlatformInterface
 {
     /**
-     * @param iterable<ModelClientInterface>     $modelClients
-     * @param iterable<ResultConverterInterface> $resultConverters
+     * @var ProviderInterface[]
+     */
+    private readonly array $providers;
+
+    /**
+     * @param iterable<ProviderInterface> $providers
      */
     public function __construct(
-        private readonly iterable $modelClients,
-        private readonly iterable $resultConverters,
-        private readonly ModelCatalogInterface $modelCatalog,
-        private ?Contract $contract = null,
+        iterable $providers,
+        private readonly ModelResolverInterface $modelResolver = new CatalogBasedModelResolver(),
+        private readonly ?ModelCatalogInterface $modelCatalog = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
-        $this->contract = $contract ?? Contract::create();
+        $this->providers = $providers instanceof \Traversable ? iterator_to_array($providers) : $providers;
+
+        if ([] === $this->providers) {
+            throw new InvalidArgumentException('Platform must have at least one provider configured.');
+        }
+    }
+
+    /**
+     * Convenience factory for single-provider usage.
+     */
+    public static function create(ProviderInterface $provider, ?EventDispatcherInterface $eventDispatcher = null): self
+    {
+        return new self(
+            [$provider],
+            new CatalogBasedModelResolver(),
+            $provider->getModelCatalog(),
+            $eventDispatcher,
+        );
     }
 
     public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
     {
-        $model = $this->modelCatalog->getModel($model);
-
-        $event = new InvocationEvent($model, $input, $options);
+        $event = new ModelRoutingEvent($model, $input, $options);
         $this->eventDispatcher?->dispatch($event);
 
-        $payload = $this->contract->createRequestPayload($event->getModel(), $event->getInput(), $event->getOptions());
-        $options = array_merge($model->getOptions(), $event->getOptions());
+        $provider = $this->modelResolver->resolve(
+            $event->getModel(),
+            $this->providers,
+            $event->getInput(),
+            $event->getOptions(),
+        );
 
-        if (isset($options['tools'])) {
-            $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
-        }
-
-        $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);
-
-        $event = new ResultEvent($model, $result, $options, $input);
-        $this->eventDispatcher?->dispatch($event);
-
-        return $event->getDeferredResult();
+        return $provider->invoke($event->getModel(), $event->getInput(), $event->getOptions());
     }
 
     public function getModelCatalog(): ModelCatalogInterface
     {
-        return $this->modelCatalog;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed> $options
-     */
-    private function doInvoke(Model $model, array|string $payload, array $options = []): RawResultInterface
-    {
-        foreach ($this->modelClients as $modelClient) {
-            if ($modelClient->supports($model)) {
-                return $modelClient->request($model, $payload, $options);
-            }
+        if (null !== $this->modelCatalog) {
+            return $this->modelCatalog;
         }
 
-        throw new RuntimeException(\sprintf('No ModelClient registered for model "%s" with given input.', $model::class));
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function convertResult(Model $model, RawResultInterface $result, array $options): DeferredResult
-    {
-        foreach ($this->resultConverters as $resultConverter) {
-            if ($resultConverter->supports($model)) {
-                return new DeferredResult($resultConverter, $result, $options);
-            }
-        }
-
-        throw new RuntimeException(\sprintf('No ResultConverter registered for model "%s" with given input.', $model::class));
+        return new CompositeModelCatalog(
+            array_map(
+                static fn (ProviderInterface $provider): ModelCatalogInterface => $provider->getModelCatalog(),
+                $this->providers,
+            ),
+        );
     }
 }
