@@ -25,6 +25,7 @@ final class Vectorizer implements VectorizerInterface
         private readonly PlatformInterface $platform,
         private readonly string $model,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly bool $includeText = false,
     ) {
     }
 
@@ -112,7 +113,7 @@ final class Vectorizer implements VectorizerInterface
         // Preserve the original text in metadata so downstream consumers
         // (e.g. text search, reranking) can access it via Metadata::getText().
         $metadata = $document->getMetadata();
-        if (!$metadata->hasText()) {
+        if ($this->includeText && !$metadata->hasText()) {
             $metadata->setText($document->getContent());
         }
 
@@ -196,7 +197,7 @@ final class Vectorizer implements VectorizerInterface
             // Preserve the original text in metadata so downstream consumers
             // (e.g. text search, reranking) can access it via Metadata::getText().
             $metadata = $document->getMetadata();
-            if (!$metadata->hasText()) {
+            if ($this->includeText && !$metadata->hasText()) {
                 $metadata->setText($document->getContent());
             }
 

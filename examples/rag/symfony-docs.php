@@ -44,7 +44,7 @@ if (!is_dir($docsDir.'/.git')) {
 // 2. Load & Index
 $store = new InMemoryStore();
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
-$vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
+$vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger(), includeText: true);
 $processor = new DocumentProcessor($vectorizer, $store, logger: logger());
 
 $loader = new RstToctreeLoader();

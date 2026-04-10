@@ -25,7 +25,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
-$vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
+$vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
 
 // Sample documents with some unwanted content
 $documents = [

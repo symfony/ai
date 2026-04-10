@@ -70,7 +70,7 @@ final class DocumentIndexerTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $store->documents[0]);
         $this->assertSame($id, $store->documents[0]->getId());
         $this->assertSame($vector, $store->documents[0]->getVector());
-        $this->assertSame(['key' => 'value', '_text' => 'Test content'], $store->documents[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['key' => 'value'], $store->documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testIndexMultipleDocuments()
