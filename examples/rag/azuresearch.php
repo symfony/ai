@@ -29,7 +29,13 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = StoreFactory::create('movies');
+$store = StoreFactory::create(
+    indexName: 'movies',
+    endpoint: env('AZURE_SEARCH_ENDPOINT'),
+    apiKey: env('AZURE_SEARCH_API_KEY'),
+    apiVersion: env('AZURE_SEARCH_API_VERSION'),
+    httpClient: http_client(),
+);
 
 // create embeddings and documents
 $documents = [];

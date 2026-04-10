@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -107,11 +108,15 @@ final class SearchStore implements StoreInterface
      */
     private function request(string $endpoint, array $payload): array
     {
-        $result = $this->httpClient->request('POST', \sprintf('indexes/%s/docs/%s', $this->indexName, $endpoint), [
+        $response = $this->httpClient->request('POST', \sprintf('indexes/%s/docs/%s', $this->indexName, $endpoint), [
             'json' => $payload,
         ]);
 
-        return $result->toArray();
+        if ($response->getStatusCode() >= 400) {
+            throw new RuntimeException(\sprintf('Azure Search request failed: "%s"', $response->getContent(false)));
+        }
+
+        return $response->toArray();
     }
 
     /**
