@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] `GeminiContract::create()` no longer accepts variadic `NormalizerInterface` arguments; pass an array instead
+ * [BC BREAK] Rename `PlatformFactory` to `Factory` with explicit `createProvider()` and `createPlatform()` methods
  * Add support for Gemini 3.1 Flash Lite preview model (`gemini-3.1-flash-lite-preview`)
  * Add support for Gemini 3 Flash preview model (`gemini-3-flash-preview`)
  * [BC BREAK] `ResultConverter` now returns a `MultiPartResult` when there are multiple `parts` in a `candidate`

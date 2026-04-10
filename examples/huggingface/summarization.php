@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
 $longText = <<<TEXT
     The tower is 324 metres (1,063 ft) tall, about the same height as an 81-storey building, and the tallest structure

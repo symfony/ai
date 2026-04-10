@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\SummaryGeneratorTransformer;
@@ -26,7 +26,7 @@ echo "=== Summary Generator Transformer ===\n\n";
 echo "This example demonstrates using the SummaryGeneratorTransformer to automatically\n";
 echo "generate LLM-based summaries during document indexing and store them in metadata.\n\n";
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $store = new InMemoryStore();
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 

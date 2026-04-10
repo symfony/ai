@@ -10,8 +10,8 @@
  */
 
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\Factory;
 use Symfony\AI\Platform\Bridge\Generic\ModelCatalog;
-use Symfony\AI\Platform\Bridge\Generic\PlatformFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -38,7 +38,7 @@ $modelCatalog = new ModelCatalog([
     ],
 ]);
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     baseUrl: env('GITHUB_HOST_URL'),
     apiKey: env('GITHUB_MODELS_TOKEN'),
     httpClient: $client,

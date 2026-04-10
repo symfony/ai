@@ -31,7 +31,7 @@
                     </a>
                 </div>
                 <div class="col-lg-7" data-aos="fade-left">
-                    <pre class="terminal"><code><span class="variable">$platform</span> = <span class="title class_">PlatformFactory</span>::<span class="title function_ invoke__">create</span>(<span class="variable">$apiKey</span>, <span class="title function_ invoke__">http_client</span>());
+                    <pre class="terminal"><code><span class="variable">$platform</span> = <span class="title class_">Factory</span>::<span class="title function_ invoke__">createPlatform</span>(<span class="variable">$apiKey</span>, <span class="title function_ invoke__">http_client</span>());
 
 <span class="variable">$messages</span> = <span class="keyword">new</span> <span class="title class_">MessageBag</span>(
     <span class="title class_">Message</span>::<span class="title function_ invoke__">forSystem</span>(<span class="string">'You are a helpful assistant.'</span>),

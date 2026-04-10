@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ovh\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -21,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('OVH_AI_SECRET_KEY'), http_client(), eventDispatcher: $dispatcher);
+$platform = Factory::createPlatform(env('OVH_AI_SECRET_KEY'), http_client(), eventDispatcher: $dispatcher);
 
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),

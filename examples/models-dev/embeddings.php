@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\ModelsDev\PlatformFactory;
+use Symfony\AI\Platform\Bridge\ModelsDev\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     provider: 'google',
     apiKey: env('GEMINI_API_KEY'),
     httpClient: http_client(),

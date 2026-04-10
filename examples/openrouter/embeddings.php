@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENROUTER_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client());
 
 $result = $platform->invoke('openai/text-embedding-3-small', <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

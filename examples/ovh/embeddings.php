@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ovh\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OVH_AI_SECRET_KEY'), http_client());
+$platform = Factory::createPlatform(env('OVH_AI_SECRET_KEY'), http_client());
 
 $result = $platform->invoke('bge-multilingual-gemma2', <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

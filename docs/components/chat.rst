@@ -20,10 +20,10 @@ with a ``Symfony\AI\Agent\AgentInterface`` and a ``Symfony\AI\Chat\MessageStoreI
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Chat\Chat;
     use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
     use Symfony\AI\Platform\Message\Message;
 
-    $platform = PlatformFactory::create($apiKey);
+    $platform = Factory::createPlatform($apiKey);
 
     $agent = new Agent($platform, 'gpt-4o-mini');
     $chat = new Chat($agent, new InMemoryStore());
@@ -41,12 +41,12 @@ deltas as they are produced by the model::
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Chat\Chat;
     use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
-    $platform = PlatformFactory::create($apiKey);
+    $platform = Factory::createPlatform($apiKey);
 
     $agent = new Agent($platform, 'gpt-4o-mini');
     $chat = new Chat($agent, new InMemoryStore());

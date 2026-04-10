@@ -14,7 +14,7 @@ use Doctrine\DBAL\Tools\DsnParser;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Memory\EmbeddingProvider;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
@@ -55,7 +55,7 @@ foreach ($pastConversationPieces as $i => $message) {
 $store->setup();
 
 // create embeddings for documents as preparation of the chain memory
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, $embeddings = 'text-embedding-3-small');
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);

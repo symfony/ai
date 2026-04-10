@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
 
 try {
     $result = $platform->invoke(env('OLLAMA_LLM'), new MessageBag(

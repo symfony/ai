@@ -22,9 +22,9 @@ abstract class AbstractModelClient
     {
         return match ($region) {
             null => 'https://api.openai.com',
-            PlatformFactory::REGION_EU => 'https://eu.api.openai.com',
-            PlatformFactory::REGION_US => 'https://us.api.openai.com',
-            default => throw new InvalidArgumentException(\sprintf('Invalid region "%s". Valid options are: "%s", "%s", or null.', $region, PlatformFactory::REGION_EU, PlatformFactory::REGION_US)),
+            Factory::REGION_EU => 'https://eu.api.openai.com',
+            Factory::REGION_US => 'https://us.api.openai.com',
+            default => throw new InvalidArgumentException(\sprintf('Invalid region "%s". Valid options are: "%s", "%s", or null.', $region, Factory::REGION_EU, Factory::REGION_US)),
         };
     }
 

@@ -90,7 +90,7 @@ Use a vectorizer to convert documents into embeddings and store them::
     use Symfony\AI\Store\Indexer\DocumentIndexer;
     use Symfony\AI\Store\Indexer\DocumentProcessor;
 
-    $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
+    $platform = Factory::createPlatform(env('OPENAI_API_KEY'));
     $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
     $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
     $indexer->index($documents);

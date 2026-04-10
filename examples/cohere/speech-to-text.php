@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Cohere\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Cohere\Factory;
 use Symfony\AI\Platform\Message\Content\Audio;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('COHERE_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('COHERE_API_KEY'), http_client());
 
 $result = $platform->invoke('cohere-transcribe-03-2026', Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'), [
     'language' => 'en',

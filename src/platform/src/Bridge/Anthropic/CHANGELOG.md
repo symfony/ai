@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] `AnthropicContract::create()` no longer accepts variadic `NormalizerInterface` arguments; pass an array instead
+ * [BC BREAK] Rename `PlatformFactory` to `Factory` with explicit `createProvider()` and `createPlatform()` methods
  * [BC BREAK] `ResultConverter` now returns `MultiPartResult` for responses with multiple results
  * Add support for code execution results
 

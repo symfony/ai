@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Perplexity\Factory;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once __DIR__.'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('PERPLEXITY_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('PERPLEXITY_API_KEY'), http_client());
 
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),

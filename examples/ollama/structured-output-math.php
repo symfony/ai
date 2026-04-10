@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -21,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher);
+$platform = Factory::createPlatform(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher);
 $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),

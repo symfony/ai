@@ -29,18 +29,18 @@ Refer to each provider's documentation for how to obtain an API key.
 Usage
 -----
 
-Using the PlatformFactory
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Using the Factory
+~~~~~~~~~~~~~~~~~
 
-The simplest way to get started is with ``PlatformFactory``, which auto-detects
+The simplest way to get started is with ``Factory``, which auto-detects
 the API base URL from the models.dev data::
 
-    use Symfony\AI\Platform\Bridge\ModelsDev\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\ModelsDev\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
     // Auto-detect base URL from models.dev data
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         provider: 'deepseek',
         apiKey: $_ENV['DEEPSEEK_API_KEY'],
     );
@@ -57,7 +57,7 @@ For providers where models.dev does not publish an API base URL, you must provid
 explicitly. The base URL should **not** include the ``/v1`` suffix as it will be added
 automatically::
 
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         provider: 'groq',
         apiKey: $_ENV['GROQ_API_KEY'],
         baseUrl: 'https://api.groq.com/openai',
@@ -68,14 +68,14 @@ providers. However, some providers require specialized API. In that case, the
 bridge automatically detects and routes to specialized bridges when installed::
 
     // Anthropic bridge installed: routes automatically
-    $platform = PlatformFactory::create('anthropic', $_ENV['ANTHROPIC_API_KEY']);
+    $platform = Factory::createPlatform('anthropic', $_ENV['ANTHROPIC_API_KEY']);
 
 The factory is designed to be simple and opinionated, using models.dev definitions
 for everything. Advanced options are available when needed::
 
     use Symfony\Component\HttpClient\HttpClient;
 
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         provider: 'deepseek',
         apiKey: $_ENV['DEEPSEEK_API_KEY'],
         httpClient: HttpClient::create(), // Optional: custom HTTP client
@@ -94,7 +94,7 @@ Embeddings
 Embedding models are automatically detected and routed to the
 ``EmbeddingsModel`` class. Use them like any other embedding model::
 
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         provider: 'openai',
         apiKey: $_ENV['OPENAI_API_KEY'],
         baseUrl: 'https://api.openai.com/v1',

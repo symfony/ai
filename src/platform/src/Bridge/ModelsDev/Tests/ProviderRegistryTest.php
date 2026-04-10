@@ -64,7 +64,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertContains('mistral', $ids);
         $this->assertContains('deepseek', $ids);
 
-        // Providers with specialized bridges are also listed (routing handled by PlatformFactory)
+        // Providers with specialized bridges are also listed (routing handled by Factory)
         $this->assertContains('anthropic', $ids);
         $this->assertContains('google', $ids);
         $this->assertContains('minimax', $ids);

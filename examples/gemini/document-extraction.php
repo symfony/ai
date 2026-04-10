@@ -11,7 +11,7 @@
 
 use Symfony\AI\Fixtures\Field;
 use Symfony\AI\Fixtures\FrameworkDetails;
-use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Content\Document;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -34,7 +34,7 @@ if (!shell_exec('command -v gs')) {
 
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
+$platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
 
 $documentPath = dirname(__DIR__, 2).'/fixtures/symfony_site_document.pdf';
 $messages = new MessageBag(

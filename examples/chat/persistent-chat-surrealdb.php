@@ -12,13 +12,13 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore;
 use Symfony\AI\Chat\Chat;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 // SurrealDb does not require to call the `setup()` method as the table is created during insertion
 $store = new MessageStore(
