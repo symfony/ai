@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Event\ModelRoutingEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
-use Symfony\AI\Platform\ModelResolverInterface;
+use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\ProviderInterface;
@@ -27,17 +27,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class PlatformTest extends TestCase
 {
-    public function testCreateWithSingleProvider()
-    {
-        $catalog = $this->createStub(ModelCatalogInterface::class);
-        $provider = $this->createStub(ProviderInterface::class);
-        $provider->method('getModelCatalog')->willReturn($catalog);
-
-        $platform = Platform::create($provider);
-
-        $this->assertSame($catalog, $platform->getModelCatalog());
-    }
-
     public function testConstructorThrowsWithNoProviders()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -56,10 +45,10 @@ final class PlatformTest extends TestCase
             ->with('gpt-4o', 'Hello', [])
             ->willReturn($deferredResult);
 
-        $resolver = $this->createStub(ModelResolverInterface::class);
-        $resolver->method('resolve')->willReturn($provider);
+        $router = $this->createStub(ModelRouterInterface::class);
+        $router->method('resolve')->willReturn($provider);
 
-        $platform = new Platform([$provider], $resolver);
+        $platform = new Platform([$provider], $router);
 
         $result = $platform->invoke('gpt-4o', 'Hello');
 
@@ -72,10 +61,9 @@ final class PlatformTest extends TestCase
 
         $provider = $this->createStub(ProviderInterface::class);
         $provider->method('invoke')->willReturn($deferredResult);
-        $provider->method('getModelCatalog')->willReturn($this->createStub(ModelCatalogInterface::class));
 
-        $resolver = $this->createStub(ModelResolverInterface::class);
-        $resolver->method('resolve')->willReturn($provider);
+        $router = $this->createStub(ModelRouterInterface::class);
+        $router->method('resolve')->willReturn($provider);
 
         $dispatchedEvent = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -87,7 +75,7 @@ final class PlatformTest extends TestCase
                 return $event;
             });
 
-        $platform = new Platform([$provider], $resolver, null, $eventDispatcher);
+        $platform = new Platform([$provider], $router, null, $eventDispatcher);
 
         $platform->invoke('gpt-4o', 'Hello', ['temperature' => 0.7]);
 
@@ -107,8 +95,8 @@ final class PlatformTest extends TestCase
             ->with('claude-3-5-sonnet', 'Hello', [])
             ->willReturn($deferredResult);
 
-        $resolver = $this->createMock(ModelResolverInterface::class);
-        $resolver->expects($this->once())
+        $router = $this->createMock(ModelRouterInterface::class);
+        $router->expects($this->once())
             ->method('resolve')
             ->with('claude-3-5-sonnet', $this->anything(), $this->anything(), $this->anything())
             ->willReturn($provider);
@@ -120,16 +108,44 @@ final class PlatformTest extends TestCase
             return $event;
         });
 
-        $platform = new Platform([$provider], $resolver, null, $eventDispatcher);
+        $platform = new Platform([$provider], $router, null, $eventDispatcher);
 
         $platform->invoke('gpt-4o', 'Hello');
+    }
+
+    public function testModelRoutingEventProviderSkipsRouter()
+    {
+        $deferredResult = new DeferredResult(new PlainConverter(new TextResult('Hello')), $this->createStub(RawResultInterface::class));
+
+        $overrideProvider = $this->createMock(ProviderInterface::class);
+        $overrideProvider->expects($this->once())
+            ->method('invoke')
+            ->with('gpt-4o', 'Hello', [])
+            ->willReturn($deferredResult);
+
+        $router = $this->createMock(ModelRouterInterface::class);
+        $router->expects($this->never())->method('resolve');
+
+        $defaultProvider = $this->createStub(ProviderInterface::class);
+
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ModelRoutingEvent $event) use ($overrideProvider) {
+            $event->setProvider($overrideProvider);
+
+            return $event;
+        });
+
+        $platform = new Platform([$defaultProvider], $router, null, $eventDispatcher);
+
+        $result = $platform->invoke('gpt-4o', 'Hello');
+
+        $this->assertSame($deferredResult, $result);
     }
 
     public function testGetModelCatalogReturnsProvidedCatalog()
     {
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $provider = $this->createStub(ProviderInterface::class);
-        $provider->method('getModelCatalog')->willReturn($this->createStub(ModelCatalogInterface::class));
 
         $platform = new Platform([$provider], modelCatalog: $catalog);
 

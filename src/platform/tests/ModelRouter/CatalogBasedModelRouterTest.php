@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\ModelResolver;
+namespace Symfony\AI\Platform\Tests\ModelRouter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
-use Symfony\AI\Platform\ModelResolver\CatalogBasedModelResolver;
+use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ProviderInterface;
 
-final class CatalogBasedModelResolverTest extends TestCase
+final class CatalogBasedModelRouterTest extends TestCase
 {
     public function testResolvesFirstSupportingProvider()
     {
@@ -28,8 +28,8 @@ final class CatalogBasedModelResolverTest extends TestCase
         $provider2->method('supports')->willReturn(true);
         $provider2->method('getName')->willReturn('openai');
 
-        $resolver = new CatalogBasedModelResolver();
-        $result = $resolver->resolve('gpt-4o', [$provider1, $provider2], 'Hello');
+        $router = new CatalogBasedModelRouter();
+        $result = $router->resolve('gpt-4o', [$provider1, $provider2], 'Hello');
 
         $this->assertSame($provider2, $result);
     }
@@ -44,8 +44,8 @@ final class CatalogBasedModelResolverTest extends TestCase
         $provider2->method('supports')->willReturn(true);
         $provider2->method('getName')->willReturn('openrouter');
 
-        $resolver = new CatalogBasedModelResolver();
-        $result = $resolver->resolve('gpt-4o', [$provider1, $provider2], 'Hello');
+        $router = new CatalogBasedModelRouter();
+        $result = $router->resolve('gpt-4o', [$provider1, $provider2], 'Hello');
 
         $this->assertSame($provider1, $result);
     }
@@ -55,20 +55,20 @@ final class CatalogBasedModelResolverTest extends TestCase
         $provider = $this->createStub(ProviderInterface::class);
         $provider->method('supports')->willReturn(false);
 
-        $resolver = new CatalogBasedModelResolver();
+        $router = new CatalogBasedModelRouter();
 
         $this->expectException(ModelNotFoundException::class);
         $this->expectExceptionMessageMatches('/No provider found for model "unknown-model"/');
 
-        $resolver->resolve('unknown-model', [$provider], 'Hello');
+        $router->resolve('unknown-model', [$provider], 'Hello');
     }
 
     public function testThrowsWhenNoProvidersGiven()
     {
-        $resolver = new CatalogBasedModelResolver();
+        $router = new CatalogBasedModelRouter();
 
         $this->expectException(ModelNotFoundException::class);
 
-        $resolver->resolve('gpt-4o', [], 'Hello');
+        $router->resolve('gpt-4o', [], 'Hello');
     }
 }
