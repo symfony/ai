@@ -125,8 +125,8 @@ final class VectorizerTest extends TestCase
         $this->assertCount(2, $vectorDocuments);
         $this->assertSame($metadata1, $vectorDocuments[0]->getMetadata());
         $this->assertSame($metadata2, $vectorDocuments[1]->getMetadata());
-        $this->assertSame(['source' => 'file1.txt', 'author' => 'Alice', 'tags' => ['important'], '_text' => 'Content 1'], $vectorDocuments[0]->getMetadata()->getArrayCopy());
-        $this->assertSame(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2, '_text' => 'Content 2'], $vectorDocuments[1]->getMetadata()->getArrayCopy());
+        $this->assertSame(['source' => 'file1.txt', 'author' => 'Alice', 'tags' => ['important']], $vectorDocuments[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['source' => 'file2.txt', 'author' => 'Bob', 'version' => 2], $vectorDocuments[1]->getMetadata()->getArrayCopy());
     }
 
     public function testVectorizeDocumentsPreservesDocumentIds()
@@ -185,7 +185,7 @@ final class VectorizerTest extends TestCase
             $this->assertSame($documents[$i]->getId(), $vectorDoc->getId());
             $this->assertEquals($vectors[$i], $vectorDoc->getVector());
             $this->assertSame($documents[$i]->getMetadata(), $vectorDoc->getMetadata());
-            $this->assertSame(['index' => $i, '_text' => \sprintf('Document %d content', $i)], $vectorDoc->getMetadata()->getArrayCopy());
+            $this->assertSame(['index' => $i], $vectorDoc->getMetadata()->getArrayCopy());
         }
     }
 
@@ -515,6 +515,80 @@ final class VectorizerTest extends TestCase
         $result = $vectorizer->vectorize($text);
 
         $this->assertEquals($vector, $result);
+    }
+
+    public function testVectorizeDocumentDoesNotIncludeTextByDefault()
+    {
+        $document = new TextDocument(Uuid::v4()->toString(), 'Test content', new Metadata(['source' => 'test']));
+        $vector = new Vector([0.1, 0.2, 0.3]);
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
+        $result = $vectorizer->vectorize($document);
+
+        $this->assertInstanceOf(VectorDocument::class, $result);
+        $this->assertFalse($result->getMetadata()->hasText());
+        $this->assertSame(['source' => 'test'], $result->getMetadata()->getArrayCopy());
+    }
+
+    public function testVectorizeDocumentsDoesNotIncludeTextByDefault()
+    {
+        $documents = [
+            new TextDocument(Uuid::v4()->toString(), 'First content', new Metadata(['source' => 'test1'])),
+            new TextDocument(Uuid::v4()->toString(), 'Second content', new Metadata(['source' => 'test2'])),
+        ];
+
+        $vectors = [
+            new Vector([0.1, 0.2]),
+            new Vector([0.3, 0.4]),
+        ];
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
+        $result = $vectorizer->vectorize($documents);
+
+        $this->assertCount(2, $result);
+        $this->assertFalse($result[0]->getMetadata()->hasText());
+        $this->assertFalse($result[1]->getMetadata()->hasText());
+        $this->assertSame(['source' => 'test1'], $result[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['source' => 'test2'], $result[1]->getMetadata()->getArrayCopy());
+    }
+
+    public function testVectorizeDocumentIncludesTextWhenEnabled()
+    {
+        $document = new TextDocument(Uuid::v4()->toString(), 'Test content', new Metadata(['source' => 'test']));
+        $vector = new Vector([0.1, 0.2, 0.3]);
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
+        $result = $vectorizer->vectorize($document);
+
+        $this->assertInstanceOf(VectorDocument::class, $result);
+        $this->assertTrue($result->getMetadata()->hasText());
+        $this->assertSame('Test content', $result->getMetadata()->getText());
+    }
+
+    public function testVectorizeDocumentsIncludesTextWhenEnabled()
+    {
+        $documents = [
+            new TextDocument(Uuid::v4()->toString(), 'First content', new Metadata(['source' => 'test1'])),
+            new TextDocument(Uuid::v4()->toString(), 'Second content', new Metadata(['source' => 'test2'])),
+        ];
+
+        $vectors = [
+            new Vector([0.1, 0.2]),
+            new Vector([0.3, 0.4]),
+        ];
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
+        $result = $vectorizer->vectorize($documents);
+
+        $this->assertCount(2, $result);
+        $this->assertTrue($result[0]->getMetadata()->hasText());
+        $this->assertTrue($result[1]->getMetadata()->hasText());
+        $this->assertSame('First content', $result[0]->getMetadata()->getText());
+        $this->assertSame('Second content', $result[1]->getMetadata()->getText());
     }
 
     public function testVectorizeTextDocumentsWithoutBatchSupportPassesOptions()
