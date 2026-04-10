@@ -77,6 +77,7 @@ use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory as OpenRouterPlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Region as OpenRouterRegion;
 use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory as OvhPlatformFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\PlatformFactory as PerplexityPlatformFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory as ScalewayPlatformFactory;
@@ -840,6 +841,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.openrouter'),
                     null,
                     new Reference('event_dispatcher'),
+                    OpenRouterRegion::from($platform['region']),
                 ])
                 ->addTag('ai.platform', ['name' => 'openrouter']);
 
