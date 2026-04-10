@@ -240,6 +240,15 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.chat.message_bag.normalizer'));
     }
 
+    #[TestDox('Service ai.platform.response_format_factory is registered and old ai.agent.response_format_factory is not')]
+    public function testResponseFormatFactoryServiceIsRegisteredWithNewName()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+
+        $this->assertTrue($container->hasDefinition('ai.platform.response_format_factory'));
+        $this->assertFalse($container->hasDefinition('ai.agent.response_format_factory'));
+    }
+
     public function testInjectionAgentAliasIsRegistered()
     {
         $container = $this->buildContainer([
