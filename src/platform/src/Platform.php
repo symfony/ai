@@ -30,21 +30,14 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class Platform implements PlatformInterface
 {
     /**
-     * @var ProviderInterface[]
-     */
-    private readonly array $providers;
-
-    /**
-     * @param iterable<ProviderInterface> $providers
+     * @param ProviderInterface[] $providers
      */
     public function __construct(
-        iterable $providers,
+        private readonly array $providers,
         private readonly ModelRouterInterface $modelRouter = new CatalogBasedModelRouter(),
         private readonly ?ModelCatalogInterface $modelCatalog = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
-        $this->providers = $providers instanceof \Traversable ? iterator_to_array($providers) : $providers;
-
         if ([] === $this->providers) {
             throw new InvalidArgumentException('Platform must have at least one provider configured.');
         }
