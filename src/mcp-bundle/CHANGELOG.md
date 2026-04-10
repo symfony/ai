@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.7
+---
+
+ * Add `routes` config option for registering additional paths through the MCP controller
+
 0.4
 ---
 
