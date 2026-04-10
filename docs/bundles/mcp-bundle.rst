@@ -224,6 +224,43 @@ To use a custom cache backend, you need to configure a PSR-16 cache service in y
 This allows you to store sessions in Redis, a SQL database via Doctrine, or any other PSR-6 cache adapter.
 See the `Symfony Cache documentation`_ for more details on configuring cache pools.
 
+Tool Authorization
+..................
+
+When the Symfony Security component is available, the bundle automatically registers
+tool authorization support using ``#[IsGranted]`` attributes.
+
+**Filtering tool lists** — ``FilteredListToolsHandler`` is auto-registered and filters
+the ``tools/list`` response so users only see tools they are authorized to use.
+Unauthenticated users receive an empty tool list::
+
+    use Mcp\Capability\Attribute\McpTool;
+    use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+    class AccountTools
+    {
+        #[McpTool(name: 'delete_account')]
+        #[IsGranted('ROLE_ADMIN')]
+        public function deleteAccount(string $id): array
+        {
+            // Only visible in tool lists to users with ROLE_ADMIN
+        }
+    }
+
+**Blocking tool execution** — To also enforce authorization at execution time, register
+``SecurityReferenceHandler`` as a decorator for the default reference handler::
+
+    # config/services.yaml
+    services:
+        Symfony\AI\McpBundle\Security\SecurityReferenceHandler:
+            decorates: mcp.reference_handler
+            arguments:
+                - '@.inner'
+                - '@mcp.is_granted_checker'
+
+This throws ``AccessDeniedException`` if a user tries to call a tool they are not
+authorized to use.
+
 Act as Client
 ~~~~~~~~~~~~~
 
