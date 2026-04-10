@@ -177,6 +177,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Failover\\.*
+    - name: ModelFailoverPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\ModelFailover\\.*
     - name: GeminiPlatform
       collectors:
         - type: classLike
@@ -472,6 +476,8 @@ deptrac:
     ElevenLabsPlatform:
       - PlatformComponent
     FailoverPlatform:
+      - PlatformComponent
+    ModelFailoverPlatform:
       - PlatformComponent
     GeminiPlatform:
       - PlatformComponent
