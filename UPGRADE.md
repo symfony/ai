@@ -37,6 +37,13 @@ Agent
 AI Bundle
 ---------
 
+ * The service ID `ai.agent.response_format_factory` has been renamed to `ai.platform.response_format_factory`:
+
+   ```diff
+   -$container->get('ai.agent.response_format_factory');
+   +$container->get('ai.platform.response_format_factory');
+   ```
+
  * The traceable profiler decorators have been moved to their respective components. Update your imports if you
    reference them directly:
 

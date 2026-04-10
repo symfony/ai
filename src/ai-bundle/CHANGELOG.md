@@ -4,6 +4,7 @@ CHANGELOG
 0.7
 ---
 
+ * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
  * [BC BREAK] Move `TraceablePlatform` to `Symfony\AI\Platform\TraceablePlatform`
  * [BC BREAK] Move `TraceableAgent` to `Symfony\AI\Agent\TraceableAgent`
  * [BC BREAK] Move `TraceableToolbox` to `Symfony\AI\Agent\Toolbox\TraceableToolbox`
