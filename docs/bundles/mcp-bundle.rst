@@ -160,14 +160,14 @@ The MCP Bundle supports two transport types for server communication:
 The HTTP transport uses the MCP SDK's ``StreamableHttpTransport`` which supports:
 
 - JSON-RPC 2.0 over HTTP POST requests
-- Session management with configurable storage (file/memory/cache)
+- Session management with configurable storage (file/memory/cache/framework)
 - CORS headers for cross-origin requests
 - Proper MCP initialization handshake
 
 Session Storage
 ...............
 
-The MCP Bundle supports three types of session storage for the HTTP transport:
+The MCP Bundle supports four types of session storage for the HTTP transport:
 
 **File Storage** (default) - Stores sessions on the filesystem:
 
@@ -224,6 +224,19 @@ To use a custom cache backend, you need to configure a PSR-16 cache service in y
 This allows you to store sessions in Redis, a SQL database via Doctrine, or any other PSR-6 cache adapter.
 See the `Symfony Cache documentation`_ for more details on configuring cache pools.
 
+**Framework Storage** - Uses Symfony's ``SessionHandlerInterface`` for session persistence::
+
+    mcp:
+        http:
+            session:
+                store: framework
+                prefix: 'mcp-' # Optional prefix for session keys
+                ttl: 3600
+
+This wraps the configured Symfony session handler (e.g. Redis, database, filesystem — whatever
+your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
+Expired sessions are cleaned up lazily on read.
+
 Act as Client
 ~~~~~~~~~~~~~
 
@@ -274,7 +287,7 @@ Configuration
         http:
             path: /_mcp # HTTP endpoint path (default: /_mcp)
             session:
-                store: file # Session store type: 'file', 'memory', or 'cache' (default: file)
+                store: file # Session store type: 'file', 'memory', 'cache', or 'framework' (default: file)
                 directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
                 cache_pool: 'cache.mcp.sessions' # Cache pool service for cache store (default: cache.mcp.sessions)
                 prefix: 'mcp-' # Prefix for cache keys (default: 'mcp-')
