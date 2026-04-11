@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-10T10:03:58Z
+
+<!-- changelog-version-bump:0.7 -->
+
+Hi! Version **0.7** has been released. This PR has changelog/upgrade entries under the `0.7` heading, which is now a released version.
+
+Please update the following files to place your entries under the next version **0.8**:
+
+- `src/mcp-bundle/CHANGELOG.md`
+
+**For `CHANGELOG.md` files**: change the version heading from `0.7` to `0.8`
+**For `UPGRADE.md`**: place entries under `UPGRADE FROM 0.7 to 0.8`
+
+Thank you!
+
+---
+<sub>🤖 This comment was generated automatically by an agent.</sub>
