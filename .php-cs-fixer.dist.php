@@ -59,6 +59,35 @@ return (new PhpCsFixer\Config())
             ],
         ],
     ])
+    ->setRuleCustomisationPolicy(new class implements PhpCsFixer\Config\RuleCustomisationPolicyInterface {
+        public function getPolicyVersionForCache(): string
+        {
+            return hash_file('xxh128', __FILE__);
+        }
+
+        public function getRuleCustomisers(): array
+        {
+            return [
+                'void_return' => static function (SplFileInfo $file) {
+                    // temporary hack due to bug: https://github.com/symfony/symfony/issues/62734
+                    if (!$file instanceof Symfony\Component\Finder\SplFileInfo) {
+                        return false;
+                    }
+
+                    $relativePathname = $file->getRelativePathname();
+
+                    if (
+                        str_contains($relativePathname, '/Tests/') // don't touch test files, as massive change with little benefit - as outside of public contract anyway
+                        || str_contains($relativePathname, '/Test/') // public namespace not following the rule, do not mistake it with `/Tests/`
+                    ) {
+                        return false;
+                    }
+
+                    return true;
+                },
+            ];
+        }
+    })
     ->setRiskyAllowed(true)
     ->setFinder(
         (new PhpCsFixer\Finder())
