@@ -14,6 +14,9 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -55,6 +58,45 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('toolu_01UM4PcTjC1UDiorSXVHSVFM', $result->getContent()[0]->getId());
         $this->assertSame('xxx_tool', $result->getContent()[0]->getName());
         $this->assertSame(['action' => 'get_data'], $result->getContent()[0]->getArguments());
+    }
+
+    public function testConvertWithCodeExecutionReturnsMultiPartResult()
+    {
+        $json = file_get_contents(__DIR__.'/Fixtures/code_execution.json');
+        $httpClient = new MockHttpClient(new JsonMockResponse(json_decode($json, true)));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+        $handler = new ResultConverter();
+
+        $result = $handler->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(6, $parts);
+
+        $this->assertInstanceOf(TextResult::class, $parts[0]);
+        $this->assertStringStartsWith("I'll calculate the total cost", $parts[0]->getContent());
+
+        $this->assertInstanceOf(ExecutableCodeResult::class, $parts[1]);
+        $this->assertSame('srvtoolu_0195ncSpA6Lt4HPtDGcuqh9y', $parts[1]->getId());
+        $this->assertNull($parts[1]->getLanguage());
+        $this->assertStringContainsString('Mortgage Calculator', $parts[1]->getContent());
+
+        $this->assertInstanceOf(CodeExecutionResult::class, $parts[2]);
+        $this->assertSame('srvtoolu_0195ncSpA6Lt4HPtDGcuqh9y', $parts[2]->getId());
+        $this->assertTrue($parts[2]->isSucceeded());
+
+        $this->assertInstanceOf(ExecutableCodeResult::class, $parts[3]);
+        $this->assertSame('srvtoolu_01RpzxD68AoPFshMf1RNKjSg', $parts[3]->getId());
+        $this->assertSame('bash', $parts[3]->getLanguage());
+        $this->assertSame('python /tmp/mortgage_calculator.py', $parts[3]->getContent());
+
+        $this->assertInstanceOf(CodeExecutionResult::class, $parts[4]);
+        $this->assertSame('srvtoolu_01RpzxD68AoPFshMf1RNKjSg', $parts[4]->getId());
+        $this->assertTrue($parts[4]->isSucceeded());
+        $this->assertStringContainsString('MORTGAGE CALCULATION RESULTS', $parts[4]->getContent());
+
+        $this->assertInstanceOf(TextResult::class, $parts[5]);
+        $this->assertStringStartsWith('## Summary', $parts[5]->getContent());
     }
 
     public function testModelNotFoundError()
@@ -402,7 +444,7 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Response content does not contain any text nor tool calls.');
+        $this->expectExceptionMessage('Response content does not contain any supported content.');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
