@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+* Add support for multiple system messages in `MessageBag` by concatenating them with break lines
+
 0.7
 ---
 
