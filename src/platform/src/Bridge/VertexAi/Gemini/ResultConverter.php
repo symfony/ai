@@ -141,7 +141,7 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             if (isset($contentPart['inlineData'])) {
-                return new BinaryResult($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null);
+                return BinaryResult::fromBase64($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null);
             }
 
             throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finishReason']));

@@ -145,8 +145,8 @@ final class ResultConverterTest extends TestCase
                             'parts' => [
                                 [
                                     'inlineData' => [
-                                        'mimeType' => 'image/png',
-                                        'data' => 'base64EncodedImageData',
+                                        'mimeType' => 'text/plain',
+                                        'data' => 'SGVsbG8=',
                                     ],
                                 ],
                             ],
@@ -160,8 +160,8 @@ final class ResultConverterTest extends TestCase
         $result = $resultConverter->convert(new RawHttpResult($response));
 
         $this->assertInstanceOf(BinaryResult::class, $result);
-        $this->assertSame('base64EncodedImageData', $result->getContent());
-        $this->assertSame('image/png', $result->getMimeType());
+        $this->assertSame('Hello', $result->getContent());
+        $this->assertSame('text/plain', $result->getMimeType());
     }
 
     public function testConvertsInlineDataWithoutMimeTypeToBinaryResult()
@@ -176,7 +176,7 @@ final class ResultConverterTest extends TestCase
                             'parts' => [
                                 [
                                     'inlineData' => [
-                                        'data' => 'base64EncodedData',
+                                        'data' => 'SGVsbG8=',
                                     ],
                                 ],
                             ],
@@ -190,7 +190,7 @@ final class ResultConverterTest extends TestCase
         $result = $resultConverter->convert(new RawHttpResult($response));
 
         $this->assertInstanceOf(BinaryResult::class, $result);
-        $this->assertSame('base64EncodedData', $result->getContent());
+        $this->assertSame('Hello', $result->getContent());
         $this->assertNull($result->getMimeType());
     }
 
@@ -223,8 +223,8 @@ final class ResultConverterTest extends TestCase
         }
 
         if ($items[0] instanceof BinaryDelta) {
-            $this->assertSame('base64EncodedImageData', $items[0]->getData());
-            $this->assertSame('image/png', $items[0]->getMimeType());
+            $this->assertSame('Hello', $items[0]->getData());
+            $this->assertSame('text/plain', $items[0]->getMimeType());
         }
 
         if ($items[0] instanceof ToolCallComplete) {
@@ -256,8 +256,8 @@ final class ResultConverterTest extends TestCase
                 'content' => [
                     'parts' => [[
                         'inlineData' => [
-                            'mimeType' => 'image/png',
-                            'data' => 'base64EncodedImageData',
+                            'mimeType' => 'text/plain',
+                            'data' => 'SGVsbG8=',
                         ],
                     ]],
                 ],
