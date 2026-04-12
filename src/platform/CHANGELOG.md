@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * Add batch processing support via `BatchPlatformInterface`, `BatchClientInterface`, `BatchJob`, `BatchResult`, and `Capability::BATCH`
+ * Add batch processing support for OpenAI (Files API + Batch API)
+ * Add batch processing support for Anthropic (Message Batches API)
+
 0.7
 ---
 
