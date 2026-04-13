@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi;
 
-use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\Model as EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model as GeminiModel;
 use Symfony\AI\Platform\Capability;
@@ -33,7 +32,7 @@ final class ModelCatalog extends AbstractModelCatalog
         $defaultModels = [
             // Gemini models
             'gemini-3-pro-preview' => [
-                'class' => Gemini::class,
+                'class' => GeminiModel::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::INPUT_IMAGE,
