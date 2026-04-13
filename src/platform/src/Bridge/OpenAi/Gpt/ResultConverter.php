@@ -175,7 +175,7 @@ final class ResultConverter implements ResultConverterInterface
             [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
 
             if ($toolCallResult && 'response.completed' === $type) {
-                yield new ToolCallComplete(...$toolCallResult->getContent());
+                yield new ToolCallComplete($toolCallResult->getContent());
             }
         }
     }
@@ -196,7 +196,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         $toolCallResult = $functionCalls ? new ToolCallResult(
-            ...array_map($this->convertFunctionCall(...), $functionCalls)
+            array_map($this->convertFunctionCall(...), $functionCalls)
         ) : null;
 
         return [$toolCallResult, $output];

@@ -51,7 +51,7 @@ final class ClaudeResultConverter implements ResultConverterInterface
             }
         }
         if ([] !== $toolCalls) {
-            return new ToolCallResult(...$toolCalls);
+            return new ToolCallResult($toolCalls);
         }
 
         return new TextResult($data['content'][0]['text']);

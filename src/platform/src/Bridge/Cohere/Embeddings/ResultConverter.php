@@ -47,7 +47,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return new VectorResult(
-            ...array_map(
+            array_map(
                 static fn (array $embedding): Vector => new Vector($embedding),
                 $data['embeddings']['float'],
             ),

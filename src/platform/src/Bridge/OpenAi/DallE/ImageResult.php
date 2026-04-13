@@ -21,11 +21,14 @@ class ImageResult extends BaseResult
     /** @var list<Base64Image|UrlImage> */
     private readonly array $images;
 
+    /**
+     * @param list<Base64Image|UrlImage> $images
+     */
     public function __construct(
         public ?string $revisedPrompt = null, // Only string on Dall-E 3 usage
-        Base64Image|UrlImage ...$images,
+        array $images = [],
     ) {
-        $this->images = array_values($images);
+        $this->images = $images;
     }
 
     /**

@@ -33,7 +33,7 @@ final class SourceIndexerTest extends TestCase
         $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new SourceIndexer($loader, $processor);
@@ -63,7 +63,7 @@ final class SourceIndexerTest extends TestCase
         $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new SourceIndexer($loader, $processor);
@@ -83,7 +83,7 @@ final class SourceIndexerTest extends TestCase
         $vector = new Vector([0.1, 0.2, 0.3]);
 
         $loader = new InMemoryLoader([$document1]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new SourceIndexer($loader, $processor);
@@ -104,7 +104,7 @@ final class SourceIndexerTest extends TestCase
         // InMemoryLoader returns all documents regardless of source
         $loader = new InMemoryLoader([$document1, $document2]);
         // Need 4 vectors total: 2 for each source in the array (2 sources * 2 docs = 4)
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2, $vector3, $vector4])), 'test-embedding-model');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new SourceIndexer($loader, $processor);

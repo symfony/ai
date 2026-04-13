@@ -129,7 +129,7 @@ class DataCollectorTest extends TestCase
         $traceablePlatform = new TraceablePlatform($platform);
         $messageBag = new MessageBag(Message::ofUser(new Text('Call a tool')));
         $toolCall = new ToolCall('call_123', 'my_tool', ['arg' => 'value']);
-        $toolCallResult = new ToolCallResult($toolCall);
+        $toolCallResult = new ToolCallResult([$toolCall]);
 
         $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($toolCallResult), $this->createStub(RawResultInterface::class)));
 
@@ -148,7 +148,7 @@ class DataCollectorTest extends TestCase
         $platform = $this->createMock(PlatformInterface::class);
         $traceablePlatform = new TraceablePlatform($platform);
         $vector = new PlatformVector([0.1, 0.2, 0.3]);
-        $vectorResult = new VectorResult($vector);
+        $vectorResult = new VectorResult([$vector]);
 
         $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($vectorResult), $this->createStub(RawResultInterface::class)));
 

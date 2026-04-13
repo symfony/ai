@@ -32,7 +32,7 @@ final class ConfiguredSourceIndexerTest extends TestCase
         $document = new TextDocument(Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $innerIndexer = new SourceIndexer($loader, $processor);
@@ -49,7 +49,7 @@ final class ConfiguredSourceIndexerTest extends TestCase
         $document = new TextDocument(Uuid::v4(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
         $loader = new InMemoryLoader([$document]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $innerIndexer = new SourceIndexer($loader, $processor);
@@ -70,7 +70,7 @@ final class ConfiguredSourceIndexerTest extends TestCase
         $vector3 = new Vector([0.7, 0.8, 0.9]);
         $vector4 = new Vector([1.0, 1.1, 1.2]);
         $loader = new InMemoryLoader([$document1, $document2]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2, $vector3, $vector4)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2, $vector3, $vector4])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $innerIndexer = new SourceIndexer($loader, $processor);
@@ -96,7 +96,7 @@ final class ConfiguredSourceIndexerTest extends TestCase
         }
 
         $loader = new InMemoryLoader($documents);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(...$vectors)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vectors)), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $innerIndexer = new SourceIndexer($loader, $processor);

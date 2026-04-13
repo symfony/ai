@@ -47,7 +47,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return new RerankingResult(
-            ...array_map(
+            array_map(
                 static fn (array $item): RerankingEntry => new RerankingEntry((int) $item['index'], (float) $item['relevance_score']),
                 $data['results'],
             ),

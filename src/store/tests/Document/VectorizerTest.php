@@ -63,7 +63,7 @@ final class VectorizerTest extends TestCase
             ];
         };
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors), $modelCatalog);
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors), $modelCatalog);
 
         $vectorizer = new Vectorizer($platform, 'test-embedding-with-batch');
         $vectorDocuments = $vectorizer->vectorize($documents);
@@ -83,7 +83,7 @@ final class VectorizerTest extends TestCase
         $document = new TextDocument(Uuid::v4()->toString(), 'Single document content', new Metadata(['test' => 'value']));
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $vectorDocuments = $vectorizer->vectorize([$document]);
 
@@ -118,7 +118,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.3, 0.4]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $vectorDocuments = $vectorizer->vectorize($documents);
 
@@ -147,7 +147,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.3]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $vectorDocuments = $vectorizer->vectorize($documents);
 
@@ -173,7 +173,7 @@ final class VectorizerTest extends TestCase
         }
 
         $platform = PlatformTestHandler::createPlatform(
-            $count > 0 ? new VectorResult(...$vectors) : new VectorResult()
+            $count > 0 ? new VectorResult($vectors) : new VectorResult()
         );
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $vectorDocuments = $vectorizer->vectorize($documents);
@@ -211,7 +211,7 @@ final class VectorizerTest extends TestCase
         }
         $vector = new Vector($dimensions);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $vectorDocuments = $vectorizer->vectorize([$document]);
 
@@ -233,7 +233,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.5, 0.6]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $vectorDocuments = $vectorizer->vectorize($documents);
 
@@ -270,7 +270,7 @@ final class VectorizerTest extends TestCase
             ];
         };
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors), $modelCatalog);
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors), $modelCatalog);
 
         $vectorizer = new Vectorizer($platform, 'test-embedding-no-batch');
         $vectorDocuments = $vectorizer->vectorize($documents);
@@ -285,7 +285,7 @@ final class VectorizerTest extends TestCase
         $text = 'This is a test string to vectorize';
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($text);
 
@@ -298,7 +298,7 @@ final class VectorizerTest extends TestCase
         $text = 'Test with émojis 🚀 and ünïcödé characters';
         $vector = new Vector([0.5, 0.6, 0.7]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($text);
 
@@ -311,7 +311,7 @@ final class VectorizerTest extends TestCase
         $text = '';
         $vector = new Vector([0.0, 0.0, 0.0]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($text);
 
@@ -343,7 +343,7 @@ final class VectorizerTest extends TestCase
 
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($stringable);
 
@@ -360,7 +360,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.7, 0.8, 0.9]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($strings);
 
@@ -394,7 +394,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.3, 0.4]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($stringables);
 
@@ -425,7 +425,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.5, 0.6]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($values);
 
@@ -448,7 +448,7 @@ final class VectorizerTest extends TestCase
 
         // Use FallbackModelCatalog which provides all capabilities including INPUT_MULTIPLE
         // This ensures batch mode is used and the test expectation matches the behavior
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'test-embedding-with-batch');
         $result = $vectorizer->vectorize($documents, $options);
 
@@ -466,7 +466,7 @@ final class VectorizerTest extends TestCase
 
         // Use FallbackModelCatalog which provides all capabilities including INPUT_MULTIPLE
         // This ensures batch mode is used and the test expectation matches the behavior
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'test-embedding-with-batch');
         $result = $vectorizer->vectorize($documents);
 
@@ -488,7 +488,7 @@ final class VectorizerTest extends TestCase
                 $this->equalTo($text),
                 $this->equalTo($options)
             )
-            ->willReturn(new DeferredResult(new PlainConverter(new VectorResult($vector)), $this->createMock(RawResultInterface::class)));
+            ->willReturn(new DeferredResult(new PlainConverter(new VectorResult([$vector])), $this->createMock(RawResultInterface::class)));
 
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($text, $options);
@@ -509,7 +509,7 @@ final class VectorizerTest extends TestCase
                 $this->equalTo($text),
                 $this->equalTo([])
             )
-            ->willReturn(new DeferredResult(new PlainConverter(new VectorResult($vector)), $this->createMock(RawResultInterface::class)));
+            ->willReturn(new DeferredResult(new PlainConverter(new VectorResult([$vector])), $this->createMock(RawResultInterface::class)));
 
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($text);
@@ -522,7 +522,7 @@ final class VectorizerTest extends TestCase
         $document = new TextDocument(Uuid::v4()->toString(), 'Test content', new Metadata(['source' => 'test']));
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($document);
 
@@ -543,7 +543,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.3, 0.4]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
         $result = $vectorizer->vectorize($documents);
 
@@ -559,7 +559,7 @@ final class VectorizerTest extends TestCase
         $document = new TextDocument(Uuid::v4()->toString(), 'Test content', new Metadata(['source' => 'test']));
         $vector = new Vector([0.1, 0.2, 0.3]);
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult($vector));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
         $result = $vectorizer->vectorize($document);
 
@@ -580,7 +580,7 @@ final class VectorizerTest extends TestCase
             new Vector([0.3, 0.4]),
         ];
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors));
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
         $result = $vectorizer->vectorize($documents);
 
@@ -618,7 +618,7 @@ final class VectorizerTest extends TestCase
             ];
         };
 
-        $platform = PlatformTestHandler::createPlatform(new VectorResult(...$vectors), $modelCatalog);
+        $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors), $modelCatalog);
 
         $vectorizer = new Vectorizer($platform, 'test-embedding-no-batch-with-options');
         $result = $vectorizer->vectorize($documents, $options);

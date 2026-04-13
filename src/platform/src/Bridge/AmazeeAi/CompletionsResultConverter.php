@@ -43,7 +43,7 @@ class CompletionsResultConverter extends ResultConverter
     {
         if ('tool_calls' === $choice['finish_reason']) {
             if (isset($choice['message']['tool_calls'])) {
-                return new ToolCallResult(...array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+                return new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
             }
 
             // LiteLLM structured output: finish_reason is "tool_calls" but

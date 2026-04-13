@@ -111,7 +111,7 @@ final class ResultConverter implements ResultConverterInterface
         return match (true) {
             $result instanceof TextResult => new TextDelta($result->getContent()),
             $result instanceof BinaryResult => new BinaryDelta($result->getContent(), $result->getMimeType()),
-            $result instanceof ToolCallResult => new ToolCallComplete(...$result->getContent()),
+            $result instanceof ToolCallResult => new ToolCallComplete($result->getContent()),
         };
     }
 
@@ -143,7 +143,7 @@ final class ResultConverter implements ResultConverterInterface
     private function convertPart(array $contentPart): ToolCallResult|TextResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|null
     {
         return match (true) {
-            isset($contentPart['functionCall']) => new ToolCallResult($this->convertToolCall($contentPart['functionCall'])),
+            isset($contentPart['functionCall']) => new ToolCallResult([$this->convertToolCall($contentPart['functionCall'])]),
             isset($contentPart['text']) => new TextResult($contentPart['text']),
             isset($contentPart['inlineData']) => BinaryResult::fromBase64($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null),
             isset($contentPart['executableCode']) => new ExecutableCodeResult(

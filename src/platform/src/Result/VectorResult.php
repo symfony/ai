@@ -23,9 +23,12 @@ final class VectorResult extends BaseResult
      */
     private readonly array $vectors;
 
-    public function __construct(Vector ...$vector)
+    /**
+     * @param Vector[] $vectors
+     */
+    public function __construct(array $vectors = [])
     {
-        $this->vectors = $vector;
+        $this->vectors = $vectors;
     }
 
     /**

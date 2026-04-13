@@ -27,10 +27,10 @@ final class RerankerTest extends TestCase
 {
     public function testReranksDocumentsInCorrectOrder()
     {
-        $platform = PlatformTestHandler::createPlatform(new RerankingResult(
+        $platform = PlatformTestHandler::createPlatform(new RerankingResult([
             new RerankingEntry(0, 0.55),
             new RerankingEntry(1, 0.91),
-        ));
+        ]));
 
         $reranker = new Reranker($platform, 'BAAI/bge-reranker-base?task=text-ranking');
 
@@ -58,11 +58,11 @@ final class RerankerTest extends TestCase
 
     public function testTopKLimitsResults()
     {
-        $platform = PlatformTestHandler::createPlatform(new RerankingResult(
+        $platform = PlatformTestHandler::createPlatform(new RerankingResult([
             new RerankingEntry(0, 0.9),
             new RerankingEntry(1, 0.8),
             new RerankingEntry(2, 0.7),
-        ));
+        ]));
 
         $reranker = new Reranker($platform, 'BAAI/bge-reranker-base?task=text-ranking');
 
@@ -81,9 +81,9 @@ final class RerankerTest extends TestCase
 
     public function testFallsBackToSourceWhenTextIsNull()
     {
-        $platform = PlatformTestHandler::createPlatform(new RerankingResult(
+        $platform = PlatformTestHandler::createPlatform(new RerankingResult([
             new RerankingEntry(0, 0.85),
-        ));
+        ]));
 
         $reranker = new Reranker($platform, 'BAAI/bge-reranker-base?task=text-ranking');
 

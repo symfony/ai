@@ -41,7 +41,7 @@ final class ResultConverter implements ResultConverterInterface
 
         if (Task::Embeddings == $task || Task::FeatureExtraction == $task) {
             return new VectorResult(
-                ...array_map(static fn (array $vector) => new Vector($vector), $data),
+                array_map(static fn (array $vector) => new Vector($vector), $data),
             );
         }
 

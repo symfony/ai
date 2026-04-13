@@ -91,7 +91,7 @@ class ResultConverter implements ResultConverterInterface
             }
 
             if ([] !== $toolCalls) {
-                $results[] = new ToolCallResult(...$toolCalls);
+                $results[] = new ToolCallResult($toolCalls);
                 $toolCalls = [];
             }
 
@@ -116,7 +116,7 @@ class ResultConverter implements ResultConverterInterface
 
         if ([] === $results) {
             if ($toolCalls) {
-                return new ToolCallResult(...$toolCalls);
+                return new ToolCallResult($toolCalls);
             }
 
             throw new RuntimeException('Response content does not contain any supported content.');
@@ -246,7 +246,7 @@ class ResultConverter implements ResultConverterInterface
 
             // Handle message stop - yield tool calls if any were collected
             if ('message_stop' === $type && [] !== $toolCalls) {
-                yield new ToolCallComplete(...$toolCalls);
+                yield new ToolCallComplete($toolCalls);
             }
         }
     }

@@ -4,8 +4,9 @@ CHANGELOG
 0.8
 ---
 
-* Add `MultiPartResult` for exposing the parts inside a message
-* Add `ExecutableCodeResult`, `CodeExecutionResult` for exposing the executed code blocks and results
+ * Add `MultiPartResult` for exposing the parts inside a message
+ * Add `ExecutableCodeResult`, `CodeExecutionResult` for exposing the executed code blocks and results
+ * [BC BREAK] Replace variadic constructor parameters with array parameters in `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult` (OpenAI DallE bridge)
 
 0.7
 ---

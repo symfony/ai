@@ -52,7 +52,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -72,7 +72,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.1, 0.2, 0.3]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -95,7 +95,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -147,7 +147,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -185,7 +185,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -223,7 +223,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -259,7 +259,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -300,7 +300,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -342,7 +342,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -377,7 +377,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -417,7 +417,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 
@@ -466,7 +466,7 @@ final class RetrieverTest extends TestCase
 
         $queryVector = new Vector([0.2, 0.3, 0.4]);
         $vectorizer = new Vectorizer(
-            PlatformTestHandler::createPlatform(new VectorResult($queryVector)),
+            PlatformTestHandler::createPlatform(new VectorResult([$queryVector])),
             'text-embedding-3-small'
         );
 

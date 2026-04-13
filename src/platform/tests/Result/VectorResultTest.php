@@ -23,7 +23,7 @@ final class VectorResultTest extends TestCase
     public function testGetContentWithSingleVector()
     {
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $result = new VectorResult($vector);
+        $result = new VectorResult([$vector]);
 
         $this->assertSame([$vector], $result->getContent());
     }
@@ -34,7 +34,7 @@ final class VectorResultTest extends TestCase
         $vector2 = new Vector([0.4, 0.5, 0.6]);
         $vector3 = new Vector([0.7, 0.8, 0.9]);
 
-        $result = new VectorResult($vector1, $vector2, $vector3);
+        $result = new VectorResult([$vector1, $vector2, $vector3]);
 
         $expected = [$vector1, $vector2, $vector3];
         $this->assertSame($expected, $result->getContent());
@@ -47,7 +47,7 @@ final class VectorResultTest extends TestCase
         $this->assertSame([], $result->getContent());
     }
 
-    public function testConstructorAcceptsVariadicVectors()
+    public function testConstructorAcceptsArrayOfVectors()
     {
         $vectors = [
             new Vector([0.1, 0.2]),
@@ -55,7 +55,7 @@ final class VectorResultTest extends TestCase
             new Vector([0.5, 0.6]),
         ];
 
-        $result = new VectorResult(...$vectors);
+        $result = new VectorResult($vectors);
 
         $this->assertSame($vectors, $result->getContent());
     }

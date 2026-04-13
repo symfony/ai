@@ -825,7 +825,7 @@ Vector Results
     use Symfony\AI\Platform\Vector\Vector;
 
     $platform = new InMemoryPlatform(
-        fn() => new VectorResult(new Vector([0.1, 0.2, 0.3, 0.4]))
+        fn() => new VectorResult([new Vector([0.1, 0.2, 0.3, 0.4])])
     );
 
     $result = $platform->invoke('gpt-4o-mini', 'vectorize this text');

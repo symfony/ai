@@ -157,7 +157,7 @@ final class StreamingAgentToolCallTest extends TestCase
     {
         $result = new StreamResult((static function () use ($text, $toolCall) {
             yield new TextDelta($text);
-            yield new ToolCallComplete($toolCall);
+            yield new ToolCallComplete([$toolCall]);
         })());
         $result->getMetadata()->add('token_usage', $tokenUsage);
 

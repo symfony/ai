@@ -11,6 +11,29 @@ AI Bundle
    +$container->get('ai.platform.response_format_factory');
    ```
 
+Platform
+--------
+
+ * The constructors of `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult`
+   (OpenAI DallE bridge) no longer accept variadic parameters. Pass an array instead:
+
+   ```diff
+   -new VectorResult($vector1, $vector2);
+   +new VectorResult([$vector1, $vector2]);
+
+   -new ToolCallResult($toolCall1, $toolCall2);
+   +new ToolCallResult([$toolCall1, $toolCall2]);
+
+   -new RerankingResult($entry1, $entry2);
+   +new RerankingResult([$entry1, $entry2]);
+
+   -new ToolCallComplete($toolCall1, $toolCall2);
+   +new ToolCallComplete([$toolCall1, $toolCall2]);
+
+   -new ImageResult(null, $image1, $image2);
+   +new ImageResult(null, [$image1, $image2]);
+   ```
+
 UPGRADE FROM 0.6 to 0.7
 =======================
 

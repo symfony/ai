@@ -51,7 +51,7 @@ final class ResultConverter implements ResultConverterInterface
             $images[] = new Base64Image($image['b64_json']);
         }
 
-        return new ImageResult($image['revised_prompt'] ?? null, ...$images);
+        return new ImageResult($image['revised_prompt'] ?? null, $images);
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface

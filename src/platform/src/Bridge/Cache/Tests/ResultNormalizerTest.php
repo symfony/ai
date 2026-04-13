@@ -154,9 +154,9 @@ final class ResultNormalizerTest extends TestCase
             ],
         ];
         yield ToolCallResult::class => [
-            new ToolCallResult(
+            new ToolCallResult([
                 new ToolCall('call-1', 'get_weather', ['city' => 'Paris']),
-            ),
+            ]),
             [
                 'class' => ToolCallResult::class,
                 'payload' => [
@@ -172,7 +172,7 @@ final class ResultNormalizerTest extends TestCase
             ],
         ];
         yield VectorResult::class => [
-            new VectorResult(new Vector([0.1, 0.2, 0.3])),
+            new VectorResult([new Vector([0.1, 0.2, 0.3])]),
             [
                 'class' => VectorResult::class,
                 'payload' => [

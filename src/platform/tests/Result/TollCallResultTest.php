@@ -23,12 +23,12 @@ final class TollCallResultTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Response must have at least one tool call.');
 
-        new ToolCallResult();
+        new ToolCallResult([]);
     }
 
     public function testGetContent()
     {
-        $result = new ToolCallResult($toolCall = new ToolCall('ID', 'name', ['foo' => 'bar']));
+        $result = new ToolCallResult([$toolCall = new ToolCall('ID', 'name', ['foo' => 'bar'])]);
         $this->assertSame([$toolCall], $result->getContent());
     }
 }
