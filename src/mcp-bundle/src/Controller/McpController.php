@@ -43,7 +43,7 @@ final class McpController
         );
 
         $psrResponse = $this->server->run($transport);
-        $streamed = 'text/event-stream' === $psrResponse->getHeaderLine('Content-Type');
+        $streamed = 'text/event-stream' === strtolower($psrResponse->getHeaderLine('Content-Type'));
 
         return $this->httpFoundationFactory->createResponse($psrResponse, $streamed);
     }
