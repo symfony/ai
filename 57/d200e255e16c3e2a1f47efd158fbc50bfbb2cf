@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-10T07:06:53Z
+
+@copilot this is a bc break, please update the bundle changelog and the upgrade.md file
+
+---------------------------------------------------------------------------
+
+by Copilot at 2026-04-10T07:10:21Z
+
+> @copilot this is a bc break, please update the bundle changelog and the upgrade.md file
+
+Done in 98af779. Added a `[BC BREAK]` entry to `src/ai-bundle/CHANGELOG.md` and a migration note with a diff example to `UPGRADE.md` under the `UPGRADE FROM 0.6 to 0.7 → AI Bundle` section.
+
+---------------------------------------------------------------------------
+
+by Copilot at 2026-04-10T07:15:40Z
+
+@OskarStark I've opened a new pull request, #1919, to work on those changes. Once the pull request is ready, I'll request review from you.
