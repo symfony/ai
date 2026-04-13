@@ -26,10 +26,10 @@ final class TableQuestionAnsweringResultTest extends TestCase
     {
         $result = new TableQuestionAnsweringResult('Paris');
 
-        $this->assertSame('Paris', $result->answer);
-        $this->assertSame([], $result->coordinates);
-        $this->assertSame([], $result->cells);
-        $this->assertNull($result->aggregator);
+        $this->assertSame('Paris', $result->getAnswer());
+        $this->assertSame([], $result->getCoordinates());
+        $this->assertSame([], $result->getCells());
+        $this->assertNull($result->getAggregator());
     }
 
     #[TestDox('Construction with all parameters creates valid instance')]
@@ -41,10 +41,10 @@ final class TableQuestionAnsweringResultTest extends TestCase
 
         $result = new TableQuestionAnsweringResult('Total is 100', $coordinates, $cells, $aggregator);
 
-        $this->assertSame('Total is 100', $result->answer);
-        $this->assertSame($coordinates, $result->coordinates);
-        $this->assertSame($cells, $result->cells);
-        $this->assertSame($aggregator, $result->aggregator);
+        $this->assertSame('Total is 100', $result->getAnswer());
+        $this->assertSame($coordinates, $result->getCoordinates());
+        $this->assertSame($cells, $result->getCells());
+        $this->assertSame($aggregator, $result->getAggregator());
     }
 
     /**
@@ -62,10 +62,10 @@ final class TableQuestionAnsweringResultTest extends TestCase
     {
         $result = new TableQuestionAnsweringResult($answer, $coordinates, $cells, $aggregator);
 
-        $this->assertSame($answer, $result->answer);
-        $this->assertSame($coordinates, $result->coordinates);
-        $this->assertSame($cells, $result->cells);
-        $this->assertSame($aggregator, $result->aggregator);
+        $this->assertSame($answer, $result->getAnswer());
+        $this->assertSame($coordinates, $result->getCoordinates());
+        $this->assertSame($cells, $result->getCells());
+        $this->assertSame($aggregator, $result->getAggregator());
     }
 
     #[TestDox('fromArray creates instance with required answer field')]
@@ -75,10 +75,10 @@ final class TableQuestionAnsweringResultTest extends TestCase
 
         $result = TableQuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame('Berlin', $result->answer);
-        $this->assertSame([], $result->coordinates);
-        $this->assertSame([], $result->cells);
-        $this->assertNull($result->aggregator);
+        $this->assertSame('Berlin', $result->getAnswer());
+        $this->assertSame([], $result->getCoordinates());
+        $this->assertSame([], $result->getCells());
+        $this->assertNull($result->getAggregator());
     }
 
     #[TestDox('fromArray creates instance with all fields')]
@@ -93,10 +93,10 @@ final class TableQuestionAnsweringResultTest extends TestCase
 
         $result = TableQuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame('The result is 150', $result->answer);
-        $this->assertSame([[0, 0], [1, 1]], $result->coordinates);
-        $this->assertSame(['A1', 'B2', 100, 50], $result->cells);
-        $this->assertSame(['SUM'], $result->aggregator);
+        $this->assertSame('The result is 150', $result->getAnswer());
+        $this->assertSame([[0, 0], [1, 1]], $result->getCoordinates());
+        $this->assertSame(['A1', 'B2', 100, 50], $result->getCells());
+        $this->assertSame(['SUM'], $result->getAggregator());
     }
 
     /**
@@ -111,10 +111,10 @@ final class TableQuestionAnsweringResultTest extends TestCase
     {
         $result = TableQuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame($data['answer'], $result->answer);
-        $this->assertSame($data['coordinates'] ?? [], $result->coordinates);
-        $this->assertSame($data['cells'] ?? [], $result->cells);
-        $this->assertSame($data['aggregator'] ?? null, $result->aggregator);
+        $this->assertSame($data['answer'], $result->getAnswer());
+        $this->assertSame($data['coordinates'] ?? [], $result->getCoordinates());
+        $this->assertSame($data['cells'] ?? [], $result->getCells());
+        $this->assertSame($data['aggregator'] ?? null, $result->getAggregator());
     }
 
     #[TestDox('fromArray handles various cell data types')]
@@ -128,14 +128,14 @@ final class TableQuestionAnsweringResultTest extends TestCase
 
         $result = TableQuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame('Mixed types', $result->answer);
-        $this->assertCount(5, $result->cells);
-        $this->assertSame('string', $result->cells[0]);
-        $this->assertSame(42, $result->cells[1]);
-        $this->assertSame('3.14', $result->cells[2]);
-        $this->assertSame('another string', $result->cells[3]);
-        $this->assertSame(0, $result->cells[4]);
-        $this->assertSame(['NONE'], $result->aggregator);
+        $this->assertSame('Mixed types', $result->getAnswer());
+        $this->assertCount(5, $result->getCells());
+        $this->assertSame('string', $result->getCells()[0]);
+        $this->assertSame(42, $result->getCells()[1]);
+        $this->assertSame('3.14', $result->getCells()[2]);
+        $this->assertSame('another string', $result->getCells()[3]);
+        $this->assertSame(0, $result->getCells()[4]);
+        $this->assertSame(['NONE'], $result->getAggregator());
     }
 
     /**
@@ -150,8 +150,8 @@ final class TableQuestionAnsweringResultTest extends TestCase
     {
         $result = TableQuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame($data['answer'], $result->answer);
-        $this->assertSame($data['aggregator'], $result->aggregator);
+        $this->assertSame($data['answer'], $result->getAnswer());
+        $this->assertSame($data['aggregator'], $result->getAggregator());
     }
 
     #[TestDox('Empty arrays are handled correctly')]
@@ -160,12 +160,12 @@ final class TableQuestionAnsweringResultTest extends TestCase
         $result1 = new TableQuestionAnsweringResult('answer', [], [], []);
         $result2 = TableQuestionAnsweringResult::fromArray(['answer' => 'test']);
 
-        $this->assertSame([], $result1->coordinates);
-        $this->assertSame([], $result1->cells);
-        $this->assertSame([], $result1->aggregator);
-        $this->assertSame([], $result2->coordinates);
-        $this->assertSame([], $result2->cells);
-        $this->assertNull($result2->aggregator);
+        $this->assertSame([], $result1->getCoordinates());
+        $this->assertSame([], $result1->getCells());
+        $this->assertSame([], $result1->getAggregator());
+        $this->assertSame([], $result2->getCoordinates());
+        $this->assertSame([], $result2->getCells());
+        $this->assertNull($result2->getAggregator());
     }
 
     #[TestDox('Large cell arrays are handled correctly')]
@@ -179,11 +179,11 @@ final class TableQuestionAnsweringResultTest extends TestCase
 
         $result = new TableQuestionAnsweringResult('Large table result', [], $largeCells, ['COUNT']);
 
-        $this->assertCount(200, $result->cells);
-        $this->assertSame('cell_0', $result->cells[0]);
-        $this->assertSame(0, $result->cells[1]);
-        $this->assertSame('cell_99', $result->cells[198]);
-        $this->assertSame(99, $result->cells[199]);
+        $this->assertCount(200, $result->getCells());
+        $this->assertSame('cell_0', $result->getCells()[0]);
+        $this->assertSame(0, $result->getCells()[1]);
+        $this->assertSame('cell_99', $result->getCells()[198]);
+        $this->assertSame(99, $result->getCells()[199]);
     }
 
     #[TestDox('Special answer values are handled correctly')]
@@ -199,7 +199,7 @@ final class TableQuestionAnsweringResultTest extends TestCase
         $result1 = new TableQuestionAnsweringResult($answer);
         $result2 = TableQuestionAnsweringResult::fromArray(['answer' => $answer]);
 
-        $this->assertSame($answer, $result1->answer);
-        $this->assertSame($answer, $result2->answer);
+        $this->assertSame($answer, $result1->getAnswer());
+        $this->assertSame($answer, $result2->getAnswer());
     }
 }

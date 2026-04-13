@@ -26,10 +26,10 @@ final class QuestionAnsweringResultTest extends TestCase
     {
         $result = new QuestionAnsweringResult('Paris', 10, 15, 0.95);
 
-        $this->assertSame('Paris', $result->answer);
-        $this->assertSame(10, $result->startIndex);
-        $this->assertSame(15, $result->endIndex);
-        $this->assertSame(0.95, $result->score);
+        $this->assertSame('Paris', $result->getAnswer());
+        $this->assertSame(10, $result->getStartIndex());
+        $this->assertSame(15, $result->getEndIndex());
+        $this->assertSame(0.95, $result->getScore());
     }
 
     #[TestDox('Constructor accepts various parameter combinations')]
@@ -44,10 +44,10 @@ final class QuestionAnsweringResultTest extends TestCase
     {
         $result = new QuestionAnsweringResult($answer, $startIndex, $endIndex, $score);
 
-        $this->assertSame($answer, $result->answer);
-        $this->assertSame($startIndex, $result->startIndex);
-        $this->assertSame($endIndex, $result->endIndex);
-        $this->assertSame($score, $result->score);
+        $this->assertSame($answer, $result->getAnswer());
+        $this->assertSame($startIndex, $result->getStartIndex());
+        $this->assertSame($endIndex, $result->getEndIndex());
+        $this->assertSame($score, $result->getScore());
     }
 
     #[TestDox('fromArray creates instance from array data')]
@@ -62,10 +62,10 @@ final class QuestionAnsweringResultTest extends TestCase
 
         $result = QuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame('Machine learning', $result->answer);
-        $this->assertSame(25, $result->startIndex);
-        $this->assertSame(40, $result->endIndex);
-        $this->assertSame(0.87, $result->score);
+        $this->assertSame('Machine learning', $result->getAnswer());
+        $this->assertSame(25, $result->getStartIndex());
+        $this->assertSame(40, $result->getEndIndex());
+        $this->assertSame(0.87, $result->getScore());
     }
 
     /**
@@ -80,10 +80,10 @@ final class QuestionAnsweringResultTest extends TestCase
     {
         $result = QuestionAnsweringResult::fromArray($data);
 
-        $this->assertSame($data['answer'], $result->answer);
-        $this->assertSame($data['start'], $result->startIndex);
-        $this->assertSame($data['end'], $result->endIndex);
-        $this->assertSame($data['score'], $result->score);
+        $this->assertSame($data['answer'], $result->getAnswer());
+        $this->assertSame($data['start'], $result->getStartIndex());
+        $this->assertSame($data['end'], $result->getEndIndex());
+        $this->assertSame($data['score'], $result->getScore());
     }
 
     #[TestDox('Special index and score values are handled correctly')]
@@ -95,9 +95,9 @@ final class QuestionAnsweringResultTest extends TestCase
     {
         $result = new QuestionAnsweringResult($answer, $startIndex, $endIndex, $score);
 
-        $this->assertSame($answer, $result->answer);
-        $this->assertSame($startIndex, $result->startIndex);
-        $this->assertSame($endIndex, $result->endIndex);
-        $this->assertSame($score, $result->score);
+        $this->assertSame($answer, $result->getAnswer());
+        $this->assertSame($startIndex, $result->getStartIndex());
+        $this->assertSame($endIndex, $result->getEndIndex());
+        $this->assertSame($score, $result->getScore());
     }
 }

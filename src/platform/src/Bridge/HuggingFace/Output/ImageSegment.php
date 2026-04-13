@@ -17,9 +17,24 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 final class ImageSegment
 {
     public function __construct(
-        public readonly string $label,
-        public readonly ?float $score,
-        public readonly string $mask,
+        private readonly string $label,
+        private readonly ?float $score,
+        private readonly string $mask,
     ) {
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function getScore(): ?float
+    {
+        return $this->score;
+    }
+
+    public function getMask(): string
+    {
+        return $this->mask;
     }
 }

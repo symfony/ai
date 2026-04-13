@@ -20,8 +20,16 @@ final class ClassificationResult
      * @param Classification[] $classifications
      */
     public function __construct(
-        public array $classifications,
+        private readonly array $classifications,
     ) {
+    }
+
+    /**
+     * @return Classification[]
+     */
+    public function getClassifications(): array
+    {
+        return $this->classifications;
     }
 
     /**

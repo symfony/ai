@@ -20,8 +20,16 @@ final class TokenClassificationResult
      * @param Token[] $tokens
      */
     public function __construct(
-        public array $tokens,
+        private readonly array $tokens,
     ) {
+    }
+
+    /**
+     * @return Token[]
+     */
+    public function getTokens(): array
+    {
+        return $this->tokens;
     }
 
     /**

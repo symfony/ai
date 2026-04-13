@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC Break] Change all Output class properties from public to private readonly with getter methods
+
 0.7
 ---
 

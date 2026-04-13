@@ -26,11 +26,11 @@ final class TokenTest extends TestCase
     {
         $token = new Token('PERSON', 0.99, 'John', 0, 4);
 
-        $this->assertSame('PERSON', $token->entityGroup);
-        $this->assertSame(0.99, $token->score);
-        $this->assertSame('John', $token->word);
-        $this->assertSame(0, $token->start);
-        $this->assertSame(4, $token->end);
+        $this->assertSame('PERSON', $token->getEntityGroup());
+        $this->assertSame(0.99, $token->getScore());
+        $this->assertSame('John', $token->getWord());
+        $this->assertSame(0, $token->getStart());
+        $this->assertSame(4, $token->getEnd());
     }
 
     #[TestDox('Constructor accepts various parameter combinations')]
@@ -45,11 +45,11 @@ final class TokenTest extends TestCase
     {
         $token = new Token($entityGroup, $score, $word, $start, $end);
 
-        $this->assertSame($entityGroup, $token->entityGroup);
-        $this->assertSame($score, $token->score);
-        $this->assertSame($word, $token->word);
-        $this->assertSame($start, $token->start);
-        $this->assertSame($end, $token->end);
+        $this->assertSame($entityGroup, $token->getEntityGroup());
+        $this->assertSame($score, $token->getScore());
+        $this->assertSame($word, $token->getWord());
+        $this->assertSame($start, $token->getStart());
+        $this->assertSame($end, $token->getEnd());
     }
 
     #[TestDox('Constructor handles various token patterns')]
@@ -69,10 +69,10 @@ final class TokenTest extends TestCase
     {
         $token = new Token($entityGroup, $score, $word, $start, $end);
 
-        $this->assertSame($entityGroup, $token->entityGroup);
-        $this->assertSame($score, $token->score);
-        $this->assertSame($word, $token->word);
-        $this->assertSame($start, $token->start);
-        $this->assertSame($end, $token->end);
+        $this->assertSame($entityGroup, $token->getEntityGroup());
+        $this->assertSame($score, $token->getScore());
+        $this->assertSame($word, $token->getWord());
+        $this->assertSame($start, $token->getStart());
+        $this->assertSame($end, $token->getEnd());
     }
 }

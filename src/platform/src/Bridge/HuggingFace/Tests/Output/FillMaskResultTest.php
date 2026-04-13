@@ -32,8 +32,8 @@ final class FillMaskResultTest extends TestCase
 
         $result = new FillMaskResult($fills);
 
-        $this->assertSame($fills, $result->fills);
-        $this->assertCount(3, $result->fills);
+        $this->assertSame($fills, $result->getFills());
+        $this->assertCount(3, $result->getFills());
     }
 
     #[TestDox('Construction with empty array creates valid instance')]
@@ -41,8 +41,8 @@ final class FillMaskResultTest extends TestCase
     {
         $result = new FillMaskResult([]);
 
-        $this->assertSame([], $result->fills);
-        $this->assertCount(0, $result->fills);
+        $this->assertSame([], $result->getFills());
+        $this->assertCount(0, $result->getFills());
     }
 
     #[TestDox('fromArray creates instance with MaskFill objects')]
@@ -71,22 +71,22 @@ final class FillMaskResultTest extends TestCase
 
         $result = FillMaskResult::fromArray($data);
 
-        $this->assertCount(3, $result->fills);
+        $this->assertCount(3, $result->getFills());
 
-        $this->assertSame(1234, $result->fills[0]->token);
-        $this->assertSame('happy', $result->fills[0]->tokenStr);
-        $this->assertSame('I feel happy today', $result->fills[0]->sequence);
-        $this->assertSame(0.95, $result->fills[0]->score);
+        $this->assertSame(1234, $result->getFills()[0]->getToken());
+        $this->assertSame('happy', $result->getFills()[0]->getTokenStr());
+        $this->assertSame('I feel happy today', $result->getFills()[0]->getSequence());
+        $this->assertSame(0.95, $result->getFills()[0]->getScore());
 
-        $this->assertSame(5678, $result->fills[1]->token);
-        $this->assertSame('great', $result->fills[1]->tokenStr);
-        $this->assertSame('I feel great today', $result->fills[1]->sequence);
-        $this->assertSame(0.03, $result->fills[1]->score);
+        $this->assertSame(5678, $result->getFills()[1]->getToken());
+        $this->assertSame('great', $result->getFills()[1]->getTokenStr());
+        $this->assertSame('I feel great today', $result->getFills()[1]->getSequence());
+        $this->assertSame(0.03, $result->getFills()[1]->getScore());
 
-        $this->assertSame(9012, $result->fills[2]->token);
-        $this->assertSame('wonderful', $result->fills[2]->tokenStr);
-        $this->assertSame('I feel wonderful today', $result->fills[2]->sequence);
-        $this->assertSame(0.02, $result->fills[2]->score);
+        $this->assertSame(9012, $result->getFills()[2]->getToken());
+        $this->assertSame('wonderful', $result->getFills()[2]->getTokenStr());
+        $this->assertSame('I feel wonderful today', $result->getFills()[2]->getSequence());
+        $this->assertSame(0.02, $result->getFills()[2]->getScore());
     }
 
     #[TestDox('fromArray with empty data creates empty result')]
@@ -94,8 +94,8 @@ final class FillMaskResultTest extends TestCase
     {
         $result = FillMaskResult::fromArray([]);
 
-        $this->assertCount(0, $result->fills);
-        $this->assertSame([], $result->fills);
+        $this->assertCount(0, $result->getFills());
+        $this->assertSame([], $result->getFills());
     }
 
     #[TestDox('fromArray with single mask fill')]
@@ -112,12 +112,12 @@ final class FillMaskResultTest extends TestCase
 
         $result = FillMaskResult::fromArray($data);
 
-        $this->assertCount(1, $result->fills);
-        $this->assertInstanceOf(MaskFill::class, $result->fills[0]);
-        $this->assertSame(999, $result->fills[0]->token);
-        $this->assertSame('word', $result->fills[0]->tokenStr);
-        $this->assertSame('The word is here', $result->fills[0]->sequence);
-        $this->assertSame(0.99, $result->fills[0]->score);
+        $this->assertCount(1, $result->getFills());
+        $this->assertInstanceOf(MaskFill::class, $result->getFills()[0]);
+        $this->assertSame(999, $result->getFills()[0]->getToken());
+        $this->assertSame('word', $result->getFills()[0]->getTokenStr());
+        $this->assertSame('The word is here', $result->getFills()[0]->getSequence());
+        $this->assertSame(0.99, $result->getFills()[0]->getScore());
     }
 
     #[TestDox('fromArray preserves order of fills')]
@@ -131,9 +131,9 @@ final class FillMaskResultTest extends TestCase
 
         $result = FillMaskResult::fromArray($data);
 
-        $this->assertSame('first', $result->fills[0]->tokenStr);
-        $this->assertSame('second', $result->fills[1]->tokenStr);
-        $this->assertSame('third', $result->fills[2]->tokenStr);
+        $this->assertSame('first', $result->getFills()[0]->getTokenStr());
+        $this->assertSame('second', $result->getFills()[1]->getTokenStr());
+        $this->assertSame('third', $result->getFills()[2]->getTokenStr());
     }
 
     #[TestDox('fromArray handles various data formats')]
@@ -162,21 +162,21 @@ final class FillMaskResultTest extends TestCase
 
         $result = FillMaskResult::fromArray($data);
 
-        $this->assertCount(3, $result->fills);
+        $this->assertCount(3, $result->getFills());
 
-        $this->assertSame(0, $result->fills[0]->token);
-        $this->assertSame('', $result->fills[0]->tokenStr);
-        $this->assertSame('', $result->fills[0]->sequence);
-        $this->assertSame(0.0, $result->fills[0]->score);
+        $this->assertSame(0, $result->getFills()[0]->getToken());
+        $this->assertSame('', $result->getFills()[0]->getTokenStr());
+        $this->assertSame('', $result->getFills()[0]->getSequence());
+        $this->assertSame(0.0, $result->getFills()[0]->getScore());
 
-        $this->assertSame(-1, $result->fills[1]->token);
-        $this->assertSame('special-chars!@#', $result->fills[1]->tokenStr);
-        $this->assertSame("Sequence with\nnewlines\tand\ttabs", $result->fills[1]->sequence);
-        $this->assertSame(1.0, $result->fills[1]->score);
+        $this->assertSame(-1, $result->getFills()[1]->getToken());
+        $this->assertSame('special-chars!@#', $result->getFills()[1]->getTokenStr());
+        $this->assertSame("Sequence with\nnewlines\tand\ttabs", $result->getFills()[1]->getSequence());
+        $this->assertSame(1.0, $result->getFills()[1]->getScore());
 
-        $this->assertSame(999999, $result->fills[2]->token);
-        $this->assertSame('你好', $result->fills[2]->tokenStr);
-        $this->assertSame('Unicode: 你好世界', $result->fills[2]->sequence);
-        $this->assertSame(0.12345, $result->fills[2]->score);
+        $this->assertSame(999999, $result->getFills()[2]->getToken());
+        $this->assertSame('你好', $result->getFills()[2]->getTokenStr());
+        $this->assertSame('Unicode: 你好世界', $result->getFills()[2]->getSequence());
+        $this->assertSame(0.12345, $result->getFills()[2]->getScore());
     }
 }

@@ -20,8 +20,16 @@ final class ImageSegmentationResult
      * @param ImageSegment[] $segments
      */
     public function __construct(
-        public array $segments,
+        private readonly array $segments,
     ) {
+    }
+
+    /**
+     * @return ImageSegment[]
+     */
+    public function getSegments(): array
+    {
+        return $this->segments;
     }
 
     /**

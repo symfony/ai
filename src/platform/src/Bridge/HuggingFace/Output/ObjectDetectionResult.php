@@ -20,8 +20,16 @@ final class ObjectDetectionResult
      * @param DetectedObject[] $objects
      */
     public function __construct(
-        public array $objects,
+        private readonly array $objects,
     ) {
+    }
+
+    /**
+     * @return DetectedObject[]
+     */
+    public function getObjects(): array
+    {
+        return $this->objects;
     }
 
     /**

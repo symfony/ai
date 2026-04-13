@@ -32,8 +32,8 @@ final class TokenClassificationResultTest extends TestCase
 
         $result = new TokenClassificationResult($tokens);
 
-        $this->assertSame($tokens, $result->tokens);
-        $this->assertCount(2, $result->tokens);
+        $this->assertSame($tokens, $result->getTokens());
+        $this->assertCount(2, $result->getTokens());
     }
 
     #[TestDox('Construction with empty array creates valid instance')]
@@ -41,8 +41,8 @@ final class TokenClassificationResultTest extends TestCase
     {
         $result = new TokenClassificationResult([]);
 
-        $this->assertSame([], $result->tokens);
-        $this->assertCount(0, $result->tokens);
+        $this->assertSame([], $result->getTokens());
+        $this->assertCount(0, $result->getTokens());
     }
 
     #[TestDox('Constructor accepts various token arrays')]
@@ -58,9 +58,9 @@ final class TokenClassificationResultTest extends TestCase
         $result1 = new TokenClassificationResult($singleToken);
         $result2 = new TokenClassificationResult($multipleTokens);
 
-        $this->assertCount(1, $result1->tokens);
+        $this->assertCount(1, $result1->getTokens());
 
-        $this->assertCount(3, $result2->tokens);
+        $this->assertCount(3, $result2->getTokens());
     }
 
     #[TestDox('fromArray creates instance with Token objects')]
@@ -74,25 +74,25 @@ final class TokenClassificationResultTest extends TestCase
 
         $result = TokenClassificationResult::fromArray($data);
 
-        $this->assertCount(3, $result->tokens);
+        $this->assertCount(3, $result->getTokens());
 
-        $this->assertSame('PERSON', $result->tokens[0]->entityGroup);
-        $this->assertSame(0.95, $result->tokens[0]->score);
-        $this->assertSame('John', $result->tokens[0]->word);
-        $this->assertSame(0, $result->tokens[0]->start);
-        $this->assertSame(4, $result->tokens[0]->end);
+        $this->assertSame('PERSON', $result->getTokens()[0]->getEntityGroup());
+        $this->assertSame(0.95, $result->getTokens()[0]->getScore());
+        $this->assertSame('John', $result->getTokens()[0]->getWord());
+        $this->assertSame(0, $result->getTokens()[0]->getStart());
+        $this->assertSame(4, $result->getTokens()[0]->getEnd());
 
-        $this->assertSame('ORG', $result->tokens[1]->entityGroup);
-        $this->assertSame(0.87, $result->tokens[1]->score);
-        $this->assertSame('Apple', $result->tokens[1]->word);
-        $this->assertSame(10, $result->tokens[1]->start);
-        $this->assertSame(15, $result->tokens[1]->end);
+        $this->assertSame('ORG', $result->getTokens()[1]->getEntityGroup());
+        $this->assertSame(0.87, $result->getTokens()[1]->getScore());
+        $this->assertSame('Apple', $result->getTokens()[1]->getWord());
+        $this->assertSame(10, $result->getTokens()[1]->getStart());
+        $this->assertSame(15, $result->getTokens()[1]->getEnd());
 
-        $this->assertSame('LOC', $result->tokens[2]->entityGroup);
-        $this->assertSame(0.92, $result->tokens[2]->score);
-        $this->assertSame('Paris', $result->tokens[2]->word);
-        $this->assertSame(20, $result->tokens[2]->start);
-        $this->assertSame(25, $result->tokens[2]->end);
+        $this->assertSame('LOC', $result->getTokens()[2]->getEntityGroup());
+        $this->assertSame(0.92, $result->getTokens()[2]->getScore());
+        $this->assertSame('Paris', $result->getTokens()[2]->getWord());
+        $this->assertSame(20, $result->getTokens()[2]->getStart());
+        $this->assertSame(25, $result->getTokens()[2]->getEnd());
     }
 
     #[TestDox('fromArray with empty data creates empty result')]
@@ -100,8 +100,8 @@ final class TokenClassificationResultTest extends TestCase
     {
         $result = TokenClassificationResult::fromArray([]);
 
-        $this->assertCount(0, $result->tokens);
-        $this->assertSame([], $result->tokens);
+        $this->assertCount(0, $result->getTokens());
+        $this->assertSame([], $result->getTokens());
     }
 
     #[TestDox('fromArray with single token')]
@@ -113,13 +113,13 @@ final class TokenClassificationResultTest extends TestCase
 
         $result = TokenClassificationResult::fromArray($data);
 
-        $this->assertCount(1, $result->tokens);
-        $this->assertInstanceOf(Token::class, $result->tokens[0]);
-        $this->assertSame('PERSON', $result->tokens[0]->entityGroup);
-        $this->assertSame(0.99, $result->tokens[0]->score);
-        $this->assertSame('Alice', $result->tokens[0]->word);
-        $this->assertSame(5, $result->tokens[0]->start);
-        $this->assertSame(10, $result->tokens[0]->end);
+        $this->assertCount(1, $result->getTokens());
+        $this->assertInstanceOf(Token::class, $result->getTokens()[0]);
+        $this->assertSame('PERSON', $result->getTokens()[0]->getEntityGroup());
+        $this->assertSame(0.99, $result->getTokens()[0]->getScore());
+        $this->assertSame('Alice', $result->getTokens()[0]->getWord());
+        $this->assertSame(5, $result->getTokens()[0]->getStart());
+        $this->assertSame(10, $result->getTokens()[0]->getEnd());
     }
 
     #[TestDox('fromArray preserves order of tokens')]
@@ -133,9 +133,9 @@ final class TokenClassificationResultTest extends TestCase
 
         $result = TokenClassificationResult::fromArray($data);
 
-        $this->assertSame('FIRST', $result->tokens[0]->entityGroup);
-        $this->assertSame('SECOND', $result->tokens[1]->entityGroup);
-        $this->assertSame('THIRD', $result->tokens[2]->entityGroup);
+        $this->assertSame('FIRST', $result->getTokens()[0]->getEntityGroup());
+        $this->assertSame('SECOND', $result->getTokens()[1]->getEntityGroup());
+        $this->assertSame('THIRD', $result->getTokens()[2]->getEntityGroup());
     }
 
     /**
@@ -152,12 +152,12 @@ final class TokenClassificationResultTest extends TestCase
     {
         $result = TokenClassificationResult::fromArray([$tokenData]);
 
-        $this->assertCount(1, $result->tokens);
-        $this->assertSame($tokenData['entity_group'], $result->tokens[0]->entityGroup);
-        $this->assertSame($tokenData['score'], $result->tokens[0]->score);
-        $this->assertSame($tokenData['word'], $result->tokens[0]->word);
-        $this->assertSame($tokenData['start'], $result->tokens[0]->start);
-        $this->assertSame($tokenData['end'], $result->tokens[0]->end);
+        $this->assertCount(1, $result->getTokens());
+        $this->assertSame($tokenData['entity_group'], $result->getTokens()[0]->getEntityGroup());
+        $this->assertSame($tokenData['score'], $result->getTokens()[0]->getScore());
+        $this->assertSame($tokenData['word'], $result->getTokens()[0]->getWord());
+        $this->assertSame($tokenData['start'], $result->getTokens()[0]->getStart());
+        $this->assertSame($tokenData['end'], $result->getTokens()[0]->getEnd());
     }
 
     /**
@@ -174,8 +174,8 @@ final class TokenClassificationResultTest extends TestCase
     {
         $result = TokenClassificationResult::fromArray([$tokenData]);
 
-        $this->assertCount(1, $result->tokens);
-        $this->assertSame($tokenData['word'], $result->tokens[0]->word);
+        $this->assertCount(1, $result->getTokens());
+        $this->assertSame($tokenData['word'], $result->getTokens()[0]->getWord());
     }
 
     #[TestDox('fromArray handles edge cases for scores and positions')]
@@ -190,15 +190,15 @@ final class TokenClassificationResultTest extends TestCase
 
         $result = TokenClassificationResult::fromArray($data);
 
-        $this->assertCount(4, $result->tokens);
+        $this->assertCount(4, $result->getTokens());
 
-        $this->assertSame(0.0, $result->tokens[0]->score);
-        $this->assertSame(1.0, $result->tokens[1]->score);
-        $this->assertSame(0.123456789, $result->tokens[2]->score);
-        $this->assertSame(-0.1, $result->tokens[3]->score);
+        $this->assertSame(0.0, $result->getTokens()[0]->getScore());
+        $this->assertSame(1.0, $result->getTokens()[1]->getScore());
+        $this->assertSame(0.123456789, $result->getTokens()[2]->getScore());
+        $this->assertSame(-0.1, $result->getTokens()[3]->getScore());
 
-        $this->assertSame(-5, $result->tokens[3]->start);
-        $this->assertSame(-1, $result->tokens[3]->end);
+        $this->assertSame(-5, $result->getTokens()[3]->getStart());
+        $this->assertSame(-1, $result->getTokens()[3]->getEnd());
     }
 
     #[TestDox('Large token arrays are handled correctly')]
@@ -217,15 +217,15 @@ final class TokenClassificationResultTest extends TestCase
 
         $result = TokenClassificationResult::fromArray($data);
 
-        $this->assertCount(100, $result->tokens);
+        $this->assertCount(100, $result->getTokens());
 
-        $this->assertSame('ENTITY_0', $result->tokens[0]->entityGroup);
-        $this->assertSame(0.0, $result->tokens[0]->score);
-        $this->assertSame('word_0', $result->tokens[0]->word);
+        $this->assertSame('ENTITY_0', $result->getTokens()[0]->getEntityGroup());
+        $this->assertSame(0.0, $result->getTokens()[0]->getScore());
+        $this->assertSame('word_0', $result->getTokens()[0]->getWord());
 
-        $this->assertSame('ENTITY_99', $result->tokens[99]->entityGroup);
-        $this->assertSame(0.99, $result->tokens[99]->score);
-        $this->assertSame('word_99', $result->tokens[99]->word);
+        $this->assertSame('ENTITY_99', $result->getTokens()[99]->getEntityGroup());
+        $this->assertSame(0.99, $result->getTokens()[99]->getScore());
+        $this->assertSame('word_99', $result->getTokens()[99]->getWord());
     }
 
     #[TestDox('fromArray creates new Token instances correctly')]
@@ -239,24 +239,24 @@ final class TokenClassificationResultTest extends TestCase
         $result = TokenClassificationResult::fromArray($data);
 
         // Each token should be a distinct Token instance
-        $this->assertInstanceOf(Token::class, $result->tokens[0]);
-        $this->assertInstanceOf(Token::class, $result->tokens[1]);
-        $this->assertNotSame($result->tokens[0], $result->tokens[1]);
+        $this->assertInstanceOf(Token::class, $result->getTokens()[0]);
+        $this->assertInstanceOf(Token::class, $result->getTokens()[1]);
+        $this->assertNotSame($result->getTokens()[0], $result->getTokens()[1]);
 
         // Verify that the Token instances have the correct readonly properties
-        $token1 = $result->tokens[0];
-        $token2 = $result->tokens[1];
+        $token1 = $result->getTokens()[0];
+        $token2 = $result->getTokens()[1];
 
-        $this->assertSame('PERSON', $token1->entityGroup);
-        $this->assertSame(0.95, $token1->score);
-        $this->assertSame('John', $token1->word);
-        $this->assertSame(0, $token1->start);
-        $this->assertSame(4, $token1->end);
+        $this->assertSame('PERSON', $token1->getEntityGroup());
+        $this->assertSame(0.95, $token1->getScore());
+        $this->assertSame('John', $token1->getWord());
+        $this->assertSame(0, $token1->getStart());
+        $this->assertSame(4, $token1->getEnd());
 
-        $this->assertSame('ORG', $token2->entityGroup);
-        $this->assertSame(0.87, $token2->score);
-        $this->assertSame('Apple', $token2->word);
-        $this->assertSame(10, $token2->start);
-        $this->assertSame(15, $token2->end);
+        $this->assertSame('ORG', $token2->getEntityGroup());
+        $this->assertSame(0.87, $token2->getScore());
+        $this->assertSame('Apple', $token2->getWord());
+        $this->assertSame(10, $token2->getStart());
+        $this->assertSame(15, $token2->getEnd());
     }
 }

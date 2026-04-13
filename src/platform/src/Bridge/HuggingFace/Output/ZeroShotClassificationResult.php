@@ -21,10 +21,31 @@ final class ZeroShotClassificationResult
      * @param array<float>  $scores
      */
     public function __construct(
-        public array $labels,
-        public array $scores,
-        public ?string $sequence = null,
+        private readonly array $labels,
+        private readonly array $scores,
+        private readonly ?string $sequence = null,
     ) {
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getLabels(): array
+    {
+        return $this->labels;
+    }
+
+    /**
+     * @return array<float>
+     */
+    public function getScores(): array
+    {
+        return $this->scores;
+    }
+
+    public function getSequence(): ?string
+    {
+        return $this->sequence;
     }
 
     /**

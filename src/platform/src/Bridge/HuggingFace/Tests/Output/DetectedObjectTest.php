@@ -33,12 +33,12 @@ final class DetectedObjectTest extends TestCase
             ymax: 200.5
         );
 
-        $this->assertSame('person', $object->label);
-        $this->assertSame(0.95, $object->score);
-        $this->assertSame(10.5, $object->xmin);
-        $this->assertSame(20.5, $object->ymin);
-        $this->assertSame(100.5, $object->xmax);
-        $this->assertSame(200.5, $object->ymax);
+        $this->assertSame('person', $object->getLabel());
+        $this->assertSame(0.95, $object->getScore());
+        $this->assertSame(10.5, $object->getXmin());
+        $this->assertSame(20.5, $object->getYmin());
+        $this->assertSame(100.5, $object->getXmax());
+        $this->assertSame(200.5, $object->getYmax());
     }
 
     #[TestDox('Constructor accepts various bounding box coordinates')]
@@ -57,12 +57,12 @@ final class DetectedObjectTest extends TestCase
     ) {
         $object = new DetectedObject($label, $score, $xmin, $ymin, $xmax, $ymax);
 
-        $this->assertSame($label, $object->label);
-        $this->assertSame($score, $object->score);
-        $this->assertSame($xmin, $object->xmin);
-        $this->assertSame($ymin, $object->ymin);
-        $this->assertSame($xmax, $object->xmax);
-        $this->assertSame($ymax, $object->ymax);
+        $this->assertSame($label, $object->getLabel());
+        $this->assertSame($score, $object->getScore());
+        $this->assertSame($xmin, $object->getXmin());
+        $this->assertSame($ymin, $object->getYmin());
+        $this->assertSame($xmax, $object->getXmax());
+        $this->assertSame($ymax, $object->getYmax());
     }
 
     #[TestDox('Constructor handles various edge cases and patterns')]
@@ -79,12 +79,12 @@ final class DetectedObjectTest extends TestCase
     {
         $object = new DetectedObject($label, $score, $xmin, $ymin, $xmax, $ymax);
 
-        $this->assertSame($label, $object->label);
-        $this->assertSame($score, $object->score);
-        $this->assertSame($xmin, $object->xmin);
-        $this->assertSame($ymin, $object->ymin);
-        $this->assertSame($xmax, $object->xmax);
-        $this->assertSame($ymax, $object->ymax);
+        $this->assertSame($label, $object->getLabel());
+        $this->assertSame($score, $object->getScore());
+        $this->assertSame($xmin, $object->getXmin());
+        $this->assertSame($ymin, $object->getYmin());
+        $this->assertSame($xmax, $object->getXmax());
+        $this->assertSame($ymax, $object->getYmax());
     }
 
     #[TestDox('Bounding box can represent different coordinate systems')]
@@ -102,9 +102,9 @@ final class DetectedObjectTest extends TestCase
     ) {
         $object = new DetectedObject($label, $score, $xmin, $ymin, $xmax, $ymax);
 
-        $this->assertSame($xmin, $object->xmin);
-        $this->assertSame($ymin, $object->ymin);
-        $this->assertSame($xmax, $object->xmax);
-        $this->assertSame($ymax, $object->ymax);
+        $this->assertSame($xmin, $object->getXmin());
+        $this->assertSame($ymin, $object->getYmin());
+        $this->assertSame($xmax, $object->getXmax());
+        $this->assertSame($ymax, $object->getYmax());
     }
 }

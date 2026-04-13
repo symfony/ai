@@ -32,8 +32,8 @@ final class ImageSegmentationResultTest extends TestCase
 
         $result = new ImageSegmentationResult($segments);
 
-        $this->assertSame($segments, $result->segments);
-        $this->assertCount(3, $result->segments);
+        $this->assertSame($segments, $result->getSegments());
+        $this->assertCount(3, $result->getSegments());
     }
 
     #[TestDox('Construction with empty array creates valid instance')]
@@ -41,8 +41,8 @@ final class ImageSegmentationResultTest extends TestCase
     {
         $result = new ImageSegmentationResult([]);
 
-        $this->assertSame([], $result->segments);
-        $this->assertCount(0, $result->segments);
+        $this->assertSame([], $result->getSegments());
+        $this->assertCount(0, $result->getSegments());
     }
 
     #[TestDox('fromArray creates instance with ImageSegment objects')]
@@ -56,19 +56,19 @@ final class ImageSegmentationResultTest extends TestCase
 
         $result = ImageSegmentationResult::fromArray($data);
 
-        $this->assertCount(3, $result->segments);
+        $this->assertCount(3, $result->getSegments());
 
-        $this->assertSame('person', $result->segments[0]->label);
-        $this->assertSame(0.95, $result->segments[0]->score);
-        $this->assertSame('person_mask_data', $result->segments[0]->mask);
+        $this->assertSame('person', $result->getSegments()[0]->getLabel());
+        $this->assertSame(0.95, $result->getSegments()[0]->getScore());
+        $this->assertSame('person_mask_data', $result->getSegments()[0]->getMask());
 
-        $this->assertSame('dog', $result->segments[1]->label);
-        $this->assertSame(0.80, $result->segments[1]->score);
-        $this->assertSame('dog_mask_data', $result->segments[1]->mask);
+        $this->assertSame('dog', $result->getSegments()[1]->getLabel());
+        $this->assertSame(0.80, $result->getSegments()[1]->getScore());
+        $this->assertSame('dog_mask_data', $result->getSegments()[1]->getMask());
 
-        $this->assertSame('background', $result->segments[2]->label);
-        $this->assertSame(0.60, $result->segments[2]->score);
-        $this->assertSame('background_mask_data', $result->segments[2]->mask);
+        $this->assertSame('background', $result->getSegments()[2]->getLabel());
+        $this->assertSame(0.60, $result->getSegments()[2]->getScore());
+        $this->assertSame('background_mask_data', $result->getSegments()[2]->getMask());
     }
 
     #[TestDox('fromArray with empty data creates empty result')]
@@ -76,8 +76,8 @@ final class ImageSegmentationResultTest extends TestCase
     {
         $result = ImageSegmentationResult::fromArray([]);
 
-        $this->assertCount(0, $result->segments);
-        $this->assertSame([], $result->segments);
+        $this->assertCount(0, $result->getSegments());
+        $this->assertSame([], $result->getSegments());
     }
 
     #[TestDox('fromArray with single segment')]
@@ -89,11 +89,11 @@ final class ImageSegmentationResultTest extends TestCase
 
         $result = ImageSegmentationResult::fromArray($data);
 
-        $this->assertCount(1, $result->segments);
-        $this->assertInstanceOf(ImageSegment::class, $result->segments[0]);
-        $this->assertSame('object', $result->segments[0]->label);
-        $this->assertSame(0.99, $result->segments[0]->score);
-        $this->assertSame('single_mask', $result->segments[0]->mask);
+        $this->assertCount(1, $result->getSegments());
+        $this->assertInstanceOf(ImageSegment::class, $result->getSegments()[0]);
+        $this->assertSame('object', $result->getSegments()[0]->getLabel());
+        $this->assertSame(0.99, $result->getSegments()[0]->getScore());
+        $this->assertSame('single_mask', $result->getSegments()[0]->getMask());
     }
 
     #[TestDox('fromArray preserves order of segments')]
@@ -107,9 +107,9 @@ final class ImageSegmentationResultTest extends TestCase
 
         $result = ImageSegmentationResult::fromArray($data);
 
-        $this->assertSame('first', $result->segments[0]->label);
-        $this->assertSame('second', $result->segments[1]->label);
-        $this->assertSame('third', $result->segments[2]->label);
+        $this->assertSame('first', $result->getSegments()[0]->getLabel());
+        $this->assertSame('second', $result->getSegments()[1]->getLabel());
+        $this->assertSame('third', $result->getSegments()[2]->getLabel());
     }
 
     #[TestDox('fromArray handles various data formats')]
@@ -124,27 +124,27 @@ final class ImageSegmentationResultTest extends TestCase
 
         $result = ImageSegmentationResult::fromArray($data);
 
-        $this->assertCount(4, $result->segments);
+        $this->assertCount(4, $result->getSegments());
 
         // Test empty values
-        $this->assertSame('', $result->segments[0]->label);
-        $this->assertSame(0.0, $result->segments[0]->score);
-        $this->assertSame('', $result->segments[0]->mask);
+        $this->assertSame('', $result->getSegments()[0]->getLabel());
+        $this->assertSame(0.0, $result->getSegments()[0]->getScore());
+        $this->assertSame('', $result->getSegments()[0]->getMask());
 
         // Test uppercase and base64
-        $this->assertSame('UPPERCASE', $result->segments[1]->label);
-        $this->assertSame(1.0, $result->segments[1]->score);
-        $this->assertSame('BASE64==', $result->segments[1]->mask);
+        $this->assertSame('UPPERCASE', $result->getSegments()[1]->getLabel());
+        $this->assertSame(1.0, $result->getSegments()[1]->getScore());
+        $this->assertSame('BASE64==', $result->getSegments()[1]->getMask());
 
         // Test special characters and data URI
-        $this->assertSame('special-chars_123', $result->segments[2]->label);
-        $this->assertSame(0.5, $result->segments[2]->score);
-        $this->assertStringStartsWith('data:image/png', $result->segments[2]->mask);
+        $this->assertSame('special-chars_123', $result->getSegments()[2]->getLabel());
+        $this->assertSame(0.5, $result->getSegments()[2]->getScore());
+        $this->assertStringStartsWith('data:image/png', $result->getSegments()[2]->getMask());
 
         // Test unicode and long mask
-        $this->assertSame('unicode_标签', $result->segments[3]->label);
-        $this->assertSame(0.12345, $result->segments[3]->score);
-        $this->assertStringContainsString('long_', $result->segments[3]->mask);
+        $this->assertSame('unicode_标签', $result->getSegments()[3]->getLabel());
+        $this->assertSame(0.12345, $result->getSegments()[3]->getScore());
+        $this->assertStringContainsString('long_', $result->getSegments()[3]->getMask());
     }
 
     #[TestDox('fromArray handles typical segmentation results')]
@@ -161,15 +161,15 @@ final class ImageSegmentationResultTest extends TestCase
 
         $result = ImageSegmentationResult::fromArray($data);
 
-        $this->assertCount(5, $result->segments);
+        $this->assertCount(5, $result->getSegments());
 
         // Verify it handles instance segmentation (numbered instances)
-        $this->assertSame('person-1', $result->segments[0]->label);
-        $this->assertSame('person-2', $result->segments[1]->label);
+        $this->assertSame('person-1', $result->getSegments()[0]->getLabel());
+        $this->assertSame('person-2', $result->getSegments()[1]->getLabel());
 
         // Verify it handles semantic segmentation (class labels)
-        $this->assertSame('sky', $result->segments[2]->label);
-        $this->assertSame('road', $result->segments[3]->label);
-        $this->assertSame('building', $result->segments[4]->label);
+        $this->assertSame('sky', $result->getSegments()[2]->getLabel());
+        $this->assertSame('road', $result->getSegments()[3]->getLabel());
+        $this->assertSame('building', $result->getSegments()[4]->getLabel());
     }
 }
