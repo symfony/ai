@@ -13,7 +13,7 @@ namespace Symfony\AI\Store\Bridge\ChromaDb\Tests;
 
 use Codewithkyrian\ChromaDB\ChromaDB;
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\ChromaDb\Store;
+use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
 
@@ -35,6 +35,6 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             ->withPort(8000)
             ->connect();
 
-        return new Store($client, 'test_collection');
+        return StoreFactory::create($client, 'test_collection');
     }
 }
