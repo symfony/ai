@@ -4,7 +4,7 @@
             "content": {
                 "parts": [
                     {
-                        "text": "First text"
+                        "text": "First text\n"
                     },
                     {
                         "executableCode": {
