@@ -69,6 +69,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'gemini-2.5-flash-image' => [
+                'class' => GeminiModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
             'gemini-2.0-flash' => [
                 'class' => GeminiModel::class,
                 'capabilities' => [
