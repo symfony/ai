@@ -155,7 +155,7 @@ return static function (ContainerConfigurator $container): void {
             ->tag('kernel.event_subscriber')
 
         // structured output
-        ->set('ai.agent.response_format_factory', ResponseFormatFactory::class)
+        ->set('ai.platform.response_format_factory', ResponseFormatFactory::class)
             ->args([
                 service('ai.platform.json_schema_factory'),
             ])
@@ -198,7 +198,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.structured_output_serializer', StructuredOutputSerializer::class)
         ->set('ai.platform.structured_output_subscriber', PlatformSubscriber::class)
             ->args([
-                service('ai.agent.response_format_factory'),
+                service('ai.platform.response_format_factory'),
                 service('ai.platform.structured_output_serializer'),
             ])
             ->tag('kernel.event_subscriber')
