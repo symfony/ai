@@ -51,7 +51,7 @@ final class StoreTest extends TestCase
             ->willReturn($collection);
 
         $collection->expects($this->once())
-            ->method('add')
+            ->method('upsert')
             ->with($expectedIds, $expectedVectors, $expectedMetadata, $expectedOriginalDocuments);
 
         $store = new Store($client, 'test-collection');
