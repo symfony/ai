@@ -7,6 +7,9 @@ in ``composer.json``, similar to PHPStan extensions.
 Quick Start
 -----------
 
+You can also start from the official extension template:
+`matesofmate/extension-template <https://github.com/matesofmate/extension-template>`_.
+
 1. Configure composer.json
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -16,7 +19,7 @@ Quick Start
         "name": "vendor/my-extension",
         "type": "library",
         "require": {
-            "symfony/ai-mate": "^0.1"
+            "symfony/ai-mate": "^0.7"
         },
         "extra": {
             "ai-mate": {
@@ -27,6 +30,8 @@ Quick Start
     }
 
 The ``extra.ai-mate`` section is required for your package to be discovered as an extension.
+If your package uses Mate internally but must not be exposed as a reusable extension, set
+``"extension": false`` in ``extra.ai-mate``.
 
 2. Create MCP Capabilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,6 +71,9 @@ The ``discover`` command will automatically add your extension to ``mate/extensi
     return [
         'vendor/my-extension' => ['enabled' => true],
     ];
+
+When the host project is already initialized, Composer install/update will also refresh discovery
+automatically through the Mate Composer plugin.
 
 To disable an extension, set ``enabled`` to ``false``::
 
@@ -157,6 +165,28 @@ Example configuration:
         }
     }
 
+Extension Discovery Opt-Out
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``extra.ai-mate.extension`` (optional)
+
+- Default: ``true``
+- Set to ``false`` to exclude the package from Mate extension discovery
+- Useful for applications or internal tooling packages that use Mate but should not appear as installable extensions
+
+Example opt-out:
+
+.. code-block:: json
+
+    {
+        "extra": {
+            "ai-mate": {
+                "extension": false,
+                "scan-dirs": ["mate/src"]
+            }
+        }
+    }
+
 Writing Effective Agent Instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -188,11 +218,12 @@ Example ``INSTRUCTIONS.md``:
 Security
 ~~~~~~~~
 
-Extensions must be explicitly enabled in ``mate/extensions.php``:
+Discovered extensions are managed in ``mate/extensions.php``:
 
 - The ``discover`` command automatically adds discovered extensions
 - All extensions default to ``enabled: true`` when discovered
 - Set ``enabled: false`` to disable an extension
+- Set ``extra.ai-mate.extension`` to ``false`` to keep a package out of discovery entirely
 
 Troubleshooting
 ---------------
@@ -222,6 +253,9 @@ If your extensions aren't being found:
 
        $ vendor/bin/mate discover
 
+   If the host project has already been initialized, Composer install/update should also refresh
+   discovery automatically.
+
 3. **Check the extensions file**:
 
    .. code-block:: terminal
@@ -229,6 +263,9 @@ If your extensions aren't being found:
        $ cat mate/extensions.php
 
    Verify your package is listed and ``enabled`` is ``true``.
+
+   If the package intentionally sets ``extra.ai-mate.extension`` to ``false``, it will not appear
+   in ``mate/extensions.php``.
 
 Extensions Not Loading
 ~~~~~~~~~~~~~~~~~~~~~~
