@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * Add support for Gemini 3.1 Flash Lite preview model (`gemini-3.1-flash-lite-preview`)
+ * Add support for Gemini 3 Flash preview model (`gemini-3-flash-preview`)
+
 0.7
 ---
 
