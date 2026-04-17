@@ -26,6 +26,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         #[\SensitiveParameter] string $apiKey,
         string $provider = Provider::HF_INFERENCE,
@@ -47,6 +50,9 @@ final class Factory
         );
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         #[\SensitiveParameter] string $apiKey,
         string $provider = Provider::HF_INFERENCE,

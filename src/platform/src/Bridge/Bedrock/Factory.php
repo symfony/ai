@@ -34,6 +34,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         ?BedrockRuntimeClient $bedrockRuntimeClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
@@ -82,6 +85,9 @@ final class Factory
         );
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         ?BedrockRuntimeClient $bedrockRuntimeClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),

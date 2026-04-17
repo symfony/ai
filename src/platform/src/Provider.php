@@ -28,6 +28,12 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class Provider implements ProviderInterface
 {
     /**
+     * Caches the most recently resolved model so supports() and invoke() in
+     * the same invocation cycle don't hit API-backed catalogs twice.
+     */
+    private ?Model $resolvedModel = null;
+
+    /**
      * @param non-empty-string                   $name
      * @param iterable<ModelClientInterface>     $modelClients
      * @param iterable<ResultConverterInterface> $resultConverters
@@ -51,17 +57,24 @@ final class Provider implements ProviderInterface
     public function supports(string $modelName): bool
     {
         try {
-            $this->modelCatalog->getModel($modelName);
+            $this->resolvedModel = $this->modelCatalog->getModel($modelName);
 
             return true;
         } catch (ModelNotFoundException) {
+            $this->resolvedModel = null;
+
             return false;
         }
     }
 
     public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
     {
-        $model = $this->modelCatalog->getModel($model);
+        if (null !== $this->resolvedModel && $this->resolvedModel->getName() === $model) {
+            $model = $this->resolvedModel;
+            $this->resolvedModel = null;
+        } else {
+            $model = $this->modelCatalog->getModel($model);
+        }
 
         $invocationEvent = new InvocationEvent($model, $input, $options);
         $this->eventDispatcher?->dispatch($invocationEvent);

@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Codewithkyrian\ChromaDB\Factory;
+use Codewithkyrian\ChromaDB\Factory as ChromaDbFactory;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
@@ -32,7 +32,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // initialize the store
 
 $store = new Store(
-    (new Factory())
+    (new ChromaDbFactory())
         ->withHost(env('CHROMADB_HOST'))
         ->withPort((int) env('CHROMADB_PORT'))
         ->connect(),

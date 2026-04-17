@@ -26,6 +26,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         string $endpoint = 'https://api.elevenlabs.io/v1/',
         #[\SensitiveParameter] ?string $apiKey = null,
@@ -54,6 +57,9 @@ final class Factory
         );
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         string $endpoint = 'https://api.elevenlabs.io/v1/',
         #[\SensitiveParameter] ?string $apiKey = null,

@@ -25,6 +25,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         string $baseUrl,
         ?string $apiKey = null,
@@ -54,6 +57,9 @@ class Factory
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         string $baseUrl,
         ?string $apiKey = null,

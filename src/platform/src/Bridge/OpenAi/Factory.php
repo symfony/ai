@@ -29,6 +29,9 @@ final class Factory
     public const REGION_EU = 'EU';
     public const REGION_US = 'US';
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,
@@ -62,6 +65,9 @@ final class Factory
         );
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         #[\SensitiveParameter] string $apiKey,
         ?HttpClientInterface $httpClient = null,

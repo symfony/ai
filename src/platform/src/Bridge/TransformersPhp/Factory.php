@@ -24,6 +24,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?EventDispatcherInterface $eventDispatcher = null,
@@ -36,6 +39,9 @@ final class Factory
         return new Provider($name, [new ModelClient()], [new ResultConverter()], $modelCatalog, eventDispatcher: $eventDispatcher);
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?EventDispatcherInterface $eventDispatcher = null,

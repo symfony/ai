@@ -28,6 +28,7 @@ final class Factory
 {
     /**
      * @param array<string, string|false> $environment
+     * @param non-empty-string            $name
      */
     public static function createProvider(
         ?string $cliBinary = null,
@@ -52,6 +53,7 @@ final class Factory
 
     /**
      * @param array<string, string|false> $environment
+     * @param non-empty-string            $name
      */
     public static function createPlatform(
         ?string $cliBinary = null,

@@ -33,6 +33,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         ?string $location = null,
         ?string $projectId = null,
@@ -67,6 +70,9 @@ final class Factory
         );
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         ?string $location = null,
         ?string $projectId = null,

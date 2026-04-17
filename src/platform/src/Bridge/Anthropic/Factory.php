@@ -28,6 +28,7 @@ final class Factory
 {
     /**
      * @param 'none'|'short'|'long' $cacheRetention
+     * @param non-empty-string      $name
      */
     public static function createProvider(
         #[\SensitiveParameter] string $apiKey,
@@ -52,6 +53,7 @@ final class Factory
 
     /**
      * @param 'none'|'short'|'long' $cacheRetention
+     * @param non-empty-string      $name
      */
     public static function createPlatform(
         #[\SensitiveParameter] string $apiKey,

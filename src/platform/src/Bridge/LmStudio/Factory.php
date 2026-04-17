@@ -25,6 +25,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class Factory
 {
+    /**
+     * @param non-empty-string $name
+     */
     public static function createProvider(
         string $baseUrl = 'http://localhost:1234',
         ?HttpClientInterface $httpClient = null,
@@ -45,6 +48,9 @@ class Factory
         );
     }
 
+    /**
+     * @param non-empty-string $name
+     */
     public static function createPlatform(
         string $baseUrl = 'http://localhost:1234',
         ?HttpClientInterface $httpClient = null,

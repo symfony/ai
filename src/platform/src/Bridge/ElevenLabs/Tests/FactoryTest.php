@@ -19,21 +19,21 @@ use Symfony\Component\HttpClient\ScopingHttpClient;
 
 final class FactoryTest extends TestCase
 {
-    public function testStoreCanBeCreatedWithHttpClientAndRequiredInfos()
+    public function testProviderCanBeCreatedWithHttpClientAndRequiredInfos()
     {
-        $platform = Factory::createPlatform(apiKey: 'foo', httpClient: HttpClient::create());
+        $provider = Factory::createProvider(apiKey: 'foo', httpClient: HttpClient::create());
 
-        $this->assertInstanceOf(ModelCatalog::class, $platform->getModelCatalog());
+        $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
     }
 
-    public function testStoreCanBeCreatedWithScopingHttpClient()
+    public function testProviderCanBeCreatedWithScopingHttpClient()
     {
-        $platform = Factory::createPlatform(httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.elevenlabs.io/v1/', [
+        $provider = Factory::createProvider(httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.elevenlabs.io/v1/', [
             'headers' => [
                 'xi-api-key' => 'bar',
             ],
         ]));
 
-        $this->assertInstanceOf(ModelCatalog::class, $platform->getModelCatalog());
+        $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
     }
 }
