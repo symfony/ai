@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-04-12T19:04:50Z
+
+@OskarStark About the title change: the Gemini part is in the other PR (https://github.com/symfony/ai/pull/1900) and this builds on top of it since it depends on `MultiPartResult` class.
+
+Would you rather merge these as one? Then I should add Vertex here too? (and squash all to single commit)
