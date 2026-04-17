@@ -75,7 +75,7 @@ final class PlatformTest extends TestCase
                 return $event;
             });
 
-        $platform = new Platform([$provider], $router, null, $eventDispatcher);
+        $platform = new Platform([$provider], $router, $eventDispatcher);
 
         $platform->invoke('gpt-4o', 'Hello', ['temperature' => 0.7]);
 
@@ -108,7 +108,7 @@ final class PlatformTest extends TestCase
             return $event;
         });
 
-        $platform = new Platform([$provider], $router, null, $eventDispatcher);
+        $platform = new Platform([$provider], $router, $eventDispatcher);
 
         $platform->invoke('gpt-4o', 'Hello');
     }
@@ -135,24 +135,14 @@ final class PlatformTest extends TestCase
             return $event;
         });
 
-        $platform = new Platform([$defaultProvider], $router, null, $eventDispatcher);
+        $platform = new Platform([$defaultProvider], $router, $eventDispatcher);
 
         $result = $platform->invoke('gpt-4o', 'Hello');
 
         $this->assertSame($deferredResult, $result);
     }
 
-    public function testGetModelCatalogReturnsProvidedCatalog()
-    {
-        $catalog = $this->createStub(ModelCatalogInterface::class);
-        $provider = $this->createStub(ProviderInterface::class);
-
-        $platform = new Platform([$provider], modelCatalog: $catalog);
-
-        $this->assertSame($catalog, $platform->getModelCatalog());
-    }
-
-    public function testGetModelCatalogBuildsCompositeWhenNotProvided()
+    public function testGetModelCatalogBuildsComposite()
     {
         $catalog1 = $this->createStub(ModelCatalogInterface::class);
         $catalog2 = $this->createStub(ModelCatalogInterface::class);

@@ -35,7 +35,6 @@ final class Platform implements PlatformInterface
     public function __construct(
         private readonly array $providers,
         private readonly ModelRouterInterface $modelRouter = new CatalogBasedModelRouter(),
-        private readonly ?ModelCatalogInterface $modelCatalog = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         if ([] === $this->providers) {
@@ -56,10 +55,6 @@ final class Platform implements PlatformInterface
 
     public function getModelCatalog(): ModelCatalogInterface
     {
-        if (null !== $this->modelCatalog) {
-            return $this->modelCatalog;
-        }
-
         return new CompositeModelCatalog(
             array_map(
                 static fn (ProviderInterface $provider): ModelCatalogInterface => $provider->getModelCatalog(),

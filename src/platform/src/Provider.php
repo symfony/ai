@@ -23,9 +23,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * A provider encapsulating a single inference backend.
  *
- * This class contains the logic previously in Platform: model catalog lookup,
- * contract normalization, ModelClient dispatch, and ResultConverter dispatch.
- *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class Provider implements ProviderInterface
