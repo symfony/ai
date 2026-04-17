@@ -96,7 +96,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
             )),
             ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context)),
             TextResult::class => new TextResult($data['payload']),
-            ToolCallResult::class => new ToolCallResult(...array_map(
+            ToolCallResult::class => new ToolCallResult(array_map(
                 static fn (array $toolCall): ToolCall => new ToolCall(
                     $toolCall['id'],
                     $toolCall['function']['name'],
@@ -104,7 +104,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                 ),
                 $data['payload'],
             )),
-            VectorResult::class => new VectorResult(...array_map(
+            VectorResult::class => new VectorResult(array_map(
                 static fn (array $vector): Vector => new Vector($vector['data'], $vector['dimensions']),
                 $data['payload'],
             )),

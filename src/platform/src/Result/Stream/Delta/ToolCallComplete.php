@@ -25,7 +25,10 @@ final class ToolCallComplete implements DeltaInterface
      */
     private readonly array $toolCalls;
 
-    public function __construct(ToolCall ...$toolCalls)
+    /**
+     * @param ToolCall[] $toolCalls
+     */
+    public function __construct(array $toolCalls)
     {
         $this->toolCalls = $toolCalls;
     }

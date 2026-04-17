@@ -32,7 +32,7 @@ final class DocumentProcessorTest extends TestCase
     {
         $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $processor->process([$document]);
@@ -57,7 +57,7 @@ final class DocumentProcessorTest extends TestCase
         $metadata = new Metadata(['key' => 'value']);
         $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $processor->process([$document]);
@@ -76,7 +76,7 @@ final class DocumentProcessorTest extends TestCase
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
 
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $processor->process([$document1, $document2]);
@@ -94,7 +94,7 @@ final class DocumentProcessorTest extends TestCase
         // Filter will remove the "Week of Symfony" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), [$filter]);
@@ -115,7 +115,7 @@ final class DocumentProcessorTest extends TestCase
         // Filters will remove "Week of Symfony" and "SPAM" documents, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
         $filters = [
             new TextContainsFilter('Week of Symfony'),
             new TextContainsFilter('SPAM'),
@@ -138,7 +138,7 @@ final class DocumentProcessorTest extends TestCase
         // Filter will remove "Week of Symfony" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
         $filter = new TextContainsFilter('Week of Symfony');
         $transformer = new class implements TransformerInterface {
             public function transform(iterable $documents, array $options = []): iterable
@@ -173,7 +173,7 @@ final class DocumentProcessorTest extends TestCase
         // Filter will remove the "Remove" document, leaving 2 documents
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
 
         $filter = new class implements FilterInterface {
             public function filter(iterable $documents, array $options = []): iterable
@@ -213,7 +213,7 @@ final class DocumentProcessorTest extends TestCase
     {
         $document = new TextDocument(Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore(), []);
         $processor->process([$document]);
@@ -242,7 +242,7 @@ final class DocumentProcessorTest extends TestCase
             $vectors[] = new Vector([0.1 * $i, 0.2 * $i, 0.3 * $i]);
         }
 
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(...$vectors)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vectors)), 'test-embedding-model');
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
 
         // With default chunk_size of 50 and 100 documents, there should be 2 add calls
@@ -261,7 +261,7 @@ final class DocumentProcessorTest extends TestCase
             $vectors[] = new Vector([0.1 * $i, 0.2 * $i, 0.3 * $i]);
         }
 
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(...$vectors)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vectors)), 'test-embedding-model');
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
 
         // With chunk_size of 10 and 100 documents, there should be 10 add calls

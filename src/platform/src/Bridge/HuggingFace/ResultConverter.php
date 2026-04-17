@@ -82,10 +82,10 @@ final class ResultConverter implements ResultConverterInterface
             Task::AUDIO_CLASSIFICATION, Task::IMAGE_CLASSIFICATION => new ObjectResult(ClassificationResult::fromArray($content)),
             Task::AUTOMATIC_SPEECH_RECOGNITION => new TextResult($content['text'] ?? ''),
             Task::CHAT_COMPLETION => new TextResult($content['choices'][0]['message']['content'] ?? ''),
-            Task::FEATURE_EXTRACTION => new VectorResult(...(isset($content[0]) && \is_array($content[0])
+            Task::FEATURE_EXTRACTION => new VectorResult(isset($content[0]) && \is_array($content[0])
                 ? array_map(static fn (array $v): Vector => new Vector($v), $content)
                 : [new Vector($content)]
-            )),
+            ),
             Task::TEXT_CLASSIFICATION => new ObjectResult(ClassificationResult::fromArray(reset($content) ?? [])),
             Task::FILL_MASK => new ObjectResult(FillMaskResult::fromArray($content)),
             Task::IMAGE_SEGMENTATION => new ObjectResult(ImageSegmentationResult::fromArray($content)),
@@ -121,7 +121,7 @@ final class ResultConverter implements ResultConverterInterface
     {
         // TEI format: [{index: 0, score: 0.95}, ...]
         if (isset($content[0]['index'])) {
-            return new RerankingResult(...array_map(
+            return new RerankingResult(array_map(
                 static fn (array $item): RerankingEntry => new RerankingEntry((int) $item['index'], (float) $item['score']),
                 $content,
             ));
@@ -137,6 +137,6 @@ final class ResultConverter implements ResultConverterInterface
             $entries[] = new RerankingEntry($index, (float) $item['score']);
         }
 
-        return new RerankingResult(...$entries);
+        return new RerankingResult($entries);
     }
 }

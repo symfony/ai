@@ -23,7 +23,10 @@ final class ToolCallResult extends BaseResult
      */
     private readonly array $toolCalls;
 
-    public function __construct(ToolCall ...$toolCalls)
+    /**
+     * @param ToolCall[] $toolCalls
+     */
+    public function __construct(array $toolCalls)
     {
         if ([] === $toolCalls) {
             throw new InvalidArgumentException('Response must have at least one tool call.');

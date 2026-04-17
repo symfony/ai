@@ -76,7 +76,7 @@ final class OllamaResultConverter implements ResultConverterInterface
         }
 
         if ([] !== $toolCalls) {
-            return new ToolCallResult(...$toolCalls);
+            return new ToolCallResult($toolCalls);
         }
 
         return new TextResult($data['message']['content']);
@@ -92,7 +92,7 @@ final class OllamaResultConverter implements ResultConverterInterface
         }
 
         return new VectorResult(
-            ...array_map(
+            array_map(
                 static fn (array $embedding): Vector => new Vector($embedding),
                 $data['embeddings'],
             ),
@@ -116,7 +116,7 @@ final class OllamaResultConverter implements ResultConverterInterface
             }
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallComplete(...$toolCalls);
+                yield new ToolCallComplete($toolCalls);
             }
 
             if ($this->hasStreamTokenUsage($data)) {

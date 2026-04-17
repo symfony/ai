@@ -31,7 +31,7 @@ final class DocumentIndexerTest extends TestCase
     {
         $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content');
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new DocumentIndexer($processor);
@@ -59,7 +59,7 @@ final class DocumentIndexerTest extends TestCase
         $metadata = new Metadata(['key' => 'value']);
         $document = new TextDocument($id = Uuid::v4()->toString(), 'Test content', $metadata);
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector)), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new DocumentIndexer($processor);
@@ -80,7 +80,7 @@ final class DocumentIndexerTest extends TestCase
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
 
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new DocumentIndexer($processor);
@@ -93,7 +93,7 @@ final class DocumentIndexerTest extends TestCase
     {
         $vector1 = new Vector([0.1, 0.2, 0.3]);
         $vector2 = new Vector([0.4, 0.5, 0.6]);
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult($vector1, $vector2)), 'test-embedding-model');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([$vector1, $vector2])), 'test-embedding-model');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $indexer = new DocumentIndexer($processor);

@@ -82,7 +82,7 @@ final class EmbeddingProviderTest extends TestCase
 
     public function testItIsNotCreatingMemoryWhenNoVectorsFound()
     {
-        $vectorResult = new VectorResult($vector = new Vector([0.1, 0.2], 2));
+        $vectorResult = new VectorResult([$vector = new Vector([0.1, 0.2], 2)]);
         $deferredResult = new DeferredResult(
             new PlainConverter($vectorResult),
             $this->createStub(RawResultInterface::class),
@@ -113,7 +113,7 @@ final class EmbeddingProviderTest extends TestCase
 
     public function testItIsCreatingMemoryWithFoundVectors()
     {
-        $vectorResult = new VectorResult($vector = new Vector([0.1, 0.2], 2));
+        $vectorResult = new VectorResult([$vector = new Vector([0.1, 0.2], 2)]);
         $deferredResult = new DeferredResult(
             new PlainConverter($vectorResult),
             $this->createStub(RawResultInterface::class),

@@ -55,7 +55,7 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
-        return $this->create ?? new VectorResult(new Vector([1, 2, 3]));
+        return $this->create ?? new VectorResult([new Vector([1, 2, 3])]);
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface

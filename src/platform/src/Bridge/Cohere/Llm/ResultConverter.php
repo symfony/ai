@@ -62,7 +62,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if ('TOOL_CALL' === $finishReason) {
-            return new ToolCallResult(...array_map($this->convertToolCall(...), $data['message']['tool_calls'] ?? []));
+            return new ToolCallResult(array_map($this->convertToolCall(...), $data['message']['tool_calls'] ?? []));
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $finishReason));
@@ -107,7 +107,7 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             if ('message-end' === $type && [] !== $toolCalls) {
-                yield new ToolCallComplete(...array_map($this->convertToolCall(...), $toolCalls));
+                yield new ToolCallComplete(array_map($this->convertToolCall(...), $toolCalls));
             }
         }
     }

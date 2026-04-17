@@ -63,7 +63,7 @@ final class StreamListener extends AbstractStreamListener
             return;
         }
 
-        $this->result = ($this->handleToolCallsCallback)(new ToolCallResult(...$delta->getToolCalls()), Message::ofAssistant($this->buffer));
+        $this->result = ($this->handleToolCallsCallback)(new ToolCallResult($delta->getToolCalls()), Message::ofAssistant($this->buffer));
 
         $content = $this->result->getContent();
         $event->setDelta(\is_string($content) ? new TextDelta($content) : $content);

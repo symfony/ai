@@ -50,7 +50,7 @@ class NovaResultConverter implements ResultConverterInterface
             }
         }
         if ([] !== $toolCalls) {
-            return new ToolCallResult(...$toolCalls);
+            return new ToolCallResult($toolCalls);
         }
 
         return new TextResult($data['output']['message']['content'][0]['text']);

@@ -50,7 +50,7 @@ trait CompletionsConversionTrait
             }
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
-                yield new ToolCallComplete(...array_map($this->convertToolCall(...), $toolCalls));
+                yield new ToolCallComplete(array_map($this->convertToolCall(...), $toolCalls));
             }
 
             $reasoningContent = $data['choices'][0]['delta']['reasoning_content']
@@ -176,7 +176,7 @@ trait CompletionsConversionTrait
     protected function convertChoice(array $choice): ToolCallResult|TextResult
     {
         if ('tool_calls' === $choice['finish_reason']) {
-            return new ToolCallResult(...array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+            return new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
         }
 
         if (\in_array($choice['finish_reason'], ['stop', 'length'], true)) {

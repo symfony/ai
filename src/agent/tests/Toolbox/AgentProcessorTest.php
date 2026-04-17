@@ -96,7 +96,7 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Test response'));
 
         $messageBag = new MessageBag();
-        $result = new ToolCallResult($toolCall);
+        $result = new ToolCallResult([$toolCall]);
 
         $agent = $this->createStub(AgentInterface::class);
 
@@ -122,7 +122,7 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Test response'));
 
         $messageBag = new MessageBag();
-        $result = new ToolCallResult($toolCall);
+        $result = new ToolCallResult([$toolCall]);
 
         $agent = $this->createStub(AgentInterface::class);
 
@@ -146,7 +146,7 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Test response'));
 
         $messageBag = new MessageBag();
-        $toolCallResult = new ToolCallResult($toolCall);
+        $toolCallResult = new ToolCallResult([$toolCall]);
         $result = new MultiPartResult([
             new TextResult('Some text before tool call'),
             $toolCallResult,
@@ -201,7 +201,7 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
-        $result = new ToolCallResult($toolCall);
+        $result = new ToolCallResult([$toolCall]);
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
@@ -234,7 +234,7 @@ class AgentProcessorTest extends TestCase
             ->method('execute')
             ->willReturn(new ToolResult($toolCall, 'Response based on the two articles.', new SourceCollection([$source1, $source2])));
 
-        $result = new ToolCallResult($toolCall);
+        $result = new ToolCallResult([$toolCall]);
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
@@ -269,14 +269,14 @@ class AgentProcessorTest extends TestCase
                 new ToolResult($toolCall2, 'Response based on the second article.', new SourceCollection([$source2]))
             );
 
-        $result = new ToolCallResult($toolCall1);
+        $result = new ToolCallResult([$toolCall1]);
 
         $platform = $this->createMock(PlatformInterface::class);
         $platform
             ->expects($this->exactly(2))
             ->method('invoke')
             ->willReturnOnConsecutiveCalls(
-                new DeferredResult(new PlainConverter(new ToolCallResult($toolCall2)), new InMemoryRawResult()),
+                new DeferredResult(new PlainConverter(new ToolCallResult([$toolCall2])), new InMemoryRawResult()),
                 new DeferredResult(new PlainConverter(new TextResult('Final response based on both articles.')), new InMemoryRawResult())
             );
 
@@ -309,7 +309,7 @@ class AgentProcessorTest extends TestCase
         $result = new StreamResult((static function () use ($toolCall) {
             yield new TextDelta('chunk1');
             yield new TextDelta('chunk2');
-            yield new ToolCallComplete($toolCall);
+            yield new ToolCallComplete([$toolCall]);
         })());
 
         $agent = $this->createMock(AgentInterface::class);
@@ -344,7 +344,7 @@ class AgentProcessorTest extends TestCase
         $result = new StreamResult((static function () use ($toolCall) {
             yield new TextDelta('partial-1');
             yield new TextDelta('partial-2');
-            yield new ToolCallComplete($toolCall);
+            yield new ToolCallComplete([$toolCall]);
         })());
 
         $agent = $this->createMock(AgentInterface::class);
@@ -382,7 +382,7 @@ class AgentProcessorTest extends TestCase
         $result = new StreamResult((static function () use ($toolCall) {
             yield new TextDelta('partial-1');
             yield new TextDelta('partial-2');
-            yield new ToolCallComplete($toolCall);
+            yield new ToolCallComplete([$toolCall]);
         })());
         $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 
@@ -418,12 +418,12 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new ToolResult($toolCall, 'Test response'));
 
         $messageBag = new MessageBag();
-        $result = new ToolCallResult($toolCall);
+        $result = new ToolCallResult([$toolCall]);
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
             ->method('call')
-            ->willReturn(new ToolCallResult($toolCall)); // Always returns tool call, causing infinite loop
+            ->willReturn(new ToolCallResult([$toolCall])); // Always returns tool call, causing infinite loop
 
         $processor = new AgentProcessor($toolbox, maxToolCalls: 3);
         $processor->setAgent($agent);
@@ -449,14 +449,14 @@ class AgentProcessorTest extends TestCase
             );
 
         $messageBag = new MessageBag();
-        $result = new ToolCallResult($toolCall1);
+        $result = new ToolCallResult([$toolCall1]);
 
         $agent = $this->createMock(AgentInterface::class);
         $agent
             ->expects($this->exactly(2))
             ->method('call')
             ->willReturnOnConsecutiveCalls(
-                new ToolCallResult($toolCall2),
+                new ToolCallResult([$toolCall2]),
                 new TextResult('Final response after two tool calls.')
             );
 
@@ -490,11 +490,11 @@ class AgentProcessorTest extends TestCase
         $failingAgent = $this->createMock(AgentInterface::class);
         $failingAgent
             ->method('call')
-            ->willReturn(new ToolCallResult($failingToolCall));
+            ->willReturn(new ToolCallResult([$failingToolCall]));
         $processor->setAgent($failingAgent);
 
         try {
-            $processor->processOutput(new Output('gpt-4', new ToolCallResult($failingToolCall), new MessageBag()));
+            $processor->processOutput(new Output('gpt-4', new ToolCallResult([$failingToolCall]), new MessageBag()));
             $this->fail('Expected MaxIterationsExceededException to be thrown.');
         } catch (MaxIterationsExceededException) {
         }
@@ -506,7 +506,7 @@ class AgentProcessorTest extends TestCase
             ->willReturn(new TextResult('Final response'));
         $processor->setAgent($successfulAgent);
 
-        $output = new Output('gpt-4', new ToolCallResult($successfulToolCall), new MessageBag());
+        $output = new Output('gpt-4', new ToolCallResult([$successfulToolCall]), new MessageBag());
         $processor->processOutput($output);
 
         $metadata = $output->getResult()->getMetadata();

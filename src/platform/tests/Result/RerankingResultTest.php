@@ -23,7 +23,7 @@ final class RerankingResultTest extends TestCase
     public function testGetContentWithSingleEntry()
     {
         $entry = new RerankingEntry(0, 0.95);
-        $result = new RerankingResult($entry);
+        $result = new RerankingResult([$entry]);
 
         $this->assertSame([$entry], $result->getContent());
     }
@@ -34,7 +34,7 @@ final class RerankingResultTest extends TestCase
         $entry2 = new RerankingEntry(1, 0.80);
         $entry3 = new RerankingEntry(2, 0.60);
 
-        $result = new RerankingResult($entry1, $entry2, $entry3);
+        $result = new RerankingResult([$entry1, $entry2, $entry3]);
 
         $this->assertSame([$entry1, $entry2, $entry3], $result->getContent());
     }
@@ -46,7 +46,7 @@ final class RerankingResultTest extends TestCase
         $this->assertSame([], $result->getContent());
     }
 
-    public function testConstructorAcceptsVariadicEntries()
+    public function testConstructorAcceptsArrayOfEntries()
     {
         $entries = [
             new RerankingEntry(0, 0.9),
@@ -54,7 +54,7 @@ final class RerankingResultTest extends TestCase
             new RerankingEntry(2, 0.5),
         ];
 
-        $result = new RerankingResult(...$entries);
+        $result = new RerankingResult($entries);
 
         $this->assertSame($entries, $result->getContent());
     }

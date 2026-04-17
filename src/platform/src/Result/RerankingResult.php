@@ -23,7 +23,10 @@ final class RerankingResult extends BaseResult
      */
     private readonly array $entries;
 
-    public function __construct(RerankingEntry ...$entries)
+    /**
+     * @param list<RerankingEntry> $entries
+     */
+    public function __construct(array $entries = [])
     {
         $this->entries = $entries;
     }
