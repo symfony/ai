@@ -160,7 +160,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function count(): int
     {
-        $stats = $this->pinecone->data()->describeIndexStats();
+        $stats = $this->getVectors()->stats();
 
         if (null !== $this->namespace) {
             $namespaces = $stats->json()['namespaces'] ?? [];

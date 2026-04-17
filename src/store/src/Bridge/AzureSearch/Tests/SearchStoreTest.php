@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore;
+use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
@@ -163,12 +164,12 @@ final class SearchStoreTest extends TestCase
             ]),
         ]);
 
-        $store = new SearchStore(
-            $httpClient,
-            'https://test.search.windows.net',
-            'test-api-key',
-            'test-index',
-            '2023-11-01',
+        $store = StoreFactory::create(
+            indexName: 'test-index',
+            endpoint: 'https://test.search.windows.net',
+            apiKey: 'test-api-key',
+            apiVersion: '2023-11-01',
+            httpClient: $httpClient,
         );
 
         $this->assertSame(42, $store->count());

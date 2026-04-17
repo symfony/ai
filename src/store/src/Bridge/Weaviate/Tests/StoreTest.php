@@ -287,12 +287,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8080');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:8080',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());
