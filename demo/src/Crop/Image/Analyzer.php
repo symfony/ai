@@ -33,28 +33,28 @@ final readonly class Analyzer
 
         \assert($result instanceof ObjectDetectionResult);
 
-        if ([] === $result->objects) {
+        if ([] === $result->getObjects()) {
             throw new \RuntimeException('No objects detected.');
         }
 
-        $init = $result->objects[0];
-        $xMin = $init->xmin;
-        $yMin = $init->ymin;
-        $xMax = $init->xmax;
-        $yMax = $init->ymax;
+        $init = $result->getObjects()[0];
+        $xMin = $init->getXmin();
+        $yMin = $init->getYmin();
+        $xMax = $init->getXmax();
+        $yMax = $init->getYmax();
 
-        foreach ($result->objects as $object) {
-            if ($object->xmin < $xMin) {
-                $xMin = $object->xmin;
+        foreach ($result->getObjects() as $object) {
+            if ($object->getXmin() < $xMin) {
+                $xMin = $object->getXmin();
             }
-            if ($object->ymin < $yMin) {
-                $yMin = $object->ymin;
+            if ($object->getYmin() < $yMin) {
+                $yMin = $object->getYmin();
             }
-            if ($object->xmax > $xMax) {
-                $xMax = $object->xmax;
+            if ($object->getXmax() > $xMax) {
+                $xMax = $object->getXmax();
             }
-            if ($object->ymax > $yMax) {
-                $yMax = $object->ymax;
+            if ($object->getYmax() > $yMax) {
+                $yMax = $object->getYmax();
             }
         }
 

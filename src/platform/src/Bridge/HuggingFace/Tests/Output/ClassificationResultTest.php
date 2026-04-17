@@ -32,8 +32,8 @@ final class ClassificationResultTest extends TestCase
 
         $result = new ClassificationResult($classifications);
 
-        $this->assertSame($classifications, $result->classifications);
-        $this->assertCount(2, $result->classifications);
+        $this->assertSame($classifications, $result->getClassifications());
+        $this->assertCount(2, $result->getClassifications());
     }
 
     #[TestDox('Construction with empty array creates valid instance')]
@@ -41,8 +41,8 @@ final class ClassificationResultTest extends TestCase
     {
         $result = new ClassificationResult([]);
 
-        $this->assertSame([], $result->classifications);
-        $this->assertCount(0, $result->classifications);
+        $this->assertSame([], $result->getClassifications());
+        $this->assertCount(0, $result->getClassifications());
     }
 
     #[TestDox('fromArray creates instance with Classification objects')]
@@ -56,16 +56,16 @@ final class ClassificationResultTest extends TestCase
 
         $result = ClassificationResult::fromArray($data);
 
-        $this->assertCount(3, $result->classifications);
+        $this->assertCount(3, $result->getClassifications());
 
-        $this->assertSame('positive', $result->classifications[0]->label);
-        $this->assertSame(0.95, $result->classifications[0]->score);
+        $this->assertSame('positive', $result->getClassifications()[0]->getLabel());
+        $this->assertSame(0.95, $result->getClassifications()[0]->getScore());
 
-        $this->assertSame('negative', $result->classifications[1]->label);
-        $this->assertSame(0.03, $result->classifications[1]->score);
+        $this->assertSame('negative', $result->getClassifications()[1]->getLabel());
+        $this->assertSame(0.03, $result->getClassifications()[1]->getScore());
 
-        $this->assertSame('neutral', $result->classifications[2]->label);
-        $this->assertSame(0.02, $result->classifications[2]->score);
+        $this->assertSame('neutral', $result->getClassifications()[2]->getLabel());
+        $this->assertSame(0.02, $result->getClassifications()[2]->getScore());
     }
 
     #[TestDox('fromArray with empty data creates empty result')]
@@ -73,8 +73,8 @@ final class ClassificationResultTest extends TestCase
     {
         $result = ClassificationResult::fromArray([]);
 
-        $this->assertCount(0, $result->classifications);
-        $this->assertSame([], $result->classifications);
+        $this->assertCount(0, $result->getClassifications());
+        $this->assertSame([], $result->getClassifications());
     }
 
     #[TestDox('fromArray with single classification')]
@@ -86,10 +86,10 @@ final class ClassificationResultTest extends TestCase
 
         $result = ClassificationResult::fromArray($data);
 
-        $this->assertCount(1, $result->classifications);
-        $this->assertInstanceOf(Classification::class, $result->classifications[0]);
-        $this->assertSame('confident', $result->classifications[0]->label);
-        $this->assertSame(0.99, $result->classifications[0]->score);
+        $this->assertCount(1, $result->getClassifications());
+        $this->assertInstanceOf(Classification::class, $result->getClassifications()[0]);
+        $this->assertSame('confident', $result->getClassifications()[0]->getLabel());
+        $this->assertSame(0.99, $result->getClassifications()[0]->getScore());
     }
 
     #[TestDox('fromArray preserves order of classifications')]
@@ -103,9 +103,9 @@ final class ClassificationResultTest extends TestCase
 
         $result = ClassificationResult::fromArray($data);
 
-        $this->assertSame('first', $result->classifications[0]->label);
-        $this->assertSame('second', $result->classifications[1]->label);
-        $this->assertSame('third', $result->classifications[2]->label);
+        $this->assertSame('first', $result->getClassifications()[0]->getLabel());
+        $this->assertSame('second', $result->getClassifications()[1]->getLabel());
+        $this->assertSame('third', $result->getClassifications()[2]->getLabel());
     }
 
     /**
@@ -122,8 +122,8 @@ final class ClassificationResultTest extends TestCase
     {
         $result = ClassificationResult::fromArray([$classification]);
 
-        $this->assertCount(1, $result->classifications);
-        $this->assertSame($classification['label'], $result->classifications[0]->label);
-        $this->assertSame($classification['score'], $result->classifications[0]->score);
+        $this->assertCount(1, $result->getClassifications());
+        $this->assertSame($classification['label'], $result->getClassifications()[0]->getLabel());
+        $this->assertSame($classification['score'], $result->getClassifications()[0]->getScore());
     }
 }

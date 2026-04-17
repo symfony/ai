@@ -17,10 +17,30 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 final class MaskFill
 {
     public function __construct(
-        public readonly int $token,
-        public readonly string $tokenStr,
-        public readonly string $sequence,
-        public readonly float $score,
+        private readonly int $token,
+        private readonly string $tokenStr,
+        private readonly string $sequence,
+        private readonly float $score,
     ) {
+    }
+
+    public function getToken(): int
+    {
+        return $this->token;
+    }
+
+    public function getTokenStr(): string
+    {
+        return $this->tokenStr;
+    }
+
+    public function getSequence(): string
+    {
+        return $this->sequence;
+    }
+
+    public function getScore(): float
+    {
+        return $this->score;
     }
 }

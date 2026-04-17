@@ -17,11 +17,31 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 final class QuestionAnsweringResult
 {
     public function __construct(
-        public readonly string $answer,
-        public readonly int $startIndex,
-        public readonly int $endIndex,
-        public readonly float $score,
+        private readonly string $answer,
+        private readonly int $startIndex,
+        private readonly int $endIndex,
+        private readonly float $score,
     ) {
+    }
+
+    public function getAnswer(): string
+    {
+        return $this->answer;
+    }
+
+    public function getStartIndex(): int
+    {
+        return $this->startIndex;
+    }
+
+    public function getEndIndex(): int
+    {
+        return $this->endIndex;
+    }
+
+    public function getScore(): float
+    {
+        return $this->score;
     }
 
     /**

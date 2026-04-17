@@ -29,9 +29,9 @@ final class ZeroShotClassificationResultTest extends TestCase
 
         $result = new ZeroShotClassificationResult($labels, $scores);
 
-        $this->assertSame($labels, $result->labels);
-        $this->assertSame($scores, $result->scores);
-        $this->assertNull($result->sequence);
+        $this->assertSame($labels, $result->getLabels());
+        $this->assertSame($scores, $result->getScores());
+        $this->assertNull($result->getSequence());
     }
 
     #[TestDox('Construction with all parameters creates valid instance')]
@@ -43,9 +43,9 @@ final class ZeroShotClassificationResultTest extends TestCase
 
         $result = new ZeroShotClassificationResult($labels, $scores, $sequence);
 
-        $this->assertSame($labels, $result->labels);
-        $this->assertSame($scores, $result->scores);
-        $this->assertSame($sequence, $result->sequence);
+        $this->assertSame($labels, $result->getLabels());
+        $this->assertSame($scores, $result->getScores());
+        $this->assertSame($sequence, $result->getSequence());
     }
 
     /**
@@ -61,9 +61,9 @@ final class ZeroShotClassificationResultTest extends TestCase
     {
         $result = new ZeroShotClassificationResult($labels, $scores, $sequence);
 
-        $this->assertSame($labels, $result->labels);
-        $this->assertSame($scores, $result->scores);
-        $this->assertSame($sequence, $result->sequence);
+        $this->assertSame($labels, $result->getLabels());
+        $this->assertSame($scores, $result->getScores());
+        $this->assertSame($sequence, $result->getSequence());
     }
 
     #[TestDox('fromArray creates instance from new serverless format')]
@@ -77,9 +77,9 @@ final class ZeroShotClassificationResultTest extends TestCase
 
         $result = ZeroShotClassificationResult::fromArray($data);
 
-        $this->assertSame(['refund', 'faq', 'legal'], $result->labels);
-        $this->assertSame([0.878, 0.105, 0.017], $result->scores);
-        $this->assertNull($result->sequence);
+        $this->assertSame(['refund', 'faq', 'legal'], $result->getLabels());
+        $this->assertSame([0.878, 0.105, 0.017], $result->getScores());
+        $this->assertNull($result->getSequence());
     }
 
     #[TestDox('fromArray creates instance with required fields')]
@@ -92,9 +92,9 @@ final class ZeroShotClassificationResultTest extends TestCase
 
         $result = ZeroShotClassificationResult::fromArray($data);
 
-        $this->assertSame(['positive', 'negative'], $result->labels);
-        $this->assertSame([0.85, 0.15], $result->scores);
-        $this->assertNull($result->sequence);
+        $this->assertSame(['positive', 'negative'], $result->getLabels());
+        $this->assertSame([0.85, 0.15], $result->getScores());
+        $this->assertNull($result->getSequence());
     }
 
     #[TestDox('fromArray creates instance with all fields')]
@@ -108,9 +108,9 @@ final class ZeroShotClassificationResultTest extends TestCase
 
         $result = ZeroShotClassificationResult::fromArray($data);
 
-        $this->assertSame(['sports', 'politics', 'entertainment'], $result->labels);
-        $this->assertSame([0.6, 0.3, 0.1], $result->scores);
-        $this->assertSame('The match was exciting to watch', $result->sequence);
+        $this->assertSame(['sports', 'politics', 'entertainment'], $result->getLabels());
+        $this->assertSame([0.6, 0.3, 0.1], $result->getScores());
+        $this->assertSame('The match was exciting to watch', $result->getSequence());
     }
 
     /**
@@ -124,9 +124,9 @@ final class ZeroShotClassificationResultTest extends TestCase
     {
         $result = ZeroShotClassificationResult::fromArray($data);
 
-        $this->assertSame($data['labels'], $result->labels);
-        $this->assertSame($data['scores'], $result->scores);
-        $this->assertSame($data['sequence'] ?? null, $result->sequence);
+        $this->assertSame($data['labels'], $result->getLabels());
+        $this->assertSame($data['scores'], $result->getScores());
+        $this->assertSame($data['sequence'] ?? null, $result->getSequence());
     }
 
     /**
@@ -144,8 +144,8 @@ final class ZeroShotClassificationResultTest extends TestCase
 
         $result = ZeroShotClassificationResult::fromArray($data);
 
-        $this->assertSame($labels, $result->labels);
-        $this->assertCount(\count($labels), $result->labels);
+        $this->assertSame($labels, $result->getLabels());
+        $this->assertCount(\count($labels), $result->getLabels());
     }
 
     /**
@@ -161,11 +161,11 @@ final class ZeroShotClassificationResultTest extends TestCase
     {
         $result = ZeroShotClassificationResult::fromArray($data);
 
-        $this->assertSame($data['scores'], $result->scores);
-        $this->assertCount(\count($data['scores']), $result->scores);
+        $this->assertSame($data['scores'], $result->getScores());
+        $this->assertCount(\count($data['scores']), $result->getScores());
 
         foreach ($data['scores'] as $index => $expectedScore) {
-            $this->assertSame($expectedScore, $result->scores[$index]);
+            $this->assertSame($expectedScore, $result->getScores()[$index]);
         }
     }
 
@@ -189,7 +189,7 @@ final class ZeroShotClassificationResultTest extends TestCase
             'sequence' => $sequence,
         ]);
 
-        $this->assertSame($sequence, $result1->sequence);
-        $this->assertSame($sequence, $result2->sequence);
+        $this->assertSame($sequence, $result1->getSequence());
+        $this->assertSame($sequence, $result2->getSequence());
     }
 }

@@ -20,8 +20,16 @@ final class SentenceSimilarityResult
      * @param array<float> $similarities
      */
     public function __construct(
-        public readonly array $similarities,
+        private readonly array $similarities,
     ) {
+    }
+
+    /**
+     * @return array<float>
+     */
+    public function getSimilarities(): array
+    {
+        return $this->similarities;
     }
 
     /**

@@ -26,8 +26,8 @@ final class ClassificationTest extends TestCase
     {
         $classification = new Classification('positive', 0.95);
 
-        $this->assertSame('positive', $classification->label);
-        $this->assertSame(0.95, $classification->score);
+        $this->assertSame('positive', $classification->getLabel());
+        $this->assertSame(0.95, $classification->getScore());
     }
 
     #[TestDox('Constructor accepts various label and score combinations')]
@@ -46,7 +46,7 @@ final class ClassificationTest extends TestCase
     {
         $classification = new Classification($label, $score);
 
-        $this->assertSame($label, $classification->label);
-        $this->assertSame($score, $classification->score);
+        $this->assertSame($label, $classification->getLabel());
+        $this->assertSame($score, $classification->getScore());
     }
 }

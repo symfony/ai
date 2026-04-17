@@ -31,10 +31,10 @@ final class MaskFillTest extends TestCase
             score: 0.85
         );
 
-        $this->assertSame(12345, $maskFill->token);
-        $this->assertSame('happy', $maskFill->tokenStr);
-        $this->assertSame('I am feeling happy today', $maskFill->sequence);
-        $this->assertSame(0.85, $maskFill->score);
+        $this->assertSame(12345, $maskFill->getToken());
+        $this->assertSame('happy', $maskFill->getTokenStr());
+        $this->assertSame('I am feeling happy today', $maskFill->getSequence());
+        $this->assertSame(0.85, $maskFill->getScore());
     }
 
     #[TestDox('Constructor accepts various token IDs')]
@@ -50,10 +50,10 @@ final class MaskFillTest extends TestCase
     ) {
         $maskFill = new MaskFill($token, $tokenStr, $sequence, $score);
 
-        $this->assertSame($token, $maskFill->token);
-        $this->assertSame($tokenStr, $maskFill->tokenStr);
-        $this->assertSame($sequence, $maskFill->sequence);
-        $this->assertSame($score, $maskFill->score);
+        $this->assertSame($token, $maskFill->getToken());
+        $this->assertSame($tokenStr, $maskFill->getTokenStr());
+        $this->assertSame($sequence, $maskFill->getSequence());
+        $this->assertSame($score, $maskFill->getScore());
     }
 
     #[TestDox('Constructor handles various token strings')]
@@ -70,7 +70,7 @@ final class MaskFillTest extends TestCase
     public function testConstructorWithVariousTokenStrings(string $tokenStr)
     {
         $maskFill = new MaskFill(100, $tokenStr, 'Test sequence', 0.5);
-        $this->assertSame($tokenStr, $maskFill->tokenStr);
+        $this->assertSame($tokenStr, $maskFill->getTokenStr());
     }
 
     #[TestDox('Constructor handles various sequences')]
@@ -84,7 +84,7 @@ final class MaskFillTest extends TestCase
     public function testConstructorWithVariousSequences(string $sequence)
     {
         $maskFill = new MaskFill(100, 'token', $sequence, 0.5);
-        $this->assertSame($sequence, $maskFill->sequence);
+        $this->assertSame($sequence, $maskFill->getSequence());
     }
 
     #[TestDox('Constructor handles edge case scores')]
@@ -96,6 +96,6 @@ final class MaskFillTest extends TestCase
     public function testConstructorWithEdgeScores(float $score)
     {
         $maskFill = new MaskFill(100, 'token', 'sequence', $score);
-        $this->assertSame($score, $maskFill->score);
+        $this->assertSame($score, $maskFill->getScore());
     }
 }

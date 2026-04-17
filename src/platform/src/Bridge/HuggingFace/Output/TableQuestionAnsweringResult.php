@@ -22,11 +22,40 @@ final class TableQuestionAnsweringResult
      * @param array<string>|string|null $aggregator
      */
     public function __construct(
-        public readonly string $answer,
-        public readonly array $coordinates = [],
-        public readonly array $cells = [],
-        public readonly array|string|null $aggregator = null,
+        private readonly string $answer,
+        private readonly array $coordinates = [],
+        private readonly array $cells = [],
+        private readonly array|string|null $aggregator = null,
     ) {
+    }
+
+    public function getAnswer(): string
+    {
+        return $this->answer;
+    }
+
+    /**
+     * @return array{0: int, 1: int}[]
+     */
+    public function getCoordinates(): array
+    {
+        return $this->coordinates;
+    }
+
+    /**
+     * @return array<int, string|int>
+     */
+    public function getCells(): array
+    {
+        return $this->cells;
+    }
+
+    /**
+     * @return array<string>|string|null
+     */
+    public function getAggregator(): array|string|null
+    {
+        return $this->aggregator;
     }
 
     /**

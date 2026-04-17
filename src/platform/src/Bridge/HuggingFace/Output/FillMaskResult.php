@@ -20,8 +20,16 @@ final class FillMaskResult
      * @param MaskFill[] $fills
      */
     public function __construct(
-        public array $fills,
+        private readonly array $fills,
     ) {
+    }
+
+    /**
+     * @return MaskFill[]
+     */
+    public function getFills(): array
+    {
+        return $this->fills;
     }
 
     /**

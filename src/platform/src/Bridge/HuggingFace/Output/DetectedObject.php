@@ -17,12 +17,42 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 final class DetectedObject
 {
     public function __construct(
-        public readonly string $label,
-        public readonly float $score,
-        public readonly float $xmin,
-        public readonly float $ymin,
-        public readonly float $xmax,
-        public readonly float $ymax,
+        private readonly string $label,
+        private readonly float $score,
+        private readonly float $xmin,
+        private readonly float $ymin,
+        private readonly float $xmax,
+        private readonly float $ymax,
     ) {
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function getScore(): float
+    {
+        return $this->score;
+    }
+
+    public function getXmin(): float
+    {
+        return $this->xmin;
+    }
+
+    public function getYmin(): float
+    {
+        return $this->ymin;
+    }
+
+    public function getXmax(): float
+    {
+        return $this->xmax;
+    }
+
+    public function getYmax(): float
+    {
+        return $this->ymax;
     }
 }

@@ -17,8 +17,18 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 final class Classification
 {
     public function __construct(
-        public readonly string $label,
-        public readonly float $score,
+        private readonly string $label,
+        private readonly float $score,
     ) {
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label;
+    }
+
+    public function getScore(): float
+    {
+        return $this->score;
     }
 }

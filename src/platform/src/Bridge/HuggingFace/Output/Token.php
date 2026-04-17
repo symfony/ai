@@ -17,11 +17,36 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Output;
 final class Token
 {
     public function __construct(
-        public readonly string $entityGroup,
-        public readonly float $score,
-        public readonly string $word,
-        public readonly int $start,
-        public readonly int $end,
+        private readonly string $entityGroup,
+        private readonly float $score,
+        private readonly string $word,
+        private readonly int $start,
+        private readonly int $end,
     ) {
+    }
+
+    public function getEntityGroup(): string
+    {
+        return $this->entityGroup;
+    }
+
+    public function getScore(): float
+    {
+        return $this->score;
+    }
+
+    public function getWord(): string
+    {
+        return $this->word;
+    }
+
+    public function getStart(): int
+    {
+        return $this->start;
+    }
+
+    public function getEnd(): int
+    {
+        return $this->end;
     }
 }

@@ -27,8 +27,8 @@ final class SentenceSimilarityResultTest extends TestCase
         $similarities = [0.95, 0.87, 0.12];
         $result = new SentenceSimilarityResult($similarities);
 
-        $this->assertSame($similarities, $result->similarities);
-        $this->assertCount(3, $result->similarities);
+        $this->assertSame($similarities, $result->getSimilarities());
+        $this->assertCount(3, $result->getSimilarities());
     }
 
     #[TestDox('Construction with empty array creates valid instance')]
@@ -36,8 +36,8 @@ final class SentenceSimilarityResultTest extends TestCase
     {
         $result = new SentenceSimilarityResult([]);
 
-        $this->assertSame([], $result->similarities);
-        $this->assertCount(0, $result->similarities);
+        $this->assertSame([], $result->getSimilarities());
+        $this->assertCount(0, $result->getSimilarities());
     }
 
     /**
@@ -54,8 +54,8 @@ final class SentenceSimilarityResultTest extends TestCase
     {
         $result = new SentenceSimilarityResult($similarities);
 
-        $this->assertSame($similarities, $result->similarities);
-        $this->assertCount(\count($similarities), $result->similarities);
+        $this->assertSame($similarities, $result->getSimilarities());
+        $this->assertCount(\count($similarities), $result->getSimilarities());
     }
 
     #[TestDox('fromArray creates instance from array data')]
@@ -65,12 +65,12 @@ final class SentenceSimilarityResultTest extends TestCase
 
         $result = SentenceSimilarityResult::fromArray($data);
 
-        $this->assertSame($data, $result->similarities);
-        $this->assertCount(4, $result->similarities);
-        $this->assertSame(0.92, $result->similarities[0]);
-        $this->assertSame(0.78, $result->similarities[1]);
-        $this->assertSame(0.45, $result->similarities[2]);
-        $this->assertSame(0.23, $result->similarities[3]);
+        $this->assertSame($data, $result->getSimilarities());
+        $this->assertCount(4, $result->getSimilarities());
+        $this->assertSame(0.92, $result->getSimilarities()[0]);
+        $this->assertSame(0.78, $result->getSimilarities()[1]);
+        $this->assertSame(0.45, $result->getSimilarities()[2]);
+        $this->assertSame(0.23, $result->getSimilarities()[3]);
     }
 
     /**
@@ -88,11 +88,11 @@ final class SentenceSimilarityResultTest extends TestCase
     {
         $result = SentenceSimilarityResult::fromArray($data);
 
-        $this->assertSame($data, $result->similarities);
-        $this->assertCount(\count($data), $result->similarities);
+        $this->assertSame($data, $result->getSimilarities());
+        $this->assertCount(\count($data), $result->getSimilarities());
 
         foreach ($data as $index => $similarity) {
-            $this->assertSame($similarity, $result->similarities[$index]);
+            $this->assertSame($similarity, $result->getSimilarities()[$index]);
         }
     }
 
@@ -110,8 +110,8 @@ final class SentenceSimilarityResultTest extends TestCase
         $result2 = SentenceSimilarityResult::fromArray($similarities);
 
         foreach ($similarities as $index => $expected) {
-            $this->assertSame($expected, $result1->similarities[$index]);
-            $this->assertSame($expected, $result2->similarities[$index]);
+            $this->assertSame($expected, $result1->getSimilarities()[$index]);
+            $this->assertSame($expected, $result2->getSimilarities()[$index]);
         }
     }
 }

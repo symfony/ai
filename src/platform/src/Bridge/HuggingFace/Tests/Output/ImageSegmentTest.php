@@ -30,9 +30,9 @@ final class ImageSegmentTest extends TestCase
             mask: 'base64_encoded_mask_data'
         );
 
-        $this->assertSame('person', $segment->label);
-        $this->assertSame(0.95, $segment->score);
-        $this->assertSame('base64_encoded_mask_data', $segment->mask);
+        $this->assertSame('person', $segment->getLabel());
+        $this->assertSame(0.95, $segment->getScore());
+        $this->assertSame('base64_encoded_mask_data', $segment->getMask());
     }
 
     #[TestDox('Construction with null score creates valid instance')]
@@ -44,9 +44,9 @@ final class ImageSegmentTest extends TestCase
             mask: 'mask_data'
         );
 
-        $this->assertSame('background', $segment->label);
-        $this->assertNull($segment->score);
-        $this->assertSame('mask_data', $segment->mask);
+        $this->assertSame('background', $segment->getLabel());
+        $this->assertNull($segment->getScore());
+        $this->assertSame('mask_data', $segment->getMask());
     }
 
     #[TestDox('Constructor accepts various parameter combinations')]
@@ -65,9 +65,9 @@ final class ImageSegmentTest extends TestCase
     {
         $segment = new ImageSegment($label, $score, $mask);
 
-        $this->assertSame($label, $segment->label);
-        $this->assertSame($score, $segment->score);
-        $this->assertSame($mask, $segment->mask);
+        $this->assertSame($label, $segment->getLabel());
+        $this->assertSame($score, $segment->getScore());
+        $this->assertSame($mask, $segment->getMask());
     }
 
     #[TestDox('Typical base64 mask patterns')]
@@ -84,9 +84,9 @@ final class ImageSegmentTest extends TestCase
         $segment = new ImageSegment($label, $score, $mask);
 
         if ('' === $expectedStart) {
-            $this->assertSame('', $segment->mask);
+            $this->assertSame('', $segment->getMask());
         } else {
-            $this->assertStringStartsWith($expectedStart, $segment->mask);
+            $this->assertStringStartsWith($expectedStart, $segment->getMask());
         }
     }
 }

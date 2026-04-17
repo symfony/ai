@@ -31,8 +31,8 @@ final class ObjectDetectionResultTest extends TestCase
 
         $result = new ObjectDetectionResult($objects);
 
-        $this->assertSame($objects, $result->objects);
-        $this->assertCount(2, $result->objects);
+        $this->assertSame($objects, $result->getObjects());
+        $this->assertCount(2, $result->getObjects());
     }
 
     #[TestDox('Construction with empty array creates valid instance')]
@@ -40,8 +40,8 @@ final class ObjectDetectionResultTest extends TestCase
     {
         $result = new ObjectDetectionResult([]);
 
-        $this->assertSame([], $result->objects);
-        $this->assertCount(0, $result->objects);
+        $this->assertSame([], $result->getObjects());
+        $this->assertCount(0, $result->getObjects());
     }
 
     #[TestDox('fromArray creates instance with DetectedObject objects')]
@@ -67,20 +67,20 @@ final class ObjectDetectionResultTest extends TestCase
 
         $result = ObjectDetectionResult::fromArray($data);
 
-        $this->assertCount(3, $result->objects);
+        $this->assertCount(3, $result->getObjects());
 
-        $this->assertSame('person', $result->objects[0]->label);
-        $this->assertSame(0.95, $result->objects[0]->score);
-        $this->assertSame(10.5, $result->objects[0]->xmin);
-        $this->assertSame(20.5, $result->objects[0]->ymin);
-        $this->assertSame(100.5, $result->objects[0]->xmax);
-        $this->assertSame(200.5, $result->objects[0]->ymax);
+        $this->assertSame('person', $result->getObjects()[0]->getLabel());
+        $this->assertSame(0.95, $result->getObjects()[0]->getScore());
+        $this->assertSame(10.5, $result->getObjects()[0]->getXmin());
+        $this->assertSame(20.5, $result->getObjects()[0]->getYmin());
+        $this->assertSame(100.5, $result->getObjects()[0]->getXmax());
+        $this->assertSame(200.5, $result->getObjects()[0]->getYmax());
 
-        $this->assertSame('dog', $result->objects[1]->label);
-        $this->assertSame(0.80, $result->objects[1]->score);
+        $this->assertSame('dog', $result->getObjects()[1]->getLabel());
+        $this->assertSame(0.80, $result->getObjects()[1]->getScore());
 
-        $this->assertSame('car', $result->objects[2]->label);
-        $this->assertSame(0.60, $result->objects[2]->score);
+        $this->assertSame('car', $result->getObjects()[2]->getLabel());
+        $this->assertSame(0.60, $result->getObjects()[2]->getScore());
     }
 
     #[TestDox('fromArray with empty data creates empty result')]
@@ -88,8 +88,8 @@ final class ObjectDetectionResultTest extends TestCase
     {
         $result = ObjectDetectionResult::fromArray([]);
 
-        $this->assertCount(0, $result->objects);
-        $this->assertSame([], $result->objects);
+        $this->assertCount(0, $result->getObjects());
+        $this->assertSame([], $result->getObjects());
     }
 
     #[TestDox('fromArray with single detection')]
@@ -105,10 +105,10 @@ final class ObjectDetectionResultTest extends TestCase
 
         $result = ObjectDetectionResult::fromArray($data);
 
-        $this->assertCount(1, $result->objects);
-        $this->assertInstanceOf(DetectedObject::class, $result->objects[0]);
-        $this->assertSame('bicycle', $result->objects[0]->label);
-        $this->assertSame(0.99, $result->objects[0]->score);
+        $this->assertCount(1, $result->getObjects());
+        $this->assertInstanceOf(DetectedObject::class, $result->getObjects()[0]);
+        $this->assertSame('bicycle', $result->getObjects()[0]->getLabel());
+        $this->assertSame(0.99, $result->getObjects()[0]->getScore());
     }
 
     #[TestDox('fromArray preserves order of detections')]
@@ -122,9 +122,9 @@ final class ObjectDetectionResultTest extends TestCase
 
         $result = ObjectDetectionResult::fromArray($data);
 
-        $this->assertSame('first', $result->objects[0]->label);
-        $this->assertSame('second', $result->objects[1]->label);
-        $this->assertSame('third', $result->objects[2]->label);
+        $this->assertSame('first', $result->getObjects()[0]->getLabel());
+        $this->assertSame('second', $result->getObjects()[1]->getLabel());
+        $this->assertSame('third', $result->getObjects()[2]->getLabel());
     }
 
     #[TestDox('fromArray handles various coordinate systems')]
@@ -141,19 +141,19 @@ final class ObjectDetectionResultTest extends TestCase
 
         $result = ObjectDetectionResult::fromArray($data);
 
-        $this->assertCount(3, $result->objects);
+        $this->assertCount(3, $result->getObjects());
 
         // Normalized
-        $this->assertSame(0.1, $result->objects[0]->xmin);
-        $this->assertSame(0.9, $result->objects[0]->xmax);
+        $this->assertSame(0.1, $result->getObjects()[0]->getXmin());
+        $this->assertSame(0.9, $result->getObjects()[0]->getXmax());
 
         // Pixels
-        $this->assertSame(100.0, $result->objects[1]->xmin);
-        $this->assertSame(500.0, $result->objects[1]->xmax);
+        $this->assertSame(100.0, $result->getObjects()[1]->getXmin());
+        $this->assertSame(500.0, $result->getObjects()[1]->getXmax());
 
         // Negative
-        $this->assertSame(-50.0, $result->objects[2]->xmin);
-        $this->assertSame(50.0, $result->objects[2]->xmax);
+        $this->assertSame(-50.0, $result->getObjects()[2]->getXmin());
+        $this->assertSame(50.0, $result->getObjects()[2]->getXmax());
     }
 
     #[TestDox('fromArray handles typical YOLO-style detections')]
@@ -168,10 +168,10 @@ final class ObjectDetectionResultTest extends TestCase
 
         $result = ObjectDetectionResult::fromArray($data);
 
-        $this->assertCount(4, $result->objects);
+        $this->assertCount(4, $result->getObjects());
 
         // Check multiple instances of same class
-        $personCount = array_filter($result->objects, static fn ($obj) => 'person' === $obj->label);
+        $personCount = array_filter($result->getObjects(), static fn ($obj) => 'person' === $obj->getLabel());
         $this->assertCount(2, $personCount);
     }
 }

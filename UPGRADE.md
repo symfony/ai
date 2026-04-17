@@ -34,6 +34,20 @@ Platform
    +new ImageResult(null, [$image1, $image2]);
    ```
 
+ * Properties of all HuggingFace Output classes have been changed from public to private readonly. Use getter methods instead:
+
+   ```diff
+   -$classification->label;
+   -$classification->score;
+   +$classification->getLabel();
+   +$classification->getScore();
+   ```
+
+   Affected classes: `Classification`, `ClassificationResult`, `DetectedObject`, `FillMaskResult`,
+   `ImageSegment`, `ImageSegmentationResult`, `MaskFill`, `ObjectDetectionResult`,
+   `QuestionAnsweringResult`, `SentenceSimilarityResult`, `TableQuestionAnsweringResult`,
+   `Token`, `TokenClassificationResult`, `ZeroShotClassificationResult`.
+
 UPGRADE FROM 0.6 to 0.7
 =======================
 
