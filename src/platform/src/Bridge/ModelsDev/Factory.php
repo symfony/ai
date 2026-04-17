@@ -154,6 +154,6 @@ final class Factory
     ): Platform {
         return new Platform([
             self::createProvider($provider, $apiKey, $baseUrl, $dataPath, $contract, $httpClient, $eventDispatcher),
-        ]);
+        ], eventDispatcher: $eventDispatcher);
     }
 }

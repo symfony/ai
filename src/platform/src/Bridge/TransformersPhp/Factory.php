@@ -49,6 +49,6 @@ final class Factory
     ): Platform {
         return new Platform([
             self::createProvider($modelCatalog, $eventDispatcher, $name),
-        ]);
+        ], eventDispatcher: $eventDispatcher);
     }
 }

@@ -97,6 +97,6 @@ final class Factory
     ): Platform {
         return new Platform([
             self::createProvider($bedrockRuntimeClient, $modelCatalog, $contract, $eventDispatcher, $name),
-        ]);
+        ], eventDispatcher: $eventDispatcher);
     }
 }

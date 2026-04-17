@@ -76,6 +76,6 @@ final class Factory
     ): Platform {
         return new Platform([
             self::createProvider($baseUrl, $deployment, $apiVersion, $apiKey, $httpClient, $modelCatalog, $contract, $eventDispatcher, $name),
-        ]);
+        ], eventDispatcher: $eventDispatcher);
     }
 }

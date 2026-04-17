@@ -68,6 +68,6 @@ final class Factory
     ): Platform {
         return new Platform([
             self::createProvider($cliBinary, $workingDirectory, $timeout, $environment, $modelCatalog, $contract, $eventDispatcher, $logger, $name),
-        ]);
+        ], eventDispatcher: $eventDispatcher);
     }
 }
