@@ -17,7 +17,7 @@ use Codewithkyrian\ChromaDB\Responses\QueryItemsResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\ChromaDb\Store;
+use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -54,7 +54,7 @@ final class StoreTest extends TestCase
             ->method('upsert')
             ->with($expectedIds, $expectedVectors, $expectedMetadata, $expectedOriginalDocuments);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
 
         $store->add($documents);
     }
@@ -169,7 +169,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector)));
 
         $this->assertCount(2, $documents);
@@ -213,7 +213,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['where' => $whereFilter]));
 
         $this->assertCount(1, $documents);
@@ -256,7 +256,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['whereDocument' => $whereDocumentFilter]));
 
         $this->assertCount(2, $documents);
@@ -300,7 +300,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), [
             'where' => $whereFilter,
             'whereDocument' => $whereDocumentFilter,
@@ -346,7 +346,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['where' => $whereFilter]));
 
         $this->assertCount(0, $documents);
@@ -377,7 +377,7 @@ final class StoreTest extends TestCase
             ->method('query')
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector)));
 
         $this->assertCount(2, $documents);
@@ -410,7 +410,7 @@ final class StoreTest extends TestCase
             ->method('query')
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector)));
 
         $this->assertCount(1, $documents);
@@ -460,7 +460,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), $options));
 
         $this->assertCount(1, $documents);
@@ -491,7 +491,7 @@ final class StoreTest extends TestCase
             ->method('query')
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector)));
 
         $this->assertCount(1, $documents);
@@ -525,7 +525,7 @@ final class StoreTest extends TestCase
             ->method('query')
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['include' => ['documents']]));
 
         $this->assertCount(1, $documents);
@@ -559,7 +559,7 @@ final class StoreTest extends TestCase
             ->method('query')
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['include' => ['embeddings', 'metadatas', 'distances', 'documents']]));
 
         $this->assertCount(1, $documents);
@@ -655,7 +655,7 @@ final class StoreTest extends TestCase
             ->method('delete')
             ->with([$vectorId]);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $store->remove($vectorId);
     }
 
@@ -675,7 +675,7 @@ final class StoreTest extends TestCase
             ->method('delete')
             ->with($vectorIds);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $store->remove($vectorIds);
     }
 
@@ -686,7 +686,7 @@ final class StoreTest extends TestCase
         $client->expects($this->never())
             ->method('getOrCreateCollection');
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $store->remove([]);
     }
 
@@ -722,7 +722,7 @@ final class StoreTest extends TestCase
             )
             ->willReturn($queryResponse);
 
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
         $documents = iterator_to_array($store->query(new TextQuery('search for this text')));
 
         $this->assertCount(1, $documents);
@@ -734,21 +734,24 @@ final class StoreTest extends TestCase
     public function testStoreSupportsVectorQuery()
     {
         $client = $this->createMock(Client::class);
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
+
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreSupportsTextQuery()
     {
         $client = $this->createMock(Client::class);
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
+
         $this->assertTrue($store->supports(TextQuery::class));
     }
 
     public function testStoreNotSupportsHybridQuery()
     {
         $client = $this->createMock(Client::class);
-        $store = new Store($client, 'test-collection');
+        $store = StoreFactory::create($client, 'test-collection');
+
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

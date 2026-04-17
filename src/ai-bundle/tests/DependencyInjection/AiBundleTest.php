@@ -51,6 +51,7 @@ use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
 use Symfony\AI\Store\Bridge\Cache\StoreFactory as CacheStoreFactory;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
+use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory as ChromaDbStoreFactory;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
@@ -773,6 +774,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.chromadb.my_chromadb_store'));
 
         $definition = $container->getDefinition('ai.store.chromadb.my_chromadb_store');
+        $this->assertSame([ChromaDbStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(ChromaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
@@ -782,7 +784,83 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(1));
 
         $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        // Custom client
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'chromadb' => [
+                        'my_chromadb_store_with_custom_client' => [
+                            'client' => 'bar',
+                            'collection' => 'foo',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.chromadb.my_chromadb_store_with_custom_client'));
+
+        $definition = $container->getDefinition('ai.store.chromadb.my_chromadb_store_with_custom_client');
+        $this->assertSame([ChromaDbStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(ChromaDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(2, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('bar', (string) $definition->getArgument(0));
+        $this->assertSame('foo', (string) $definition->getArgument(1));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store_with_custom_client'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStoreWithCustomClient'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStoreWithCustomClient'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        // Empty collection name
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'chromadb' => [
+                        'my_chromadb_store' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.chromadb.my_chromadb_store'));
+
+        $definition = $container->getDefinition('ai.store.chromadb.my_chromadb_store');
+        $this->assertSame([ChromaDbStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(ChromaDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(2, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame(Client::class, (string) $definition->getArgument(0));
+        $this->assertSame('my_chromadb_store', (string) $definition->getArgument(1));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
@@ -808,42 +886,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasDefinition('ai.store.chromadb.my_store'));
         $this->assertFalse($container->hasDefinition('ai.store.azuresearch.my_store'));
-    }
-
-    public function testChromaDbStoreWithCustomClientCanBeConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'chromadb' => [
-                        'my_chromadb_store_with_custom_client' => [
-                            'client' => 'bar',
-                            'collection' => 'foo',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue($container->hasDefinition('ai.store.chromadb.my_chromadb_store_with_custom_client'));
-
-        $definition = $container->getDefinition('ai.store.chromadb.my_chromadb_store_with_custom_client');
-        $this->assertSame(ChromaDbStore::class, $definition->getClass());
-
-        $this->assertTrue($definition->isLazy());
-        $this->assertCount(2, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('bar', (string) $definition->getArgument(0));
-        $this->assertSame('foo', (string) $definition->getArgument(1));
-
-        $this->assertTrue($definition->hasTag('proxy'));
-        $this->assertSame([['interface' => StoreInterface::class]], $definition->getTag('proxy'));
-        $this->assertTrue($definition->hasTag('ai.store'));
-
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store_with_custom_client'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStoreWithCustomClient'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStoreWithCustomClient'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
     public function testClickhouseStoreWithCustomHttpClientCanBeConfigured()

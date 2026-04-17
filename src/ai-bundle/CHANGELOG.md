@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
+ * The `collection` option for `ChromaDb` is now optional.
 
 0.7
 ---

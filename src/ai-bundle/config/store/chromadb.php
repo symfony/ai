@@ -22,6 +22,6 @@ return (new ArrayNodeDefinition('chromadb'))
                 ->cannotBeEmpty()
                 ->defaultValue(ChromaDbClient::class)
             ->end()
-            ->stringNode('collection')->isRequired()->end()
+            ->stringNode('collection')->end()
         ->end()
     ->end();

@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\ChromaDb;
 
 use Codewithkyrian\ChromaDB\Client;
 use Codewithkyrian\ChromaDB\Exceptions\ChromaException;
+use Codewithkyrian\ChromaDB\Responses\QueryItemsResponse;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -159,42 +160,97 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
      *
-     * @return array<string>|null
+     * @return list<string>|null
      */
     private function buildInclude(array $options): ?array
     {
-        if ([] === ($options['include'] ?? [])) {
+        $include = $options['include'] ?? [];
+        if ([] === $include) {
             return null;
         }
 
-        return array_values(
-            array_unique(
-                array_merge(['embeddings', 'metadatas', 'distances'], $options['include'])
-            )
-        );
+        return array_values(array_unique(array_merge(['embeddings', 'metadatas', 'distances'], $include)));
     }
 
     /**
      * @return iterable<VectorDocument>
      */
-    private function transformResponse(object $queryResponse): iterable
+    private function transformResponse(QueryItemsResponse $queryResponse): iterable
     {
-        $metaCount = \count($queryResponse->metadatas[0]);
+        $ids = $this->extractRow($queryResponse->ids);
+        $metadatas = $this->extractRow($queryResponse->metadatas);
+        $embeddings = $this->extractRow($queryResponse->embeddings);
+        $documents = $this->extractRow($queryResponse->documents);
+        $distances = $this->extractRow($queryResponse->distances);
 
-        for ($i = 0; $i < $metaCount; ++$i) {
-            $metaData = new Metadata($queryResponse->metadatas[0][$i]);
-            if (isset($queryResponse->documents[0][$i])) {
-                $metaData->setText($queryResponse->documents[0][$i]);
+        foreach ($metadatas as $i => $rawMetadata) {
+            if (!\is_array($rawMetadata)) {
+                throw new RuntimeException('ChromaDB returned an invalid metadata entry.');
+            }
+
+            $metadata = [];
+            foreach ($rawMetadata as $key => $value) {
+                if (!\is_string($key)) {
+                    throw new RuntimeException('ChromaDB returned a non-string metadata key.');
+                }
+                $metadata[$key] = $value;
+            }
+            $metaData = new Metadata($metadata);
+
+            $document = $documents[$i] ?? null;
+            if (\is_string($document)) {
+                $metaData->setText($document);
+            }
+
+            $id = $ids[$i] ?? null;
+            if (!\is_string($id) && !\is_int($id)) {
+                throw new RuntimeException('ChromaDB returned an invalid document id.');
+            }
+
+            $rawVector = $embeddings[$i] ?? null;
+            if (!\is_array($rawVector)) {
+                throw new RuntimeException('ChromaDB returned an invalid embedding entry.');
+            }
+            $vector = [];
+            foreach ($rawVector as $component) {
+                if (!\is_float($component) && !\is_int($component)) {
+                    throw new RuntimeException('ChromaDB returned a non-numeric embedding component.');
+                }
+                $vector[] = (float) $component;
+            }
+
+            $score = $distances[$i] ?? null;
+            if (null !== $score && !\is_float($score) && !\is_int($score)) {
+                throw new RuntimeException('ChromaDB returned a non-numeric distance.');
             }
 
             yield new VectorDocument(
-                id: $queryResponse->ids[0][$i],
-                vector: new Vector($queryResponse->embeddings[0][$i]),
+                id: $id,
+                vector: new Vector($vector),
                 metadata: $metaData,
-                score: $queryResponse->distances[0][$i] ?? null,
+                score: null === $score ? null : (float) $score,
             );
         }
+    }
+
+    /**
+     * @param array<mixed>|null $matrix
+     *
+     * @return array<int|string, mixed>
+     */
+    private function extractRow(?array $matrix): array
+    {
+        if (null === $matrix) {
+            return [];
+        }
+
+        $row = $matrix[0] ?? [];
+        if (!\is_array($row)) {
+            throw new RuntimeException('ChromaDB returned a malformed response row.');
+        }
+
+        return $row;
     }
 }
