@@ -34,11 +34,11 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
-use Symfony\AI\Platform\Bridge\Decart\PlatformFactory as DecartPlatformFactory;
-use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
+use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -4078,8 +4078,8 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($definition->isLazy());
         $this->assertSame([
-            DecartPlatformFactory::class,
-            'create',
+            DecartFactory::class,
+            'createPlatform',
         ], $definition->getFactory());
         $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
@@ -4117,7 +4117,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
 
         $definition = $container->getDefinition('ai.platform.ollama');
-        $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());
@@ -4148,7 +4148,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
 
         $definition = $container->getDefinition('ai.platform.ollama');
-        $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());
@@ -4178,7 +4178,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
 
         $definition = $container->getDefinition('ai.platform.ollama');
-        $this->assertSame([OllamaPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());
@@ -4344,7 +4344,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
 
         $definition = $container->getDefinition('ai.platform.elevenlabs');
-        $this->assertSame([ElevenLabsPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());
@@ -4380,7 +4380,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
 
         $definition = $container->getDefinition('ai.platform.elevenlabs');
-        $this->assertSame([ElevenLabsPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());
@@ -4416,7 +4416,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
 
         $definition = $container->getDefinition('ai.platform.elevenlabs');
-        $this->assertSame([ElevenLabsPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());
@@ -4451,7 +4451,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
 
         $definition = $container->getDefinition('ai.platform.elevenlabs');
-        $this->assertSame([ElevenLabsPlatformFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
         $this->assertCount(5, $definition->getArguments());

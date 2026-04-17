@@ -11,14 +11,14 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create($_ENV['OPENAI_API_KEY'], http_client());
+$platform = Factory::createPlatform($_ENV['OPENAI_API_KEY'], http_client());
 
 // Load system prompt from a plain text file (.txt)
 $promptFile = File::fromFile(dirname(__DIR__, 2).'/fixtures/prompts/helpful-assistant.txt');

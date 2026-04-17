@@ -12,13 +12,13 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore;
 use Symfony\AI\Chat\Chat;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 $store = new MessageStore(http_client(), env('POGOCACHE_HOST'), env('POGOCACHE_PASSWORD'));
 $store->setup();

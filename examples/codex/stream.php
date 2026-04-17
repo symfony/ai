@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Codex\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Codex\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     workingDirectory: dirname(__DIR__, 2),
     environment: ['CODEX' => false], // To enable Codex to execute the example
     logger: logger(),

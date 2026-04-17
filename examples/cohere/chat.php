@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Cohere\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Cohere\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('COHERE_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('COHERE_API_KEY'), http_client());
 
 $messages = new MessageBag(Message::ofUser('What is the largest ocean on Earth?'));
 $result = $platform->invoke('command-a-03-2025', $messages, [

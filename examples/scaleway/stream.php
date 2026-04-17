@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Scaleway\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('SCALEWAY_SECRET_KEY'), http_client());
+$platform = Factory::createPlatform(env('SCALEWAY_SECRET_KEY'), http_client());
 
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),

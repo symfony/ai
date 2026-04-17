@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -23,7 +23,7 @@ $client = http_client()->withOptions([
     ],
 ]);
 
-$platform = PlatformFactory::create(env('OPENROUTER_KEY'), $client);
+$platform = Factory::createPlatform(env('OPENROUTER_KEY'), $client);
 
 $messages = new MessageBag(
     Message::forSystem('Output two sentences related to the user topic.'),

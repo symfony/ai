@@ -13,13 +13,13 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Ollama\Ollama;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client());
+$platform = Factory::createPlatform(env('OLLAMA_HOST_URL'), httpClient: http_client());
 
 $ollama = new Ollama(http_client(), env('OLLAMA_API_KEY'));
 $toolbox = new Toolbox([$ollama], logger: logger());

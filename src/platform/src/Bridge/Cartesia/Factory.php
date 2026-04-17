@@ -1,0 +1,63 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\Cartesia;
+
+use Symfony\AI\Platform\Bridge\Cartesia\Contract\CartesiaContract;
+use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
+use Symfony\AI\Platform\ProviderInterface;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+/**
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
+ */
+final class Factory
+{
+    public static function createProvider(
+        string $apiKey,
+        string $version,
+        ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?Contract $contract = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
+        string $name = 'cartesia',
+    ): ProviderInterface {
+        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+
+        return new Provider(
+            $name,
+            [new CartesiaClient($httpClient, $apiKey, $version)],
+            [new CartesiaResultConverter()],
+            $modelCatalog,
+            $contract ?? CartesiaContract::create(),
+            $eventDispatcher,
+        );
+    }
+
+    public static function createPlatform(
+        string $apiKey,
+        string $version,
+        ?HttpClientInterface $httpClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?Contract $contract = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
+        string $name = 'cartesia',
+    ): Platform {
+        return new Platform([
+            self::createProvider($apiKey, $version, $httpClient, $modelCatalog, $contract, $eventDispatcher, $name),
+        ]);
+    }
+}

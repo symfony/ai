@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Codex\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Codex\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -21,7 +21,7 @@ $workingDirectory = sys_get_temp_dir().'/codex-example-'.bin2hex(random_bytes(4)
 mkdir($workingDirectory);
 shell_exec(sprintf('git -C %s init --quiet', escapeshellarg($workingDirectory)));
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     workingDirectory: $workingDirectory,
     environment: ['CODEX' => false],
     logger: logger(),

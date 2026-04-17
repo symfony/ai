@@ -13,13 +13,13 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory;
+use Symfony\AI\Platform\Bridge\DockerModelRunner\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('DOCKER_MODEL_RUNNER_HOST_URL'), http_client());
+$platform = Factory::createPlatform(env('DOCKER_MODEL_RUNNER_HOST_URL'), http_client());
 
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia]);

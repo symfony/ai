@@ -10,7 +10,7 @@
  */
 
 use Codewithkyrian\Transformers\Pipelines\Task;
-use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory;
+use Symfony\AI\Platform\Bridge\TransformersPhp\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -24,7 +24,7 @@ if (!is_dir(dirname(__DIR__).'/.transformers-cache/Xenova/LaMini-Flan-T5-783M'))
     echo 'Model "Xenova/LaMini-Flan-T5-783M" not found. Downloading it will be part of the first run. This may take a while...'.\PHP_EOL;
 }
 
-$platform = PlatformFactory::create();
+$platform = Factory::createPlatform();
 
 $result = $platform->invoke('Xenova/LaMini-Flan-T5-783M', 'How many continents are there in the world?', [
     'task' => Task::Text2TextGeneration,

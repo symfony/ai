@@ -16,7 +16,7 @@ use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
@@ -51,7 +51,7 @@ foreach (Movies::all() as $i => $movie) {
 $store->setup(['dimensions' => 768]);
 
 // create embeddings for documents
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());
 $model = 'gemini-embedding-exp-03-07?dimensions=768&task_type=SEMANTIC_SIMILARITY';
 $vectorizer = new Vectorizer($platform, $model, logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));

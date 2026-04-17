@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
-use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
-use Symfony\AI\Platform\Bridge\ModelsDev\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
+use Symfony\AI\Platform\Bridge\ModelsDev\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -26,14 +26,14 @@ $messages = new MessageBag(
 
 // Example 1: OpenAI-compatible provider (works immediately)
 echo "1. DeepSeek (OpenAI-compatible):\n";
-$platform = PlatformFactory::create('deepseek', env('DEEPSEEK_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform('deepseek', env('DEEPSEEK_API_KEY'), httpClient: http_client());
 $result = $platform->invoke('deepseek-chat', $messages);
 echo $result->asText()."\n\n";
 
 // Example 2: Anthropic provider (auto-routes to Anthropic bridge if installed)
-if (class_exists(AnthropicPlatformFactory::class)) {
+if (class_exists(AnthropicFactory::class)) {
     echo "2. Anthropic (auto-routed to Anthropic bridge):\n";
-    $platform = PlatformFactory::create('anthropic', env('ANTHROPIC_API_KEY'), httpClient: http_client());
+    $platform = Factory::createPlatform('anthropic', env('ANTHROPIC_API_KEY'), httpClient: http_client());
     $result = $platform->invoke('claude-haiku-4-5', $messages);
     echo $result->asText()."\n\n";
 } else {
@@ -41,9 +41,9 @@ if (class_exists(AnthropicPlatformFactory::class)) {
 }
 
 // Example 3: Google Gemini (auto-routes to Gemini bridge if installed)
-if (class_exists(GeminiPlatformFactory::class)) {
+if (class_exists(GeminiFactory::class)) {
     echo "3. Google Gemini (auto-routed to Gemini bridge):\n";
-    $platform = PlatformFactory::create('google', env('GEMINI_API_KEY'), httpClient: http_client());
+    $platform = Factory::createPlatform('google', env('GEMINI_API_KEY'), httpClient: http_client());
     $result = $platform->invoke('gemini-2.5-flash', $messages);
     echo $result->asText()."\n\n";
 } else {

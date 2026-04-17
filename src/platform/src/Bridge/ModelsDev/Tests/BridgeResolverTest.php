@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\ModelsDev\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
-use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
+use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\ModelsDev\BridgeResolver;
 
 /**
@@ -31,8 +31,8 @@ final class BridgeResolverTest extends TestCase
 
     public function testGetBridgeFactory()
     {
-        $this->assertSame(AnthropicPlatformFactory::class, BridgeResolver::getBridgeFactory('@ai-sdk/anthropic'));
-        $this->assertSame(GeminiPlatformFactory::class, BridgeResolver::getBridgeFactory('@ai-sdk/google'));
+        $this->assertSame(AnthropicFactory::class, BridgeResolver::getBridgeFactory('@ai-sdk/anthropic'));
+        $this->assertSame(GeminiFactory::class, BridgeResolver::getBridgeFactory('@ai-sdk/google'));
         $this->assertNull(BridgeResolver::getBridgeFactory('@ai-sdk/openai'));
     }
 

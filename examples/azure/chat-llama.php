@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Azure\Meta\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Azure\Meta\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('AZURE_LLAMA_BASEURL'), env('AZURE_LLAMA_KEY'), http_client());
+$platform = Factory::createPlatform(env('AZURE_LLAMA_BASEURL'), env('AZURE_LLAMA_KEY'), http_client());
 
 $messages = new MessageBag(Message::ofUser('I am going to Paris, what should I see?'));
 $result = $platform->invoke('llama-3.3-70B-Instruct', $messages, [

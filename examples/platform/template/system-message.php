@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -27,7 +27,7 @@ $rendererRegistry = new TemplateRendererRegistry([
 $templateListener = new TemplateRendererListener($rendererRegistry);
 $eventDispatcher->addSubscriber($templateListener);
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client(), eventDispatcher: $eventDispatcher);
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client(), eventDispatcher: $eventDispatcher);
 
 echo "SystemMessage with template\n";
 echo "===========================\n\n";

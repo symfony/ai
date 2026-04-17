@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Decart\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Decart\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     apiKey: env('DECART_API_KEY'),
     httpClient: http_client(),
 );

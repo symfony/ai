@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextReplaceTransformer;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
@@ -21,7 +21,7 @@ use Symfony\AI\Store\Query\VectorQuery;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
 
 $store = new InMemoryStore();
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
