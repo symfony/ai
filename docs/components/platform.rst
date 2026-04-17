@@ -43,6 +43,9 @@ With this :class:`Symfony\\AI\\Platform\\PlatformInterface` instance you can now
 Depending on the model and its capabilities, different types of inputs and outputs are supported, which results in a
 very flexible and powerful interface for working with AI models.
 
+To use several backends behind a single ``Platform`` and route model invocations automatically,
+see `Providers and Multi-Provider Platforms`_.
+
 Models
 ------
 
@@ -840,6 +843,12 @@ This platform can also be configured when using the bundle::
 .. note::
 
     Platforms are executed in the order they're injected into :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform`.
+
+.. note::
+
+    ``FailoverPlatform`` reacts to runtime errors by falling back to the next platform.
+    For catalog-based routing (e.g. sending ``gpt-4o`` to OpenAI and ``claude-*`` to Anthropic
+    in the same ``Platform`` instance), see `Providers and Multi-Provider Platforms`_.
 
 Testing Tools
 -------------
