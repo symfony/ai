@@ -645,7 +645,7 @@ final class AiBundle extends AbstractBundle
 
         if ('failover' === $type) {
             foreach ($platform as $name => $config) {
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-failover-platform', FailoverFactory::class, ['symfony/ai-bundle'])) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-failover-platform', FailoverPlatformFactory::class, ['symfony/ai-bundle'])) {
                     throw new RuntimeException('Failover platform configuration requires "symfony/ai-failover-platform" package. Try running "composer require symfony/ai-failover-platform".');
                 }
 
