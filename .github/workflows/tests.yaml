@@ -117,6 +117,12 @@ jobs:
                   bridge: ${{ matrix.bridge.bridge }}
                   target: tmp
 
+            - name: Install sqlite-vec extension
+              if: matrix.bridge.bridge == 'Sqlite'
+              run: |
+                  curl -L https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/install.sh | sh
+                  echo "SQLITE_VEC_PATH=$(pwd)/vec0.so" >> $GITHUB_ENV
+
             - name: Install dependencies
               uses: ramsey/composer-install@v4
               with:
@@ -158,6 +164,12 @@ jobs:
                   component: store
                   bridge: ${{ matrix.bridge }}
                   target: tmp
+
+            - name: Install sqlite-vec extension
+              if: matrix.bridge == 'Sqlite'
+              run: |
+                  curl -L https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/install.sh | sh
+                  echo "SQLITE_VEC_PATH=$(pwd)/vec0.so" >> $GITHUB_ENV
 
             - name: Install dependencies
               uses: ramsey/composer-install@v4

@@ -28,6 +28,7 @@
         "php": ">=8.2",
         "ext-pdo": "*",
         "ext-pdo_sqlite": "*",
+        "oskarstark/enum-helper": "^1.5",
         "symfony/ai-platform": "^0.7",
         "symfony/ai-store": "^0.7"
     },
