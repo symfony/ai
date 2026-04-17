@@ -15,6 +15,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
@@ -62,12 +65,22 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
 
         $result = $converter->convert(new RawHttpResult($response));
-        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertInstanceOf(MultiPartResult::class, $result);
 
-        $this->assertEquals("Second text\nThird text\nFourth text", $result->getContent());
+        $parts = [
+            new TextResult("First text\n"),
+            new ExecutableCodeResult("print('Hello, World!')", 'PYTHON'),
+            new CodeExecutionResult(true, 'Hello, World!'),
+            new TextResult("Second text\n"),
+            new TextResult("Third text\n"),
+            new TextResult('Fourth text'),
+        ];
+
+        $this->assertEquals($parts, $result->getContent());
+        $this->assertEquals("First text\nSecond text\nThird text\nFourth text", $result->asText());
     }
 
-    public function testItReturnsToolCallEvenIfMultipleContentPartsAreGiven()
+    public function testItReturnsMultiPartIfMultipleContentPartsAreGiven()
     {
         $payload = [
             'content' => [
@@ -96,14 +109,15 @@ final class ResultConverterTest extends TestCase
 
         $result = $resultConverter->convert(new RawHttpResult($response));
 
-        $this->assertInstanceOf(ToolCallResult::class, $result);
-        $this->assertCount(1, $result->getContent());
-        $toolCall = $result->getContent()[0];
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertCount(2, $result->getContent());
+        $this->assertInstanceOf(ToolCallResult::class, $result->getContent()[1]);
+        $toolCall = $result->getContent()[1]->getContent()[0];
         $this->assertInstanceOf(ToolCall::class, $toolCall);
-        $this->assertSame('some_tool', $toolCall->getId());
+        $this->assertSame('some_tool', $toolCall->getName());
     }
 
-    public function testItThrowsExceptionOnFailure()
+    public function testItDoesNotSucceedOnFailure()
     {
         $response = $this->createStub(ResponseInterface::class);
         $responseContent = file_get_contents(__DIR__.'/Fixtures/code_execution_outcome_failed.json');
@@ -114,11 +128,20 @@ final class ResultConverterTest extends TestCase
 
         $converter = new ResultConverter();
 
-        $this->expectException(\RuntimeException::class);
-        $converter->convert(new RawHttpResult($response));
+        $result = $converter->convert(new RawHttpResult($response));
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+
+        $parts = [
+            new TextResult('First text'),
+            new ExecutableCodeResult("print('Hello, World!')", 'PYTHON'),
+            new CodeExecutionResult(false, 'An error occurred during code execution.'),
+            new TextResult('Last text'),
+        ];
+
+        $this->assertEquals($parts, $result->getContent());
     }
 
-    public function testItThrowsExceptionOnTimeout()
+    public function testItDoesNotSucceedOnTimeout()
     {
         $response = $this->createStub(ResponseInterface::class);
         $responseContent = file_get_contents(__DIR__.'/Fixtures/code_execution_outcome_deadline_exceeded.json');
@@ -129,8 +152,17 @@ final class ResultConverterTest extends TestCase
 
         $converter = new ResultConverter();
 
-        $this->expectException(\RuntimeException::class);
-        $converter->convert(new RawHttpResult($response));
+        $result = $converter->convert(new RawHttpResult($response));
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+
+        $parts = [
+            new TextResult('First text'),
+            new ExecutableCodeResult("print('Hello, World!')", 'PYTHON'),
+            new CodeExecutionResult(false, 'An error occurred during code execution.'),
+            new TextResult('Last text'),
+        ];
+
+        $this->assertEquals($parts, $result->getContent());
     }
 
     public function testConvertsInlineDataToBinaryResult()
