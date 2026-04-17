@@ -19,9 +19,9 @@ To instantiate an agent, you need to pass a :class:`Symfony\\AI\\Platform\\Platf
 model name to the :class:`Symfony\\AI\\Agent\\Agent` class::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 
-    $platform = PlatformFactory::create($apiKey);
+    $platform = Factory::createPlatform($apiKey);
     $model = 'gpt-4o-mini';
 
     $agent = new Agent($platform, $model);
@@ -833,15 +833,15 @@ Here is a `text-to-speech` example::
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\SpeechAgent;
     use Symfony\AI\Agent\Speech\SpeechConfiguration;
-    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $openAIPlatform = OpenAiPlatformFactory::create('key');
+    $openAIPlatform = OpenAiFactory::createPlatform('key');
     $agent = new Agent($openAIPlatform, 'gpt-4o');
 
-    $elevenLabsPlatform = ElevenLabsPlatformFactory::create(apiKey: 'key');
+    $elevenLabsPlatform = ElevenLabsFactory::createPlatform(apiKey: 'key');
 
     $speechAgent = new SpeechAgent($agent, new SpeechConfiguration(
         ttsModel: 'eleven_multilingual_v2',
@@ -861,12 +861,12 @@ When handling `speech-to-text`, the decorator transcribes the audio input before
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\SpeechAgent;
     use Symfony\AI\Agent\Speech\SpeechConfiguration;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
     use Symfony\AI\Platform\Message\Content\Audio;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $platform = OpenAiPlatformFactory::create('key');
+    $platform = OpenAiFactory::createPlatform('key');
     $agent = new Agent($platform, 'gpt-4o');
 
     $speechAgent = new SpeechAgent($agent, configuration: new SpeechConfiguration(
@@ -884,16 +884,16 @@ A full speech-to-speech pipeline (STT + TTS) can be created by configuring both 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\SpeechAgent;
     use Symfony\AI\Agent\Speech\SpeechConfiguration;
-    use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory as ElevenLabsPlatformFactory;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
     use Symfony\AI\Platform\Message\Content\Audio;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $openAIPlatform = OpenAiPlatformFactory::create('key');
+    $openAIPlatform = OpenAiFactory::createPlatform('key');
     $agent = new Agent($openAIPlatform, 'gpt-4o');
 
-    $elevenLabsPlatform = ElevenLabsPlatformFactory::create(apiKey: 'key');
+    $elevenLabsPlatform = ElevenLabsFactory::createPlatform(apiKey: 'key');
 
     $speechAgent = new SpeechAgent($agent, new SpeechConfiguration(
         ttsModel: 'eleven_multilingual_v2',

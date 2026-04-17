@@ -4,6 +4,7 @@ CHANGELOG
 0.8
 ---
 
+ * [BC BREAK] Rename `PlatformFactory` to `Factory` with explicit `createProvider()` and `createPlatform()` methods
  * [BC Break] Change all Output class properties from public to private readonly with getter methods
 
 0.7

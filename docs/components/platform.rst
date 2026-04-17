@@ -28,9 +28,9 @@ OpenAI, Anthropic, Google, Replicate, and others.
 
 For example, to use the OpenAI provider, you would typically do something like this::
 
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 
-    $platform = PlatformFactory::create(env('OPENAI_API_KEY'));
+    $platform = Factory::createPlatform(env('OPENAI_API_KEY'));
 
 With this :class:`Symfony\\AI\\Platform\\PlatformInterface` instance you can now interact with the LLM::
 
@@ -81,11 +81,11 @@ Custom models
 For providers like Ollama, you can use custom models (built on top of ``Modelfile``), as those models are not listed in
 the default catalog. The ``ModelCatalog`` automatically queries the model information from the Ollama API::
 
-    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\Ollama\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $platform = PlatformFactory::create('http://127.0.0.1:11434');
+    $platform = Factory::createPlatform('http://127.0.0.1:11434');
 
     $platform->invoke('your_custom_model_name', new MessageBag(
         Message::ofUser(...)
@@ -134,11 +134,11 @@ Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multi
 Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
 standard in the industry. Platforms using this de facto standard can be used with the generic bridge::
 
-    use Symfony\AI\Platform\Bridge\Generic\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\Generic\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $platform = PlatformFactory::create('https://api.example.com', 'sk-xxxxxx', $httpClient, $modelCatalog);
+    $platform = Factory::createPlatform('https://api.example.com', 'sk-xxxxxx', $httpClient, $modelCatalog);
 
     $messages = new MessageBag(
         Message::forSystem('You are a pirate and you write funny.'),
@@ -155,6 +155,63 @@ see `LiteLLM example`_ for more details.
 Alternatively, use the :doc:`models.dev bridge <platform/models-dev>` to
 auto-discover model capabilities for many providers without manually curating
 model catalogs.
+
+Providers and Multi-Provider Platforms
+--------------------------------------
+
+A :class:`Symfony\\AI\\Platform\\Platform` is a router over one or more
+:class:`Symfony\\AI\\Platform\\ProviderInterface` instances. A provider encapsulates
+everything needed to talk to a single inference backend (model clients, result
+converters, contract, model catalog). The standalone ``Factory::createPlatform()``
+method is a convenience that wraps a single provider in a ``Platform``.
+
+For multi-provider setups, build the platform manually from multiple providers.
+The :class:`Symfony\\AI\\Platform\\ModelRouter\\CatalogBasedModelRouter` (the default)
+routes each invocation to the first provider whose catalog knows the requested model::
+
+    use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+    use Symfony\AI\Platform\Platform;
+
+    $platform = new Platform([
+        OpenAiFactory::createProvider(apiKey: env('OPENAI_API_KEY')),
+        AnthropicFactory::createProvider(apiKey: env('ANTHROPIC_API_KEY')),
+    ]);
+
+    $platform->invoke('gpt-4o', $messages);             // → OpenAI
+    $platform->invoke('claude-3-5-sonnet', $messages);  // → Anthropic
+
+Provider instances also support an optional ``$name`` parameter for connection-level
+identity, useful when running several instances of the same bridge (e.g. one OpenAI
+connection per region)::
+
+    OpenAiFactory::createProvider(apiKey: env('OPENAI_EU_KEY'), name: 'openai-eu');
+    OpenAiFactory::createProvider(apiKey: env('OPENAI_US_KEY'), name: 'openai-us');
+
+Custom routing strategies (load balancing, model-pattern matching, input-based
+selection) are implemented as additional
+:class:`Symfony\\AI\\Platform\\ModelRouterInterface` implementations passed as the
+second ``Platform`` constructor argument.
+
+Routing Events
+~~~~~~~~~~~~~~
+
+Before resolving a model to a provider, ``Platform`` dispatches a
+:class:`Symfony\\AI\\Platform\\Event\\ModelRoutingEvent`. Listeners can modify the
+model name, input, or options, or short-circuit routing entirely by setting a
+provider directly::
+
+    use Symfony\AI\Platform\Event\ModelRoutingEvent;
+
+    $eventDispatcher->addListener(ModelRoutingEvent::class, function (ModelRoutingEvent $event) use ($customProvider) {
+        if ('priority-model' === $event->getModel()) {
+            $event->setProvider($customProvider);  // skip router, use this provider
+        }
+    });
+
+Provider-level events (:class:`Symfony\\AI\\Platform\\Event\\InvocationEvent` and
+:class:`Symfony\\AI\\Platform\\Event\\ResultEvent`) still fire inside the selected
+provider for per-invocation concerns.
 
 Options
 -------
@@ -296,7 +353,7 @@ To use templates, register the ``TemplateRendererListener`` with your platform's
     $templateListener = new TemplateRendererListener($rendererRegistry);
     $eventDispatcher->addSubscriber($templateListener);
 
-    $platform = PlatformFactory::create($apiKey, eventDispatcher: $eventDispatcher);
+    $platform = Factory::createPlatform($apiKey, eventDispatcher: $eventDispatcher);
 
 .. note::
 
@@ -495,16 +552,16 @@ when using the Anthropic bridge by annotating the last user message with a
 The caching behavior is configured via the ``cacheRetention`` parameter on the
 :class:`Symfony\\AI\\Platform\\Bridge\\Anthropic\\ModelClient`::
 
-    use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 
-    // Using the PlatformFactory (defaults to 'short')
-    $platform = PlatformFactory::create($apiKey);
+    // Using the Factory (defaults to 'short')
+    $platform = Factory::createPlatform($apiKey);
 
     // Explicitly setting the cache retention
-    $platform = PlatformFactory::create($apiKey, cacheRetention: 'long');
+    $platform = Factory::createPlatform($apiKey, cacheRetention: 'long');
 
     // Disabling prompt caching
-    $platform = PlatformFactory::create($apiKey, cacheRetention: 'none');
+    $platform = Factory::createPlatform($apiKey, cacheRetention: 'none');
 
 Supported values:
 
@@ -610,7 +667,7 @@ the result back to PHP objects.
 
 To achieve this, the ``Symfony\AI\Platform\StructuredOutput\PlatformSubscriber`` needs to be registered with the platform::
 
-    use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -620,7 +677,7 @@ To achieve this, the ``Symfony\AI\Platform\StructuredOutput\PlatformSubscriber``
     $dispatcher = new EventDispatcher();
     $dispatcher->addSubscriber(new PlatformSubscriber());
 
-    $platform = PlatformFactory::create($apiKey, eventDispatcher: $dispatcher);
+    $platform = Factory::createPlatform($apiKey, eventDispatcher: $dispatcher);
     $messages = new MessageBag(
         Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
         Message::ofUser('how can I solve 8x + 7 = -23'),
@@ -701,14 +758,14 @@ Thanks to Symfony's Cache component, platform calls can be cached to reduce call
 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\Component\Cache\Adapter\ArrayAdapter;
     use Symfony\Component\Cache\Adapter\TagAwareAdapter;
     use Symfony\Component\HttpClient\HttpClient;
 
-    $platform = PlatformFactory::create($apiKey, HttpClient::create());
+    $platform = Factory::createPlatform($apiKey, HttpClient::create());
     $cachePlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
 
     $firstResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
@@ -728,8 +785,8 @@ To prevent exceptions at the application level and allows to keep a smooth exper
 the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be used to automatically call a backup platform::
 
     use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
-    use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+    use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\Component\HttpClient\HttpClient;
@@ -745,8 +802,8 @@ the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be us
 
     // # Ollama will fail as 'gpt-4o' is not available in the catalog
     $platform = new FailoverPlatform([
-        OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), HttpClient::create()),
-        OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), HttpClient::create()),
+        OllamaFactory::createPlatform(env('OLLAMA_HOST_URL'), HttpClient::create()),
+        OpenAiFactory::createPlatform(env('OPENAI_API_KEY'), HttpClient::create()),
     ], $rateLimiter);
 
     $result = $platform->invoke('gpt-4o', new MessageBag(
