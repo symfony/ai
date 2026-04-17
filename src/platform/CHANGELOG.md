@@ -7,6 +7,7 @@ CHANGELOG
  * Add `MultiPartResult` for exposing the parts inside a message
  * Add `ExecutableCodeResult`, `CodeExecutionResult` for exposing the executed code blocks and results
  * [BC BREAK] Replace variadic constructor parameters with array parameters in `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult` (OpenAI DallE bridge)
+ * Add `ref` property to `#[With]` attribute to allow providing schema as file
 
 0.7
 ---
