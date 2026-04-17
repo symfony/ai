@@ -66,11 +66,15 @@ final class Provider implements ProviderInterface
     {
         $model = $this->modelCatalog->getModel($model);
 
-        $event = new InvocationEvent($model, $input, $options);
-        $this->eventDispatcher?->dispatch($event);
+        $invocationEvent = new InvocationEvent($model, $input, $options);
+        $this->eventDispatcher?->dispatch($invocationEvent);
 
-        $payload = $this->contract->createRequestPayload($event->getModel(), $event->getInput(), $event->getOptions());
-        $options = array_merge($model->getOptions(), $event->getOptions());
+        $model = $invocationEvent->getModel();
+        $input = $invocationEvent->getInput();
+        $options = $invocationEvent->getOptions();
+
+        $payload = $this->contract->createRequestPayload($model, $input, $options);
+        $options = array_merge($model->getOptions(), $options);
 
         if (isset($options['tools'])) {
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
@@ -78,10 +82,10 @@ final class Provider implements ProviderInterface
 
         $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);
 
-        $event = new ResultEvent($model, $result, $options, $input);
-        $this->eventDispatcher?->dispatch($event);
+        $resultEvent = new ResultEvent($model, $result, $options, $input);
+        $this->eventDispatcher?->dispatch($resultEvent);
 
-        return $event->getDeferredResult();
+        return $resultEvent->getDeferredResult();
     }
 
     public function getModelCatalog(): ModelCatalogInterface
@@ -90,8 +94,8 @@ final class Provider implements ProviderInterface
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>|string $payload
+     * @param array<string, mixed>        $options
      */
     private function doInvoke(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
@@ -101,7 +105,7 @@ final class Provider implements ProviderInterface
             }
         }
 
-        throw new RuntimeException(\sprintf('No ModelClient registered for model "%s" in provider "%s".', $model::class, $this->name));
+        throw new RuntimeException(\sprintf('No ModelClient registered for model "%s" (%s) in provider "%s".', $model->getName(), $model::class, $this->name));
     }
 
     /**
@@ -115,6 +119,6 @@ final class Provider implements ProviderInterface
             }
         }
 
-        throw new RuntimeException(\sprintf('No ResultConverter registered for model "%s" in provider "%s".', $model::class, $this->name));
+        throw new RuntimeException(\sprintf('No ResultConverter registered for model "%s" (%s) in provider "%s".', $model->getName(), $model::class, $this->name));
     }
 }

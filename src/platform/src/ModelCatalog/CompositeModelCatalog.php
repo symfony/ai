@@ -55,7 +55,7 @@ final class CompositeModelCatalog implements ModelCatalogInterface
         $merged = [];
 
         foreach ($this->catalogs as $catalog) {
-            $merged = array_merge($merged, $catalog->getModels());
+            $merged += $catalog->getModels();
         }
 
         return $merged;

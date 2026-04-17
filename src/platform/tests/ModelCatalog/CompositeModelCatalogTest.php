@@ -88,7 +88,7 @@ final class CompositeModelCatalogTest extends TestCase
         $this->assertArrayHasKey('claude-3-5-sonnet', $models);
     }
 
-    public function testGetModelsLaterCatalogOverridesOnConflict()
+    public function testGetModelsFirstCatalogWinsOnConflict()
     {
         $catalog1 = $this->createStub(ModelCatalogInterface::class);
         $catalog1->method('getModels')->willReturn([
@@ -105,7 +105,7 @@ final class CompositeModelCatalogTest extends TestCase
         $models = $composite->getModels();
 
         $this->assertCount(1, $models);
-        $this->assertContains(Capability::OUTPUT_STREAMING, $models['gpt-4o']['capabilities']);
+        $this->assertNotContains(Capability::OUTPUT_STREAMING, $models['gpt-4o']['capabilities']);
     }
 
     public function testEmptyCatalogs()

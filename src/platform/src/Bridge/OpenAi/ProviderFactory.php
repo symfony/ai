@@ -35,11 +35,12 @@ final class ProviderFactory
         ?Contract $contract = null,
         ?string $region = null,
         ?EventDispatcherInterface $eventDispatcher = null,
+        string $name = 'openai',
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Provider(
-            'openai',
+            $name,
             [
                 new Gpt\ModelClient($httpClient, $apiKey, $region),
                 new Embeddings\ModelClient($httpClient, $apiKey, $region),
