@@ -75,7 +75,7 @@ final class ProfilerDataProvider
             }
         }
 
-        usort($allProfiles, static fn ($a, $b) => $b->time <=> $a->time);
+        usort($allProfiles, static fn ($a, $b) => $b->getTime() <=> $a->getTime());
 
         if (null !== $limit) {
             return \array_slice($allProfiles, 0, $limit);
@@ -142,7 +142,7 @@ final class ProfilerDataProvider
             }
         }
 
-        usort($allResults, static fn ($a, $b) => $b->time <=> $a->time);
+        usort($allResults, static fn ($a, $b) => $b->getTime() <=> $a->getTime());
 
         return \array_slice($allResults, 0, $limit);
     }
@@ -158,7 +158,7 @@ final class ProfilerDataProvider
             throw new ProfileNotFoundException(\sprintf('Profile not found for token: "%s"', $token));
         }
 
-        $profile = $profileData->profile;
+        $profile = $profileData->getProfile();
         $collectors = $profile->getCollectors();
 
         // Find collector by short name
@@ -202,7 +202,7 @@ final class ProfilerDataProvider
             throw new ProfileNotFoundException(\sprintf('Profile not found for token: "%s"', $token));
         }
 
-        $collectors = $profileData->profile->getCollectors();
+        $collectors = $profileData->getProfile()->getCollectors();
 
         return array_values(array_map(
             static fn ($collector) => $collector->getName(),

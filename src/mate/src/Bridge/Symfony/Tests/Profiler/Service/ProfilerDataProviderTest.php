@@ -42,9 +42,9 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $this->provider->readIndex();
 
         $this->assertCount(3, $profiles);
-        $this->assertSame('ghi789', $profiles[0]->token);
-        $this->assertSame('def456', $profiles[1]->token);
-        $this->assertSame('abc123', $profiles[2]->token);
+        $this->assertSame('ghi789', $profiles[0]->getToken());
+        $this->assertSame('def456', $profiles[1]->getToken());
+        $this->assertSame('abc123', $profiles[2]->getToken());
     }
 
     public function testReadIndexWithLimit()
@@ -52,8 +52,8 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $this->provider->readIndex(2);
 
         $this->assertCount(2, $profiles);
-        $this->assertSame('ghi789', $profiles[0]->token);
-        $this->assertSame('def456', $profiles[1]->token);
+        $this->assertSame('ghi789', $profiles[0]->getToken());
+        $this->assertSame('def456', $profiles[1]->getToken());
     }
 
     public function testFindProfileReturnsProfileData()
@@ -61,9 +61,9 @@ final class ProfilerDataProviderTest extends TestCase
         $profileData = $this->provider->findProfile('abc123');
 
         $this->assertNotNull($profileData);
-        $this->assertSame('abc123', $profileData->profile->getToken());
-        $this->assertInstanceOf(Profile::class, $profileData->profile);
-        $this->assertIsArray($profileData->profile->getCollectors());
+        $this->assertSame('abc123', $profileData->getProfile()->getToken());
+        $this->assertInstanceOf(Profile::class, $profileData->getProfile());
+        $this->assertIsArray($profileData->getProfile()->getCollectors());
     }
 
     public function testFindProfileReturnsNullForNonExistentToken()
@@ -80,7 +80,7 @@ final class ProfilerDataProviderTest extends TestCase
         $profileData = $this->provider->findProfile('abc123');
 
         $this->assertNotNull($profileData);
-        $this->assertSame('abc123', $profileData->profile->getToken());
+        $this->assertSame('abc123', $profileData->getProfile()->getToken());
     }
 
     public function testSearchProfilesWithoutCriteria()
@@ -95,7 +95,7 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $this->provider->searchProfiles(['method' => 'POST']);
 
         $this->assertCount(1, $profiles);
-        $this->assertSame('def456', $profiles[0]->token);
+        $this->assertSame('def456', $profiles[0]->getToken());
     }
 
     public function testSearchProfilesByStatusCode()
@@ -103,7 +103,7 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $this->provider->searchProfiles(['statusCode' => 404]);
 
         $this->assertCount(1, $profiles);
-        $this->assertSame('ghi789', $profiles[0]->token);
+        $this->assertSame('ghi789', $profiles[0]->getToken());
     }
 
     public function testSearchProfilesByUrl()
@@ -201,7 +201,7 @@ final class ProfilerDataProviderTest extends TestCase
         $profile = $this->provider->getLatestProfile();
 
         $this->assertNotNull($profile);
-        $this->assertSame('ghi789', $profile->token);
+        $this->assertSame('ghi789', $profile->getToken());
     }
 
     public function testGetLatestProfileReturnsNullWhenNoProfiles()
@@ -232,6 +232,6 @@ final class ProfilerDataProviderTest extends TestCase
         $profiles = $provider->readIndex();
 
         $this->assertCount(3, $profiles);
-        $this->assertSame('context1', $profiles[0]->context);
+        $this->assertSame('context1', $profiles[0]->getContext());
     }
 }

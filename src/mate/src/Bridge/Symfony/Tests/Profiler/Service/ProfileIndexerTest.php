@@ -42,11 +42,11 @@ final class ProfileIndexerTest extends TestCase
         $this->assertCount(3, $profiles);
 
         $first = $profiles[0];
-        $this->assertSame('abc123', $first->token);
-        $this->assertSame('127.0.0.1', $first->ip);
-        $this->assertSame('GET', $first->method);
-        $this->assertSame('/api/users', $first->url);
-        $this->assertSame(200, $first->statusCode);
+        $this->assertSame('abc123', $first->getToken());
+        $this->assertSame('127.0.0.1', $first->getIp());
+        $this->assertSame('GET', $first->getMethod());
+        $this->assertSame('/api/users', $first->getUrl());
+        $this->assertSame(200, $first->getStatusCode());
     }
 
     public function testFilterByMethod()
@@ -55,7 +55,7 @@ final class ProfileIndexerTest extends TestCase
         $filtered = $this->indexer->filterByMethod($profiles, 'POST');
 
         $this->assertCount(1, $filtered);
-        $this->assertSame('def456', array_values($filtered)[0]->token);
+        $this->assertSame('def456', array_values($filtered)[0]->getToken());
     }
 
     public function testFilterByStatusCode()
@@ -64,7 +64,7 @@ final class ProfileIndexerTest extends TestCase
         $filtered = $this->indexer->filterByStatusCode($profiles, 404);
 
         $this->assertCount(1, $filtered);
-        $this->assertSame('ghi789', array_values($filtered)[0]->token);
+        $this->assertSame('ghi789', array_values($filtered)[0]->getToken());
     }
 
     public function testFilterByUrl()

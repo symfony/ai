@@ -22,7 +22,15 @@ class Container
      * @param array<string, ServiceDefinition> $services
      */
     public function __construct(
-        public array $services,
+        private readonly array $services,
     ) {
+    }
+
+    /**
+     * @return array<string, ServiceDefinition>
+     */
+    public function getServices(): array
+    {
+        return $this->services;
     }
 }

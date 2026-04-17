@@ -32,16 +32,61 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Model;
 class ProfileIndex
 {
     public function __construct(
-        public readonly string $token,
-        public readonly string $ip,
-        public readonly string $method,
-        public readonly string $url,
-        public readonly int $time,
-        public readonly ?int $statusCode = null,
-        public readonly ?string $parentToken = null,
-        public readonly ?string $context = null,
-        public readonly ?string $type = null,
+        private readonly string $token,
+        private readonly string $ip,
+        private readonly string $method,
+        private readonly string $url,
+        private readonly int $time,
+        private readonly ?int $statusCode = null,
+        private readonly ?string $parentToken = null,
+        private readonly ?string $context = null,
+        private readonly ?string $type = null,
     ) {
+    }
+
+    public function getToken(): string
+    {
+        return $this->token;
+    }
+
+    public function getIp(): string
+    {
+        return $this->ip;
+    }
+
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function getTime(): int
+    {
+        return $this->time;
+    }
+
+    public function getStatusCode(): ?int
+    {
+        return $this->statusCode;
+    }
+
+    public function getParentToken(): ?string
+    {
+        return $this->parentToken;
+    }
+
+    public function getContext(): ?string
+    {
+        return $this->context;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
     }
 
     /**

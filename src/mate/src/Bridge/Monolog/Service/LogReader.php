@@ -103,8 +103,8 @@ final class LogReader
     public function readFiles(array $files, ?SearchCriteria $criteria = null): \Generator
     {
         $count = 0;
-        $limit = null !== $criteria ? $criteria->limit : \PHP_INT_MAX;
-        $offset = null !== $criteria ? $criteria->offset : 0;
+        $limit = null !== $criteria ? $criteria->getLimit() : \PHP_INT_MAX;
+        $offset = null !== $criteria ? $criteria->getOffset() : 0;
         $skipped = 0;
 
         foreach ($files as $file) {
@@ -184,7 +184,7 @@ final class LogReader
         $channels = [];
 
         foreach ($this->readAll() as $entry) {
-            $channels[$entry->channel] = true;
+            $channels[$entry->getChannel()] = true;
         }
 
         return array_keys($channels);
@@ -222,7 +222,7 @@ final class LogReader
                     continue;
                 }
 
-                if (null !== $level && strtoupper($level) !== $entry->level) {
+                if (null !== $level && strtoupper($level) !== $entry->getLevel()) {
                     continue;
                 }
 

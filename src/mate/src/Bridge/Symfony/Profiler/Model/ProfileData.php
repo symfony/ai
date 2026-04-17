@@ -23,8 +23,18 @@ use Symfony\Component\HttpKernel\Profiler\Profile;
 class ProfileData
 {
     public function __construct(
-        public readonly Profile $profile,
-        public readonly ?string $context = null,
+        private readonly Profile $profile,
+        private readonly ?string $context = null,
     ) {
+    }
+
+    public function getProfile(): Profile
+    {
+        return $this->profile;
+    }
+
+    public function getContext(): ?string
+    {
+        return $this->context;
     }
 }
