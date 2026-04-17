@@ -54,24 +54,48 @@ It also updates your ``composer.json`` with the following configuration:
 .. code-block:: json
 
     {
-        "autoload": {
+        "autoload-dev": {
             "psr-4": {
-                "App\\Mate\\": "mate/src"
+                "App\\Mate\\": "mate/src/"
             }
         },
         "extra": {
             "ai-mate": {
+                "extension": false,
                 "scan-dirs": ["mate/src"],
                 "includes": ["mate/config.php"]
             }
         }
     }
 
+The ``extension: false`` flag prevents your application from being discovered as a reusable Mate
+extension when it is installed as a dependency elsewhere. Remove it, or set it to ``true``, only
+if your package should be discoverable by other projects.
+
 After running ``mate init``, update your autoloader:
 
 .. code-block:: terminal
 
     $ composer dump-autoload
+
+Automatic Discovery
+-------------------
+
+The ``symfony/ai-mate`` package installs the optional Composer plugin
+``symfony/ai-mate-composer-plugin``. After your project has been initialized and
+``mate/extensions.php`` exists, Composer automatically runs::
+
+    $ vendor/bin/mate discover --composer
+
+after ``composer install`` and ``composer update``. This refreshes discovered extensions and
+regenerates the managed instruction artifacts.
+
+Before initialization, the Composer plugin does not modify your project. It only prints a hint to run::
+
+    $ vendor/bin/mate init
+
+Use ``vendor/bin/mate discover`` whenever you want to refresh extensions manually after changing
+Mate configuration, adding instructions, or working on local extensions.
 
 Discover available extensions:
 
@@ -203,6 +227,9 @@ Adding Third-Party Extensions
 
        $ vendor/bin/mate discover
 
+   When the project has already been initialized, Composer also refreshes discovery automatically
+   after ``composer install`` and ``composer update``.
+
 3. Optionally disable specific extensions::
 
        // mate/extensions.php
@@ -227,7 +254,7 @@ Container Introspection
 
 **MCP Tools:**
 
-* ``symfony-services`` - List all Symfony services from the compiled container
+* ``symfony-services`` - List Symfony services from the compiled container and optionally filter by service ID or class name using the ``query`` parameter
 
 **Configuration:**
 
@@ -241,7 +268,7 @@ Configure the cache directory::
 *Container not found*:
 
 Ensure the cache directory parameter points to the correct location. The bridge looks for
-the compiled container XML file (e.g., ``App_KernelDevDebugContainer.xml``) in the cache directory.
+compiled container XML files in the cache directory, including kernels with custom class names.
 
 *Services not appearing*:
 
@@ -266,6 +293,14 @@ All tools return profiles with a ``resource_uri`` field that points to the full 
 
 * ``symfony-profiler://profile/{token}`` - Full profile details including metadata and list of available collectors with URIs
 * ``symfony-profiler://profile/{token}/{collector}`` - Detailed collector-specific data (request, response, exception, events, etc.)
+
+When the related dependencies are installed, collector data is normalized for AI consumption for:
+
+* Doctrine DBAL queries
+* Symfony Mailer messages
+* Symfony Translation usage
+
+If no formatter is registered for a collector, Mate falls back to exposing the collector's raw data.
 
 **Configuration:**
 
@@ -409,7 +444,8 @@ Commands
     **Options:**
 
     ``--format=FORMAT``
-        Output format: ``text`` (default) or ``json``
+        Output format: ``text`` (default), ``json``, or ``toon``.
+        The ``toon`` format requires ``helgesverre/toon``.
 
     ``--extension=EXTENSION``
         Filter by extension package name (e.g., ``symfony/ai-monolog-mate-extension``)
@@ -432,6 +468,9 @@ Commands
 
         # JSON output for scripting
         $ vendor/bin/mate debug:capabilities --format=json
+
+        # TOON output for token-efficient inspection
+        $ vendor/bin/mate debug:capabilities --format=toon
 
         # Root project capabilities
         $ vendor/bin/mate debug:capabilities --extension=_custom
@@ -459,7 +498,8 @@ Commands
     **Options:**
 
     ``--format=FORMAT``
-        Output format: ``text`` (default) or ``json``
+        Output format: ``text`` (default), ``json``, or ``toon``.
+        The ``toon`` format requires ``helgesverre/toon``.
 
     ``--show-all``
         Show all discovered extensions including disabled ones
@@ -477,6 +517,9 @@ Commands
         # JSON output for scripting
         $ vendor/bin/mate debug:extensions --format=json
 
+        # TOON output for token-efficient inspection
+        $ vendor/bin/mate debug:extensions --format=toon
+
 ``mate mcp:tools:list``
     List all available MCP tools with their metadata. This command provides a compact
     overview of tools for quick reference and filtering.
@@ -490,7 +533,8 @@ Commands
         Filter tools by extension package name
 
     ``--format=FORMAT``
-        Output format: ``table`` (default) or ``json``
+        Output format: ``table`` (default), ``json``, or ``toon``.
+        The ``toon`` format requires ``helgesverre/toon``.
 
     **Examples:**
 
@@ -509,6 +553,9 @@ Commands
         # JSON output for scripting
         $ vendor/bin/mate mcp:tools:list --format=json
 
+        # TOON output for token-efficient inspection
+        $ vendor/bin/mate mcp:tools:list --format=toon
+
         # Combined filters
         $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension --filter="*search"
 
@@ -524,20 +571,24 @@ Commands
     **Options:**
 
     ``--format=FORMAT``
-        Output format: ``text`` (default) or ``json``
+        Output format: ``text`` (default), ``json``, or ``toon``.
+        The ``toon`` format requires ``helgesverre/toon``.
 
     **Examples:**
 
     .. code-block:: terminal
 
         # Inspect a specific tool
-        $ vendor/bin/mate mcp:tools:inspect php-version
+        $ vendor/bin/mate mcp:tools:inspect server-info
 
         # Inspect extension tool
-        $ vendor/bin/mate mcp:tools:inspect search-logs
+        $ vendor/bin/mate mcp:tools:inspect monolog-search
 
         # JSON output for scripting
-        $ vendor/bin/mate mcp:tools:inspect php-version --format=json
+        $ vendor/bin/mate mcp:tools:inspect server-info --format=json
+
+        # TOON output for token-efficient inspection
+        $ vendor/bin/mate mcp:tools:inspect server-info --format=toon
 
 ``mate mcp:tools:call``
     Execute MCP tools via JSON input parameters. This command allows you to test and
@@ -554,28 +605,32 @@ Commands
     **Options:**
 
     ``--format=FORMAT``
-        Output format: ``pretty`` (default) or ``json``
+        Output format: ``pretty`` (default), ``json``, or ``toon``.
+        The ``toon`` format requires ``helgesverre/toon``.
 
     **Examples:**
 
     .. code-block:: terminal
 
         # Execute tool with empty parameters
-        $ vendor/bin/mate mcp:tools:call php-version '{}'
+        $ vendor/bin/mate mcp:tools:call server-info '{}'
 
         # Execute tool with parameters
-        $ vendor/bin/mate mcp:tools:call search-logs '{"query": "error", "level": "error"}'
+        $ vendor/bin/mate mcp:tools:call monolog-search '{"term": "error", "level": "error"}'
 
         # JSON output format
-        $ vendor/bin/mate mcp:tools:call php-version '{}' --format=json
+        $ vendor/bin/mate mcp:tools:call server-info '{}' --format=json
+
+        # TOON output for token-efficient inspection
+        $ vendor/bin/mate mcp:tools:call server-info '{}' --format=toon
 
 Security
 --------
 
-For security, no vendor extensions are enabled by default. You must explicitly enable packages
-in ``mate/extensions.php`` by setting their ``enabled`` flag to ``true``.
+Discovered extensions are written to ``mate/extensions.php`` and new entries default to
+``enabled: true``. Disable specific packages by setting their ``enabled`` flag to ``false``.
 
-The local ``mate/`` directory is always enabled for rapid development.
+Packages that set ``extra.ai-mate.extension`` to ``false`` are excluded from discovery entirely.
 
 Further Reading
 ---------------
