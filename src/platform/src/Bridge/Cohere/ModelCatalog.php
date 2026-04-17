@@ -36,6 +36,35 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'command-a-vision-07-2025' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'command-a-translate-08-2025' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                ],
+            ],
+            'command-a-reasoning-08-2025' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
             'command-r-plus-08-2024' => [
                 'class' => Cohere::class,
                 'capabilities' => [
@@ -66,6 +95,24 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            // Aya models
+            'c4ai-aya-expanse-32b' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                ],
+            ],
+            'c4ai-aya-vision-32b' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                ],
+            ],
             // Embedding models
             'embed-v4.0' => [
                 'class' => Embeddings::class,
@@ -88,6 +135,14 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS],
             ],
             // Reranking models
+            'rerank-v4.0-pro' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            'rerank-v4.0-fast' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
             'rerank-v3.5' => [
                 'class' => Reranker::class,
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
@@ -99,6 +154,11 @@ final class ModelCatalog extends AbstractModelCatalog
             'rerank-multilingual-v3.0' => [
                 'class' => Reranker::class,
                 'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            // Speech-to-text models
+            'cohere-transcribe-03-2026' => [
+                'class' => SpeechToText::class,
+                'capabilities' => [Capability::INPUT_AUDIO, Capability::SPEECH_TO_TEXT],
             ],
         ];
 
