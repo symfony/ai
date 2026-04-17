@@ -1,10 +1,14 @@
 CHANGELOG
 =========
 
-0.7
+0.8
 ---
 
  * Add `count` method
+
+0.7
+---
+
  * Add support for cosine distance in MariaDB store
 
 0.1
