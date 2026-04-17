@@ -52,7 +52,7 @@ final class ProfilerResourceTemplate
             ];
         }
 
-        $profile = $profileData->profile;
+        $profile = $profileData->getProfile();
         $collectors = $this->dataProvider->listAvailableCollectors($token);
 
         $collectorResources = [];
@@ -74,8 +74,8 @@ final class ProfilerResourceTemplate
             'collectors' => $collectorResources,
         ];
 
-        if (null !== $profileData->context) {
-            $data['context'] = $profileData->context;
+        if (null !== $profileData->getContext()) {
+            $data['context'] = $profileData->getContext();
         }
 
         return [

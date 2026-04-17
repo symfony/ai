@@ -39,15 +39,15 @@ class ServiceTool
         }
 
         $output = [];
-        foreach ($container->services as $service) {
+        foreach ($container->getServices() as $service) {
             if (null !== $query && '' !== $query) {
-                $matches = str_contains(strtolower($service->id), strtolower($query))
-                    || (null !== $service->class && str_contains(strtolower($service->class), strtolower($query)));
+                $matches = str_contains(strtolower($service->getId()), strtolower($query))
+                    || (null !== $service->getClass() && str_contains(strtolower($service->getClass()), strtolower($query)));
                 if (!$matches) {
                     continue;
                 }
             }
-            $output[$service->id] = $service->class;
+            $output[$service->getId()] = $service->getClass();
         }
 
         return ResponseEncoder::encode($output);

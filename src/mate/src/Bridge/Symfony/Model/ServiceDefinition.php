@@ -26,12 +26,54 @@ class ServiceDefinition
      * @param array{0: string|null, 1: string} $constructor
      */
     public function __construct(
-        public string $id,
-        public ?string $class,
-        public ?string $alias,
-        public array $calls,
-        public array $tags,
-        public array $constructor,
+        private readonly string $id,
+        private readonly ?string $class,
+        private readonly ?string $alias,
+        private readonly array $calls,
+        private readonly array $tags,
+        private readonly array $constructor,
     ) {
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return ?class-string
+     */
+    public function getClass(): ?string
+    {
+        return $this->class;
+    }
+
+    public function getAlias(): ?string
+    {
+        return $this->alias;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
+    }
+
+    /**
+     * @return ServiceTag[]
+     */
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    /**
+     * @return array{0: string|null, 1: string}
+     */
+    public function getConstructor(): array
+    {
+        return $this->constructor;
     }
 }

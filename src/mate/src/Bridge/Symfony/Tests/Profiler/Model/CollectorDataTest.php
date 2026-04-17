@@ -30,9 +30,9 @@ final class CollectorDataTest extends TestCase
             summary: $summary
         );
 
-        $this->assertSame('request', $collectorData->name);
-        $this->assertSame($data, $collectorData->data);
-        $this->assertSame($summary, $collectorData->summary);
+        $this->assertSame('request', $collectorData->getName());
+        $this->assertSame($data, $collectorData->getData());
+        $this->assertSame($summary, $collectorData->getSummary());
     }
 
     public function testDataCanBeEmpty()
@@ -43,8 +43,7 @@ final class CollectorDataTest extends TestCase
             summary: []
         );
 
-        $this->assertIsArray($collectorData->data);
-        $this->assertEmpty($collectorData->data);
+        $this->assertSame([], $collectorData->getData());
     }
 
     public function testSummaryCanBeEmpty()
@@ -55,8 +54,7 @@ final class CollectorDataTest extends TestCase
             summary: []
         );
 
-        $this->assertIsArray($collectorData->summary);
-        $this->assertEmpty($collectorData->summary);
+        $this->assertSame([], $collectorData->getSummary());
     }
 
     public function testPropertiesAreReadonly()

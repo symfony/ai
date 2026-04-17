@@ -33,13 +33,13 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line);
 
         $this->assertNotNull($entry);
-        $this->assertSame('2024-01-15', $entry->datetime->format('Y-m-d'));
-        $this->assertSame('10:30:45', $entry->datetime->format('H:i:s'));
-        $this->assertSame('app', $entry->channel);
-        $this->assertSame('ERROR', $entry->level);
-        $this->assertSame('Database connection failed', $entry->message);
-        $this->assertSame(['exception' => 'PDOException'], $entry->context);
-        $this->assertSame(['retry' => 3], $entry->extra);
+        $this->assertSame('2024-01-15', $entry->getDatetime()->format('Y-m-d'));
+        $this->assertSame('10:30:45', $entry->getDatetime()->format('H:i:s'));
+        $this->assertSame('app', $entry->getChannel());
+        $this->assertSame('ERROR', $entry->getLevel());
+        $this->assertSame('Database connection failed', $entry->getMessage());
+        $this->assertSame(['exception' => 'PDOException'], $entry->getContext());
+        $this->assertSame(['retry' => 3], $entry->getExtra());
     }
 
     public function testParseLineFormatWithoutContext()
@@ -49,11 +49,11 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line);
 
         $this->assertNotNull($entry);
-        $this->assertSame('app', $entry->channel);
-        $this->assertSame('INFO', $entry->level);
-        $this->assertSame('Simple message', $entry->message);
-        $this->assertSame([], $entry->context);
-        $this->assertSame([], $entry->extra);
+        $this->assertSame('app', $entry->getChannel());
+        $this->assertSame('INFO', $entry->getLevel());
+        $this->assertSame('Simple message', $entry->getMessage());
+        $this->assertSame([], $entry->getContext());
+        $this->assertSame([], $entry->getExtra());
     }
 
     public function testParseJsonFormat()
@@ -63,12 +63,12 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line);
 
         $this->assertNotNull($entry);
-        $this->assertSame('2024-01-15', $entry->datetime->format('Y-m-d'));
-        $this->assertSame('app', $entry->channel);
-        $this->assertSame('INFO', $entry->level);
-        $this->assertSame('Test message', $entry->message);
-        $this->assertSame(['key' => 'value'], $entry->context);
-        $this->assertSame([], $entry->extra);
+        $this->assertSame('2024-01-15', $entry->getDatetime()->format('Y-m-d'));
+        $this->assertSame('app', $entry->getChannel());
+        $this->assertSame('INFO', $entry->getLevel());
+        $this->assertSame('Test message', $entry->getMessage());
+        $this->assertSame(['key' => 'value'], $entry->getContext());
+        $this->assertSame([], $entry->getExtra());
     }
 
     public function testParseJsonFormatWithNumericLevel()
@@ -78,7 +78,7 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line);
 
         $this->assertNotNull($entry);
-        $this->assertSame('ERROR', $entry->level);
+        $this->assertSame('ERROR', $entry->getLevel());
     }
 
     public function testParseEmptyLine()
@@ -109,8 +109,8 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line, 'dev.log', 42);
 
         $this->assertNotNull($entry);
-        $this->assertSame('dev.log', $entry->sourceFile);
-        $this->assertSame(42, $entry->lineNumber);
+        $this->assertSame('dev.log', $entry->getSourceFile());
+        $this->assertSame(42, $entry->getLineNumber());
     }
 
     public function testParseLineFormatWithTimezone()
@@ -120,8 +120,8 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line);
 
         $this->assertNotNull($entry);
-        $this->assertSame('app', $entry->channel);
-        $this->assertSame('INFO', $entry->level);
+        $this->assertSame('app', $entry->getChannel());
+        $this->assertSame('INFO', $entry->getLevel());
     }
 
     public function testParseLineFormatWithMilliseconds()
@@ -131,6 +131,6 @@ final class LogParserTest extends TestCase
         $entry = $this->parser->parse($line);
 
         $this->assertNotNull($entry);
-        $this->assertSame('DEBUG', $entry->level);
+        $this->assertSame('DEBUG', $entry->getLevel());
     }
 }

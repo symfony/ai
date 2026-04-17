@@ -22,8 +22,21 @@ class ServiceTag
      * @param array<string, string> $attributes
      */
     public function __construct(
-        public string $name,
-        public array $attributes = [],
+        private readonly string $name,
+        private readonly array $attributes = [],
     ) {
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
     }
 }

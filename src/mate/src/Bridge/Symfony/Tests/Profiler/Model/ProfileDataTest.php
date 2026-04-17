@@ -31,8 +31,8 @@ final class ProfileDataTest extends TestCase
             context: 'website'
         );
 
-        $this->assertSame($profile, $profileData->profile);
-        $this->assertSame('website', $profileData->context);
+        $this->assertSame($profile, $profileData->getProfile());
+        $this->assertSame('website', $profileData->getContext());
     }
 
     public function testContextCanBeNull()
@@ -44,8 +44,8 @@ final class ProfileDataTest extends TestCase
             context: null
         );
 
-        $this->assertSame($profile, $profileData->profile);
-        $this->assertNull($profileData->context);
+        $this->assertSame($profile, $profileData->getProfile());
+        $this->assertNull($profileData->getContext());
     }
 
     public function testContextDefaultsToNull()
@@ -56,8 +56,8 @@ final class ProfileDataTest extends TestCase
             profile: $profile
         );
 
-        $this->assertSame($profile, $profileData->profile);
-        $this->assertNull($profileData->context);
+        $this->assertSame($profile, $profileData->getProfile());
+        $this->assertNull($profileData->getContext());
     }
 
     public function testPropertiesAreReadonly()
@@ -86,9 +86,9 @@ final class ProfileDataTest extends TestCase
 
         $profileData = new ProfileData(profile: $profile);
 
-        $this->assertSame('abc123', $profileData->profile->getToken());
-        $this->assertSame('POST', $profileData->profile->getMethod());
-        $this->assertSame('/api/users', $profileData->profile->getUrl());
-        $this->assertSame('192.168.1.1', $profileData->profile->getIp());
+        $this->assertSame('abc123', $profileData->getProfile()->getToken());
+        $this->assertSame('POST', $profileData->getProfile()->getMethod());
+        $this->assertSame('/api/users', $profileData->getProfile()->getUrl());
+        $this->assertSame('192.168.1.1', $profileData->getProfile()->getIp());
     }
 }

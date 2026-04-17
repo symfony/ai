@@ -34,15 +34,61 @@ final class LogEntry
      * @param array<string, mixed> $extra
      */
     public function __construct(
-        public readonly \DateTimeImmutable $datetime,
-        public readonly string $channel,
-        public readonly string $level,
-        public readonly string $message,
-        public readonly array $context = [],
-        public readonly array $extra = [],
-        public readonly ?string $sourceFile = null,
-        public readonly ?int $lineNumber = null,
+        private readonly \DateTimeImmutable $datetime,
+        private readonly string $channel,
+        private readonly string $level,
+        private readonly string $message,
+        private readonly array $context = [],
+        private readonly array $extra = [],
+        private readonly ?string $sourceFile = null,
+        private readonly ?int $lineNumber = null,
     ) {
+    }
+
+    public function getDatetime(): \DateTimeImmutable
+    {
+        return $this->datetime;
+    }
+
+    public function getChannel(): string
+    {
+        return $this->channel;
+    }
+
+    public function getLevel(): string
+    {
+        return $this->level;
+    }
+
+    public function getMessage(): string
+    {
+        return $this->message;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getContext(): array
+    {
+        return $this->context;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getExtra(): array
+    {
+        return $this->extra;
+    }
+
+    public function getSourceFile(): ?string
+    {
+        return $this->sourceFile;
+    }
+
+    public function getLineNumber(): ?int
+    {
+        return $this->lineNumber;
     }
 
     /**

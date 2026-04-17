@@ -19,34 +19,84 @@ namespace Symfony\AI\Mate\Bridge\Monolog\Model;
 final class SearchCriteria
 {
     public function __construct(
-        public readonly ?string $term = null,
-        public readonly ?string $regex = null,
-        public readonly ?string $level = null,
-        public readonly ?string $channel = null,
-        public readonly ?\DateTimeInterface $from = null,
-        public readonly ?\DateTimeInterface $to = null,
-        public readonly ?string $contextKey = null,
-        public readonly ?string $contextValue = null,
-        public readonly int $limit = 100,
-        public readonly int $offset = 0,
+        private readonly ?string $term = null,
+        private readonly ?string $regex = null,
+        private readonly ?string $level = null,
+        private readonly ?string $channel = null,
+        private readonly ?\DateTimeInterface $from = null,
+        private readonly ?\DateTimeInterface $to = null,
+        private readonly ?string $contextKey = null,
+        private readonly ?string $contextValue = null,
+        private readonly int $limit = 100,
+        private readonly int $offset = 0,
     ) {
+    }
+
+    public function getTerm(): ?string
+    {
+        return $this->term;
+    }
+
+    public function getRegex(): ?string
+    {
+        return $this->regex;
+    }
+
+    public function getLevel(): ?string
+    {
+        return $this->level;
+    }
+
+    public function getChannel(): ?string
+    {
+        return $this->channel;
+    }
+
+    public function getFrom(): ?\DateTimeInterface
+    {
+        return $this->from;
+    }
+
+    public function getTo(): ?\DateTimeInterface
+    {
+        return $this->to;
+    }
+
+    public function getContextKey(): ?string
+    {
+        return $this->contextKey;
+    }
+
+    public function getContextValue(): ?string
+    {
+        return $this->contextValue;
+    }
+
+    public function getLimit(): int
+    {
+        return $this->limit;
+    }
+
+    public function getOffset(): int
+    {
+        return $this->offset;
     }
 
     public function matches(LogEntry $entry): bool
     {
-        if (null !== $this->level && strtoupper($this->level) !== strtoupper($entry->level)) {
+        if (null !== $this->level && strtoupper($this->level) !== strtoupper($entry->getLevel())) {
             return false;
         }
 
-        if (null !== $this->channel && strtolower($this->channel) !== strtolower($entry->channel)) {
+        if (null !== $this->channel && strtolower($this->channel) !== strtolower($entry->getChannel())) {
             return false;
         }
 
-        if (null !== $this->from && $entry->datetime < $this->from) {
+        if (null !== $this->from && $entry->getDatetime() < $this->from) {
             return false;
         }
 
-        if (null !== $this->to && $entry->datetime > $this->to) {
+        if (null !== $this->to && $entry->getDatetime() > $this->to) {
             return false;
         }
 

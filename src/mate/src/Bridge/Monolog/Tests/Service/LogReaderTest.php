@@ -63,7 +63,7 @@ final class LogReaderTest extends TestCase
         // 1 ERROR in sample.log + 1 ERROR in sample.json.log = 2 total
         $this->assertCount(2, $entries);
         foreach ($entries as $entry) {
-            $this->assertSame('ERROR', $entry->level);
+            $this->assertSame('ERROR', $entry->getLevel());
         }
     }
 
@@ -75,7 +75,7 @@ final class LogReaderTest extends TestCase
         // 1 in sample.log + 1 in sample.json.log = 2 total
         $this->assertCount(2, $entries);
         foreach ($entries as $entry) {
-            $this->assertSame('security', $entry->channel);
+            $this->assertSame('security', $entry->getChannel());
         }
     }
 
@@ -85,7 +85,7 @@ final class LogReaderTest extends TestCase
         $entries = iterator_to_array($this->reader->readAll($criteria));
 
         $this->assertCount(1, $entries);
-        $this->assertStringContainsString('Database', $entries[0]->message);
+        $this->assertStringContainsString('Database', $entries[0]->getMessage());
     }
 
     public function testReadFile()
@@ -108,7 +108,7 @@ final class LogReaderTest extends TestCase
 
         // Only ERROR entries should be returned
         foreach ($entries as $entry) {
-            $this->assertSame('ERROR', $entry->level);
+            $this->assertSame('ERROR', $entry->getLevel());
         }
     }
 

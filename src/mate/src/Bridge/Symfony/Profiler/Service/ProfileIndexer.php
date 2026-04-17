@@ -50,7 +50,7 @@ final class ProfileIndexer
     {
         return array_filter(
             $profiles,
-            static fn (ProfileIndex $profile) => strtoupper($profile->method) === strtoupper($method)
+            static fn (ProfileIndex $profile) => strtoupper($profile->getMethod()) === strtoupper($method)
         );
     }
 
@@ -63,7 +63,7 @@ final class ProfileIndexer
     {
         return array_filter(
             $profiles,
-            static fn (ProfileIndex $profile) => $profile->statusCode === $statusCode
+            static fn (ProfileIndex $profile) => $profile->getStatusCode() === $statusCode
         );
     }
 
@@ -83,7 +83,7 @@ final class ProfileIndexer
 
         return array_filter(
             $profiles,
-            static fn (ProfileIndex $profile) => $profile->time >= $fromTime && $profile->time <= $toTime
+            static fn (ProfileIndex $profile) => $profile->getTime() >= $fromTime && $profile->getTime() <= $toTime
         );
     }
 
@@ -96,7 +96,7 @@ final class ProfileIndexer
     {
         return array_filter(
             $profiles,
-            static fn (ProfileIndex $profile) => str_contains($profile->url, $urlPattern)
+            static fn (ProfileIndex $profile) => str_contains($profile->getUrl(), $urlPattern)
         );
     }
 
@@ -109,7 +109,7 @@ final class ProfileIndexer
     {
         return array_filter(
             $profiles,
-            static fn (ProfileIndex $profile) => $profile->ip === $ip
+            static fn (ProfileIndex $profile) => $profile->getIp() === $ip
         );
     }
 
@@ -122,7 +122,7 @@ final class ProfileIndexer
     {
         return array_filter(
             $profiles,
-            static fn (ProfileIndex $profile) => $profile->context === $context
+            static fn (ProfileIndex $profile) => $profile->getContext() === $context
         );
     }
 

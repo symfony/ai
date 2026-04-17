@@ -82,7 +82,7 @@ final class ProfilerTool
             throw new InvalidArgumentException(\sprintf('Profile with token "%s" not found', $token));
         }
 
-        $profile = $profileData->profile;
+        $profile = $profileData->getProfile();
         $data = [
             'token' => $profile->getToken(),
             'ip' => $profile->getIp(),
@@ -95,8 +95,8 @@ final class ProfilerTool
             'resource_uri' => \sprintf('symfony-profiler://profile/%s', $profile->getToken()),
         ];
 
-        if (null !== $profileData->context) {
-            $data['context'] = $profileData->context;
+        if (null !== $profileData->getContext()) {
+            $data['context'] = $profileData->getContext();
         }
 
         return ResponseEncoder::encode($data);

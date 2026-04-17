@@ -97,8 +97,8 @@ class ContainerProvider
                     $constructor,
                 );
 
-                if (null === $service->alias) {
-                    $services[$service->id] = $service;
+                if (null === $service->getAlias()) {
+                    $services[$service->getId()] = $service;
                 } else {
                     $aliases[] = $service;
                 }
@@ -106,18 +106,18 @@ class ContainerProvider
         }
 
         foreach ($aliases as $service) {
-            $alias = $service->alias;
+            $alias = $service->getAlias();
             if (null === $alias || !isset($services[$alias])) {
                 continue;
             }
 
-            $services[$service->id] = new ServiceDefinition(
-                $service->id,
-                $services[$alias]->class,
+            $services[$service->getId()] = new ServiceDefinition(
+                $service->getId(),
+                $services[$alias]->getClass(),
                 null,
-                $services[$alias]->calls,
-                $services[$alias]->tags,
-                $services[$alias]->constructor,
+                $services[$alias]->getCalls(),
+                $services[$alias]->getTags(),
+                $services[$alias]->getConstructor(),
             );
         }
 
