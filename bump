@@ -184,6 +184,20 @@ use Symfony\Component\Finder\Finder;
             }
         }
 
+        $rstPath = __DIR__.'/docs/components/mate/creating-extensions.rst';
+        $rstContent = $filesystem->readFile($rstPath);
+        $newRstContent = preg_replace(
+            '/("symfony\/ai-mate":\s*")[^"]+(")/',
+            \sprintf('$1%s$2', $composerConstraint),
+            $rstContent,
+            -1,
+            $rstReplacements,
+        );
+        if ($rstReplacements > 0) {
+            $filesystem->dumpFile($rstPath, $newRstContent);
+            $io->writeln(' <info>✓</info> Saved "docs/components/mate/creating-extensions.rst" with %d change');
+        }
+
         $io->newLine();
         $io->success(\sprintf('Successfully bumped version to %s and updated %d dependency constraints in %d files to "%s".', $newVersion, $totalUpdates, $finder->count(), $composerConstraint));
 
