@@ -123,9 +123,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function count(): int
     {
-        $searcher = new Searcher();
-
-        return $searcher->count();
+        throw new \RuntimeException('Count method not implemented in Vektor store');
     }
 
     /**
