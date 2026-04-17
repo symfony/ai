@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
+ * Add `count` method to `TraceableStore`
 
 0.7
 ---

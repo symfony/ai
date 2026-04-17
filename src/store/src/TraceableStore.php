@@ -94,6 +94,11 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         return $this->store->supports($queryClass);
     }
 
+    public function count(): int
+    {
+        return $this->store->count();
+    }
+
     public function drop(array $options = []): void
     {
         if ($this->store instanceof ManagedStoreInterface) {

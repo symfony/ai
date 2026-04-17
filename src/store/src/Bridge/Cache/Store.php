@@ -139,6 +139,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->clear();
     }
 
+    public function count(): int
+    {
+        $documents = $this->cache->get($this->cacheKey, static fn (): array => []);
+
+        return \count($documents);
+    }
+
     /**
      * @param array{
      *     maxItems?: positive-int,

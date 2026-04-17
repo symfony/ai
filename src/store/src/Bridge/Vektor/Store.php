@@ -121,6 +121,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    public function count(): int
+    {
+        throw new \RuntimeException('Count method not implemented in Vektor store');
+    }
+
     /**
      * @param array{
      *     id: string,

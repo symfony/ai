@@ -253,4 +253,27 @@ final class CombinedStoreTest extends TestCase
         $store = new CombinedStore($sharedStore, $sharedStore);
         $store->remove('doc-1');
     }
+
+    public function testCountReturnsSumOfBothStoresWhenDifferentInstances()
+    {
+        $vectorStore = $this->createMock(StoreInterface::class);
+        $vectorStore->method('count')->willReturn(3);
+
+        $textStore = $this->createMock(StoreInterface::class);
+        $textStore->method('count')->willReturn(5);
+
+        $store = new CombinedStore($vectorStore, $textStore);
+
+        $this->assertSame(8, $store->count());
+    }
+
+    public function testCountDelegatesToStoreOnceWhenSameInstance()
+    {
+        $sharedStore = $this->createMock(StoreInterface::class);
+        $sharedStore->expects($this->once())->method('count')->willReturn(4);
+
+        $store = new CombinedStore($sharedStore, $sharedStore);
+
+        $this->assertSame(4, $store->count());
+    }
 }
