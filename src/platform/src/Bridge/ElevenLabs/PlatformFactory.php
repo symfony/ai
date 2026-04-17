@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -41,12 +42,13 @@ final class PlatformFactory
             ]);
         }
 
-        return new Platform(
+        return new Platform([new Provider(
+            'elevenlabs',
             [new ElevenLabsClient($httpClient)],
             [new ElevenLabsResultConverter($httpClient)],
             new ModelCatalog($httpClient),
             $contract ?? ElevenLabsContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }

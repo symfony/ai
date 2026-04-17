@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Generic;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -48,6 +49,6 @@ class PlatformFactory
             $resultConverters[] = new Embeddings\ResultConverter();
         }
 
-        return new Platform($modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
+        return new Platform([new Provider('generic', $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher)]);
     }
 }

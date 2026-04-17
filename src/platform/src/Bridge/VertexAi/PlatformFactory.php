@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -54,12 +55,13 @@ final class PlatformFactory
 
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Platform([new Provider(
+            'vertexai',
             [new GeminiModelClient($httpClient, $location, $projectId, $apiKey), new EmbeddingsModelClient($httpClient, $location, $projectId, $apiKey)],
             [new GeminiResultConverter(), new EmbeddingsResultConverter()],
             $modelCatalog,
             $contract ?? GeminiContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }

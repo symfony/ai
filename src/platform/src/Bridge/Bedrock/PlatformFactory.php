@@ -25,6 +25,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -46,7 +47,8 @@ final class PlatformFactory
             $bedrockRuntimeClient = new BedrockRuntimeClient();
         }
 
-        return new Platform(
+        return new Platform([new Provider(
+            'bedrock',
             [
                 new ClaudeModelClient($bedrockRuntimeClient),
                 new LlamaModelClient($bedrockRuntimeClient),
@@ -75,6 +77,6 @@ final class PlatformFactory
                 new NovaContract\UserMessageNormalizer(),
             ),
             $eventDispatcher,
-        );
+        )]);
     }
 }

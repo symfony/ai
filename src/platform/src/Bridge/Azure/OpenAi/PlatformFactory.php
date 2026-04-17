@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter as ResponsesResultC
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -40,7 +41,8 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Platform([new Provider(
+            'azure-openai',
             [
                 new ResponsesModelClient($httpClient, $baseUrl, $apiKey, $deployment),
                 new EmbeddingsModelClient($httpClient, $baseUrl, $deployment, $apiVersion, $apiKey),
@@ -50,6 +52,6 @@ final class PlatformFactory
             $modelCatalog,
             $contract ?? OpenAiContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }

@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Meta\ModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -34,6 +35,6 @@ final class PlatformFactory
     ): Platform {
         $modelClient = new LlamaModelClient($httpClient ?? HttpClient::create(), $baseUrl, $apiKey);
 
-        return new Platform([$modelClient], [new LlamaResultConverter()], $modelCatalog, $contract, $eventDispatcher);
+        return new Platform([new Provider('azure-meta', [$modelClient], [new LlamaResultConverter()], $modelCatalog, $contract, $eventDispatcher)]);
     }
 }

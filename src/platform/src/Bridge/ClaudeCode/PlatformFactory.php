@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\Contract\ClaudeCodeContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -37,12 +38,13 @@ final class PlatformFactory
         ?EventDispatcherInterface $eventDispatcher = null,
         LoggerInterface $logger = new NullLogger(),
     ): Platform {
-        return new Platform(
+        return new Platform([new Provider(
+            'claudecode',
             [new ModelClient($cliBinary, $workingDirectory, $timeout, $environment, $logger)],
             [new ResultConverter()],
             $modelCatalog,
             $contract ?? ClaudeCodeContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }

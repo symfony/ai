@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -37,12 +38,13 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Platform([new Provider(
+            'anthropic',
             [new ModelClient($httpClient, $apiKey, $cacheRetention)],
             [new ResultConverter()],
             $modelCatalog,
             $contract ?? AnthropicContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }

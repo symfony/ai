@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\Scaleway\Llm\ResultConverter as ScalewayResponseC
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -36,7 +37,8 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Platform([new Provider(
+            'scaleway',
             [
                 new ScalewayModelClient($httpClient, $apiKey),
                 new ScalewayEmbeddingsModelClient($httpClient, $apiKey),
@@ -48,6 +50,6 @@ final class PlatformFactory
             $modelCatalog,
             $contract,
             $eventDispatcher,
-        );
+        )]);
     }
 }

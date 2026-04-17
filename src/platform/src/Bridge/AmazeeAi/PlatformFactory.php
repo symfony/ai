@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -33,7 +34,8 @@ final class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Platform([new Provider(
+            'amazeeai',
             [
                 new ModelClient($httpClient, $baseUrl, $apiKey),
                 new Embeddings\ModelClient($httpClient, $baseUrl, $apiKey),
@@ -45,6 +47,6 @@ final class PlatformFactory
             $modelCatalog,
             $contract,
             $eventDispatcher,
-        );
+        )]);
     }
 }

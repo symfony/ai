@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\Contract\OpenResponsesContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -35,12 +36,13 @@ class PlatformFactory
     ): Platform {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Platform(
+        return new Platform([new Provider(
+            'openresponses',
             [new ModelClient($httpClient, $baseUrl, $apiKey, $responsesPath)],
             [new ResultConverter()],
             $modelCatalog,
             $contract ?? OpenResponsesContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }

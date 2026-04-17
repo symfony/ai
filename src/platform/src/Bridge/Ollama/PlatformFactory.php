@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -42,12 +43,13 @@ final class PlatformFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
         }
 
-        return new Platform(
+        return new Platform([new Provider(
+            'ollama',
             [new OllamaClient($httpClient)],
             [new OllamaResultConverter()],
             new ModelCatalog($httpClient),
             $contract ?? OllamaContract::create(),
             $eventDispatcher,
-        );
+        )]);
     }
 }
