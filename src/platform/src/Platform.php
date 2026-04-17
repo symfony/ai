@@ -29,6 +29,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class Platform implements PlatformInterface
 {
+    private ?ModelCatalogInterface $modelCatalog = null;
+
     /**
      * @param ProviderInterface[] $providers
      */
@@ -55,7 +57,7 @@ final class Platform implements PlatformInterface
 
     public function getModelCatalog(): ModelCatalogInterface
     {
-        return new CompositeModelCatalog(
+        return $this->modelCatalog ??= new CompositeModelCatalog(
             array_map(
                 static fn (ProviderInterface $provider): ModelCatalogInterface => $provider->getModelCatalog(),
                 $this->providers,
