@@ -28,3 +28,5 @@ The tour begins smoothly, but things quickly go wrong when the park's computer s
 As the island descends into chaos, the visitors must survive encounters with various dangerous dinosaurs, including the intelligent and deadly **Velociraptors** and the massive **Tyrannosaurus Rex**. Dr. Grant finds himself responsible for Hammond's grandchildren, Tim and Lex, as they attempt to reach safety.
 
 The film explores themes of *scientific ethics*, the *hubris of trying to control nature*, and the *unintended consequences of genetic engineering*. It questions whether humans have the right to resurrect extinct species and whether scientific advancement should be pursued without considering the potential risks and moral implications.
+
+**Connections**: Directed by Steven Spielberg.
