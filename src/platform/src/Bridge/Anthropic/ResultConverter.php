@@ -16,6 +16,9 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -79,25 +82,51 @@ class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
+        $results = [];
         $toolCalls = [];
-        $text = null;
         foreach ($data['content'] as $content) {
             if ('tool_use' === $content['type']) {
                 $toolCalls[] = new ToolCall($content['id'], $content['name'], $content['input']);
-            } elseif ('text' === $content['type']) {
-                $text = $content['text'];
+                continue;
+            }
+
+            if ([] !== $toolCalls) {
+                $results[] = new ToolCallResult(...$toolCalls);
+                $toolCalls = [];
+            }
+
+            if ('text' === $content['type']) {
+                $results[] = new TextResult($content['text']);
+            } elseif ('server_tool_use' === $content['type']) {
+                if ('bash_code_execution' === $content['name']) {
+                    $results[] = new ExecutableCodeResult($content['input']['command'], 'bash', $content['id']);
+                } elseif ('text_editor_code_execution' === $content['name']) {
+                    $results[] = new ExecutableCodeResult($content['input']['file_text'] ?? $content['input']['command'], null, $content['id']);
+                }
+            } elseif ('bash_code_execution_tool_result' === $content['type']) {
+                $results[] = new CodeExecutionResult(
+                    0 === ($content['content']['return_code'] ?? 0),
+                    ($content['content']['stdout'] ?? '').($content['content']['stderr'] ?? '') ?: null,
+                    $content['tool_use_id'],
+                );
+            } elseif ('text_editor_code_execution_tool_result' === $content['type']) {
+                $results[] = new CodeExecutionResult(true, null, $content['tool_use_id']);
             }
         }
 
-        if (null === $text && [] === $toolCalls) {
-            throw new RuntimeException('Response content does not contain any text nor tool calls.');
+        if ([] === $results) {
+            if ($toolCalls) {
+                return new ToolCallResult(...$toolCalls);
+            }
+
+            throw new RuntimeException('Response content does not contain any supported content.');
         }
 
-        if ([] !== $toolCalls) {
-            return new ToolCallResult(...$toolCalls);
+        if (1 === \count($results)) {
+            return $results[0];
         }
 
-        return new TextResult($text);
+        return new MultiPartResult($results);
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor

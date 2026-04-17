@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC BREAK] `ResultConverter` now returns `MultiPartResult` for responses with multiple results
+ * Add support for code execution results
+
 0.7
 ---
 
