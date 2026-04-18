@@ -8,6 +8,7 @@ CHANGELOG
  * Add `ExecutableCodeResult`, `CodeExecutionResult` for exposing the executed code blocks and results
  * [BC BREAK] Replace variadic constructor parameters with array parameters in `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult` (OpenAI DallE bridge)
  * Add `ref` property to `#[With]` attribute to allow providing schema as file
+ * [DeepSeek] Expose API errors through `AuthenticationException`, `BadRequestException`, and `RateLimitExceededException`
 
 0.7
 ---
