@@ -163,7 +163,7 @@ final class AgentCallCommand extends Command
                     $io->writeln($result->getContent());
                     $io->newLine();
 
-                    $messages->add(Message::ofAssistant($result->getContent()));
+                    $messages->add(Message::ofAssistant($result));
                 } else {
                     $io->error('Unexpected response type from agent');
                 }

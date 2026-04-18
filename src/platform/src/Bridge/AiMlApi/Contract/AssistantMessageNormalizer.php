@@ -12,6 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\AiMlApi\Contract;
 
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -42,19 +46,32 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $array = [
+        $content = $data->getContent();
+
+        if ($content instanceof MultiPartResult) {
+            $array = [
+                'role' => $data->getRole()->value,
+                'content' => '',
+            ];
+
+            foreach ($content as $part) {
+                if ($part instanceof TextResult) {
+                    $array['content'] .= $part->getContent();
+                } elseif ($part instanceof ToolCallResult) {
+                    $array['tool_calls'] = array_merge($array['tool_calls'] ?? [], $this->normalizer->normalize($part->getContent(), $format, $context));
+                } elseif ($part instanceof ThinkingResult) {
+                    $array['reasoning_content'] = ($array['reasoning_content'] ?? '').$part->getContent();
+                }
+            }
+
+            return $array;
+        }
+
+        $content = $data->getContent()?->getContent();
+
+        return [
             'role' => $data->getRole()->value,
-            'content' => $data->getContent() ?? '',
+            'content' => $content,
         ];
-
-        if ($data->hasToolCalls()) {
-            $array['tool_calls'] = $this->normalizer->normalize($data->getToolCalls(), $format, $context);
-        }
-
-        if ($data->hasThinkingContent()) {
-            $array['reasoning_content'] = $data->getThinkingContent();
-        }
-
-        return $array;
     }
 }

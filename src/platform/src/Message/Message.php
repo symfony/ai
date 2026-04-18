@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 
 /**
@@ -35,12 +37,13 @@ final class Message
         return new SystemMessage($content instanceof \Stringable ? (string) $content : $content);
     }
 
-    /**
-     * @param ?ToolCall[] $toolCalls
-     */
-    public static function ofAssistant(?string $content = null, ?array $toolCalls = null): AssistantMessage
+    public static function ofAssistant(string|ResultInterface $result): AssistantMessage
     {
-        return new AssistantMessage($content, $toolCalls);
+        if (\is_string($result)) {
+            $result = new TextResult($result);
+        }
+
+        return new AssistantMessage($result);
     }
 
     public static function ofUser(\Stringable|string|ContentInterface ...$content): UserMessage

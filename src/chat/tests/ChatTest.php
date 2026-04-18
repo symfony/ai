@@ -60,7 +60,7 @@ final class ChatTest extends TestCase
         $result = $this->chat->submit($userMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
-        $this->assertSame($assistantContent, $result->getContent());
+        $this->assertSame($assistantContent, $result->getContent()->getContent());
         $this->assertSame($assistantSources, $result->getMetadata()->get('sources', []));
         $this->assertCount(2, $this->store->load());
 
@@ -87,7 +87,7 @@ final class ChatTest extends TestCase
         $result = $this->chat->submit($newUserMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
-        $this->assertSame($newAssistantContent, $result->getContent());
+        $this->assertSame($newAssistantContent, $result->getContent()->getContent());
         $this->assertCount(4, $this->store->load());
 
         $this->agent->assertCallCount(1);
@@ -104,7 +104,7 @@ final class ChatTest extends TestCase
         $result = $this->chat->submit($userMessage);
 
         $this->assertInstanceOf(AssistantMessage::class, $result);
-        $this->assertSame($assistantContent, $result->getContent());
+        $this->assertSame($assistantContent, $result->getContent()->getContent());
         $this->assertCount(2, $this->store->load());
 
         $this->agent->assertCallCount(1);
@@ -136,7 +136,7 @@ final class ChatTest extends TestCase
 
         $assistantMessage = $stored->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('I am doing well!', $assistantMessage->getContent());
+        $this->assertSame('I am doing well!', $assistantMessage->getContent()->getContent());
     }
 
     public function testItStreamsAndPreservesExistingConversation()
@@ -169,6 +169,6 @@ final class ChatTest extends TestCase
 
         $assistantMessage = $stored->getMessages()[3];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('Yes, I can!', $assistantMessage->getContent());
+        $this->assertSame('Yes, I can!', $assistantMessage->getContent()->getContent());
     }
 }

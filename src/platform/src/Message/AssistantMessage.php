@@ -12,7 +12,11 @@
 namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -23,14 +27,8 @@ final class AssistantMessage implements MessageInterface
     use IdentifierAwareTrait;
     use MetadataAwareTrait;
 
-    /**
-     * @param ?ToolCall[] $toolCalls
-     */
     public function __construct(
-        private readonly ?string $content = null,
-        private readonly ?array $toolCalls = null,
-        private readonly ?string $thinkingContent = null,
-        private readonly ?string $thinkingSignature = null,
+        private readonly ResultInterface $content,
     ) {
         $this->id = Uuid::v7();
     }
@@ -42,34 +40,56 @@ final class AssistantMessage implements MessageInterface
 
     public function hasToolCalls(): bool
     {
-        return null !== $this->toolCalls && [] !== $this->toolCalls;
+        if ($this->content instanceof MultiPartResult) {
+            return array_any($this->content->getContent(), static fn (ResultInterface $part) => $part instanceof ToolCallResult);
+        }
+
+        return $this->content instanceof ToolCallResult;
     }
 
     /**
-     * @return ?ToolCall[]
+     * @return ToolCall[]|null
      */
     public function getToolCalls(): ?array
     {
-        return $this->toolCalls;
+        if ($this->content instanceof MultiPartResult) {
+            $toolCalls = [];
+            foreach ($this->content as $part) {
+                if ($part instanceof ToolCallResult) {
+                    array_push($toolCalls, ...$part->getContent());
+                }
+            }
+
+            return $toolCalls ?: null;
+        }
+
+        if ($this->content instanceof ToolCallResult) {
+            return $this->content->getContent();
+        }
+
+        return null;
     }
 
-    public function getContent(): ?string
+    public function getContent(): ResultInterface
     {
         return $this->content;
     }
 
-    public function hasThinkingContent(): bool
+    public function hasThinking(): bool
     {
-        return null !== $this->thinkingContent;
+        return match (true) {
+            $this->content instanceof MultiPartResult => array_any($this->content->getContent(), static fn (ResultInterface $part) => $part instanceof ThinkingResult),
+            $this->content instanceof ThinkingResult => true,
+            default => false,
+        };
     }
 
-    public function getThinkingContent(): ?string
+    public function getThinking(): ?ThinkingResult
     {
-        return $this->thinkingContent;
-    }
-
-    public function getThinkingSignature(): ?string
-    {
-        return $this->thinkingSignature;
+        return match (true) {
+            $this->content instanceof MultiPartResult => array_find($this->content->getContent(), static fn (ResultInterface $part) => $part instanceof ThinkingResult),
+            $this->content instanceof ThinkingResult => $this->content,
+            default => null,
+        };
     }
 }

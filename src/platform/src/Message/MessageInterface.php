@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
 
@@ -28,9 +29,9 @@ interface MessageInterface
     public function withId(AbstractUid&TimeBasedUidInterface $id): self;
 
     /**
-     * @return string|Template|ContentInterface[]|null
+     * @return string|Template|ResultInterface|ContentInterface[]|null
      */
-    public function getContent(): string|Template|array|null;
+    public function getContent(): string|Template|ResultInterface|array|null;
 
     public function getMetadata(): Metadata;
 }

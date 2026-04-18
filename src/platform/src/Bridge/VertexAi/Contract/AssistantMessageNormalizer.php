@@ -12,47 +12,53 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi\Contract;
 
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
+use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model as BaseModel;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
+ *
+ * @phpstan-import-type Part from ResultConverter
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer
 {
     /**
      * @param AssistantMessage $data
      *
-     * @return array{
-     *     array{
-     *         text: string,
-     *         functionCall?: array{
-     *             name: string,
-     *             args?: array<int|string, mixed>
-     *         }
-     *     }
-     * }
+     * @return list<Part>
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $normalized = [];
 
-        if (null !== $data->getContent()) {
-            $normalized[] = ['text' => $data->getContent()];
+        $parts = $data->getContent();
+        if (!$parts instanceof MultiPartResult) {
+            $parts = [$parts];
         }
 
-        if ($data->hasToolCalls()) {
-            $normalized['functionCall'] = [
-                'name' => $data->getToolCalls()[0]->getName(),
-            ];
+        foreach ($parts as $i => $content) {
+            if ($content instanceof TextResult) {
+                $normalized[$i]['text'] = $content->getContent();
+            }
 
-            if ($data->getToolCalls()[0]->getArguments()) {
-                $normalized['functionCall']['args'] = $data->getToolCalls()[0]->getArguments();
+            if ($content instanceof ToolCallResult) {
+                $toolCall = $content->getContent()[0];
+                $normalized[$i]['functionCall'] = [
+                    'name' => $toolCall->getName(),
+                ];
+
+                if ($toolCall->getArguments()) {
+                    $normalized[$i]['functionCall']['args'] = $toolCall->getArguments();
+                }
             }
         }
 
-        return $normalized;
+        return array_values($normalized);
     }
 
     protected function supportedDataClass(): string
