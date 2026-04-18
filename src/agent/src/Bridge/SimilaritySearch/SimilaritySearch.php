@@ -24,7 +24,7 @@ final class SimilaritySearch
     /**
      * @var VectorDocument[]
      */
-    public array $usedDocuments = [];
+    private array $usedDocuments = [];
 
     public function __construct(
         private readonly RetrieverInterface $retriever,
@@ -49,5 +49,13 @@ final class SimilaritySearch
         }
 
         return $result;
+    }
+
+    /**
+     * @return VectorDocument[]
+     */
+    public function getUsedDocuments(): array
+    {
+        return $this->usedDocuments;
     }
 }

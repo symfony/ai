@@ -25,10 +25,15 @@ class ImageResult extends BaseResult
      * @param list<Base64Image|UrlImage> $images
      */
     public function __construct(
-        public ?string $revisedPrompt = null, // Only string on Dall-E 3 usage
+        private readonly ?string $revisedPrompt = null, // Only string on Dall-E 3 usage
         array $images = [],
     ) {
         $this->images = $images;
+    }
+
+    public function getRevisedPrompt(): ?string
+    {
+        return $this->revisedPrompt;
     }
 
     /**

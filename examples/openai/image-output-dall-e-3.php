@@ -26,7 +26,7 @@ $result = $platform->invoke(
 
 assert($result instanceof ImageResult);
 
-echo 'Revised Prompt: '.$result->revisedPrompt.\PHP_EOL.\PHP_EOL;
+echo 'Revised Prompt: '.$result->getRevisedPrompt().\PHP_EOL.\PHP_EOL;
 
 foreach ($result->getContent() as $index => $image) {
     echo 'Image '.$index.': '.$image->url.\PHP_EOL;

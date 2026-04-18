@@ -56,6 +56,6 @@ final class ResultConverterTest extends TestCase
         $this->assertCount(1, $result->getContent());
         $this->assertInstanceOf(Base64Image::class, $result->getContent()[0]);
         $this->assertSame($emptyPixel, $result->getContent()[0]->encodedImage);
-        $this->assertSame('revised prompt', $result->revisedPrompt);
+        $this->assertSame('revised prompt', $result->getRevisedPrompt());
     }
 }

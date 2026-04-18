@@ -1,6 +1,16 @@
 UPGRADE FROM 0.7 to 0.8
 =======================
 
+Agent
+-----
+
+ * The `SimilaritySearch::$usedDocuments` property is no longer public. Use `getUsedDocuments()` instead:
+
+   ```diff
+   -$usedDocuments = $similaritySearch->usedDocuments;
+   +$usedDocuments = $similaritySearch->getUsedDocuments();
+   ```
+
 AI Bundle
 ---------
 
@@ -25,6 +35,13 @@ Platform
    -#[With(minimum: 0, maximum: 10)]
    +#[Schema(minimum: 0, maximum: 10)]
     int $number,
+   ```
+
+ * The `ImageResult::$revisedPrompt` property is no longer public. Use `getRevisedPrompt()` instead:
+
+   ```diff
+   -$revisedPrompt = $imageResult->revisedPrompt;
+   +$revisedPrompt = $imageResult->getRevisedPrompt();
    ```
 
  * The constructors of `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult`
