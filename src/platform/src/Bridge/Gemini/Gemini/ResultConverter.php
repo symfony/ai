@@ -12,13 +12,13 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
-use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -47,6 +47,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use HttpStatusErrorHandlingTrait;
+
     public const OUTCOME_OK = 'OUTCOME_OK';
     public const OUTCOME_FAILED = 'OUTCOME_FAILED';
     public const OUTCOME_DEADLINE_EXCEEDED = 'OUTCOME_DEADLINE_EXCEEDED';
@@ -60,9 +62,7 @@ final class ResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
-        if (429 === $response->getStatusCode()) {
-            throw new RateLimitExceededException();
-        }
+        $this->throwOnHttpError($response);
 
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));

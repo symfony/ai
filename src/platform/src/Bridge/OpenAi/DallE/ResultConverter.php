@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\DallE;
 use Symfony\AI\Platform\Bridge\OpenAi\DallE;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -27,13 +29,19 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use HttpStatusErrorHandlingTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof DallE;
     }
 
-    public function convert(RawResultInterface $result, array $options = []): ResultInterface
+    public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        if ($result instanceof RawHttpResult) {
+            $this->throwOnHttpError($result->getObject());
+        }
+
         $result = $result->getData();
 
         if (!isset($result['data'][0])) {

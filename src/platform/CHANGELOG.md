@@ -11,6 +11,7 @@ CHANGELOG
  * [BC BREAK] Rename `#[With]` attribute to `#[Schema]` and `WithAttributeDescriber` to `SchemaAttributeDescriber`
  * Add `ref` property to `#[Schema]` attribute to allow providing schema as file
  * Add support for `DiscriminatorMap` and `DateTimeImmutable` for structured output and tool calls
+ * Add `HttpStatusErrorHandlingTrait` and expose API errors (`AuthenticationException`, `BadRequestException`, `RateLimitExceededException`) across the Mistral, DeepSeek, Cerebras, Perplexity, Cohere, Gemini and OpenAI (Embeddings, DallE, TextToSpeech) bridges
 
 0.7
 ---

@@ -49,7 +49,7 @@ final class ResultConverterTest extends TestCase
         $result = $this->createStub(ResponseInterface::class);
         $result
             ->method('getStatusCode')
-            ->willReturn(400);
+            ->willReturn(500);
         $result
             ->method('getContent')
             ->willReturn('Hi Test!');
