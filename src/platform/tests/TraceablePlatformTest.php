@@ -30,16 +30,16 @@ final class TraceablePlatformTest extends TestCase
         $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $this->createStub(RawResultInterface::class)));
 
         $traceablePlatform->invoke('gpt-4o', 'Hello');
-        $this->assertCount(1, $traceablePlatform->calls);
-        $this->assertSame('gpt-4o', $traceablePlatform->calls[0]['model']);
-        $this->assertSame('Hello', $traceablePlatform->calls[0]['input']);
+        $this->assertCount(1, $traceablePlatform->getCalls());
+        $this->assertSame('gpt-4o', $traceablePlatform->getCalls()[0]['model']);
+        $this->assertSame('Hello', $traceablePlatform->getCalls()[0]['input']);
 
-        $oldCache = $traceablePlatform->resultCache;
+        $oldCache = $traceablePlatform->getResultCache();
 
         $traceablePlatform->reset();
 
-        $this->assertCount(0, $traceablePlatform->calls);
-        $this->assertNotSame($oldCache, $traceablePlatform->resultCache);
-        $this->assertInstanceOf(\WeakMap::class, $traceablePlatform->resultCache);
+        $this->assertCount(0, $traceablePlatform->getCalls());
+        $this->assertNotSame($oldCache, $traceablePlatform->getResultCache());
+        $this->assertInstanceOf(\WeakMap::class, $traceablePlatform->getResultCache());
     }
 }

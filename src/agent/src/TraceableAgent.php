@@ -31,7 +31,7 @@ final class TraceableAgent implements AgentInterface, ResetInterface
     /**
      * @var AgentData[]
      */
-    public array $calls = [];
+    private array $calls = [];
 
     public function __construct(
         private readonly AgentInterface $agent,
@@ -53,6 +53,14 @@ final class TraceableAgent implements AgentInterface, ResetInterface
     public function getName(): string
     {
         return $this->agent->getName();
+    }
+
+    /**
+     * @return AgentData[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
     }
 
     public function reset(): void

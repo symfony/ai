@@ -42,9 +42,9 @@ final class TraceableToolboxTest extends TestCase
         $result = $traceableToolbox->execute($toolCall);
 
         $this->assertSame('tool_result', $result->getResult());
-        $this->assertCount(1, $traceableToolbox->calls);
-        $this->assertSame($toolCall, $traceableToolbox->calls[0]->getToolCall());
-        $this->assertSame('tool_result', $traceableToolbox->calls[0]->getResult());
+        $this->assertCount(1, $traceableToolbox->getCalls());
+        $this->assertSame($toolCall, $traceableToolbox->getCalls()[0]->getToolCall());
+        $this->assertSame('tool_result', $traceableToolbox->getCalls()[0]->getResult());
     }
 
     public function testResetClearsCalls()
@@ -53,10 +53,10 @@ final class TraceableToolboxTest extends TestCase
         $traceableToolbox = new TraceableToolbox($toolbox);
 
         $traceableToolbox->execute(new ToolCall('foo', '__invoke'));
-        $this->assertCount(1, $traceableToolbox->calls);
+        $this->assertCount(1, $traceableToolbox->getCalls());
 
         $traceableToolbox->reset();
-        $this->assertCount(0, $traceableToolbox->calls);
+        $this->assertCount(0, $traceableToolbox->getCalls());
     }
 
     /**

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC BREAK] Change `public array $calls` to `private array $calls` in `TraceableStore` - use `getCalls()` instead
+
 0.7
 ---
 

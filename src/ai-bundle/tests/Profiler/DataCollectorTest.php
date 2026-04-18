@@ -292,7 +292,7 @@ class DataCollectorTest extends TestCase
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getAgents());
-        $this->assertCount(1, $traceableAgent->calls);
+        $this->assertCount(1, $traceableAgent->getCalls());
         $this->assertEquals([
             'messages' => $messageBag,
             'options' => [],

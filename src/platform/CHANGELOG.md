@@ -11,6 +11,7 @@ CHANGELOG
  * [BC BREAK] Rename `#[With]` attribute to `#[Schema]` and `WithAttributeDescriber` to `SchemaAttributeDescriber`
  * Add `ref` property to `#[Schema]` attribute to allow providing schema as file
  * Add support for `DiscriminatorMap` and `DateTimeImmutable` for structured output and tool calls
+ * [BC BREAK] Change `public array $calls` and `public \WeakMap $resultCache` to private in `TraceablePlatform` - use `getCalls()` and `getResultCache()` instead
 
 0.7
 ---

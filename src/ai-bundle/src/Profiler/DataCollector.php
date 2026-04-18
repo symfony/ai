@@ -111,11 +111,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->data = [
             'tools' => $this->getAllTools(),
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->calls, $this->toolboxes)),
-            'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->calls, $this->messageStores)),
-            'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->calls, $this->chats)),
-            'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->calls, $this->agents)),
-            'stores' => array_merge(...array_map(static fn (TraceableStore $store): array => $store->calls, $this->stores)),
+            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getCalls(), $this->toolboxes)),
+            'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->getCalls(), $this->messageStores)),
+            'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->getCalls(), $this->chats)),
+            'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->getCalls(), $this->agents)),
+            'stores' => array_merge(...array_map(static fn (TraceableStore $store): array => $store->getCalls(), $this->stores)),
         ];
     }
 
@@ -211,12 +211,13 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
      */
     private function awaitCallResults(TraceablePlatform $platform): array
     {
-        $calls = $platform->calls;
+        $calls = $platform->getCalls();
+        $resultCache = $platform->getResultCache();
         foreach ($calls as $key => $call) {
             $result = $call['result']->getResult();
 
-            if (isset($platform->resultCache[$result])) {
-                $call['result'] = $platform->resultCache[$result];
+            if (isset($resultCache[$result])) {
+                $call['result'] = $resultCache[$result];
                 $call['result_type'] = 'text';
             } else {
                 $content = $result->getContent();
