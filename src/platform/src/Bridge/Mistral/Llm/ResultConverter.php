@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -43,6 +46,19 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         $httpResponse = $result->getObject();
+
+        if (401 === $httpResponse->getStatusCode()) {
+            throw new AuthenticationException($this->extractErrorMessage($httpResponse->getContent(false)) ?? 'Unauthorized');
+        }
+
+        if (400 === $httpResponse->getStatusCode()) {
+            throw new BadRequestException($this->extractErrorMessage($httpResponse->getContent(false)) ?? 'Bad Request');
+        }
+
+        if (429 === $httpResponse->getStatusCode()) {
+            $retryAfter = $httpResponse->getHeaders(false)['retry-after'][0] ?? null;
+            throw new RateLimitExceededException($retryAfter ? (int) $retryAfter : null);
+        }
 
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));
@@ -116,5 +132,19 @@ final class ResultConverter implements ResultConverterInterface
         $arguments = json_decode((string) $toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
+    }
+
+    private function extractErrorMessage(string $body): ?string
+    {
+        if ('' === $body) {
+            return null;
+        }
+
+        $data = json_decode($body, true);
+        if (!\is_array($data)) {
+            return null;
+        }
+
+        return $data['error']['message'] ?? $data['message'] ?? null;
     }
 }
