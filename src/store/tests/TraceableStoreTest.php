@@ -41,7 +41,7 @@ final class TraceableStoreTest extends TestCase
                 'documents' => $document,
                 'called_at' => $clock->now(),
             ],
-        ], $traceableStore->calls);
+        ], $traceableStore->getCalls());
     }
 
     public function testStoreCanRetrieveDataOnQuery()
@@ -61,7 +61,7 @@ final class TraceableStoreTest extends TestCase
                 'options' => [],
                 'called_at' => $clock->now(),
             ],
-        ], $traceableStore->calls);
+        ], $traceableStore->getCalls());
     }
 
     public function testStoreCanRetrieveDataOnRemove()
@@ -81,7 +81,7 @@ final class TraceableStoreTest extends TestCase
                 'options' => [],
                 'called_at' => $clock->now(),
             ],
-        ], $traceableStore->calls);
+        ], $traceableStore->getCalls());
     }
 
     public function testSetupDelegatesToManagedStore()

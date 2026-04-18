@@ -34,11 +34,11 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
     /**
      * @var PlatformCallData[]
      */
-    public array $calls = [];
+    private array $calls = [];
     /**
      * @var \WeakMap<ResultInterface, string>
      */
-    public \WeakMap $resultCache;
+    private \WeakMap $resultCache;
 
     public function __construct(
         private readonly PlatformInterface $platform,
@@ -71,6 +71,22 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
+    }
+
+    /**
+     * @return PlatformCallData[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
+    }
+
+    /**
+     * @return \WeakMap<ResultInterface, string>
+     */
+    public function getResultCache(): \WeakMap
+    {
+        return $this->resultCache;
     }
 
     public function reset(): void
