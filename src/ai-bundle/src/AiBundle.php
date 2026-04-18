@@ -73,6 +73,8 @@ use Symfony\AI\Platform\Bridge\Generic\PlatformFactory as GenericPlatformFactory
 use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory as HuggingFacePlatformFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory as LmStudioPlatformFactory;
 use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory as MistralPlatformFactory;
+use Symfony\AI\Platform\Bridge\ModelFailover\ModelFailoverPlatform;
+use Symfony\AI\Platform\Bridge\ModelFailover\ModelFailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
@@ -659,6 +661,30 @@ final class AiBundle extends AbstractBundle
                         ),
                         new Reference($config['rate_limiter']),
                         new Reference(ClockInterface::class),
+                        new Reference(LoggerInterface::class),
+                    ])
+                    ->addTag('proxy', ['interface' => PlatformInterface::class])
+                    ->addTag('ai.platform', ['name' => $type]);
+
+                $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.platform.'.$type.'.'.$name, PlatformInterface::class, $name);
+            }
+
+            return;
+        }
+
+        if ('model_failover' === $type) {
+            foreach ($platform as $name => $config) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-model-failover-platform', ModelFailoverPlatformFactory::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Model failover platform configuration requires "symfony/ai-model-failover-platform" package. Try running "composer require symfony/ai-model-failover-platform".');
+                }
+
+                $definition = (new Definition(ModelFailoverPlatform::class))
+                    ->setFactory(ModelFailoverPlatformFactory::class.'::create')
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($config['platform']),
+                        $config['models'],
                         new Reference(LoggerInterface::class),
                     ])
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
