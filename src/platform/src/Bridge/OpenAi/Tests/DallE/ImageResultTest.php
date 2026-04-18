@@ -23,7 +23,7 @@ final class ImageResultTest extends TestCase
         $base64Image = new Base64Image('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
         $generatedImagesResult = new ImageResult(null, [$base64Image]);
 
-        $this->assertNull($generatedImagesResult->revisedPrompt);
+        $this->assertNull($generatedImagesResult->getRevisedPrompt());
         $this->assertCount(1, $generatedImagesResult->getContent());
         $this->assertSame($base64Image, $generatedImagesResult->getContent()[0]);
     }
@@ -33,7 +33,7 @@ final class ImageResultTest extends TestCase
         $base64Image = new Base64Image('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
         $generatedImagesResult = new ImageResult('revised prompt', [$base64Image]);
 
-        $this->assertSame('revised prompt', $generatedImagesResult->revisedPrompt);
+        $this->assertSame('revised prompt', $generatedImagesResult->getRevisedPrompt());
         $this->assertCount(1, $generatedImagesResult->getContent());
         $this->assertSame($base64Image, $generatedImagesResult->getContent()[0]);
     }

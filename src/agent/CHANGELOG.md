@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC BREAK] Reduce visibility of `SimilaritySearch::$usedDocuments` to `private`; use `getUsedDocuments()` instead
+
 0.7
 ---
 
