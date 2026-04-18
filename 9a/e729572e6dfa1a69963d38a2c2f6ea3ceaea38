@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-18T07:55:25Z
+
+No demo adjustements?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-18T07:59:10Z
+
+> No demo adjustements?
+
+only in `demo/src/Recipe/Data/Recipe.php`
