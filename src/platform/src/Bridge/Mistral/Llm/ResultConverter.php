@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -31,6 +32,7 @@ use Symfony\AI\Platform\ResultConverterInterface;
 final class ResultConverter implements ResultConverterInterface
 {
     use CompletionsConversionTrait;
+    use HttpStatusErrorHandlingTrait;
 
     public function supports(Model $model): bool
     {
@@ -43,6 +45,8 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         $httpResponse = $result->getObject();
+
+        $this->throwOnHttpError($httpResponse);
 
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));

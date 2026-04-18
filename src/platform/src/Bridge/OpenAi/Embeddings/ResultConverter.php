@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -26,13 +27,19 @@ use Symfony\AI\Platform\Vector\Vector;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use HttpStatusErrorHandlingTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Embeddings;
     }
 
-    public function convert(RawResultInterface $result, array $options = []): VectorResult
+    public function convert(RawResultInterface|RawHttpResult $result, array $options = []): VectorResult
     {
+        if ($result instanceof RawHttpResult) {
+            $this->throwOnHttpError($result->getObject());
+        }
+
         $data = $result->getData();
 
         if (!isset($data['data'])) {
