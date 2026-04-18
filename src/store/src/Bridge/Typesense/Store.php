@@ -19,6 +19,7 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -55,6 +56,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     'name' => $this->vectorFieldName,
                     'type' => 'float[]',
                     'num_dim' => $this->embeddingsDimension,
+                ],
+                [
+                    'name' => 'content',
+                    'type' => 'string',
+                    'optional' => true,
                 ],
                 [
                     'name' => 'metadata',
@@ -98,15 +104,25 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function supports(string $queryClass): bool
     {
-        return VectorQuery::class === $queryClass;
+        return \in_array($queryClass, [VectorQuery::class, TextQuery::class], true);
     }
 
     public function query(QueryInterface $query, array $options = []): iterable
     {
-        if (!$query instanceof VectorQuery) {
-            throw new UnsupportedQueryTypeException($query::class, $this);
-        }
+        return match (true) {
+            $query instanceof VectorQuery => $this->queryVector($query, $options),
+            $query instanceof TextQuery => $this->queryText($query, $options),
+            default => throw new UnsupportedQueryTypeException($query::class, $this),
+        };
+    }
 
+    /**
+     * @param array{k?: int} $options
+     *
+     * @return iterable<VectorDocument>
+     */
+    private function queryVector(VectorQuery $query, array $options): iterable
+    {
         $vector = $query->getVector();
         $documents = $this->request('POST', 'multi_search', [
             'searches' => [
@@ -114,6 +130,29 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     'collection' => $this->collection,
                     'q' => '*',
                     'vector_query' => \sprintf('%s:([%s], k:%d)', $this->vectorFieldName, implode(', ', $vector->getData()), $options['k'] ?? 10),
+                ],
+            ],
+        ]);
+
+        foreach ($documents['results'][0]['hits'] as $item) {
+            yield $this->convertToVectorDocument($item);
+        }
+    }
+
+    /**
+     * @param array{limit?: int} $options
+     *
+     * @return iterable<VectorDocument>
+     */
+    private function queryText(TextQuery $query, array $options): iterable
+    {
+        $documents = $this->request('POST', 'multi_search', [
+            'searches' => [
+                [
+                    'collection' => $this->collection,
+                    'q' => $query->getText(),
+                    'query_by' => 'content',
+                    'per_page' => $options['limit'] ?? 10,
                 ],
             ],
         ]);
@@ -151,11 +190,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function convertToIndexableArray(VectorDocument $document): array
     {
-        return [
+        $data = [
             'id' => $document->getId(),
             $this->vectorFieldName => $document->getVector()->getData(),
             'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
         ];
+
+        $text = $document->getMetadata()[Metadata::KEY_TEXT] ?? null;
+        if (null !== $text && \is_string($text)) {
+            $data['content'] = $text;
+        }
+
+        return $data;
     }
 
     /**
