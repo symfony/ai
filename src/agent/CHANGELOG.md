@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC BREAK] Change `StaticMemoryProvider` constructor from variadic `string ...$memory` to `array $memory`
+ * [BC BREAK] Change `ToolCallsExecuted` constructor from variadic `ToolResult ...$toolResults` to `array $toolResults`
+
 0.7
 ---
 

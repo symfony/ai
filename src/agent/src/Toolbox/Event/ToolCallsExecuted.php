@@ -19,15 +19,13 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 final class ToolCallsExecuted
 {
-    /**
-     * @var ToolResult[]
-     */
-    private readonly array $toolResults;
     private ResultInterface $result;
 
-    public function __construct(ToolResult ...$toolResults)
+    /**
+     * @param ToolResult[] $toolResults
+     */
+    public function __construct(private readonly array $toolResults)
     {
-        $this->toolResults = $toolResults;
     }
 
     public function hasResult(): bool
