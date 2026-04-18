@@ -1,0 +1,78 @@
+---------------------------------------------------------------------------
+
+by aszenz at 2026-02-15T11:57:41Z
+
+> Please just use the test classes in the examples, so we don't need to repeat those classes there - that's alright since we don't ship the examples standalone.
+
+Done
+
+> did you test with OpenAI or other providers? the change has impact to all platform bridges basically
+
+Revamped the example to test multiple providers and indeed it surfaced new issues:
+
+1. oneOff was not working on anthropic, so switched to anyOf
+2. gemini doesn't support const, so switched to enum in the example
+
+During testing I found more issues:
+
+### gemini-3-flash-preview failed to work with the error:
+
+```
+Error "400" - "INVALID_ARGUMENT": "Function call is missing a thought_signature in functionCall parts. This is required for tools to work correctly, and missing thought_signature may lead to degraded model performance. Additional data, function call `default_api:search` , position 2. Please refer to https://ai.google.dev/gemini-api/docs/thought-signatures for more details.".
+```
+
+### JsonSchema Factory marks optional class fields as required
+
+This makes models like Gemini not work when user provides only one search term.
+
+The code here:
+
+https://github.com/symfony/ai/blob/main/src/platform/src/Contract/JsonSchema/Factory.php#L125-L127
+
+Only checks for reflection parameter not property
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-02-22T20:15:37Z
+
+heads up, there is #1568 going on in parallel - we'll merge that one first I assume, and you can rebase.
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-02-23T06:25:14Z
+
+> heads up, there is #1568 going on in parallel - we'll merge that one first I assume, and you can rebase.
+
+That change seems big, maybe it makes more sense to merge this smaller improvement first
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-04T23:21:36Z
+
+Merged #1683, rebase unlocked :+1:
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-03-18T12:45:17Z
+
+@chr-hertel Can you review this again
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-04-10T09:12:25Z
+
+@chr-hertel Ping , is this still needed, then i can resolve conflicts
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-10T09:48:39Z
+
+Yes, sorry, i was also having a look the other day and got into thinking regarding the examples - i get why you did it with the `foreach` but it's rather not the style like we do it atm - didn't have a clever idea yet - examples are going quite crazy, but also they don't cost a lot
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-04-10T10:27:51Z
+
+> Yes, sorry, i was also having a look the other day and got into thinking regarding the examples - i get why you did it with the `foreach` but it's rather not the style like we do it atm - didn't have a clever idea yet - examples are going quite crazy, but also they don't cost a lot
+
+I think many of the examples are serving more as test cases. Hence I used foreach
