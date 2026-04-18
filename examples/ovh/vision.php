@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Ovh\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ovh\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OVH_AI_SECRET_KEY'), http_client());
+$platform = Factory::createPlatform(env('OVH_AI_SECRET_KEY'), http_client());
 
 $messages = new MessageBag(
     Message::ofUser(

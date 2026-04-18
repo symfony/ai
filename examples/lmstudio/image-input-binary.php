@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory;
+use Symfony\AI\Platform\Bridge\LmStudio\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('LMSTUDIO_HOST_URL'), http_client());
+$platform = Factory::createPlatform(env('LMSTUDIO_HOST_URL'), http_client());
 
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),

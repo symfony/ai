@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     env('AZURE_OPENAI_BASEURL'),
     env('AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT'),
     env('AZURE_OPENAI_EMBEDDINGS_API_VERSION'),

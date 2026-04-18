@@ -13,14 +13,14 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Clock\Clock;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
 
 $toolbox = new Toolbox([new Clock()], logger: logger());
 $processor = new AgentProcessor($toolbox);

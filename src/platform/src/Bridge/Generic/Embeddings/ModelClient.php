@@ -19,7 +19,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * This generic implementation is based on OpenAI's initial embeddings endpoint, that got later adopted by other
- * providers as well. It can be used by any bridge or directly with the generic PlatformFactory.
+ * providers as well. It can be used by any bridge or directly with the generic Factory.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */

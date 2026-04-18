@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\ElevenLabs\PlatformFactory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(apiKey: env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(apiKey: env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('eleven_multilingual_v2', new Text('The first move is what sets everything in motion.'), [
     'voice' => 'pqHfZKP75CvOlQylNhV4', // Bill

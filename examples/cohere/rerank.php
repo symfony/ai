@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Cohere\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Cohere\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('COHERE_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('COHERE_API_KEY'), http_client());
 
 $result = $platform->invoke('rerank-v3.5', [
     'query' => 'What is artificial intelligence?',

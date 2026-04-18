@@ -10,11 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\DallE\ImageResult;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 $result = $platform->invoke(
     model: 'dall-e-3',

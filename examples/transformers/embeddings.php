@@ -10,7 +10,7 @@
  */
 
 use Codewithkyrian\Transformers\Pipelines\Task;
-use Symfony\AI\Platform\Bridge\TransformersPhp\PlatformFactory;
+use Symfony\AI\Platform\Bridge\TransformersPhp\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -24,7 +24,7 @@ if (!is_dir(dirname(__DIR__).'/.transformers-cache/Xenova/all-MiniLM-L6-v2')) {
     echo 'Model "Xenova/all-MiniLM-L6-v2" not found. Downloading it will be part of the first run. This may take a while...'.\PHP_EOL;
 }
 
-$platform = PlatformFactory::create();
+$platform = Factory::createPlatform();
 
 $text = <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\ClaudeCode\PlatformFactory;
+use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     workingDirectory: dirname(__DIR__, 2),
     environment: ['CLAUDECODE' => false], // To enable Claude Code to execute the example
     logger: logger(),

@@ -11,6 +11,10 @@ CHANGELOG
  * [BC BREAK] Rename `#[With]` attribute to `#[Schema]` and `WithAttributeDescriber` to `SchemaAttributeDescriber`
  * Add `ref` property to `#[Schema]` attribute to allow providing schema as file
  * Add support for `DiscriminatorMap` and `DateTimeImmutable` for structured output and tool calls
+ * Add `ProviderInterface` and `Provider` abstraction for inference backends, with `Platform` becoming a router over one or more providers
+ * Add `ModelRouterInterface` with `CatalogBasedModelRouter` as default strategy, and `CompositeModelCatalog` merging provider catalogs
+ * Add `ModelRoutingEvent` dispatched by `Platform` before resolution, allowing listeners to observe/modify routing or short-circuit it by setting a provider
+ * [BC BREAK] `Platform` constructor signature changed from `(modelClients, resultConverters, modelCatalog, contract, eventDispatcher)` to `(providers, modelRouter, eventDispatcher)`
 
 0.7
 ---

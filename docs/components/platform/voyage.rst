@@ -19,9 +19,9 @@ Usage
 
 Basic text embedding usage example::
 
-    use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\Voyage\Factory;
 
-    $platform = PlatformFactory::create($_ENV['VOYAGE_API_KEY'], $httpClient);
+    $platform = Factory::createPlatform($_ENV['VOYAGE_API_KEY'], $httpClient);
 
     $result = $platform->invoke('voyage-3', <<<TEXT
         Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and
@@ -36,12 +36,12 @@ multiple data types per vector embedding. To do this, wrap the data in a `Collec
 
 Basic multimodal embedding usage example::
 
-    use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\Voyage\Factory;
     use Symfony\AI\Platform\Message\Content\Collection;
     use Symfony\AI\Platform\Message\Content\ImageUrl;
     use Symfony\AI\Platform\Message\Content\Text;
 
-    $platform = PlatformFactory::create($_ENV['VOYAGE_API_KEY'], $httpClient);
+    $platform = Factory::createPlatform($_ENV['VOYAGE_API_KEY'], $httpClient);
 
     $result = $platform->invoke(
         'voyage-multimodal-3',

@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\LmStudio\PlatformFactory;
+use Symfony\AI\Platform\Bridge\LmStudio\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('LMSTUDIO_HOST_URL'), http_client());
+$platform = Factory::createPlatform(env('LMSTUDIO_HOST_URL'), http_client());
 
 $result = $platform->invoke('text-embedding-nomic-embed-text-v2-moe', <<<TEXT
     Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.

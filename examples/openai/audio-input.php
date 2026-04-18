@@ -14,7 +14,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 throw new RuntimeException('This example is temporarily unavailable due to migration to Responses API (which does not support audio yet).');
-// $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+// $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 //
 // $messages = new MessageBag(
 //    Message::ofUser(

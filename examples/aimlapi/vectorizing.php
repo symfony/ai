@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\AiMlApi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\AiMlApi\Factory;
 use Symfony\AI\Store\Document\Vectorizer;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('AIMLAPI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('AIMLAPI_API_KEY'), http_client());
 
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 

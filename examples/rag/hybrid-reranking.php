@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Store\CombinedStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
@@ -43,7 +43,7 @@ foreach (Movies::all() as $movie) {
     );
 }
 
-$platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 $vectorizer = new Vectorizer($platform, 'BAAI/bge-small-en-v1.5?task=feature-extraction', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);

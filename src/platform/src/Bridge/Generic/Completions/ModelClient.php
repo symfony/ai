@@ -21,7 +21,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * This default implementation is based on OpenAI's initial completion endpoint, that got later adopted by other
- * providers as well. It can be used by any bridge or directly with the default PlatformFactory.
+ * providers as well. It can be used by any bridge or directly with the default Factory.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */

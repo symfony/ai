@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Mistral\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('MISTRAL_API_KEY'), http_client());
 
 $result = $platform->invoke('mistral-embed', <<<TEXT
     In the middle of the 20th century, food scientists began to understand the importance of vitamins and minerals in

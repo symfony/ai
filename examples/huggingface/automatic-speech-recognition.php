@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Audio;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 $audio = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
 $result = $platform->invoke('openai/whisper-large-v3', $audio, [

@@ -12,7 +12,7 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('GEMINI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());
 
 $toolbox = new Toolbox([], logger: logger());
 $processor = new AgentProcessor($toolbox);

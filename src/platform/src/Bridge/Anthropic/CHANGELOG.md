@@ -4,6 +4,7 @@ CHANGELOG
 0.8
 ---
 
+ * [BC BREAK] Rename `PlatformFactory` to `Factory` with explicit `createProvider()` and `createPlatform()` methods
  * [BC BREAK] `ResultConverter` now returns `MultiPartResult` for responses with multiple results
  * Add support for code execution results
 
