@@ -14,6 +14,19 @@ AI Bundle
 Platform
 --------
 
+ * The `#[With]` attribute has been renamed to `#[Schema]`. The `WithAttributeDescriber` class has been renamed to
+   `SchemaAttributeDescriber` and the related service id `ai.platform.json_schema.describer.with_attribute` to
+   `ai.platform.json_schema.describer.schema_attribute`.
+
+   ```diff
+   -use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+   +use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
+
+   -#[With(minimum: 0, maximum: 10)]
+   +#[Schema(minimum: 0, maximum: 10)]
+    int $number,
+   ```
+
  * The constructors of `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult`
    (OpenAI DallE bridge) no longer accept variadic parameters. Pass an array instead:
 

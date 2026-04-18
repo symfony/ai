@@ -11,7 +11,7 @@
 
 namespace App\Recipe\Data;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
 final class Recipe
 {
@@ -23,19 +23,19 @@ final class Recipe
     /**
      * @var int Duration in minutes
      */
-    #[With(minimum: 5, maximum: 240)]
+    #[Schema(minimum: 5, maximum: 240)]
     public int $duration;
 
     /**
      * @var string Difficulty level of the recipe
      */
-    #[With(enum: ['Beginner', 'Intermediate', 'Advanced'])]
+    #[Schema(enum: ['Beginner', 'Intermediate', 'Advanced'])]
     public string $level;
 
     /**
      * @var string Dietary preference
      */
-    #[With(enum: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Keto', 'Paleo'])]
+    #[Schema(enum: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Keto', 'Paleo'])]
     public string $diet;
 
     /**

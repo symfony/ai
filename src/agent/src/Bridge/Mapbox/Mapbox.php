@@ -12,7 +12,7 @@
 namespace Symfony\AI\Agent\Bridge\Mapbox;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -44,7 +44,7 @@ final class Mapbox
      */
     public function geocode(
         string $address,
-        #[With(minimum: 1, maximum: 10)]
+        #[Schema(minimum: 1, maximum: 10)]
         int $limit = 1,
     ): array {
         $response = $this->httpClient->request('GET', 'https://api.mapbox.com/geocoding/v5/mapbox.places/'.urlencode($address).'.json', [
@@ -101,7 +101,7 @@ final class Mapbox
     public function reverseGeocode(
         float $longitude,
         float $latitude,
-        #[With(minimum: 1, maximum: 5)]
+        #[Schema(minimum: 1, maximum: 5)]
         int $limit = 1,
     ): array {
         $response = $this->httpClient->request('GET', 'https://api.mapbox.com/search/geocode/v6/reverse', [

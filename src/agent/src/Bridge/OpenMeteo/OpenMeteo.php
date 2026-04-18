@@ -12,7 +12,7 @@
 namespace Symfony\AI\Agent\Bridge\OpenMeteo;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -104,7 +104,7 @@ final class OpenMeteo
     public function forecast(
         float $latitude,
         float $longitude,
-        #[With(minimum: 1, maximum: 16)]
+        #[Schema(minimum: 1, maximum: 16)]
         int $days = 7,
     ): array {
         $result = $this->httpClient->request('GET', 'https://api.open-meteo.com/v1/forecast', [

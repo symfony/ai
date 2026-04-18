@@ -11,15 +11,15 @@
 
 namespace Symfony\AI\Platform\Tests\Fixtures\StructuredOutput;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
-class WithAttributeValuesDto
+class SchemaAttributeValuesDto
 {
     /**
      * @param string $name this is the PHPDoc description
      */
     public function __construct(
-        #[With(description: 'This is the attribute description.', example: 'Attribute example')]
+        #[Schema(description: 'This is the attribute description.', example: 'Attribute example')]
         public string $name,
     ) {
     }

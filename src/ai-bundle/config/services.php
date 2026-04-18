@@ -63,10 +63,10 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\WithAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -184,7 +184,7 @@ return static function (ContainerConfigurator $container): void {
                 service('validator')->nullOnInvalid(),
             ])
             ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.with_attribute', WithAttributeDescriber::class)
+        ->set('ai.platform.json_schema.describer.schema_attribute', SchemaAttributeDescriber::class)
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer', Describer::class)
             ->args([

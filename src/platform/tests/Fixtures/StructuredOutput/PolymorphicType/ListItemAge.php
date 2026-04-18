@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
 final class ListItemAge implements ListItemDiscriminator
 {
     public function __construct(
         public int $age,
-        #[With(pattern: '^age$')]
+        #[Schema(pattern: '^age$')]
         public string $type = 'age',
     ) {
     }

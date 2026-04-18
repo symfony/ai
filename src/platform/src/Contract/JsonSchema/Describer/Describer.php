@@ -40,7 +40,7 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
                 $describers[] = new ValidatorConstraintsDescriber();
             }
 
-            $describers[] = new WithAttributeDescriber();
+            $describers[] = new SchemaAttributeDescriber();
         }
 
         $objectDescribers = $propertyDescribers = [];

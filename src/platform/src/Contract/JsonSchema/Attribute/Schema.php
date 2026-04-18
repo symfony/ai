@@ -17,7 +17,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
 #[\Attribute(\Attribute::TARGET_PARAMETER | \Attribute::TARGET_PROPERTY)]
-final class With
+final class Schema
 {
     /**
      * @param list<int|float|string|null>|null $enum

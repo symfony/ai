@@ -159,5 +159,12 @@ jobs:
               with:
                   working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
 
+            - name: Re-install root dependencies
+              uses: ramsey/composer-install@v4
+
+            - name: Link local packages
+              working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
+              run: ../../../../../link
+
             - name: Run PHPStan
               run: cd tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpstan

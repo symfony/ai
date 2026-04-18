@@ -11,18 +11,18 @@
 
 namespace Symfony\AI\Platform\Tests\Fixtures\StructuredOutput;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
-class WithAttributeRefDto
+class SchemaAttributeRefDto
 {
     public function __construct(
-        #[With(ref: __DIR__.'/../json_schema_ref.json')]
+        #[Schema(ref: __DIR__.'/../json_schema_ref.json')]
         public ?string $schemaFromFile = null,
 
-        #[With(ref: __DIR__.'/../non_existent.json')]
+        #[Schema(ref: __DIR__.'/../non_existent.json')]
         public ?string $nonExistentSchema = null,
 
-        #[With(ref: __FILE__)]
+        #[Schema(ref: __FILE__)]
         public ?string $nonJsonSchema = null,
     ) {
     }
