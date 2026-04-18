@@ -57,7 +57,7 @@ class MessageBagNormalizerTest extends TestCase
         $toolCallMessage = Message::ofToolCall($toolCall, 'Critical hit');
         $systemMessage = Message::forSystem('You\'re a nice bot that will not overthrow humanity.');
         $assistantMessage = Message::ofAssistant('Anything else?');
-        $toolCallAssistantMessage = Message::ofAssistant(null, [$toolCall]);
+        $toolCallAssistantMessage = Message::ofAssistant($toolCall);
 
         $messageBag = new MessageBag($message, $assistantMessage, $toolCallAssistantMessage, $toolCallMessage);
         $expected = ['input' => [
@@ -68,7 +68,7 @@ class MessageBagNormalizerTest extends TestCase
             [
                 'role' => 'assistant',
                 'type' => 'message',
-                'content' => $assistantMessage->getContent(),
+                'content' => 'Anything else?',
             ],
             [
                 'arguments' => json_encode($toolCall->getArguments()),

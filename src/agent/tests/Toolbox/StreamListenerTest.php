@@ -78,7 +78,7 @@ final class StreamListenerTest extends TestCase
         $this->assertInstanceOf(TextDelta::class, $result[2]);
         $this->assertSame('Tool response', $result[2]->getText());
         $this->assertNotNull($capturedAssistantMessage);
-        $this->assertSame('Initial content ', $capturedAssistantMessage->getContent());
+        $this->assertSame('Initial content ', $capturedAssistantMessage->asText());
         $this->assertNotNull($capturedToolCallResult);
         $this->assertInstanceOf(ToolCallResult::class, $capturedToolCallResult);
         $this->assertSame('test-id', $capturedToolCallResult->getContent()[0]->getId());
@@ -104,7 +104,7 @@ final class StreamListenerTest extends TestCase
         $this->assertInstanceOf(TextDelta::class, $result[0]);
         $this->assertSame('Immediate tool response', $result[0]->getText());
         $this->assertNotNull($capturedAssistantMessage);
-        $this->assertSame('', $capturedAssistantMessage->getContent());
+        $this->assertSame('', $capturedAssistantMessage->asText());
     }
 
     public function testGetContentWithToolCallCompleteReturningGenerator()
@@ -136,7 +136,7 @@ final class StreamListenerTest extends TestCase
         $this->assertSame('Part 2', $result[2]->getText());
         $this->assertInstanceOf(TextDelta::class, $result[3]);
         $this->assertSame('Part 3', $result[3]->getText());
-        $this->assertSame('Start', $capturedAssistantMessage->getContent());
+        $this->assertSame('Start', $capturedAssistantMessage->asText());
     }
 
     public function testGetContentStopsAfterToolCallComplete()

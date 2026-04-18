@@ -6,6 +6,8 @@ CHANGELOG
 
  * Add `ValidatorSubscriber` to validate structured output using Symfony Validator
  * Add support for multiple system messages in `MessageBag`
+ * [BC BREAK] Rework `AssistantMessage` to hold `ContentInterface` parts (variadic constructor) instead of a single string content plus separate tool-call/thinking fields. Introduces `Message\Content\Thinking` as a first-class content block and makes `Result\ToolCall` implement `ContentInterface`. `Message::ofAssistant()` accepts strings, `ContentInterface` instances, and `ResultInterface` values (mapping `TextResult`, `ThinkingResult`, `ToolCallResult` and `MultiPartResult` to their content equivalents).
+ * Add `thought`/`thoughtSignature` round-trip in Gemini and VertexAI bridges: `ResultConverter` emits a `ThinkingResult` for a part with `thought: true`, and `AssistantMessageNormalizer` sends `Thinking` content parts back with `thought: true` (and `thoughtSignature` when set). Signatures attached to non-thought `text` or `functionCall` parts are also preserved by adding an optional `signature` field to `Message\Content\Text`, `Result\ToolCall`, and `Result\TextResult`.
 
 0.8
 ---

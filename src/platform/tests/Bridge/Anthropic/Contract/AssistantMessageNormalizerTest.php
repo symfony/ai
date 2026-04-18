@@ -16,6 +16,8 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
 
 /**
@@ -35,8 +37,8 @@ final class AssistantMessageNormalizerTest extends TestCase
         $model = new Claude(Claude::HAIKU_35);
         $context = [Contract::CONTEXT_MODEL => $model];
 
-        $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage('content'), null, $context));
-        $this->assertFalse($this->normalizer->supportsNormalization(new AssistantMessage('content'), null, []));
+        $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage(new Text('content')), null, $context));
+        $this->assertFalse($this->normalizer->supportsNormalization(new AssistantMessage(new Text('content')), null, []));
         $this->assertFalse($this->normalizer->supportsNormalization(new \stdClass(), null, $context));
     }
 
@@ -47,7 +49,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testNormalizeWithContent()
     {
-        $message = new AssistantMessage('Hello, I am an assistant.');
+        $message = new AssistantMessage(new Text('Hello, I am an assistant.'));
 
         $this->assertSame([
             'role' => 'assistant',
@@ -55,20 +57,20 @@ final class AssistantMessageNormalizerTest extends TestCase
         ], $this->normalizer->normalize($message));
     }
 
-    public function testNormalizeWithNullContentProducesEmptyString()
+    public function testNormalizeWithEmptyMessageProducesEmptyBlocks()
     {
-        $message = new AssistantMessage(null);
+        $message = new AssistantMessage();
 
         $this->assertSame([
             'role' => 'assistant',
-            'content' => '',
+            'content' => [],
         ], $this->normalizer->normalize($message));
     }
 
     public function testNormalizeWithToolCalls()
     {
         $toolCall = new ToolCall('tool-id', 'some_tool', ['param' => 'value']);
-        $message = new AssistantMessage(null, [$toolCall]);
+        $message = new AssistantMessage($toolCall);
 
         $this->assertSame([
             'role' => 'assistant',
@@ -86,7 +88,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     public function testNormalizeWithToolCallsAndContent()
     {
         $toolCall = new ToolCall('tool-id', 'some_tool', ['param' => 'value']);
-        $message = new AssistantMessage('Some text before tool use.', [$toolCall]);
+        $message = new AssistantMessage(new Text('Some text before tool use.'), $toolCall);
 
         $this->assertSame([
             'role' => 'assistant',
@@ -104,7 +106,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testNormalizeWithThinkingContent()
     {
-        $message = new AssistantMessage(null, null, 'Let me think about this...', 'sig-abc');
+        $message = new AssistantMessage(new Thinking('Let me think about this...', 'sig-abc'));
 
         $this->assertSame([
             'role' => 'assistant',
@@ -120,7 +122,10 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testNormalizeWithThinkingContentAndText()
     {
-        $message = new AssistantMessage('The answer is 42.', null, 'Let me think about this...', 'sig-abc');
+        $message = new AssistantMessage(
+            new Thinking('Let me think about this...', 'sig-abc'),
+            new Text('The answer is 42.'),
+        );
 
         $this->assertSame([
             'role' => 'assistant',

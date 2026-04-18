@@ -18,11 +18,21 @@ final class Text implements ContentInterface
 {
     public function __construct(
         private readonly string $text,
+        private readonly ?string $signature = null,
     ) {
     }
 
     public function getText(): string
     {
         return $this->text;
+    }
+
+    /**
+     * Provider-scoped signature guarding this text part when replayed on a subsequent turn.
+     * Currently only Google Gemini / Vertex AI emit signatures on non-thought text parts.
+     */
+    public function getSignature(): ?string
+    {
+        return $this->signature;
     }
 }

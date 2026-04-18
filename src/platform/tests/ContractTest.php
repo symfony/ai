@@ -18,7 +18,6 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -157,7 +156,7 @@ final class ContractTest extends TestCase
                 Message::forSystem('My amazing system prompt.'),
                 Message::ofAssistant('It is time to sleep.'),
                 Message::ofUser('Hello, world!'),
-                new AssistantMessage('Hello User!'),
+                Message::ofAssistant('Hello User!'),
                 Message::ofUser('My hint for how to analyze an image.', new ImageUrl('http://image-generator.local/my-fancy-image.png')),
             ),
             'expected' => [

@@ -53,7 +53,7 @@ class AssistantMessageNormalizerTest extends TestCase
 
         $toolCall = new ToolCall('some-id', 'roll-die', ['sides' => 24]);
         yield 'with tool calls' => [
-            Message::ofAssistant(null, [$toolCall]),
+            Message::ofAssistant($toolCall),
             [
                 [
                     'arguments' => json_encode($toolCall->getArguments()),

@@ -1,5 +1,7 @@
 {% if message.role.value == 'assistant' %}
-    {{ _self.bot(message.content, latest: latest) }}
+    {% for content in message.content %}
+        {{ content.text is defined ? _self.bot(content.text, latest: latest) }}
+    {% endfor %}
 {% else %}
     {{ _self.user(message.content) }}
 {% endif %}

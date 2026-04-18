@@ -17,6 +17,8 @@ use Symfony\AI\Platform\Bridge\Gemini\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
 
 final class AssistantMessageNormalizerTest extends TestCase
@@ -25,7 +27,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     {
         $normalizer = new AssistantMessageNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage('Hello'), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage(new Text('Hello')), context: [
             Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an assistant message'));
@@ -57,25 +59,63 @@ final class AssistantMessageNormalizerTest extends TestCase
     public static function normalizeDataProvider(): iterable
     {
         yield 'assistant message' => [
-            new AssistantMessage('Great to meet you. What would you like to know?'),
+            new AssistantMessage(new Text('Great to meet you. What would you like to know?')),
             [['text' => 'Great to meet you. What would you like to know?']],
         ];
         yield 'function call' => [
-            new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1', ['arg1' => '123'])]),
+            new AssistantMessage(new ToolCall('id1', 'name1', ['arg1' => '123'])),
             [['functionCall' => ['id' => 'id1', 'name' => 'name1', 'args' => ['arg1' => '123']]]],
         ];
         yield 'function call without parameters' => [
-            new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1')]),
+            new AssistantMessage(new ToolCall('id1', 'name1')),
             [['functionCall' => ['id' => 'id1', 'name' => 'name1']]],
         ];
         yield 'text with function call' => [
             new AssistantMessage(
-                'I\'ll look that up for you.',
-                [new ToolCall('id1', 'name1', ['arg1' => '123'])],
+                new Text('I\'ll look that up for you.'),
+                new ToolCall('id1', 'name1', ['arg1' => '123']),
             ),
             [
                 ['text' => 'I\'ll look that up for you.'],
                 ['functionCall' => ['id' => 'id1', 'name' => 'name1', 'args' => ['arg1' => '123']]],
+            ],
+        ];
+        yield 'thinking with signature' => [
+            new AssistantMessage(
+                new Thinking('Let me reason about this...', 'sig_abc123'),
+                new Text('The answer is 42.'),
+            ),
+            [
+                ['text' => 'Let me reason about this...', 'thought' => true, 'thoughtSignature' => 'sig_abc123'],
+                ['text' => 'The answer is 42.'],
+            ],
+        ];
+        yield 'thinking without signature' => [
+            new AssistantMessage(new Thinking('Quick thought.')),
+            [['text' => 'Quick thought.', 'thought' => true]],
+        ];
+        yield 'multiple thinking parts with signatures' => [
+            new AssistantMessage(
+                new Thinking('First thought.', 'sig_1'),
+                new Text('Intermediate.'),
+                new Thinking('Second thought.', 'sig_2'),
+            ),
+            [
+                ['text' => 'First thought.', 'thought' => true, 'thoughtSignature' => 'sig_1'],
+                ['text' => 'Intermediate.'],
+                ['text' => 'Second thought.', 'thought' => true, 'thoughtSignature' => 'sig_2'],
+            ],
+        ];
+        yield 'signed text part (non-thought)' => [
+            new AssistantMessage(new Text('Signed visible text.', 'sig_text')),
+            [
+                ['text' => 'Signed visible text.', 'thoughtSignature' => 'sig_text'],
+            ],
+        ];
+        yield 'signed function call' => [
+            new AssistantMessage(new ToolCall('id1', 'run', ['x' => 1], 'sig_call')),
+            [
+                ['functionCall' => ['id' => 'id1', 'name' => 'run', 'args' => ['x' => 1]], 'thoughtSignature' => 'sig_call'],
             ],
         ];
     }

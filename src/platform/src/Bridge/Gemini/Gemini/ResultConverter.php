@@ -30,6 +30,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -38,6 +39,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
  * @phpstan-type Part array{
  *     functionCall?: array{id?: string, name: string, args: mixed[]},
  *     text?: string,
+ *     thought?: bool,
+ *     thoughtSignature?: string,
  *     inlineData?: array{data: string, mimeType: string},
  *     executableCode?: array{language: string, code: string},
  *     codeExecutionResult?: array{id?: string, outcome: self::OUTCOME_*, output: string},
@@ -140,11 +143,14 @@ final class ResultConverter implements ResultConverterInterface
     /**
      * @param Part $contentPart
      */
-    private function convertPart(array $contentPart): ToolCallResult|TextResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|null
+    private function convertPart(array $contentPart): ToolCallResult|TextResult|ThinkingResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|null
     {
+        $signature = $contentPart['thoughtSignature'] ?? null;
+
         return match (true) {
-            isset($contentPart['functionCall']) => new ToolCallResult([$this->convertToolCall($contentPart['functionCall'])]),
-            isset($contentPart['text']) => new TextResult($contentPart['text']),
+            isset($contentPart['functionCall']) => new ToolCallResult([$this->convertToolCall($contentPart['functionCall'], $signature)]),
+            true === ($contentPart['thought'] ?? false) => new ThinkingResult($contentPart['text'] ?? '', $signature),
+            isset($contentPart['text']) => new TextResult($contentPart['text'], $signature),
             isset($contentPart['inlineData']) => BinaryResult::fromBase64($contentPart['inlineData']['data'], $contentPart['inlineData']['mimeType'] ?? null),
             isset($contentPart['executableCode']) => new ExecutableCodeResult(
                 $contentPart['executableCode']['code'],
@@ -167,8 +173,8 @@ final class ResultConverter implements ResultConverterInterface
      *     args: mixed[]
      * } $toolCall
      */
-    private function convertToolCall(array $toolCall): ToolCall
+    private function convertToolCall(array $toolCall, ?string $signature = null): ToolCall
     {
-        return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $toolCall['args']);
+        return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $toolCall['args'], $signature);
     }
 }

@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 final class ContractTest extends TestCase
 {
@@ -88,7 +89,7 @@ final class ContractTest extends TestCase
         yield 'with tool use' => [
             new MessageBag(
                 Message::ofUser('Hello there, what is the time?'),
-                Message::ofAssistant(toolCalls: [new ToolCall('123456', 'clock', [])]),
+                Message::ofAssistant(new ToolCallResult([new ToolCall('123456', 'clock', [])])),
                 Message::ofToolCall(new ToolCall('123456', 'clock', []), '2023-10-01T10:00:00+00:00'),
                 Message::ofAssistant('It is 10:00 AM.'),
             ),
