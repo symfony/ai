@@ -454,15 +454,16 @@ Multi-Turn Conversations with Thinking
 When using thinking in multi-turn conversations, Anthropic requires that
 thinking blocks from previous assistant turns be included in the conversation
 history. The :class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` supports
-this through its ``$thinkingContent`` and ``$thinkingSignature`` parameters::
+this through :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`::
 
     use Symfony\AI\Platform\Message\AssistantMessage;
+    use Symfony\AI\Platform\Result\TextResult;
+    use Symfony\AI\Platform\Result\ThinkingResult;
 
     // Include the model's thinking from a previous turn
     $assistant = new AssistantMessage(
-        content: 'The answer is 42.',
-        thinkingContent: 'Let me work through this step by step...',
-        thinkingSignature: 'sig_abc123...',
+        new ThinkingResult('Let me work through this step by step...', 'sig_abc123...'),
+        new TextResult('The answer is 42.'),
     );
 
     $messages = new MessageBag(

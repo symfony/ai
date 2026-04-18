@@ -68,7 +68,7 @@ final class MessageBagTest extends TestCase
         $newMessageFromBag = $newMessageBag->getMessages()[3];
 
         $this->assertInstanceOf(AssistantMessage::class, $newMessageFromBag);
-        $this->assertSame('It is time to wake up.', $newMessageFromBag->getContent());
+        $this->assertSame('It is time to wake up.', $newMessageFromBag->getContent()->getContent());
     }
 
     public function testMerge()
@@ -88,7 +88,7 @@ final class MessageBagTest extends TestCase
         $messageFromBag = $messageBag->getMessages()[3];
 
         $this->assertInstanceOf(AssistantMessage::class, $messageFromBag);
-        $this->assertSame('It is time to wake up.', $messageFromBag->getContent());
+        $this->assertSame('It is time to wake up.', $messageFromBag->getContent()->getContent());
     }
 
     public function testWithoutSystemMessage()
@@ -108,7 +108,7 @@ final class MessageBagTest extends TestCase
 
         $assistantMessage = $newMessageBag->getMessages()[0];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('It is time to sleep.', $assistantMessage->getContent());
+        $this->assertSame('It is time to sleep.', $assistantMessage->getContent()->getContent());
 
         $userMessage = $newMessageBag->getMessages()[1];
         $this->assertInstanceOf(UserMessage::class, $userMessage);

@@ -14,7 +14,11 @@ namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class AssistantMessageNormalizerTest extends TestCase
@@ -28,7 +32,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testSupportsNormalization()
     {
-        $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage('content')));
+        $this->assertTrue($this->normalizer->supportsNormalization(new AssistantMessage(new TextResult('content'))));
         $this->assertFalse($this->normalizer->supportsNormalization(new \stdClass()));
     }
 
@@ -39,7 +43,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testNormalizeWithContent()
     {
-        $message = new AssistantMessage('I am an assistant');
+        $message = new AssistantMessage(new TextResult('I am an assistant'));
 
         $expected = [
             'role' => 'assistant',
@@ -55,7 +59,7 @@ final class AssistantMessageNormalizerTest extends TestCase
             new ToolCall('id1', 'function1', ['param' => 'value']),
             new ToolCall('id2', 'function2', ['param' => 'value2']),
         ];
-        $message = new AssistantMessage('Content with tools', $toolCalls);
+        $message = new AssistantMessage(new MultiPartResult([new TextResult('Content with tools'), new ToolCallResult($toolCalls)]));
 
         $expectedToolCalls = [
             ['id' => 'id1', 'function' => 'function1', 'arguments' => ['param' => 'value']],
@@ -82,7 +86,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     public function testNormalizeWithNullContent()
     {
         $toolCalls = [new ToolCall('id1', 'function1', ['param' => 'value'])];
-        $message = new AssistantMessage(null, $toolCalls);
+        $message = new AssistantMessage(new ToolCallResult($toolCalls));
 
         $expectedToolCalls = [['id' => 'id1', 'function' => 'function1', 'arguments' => ['param' => 'value']]];
 
@@ -103,7 +107,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testNormalizeWithThinkingContent()
     {
-        $message = new AssistantMessage('The answer is 42.', null, 'Let me think about this...');
+        $message = new AssistantMessage(new MultiPartResult([new ThinkingResult('Let me think about this...'), new TextResult('The answer is 42.')]));
 
         $expected = [
             'role' => 'assistant',
@@ -116,7 +120,7 @@ final class AssistantMessageNormalizerTest extends TestCase
 
     public function testNormalizeWithoutThinkingContentDoesNotEmitReasoningContent()
     {
-        $message = new AssistantMessage('Just a normal response');
+        $message = new AssistantMessage(new TextResult('Just a normal response'));
 
         $result = $this->normalizer->normalize($message);
 
@@ -127,7 +131,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     public function testNormalizeWithThinkingContentAndToolCalls()
     {
         $toolCalls = [new ToolCall('id1', 'function1', ['param' => 'value'])];
-        $message = new AssistantMessage('Content', $toolCalls, 'Reasoning about tool usage');
+        $message = new AssistantMessage(new MultiPartResult([new TextResult('Content'), new ThinkingResult('Reasoning about tool usage'), new ToolCallResult($toolCalls)]));
 
         $expectedToolCalls = [['id' => 'id1', 'function' => 'function1', 'arguments' => ['param' => 'value']]];
 

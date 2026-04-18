@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\Serializer\Serializer;
 
 class AssistantMessageNormalizerTest extends TestCase
@@ -53,7 +54,7 @@ class AssistantMessageNormalizerTest extends TestCase
 
         $toolCall = new ToolCall('some-id', 'roll-die', ['sides' => 24]);
         yield 'with tool calls' => [
-            Message::ofAssistant(null, [$toolCall]),
+            Message::ofAssistant(new ToolCallResult([$toolCall])),
             [
                 [
                     'arguments' => json_encode($toolCall->getArguments()),

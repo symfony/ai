@@ -123,7 +123,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
                 }
 
                 $toolCalls = $result->getContent();
-                $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
+                $messages->add(Message::ofAssistant($result));
 
                 $results = [];
                 foreach ($toolCalls as $toolCall) {

@@ -15,6 +15,7 @@ use App\Recipe\Data\Recipe;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -60,7 +61,7 @@ final class Chat
 
         \assert($recipe instanceof Recipe);
 
-        $assistantMessage = Message::ofAssistant($recipe->toString());
+        $assistantMessage = Message::ofAssistant($result);
         $assistantMessage->getMetadata()->add('recipe', $result->getContent());
         $messages->add($assistantMessage);
 
