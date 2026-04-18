@@ -4497,6 +4497,8 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
+        $this->assertTrue($container->hasDefinition('ai.platform.openai'));
         $this->assertTrue($container->hasDefinition('ai.platform.failover.main'));
 
         $definition = $container->getDefinition('ai.platform.failover.main');
@@ -4527,6 +4529,88 @@ class AiBundleTest extends TestCase
         $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $main'));
+
+        // Model override
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'main' => [
+                            'platforms' => [
+                                ['platform' => 'ai.platform.ollama', 'model' => 'llama3'],
+                                ['platform' => 'ai.platform.openai', 'model' => 'gpt-4'],
+                            ],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
+        $this->assertTrue($container->hasDefinition('ai.platform.openai'));
+        $this->assertTrue($container->hasDefinition('ai.platform.failover.main'));
+
+        $definition = $container->getDefinition('ai.platform.failover.main');
+
+        $this->assertCount(2, $definition->getArgument(0));
+
+        $this->assertEquals([
+            ['platform' => new Reference('ai.platform.ollama'), 'model' => 'llama3'],
+            ['platform' => new Reference('ai.platform.openai'), 'model' => 'gpt-4'],
+        ], $definition->getArgument(0));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('limiter.failover_platform', (string) $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame(LoggerInterface::class, (string) $definition->getArgument(3));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $main'));
+
+        // Multiple model overrides
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'main' => [
+                            'platforms' => [
+                                ['platform' => 'ai.platform.ollama', 'model' => ['llama3', 'mistral']],
+                                'ai.platform.openai',
+                            ],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.failover.main'));
+
+        $definition = $container->getDefinition('ai.platform.failover.main');
+
+        $this->assertCount(2, $definition->getArgument(0));
+        $this->assertEquals([
+            ['platform' => new Reference('ai.platform.ollama'), 'model' => ['llama3', 'mistral']],
+            new Reference('ai.platform.openai'),
+        ], $definition->getArgument(0));
     }
 
     public function testOpenAiPlatformWithDefaultRegion()

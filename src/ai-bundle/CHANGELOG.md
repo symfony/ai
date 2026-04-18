@@ -31,6 +31,7 @@ CHANGELOG
  * Add `speech` configuration node for automatic `SpeechAgent` decoration with TTS/STT support
  * The `strategy` option for `Cache` store is now `cosine` by default
  * The `DistanceCalculator` is no longer a service when using `Cache` store
+ * Add support for model overrides per platform when using `Failover` platform
 
 0.6
 ---
