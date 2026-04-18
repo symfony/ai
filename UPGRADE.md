@@ -1,18 +1,44 @@
 UPGRADE FROM 0.7 to 0.8
 =======================
 
-AI Bundle
----------
+Agent
+-----
 
- * The service ID `ai.agent.response_format_factory` has been renamed to `ai.platform.response_format_factory`:
+ * The `public array $calls` property of `TraceableAgent` and `TraceableToolbox` has been changed to `private`. Use the new `getCalls()` method instead:
 
    ```diff
-   -$container->get('ai.agent.response_format_factory');
-   +$container->get('ai.platform.response_format_factory');
+   -$traceableAgent->calls;
+   +$traceableAgent->getCalls();
+
+   -$traceableToolbox->calls;
+   +$traceableToolbox->getCalls();
+   ```
+
+Chat
+----
+
+ * The `public array $calls` property of `TraceableChat` and `TraceableMessageStore` has been changed to `private`. Use the new `getCalls()` method instead:
+
+   ```diff
+   -$traceableChat->calls;
+   +$traceableChat->getCalls();
+
+   -$traceableMessageStore->calls;
+   +$traceableMessageStore->getCalls();
    ```
 
 Platform
 --------
+
+ * The `public array $calls` property and `public \WeakMap $resultCache` property of `TraceablePlatform` have been changed to `private`. Use the new `getCalls()` and `getResultCache()` methods instead:
+
+   ```diff
+   -$traceablePlatform->calls;
+   +$traceablePlatform->getCalls();
+
+   -$traceablePlatform->resultCache;
+   +$traceablePlatform->getResultCache();
+   ```
 
  * The constructors of `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult`
    (OpenAI DallE bridge) no longer accept variadic parameters. Pass an array instead:
@@ -47,6 +73,26 @@ Platform
    `ImageSegment`, `ImageSegmentationResult`, `MaskFill`, `ObjectDetectionResult`,
    `QuestionAnsweringResult`, `SentenceSimilarityResult`, `TableQuestionAnsweringResult`,
    `Token`, `TokenClassificationResult`, `ZeroShotClassificationResult`.
+
+Store
+-----
+
+ * The `public array $calls` property of `TraceableStore` has been changed to `private`. Use the new `getCalls()` method instead:
+
+   ```diff
+   -$traceableStore->calls;
+   +$traceableStore->getCalls();
+   ```
+
+AI Bundle
+---------
+
+ * The service ID `ai.agent.response_format_factory` has been renamed to `ai.platform.response_format_factory`:
+
+   ```diff
+   -$container->get('ai.agent.response_format_factory');
+   +$container->get('ai.platform.response_format_factory');
+   ```
 
 UPGRADE FROM 0.6 to 0.7
 =======================

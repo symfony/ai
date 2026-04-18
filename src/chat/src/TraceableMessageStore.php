@@ -28,7 +28,7 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
     /**
      * @var MessageStoreData[]
      */
-    public array $calls = [];
+    private array $calls = [];
 
     public function __construct(
         private readonly MessageStoreInterface|ManagedStoreInterface $messageStore,
@@ -67,6 +67,14 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
         }
 
         $this->messageStore->drop();
+    }
+
+    /**
+     * @return MessageStoreData[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
     }
 
     public function reset(): void

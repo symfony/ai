@@ -22,7 +22,7 @@ final class TraceableToolbox implements ToolboxInterface, ResetInterface
     /**
      * @var ToolResult[]
      */
-    public array $calls = [];
+    private array $calls = [];
 
     public function __construct(
         private readonly ToolboxInterface $toolbox,
@@ -37,6 +37,14 @@ final class TraceableToolbox implements ToolboxInterface, ResetInterface
     public function execute(ToolCall $toolCall): ToolResult
     {
         return $this->calls[] = $this->toolbox->execute($toolCall);
+    }
+
+    /**
+     * @return ToolResult[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
     }
 
     public function reset(): void
