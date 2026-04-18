@@ -8412,6 +8412,7 @@ class AiBundleTest extends TestCase
                     ],
                     'openrouter' => [
                         'api_key' => 'sk-openrouter_key_full',
+                        'region' => 'world',
                     ],
                     'lmstudio' => [
                         'host_url' => 'http://127.0.0.1:1234',
