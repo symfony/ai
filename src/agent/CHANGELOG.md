@@ -6,6 +6,8 @@ CHANGELOG
 
  * [BC BREAK] Reduce visibility of `SimilaritySearch::$usedDocuments` to `private`; use `getUsedDocuments()` instead
  * [BC BREAK] Change `public array $calls` to `private array $calls` in `TraceableAgent` and `TraceableToolbox` - use `getCalls()` instead
+ * [BC BREAK] Change `StaticMemoryProvider` constructor from variadic `string ...$memory` to `array $memory`
+ * [BC BREAK] Change `ToolCallsExecuted` constructor from variadic `ToolResult ...$toolResults` to `array $toolResults`
 
 0.7
 ---
