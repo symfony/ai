@@ -24,10 +24,11 @@ final class AssistantMessage implements MessageInterface
     use MetadataAwareTrait;
 
     /**
-     * @param ?ToolCall[] $toolCalls
+     * @param \JsonSerializable|\Stringable|object|string|null $content
+     * @param ?ToolCall[]                                      $toolCalls
      */
     public function __construct(
-        private readonly ?string $content = null,
+        private readonly object|string|null $content = null,
         private readonly ?array $toolCalls = null,
         private readonly ?string $thinkingContent = null,
         private readonly ?string $thinkingSignature = null,
@@ -53,7 +54,10 @@ final class AssistantMessage implements MessageInterface
         return $this->toolCalls;
     }
 
-    public function getContent(): ?string
+    /**
+     * @return \JsonSerializable|\Stringable|object|string|null
+     */
+    public function getContent(): object|string|null
     {
         return $this->content;
     }

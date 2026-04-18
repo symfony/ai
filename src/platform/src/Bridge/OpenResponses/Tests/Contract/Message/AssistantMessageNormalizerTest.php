@@ -65,6 +65,75 @@ class AssistantMessageNormalizerTest extends TestCase
         ];
     }
 
+    public function testNormalizeWithStringableContent()
+    {
+        $content = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'Stringable content';
+            }
+        };
+        $message = new AssistantMessage($content);
+        $normalizer = new AssistantMessageNormalizer();
+
+        $normalized = $normalizer->normalize($message, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+
+        $this->assertSame([
+            'role' => 'assistant',
+            'type' => 'message',
+            'content' => 'Stringable content',
+        ], $normalized);
+    }
+
+    public function testNormalizeWithJsonSerializableContent()
+    {
+        $content = new class implements \JsonSerializable {
+            public function jsonSerialize(): array
+            {
+                return ['title' => 'Test', 'value' => 123];
+            }
+        };
+        $message = new AssistantMessage($content);
+        $normalizer = new AssistantMessageNormalizer();
+
+        $innerNormalizer = $this->createMock(\Symfony\Component\Serializer\Normalizer\NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, $this->anything())
+            ->willReturn(['title' => 'Test', 'value' => 123]);
+        $normalizer->setNormalizer($innerNormalizer);
+
+        $normalized = $normalizer->normalize($message, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+
+        $this->assertSame('assistant', $normalized['role']);
+        $this->assertSame('message', $normalized['type']);
+        $this->assertIsString($normalized['content']);
+        $this->assertStringContainsString('"title":"Test"', $normalized['content']);
+        $this->assertStringContainsString('"value":123', $normalized['content']);
+    }
+
+    public function testNormalizeWithObjectContent()
+    {
+        $content = new \stdClass();
+        $content->property = 'value';
+        $message = new AssistantMessage($content);
+        $normalizer = new AssistantMessageNormalizer();
+
+        $innerNormalizer = $this->createMock(\Symfony\Component\Serializer\Normalizer\NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($content, null, $this->anything())
+            ->willReturn(['property' => 'value']);
+        $normalizer->setNormalizer($innerNormalizer);
+
+        $normalized = $normalizer->normalize($message, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+
+        $this->assertSame('assistant', $normalized['role']);
+        $this->assertSame('message', $normalized['type']);
+        $this->assertIsString($normalized['content']);
+        $this->assertStringContainsString('"property":"value"', $normalized['content']);
+    }
+
     #[DataProvider('supportsNormalizationProvider')]
     public function testSupportsNormalization(mixed $data, Model $model, bool $expected)
     {

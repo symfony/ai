@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Contract\Normalizer\ContentNormalizerTrait;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Model;
@@ -23,6 +24,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer implements NormalizerAwareInterface
 {
+    use ContentNormalizerTrait;
     use NormalizerAwareTrait;
 
     /**
@@ -48,7 +50,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         if (!$hasBlocks) {
             return [
                 'role' => 'assistant',
-                'content' => $data->getContent() ?? '',
+                'content' => $this->normalizeContentToString($data->getContent(), $format, $context) ?? '',
             ];
         }
 
@@ -66,7 +68,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         if (null !== $data->getContent()) {
-            $blocks[] = ['type' => 'text', 'text' => $data->getContent()];
+            $blocks[] = ['type' => 'text', 'text' => $this->normalizeContentToString($data->getContent(), $format, $context)];
         }
 
         if ($data->hasToolCalls()) {
