@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -60,8 +62,17 @@ final class ResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
+        if (401 === $response->getStatusCode()) {
+            throw new AuthenticationException($this->extractErrorMessage($response->getContent(false)) ?? 'Unauthorized');
+        }
+
+        if (400 === $response->getStatusCode()) {
+            throw new BadRequestException($this->extractErrorMessage($response->getContent(false)) ?? 'Bad Request');
+        }
+
         if (429 === $response->getStatusCode()) {
-            throw new RateLimitExceededException();
+            $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
+            throw new RateLimitExceededException($retryAfter ? (int) $retryAfter : null);
         }
 
         if ($options['stream'] ?? false) {
@@ -170,5 +181,19 @@ final class ResultConverter implements ResultConverterInterface
     private function convertToolCall(array $toolCall): ToolCall
     {
         return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $toolCall['args']);
+    }
+
+    private function extractErrorMessage(string $body): ?string
+    {
+        if ('' === $body) {
+            return null;
+        }
+
+        $data = json_decode($body, true);
+        if (!\is_array($data)) {
+            return null;
+        }
+
+        return $data['error']['message'] ?? $data['message'] ?? null;
     }
 }
