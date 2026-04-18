@@ -46,6 +46,15 @@ class LlamaModelClient implements ModelClientInterface
     {
         $configuredRegion = $this->bedrockRuntimeClient->getConfiguration()->get('region');
         $regionPrefix = substr((string) $configuredRegion, 0, 2);
+        $regionPrefix = match ($regionPrefix) {
+            'ap',
+            'cn' => 'apac',
+            'ca',
+            'sa' => 'us',
+            'me',
+            'af' => 'eu',
+            default => $regionPrefix,
+        };
         $modifiedModelName = str_replace('llama-3', 'llama3', $model->getName());
 
         return $regionPrefix.'.meta.'.str_replace('.', '-', $modifiedModelName).'-v1:0';
