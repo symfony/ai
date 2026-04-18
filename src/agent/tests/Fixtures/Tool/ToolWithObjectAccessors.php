@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Tests\Fixtures\Tool;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
 class ToolWithObjectAccessors
 {
@@ -19,7 +19,7 @@ class ToolWithObjectAccessors
     private float $value2;
 
     public function __construct(
-        #[With(pattern: '^foo$')]
+        #[Schema(pattern: '^foo$')]
         private string $value3,
     ) {
     }
@@ -36,7 +36,7 @@ class ToolWithObjectAccessors
         ];
     }
 
-    public function setValue1(#[With(minimum: 1)] int $value1): void
+    public function setValue1(#[Schema(minimum: 1)] int $value1): void
     {
         $this->value1 = $value1;
     }
@@ -46,7 +46,7 @@ class ToolWithObjectAccessors
         return $this->value1;
     }
 
-    public function setValue2(#[With(const: 42)] float $value): void
+    public function setValue2(#[Schema(const: 42)] float $value): void
     {
         $this->value2 = $value;
     }

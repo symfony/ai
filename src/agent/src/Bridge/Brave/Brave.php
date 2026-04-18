@@ -15,7 +15,7 @@ use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
 use Symfony\AI\Agent\Toolbox\Source\Source;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -50,10 +50,10 @@ final class Brave implements HasSourcesInterface
      * }>
      */
     public function __invoke(
-        #[With(maxLength: 500)]
+        #[Schema(maxLength: 500)]
         string $query,
         int $count = 20,
-        #[With(minimum: 0, maximum: 9)]
+        #[Schema(minimum: 0, maximum: 9)]
         int $offset = 0,
     ): array {
         $result = $this->httpClient->request('GET', 'https://api.search.brave.com/res/v1/web/search', [

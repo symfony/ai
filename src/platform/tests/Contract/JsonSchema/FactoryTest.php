@@ -22,10 +22,10 @@ use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SchemaAttributeValuesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
-use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\WithAttributeValuesDto;
 
 final class FactoryTest extends TestCase
 {
@@ -381,7 +381,7 @@ final class FactoryTest extends TestCase
             'additionalProperties' => false,
         ];
 
-        $actual = $this->factory->buildProperties(WithAttributeValuesDto::class);
+        $actual = $this->factory->buildProperties(SchemaAttributeValuesDto::class);
 
         $this->assertSame($expected, $actual);
     }

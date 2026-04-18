@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Attribute;
 
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 final class ToolParameterTest extends TestCase
@@ -21,7 +21,7 @@ final class ToolParameterTest extends TestCase
     public function testValidEnum()
     {
         $enum = ['value1', 'value2'];
-        $toolParameter = new With(enum: $enum);
+        $toolParameter = new Schema(enum: $enum);
         $this->assertSame($enum, $toolParameter->enum);
     }
 
@@ -29,13 +29,13 @@ final class ToolParameterTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $enum = ['value1', new \stdClass()];
-        new With(enum: $enum); /* @phpstan-ignore-line argument.type */
+        new Schema(enum: $enum); /* @phpstan-ignore-line argument.type */
     }
 
     public function testValidConstString()
     {
         $const = 'constant value';
-        $toolParameter = new With(const: $const);
+        $toolParameter = new Schema(const: $const);
         $this->assertSame($const, $toolParameter->const);
     }
 
@@ -43,13 +43,13 @@ final class ToolParameterTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $const = '   ';
-        new With(const: $const);
+        new Schema(const: $const);
     }
 
     public function testValidPattern()
     {
         $pattern = '/^[a-z]+$/';
-        $toolParameter = new With(pattern: $pattern);
+        $toolParameter = new Schema(pattern: $pattern);
         $this->assertSame($pattern, $toolParameter->pattern);
     }
 
@@ -57,27 +57,27 @@ final class ToolParameterTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $pattern = '   ';
-        new With(pattern: $pattern);
+        new Schema(pattern: $pattern);
     }
 
     public function testValidMinLength()
     {
         $minLength = 5;
-        $toolParameter = new With(minLength: $minLength);
+        $toolParameter = new Schema(minLength: $minLength);
         $this->assertSame($minLength, $toolParameter->minLength);
     }
 
     public function testInvalidMinLengthNegative()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(minLength: -1);
+        new Schema(minLength: -1);
     }
 
     public function testValidMinLengthAndMaxLength()
     {
         $minLength = 5;
         $maxLength = 10;
-        $toolParameter = new With(minLength: $minLength, maxLength: $maxLength);
+        $toolParameter = new Schema(minLength: $minLength, maxLength: $maxLength);
         $this->assertSame($minLength, $toolParameter->minLength);
         $this->assertSame($maxLength, $toolParameter->maxLength);
     }
@@ -85,7 +85,7 @@ final class ToolParameterTest extends TestCase
     public function testInvalidMaxLengthLessThanMinLength()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(minLength: 10, maxLength: 5);
+        new Schema(minLength: 10, maxLength: 5);
     }
 
     #[TestWith([0], 'zero')]
@@ -93,28 +93,28 @@ final class ToolParameterTest extends TestCase
     #[TestWith([-1], 'negative')]
     public function testValidMinimum(int|float $minimum)
     {
-        $toolParameter = new With(minimum: $minimum);
+        $toolParameter = new Schema(minimum: $minimum);
         $this->assertSame($minimum, $toolParameter->minimum);
     }
 
     public function testValidMultipleOf()
     {
         $multipleOf = 5;
-        $toolParameter = new With(multipleOf: $multipleOf);
+        $toolParameter = new Schema(multipleOf: $multipleOf);
         $this->assertSame($multipleOf, $toolParameter->multipleOf);
     }
 
     public function testInvalidMultipleOfNegative()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(multipleOf: -5);
+        new Schema(multipleOf: -5);
     }
 
     public function testValidExclusiveMinimumAndMaximum()
     {
         $exclusiveMinimum = 1;
         $exclusiveMaximum = 10;
-        $toolParameter = new With(exclusiveMinimum: $exclusiveMinimum, exclusiveMaximum: $exclusiveMaximum);
+        $toolParameter = new Schema(exclusiveMinimum: $exclusiveMinimum, exclusiveMaximum: $exclusiveMaximum);
         $this->assertSame($exclusiveMinimum, $toolParameter->exclusiveMinimum);
         $this->assertSame($exclusiveMaximum, $toolParameter->exclusiveMaximum);
     }
@@ -122,14 +122,14 @@ final class ToolParameterTest extends TestCase
     public function testInvalidExclusiveMaximumLessThanExclusiveMinimum()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(exclusiveMinimum: 10, exclusiveMaximum: 5);
+        new Schema(exclusiveMinimum: 10, exclusiveMaximum: 5);
     }
 
     public function testValidMinItemsAndMaxItems()
     {
         $minItems = 1;
         $maxItems = 5;
-        $toolParameter = new With(minItems: $minItems, maxItems: $maxItems);
+        $toolParameter = new Schema(minItems: $minItems, maxItems: $maxItems);
         $this->assertSame($minItems, $toolParameter->minItems);
         $this->assertSame($maxItems, $toolParameter->maxItems);
     }
@@ -137,26 +137,26 @@ final class ToolParameterTest extends TestCase
     public function testInvalidMaxItemsLessThanMinItems()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(minItems: 5, maxItems: 1);
+        new Schema(minItems: 5, maxItems: 1);
     }
 
     public function testValidUniqueItemsTrue()
     {
-        $toolParameter = new With(uniqueItems: true);
+        $toolParameter = new Schema(uniqueItems: true);
         $this->assertTrue($toolParameter->uniqueItems);
     }
 
     public function testInvalidUniqueItemsFalse()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(uniqueItems: false);
+        new Schema(uniqueItems: false);
     }
 
     public function testValidMinContainsAndMaxContains()
     {
         $minContains = 1;
         $maxContains = 3;
-        $toolParameter = new With(minContains: $minContains, maxContains: $maxContains);
+        $toolParameter = new Schema(minContains: $minContains, maxContains: $maxContains);
         $this->assertSame($minContains, $toolParameter->minContains);
         $this->assertSame($maxContains, $toolParameter->maxContains);
     }
@@ -164,14 +164,14 @@ final class ToolParameterTest extends TestCase
     public function testInvalidMaxContainsLessThanMinContains()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(minContains: 3, maxContains: 1);
+        new Schema(minContains: 3, maxContains: 1);
     }
 
     public function testValidMinPropertiesAndMaxProperties()
     {
         $minProperties = 1;
         $maxProperties = 5;
-        $toolParameter = new With(minProperties: $minProperties, maxProperties: $maxProperties);
+        $toolParameter = new Schema(minProperties: $minProperties, maxProperties: $maxProperties);
         $this->assertSame($minProperties, $toolParameter->minProperties);
         $this->assertSame($maxProperties, $toolParameter->maxProperties);
     }
@@ -179,18 +179,18 @@ final class ToolParameterTest extends TestCase
     public function testInvalidMaxPropertiesLessThanMinProperties()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(minProperties: 5, maxProperties: 1);
+        new Schema(minProperties: 5, maxProperties: 1);
     }
 
     public function testValidDependentRequired()
     {
-        $toolParameter = new With(dependentRequired: true);
+        $toolParameter = new Schema(dependentRequired: true);
         $this->assertTrue($toolParameter->dependentRequired);
     }
 
     public function testValidCombination()
     {
-        $toolParameter = new With(
+        $toolParameter = new Schema(
             enum: ['value1', 'value2'],
             const: 'constant',
             pattern: '/^[a-z]+$/',
@@ -211,12 +211,12 @@ final class ToolParameterTest extends TestCase
             dependentRequired: true
         );
 
-        $this->assertInstanceOf(With::class, $toolParameter);
+        $this->assertInstanceOf(Schema::class, $toolParameter);
     }
 
     public function testInvalidCombination()
     {
         $this->expectException(InvalidArgumentException::class);
-        new With(minLength: -1, maxLength: -2);
+        new Schema(minLength: -1, maxLength: -2);
     }
 }

@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
 class ListItemName implements ListItemDiscriminator
 {
     public function __construct(
         public string $name,
-        #[With(pattern: '^name$')]
+        #[Schema(pattern: '^name$')]
         public string $type = 'name',
     ) {
     }

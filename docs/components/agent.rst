@@ -132,13 +132,13 @@ Symfony AI generates a JSON Schema representation for all tools in the :class:`S
 method arguments and param comments in the doc block. Additionally, JSON Schema support validation rules, which are
 partially supported by LLMs like GPT.
 
-Parameter Validation with ``#[With]`` Attribute
-...............................................
+Parameter Validation with ``#[Schema]`` Attribute
+.................................................
 
-To leverage JSON Schema validation rules, configure the :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\With` attribute on the method arguments of your tool::
+To leverage JSON Schema validation rules, configure the :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\Schema` attribute on the method arguments of your tool::
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
     #[AsTool('my_tool', 'Example tool with parameters requirements.')]
     final class MyTool
@@ -149,18 +149,18 @@ To leverage JSON Schema validation rules, configure the :class:`Symfony\\AI\\Pla
          * @param array<string> $categories List of valid categories
          */
         public function __invoke(
-            #[With(pattern: '/([a-z0-1]){5}/')]
+            #[Schema(pattern: '/([a-z0-1]){5}/')]
             string $name,
-            #[With(minimum: 0, maximum: 10)]
+            #[Schema(minimum: 0, maximum: 10)]
             int $number,
-            #[With(enum: ['tech', 'business', 'science'])]
+            #[Schema(enum: ['tech', 'business', 'science'])]
             array $categories,
         ): string {
             // ...
         }
     }
 
-See attribute class :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\With` for all available options.
+See attribute class :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\Schema` for all available options.
 
 .. note::
 
@@ -172,13 +172,13 @@ Defining Schema from File
 If you already have a JSON Schema defined in a file, you can reference it using the ``ref`` argument::
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
     #[AsTool('my_tool', 'Example tool with external schema.')]
     final class MyTool
     {
         public function __invoke(
-            #[With(ref: __DIR__.'/schema.json')]
+            #[Schema(ref: __DIR__.'/schema.json')]
             array $data,
         ): string {
             // ...
@@ -187,12 +187,12 @@ If you already have a JSON Schema defined in a file, you can reference it using 
 
 .. note::
 
-    When using ``ref``, other arguments on the ``#[With]`` attribute are not allowed as the entire schema is loaded from the file.
+    When using ``ref``, other arguments on the ``#[Schema]`` attribute are not allowed as the entire schema is loaded from the file.
 
 Automatic Enum Validation
 .........................
 
-For PHP backed enums, automatic validation without requiring any :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\With` attribute is supported::
+For PHP backed enums, automatic validation without requiring any :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\Schema` attribute is supported::
 
     enum Priority: int
     {
@@ -223,12 +223,12 @@ For PHP backed enums, automatic validation without requiring any :class:`Symfony
             Priority $priority,
             ?ContentType $fallback = null,
         ): array {
-            // Enums are automatically validated - no #[With] attribute needed!
+            // Enums are automatically validated - no #[Schema] attribute needed!
             // ...
         }
     }
 
-This eliminates the need for manual ``#[With(enum: [...])]`` attributes when using PHP's native backed enum types.
+This eliminates the need for manual ``#[Schema(enum: [...])]`` attributes when using PHP's native backed enum types.
 
 Using Symfony Validator
 .......................
@@ -256,7 +256,7 @@ If you have `symfony/validator` installed, you can also use validation constrain
         }
     }
 
-This replaces the need to manually define the schema using ``#[With(...)]``, though it's possible to use both if needed.
+This replaces the need to manually define the schema using ``#[Schema(...)]``, though it's possible to use both if needed.
 
 To validate tool call arguments before invoking the actual tool, add the built-in :class:`Symfony\\AI\\Agent\\Toolbox\\EventListener\\ValidateToolCallArgumentsListener`
 to the event dispatcher that is passed to :class:`Symfony\\AI\\Agent\\Toolbox\\Toolbox`::

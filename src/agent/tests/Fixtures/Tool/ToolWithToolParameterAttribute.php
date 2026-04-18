@@ -12,7 +12,7 @@
 namespace Symfony\AI\Agent\Tests\Fixtures\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\With;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
 #[AsTool('tool_with_ToolParameter_attribute', 'A tool which has a parameter with described with #[ToolParameter] attribute')]
 final class ToolWithToolParameterAttribute
@@ -28,21 +28,21 @@ final class ToolWithToolParameterAttribute
      * @param string       $shippingAddress  The shipping address given to the tool
      */
     public function __invoke(
-        #[With(enum: ['dog', 'cat', 'bird'])]
+        #[Schema(enum: ['dog', 'cat', 'bird'])]
         string $animal,
-        #[With(const: 42)]
+        #[Schema(const: 42)]
         int $numberOfArticles,
-        #[With(const: 'info@example.de')]
+        #[Schema(const: 'info@example.de')]
         string $infoEmail,
-        #[With(const: ['de', 'en'])]
+        #[Schema(const: ['de', 'en'])]
         string $locales,
-        #[With(
+        #[Schema(
             pattern: '^[a-zA-Z]+$',
             minLength: 1,
             maxLength: 10,
         )]
         string $text,
-        #[With(
+        #[Schema(
             minimum: 1,
             maximum: 10,
             multipleOf: 2,
@@ -50,7 +50,7 @@ final class ToolWithToolParameterAttribute
             exclusiveMaximum: 10,
         )]
         int $number,
-        #[With(
+        #[Schema(
             minItems: 1,
             maxItems: 10,
             uniqueItems: true,
@@ -58,7 +58,7 @@ final class ToolWithToolParameterAttribute
             maxContains: 10,
         )]
         array $products,
-        #[With(
+        #[Schema(
             minProperties: 1,
             maxProperties: 10,
             dependentRequired: true,
