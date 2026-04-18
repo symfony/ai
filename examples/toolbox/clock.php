@@ -23,7 +23,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
 
 $metadataFactory = (new MemoryToolFactory())
-    ->addTool(Clock::class, 'clock', 'Get the current date and time', 'now');
+    ->addTool(Clock::class, 'clock', 'Get the current date and time', 'now', 'Returns a DatePoint object with the current date and time');
 $toolbox = new Toolbox([new Clock()], $metadataFactory, logger: logger());
 $processor = new AgentProcessor($toolbox);
 $agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);

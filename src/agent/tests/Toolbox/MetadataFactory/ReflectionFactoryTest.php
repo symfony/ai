@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolMultiple;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithResponseDescription;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWrong;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
@@ -126,6 +127,19 @@ final class ReflectionFactoryTest extends TestCase
                 'required' => ['text', 'number'],
                 'additionalProperties' => false,
             ],
+        );
+    }
+
+    public function testGetDefinitionWithResponseDescription()
+    {
+        /** @var Tool[] $metadatas */
+        $metadatas = iterator_to_array($this->factory->getTool(ToolWithResponseDescription::class));
+
+        $this->assertCount(1, $metadatas);
+        $this->assertSame('tool_with_response', $metadatas[0]->getName());
+        $this->assertSame(
+            "A tool that searches for items\n\nResponse description: Returns a list of matching items with name and score",
+            $metadatas[0]->getDescription(),
         );
     }
 

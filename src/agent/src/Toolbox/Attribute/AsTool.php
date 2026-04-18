@@ -21,6 +21,7 @@ final class AsTool
         public readonly string $name,
         public readonly string $description,
         public readonly string $method = '__invoke',
+        public readonly ?string $responseDescription = null,
     ) {
     }
 }
