@@ -127,6 +127,22 @@ Platform
    `QuestionAnsweringResult`, `SentenceSimilarityResult`, `TableQuestionAnsweringResult`,
    `Token`, `TokenClassificationResult`, `ZeroShotClassificationResult`.
 
+ * The `Contract::create()` factory method and all bridge-specific `Contract::create()` methods no longer
+   accept variadic `NormalizerInterface` arguments. Pass an array instead:
+
+   ```diff
+   -Contract::create(new MyNormalizer(), new AnotherNormalizer());
+   +Contract::create([new MyNormalizer(), new AnotherNormalizer()]);
+
+   -AnthropicContract::create(new MyNormalizer());
+   +AnthropicContract::create([new MyNormalizer()]);
+   ```
+
+   This affects the following classes: `Contract`, `AnthropicContract`, `CartesiaContract`,
+   `ClaudeCodeContract`, `CodexContract`, `DecartContract`, `ElevenLabsContract`,
+   `GeminiContract` (Gemini and VertexAi bridges), `HuggingFaceContract`, `OllamaContract`,
+   `OpenAiContract`, `OpenResponsesContract`, `PerplexityContract`, `VoyageContract`.
+
 Store
 -----
 

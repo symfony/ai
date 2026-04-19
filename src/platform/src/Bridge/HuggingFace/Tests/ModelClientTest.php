@@ -102,10 +102,10 @@ final class ModelClientTest extends TestCase
         $model = new Model('HuggingFaceH4/zephyr-7b-beta');
         $modelClient = new ModelClient($httpClient, Provider::FEATHERLESS_AI, 'test-api-key');
 
-        $contract = Contract::create(
+        $contract = Contract::create([
             new FileNormalizer(),
-            new MessageBagNormalizer()
-        );
+            new MessageBagNormalizer(),
+        ]);
 
         $messageBag = new MessageBag();
         $messageBag->add(new UserMessage(new Text('Test message')));
@@ -173,10 +173,10 @@ final class ModelClientTest extends TestCase
         $model = new Model('test-model');
         $modelClient = new ModelClient($httpClient, Provider::HF_INFERENCE, 'test-api-key');
 
-        $contract = Contract::create(
+        $contract = Contract::create([
             new FileNormalizer(),
-            new MessageBagNormalizer()
-        );
+            new MessageBagNormalizer(),
+        ]);
 
         $messageBag = new MessageBag();
         $messageBag->add(new UserMessage(new Text('Test message')));
@@ -209,10 +209,10 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'test-provider', 'test-api-key');
 
         // Contract handling first
-        $contract = Contract::create(
+        $contract = Contract::create([
             new FileNormalizer(),
-            new MessageBagNormalizer()
-        );
+            new MessageBagNormalizer(),
+        ]);
 
         $payload = $contract->createRequestPayload($model, $input);
 

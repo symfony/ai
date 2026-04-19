@@ -19,9 +19,12 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  */
 final class OpenResponsesContract extends Contract
 {
-    public static function create(NormalizerInterface ...$normalizer): Contract
+    /**
+     * @param NormalizerInterface[] $normalizers
+     */
+    public static function create(array $normalizers = []): Contract
     {
-        return parent::create(
+        return parent::create([
             new Message\MessageBagNormalizer(),
             new Message\AssistantMessageNormalizer(),
             new Message\Content\ImageNormalizer(),
@@ -31,7 +34,7 @@ final class OpenResponsesContract extends Contract
             new ToolCallNormalizer(),
             new Message\ToolCallMessageNormalizer(),
             new Message\Content\DocumentNormalizer(),
-            ...$normalizer
-        );
+            ...$normalizers,
+        ]);
     }
 }

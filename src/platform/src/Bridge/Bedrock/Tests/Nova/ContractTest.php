@@ -32,13 +32,13 @@ final class ContractTest extends TestCase
     #[DataProvider('provideMessageBag')]
     public function testConvert(MessageBag $bag, array $expected)
     {
-        $contract = Contract::create(
+        $contract = Contract::create([
             new AssistantMessageNormalizer(),
             new MessageBagNormalizer(),
             new ToolCallMessageNormalizer(),
             new ToolNormalizer(),
             new UserMessageNormalizer(),
-        );
+        ]);
 
         $this->assertEquals($expected, $contract->createRequestPayload(new Nova('nova-pro'), $bag));
     }

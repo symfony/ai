@@ -215,7 +215,7 @@ final class ContractTest extends TestCase
 
     public function testExtendedContractHandlesWhisper()
     {
-        $contract = Contract::create(new AudioNormalizer());
+        $contract = Contract::create([new AudioNormalizer()]);
 
         $audio = Audio::fromFile(\dirname(__DIR__, 3).'/fixtures/audio.mp3');
 

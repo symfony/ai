@@ -58,7 +58,7 @@ final class PlatformFactory
                 new NovaResultConverter(),
             ],
             $modelCatalog,
-            $contract ?? Contract::create(
+            $contract ?? Contract::create([
                 new AnthropicContract\AssistantMessageNormalizer(),
                 new AnthropicContract\DocumentNormalizer(),
                 new AnthropicContract\DocumentUrlNormalizer(),
@@ -73,7 +73,7 @@ final class PlatformFactory
                 new NovaContract\ToolCallMessageNormalizer(),
                 new NovaContract\ToolNormalizer(),
                 new NovaContract\UserMessageNormalizer(),
-            ),
+            ]),
             $eventDispatcher,
         );
     }

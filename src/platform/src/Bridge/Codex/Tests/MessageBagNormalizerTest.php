@@ -96,7 +96,7 @@ final class MessageBagNormalizerTest extends TestCase
      */
     private function normalize(MessageBag $messageBag): array
     {
-        $contract = Contract::create(new MessageBagNormalizer());
+        $contract = Contract::create([new MessageBagNormalizer()]);
         $model = new Codex('gpt-5-codex');
 
         return $contract->createRequestPayload($model, $messageBag);

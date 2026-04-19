@@ -4,6 +4,7 @@ CHANGELOG
 0.8
 ---
 
+ * [BC BREAK] `AnthropicContract::create()` no longer accepts variadic `NormalizerInterface` arguments; pass an array instead
  * [BC BREAK] `ResultConverter` now returns `MultiPartResult` for responses with multiple results
  * Add support for code execution results
 
