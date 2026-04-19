@@ -26,15 +26,15 @@ final class TraceableMessageStoreTest extends TestCase
 
         $traceableMessageStore = new TraceableMessageStore($messageStore, new MonotonicClock());
 
-        $this->assertCount(0, $traceableMessageStore->calls);
+        $this->assertCount(0, $traceableMessageStore->getCalls());
 
         $traceableMessageStore->save(new MessageBag(
             Message::ofUser('Hello World'),
         ));
 
-        $this->assertCount(1, $traceableMessageStore->calls);
+        $this->assertCount(1, $traceableMessageStore->getCalls());
 
-        $calls = $traceableMessageStore->calls;
+        $calls = $traceableMessageStore->getCalls();
 
         $this->assertArrayHasKey('bag', $calls[0]);
         $this->assertArrayHasKey('saved_at', $calls[0]);
@@ -49,9 +49,9 @@ final class TraceableMessageStoreTest extends TestCase
         $traceableMessageStore = new TraceableMessageStore($messageStore, new MonotonicClock());
 
         $traceableMessageStore->save(new MessageBag());
-        $this->assertCount(1, $traceableMessageStore->calls);
+        $this->assertCount(1, $traceableMessageStore->getCalls());
 
         $traceableMessageStore->reset();
-        $this->assertCount(0, $traceableMessageStore->calls);
+        $this->assertCount(0, $traceableMessageStore->getCalls());
     }
 }

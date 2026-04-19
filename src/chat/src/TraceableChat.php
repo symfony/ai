@@ -35,7 +35,7 @@ final class TraceableChat implements ChatInterface, ResetInterface
     /**
      * @var ChatData[]
      */
-    public array $calls = [];
+    private array $calls = [];
 
     public function __construct(
         private readonly ChatInterface $chat,
@@ -74,6 +74,14 @@ final class TraceableChat implements ChatInterface, ResetInterface
         ];
 
         return $this->chat->stream($message);
+    }
+
+    /**
+     * @return ChatData[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
     }
 
     public function reset(): void

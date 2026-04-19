@@ -34,7 +34,7 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
     /**
      * @var StoreData[]
      */
-    public array $calls = [];
+    private array $calls = [];
 
     public function __construct(
         private readonly StoreInterface $store,
@@ -99,6 +99,14 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         if ($this->store instanceof ManagedStoreInterface) {
             $this->store->drop($options);
         }
+    }
+
+    /**
+     * @return StoreData[]
+     */
+    public function getCalls(): array
+    {
+        return $this->calls;
     }
 
     public function reset(): void

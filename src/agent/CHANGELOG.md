@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Reduce visibility of `SimilaritySearch::$usedDocuments` to `private`; use `getUsedDocuments()` instead
+ * [BC BREAK] Change `public array $calls` to `private array $calls` in `TraceableAgent` and `TraceableToolbox` - use `getCalls()` instead
 
 0.7
 ---
