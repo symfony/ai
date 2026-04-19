@@ -19,13 +19,11 @@ use Symfony\AI\Agent\Input;
 final class StaticMemoryProvider implements MemoryProviderInterface
 {
     /**
-     * @var array<string>
+     * @param array<string> $memory
      */
-    private readonly array $memory;
-
-    public function __construct(string ...$memory)
-    {
-        $this->memory = $memory;
+    public function __construct(
+        private readonly array $memory = [],
+    ) {
     }
 
     public function load(Input $input): array

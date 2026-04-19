@@ -23,11 +23,11 @@ $platform = PlatformFactory::create($_ENV['OPENAI_API_KEY'], http_client());
 
 $systemPromptProcessor = new SystemPromptInputProcessor('You are a professional trainer with short, personalized advice and a motivating claim.');
 
-$personalFacts = new StaticMemoryProvider(
+$personalFacts = new StaticMemoryProvider([
     'My name is Wilhelm Tell',
     'I wish to be a swiss national hero',
     'I am struggling with hitting apples but want to be professional with the bow and arrow',
-);
+]);
 $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
 
 $agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor, $memoryProcessor]);

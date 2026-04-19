@@ -30,10 +30,10 @@ final class StaticMemoryProviderTest extends TestCase
 
     public function testItDeliversFormattedFacts()
     {
-        $provider = new StaticMemoryProvider(
+        $provider = new StaticMemoryProvider([
             $fact1 = 'The sky is blue',
             $fact2 = 'Water is wet',
-        );
+        ]);
 
         $memory = $provider->load(new Input('gpt-4', new MessageBag(), []));
 

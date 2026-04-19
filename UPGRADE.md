@@ -21,6 +21,22 @@ Agent
    +$traceableToolbox->getCalls();
    ```
 
+ * The constructors of `StaticMemoryProvider` and `ToolCallsExecuted` no longer accept variadic parameters. Pass an array instead:
+
+   ```diff
+   -new StaticMemoryProvider('fact1', 'fact2');
+   +new StaticMemoryProvider(['fact1', 'fact2']);
+
+   -new StaticMemoryProvider('fact1');
+   +new StaticMemoryProvider(['fact1']);
+
+   -new ToolCallsExecuted($toolResult1, $toolResult2);
+   +new ToolCallsExecuted([$toolResult1, $toolResult2]);
+
+   -new ToolCallsExecuted($toolResult1);
+   +new ToolCallsExecuted([$toolResult1]);
+   ```
+
 AI Bundle
 ---------
 
