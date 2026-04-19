@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-04-19T11:22:17Z
+
+I think we should do similar thing for Gemini config handling as is done for Vertex: options should not automatically go under `generationConfig`, but to the top-level. This would allow adopting new features without waiting updates in the bridge.
+
+But this seemed quite a big breaking change, hence excluded here.
