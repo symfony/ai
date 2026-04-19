@@ -61,18 +61,24 @@ final class ModelClient implements ModelClientInterface
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
 
-        $generationConfig = ['generationConfig' => $options];
-        unset($generationConfig['generationConfig']['stream']);
-        unset($generationConfig['generationConfig']['tools']);
-        unset($generationConfig['generationConfig']['server_tools']);
+        $config = ['generationConfig' => $options];
+        unset($config['generationConfig']['stream']);
+        unset($config['generationConfig']['tools']);
+        unset($config['generationConfig']['tool_config']);
+        unset($config['generationConfig']['server_tools']);
 
-        if ([] === $generationConfig['generationConfig']) {
-            $generationConfig = [];
+        if ([] === $config['generationConfig']) {
+            $config = [];
         }
 
         if (isset($options['tools'])) {
-            $generationConfig['tools'][] = ['functionDeclarations' => $options['tools']];
+            $config['tools'][] = ['functionDeclarations' => $options['tools']];
             unset($options['tools']);
+        }
+
+        if (isset($options['tool_config'])) {
+            $config['tool_config'] = $options['tool_config'];
+            unset($options['tool_config']);
         }
 
         foreach ($options['server_tools'] ?? [] as $tool => $params) {
@@ -80,14 +86,14 @@ final class ModelClient implements ModelClientInterface
                 continue;
             }
 
-            $generationConfig['tools'][] = [$tool => true === $params ? new \ArrayObject() : $params];
+            $config['tools'][] = [$tool => true === $params ? new \ArrayObject() : $params];
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => [
                 'x-goog-api-key' => $this->apiKey,
             ],
-            'json' => array_merge($generationConfig, $payload),
+            'json' => array_merge($config, $payload),
         ]));
     }
 }
