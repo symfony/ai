@@ -4,6 +4,7 @@ CHANGELOG
 0.8
 ---
 
+ * [BC BREAK] `GeminiContract::create()` no longer accepts variadic `NormalizerInterface` arguments; pass an array instead
 * [BC BREAK] `ResultConverter` now returns a `MultiPartResult` when there are multiple `parts` in a `candidate`
 * [BC BREAK] `ResultConverter` now `ExecutableCodeResult` and `CodeExecutionResult` parts when using `code_execution` server tool
 * [BC BREAK] Throwing when code execution server tool fails is replaced with `CodeExecutionResult::isSucceeded()`

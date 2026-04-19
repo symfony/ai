@@ -41,32 +41,35 @@ class Contract
     ) {
     }
 
-    public static function create(NormalizerInterface ...$normalizer): self
+    /**
+     * @param NormalizerInterface[] $normalizers
+     */
+    public static function create(array $normalizers = []): self
     {
         // Messages
-        $normalizer[] = new MessageBagNormalizer();
-        $normalizer[] = new AssistantMessageNormalizer();
-        $normalizer[] = new SystemMessageNormalizer();
-        $normalizer[] = new ToolCallMessageNormalizer();
-        $normalizer[] = new UserMessageNormalizer();
+        $normalizers[] = new MessageBagNormalizer();
+        $normalizers[] = new AssistantMessageNormalizer();
+        $normalizers[] = new SystemMessageNormalizer();
+        $normalizers[] = new ToolCallMessageNormalizer();
+        $normalizers[] = new UserMessageNormalizer();
 
         // Message Content
-        $normalizer[] = new AudioNormalizer();
-        $normalizer[] = new ImageNormalizer();
-        $normalizer[] = new ImageUrlNormalizer();
-        $normalizer[] = new TextNormalizer();
+        $normalizers[] = new AudioNormalizer();
+        $normalizers[] = new ImageNormalizer();
+        $normalizers[] = new ImageUrlNormalizer();
+        $normalizers[] = new TextNormalizer();
 
         // Options
-        $normalizer[] = new ToolNormalizer();
+        $normalizers[] = new ToolNormalizer();
 
         // Result
-        $normalizer[] = new ToolCallNormalizer();
+        $normalizers[] = new ToolCallNormalizer();
 
         // JsonSerializable objects as extension point to library interfaces
-        $normalizer[] = new JsonSerializableNormalizer();
+        $normalizers[] = new JsonSerializableNormalizer();
 
         return new self(
-            new Serializer($normalizer),
+            new Serializer($normalizers),
         );
     }
 

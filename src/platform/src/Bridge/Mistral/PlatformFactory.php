@@ -40,12 +40,12 @@ final class PlatformFactory
             [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
             [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
             $modelCatalog,
-            $contract ?? Contract::create(
+            $contract ?? Contract::create([
                 new ToolNormalizer(),
                 new DocumentNormalizer(),
                 new DocumentUrlNormalizer(),
                 new ImageUrlNormalizer(),
-            ),
+            ]),
             $eventDispatcher,
         );
     }

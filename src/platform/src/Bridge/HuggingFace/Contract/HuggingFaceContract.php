@@ -16,12 +16,15 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class HuggingFaceContract extends Contract
 {
-    public static function create(NormalizerInterface ...$normalizer): Contract
+    /**
+     * @param NormalizerInterface[] $normalizers
+     */
+    public static function create(array $normalizers = []): Contract
     {
-        return parent::create(
+        return parent::create([
             new FileNormalizer(),
             new MessageBagNormalizer(),
-            ...$normalizer,
-        );
+            ...$normalizers,
+        ]);
     }
 }

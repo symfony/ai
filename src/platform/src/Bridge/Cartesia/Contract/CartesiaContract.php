@@ -19,11 +19,14 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  */
 final class CartesiaContract extends Contract
 {
-    public static function create(NormalizerInterface ...$normalizer): Contract
+    /**
+     * @param NormalizerInterface[] $normalizers
+     */
+    public static function create(array $normalizers = []): Contract
     {
-        return parent::create(
+        return parent::create([
             new AudioNormalizer(),
-            ...$normalizer,
-        );
+            ...$normalizers,
+        ]);
     }
 }

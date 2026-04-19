@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * [BC BREAK] `OpenResponsesContract::create()` no longer accepts variadic `NormalizerInterface` arguments; pass an array instead
+
 0.7
 ---
 

@@ -37,9 +37,9 @@ final class PlatformFactory
             [new ModelClient($httpClient, $apiKey)],
             [new ResultConverter()],
             $modelCatalog,
-            $contract ?? Contract::create(
+            $contract ?? Contract::create([
                 new ToolNormalizer(),
-            ),
+            ]),
             $eventDispatcher,
         );
     }

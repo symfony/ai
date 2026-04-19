@@ -36,7 +36,7 @@ final class PlatformFactory
             [new Embeddings\ModelClient($httpClient, $apiKey), new Reranker\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey), new SpeechToText\ModelClient($httpClient, $apiKey)],
             [new Embeddings\ResultConverter(), new Reranker\ResultConverter(), new Llm\ResultConverter(), new SpeechToText\ResultConverter()],
             $modelCatalog,
-            $contract ?? Contract::create(new SpeechToText\AudioNormalizer()),
+            $contract ?? Contract::create([new SpeechToText\AudioNormalizer()]),
             $eventDispatcher,
         );
     }

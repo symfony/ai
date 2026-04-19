@@ -19,12 +19,15 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  */
 final class DecartContract extends Contract
 {
-    public static function create(NormalizerInterface ...$normalizer): Contract
+    /**
+     * @param NormalizerInterface[] $normalizers
+     */
+    public static function create(array $normalizers = []): Contract
     {
-        return parent::create(
+        return parent::create([
             new ImageNormalizer(),
             new VideoNormalizer(),
-            ...$normalizer
-        );
+            ...$normalizers,
+        ]);
     }
 }

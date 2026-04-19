@@ -35,7 +35,7 @@ class PlatformFactory
             apiKey: $apiKey,
             httpClient: $httpClient,
             modelCatalog: new ModelCatalog(),
-            contract: $contract ?? Contract::create(new AssistantMessageNormalizer()),
+            contract: $contract ?? Contract::create([new AssistantMessageNormalizer()]),
             eventDispatcher: $eventDispatcher,
         );
     }
