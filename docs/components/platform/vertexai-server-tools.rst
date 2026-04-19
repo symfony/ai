@@ -57,6 +57,26 @@ Ground a model's responses using Google Search, which uses publicly-available we
         ],
     ]);
 
+Google Maps
+~~~~~~~~~~~
+
+The Google Maps tool enables the model to find places based on location::
+
+    $messages = new MessageBag(
+        Message::ofUser('Find the nearest hotel')
+    );
+
+    $result = $platform->invoke('gemini-2.5-pro', $messages, [
+        'server_tools' => [
+            'google_maps' => true,
+        ],
+        'tool_config' => [
+            'retrieval_config' => [
+                'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+            ],
+        ],
+    ]);
+
 Code Execution
 ~~~~~~~~~~~~~~
 
