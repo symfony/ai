@@ -29,8 +29,8 @@
         "php": ">=8.2",
         "mongodb/mongodb": "^1.21|^2.0",
         "psr/log": "^3.0",
-        "symfony/ai-platform": "^0.7",
-        "symfony/ai-store": "^0.7",
+        "symfony/ai-platform": "^0.8",
+        "symfony/ai-store": "^0.8",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
