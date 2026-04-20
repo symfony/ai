@@ -44,7 +44,7 @@ This can happen due to preselected models in the examples not being available an
 Hugging Face's side. You can change the model used in the examples by updating the model name in the example script.
 
 To find available models for a specific task, you can check out the [Hugging Face Model Hub](https://huggingface.co/models)
-and filter by the desired task, or you can use the `huggingface/_model-listing.php` script.
+and filter by the desired task, or you can use the `huggingface/_model.php` script.
 
 ### Listing Available Models
 
@@ -98,7 +98,7 @@ php huggingface/_model.php ai:huggingface:model-list --warm --task=text-generati
 
 ### Model Information
 
-To get detailed information about a specific model, you can use the `huggingface/_model-info.php` script:
+To get detailed information about a specific model, you can use the `huggingface/_model.php` script:
 
 ```bash
 php huggingface/_model.php ai:huggingface:model-info google/vit-base-patch16-224

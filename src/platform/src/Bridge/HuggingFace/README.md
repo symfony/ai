@@ -31,10 +31,10 @@ composer require symfony/ai-platform
 ### Initialize the Platform
 
 ```php
-use Symfony\AI\Platform\Bridge\HuggingFace\PlatformFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     apiKey: 'hf_your_api_key_here',
     provider: Provider::CEREBRAS, // or other providers
     httpClient: $httpClient  // optional, uses default if not provided
@@ -95,9 +95,10 @@ the [`Provider` interface](./Provider.php).
 Specify a provider when creating the platform:
 
 ```php
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     apiKey: 'your_api_key',
     provider: Provider::GROQ,
 );
