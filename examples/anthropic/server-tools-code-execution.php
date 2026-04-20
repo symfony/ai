@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('ANTHROPIC_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_client());
 
 $agent = new Agent($platform, 'claude-sonnet-4-5-20250929');
 

@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
 use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -22,7 +22,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $store = new InMemoryStore();
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
 
 $indexer = new SourceIndexer(

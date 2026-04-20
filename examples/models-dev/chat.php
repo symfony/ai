@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\ModelsDev\PlatformFactory;
+use Symfony\AI\Platform\Bridge\ModelsDev\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     provider: 'anthropic',
     apiKey: env('ANTHROPIC_API_KEY'),
     httpClient: http_client(),

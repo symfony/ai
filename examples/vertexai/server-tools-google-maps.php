@@ -10,13 +10,13 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\VertexAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), env('GOOGLE_CLOUD_VERTEX_API_KEY'));
+$platform = Factory::createPlatform(env('GOOGLE_CLOUD_LOCATION'), env('GOOGLE_CLOUD_PROJECT'), env('GOOGLE_CLOUD_VERTEX_API_KEY'));
 
 $agent = new Agent($platform, 'gemini-2.5-pro');
 

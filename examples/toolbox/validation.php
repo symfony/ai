@@ -15,7 +15,7 @@ use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -41,7 +41,7 @@ final class CountryQuery
     }
 }
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 $eventDispatcher = new EventDispatcher();
 $eventDispatcher->addListener(ToolCallArgumentsResolved::class, new ValidateToolCallArgumentsListener());

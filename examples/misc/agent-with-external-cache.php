@@ -11,14 +11,14 @@
 
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Cache\Adapter\RedisTagAwareAdapter;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $cachedPlatform = new CachePlatform($platform, cache: new RedisTagAwareAdapter(new Redis([
     'host' => 'localhost',
     'port' => 6379,

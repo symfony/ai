@@ -77,7 +77,7 @@ final class ModelCatalogTest extends TestCase
     public function testProvidersWithSpecializedBridgesCanCreateCatalog()
     {
         // ModelCatalog can be created for all providers, including those with specialized bridges
-        // The routing to specialized bridges happens in PlatformFactory
+        // The routing to specialized bridges happens in Factory
         $catalog = new ModelCatalog('anthropic');
 
         $this->assertNotEmpty($catalog->getModels());

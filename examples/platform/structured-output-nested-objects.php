@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
-use Symfony\AI\Platform\Bridge\Gemini\PlatformFactory as GeminiPlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
+use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -29,9 +29,9 @@ $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber());
 
 $platforms = [
-    'claude-sonnet-4-5-20250929' => AnthropicPlatformFactory::create(env('ANTHROPIC_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher),
-    'gpt-5-mini' => OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client(), eventDispatcher: $dispatcher),
-    'gemini-2.5-flash' => GeminiPlatformFactory::create(env('GEMINI_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher),
+    'claude-sonnet-4-5-20250929' => AnthropicFactory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher),
+    'gpt-5-mini' => OpenAiFactory::createPlatform(env('OPENAI_API_KEY'), http_client(), eventDispatcher: $dispatcher),
+    'gemini-2.5-flash' => GeminiFactory::createPlatform(env('GEMINI_API_KEY'), httpClient: http_client(), eventDispatcher: $dispatcher),
 ];
 
 foreach ($platforms as $model => $platform) {

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -38,7 +39,7 @@ final class PlatformTestHandler implements ModelClientInterface, ResultConverter
     {
         $handler = new self($create);
 
-        return new Platform([$handler], [$handler], $modelCatalog);
+        return new Platform([new Provider('test', [$handler], [$handler], $modelCatalog)]);
     }
 
     public function supports(Model $model): bool

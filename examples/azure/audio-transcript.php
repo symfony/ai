@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Azure\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Content\Audio;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     env('AZURE_OPENAI_BASEURL'),
     env('AZURE_OPENAI_WHISPER_DEPLOYMENT'),
     env('AZURE_OPENAI_WHISPER_API_VERSION'),

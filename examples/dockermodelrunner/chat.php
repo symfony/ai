@@ -10,13 +10,13 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Platform\Bridge\DockerModelRunner\PlatformFactory;
+use Symfony\AI\Platform\Bridge\DockerModelRunner\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('DOCKER_MODEL_RUNNER_HOST_URL'), http_client());
+$platform = Factory::createPlatform(env('DOCKER_MODEL_RUNNER_HOST_URL'), http_client());
 
 $agent = new Agent($platform, 'ai/gemma3n');
 $messages = new MessageBag(

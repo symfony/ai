@@ -13,14 +13,14 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Youtube\YoutubeTranscriber;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Scaleway\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Scaleway\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('SCALEWAY_SECRET_KEY'), http_client());
+$platform = Factory::createPlatform(env('SCALEWAY_SECRET_KEY'), http_client());
 
 $transcriber = new YoutubeTranscriber(http_client());
 $toolbox = new Toolbox([$transcriber], logger: logger());

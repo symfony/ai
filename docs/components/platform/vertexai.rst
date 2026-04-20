@@ -46,11 +46,11 @@ Configure your Google Cloud project and location:
 
 Basic usage example::
 
-    use Symfony\AI\Platform\Bridge\VertexAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\VertexAi\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         $_ENV['GOOGLE_CLOUD_LOCATION'],
         $_ENV['GOOGLE_CLOUD_PROJECT'],
         httpClient: $httpClient
@@ -78,7 +78,7 @@ Similar to the first approach, but instead of authenticating with the `gcloud` c
 You can provide an API key together with a location and project ID. This still uses the
 project-scoped endpoint but authenticates with the API key instead of ADC::
 
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         $_ENV['GOOGLE_CLOUD_LOCATION'],
         $_ENV['GOOGLE_CLOUD_PROJECT'],
         apiKey: $_ENV['GOOGLE_CLOUD_VERTEX_API_KEY'],
@@ -93,7 +93,7 @@ If you only provide an API key without a location or project ID, the platform us
 VertexAI **global endpoint** (``https://aiplatform.googleapis.com/v1/publishers/google/models/...``).
 This is the simplest setup and does not require the ``google/auth`` package::
 
-    $platform = PlatformFactory::create(
+    $platform = Factory::createPlatform(
         apiKey: $_ENV['GOOGLE_CLOUD_VERTEX_API_KEY'],
     );
 

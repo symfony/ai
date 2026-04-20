@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Codewithkyrian\ChromaDB\Factory;
+use Codewithkyrian\ChromaDB\Factory as ChromaDbFactory;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Bridge\ChromaDb\Store;
@@ -32,7 +32,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // initialize the store
 
 $store = new Store(
-    (new Factory())
+    (new ChromaDbFactory())
         ->withHost(env('CHROMADB_HOST'))
         ->withPort((int) env('CHROMADB_PORT'))
         ->connect(),
@@ -50,7 +50,7 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // create embeddings for documents
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);

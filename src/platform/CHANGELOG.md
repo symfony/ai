@@ -13,6 +13,10 @@ CHANGELOG
  * Add support for `DiscriminatorMap` and `DateTimeImmutable` for structured output and tool calls
  * [BC BREAK] `Contract::create()` no longer accepts variadic `NormalizerInterface` arguments; pass an array instead
  * [BC BREAK] Change `public array $calls` and `public \WeakMap $resultCache` to private in `TraceablePlatform` - use `getCalls()` and `getResultCache()` instead
+ * Add `ProviderInterface` and `Provider` abstraction for inference backends, with `Platform` becoming a router over one or more providers
+ * Add `ModelRouterInterface` with `CatalogBasedModelRouter` as default strategy, and `CompositeModelCatalog` merging provider catalogs
+ * Add `ModelRoutingEvent` dispatched by `Platform` before resolution, allowing listeners to observe/modify routing or short-circuit it by setting a provider
+ * [BC BREAK] `Platform` constructor signature changed from `(modelClients, resultConverters, modelCatalog, contract, eventDispatcher)` to `(providers, modelRouter, eventDispatcher)`
 
 0.7
 ---

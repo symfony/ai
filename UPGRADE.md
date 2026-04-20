@@ -93,6 +93,40 @@ Platform
    +$traceablePlatform->getResultCache();
    ```
 
+ * Bridge factories are now unified as a single `Factory` class per bridge (replacing `PlatformFactory`), with explicit
+   `createProvider()` and `createPlatform()` methods. `createPlatform()` returns a ready-to-use `Platform` for the
+   standalone case (most common). `createProvider()` returns a `ProviderInterface` for composing multiple providers
+   into one `Platform` (multi-provider auto-routing, load balancing, failover). Update your imports and method calls:
+
+   ```diff
+   -use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+   +use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+
+   -$platform = PlatformFactory::create(apiKey: 'sk-...');
+   +$platform = Factory::createPlatform(apiKey: 'sk-...');
+   ```
+
+   The same rename applies to every bridge. Multi-provider composition is now straightforward:
+
+   ```php
+   use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
+   use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+   use Symfony\AI\Platform\Platform;
+
+   $platform = new Platform([
+       OpenAiFactory::createProvider(apiKey: 'sk-...'),
+       AnthropicFactory::createProvider(apiKey: 'sk-...'),
+   ]);
+
+   $platform->invoke('gpt-4o', $messages);             // → OpenAI
+   $platform->invoke('claude-3-5-sonnet', $messages);  // → Anthropic
+   ```
+
+   `Platform` is now a router over one or more `ProviderInterface` instances. Its constructor signature changed to
+   `(array $providers, ?ModelRouterInterface $modelRouter, ?EventDispatcherInterface $eventDispatcher)`. Model
+   invocations dispatch a new `ModelRoutingEvent` before resolution, allowing listeners to modify the model name,
+   input, options, or short-circuit routing by setting a provider directly via `$event->setProvider(...)`.
+
  * The constructors of `VectorResult`, `ToolCallResult`, `RerankingResult`, `ToolCallComplete`, and `ImageResult`
    (OpenAI DallE bridge) no longer accept variadic parameters. Pass an array instead:
 

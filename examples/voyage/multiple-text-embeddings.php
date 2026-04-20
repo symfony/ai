@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Voyage\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('VOYAGE_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('VOYAGE_API_KEY'), http_client());
 
 $text1 = 'Once upon a time, there was a country called Japan. It was a beautiful country with a lot of mountains and rivers.';
 $text2 = 'The people of Japan were very kind and hardworking. They loved their country very much and took care of it.';

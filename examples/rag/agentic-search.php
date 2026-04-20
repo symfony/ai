@@ -17,7 +17,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\AgenticSearch\AgenticSearchTools;
 use Symfony\AI\Fixtures\AgenticSearch\DocumentCorpus;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Document\Metadata;
@@ -52,7 +52,7 @@ echo "Building document corpus from movie fixtures...\n";
 
 // 1. Build the document corpus - one document per movie, preferring detailed markdown versions
 $store = new InMemoryStore();
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 
 $originalDocuments = [];

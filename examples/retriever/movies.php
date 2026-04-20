@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -33,7 +33,7 @@ foreach (Movies::all() as $movie) {
     );
 }
 
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));

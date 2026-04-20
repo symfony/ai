@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Voyage\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Voyage\Factory;
 use Symfony\AI\Platform\Message\Content\Collection;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('VOYAGE_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('VOYAGE_API_KEY'), http_client());
 
 $image = Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg');
 

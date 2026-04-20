@@ -12,10 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaClient;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -109,7 +109,7 @@ final class OllamaClientTest extends TestCase
             ),
         ], 'http://127.0.0.1:1234');
 
-        $platform = PlatformFactory::create('http://127.0.0.1:1234', httpClient: $httpClient);
+        $platform = Factory::createPlatform('http://127.0.0.1:1234', httpClient: $httpClient);
         $response = $platform->invoke('llama3.2', [
             'messages' => [
                 [

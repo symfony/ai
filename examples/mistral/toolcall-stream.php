@@ -13,14 +13,14 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Youtube\YoutubeTranscriber;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Mistral\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('MISTRAL_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('MISTRAL_API_KEY'), http_client());
 
 $transcriber = new YoutubeTranscriber(http_client());
 $toolbox = new Toolbox([$transcriber], logger: logger());

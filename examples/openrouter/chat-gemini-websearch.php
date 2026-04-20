@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(env('OPENROUTER_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client());
 
 $messages = new MessageBag(
     Message::forSystem('Check the web for details that the user ask.'),

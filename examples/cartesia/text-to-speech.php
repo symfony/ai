@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Cartesia\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Cartesia\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = PlatformFactory::create(
+$platform = Factory::createPlatform(
     apiKey: env('CARTESIA_API_KEY'),
     version: env('CARTESIA_API_VERSION'),
     httpClient: http_client(),

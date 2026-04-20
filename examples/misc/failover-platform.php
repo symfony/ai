@@ -10,9 +10,9 @@
  */
 
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -29,8 +29,8 @@ $rateLimiter = new RateLimiterFactory([
 
 // # Ollama will fail as 'gpt-5.2' is not available in the catalog
 $platform = new FailoverPlatform([
-    OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client()),
-    OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client()),
+    OllamaFactory::createPlatform(env('OLLAMA_HOST_URL'), httpClient: http_client()),
+    OpenAiFactory::createPlatform(env('OPENAI_API_KEY'), http_client()),
 ], $rateLimiter);
 
 $result = $platform->invoke('gpt-5.2', new MessageBag(

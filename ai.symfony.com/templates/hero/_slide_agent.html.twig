@@ -26,7 +26,7 @@
             cursorChar: '|',
             strings: ['gpt-5.1', 'mistral-large-latest', 'gemini-3-pro-preview', 'claude-sonnet-4-5'],
         }) %}
-        <pre class="terminal"><code><span class="variable">$platform</span> = <span class="title class_">PlatformFactory</span>::<span class="title function_ invoke__">create</span>(...);
+        <pre class="terminal"><code><span class="variable">$platform</span> = <span class="title class_">Factory</span>::<span class="title function_ invoke__">createPlatform</span>(...);
 <span class="variable">$agent</span> = <span class="keyword">new</span> <span class="title class_">Agent</span>(<span class="variable">$platform</span>, <span class="string">'</span><span class="string" {{ model_typed|raw }}></span><span class="string">'</span>)
 
 <span class="variable">$messages</span> = <span class="keyword">new</span> <span class="title class_">MessageBag</span>(

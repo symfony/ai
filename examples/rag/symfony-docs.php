@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Store\Document\Loader\RstToctreeLoader;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
@@ -43,7 +43,7 @@ if (!is_dir($docsDir.'/.git')) {
 
 // 2. Load & Index
 $store = new InMemoryStore();
-$platform = PlatformFactory::create(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger(), includeText: true);
 $processor = new DocumentProcessor($vectorizer, $store, logger: logger());
 

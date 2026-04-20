@@ -13,7 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\Bedrock\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -25,7 +25,7 @@ if (!isset($_SERVER['AWS_ACCESS_KEY_ID'], $_SERVER['AWS_SECRET_ACCESS_KEY'], $_S
     exit(1);
 }
 
-$platform = PlatformFactory::create();
+$platform = Factory::createPlatform();
 
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia]);

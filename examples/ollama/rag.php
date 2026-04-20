@@ -14,7 +14,7 @@ use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\Movies;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory;
+use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Store\Document\Metadata;
@@ -42,7 +42,7 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // create embeddings for documents
-$platform = PlatformFactory::create(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('OLLAMA_HOST_URL'), env('OLLAMA_API_KEY'), httpClient: http_client());
 $vectorizer = new Vectorizer($platform, env('OLLAMA_EMBEDDINGS'), logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
