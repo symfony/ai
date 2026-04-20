@@ -27,8 +27,8 @@
     "require": {
         "php": ">=8.2",
         "codewithkyrian/chromadb-php": "^1.0",
-        "symfony/ai-platform": "^0.7",
-        "symfony/ai-store": "^0.7",
+        "symfony/ai-platform": "^0.8",
+        "symfony/ai-store": "^0.8",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
