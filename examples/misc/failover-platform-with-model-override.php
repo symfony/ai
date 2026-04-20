@@ -9,16 +9,13 @@
  * file that was distributed with this source code.
  */
 
+use Symfony\AI\Platform\Bridge\Anthropic\PlatformFactory as AnthropicPlatformFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
-use Symfony\AI\Platform\Bridge\Ollama\PlatformFactory as OllamaPlatformFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
 use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory as OpenAiPlatformFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
-
-require_once dirname(__DIR__).'/bootstrap.php';
 
 $rateLimiter = new RateLimiterFactory([
     'policy' => 'sliding_window',
@@ -27,17 +24,13 @@ $rateLimiter = new RateLimiterFactory([
     'limit' => 1,
 ], new InMemoryStorage());
 
-// # Ollama will fail as 'gpt-5.2' is not available in the catalog
 $platform = new FailoverPlatform([
-    ['platform' => OllamaPlatformFactory::create(env('OLLAMA_HOST_URL'), httpClient: http_client())],
-    ['platform' => OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client())],
+    ['platform' => OpenAiPlatformFactory::create(env('OPENAI_API_KEY'), http_client()), 'model' => 'gpt-4o'],
+    ['platform' => AnthropicPlatformFactory::create(env('ANTHROPIC_API_KEY'), http_client()), 'model' => 'claude-sonnet-4-20250514'],
 ], $rateLimiter);
 
-$result = $platform->invoke('gpt-5.2', new MessageBag(
+// OpenAI receives 'gpt-4o', if it fails, Anthropic receives 'claude-sonnet-4-20250514'
+$result = $platform->invoke('gpt-4o', new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
-    Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
+    Message::ofUser('What is the capital of France?'),
 ));
-
-assert($result->getResultConverter() instanceof ResultConverter);
-
-echo $result->asText().\PHP_EOL;

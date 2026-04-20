@@ -272,6 +272,32 @@ Platform
    +    echo $chunk->getText();
    +}
    ```
+ * The `FailoverPlatform` constructor now accepts both bare `PlatformInterface` instances and
+   associative arrays with a `platform` key. When no model override is needed, you can pass the
+   platform directly instead of wrapping it in an array:
+
+   ```diff
+   -$platform = new FailoverPlatform([
+   -    ['platform' => $openai],
+   -    ['platform' => $anthropic],
+   -], $rateLimiter);
+   +$platform = new FailoverPlatform([
+   +    $openai,
+   +    $anthropic,
+   +], $rateLimiter);
+   ```
+
+ * The `model` option in `FailoverPlatform` now accepts an array of model names for "multi-models"
+   fallback per platform. Models are tried in order; the failover proceeds to the next platform
+   only when all models on the current platform have been exhausted:
+
+   ```php
+   $platform = new FailoverPlatform([
+       ['platform' => $openRouter, 'model' => ['minimax/minimax-m2.5:free', 'openai/gpt-oss-120b:free']],
+       $openai,
+   ], $rateLimiter);
+   ```
+
  * `Symfony\AI\Platform\Bridge\Perplexity\PerplexitySearchResults`,
    `Symfony\AI\Platform\Bridge\Perplexity\PerplexityCitations`, and
    `Symfony\AI\Platform\Bridge\Perplexity\StreamListener` have been
