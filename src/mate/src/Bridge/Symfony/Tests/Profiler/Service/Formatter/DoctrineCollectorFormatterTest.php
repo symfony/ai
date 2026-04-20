@@ -51,17 +51,19 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertSame(['default'], $result['connections']);
         $this->assertCount(2, $result['queries']);
         $this->assertFalse($result['queries_truncated']);
-        $this->assertSame([], $result['duplicate_queries']);
+        $this->assertArrayNotHasKey('duplicate_queries', $result);
 
-        $this->assertSame('default', $result['queries'][0]['connection']);
         $this->assertSame('SELECT * FROM users', $result['queries'][0]['sql']);
-        $this->assertSame([], $result['queries'][0]['params']);
-        $this->assertSame(1.2, $result['queries'][0]['time_ms']);
+        $this->assertSame(1, $result['queries'][0]['count']);
+        $this->assertSame(1.2, $result['queries'][0]['total_time_ms']);
+        $this->assertSame(1.2, $result['queries'][0]['avg_time_ms']);
+        $this->assertSame([], $result['queries'][0]['sample_params']);
 
-        $this->assertSame('default', $result['queries'][1]['connection']);
         $this->assertSame('SELECT * FROM posts WHERE user_id = ?', $result['queries'][1]['sql']);
-        $this->assertSame([1], $result['queries'][1]['params']);
-        $this->assertSame(0.8, $result['queries'][1]['time_ms']);
+        $this->assertSame(1, $result['queries'][1]['count']);
+        $this->assertSame(0.8, $result['queries'][1]['total_time_ms']);
+        $this->assertSame(0.8, $result['queries'][1]['avg_time_ms']);
+        $this->assertSame([1], $result['queries'][1]['sample_params']);
     }
 
     public function testFormatMultipleConnections()
@@ -83,8 +85,6 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertSame(2, $result['query_count']);
         $this->assertSame(['default', 'legacy'], $result['connections']);
         $this->assertCount(2, $result['queries']);
-        $this->assertSame('default', $result['queries'][0]['connection']);
-        $this->assertSame('legacy', $result['queries'][1]['connection']);
     }
 
     public function testFormatTruncatesQueries()
@@ -106,25 +106,6 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertTrue($result['queries_truncated']);
     }
 
-    public function testFormatTruncatesLongParams()
-    {
-        $longParam = str_repeat('a', 150);
-
-        $collector = $this->createCollector(
-            ['default' => 'doctrine.default'],
-            [
-                'default' => [
-                    ['sql' => 'SELECT * FROM users WHERE bio = ?', 'params' => [$longParam], 'executionMS' => 0.001, 'types' => []],
-                ],
-            ],
-        );
-
-        $result = $this->formatter->format($collector);
-
-        $this->assertSame(103, \strlen($result['queries'][0]['params'][0]));
-        $this->assertStringEndsWith('...', $result['queries'][0]['params'][0]);
-    }
-
     public function testFormatDetectsDuplicateQueries()
     {
         $collector = $this->createCollector(
@@ -141,10 +122,38 @@ final class DoctrineCollectorFormatterTest extends TestCase
 
         $result = $this->formatter->format($collector);
 
-        $this->assertCount(1, $result['duplicate_queries']);
-        $this->assertSame('SELECT * FROM users WHERE id = ?', $result['duplicate_queries'][0]['sql']);
-        $this->assertSame(3, $result['duplicate_queries'][0]['count']);
-        $this->assertSame(6.0, $result['duplicate_queries'][0]['total_time_ms']);
+        $this->assertCount(2, $result['queries']);
+        // sorted by total_time_ms descending
+        $this->assertSame('SELECT * FROM users WHERE id = ?', $result['queries'][0]['sql']);
+        $this->assertSame(3, $result['queries'][0]['count']);
+        $this->assertSame(6.0, $result['queries'][0]['total_time_ms']);
+        $this->assertSame(2.0, $result['queries'][0]['avg_time_ms']);
+        $this->assertSame([1], $result['queries'][0]['sample_params']);
+        $this->assertSame('SELECT * FROM posts', $result['queries'][1]['sql']);
+        $this->assertSame(1, $result['queries'][1]['count']);
+        $this->assertSame(1.0, $result['queries'][1]['total_time_ms']);
+        $this->assertSame(1.0, $result['queries'][1]['avg_time_ms']);
+        $this->assertSame([], $result['queries'][1]['sample_params']);
+        $this->assertArrayNotHasKey('duplicate_queries', $result);
+    }
+
+    public function testFormatTruncatesLongSampleParams()
+    {
+        $longParam = str_repeat('a', 150);
+
+        $collector = $this->createCollector(
+            ['default' => 'doctrine.default'],
+            [
+                'default' => [
+                    ['sql' => 'SELECT * FROM users WHERE bio = ?', 'params' => [$longParam], 'executionMS' => 0.001, 'types' => []],
+                ],
+            ],
+        );
+
+        $result = $this->formatter->format($collector);
+
+        $this->assertSame(103, \strlen($result['queries'][0]['sample_params'][0]));
+        $this->assertStringEndsWith('...', $result['queries'][0]['sample_params'][0]);
     }
 
     public function testFormatNoQueries()
@@ -160,7 +169,6 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertSame(0.0, $result['total_time_ms']);
         $this->assertSame([], $result['queries']);
         $this->assertFalse($result['queries_truncated']);
-        $this->assertSame([], $result['duplicate_queries']);
     }
 
     public function testGetSummary()

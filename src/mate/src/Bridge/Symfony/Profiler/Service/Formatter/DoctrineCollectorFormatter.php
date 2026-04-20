@@ -38,7 +38,7 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
     {
         \assert($collector instanceof DoctrineDataCollector);
 
-        $queries = $this->flattenQueries($collector);
+        $queries = $this->groupQueries($collector);
         $truncated = \count($queries) > self::MAX_QUERIES;
         $queries = \array_slice($queries, 0, self::MAX_QUERIES);
 
@@ -48,7 +48,6 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
             'connections' => array_keys($collector->getConnections()),
             'queries' => $queries,
             'queries_truncated' => $truncated,
-            'duplicate_queries' => $this->detectDuplicateQueries($collector),
         ];
     }
 
@@ -56,47 +55,35 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
     {
         \assert($collector instanceof DoctrineDataCollector);
 
+        $duplicateCount = \count(array_filter(
+            $this->groupQueries($collector),
+            static fn (array $q): bool => $q['count'] > 1,
+        ));
+
         return [
             'query_count' => $collector->getQueryCount(),
             'total_time_ms' => round($collector->getTime() * 1000, 2),
-            'duplicate_query_count' => \count($this->detectDuplicateQueries($collector)),
+            'duplicate_query_count' => $duplicateCount,
         ];
     }
 
     /**
-     * @return list<array{connection: string, sql: string, params: mixed, time_ms: float}>
+     * @return list<array{sql: string, count: int, total_time_ms: float, avg_time_ms: float, sample_params: mixed}>
      */
-    private function flattenQueries(DoctrineDataCollector $collector): array
+    private function groupQueries(DoctrineDataCollector $collector): array
     {
-        $flattened = [];
-
-        foreach ($collector->getQueries() as $connection => $queries) {
-            foreach ($queries as $query) {
-                $flattened[] = [
-                    'connection' => $connection,
-                    'sql' => $query['sql'] ?? '',
-                    'params' => $this->truncateParams($query['params'] ?? null),
-                    'time_ms' => round(($query['executionMS'] ?? 0.0) * 1000, 2),
-                ];
-            }
-        }
-
-        return $flattened;
-    }
-
-    /**
-     * @return list<array{sql: string, count: int, total_time_ms: float}>
-     */
-    private function detectDuplicateQueries(DoctrineDataCollector $collector): array
-    {
-        /** @var array<string, array{count: int, total_time_ms: float}> $grouped */
+        /** @var array<string, array{count: int, total_time_ms: float, sample_params: mixed}> $grouped */
         $grouped = [];
 
         foreach ($collector->getQueries() as $queries) {
             foreach ($queries as $query) {
                 $sql = $query['sql'] ?? '';
                 if (!isset($grouped[$sql])) {
-                    $grouped[$sql] = ['count' => 0, 'total_time_ms' => 0.0];
+                    $grouped[$sql] = [
+                        'count' => 0,
+                        'total_time_ms' => 0.0,
+                        'sample_params' => $this->truncateParams($query['params'] ?? null),
+                    ];
                 }
 
                 ++$grouped[$sql]['count'];
@@ -104,20 +91,21 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
             }
         }
 
-        $duplicates = [];
+        $result = [];
         foreach ($grouped as $sql => $data) {
-            if ($data['count'] <= 1) {
-                continue;
-            }
-
-            $duplicates[] = [
+            $totalTimeMs = round($data['total_time_ms'], 2);
+            $result[] = [
                 'sql' => $sql,
                 'count' => $data['count'],
-                'total_time_ms' => round($data['total_time_ms'], 2),
+                'total_time_ms' => $totalTimeMs,
+                'avg_time_ms' => round($totalTimeMs / $data['count'], 2),
+                'sample_params' => $data['sample_params'],
             ];
         }
 
-        return $duplicates;
+        usort($result, static fn (array $a, array $b): int => $b['total_time_ms'] <=> $a['total_time_ms']);
+
+        return $result;
     }
 
     private function truncateParams(mixed $params): mixed
