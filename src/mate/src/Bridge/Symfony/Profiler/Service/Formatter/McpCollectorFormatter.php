@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 
+use Symfony\AI\McpBundle\Profiler\DataCollector as McpDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 
@@ -20,11 +21,11 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  * @author Johannes Wachter <johannes@sulu.io>
  *
  * @internal
+ *
+ * @implements CollectorFormatterInterface<McpDataCollector>
  */
 final class McpCollectorFormatter implements CollectorFormatterInterface
 {
-    use ExtractsCollectorDataTrait;
-
     public function getName(): string
     {
         return 'mcp';
@@ -32,19 +33,19 @@ final class McpCollectorFormatter implements CollectorFormatterInterface
 
     public function format(DataCollectorInterface $collector): array
     {
-        $data = $this->extractCollectorData($collector);
+        \assert($collector instanceof McpDataCollector);
 
-        $tools = $this->normalizeEntries($data['tools'] ?? []);
-        $prompts = $this->normalizeEntries($data['prompts'] ?? []);
-        $resources = $this->normalizeEntries($data['resources'] ?? []);
-        $resourceTemplates = $this->normalizeEntries($data['resourceTemplates'] ?? []);
+        $tools = $this->normalizeEntries($collector->getTools());
+        $prompts = $this->normalizeEntries($collector->getPrompts());
+        $resources = $this->normalizeEntries($collector->getResources());
+        $resourceTemplates = $this->normalizeEntries($collector->getResourceTemplates());
 
         return [
             'tool_count' => \count($tools),
             'prompt_count' => \count($prompts),
             'resource_count' => \count($resources),
             'resource_template_count' => \count($resourceTemplates),
-            'total_count' => \count($tools) + \count($prompts) + \count($resources) + \count($resourceTemplates),
+            'total_count' => $collector->getTotalCount(),
             'tools' => $tools,
             'prompts' => $prompts,
             'resources' => $resources,
@@ -54,40 +55,25 @@ final class McpCollectorFormatter implements CollectorFormatterInterface
 
     public function getSummary(DataCollectorInterface $collector): array
     {
-        $data = $this->extractCollectorData($collector);
-
-        $toolCount = $this->countEntries($data['tools'] ?? []);
-        $promptCount = $this->countEntries($data['prompts'] ?? []);
-        $resourceCount = $this->countEntries($data['resources'] ?? []);
-        $resourceTemplateCount = $this->countEntries($data['resourceTemplates'] ?? []);
+        \assert($collector instanceof McpDataCollector);
 
         return [
-            'tool_count' => $toolCount,
-            'prompt_count' => $promptCount,
-            'resource_count' => $resourceCount,
-            'resource_template_count' => $resourceTemplateCount,
-            'total_count' => $toolCount + $promptCount + $resourceCount + $resourceTemplateCount,
+            'tool_count' => \count($collector->getTools()),
+            'prompt_count' => \count($collector->getPrompts()),
+            'resource_count' => \count($collector->getResources()),
+            'resource_template_count' => \count($collector->getResourceTemplates()),
+            'total_count' => $collector->getTotalCount(),
         ];
     }
 
     /**
-     * @param mixed $entries
+     * @param array<array<string, mixed>> $entries
      *
      * @return list<array<string, mixed>>
      */
-    private function normalizeEntries(mixed $entries): array
+    private function normalizeEntries(array $entries): array
     {
-        if (!\is_array($entries)) {
-            return [];
-        }
-
-        return array_values(array_map(function (mixed $entry): array {
-            if (!\is_array($entry)) {
-                return ['value' => $entry];
-            }
-
-            return $this->normalizeEntry($entry);
-        }, $entries));
+        return array_values(array_map(fn (array $entry): array => $this->normalizeEntry($entry), $entries));
     }
 
     /**
@@ -148,10 +134,5 @@ final class McpCollectorFormatter implements CollectorFormatterInterface
         $snakeCase = preg_replace('/(?<!^)[A-Z]/', '_$0', $value);
 
         return strtolower($snakeCase ?? $value);
-    }
-
-    private function countEntries(mixed $entries): int
-    {
-        return \is_array($entries) ? \count($entries) : 0;
     }
 }
