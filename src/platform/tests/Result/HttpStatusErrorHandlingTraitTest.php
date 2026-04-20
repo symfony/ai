@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Result;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
@@ -20,19 +21,40 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
+/**
+ * @author Pascal CESCON <pascal.cescon@gmail.com>
+ */
 final class HttpStatusErrorHandlingTraitTest extends TestCase
 {
-    public function testNoopOnSuccessfulStatusCodes()
+    /**
+     * Any status outside the 400/401/429 trio - success, redirect, server-error -
+     * is passed through untouched for the calling converter to handle.
+     */
+    #[DataProvider('unhandledStatusCodes')]
+    public function testDoesNotThrowForUnhandledStatusCodes(int $status)
     {
-        $subject = $this->subject();
+        $this->expectNotToPerformAssertions();
 
-        foreach ([200, 201, 204, 301, 302, 500, 503] as $status) {
-            $response = $this->response('', $status);
-            $subject->throwOnHttpError($response);
-            $this->assertTrue(true, \sprintf('No exception thrown for status %d.', $status));
-        }
+        $this->subject()->throwOnHttpError($this->response('', $status));
     }
 
+    /**
+     * @return iterable<array{int}>
+     */
+    public static function unhandledStatusCodes(): iterable
+    {
+        yield '200 OK' => [200];
+        yield '201 Created' => [201];
+        yield '204 No Content' => [204];
+        yield '301 Moved Permanently' => [301];
+        yield '302 Found' => [302];
+        yield '500 Internal Server Error' => [500];
+        yield '503 Service Unavailable' => [503];
+    }
+
+    /**
+     * Nested `error.message` is emitted by OpenAI, Gemini, Perplexity and DeepSeek.
+     */
     public function testThrowsAuthenticationExceptionOn401WithNestedErrorMessage()
     {
         $response = $this->response(json_encode([
@@ -47,6 +69,9 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         $this->subject()->throwOnHttpError($response);
     }
 
+    /**
+     * Flat top-level `message` is emitted by Mistral, Cerebras and Cohere.
+     */
     public function testThrowsAuthenticationExceptionOn401WithFlatMessage()
     {
         $response = $this->response(json_encode([
@@ -130,6 +155,25 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
     public function testThrowsRateLimitExceededExceptionOn429WithoutRetryAfter()
     {
         $response = $this->response('{"message":"Too many requests"}', 429);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertNull($e->getRetryAfter());
+        }
+    }
+
+    /**
+     * RFC 7231 allows Retry-After as an HTTP-date. AI providers consistently use
+     * delta-seconds in practice, so the trait intentionally ignores date-format
+     * values rather than silently casting them to 0 ("retry now").
+     */
+    public function testIgnoresNonNumericRetryAfter()
+    {
+        $response = $this->response('{"message":"Too many requests"}', 429, [
+            'retry-after' => 'Wed, 21 Oct 2015 07:28:00 GMT',
+        ]);
 
         try {
             $this->subject()->throwOnHttpError($response);
