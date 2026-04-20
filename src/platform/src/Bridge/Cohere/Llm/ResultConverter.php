@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Cohere\Llm;
 use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -31,6 +32,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use HttpStatusErrorHandlingTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Cohere;
@@ -43,8 +46,12 @@ final class ResultConverter implements ResultConverterInterface
     {
         $httpResponse = $result->getObject();
 
-        if ($httpResponse instanceof ResponseInterface && 200 !== $code = $httpResponse->getStatusCode()) {
-            throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $httpResponse->getContent(false)));
+        if ($httpResponse instanceof ResponseInterface) {
+            $this->throwOnHttpError($httpResponse);
+
+            if (200 !== $code = $httpResponse->getStatusCode()) {
+                throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $httpResponse->getContent(false)));
+            }
         }
 
         if ($options['stream'] ?? false) {

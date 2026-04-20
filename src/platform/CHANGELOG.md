@@ -17,6 +17,7 @@ CHANGELOG
  * Add `ModelRouterInterface` with `CatalogBasedModelRouter` as default strategy, and `CompositeModelCatalog` merging provider catalogs
  * Add `ModelRoutingEvent` dispatched by `Platform` before resolution, allowing listeners to observe/modify routing or short-circuit it by setting a provider
  * [BC BREAK] `Platform` constructor signature changed from `(modelClients, resultConverters, modelCatalog, contract, eventDispatcher)` to `(providers, modelRouter, eventDispatcher)`
+ * Add `HttpStatusErrorHandlingTrait` and expose API errors (`AuthenticationException`, `BadRequestException`, `RateLimitExceededException`) across the Mistral, DeepSeek, Cerebras, Perplexity, Cohere, Gemini and OpenAI (Embeddings, DallE, TextToSpeech) bridges
 
 0.7
 ---

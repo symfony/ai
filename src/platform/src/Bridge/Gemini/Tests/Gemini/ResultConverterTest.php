@@ -38,17 +38,17 @@ final class ResultConverterTest extends TestCase
     {
         $converter = new ResultConverter();
         $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getStatusCode')->willReturn(500);
         $httpResponse->method('toArray')->willReturn([
             'error' => [
-                'code' => 400,
-                'status' => 'INVALID_ARGUMENT',
-                'message' => 'Invalid request: The model does not support this feature.',
+                'code' => 500,
+                'status' => 'INTERNAL',
+                'message' => 'Internal error encountered.',
             ],
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Error "400" - "INVALID_ARGUMENT": "Invalid request: The model does not support this feature.".');
+        $this->expectExceptionMessage('Error "500" - "INTERNAL": "Internal error encountered.".');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

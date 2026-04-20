@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -26,6 +27,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use HttpStatusErrorHandlingTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof TextToSpeech;
@@ -34,6 +37,8 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         $response = $result->getObject();
+
+        $this->throwOnHttpError($response);
 
         if (200 !== $response->getStatusCode()) {
             throw new RuntimeException(\sprintf('The OpenAI Text-to-Speech API returned an error: "%s"', $response->getContent(false)));

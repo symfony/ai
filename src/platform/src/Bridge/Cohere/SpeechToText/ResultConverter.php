@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Cohere\SpeechToText;
 use Symfony\AI\Platform\Bridge\Cohere\SpeechToText;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -25,6 +26,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use HttpStatusErrorHandlingTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof SpeechToText;
@@ -33,6 +36,8 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): TextResult
     {
         $httpResponse = $result->getObject();
+
+        $this->throwOnHttpError($httpResponse);
 
         if (200 !== $httpResponse->getStatusCode()) {
             throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $httpResponse->getStatusCode(), $httpResponse->getContent(false)));
