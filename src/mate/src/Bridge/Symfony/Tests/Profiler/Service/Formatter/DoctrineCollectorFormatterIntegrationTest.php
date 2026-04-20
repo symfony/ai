@@ -52,11 +52,11 @@ final class DoctrineCollectorFormatterIntegrationTest extends TestCase
         $this->assertCount(2, $result['queries']);
         $this->assertFalse($result['queries_truncated']);
 
-        $this->assertSame('default', $result['queries'][0]['connection']);
-        $this->assertSame('SELECT * FROM users', $result['queries'][0]['sql']);
-        $this->assertArrayHasKey('time_ms', $result['queries'][0]);
-
-        $this->assertSame('SELECT * FROM posts WHERE user_id = ?', $result['queries'][1]['sql']);
+        $this->assertArrayHasKey('total_time_ms', $result['queries'][0]);
+        $this->assertArrayHasKey('avg_time_ms', $result['queries'][0]);
+        $this->assertArrayHasKey('sample_params', $result['queries'][0]);
+        $this->assertSame(1, $result['queries'][0]['count']);
+        $this->assertSame(1, $result['queries'][1]['count']);
     }
 
     public function testFormatDetectsDuplicatesWithRealCollector()
@@ -73,10 +73,11 @@ final class DoctrineCollectorFormatterIntegrationTest extends TestCase
         $result = $this->formatter->format($collector);
 
         $this->assertSame(4, $result['query_count']);
-        $this->assertCount(4, $result['queries']);
-        $this->assertCount(1, $result['duplicate_queries']);
-        $this->assertSame('SELECT * FROM users WHERE id = ?', $result['duplicate_queries'][0]['sql']);
-        $this->assertSame(3, $result['duplicate_queries'][0]['count']);
+        $this->assertCount(2, $result['queries']);
+        // sorted by total_time_ms descending — the 3× query is first
+        $this->assertSame('SELECT * FROM users WHERE id = ?', $result['queries'][0]['sql']);
+        $this->assertSame(3, $result['queries'][0]['count']);
+        $this->assertArrayHasKey('avg_time_ms', $result['queries'][0]);
     }
 
     public function testGetSummaryWithRealCollector()
@@ -113,8 +114,6 @@ final class DoctrineCollectorFormatterIntegrationTest extends TestCase
         $this->assertSame(2, $result['query_count']);
         $this->assertSame(['default', 'legacy'], $result['connections']);
         $this->assertCount(2, $result['queries']);
-        $this->assertSame('default', $result['queries'][0]['connection']);
-        $this->assertSame('legacy', $result['queries'][1]['connection']);
     }
 
     /**
