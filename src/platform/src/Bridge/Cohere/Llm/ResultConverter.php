@@ -25,7 +25,6 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -46,12 +45,10 @@ final class ResultConverter implements ResultConverterInterface
     {
         $httpResponse = $result->getObject();
 
-        if ($httpResponse instanceof ResponseInterface) {
-            $this->throwOnHttpError($httpResponse);
+        $this->throwOnHttpError($httpResponse);
 
-            if (200 !== $code = $httpResponse->getStatusCode()) {
-                throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $httpResponse->getContent(false)));
-            }
+        if (200 !== $code = $httpResponse->getStatusCode()) {
+            throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $httpResponse->getContent(false)));
         }
 
         if ($options['stream'] ?? false) {

@@ -10,6 +10,7 @@ CHANGELOG
  * [BC BREAK] `ResultConverter` now `ExecutableCodeResult` and `CodeExecutionResult` parts when using `code_execution` server tool
  * [BC BREAK] Throwing when code execution server tool fails is replaced with `CodeExecutionResult::isSucceeded()`
  * Add possibility to pass `tool_config` to the model
+ * HTTP 400/401/429 responses now throw dedicated exceptions (`BadRequestException`, `AuthenticationException`, `RateLimitExceededException`)
 
 0.7
 ---

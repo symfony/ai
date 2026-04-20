@@ -23,6 +23,17 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * Translates the common 4xx/429 responses returned by AI providers into
  * dedicated platform exceptions so consumers can react to auth failures,
  * bad requests and rate limits without parsing error bodies themselves.
+ *
+ * Error bodies are parsed leniently: both the nested `error.message` shape
+ * (OpenAI, Gemini, Perplexity) and the flat top-level `message` shape
+ * (Mistral, Cerebras, Cohere) are supported.
+ *
+ * The `Retry-After` header lookup on 429 is best-effort: providers that
+ * expose retry hints through other mechanisms (e.g. Cerebras via
+ * `x-ratelimit-reset-*`, Gemini via `error.details[].retryDelay`) are not
+ * parsed here and will yield a null `getRetryAfter()`.
+ *
+ * @author Pascal CESCON <pascal.cescon@gmail.com>
  */
 trait HttpStatusErrorHandlingTrait
 {
@@ -58,6 +69,10 @@ trait HttpStatusErrorHandlingTrait
     {
         $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
 
-        return $retryAfter ? (int) $retryAfter : null;
+        if (null === $retryAfter || !ctype_digit($retryAfter)) {
+            return null;
+        }
+
+        return (int) $retryAfter;
     }
 }

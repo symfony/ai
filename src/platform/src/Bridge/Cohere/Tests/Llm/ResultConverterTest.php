@@ -117,13 +117,16 @@ final class ResultConverterTest extends TestCase
 
     public function testItConvertsStreamWithTextContent()
     {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
         $converter = new ResultConverter();
         $result = $converter->convert(
             new InMemoryRawResult([], [
                 ['type' => 'content-delta', 'delta' => ['message' => ['content' => ['text' => 'Hello']]]],
                 ['type' => 'content-delta', 'delta' => ['message' => ['content' => ['text' => ', world!']]]],
                 ['type' => 'message-end', 'delta' => []],
-            ]),
+            ], $httpResponse),
             ['stream' => true],
         );
 
@@ -137,6 +140,9 @@ final class ResultConverterTest extends TestCase
 
     public function testItConvertsStreamWithToolCalls()
     {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
         $converter = new ResultConverter();
         $result = $converter->convert(
             new InMemoryRawResult([], [
@@ -144,7 +150,7 @@ final class ResultConverterTest extends TestCase
                 ['type' => 'tool-call-delta', 'delta' => ['message' => ['tool_calls' => ['function' => ['arguments' => '{"tz":']]]]],
                 ['type' => 'tool-call-delta', 'delta' => ['message' => ['tool_calls' => ['function' => ['arguments' => '"UTC"}']]]]],
                 ['type' => 'message-end', 'delta' => []],
-            ]),
+            ], $httpResponse),
             ['stream' => true],
         );
 
@@ -189,12 +195,15 @@ final class ResultConverterTest extends TestCase
 
     public function testItConvertsStreamWithToolCallsWithEmptyArguments()
     {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
         $converter = new ResultConverter();
         $result = $converter->convert(
             new InMemoryRawResult([], [
                 ['type' => 'tool-call-start', 'delta' => ['message' => ['tool_calls' => ['id' => 'call_1', 'function' => ['name' => 'get_time', 'arguments' => '']]]]],
                 ['type' => 'message-end', 'delta' => []],
-            ]),
+            ], $httpResponse),
             ['stream' => true],
         );
 
