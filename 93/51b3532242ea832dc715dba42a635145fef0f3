@@ -1,0 +1,126 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-10T17:49:23Z
+
+I would not split this PR and go with a big refactoring in one go.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-10T17:50:20Z
+
+So we need adjustments in the ai bundle?
+
+---------------------------------------------------------------------------
+
+by mxr576 at 2026-04-11T22:06:19Z
+
+Great work on this PR, the routing layer is a clean solution. One architectural question worth discussing before this lands though.
+
+Looking at the refactored `Platform`, it is essentially a provider pool with an injected model router. It holds a list of `ProviderInterface` instances, delegates all real work to whichever provider the router selects, and adds a single cross-cutting concern on top: the `ModelRoutingEvent` pre-routing hook. This makes `Platform` behaviorally identical to what a `ProviderPool implements ProviderInterface` would be. The only thing keeping it as a separate top-level concept is `PlatformInterface`, the public contract consumed by `agent`, `chat`, `store`, and user code.
+
+Two alternatives come to mind.
+
+**Alternative A** collapses the hierarchy: `Platform` becomes `ProviderPool implements ProviderInterface`, making the entire stack uniform and infinitely composable.
+
+```php
+$openaiPool = new ProviderPool([$openai1, $openai2], new RoundRobinModelRouter());
+$mainPool   = new ProviderPool([$openaiPool, $anthropic], new CatalogBasedModelRouter());
+
+$chat = new Chat($mainPool); // ProviderInterface is the only contract
+```
+
+Failover decorators and pools nest naturally at every level. This actually makes the failover story from #1808 cleaner than what the PR proposes, since a `FailoverProvider` wrapping a `ProviderPool` wrapping another `FailoverProvider` just works.
+
+**Alternative B** goes the other direction: skip `ProviderInterface` entirely and introduce `PlatformPool implements PlatformInterface` instead. Everything stays in the `Platform` domain, zero new abstraction layer, purely additive change.
+
+```php
+$platform = new PlatformPool(
+    platforms: [$openai, $anthropic],
+    router: new CatalogBasedModelRouter(),
+);
+```
+
+Now, do both alternatives still cover the referenced issues?
+
+Alternative A covers all five, and as noted above the failover composition story is actually better. Alternative B covers four out of five. The gap is #646 (Connector concept). Without a dedicated `ProviderInterface`, third-party bridge authors have no formal backend contract to implement. Failover (#1808) technically works too, but `PlatformInterface` ends up overloaded as both a consumer-facing API and a composable backend building block, which feels wrong.
+
+I fully understand why `Platform` is kept as the top-level concept here. Changing `PlatformInterface` would ripple through `agent`, `chat`, `store`, `ai-bundle`, all bridges, and all user code. That is a genuine earthquake. But since Symfony AI is still in active development in a monorepo without a stable release, a one-time collapse is at least worth naming as a deliberate choice before the two-hierarchy split solidifies into permanent architecture.
+
+My lean: this PR's approach is the right call if `ProviderInterface` is meant to be a first-class extension point for third-party bridges, which seems like the stronger long-term argument. Alternative B is fine if we want to avoid a new abstraction layer, but it leaves #646 only half-answered. Alternative A is the most consistent design, just expensive right now.
+
+---------------------------------------------------------------------------
+
+by mxr576 at 2026-04-18T12:57:48Z
+
+Looking at `PlatformInterface` and `ProviderInterface` side by side, there is a structural observation worth raising, which was bothering me since the beginning.
+
+`PlatformInterface` exposes `invoke()` and `getModelCatalog()`. `ProviderInterface` exposes exactly those two methods plus `getName()` and `supports()`. The surfaces are nearly identical, and that gap is not accidental — `supports()` and `getName()` are the extra semantics a routing layer needs from its leaves. But it raises the question: why does the system need two interfaces at all when one is almost a strict superset of the other?
+
+The current design forces callers into a two-step mental model: use `ProviderFactory` to build a provider, then wrap it in `Platform` even when there is only one provider and no routing is needed. The `createPlatform()` factory methods exist precisely to paper over that friction, but as discussed elsewhere in this thread, they do so by hiding `ModelRouterInterface` as a side effect.
+
+An alternative that fits naturally into the architecture this PR is building: make `Provider` implement `PlatformInterface` directly. No new abstraction, no interface merging, no breaking change. `ProviderInterface` stays exactly as designed. The hierarchy becomes:
+
+```
+PlatformInterface          ← the only type callers ever depend on
+|
+├── Provider            (single backend, leaf node)
+|     |-- ModelClientInterface[]
+|     |-- ResultConverterInterface[]
+|     |-- Contract
+|     |-- ModelCatalog
+|
+└── Platform            (routing layer, only needed for multi-provider)
+|-- ProviderInterface[]
+|-- ModelRouterInterface
+|-- CompositeModelCatalog
+|-- ModelRoutingEvent
+```
+
+The user-facing DX would look like this:
+
+```php
+// Single provider — no Platform needed at all
+$platform = OpenAi\ProviderFactory::create(apiKey: 'sk-...');
+$platform->invoke('gpt-4o', $messages); // Provider IS-A PlatformInterface
+
+// Multi-provider — Platform earns its place as a routing layer
+$openai    = OpenAi\ProviderFactory::create(apiKey: 'sk-...');
+$anthropic = Anthropic\ProviderFactory::create(apiKey: 'sk-...');
+
+$platform = new Platform([$openai, $anthropic]);
+$platform->invoke('gpt-4o', $messages);            // → OpenAI
+$platform->invoke('claude-3-5-sonnet', $messages); // → Anthropic
+
+// Custom routing — full control, no factory in the way
+$platform = new Platform([$openai, $anthropic], new RoundRobinModelRouter());
+```
+
+The consequences are worth spelling out:
+
+- Single-provider consumers type-hint `PlatformInterface` and inject a `Provider` directly. No `Platform` wrapper needed, no factory shortcut needed.
+- `Platform` is only instantiated when you actually need routing over multiple providers, which is when it earns its existence.
+- Bridge factories drop `createPlatform()` entirely. They produce a `ProviderInterface` (which is also a `PlatformInterface`), and the caller decides whether to use it bare or compose it into a `Platform`.
+- `TraceablePlatform` and anything else decorating `PlatformInterface` continues to work without modification.
+
+This keeps `Platform` clean as a routing concern and removes the pressure to make factories aware of `ModelRouterInterface`. The two interfaces stop competing and start forming a coherent hierarchy.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-19T22:22:37Z
+
+Hey @mxr576, thanks for your review and sharing your thoughts - I see your point, but I'm actually in favor of segregating this even more - see #1956 - reducing the ambiguity and having more conceptual separation of concerns/responsibility between PlatformInterface and ProviderInterface.
+
+Good catch with that missing ModelRouterInterface - added it.
+Thanks again!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-19T22:26:25Z
+
+@OskarStark i guess that's good to go in now - any last thoughts?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-20T04:23:07Z
+
+Good to merge 💪🏼
