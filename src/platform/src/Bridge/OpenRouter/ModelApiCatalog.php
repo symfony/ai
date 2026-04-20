@@ -52,6 +52,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
                 ...$this->models,
                 ...$this->fetchRemoteModels(),
                 ...$this->fetchRemoteEmbeddings(),
+                ...$this->fetchRemoteVideoModels(),
             ];
             $this->modelsAreLoaded = true;
         }
@@ -129,6 +130,30 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
             yield $embedding['id'] => [
                 'class' => EmbeddingsModel::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
+            ];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{class: class-string<VideoGenerationModel>, capabilities: list<Capability::*>}>
+     */
+    protected function fetchRemoteVideoModels(): iterable
+    {
+        $responseVideos = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/videos/models');
+        foreach ($responseVideos->toArray()['data'] as $video) {
+            $capabilities = [
+                Capability::INPUT_TEXT,
+                Capability::TEXT_TO_VIDEO,
+            ];
+
+            if ([] !== ($video['supported_frame_images'] ?? [])) {
+                $capabilities[] = Capability::INPUT_IMAGE;
+                $capabilities[] = Capability::IMAGE_TO_VIDEO;
+            }
+
+            yield $video['id'] => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => $capabilities,
             ];
         }
     }

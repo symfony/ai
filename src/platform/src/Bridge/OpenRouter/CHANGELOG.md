@@ -11,6 +11,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename `PlatformFactory` to `Factory` with explicit `createProvider()` and `createPlatform()` methods
+ * Add support for video generation via the `POST /api/v1/videos` endpoint
 
 0.7
 ---

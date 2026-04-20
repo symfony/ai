@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient as RerankModelClien
 use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter as RerankResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ModelClient as SpeechModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ResultConverter as SpeechResultConverter;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video as VideoBridge;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -51,12 +52,14 @@ final class Factory
             new Generic\Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/embeddings'),
             new RerankModelClient($httpClient, $apiKey),
             new SpeechModelClient($httpClient, $apiKey),
+            new VideoBridge\ModelClient($httpClient, $apiKey, $baseUrl),
         ];
         $resultConverters = [
             new Generic\Completions\ResultConverter(),
             new Generic\Embeddings\ResultConverter(),
             new RerankResultConverter(),
             new SpeechResultConverter(),
+            new VideoBridge\ResultConverter(),
         ];
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
