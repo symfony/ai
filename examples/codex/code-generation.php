@@ -30,7 +30,7 @@ $platform = Factory::createPlatform(
 $messages = new MessageBag(
     Message::ofUser('Create a file called hello.php that prints "Hello, World!" to the console.'),
 );
-$result = $platform->invoke('gpt-5-codex', $messages, [
+$result = $platform->invoke('gpt-5.4', $messages, [
     'sandbox' => 'workspace-write',
 ]);
 

@@ -15,6 +15,10 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
+ * Default model catalog for the Codex CLI bridge.
+ *
+ * @see https://developers.openai.com/codex/models
+ *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class ModelCatalog extends AbstractModelCatalog
@@ -48,19 +52,7 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Codex::class,
                 'capabilities' => $capabilities,
             ],
-            'gpt-5.2-codex' => [
-                'class' => Codex::class,
-                'capabilities' => $capabilities,
-            ],
-            'gpt-5.1-codex' => [
-                'class' => Codex::class,
-                'capabilities' => $capabilities,
-            ],
-            'gpt-5-codex' => [
-                'class' => Codex::class,
-                'capabilities' => $capabilities,
-            ],
-            'gpt-5-codex-mini' => [
+            'gpt-5.2' => [
                 'class' => Codex::class,
                 'capabilities' => $capabilities,
             ],
