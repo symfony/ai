@@ -403,6 +403,42 @@ final class ResultConverterTest extends TestCase
         $this->assertNull($thinkingCompletes[0]->getSignature());
     }
 
+    public function testConvertWithTextPreambleBeforeToolCallYieldsMultiPartResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'text',
+                    'text' => 'Let me look that up for you.',
+                ],
+                [
+                    'type' => 'tool_use',
+                    'id' => 'toolu_01ABC123',
+                    'name' => 'get_weather',
+                    'input' => ['location' => 'Berlin'],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+        $converter = new ResultConverter();
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(TextResult::class, $parts[0]);
+        $this->assertSame('Let me look that up for you.', $parts[0]->getContent());
+
+        $this->assertInstanceOf(ToolCallResult::class, $parts[1]);
+        $toolCalls = $parts[1]->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('toolu_01ABC123', $toolCalls[0]->getId());
+        $this->assertSame('get_weather', $toolCalls[0]->getName());
+        $this->assertSame(['location' => 'Berlin'], $toolCalls[0]->getArguments());
+    }
+
     public function testNonStreamingResponseWithThinkingAndTextContent()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([
