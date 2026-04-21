@@ -144,7 +144,7 @@ final class ModelClientTest extends TestCase
         $videoContent = 'binary';
         $capturedBody = null;
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$capturedBody, $videoContent) {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$capturedBody, $videoContent) {
             if ('POST' === $method && str_ends_with($url, '/v1/videos')) {
                 $capturedBody = json_decode($options['body'], true);
 
