@@ -24,28 +24,33 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
     /**
      * @param AssistantMessage $data
      *
-     * @return array{array{text: string}}
+     * @return list<array{text: string}|array{functionCall: array{id: string, name: string, args?: mixed}}>
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $normalized = [];
 
+        // text and functionCall are separate oneof fields in Gemini's
+        // they must be emitted as distinct parts, never merged into one.
         if (null !== $data->getContent()) {
-            $normalized['text'] = $data->getContent();
+            $normalized[] = ['text' => $data->getContent()];
         }
 
         if ($data->hasToolCalls()) {
-            $normalized['functionCall'] = [
-                'id' => $data->getToolCalls()[0]->getId(),
-                'name' => $data->getToolCalls()[0]->getName(),
+            $toolCall = $data->getToolCalls()[0];
+            $functionCall = [
+                'id' => $toolCall->getId(),
+                'name' => $toolCall->getName(),
             ];
 
-            if ($data->getToolCalls()[0]->getArguments()) {
-                $normalized['functionCall']['args'] = $data->getToolCalls()[0]->getArguments();
+            if ($toolCall->getArguments()) {
+                $functionCall['args'] = $toolCall->getArguments();
             }
+
+            $normalized[] = ['functionCall' => $functionCall];
         }
 
-        return [$normalized];
+        return $normalized;
     }
 
     protected function supportedDataClass(): string
