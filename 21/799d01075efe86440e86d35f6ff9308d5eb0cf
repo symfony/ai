@@ -1,0 +1,18 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-21T21:44:18Z
+
+Please add a testcase
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-22T10:48:17Z
+
+Hey @froozeify, thanks for reporting & jumping on it! And welcome to Symfony AI repo!
+
+I was ~~not~~ able to reproduce it right away, but changes look logical from contract point of view to me.
+
+~~could you also provide a simple script in `examples/gemini/` like `toolcall-roundtrip.php` or something?
+that'd be great for catching regressions here later and pays into~~ #1969
+
+Thanks already!
