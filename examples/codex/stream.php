@@ -24,7 +24,7 @@ $platform = Factory::createPlatform(
 $messages = new MessageBag(
     Message::ofUser('What is Symfony? Explain in 3 sentences.'),
 );
-$result = $platform->invoke('gpt-5-codex', $messages, [
+$result = $platform->invoke('gpt-5.4', $messages, [
     'stream' => true,
     'sandbox' => 'read-only',
 ]);
