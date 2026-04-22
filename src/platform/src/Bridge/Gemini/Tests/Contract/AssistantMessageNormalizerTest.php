@@ -68,5 +68,15 @@ final class AssistantMessageNormalizerTest extends TestCase
             new AssistantMessage(toolCalls: [new ToolCall('id1', 'name1')]),
             [['functionCall' => ['id' => 'id1', 'name' => 'name1']]],
         ];
+        yield 'text with function call' => [
+            new AssistantMessage(
+                'I\'ll look that up for you.',
+                [new ToolCall('id1', 'name1', ['arg1' => '123'])],
+            ),
+            [
+                ['text' => 'I\'ll look that up for you.'],
+                ['functionCall' => ['id' => 'id1', 'name' => 'name1', 'args' => ['arg1' => '123']]],
+            ],
+        ];
     }
 }
