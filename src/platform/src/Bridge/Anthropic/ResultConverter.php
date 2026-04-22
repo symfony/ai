@@ -83,16 +83,10 @@ class ResultConverter implements ResultConverterInterface
         }
 
         $results = [];
-        $toolCalls = [];
         foreach ($data['content'] as $content) {
             if ('tool_use' === $content['type']) {
-                $toolCalls[] = new ToolCall($content['id'], $content['name'], $content['input']);
+                $results[] = new ToolCallResult([new ToolCall($content['id'], $content['name'], $content['input'])]);
                 continue;
-            }
-
-            if ([] !== $toolCalls) {
-                $results[] = new ToolCallResult($toolCalls);
-                $toolCalls = [];
             }
 
             if ('text' === $content['type']) {
@@ -115,10 +109,6 @@ class ResultConverter implements ResultConverterInterface
         }
 
         if ([] === $results) {
-            if ($toolCalls) {
-                return new ToolCallResult($toolCalls);
-            }
-
             throw new RuntimeException('Response content does not contain any supported content.');
         }
 
