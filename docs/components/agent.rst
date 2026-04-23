@@ -912,6 +912,56 @@ A full speech-to-speech pipeline (STT + TTS) can be created by configuring both 
 
     Handling both `text-to-speech` and `speech-to-text` introduces latency as most of the process is synchronous.
 
+Interrupting a streaming TTS
+............................
+
+For platforms that support streaming TTS (e.g. ElevenLabs), the
+:class:`Symfony\\AI\\Agent\\Speech\\SpeechConfiguration` exposes a ``ttsStream`` flag. When enabled, the
+decorator returns a :class:`Symfony\\AI\\Platform\\Result\\StreamResult` of
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` chunks instead of a fully buffered
+:class:`Symfony\\AI\\Platform\\Result\\BinaryResult`. The stream implements
+:class:`Symfony\\AI\\Platform\\Result\\CancellableInterface`, which means it can be aborted at any
+moment during iteration::
+
+    use Symfony\AI\Agent\SpeechAgent;
+    use Symfony\AI\Agent\Speech\SpeechConfiguration;
+    use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
+    use Symfony\AI\Platform\Result\StreamResult;
+
+    $speechAgent = new SpeechAgent($agent, new SpeechConfiguration(
+        ttsModel: 'eleven_multilingual_v2',
+        ttsOptions: ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
+        ttsStream: true,
+    ), textToSpeechPlatform: $elevenLabsPlatform);
+
+    $answer = $speechAgent->call($messages);
+    assert($answer instanceof StreamResult);
+
+    foreach ($answer->getContent() as $delta) {
+        if (!$delta instanceof BinaryDelta) {
+            continue;
+        }
+
+        // forward the chunk to the client...
+
+        if ($shouldStop) {
+            $answer->cancel(); // closes the underlying HTTP connection
+        }
+    }
+
+This is the building block for a barge-in pattern: when the application detects that the user
+started speaking again, calling ``cancel()`` aborts the in-flight HTTP response so the TTS provider
+stops billing and streaming further audio.
+
+.. note::
+
+    Cancellation is only effective for results that still hold an in-flight I/O operation
+    (streaming TTS). Synchronous STT (Whisper) and non-streaming LLM calls performed inside
+    :class:`Symfony\\AI\\Agent\\SpeechAgent` complete before control returns to the caller and
+    cannot be interrupted retroactively. To interrupt a generation, configure the inner agent to
+    stream and call ``cancel()`` on its :class:`Symfony\\AI\\Platform\\Result\\StreamResult` from
+    the consumer side.
+
 Code Examples
 ~~~~~~~~~~~~~
 

@@ -50,10 +50,16 @@ final class SpeechAgent implements AgentInterface
             return $result;
         }
 
+        $ttsOptions = $this->configuration->getTextToSpeechOptions();
+
+        if ($this->configuration->shouldStreamTextToSpeech()) {
+            $ttsOptions['stream'] = true;
+        }
+
         $speechResult = $this->textToSpeechPlatform->invoke(
             $this->configuration->getTextToSpeechModel(),
             $result->getContent(),
-            $this->configuration->getTextToSpeechOptions(),
+            $ttsOptions,
         );
 
         $speechResult->getMetadata()->add('text', $result->getContent());

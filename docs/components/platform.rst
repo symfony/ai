@@ -423,6 +423,66 @@ The following delta types are available:
     To be able to use streaming in your web application,
     an additional layer like `Mercure`_ is needed.
 
+Cancelling a result
+~~~~~~~~~~~~~~~~~~~
+
+Results backed by an in-flight HTTP response implement
+:class:`Symfony\\AI\\Platform\\Result\\CancellableInterface`, which exposes two methods:
+
+* ``cancel()`` -- aborts the underlying I/O if still running; idempotent.
+* ``isCancelled()`` -- returns ``true`` once ``cancel()`` was called.
+
+The interface is implemented by
+:class:`Symfony\\AI\\Platform\\Result\\RawHttpResult` and
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult`. Calling ``cancel()`` on any of them
+propagates to the underlying ``Symfony\Contracts\HttpClient\ResponseInterface::cancel()``,
+closing the connection and releasing the HTTP client slot.
+
+Typical use case: interrupting a streaming result when the consumer decides to stop early
+(user navigated away, barge-in over a TTS audio playback, request budget exceeded)::
+
+    $result = $platform->invoke($model, $messages, ['stream' => true]);
+
+    foreach ($result->asStream() as $delta) {
+        // ... forward delta to client ...
+
+        if ($shouldStop) {
+            $result->cancel();
+            break;
+        }
+    }
+
+Cancellation is only effective while the result still holds pending I/O. Calling ``cancel()``
+on a fully materialised result (e.g. a :class:`Symfony\\AI\\Platform\\Result\\TextResult` after
+``getContent()`` has been consumed) is a no-op.
+
+Stopping a stream from a listener
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Stream listeners can request the underlying
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` to stop iterating by calling
+``$event->stop()`` on the :class:`Symfony\\AI\\Platform\\Result\\Stream\\StartEvent`,
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\DeltaEvent` they receive. The
+``StreamResult`` detects the request right after the listener returns, cancels the
+underlying HTTP response and returns from the generator cleanly::
+
+    use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
+    use Symfony\AI\Platform\Result\Stream\DeltaEvent;
+
+    $result->addListener(new class extends AbstractStreamListener {
+        private int $tokens = 0;
+
+        public function onDelta(DeltaEvent $event): void
+        {
+            if (++$this->tokens > 200) {
+                $event->stop(); // triggers $result->cancel() + generator return
+            }
+        }
+    });
+
+Useful to enforce a budget, stop on pattern detection or preempt the stream based
+on any observable state without requiring an external interruption signal.
+
 Code Examples
 ~~~~~~~~~~~~~
 

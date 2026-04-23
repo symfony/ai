@@ -8334,6 +8334,34 @@ class AiBundleTest extends TestCase
         $this->assertSame(['voice_id' => 'abc123'], $speechConfigDefinition->getArgument('$ttsOptions'));
         $this->assertSame('whisper', $speechConfigDefinition->getArgument('$sttModel'));
         $this->assertSame(['language' => 'fr'], $speechConfigDefinition->getArgument('$sttOptions'));
+        $this->assertFalse($speechConfigDefinition->getArgument('$ttsStream'));
+
+        // Enabled with tts_stream: true
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'text_to_speech_platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'eleven_multilingual_v2',
+                            'tts_stream' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
+        $this->assertTrue($speechConfigDefinition->getArgument('$ttsStream'));
     }
 
     /**

@@ -1329,6 +1329,7 @@ final class AiBundle extends AbstractBundle
                     '$ttsOptions' => $config['speech']['tts_options'],
                     '$sttModel' => $config['speech']['stt_model'],
                     '$sttOptions' => $config['speech']['stt_options'],
+                    '$ttsStream' => $config['speech']['tts_stream'],
                 ]);
 
             $container->setDefinition('ai.speech_agent.'.$name, new Definition(SpeechAgent::class))

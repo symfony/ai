@@ -22,6 +22,8 @@ abstract class Event implements MetadataAwareInterface
 {
     use MetadataAwareTrait;
 
+    private bool $stopRequested = false;
+
     public function __construct(
         private readonly StreamResult $result,
     ) {
@@ -30,5 +32,23 @@ abstract class Event implements MetadataAwareInterface
     public function getResult(): StreamResult
     {
         return $this->result;
+    }
+
+    /**
+     * Signals to the StreamResult that iteration should stop after the current
+     * listener pass. The underlying StreamResult will be cancelled and the
+     * generator will return cleanly on the next boundary.
+     *
+     * No-op when invoked from a `CompleteEvent` listener, since iteration has
+     * already terminated by that point.
+     */
+    public function stop(): void
+    {
+        $this->stopRequested = true;
+    }
+
+    public function isStopRequested(): bool
+    {
+        return $this->stopRequested;
     }
 }

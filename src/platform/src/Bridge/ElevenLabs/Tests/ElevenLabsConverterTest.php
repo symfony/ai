@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -124,6 +125,41 @@ final class ElevenLabsConverterTest extends TestCase
         $this->expectExceptionMessage('Free users cannot use library voices via the API. Please upgrade your subscription to use this voice.');
         $this->expectExceptionCode(0);
         $converter->convert($rawResult);
+    }
+
+    public function testCancelDuringStreamIterationStopsCleanly()
+    {
+        $chunks = ['chunk-1', 'chunk-2', 'chunk-3', 'chunk-4', 'chunk-5'];
+        $response = new MockResponse((static function () use ($chunks) {
+            foreach ($chunks as $chunk) {
+                yield $chunk;
+            }
+        })(), [
+            'url' => 'https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb/stream',
+            'http_code' => 200,
+        ]);
+
+        $httpClient = new MockHttpClient([$response]);
+        $rawResult = new RawHttpResult($httpClient->request('POST', 'https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb/stream'));
+
+        $converter = new ElevenLabsResultConverter($httpClient);
+        $result = $converter->convert($rawResult, ['stream' => true]);
+        $result->setRawResult($rawResult);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $collected = [];
+        foreach ($result->getContent() as $delta) {
+            $this->assertInstanceOf(BinaryDelta::class, $delta);
+            $collected[] = $delta;
+            if (2 === \count($collected)) {
+                $result->cancel();
+            }
+        }
+
+        $this->assertLessThan(\count($chunks), \count($collected));
+        $this->assertTrue($result->isCancelled());
+        $this->assertTrue($rawResult->getObject()->getInfo('canceled'));
     }
 
     public function testConvertThrowsExceptionWithoutErrorMessage()
