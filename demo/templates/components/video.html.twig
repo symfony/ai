@@ -11,16 +11,27 @@
                 <video id="videoFeed" autoplay playsinline></video>
             </div>
             <canvas id="canvas" class="d-none"></canvas>
-            <i class="text-muted">{{ this.caption }}</i>
+            <i data-loading="action(submit)|hide" class="text-muted">{{ this.caption|markdown_to_html }}</i>
+            <div data-loading="action(submit)|show" class="text-muted">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <i>Analyzing the frame…</i>
+            </div>
         </div>
     </div>
     <div class="card-footer p-2">
         <form class="input-group" data-action="submit->video#submit">
             <input autofocus id="chat-message"
                    data-model="norender|instruction"
+                   data-loading="action(submit)|addAttribute(disabled)"
                    type="text" class="form-control border-0" placeholder="What do you see?">
-            <button class="btn btn-outline-secondary border-0">
-                {{ ux_icon('send') }} Submit
+            <button class="btn btn-outline-secondary border-0" data-loading="action(submit)|addAttribute(disabled)">
+                <span data-loading="action(submit)|hide">
+                    {{ ux_icon('send') }} Submit
+                </span>
+                <span data-loading="action(submit)|show">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Thinking…
+                </span>
             </button>
         </form>
     </div>

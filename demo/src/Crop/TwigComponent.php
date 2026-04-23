@@ -63,4 +63,14 @@ final class TwigComponent
 
         $this->croppedImage = $this->imageCropper->crop($this->imageData, $this->format, $this->width);
     }
+
+    #[LiveAction]
+    public function reset(): void
+    {
+        $this->originalImage = null;
+        $this->imageData = null;
+        $this->format = '1:1';
+        $this->width = 800;
+        $this->croppedImage = null;
+    }
 }
