@@ -52,10 +52,17 @@ final class ResultConverter implements ResultConverterInterface
                 $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $this->objectToPopulate;
             }
 
+            $content = $innerResult->getContent();
+
+            //Some models encapsulate the structured output in a json code block, so try to extract it before decoding/deserializing
+            if (str_starts_with($content, '```json') && str_ends_with($content, '```')) {
+                $content = substr($content, 7, -3);
+            }
+
             $structure = null === $this->outputType
-                ? json_decode($innerResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
+                ? json_decode($content, true, flags: \JSON_THROW_ON_ERROR)
                 : $this->serializer->deserialize(
-                    $innerResult->getContent(),
+                    $content,
                     $this->outputType,
                     'json',
                     $context

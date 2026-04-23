@@ -166,4 +166,16 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(UserWithAccessors::class, $result->getContent());
         $this->assertSame(10, $result->getContent()->getAge());
     }
+
+    public function testConvertWithMarkdownEncapsulation()
+    {
+        $innerConverter = new PlainConverter(new TextResult("```json\n{\"key\": \"value\"}\n```"));
+        $converter = new ResultConverter($innerConverter, new Serializer());
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(ObjectResult::class, $result);
+        $this->assertIsArray($result->getContent());
+        $this->assertSame(['key' => 'value'], $result->getContent());
+    }
 }
