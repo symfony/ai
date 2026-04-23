@@ -52,7 +52,7 @@ final class ModelClient implements ModelClientInterface
         $url = \sprintf(
             'https://generativelanguage.googleapis.com/v1beta/models/%s:%s',
             $model->getName(),
-            $options['stream'] ?? false ? 'streamGenerateContent' : 'generateContent',
+            $options['stream'] ?? false ? 'streamGenerateContent?alt=sse' : 'generateContent',
         );
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {

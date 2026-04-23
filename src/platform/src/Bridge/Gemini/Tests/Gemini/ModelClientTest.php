@@ -73,7 +73,7 @@ final class ModelClientTest extends TestCase
     public function testRequestWithStreamUsesDifferentEndpoint()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {
-            $this->assertSame('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent', $url);
+            $this->assertSame('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse', $url);
 
             return new JsonMockResponse(['candidates' => []]);
         });
