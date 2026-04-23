@@ -78,5 +78,15 @@ final class AssistantMessageNormalizerTest extends TestCase
                 ['functionCall' => ['id' => 'id1', 'name' => 'name1', 'args' => ['arg1' => '123']]],
             ],
         ];
+        yield 'parallel function calls' => [
+            new AssistantMessage(toolCalls: [
+                new ToolCall('id1', 'name1', ['arg1' => '123']),
+                new ToolCall('id2', 'name2', ['arg2' => '456']),
+            ]),
+            [
+                ['functionCall' => ['id' => 'id1', 'name' => 'name1', 'args' => ['arg1' => '123']]],
+                ['functionCall' => ['id' => 'id2', 'name' => 'name2', 'args' => ['arg2' => '456']]],
+            ],
+        ];
     }
 }
