@@ -12,6 +12,9 @@
 namespace Symfony\AI\Platform\Result\Stream\Delta;
 
 /**
+ * Streaming binary delta — emitted by bridges that stream raw binary content
+ * (e.g. ElevenLabs TTS audio chunks). Yielded by `StreamResult::getContent()`.
+ *
  * @author Fabien Potencier <fabien@symfony.com>
  */
 final class BinaryDelta implements DeltaInterface

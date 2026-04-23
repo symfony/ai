@@ -80,4 +80,25 @@ final class SpeechConfigurationTest extends TestCase
         $this->assertSame([], $speechConfiguration->getTextToSpeechOptions());
         $this->assertSame([], $speechConfiguration->getSpeechToTextOptions());
     }
+
+    public function testShouldStreamTextToSpeechDefaultsToFalse()
+    {
+        $speechConfiguration = new SpeechConfiguration(ttsModel: 'foo');
+
+        $this->assertFalse($speechConfiguration->shouldStreamTextToSpeech());
+    }
+
+    public function testShouldStreamTextToSpeechReturnsTrueWhenEnabled()
+    {
+        $speechConfiguration = new SpeechConfiguration(ttsModel: 'foo', ttsStream: true);
+
+        $this->assertTrue($speechConfiguration->shouldStreamTextToSpeech());
+    }
+
+    public function testShouldStreamTextToSpeechReturnsFalseWhenTtsModelIsMissing()
+    {
+        $speechConfiguration = new SpeechConfiguration(ttsStream: true);
+
+        $this->assertFalse($speechConfiguration->shouldStreamTextToSpeech());
+    }
 }
