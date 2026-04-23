@@ -96,6 +96,7 @@
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
+            "symfony/ai-mate-composer-plugin": true,
             "symfony/flex": true,
             "symfony/runtime": true
         },
