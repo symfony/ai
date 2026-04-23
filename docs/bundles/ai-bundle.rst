@@ -1261,6 +1261,30 @@ Speech is disabled by default and can be disabled when needed with ``speech: fal
                 model: gpt-4o
                 speech: false
 
+Session-level interruption
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For long-running contexts (WebSocket servers, CLI daemons, event loops), the bundle can
+wrap the agent in a :class:`Symfony\\AI\\Agent\\Speech\\SpeechSession` by enabling
+``session: true`` under the ``speech`` key:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: gpt-4o
+                speech:
+                    text_to_speech_platform: 'ai.platform.elevenlabs'
+                    tts_model: eleven_multilingual_v2
+                    session: true
+
+With ``session: true``, every ``call()`` on the decorated agent cancels the previous
+in-flight result and flips an :class:`Symfony\\AI\\Platform\\Result\\InterruptionSignal`
+that the wrapped :class:`Symfony\\AI\\Agent\\SpeechAgent` checks between its STT / LLM /
+TTS phases. Intended for interactive voice scenarios where a fresh user input must
+supersede the pipeline currently being processed.
+
 Using the result
 ~~~~~~~~~~~~~~~~
 

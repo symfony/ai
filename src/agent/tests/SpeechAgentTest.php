@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -25,7 +26,9 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\Exception\InterruptedException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\InterruptionSignal;
 use Symfony\AI\Platform\Result\TextResult;
 
 final class SpeechAgentTest extends TestCase
@@ -248,6 +251,109 @@ final class SpeechAgentTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-response', $result->getContent());
         $this->assertSame('It is sunny', $result->getMetadata()->get('text'));
+    }
+
+    public function testCallThrowsInterruptedExceptionWhenSignalIsAlreadyFired()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->never())->method('call');
+
+        $configuration = new SpeechConfiguration(ttsModel: 'tts-1', sttModel: 'whisper-1');
+
+        $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
+
+        $signal = new InterruptionSignal();
+        $signal->interrupt();
+
+        $this->expectException(InterruptedException::class);
+        $agent->call(new MessageBag(Message::ofUser('hi')), ['interruption_signal' => $signal]);
+    }
+
+    public function testCallThrowsInterruptedExceptionBetweenSttAndLlm()
+    {
+        $signal = new InterruptionSignal();
+
+        $sttResult = new DeferredResult(new PlainConverter(new TextResult('transcribed')), new InMemoryRawResult());
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->willReturnCallback(static function () use ($signal, $sttResult) {
+                // Simulate an external actor firing the signal while STT is running.
+                $signal->interrupt();
+
+                return $sttResult;
+            });
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->never())->method('call');
+
+        $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
+
+        $agent = new SpeechAgent($innerAgent, $configuration, $platform);
+
+        $this->expectException(InterruptedException::class);
+        $agent->call(
+            new MessageBag(Message::ofUser(Audio::fromFile(\dirname(__DIR__).'/../../fixtures/audio.mp3'))),
+            ['interruption_signal' => $signal],
+        );
+    }
+
+    public function testCallThrowsInterruptedExceptionBetweenLlmAndTts()
+    {
+        $signal = new InterruptionSignal();
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(static function () use ($signal) {
+                // Simulate an external actor firing the signal while LLM is running.
+                $signal->interrupt();
+
+                return new TextResult('hello');
+            });
+
+        $configuration = new SpeechConfiguration(ttsModel: 'tts-1');
+
+        $agent = new SpeechAgent($innerAgent, $configuration, null, $platform);
+
+        $this->expectException(InterruptedException::class);
+        $agent->call(new MessageBag(Message::ofUser('hi')), ['interruption_signal' => $signal]);
+    }
+
+    public function testCallIgnoresNonInterruptedSignal()
+    {
+        $signal = new InterruptionSignal();
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('hello'));
+
+        $platform = $this->createMock(PlatformInterface::class);
+
+        $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(), $platform, $platform);
+        $result = $agent->call(new MessageBag(Message::ofUser('hi')), ['interruption_signal' => $signal]);
+
+        $this->assertSame('hello', $result->getContent());
+    }
+
+    public function testCallRejectsInvalidSignalType()
+    {
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $platform = $this->createMock(PlatformInterface::class);
+
+        $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(), $platform, $platform);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "interruption_signal" option must be an instance of');
+        $agent->call(new MessageBag(Message::ofUser('hi')), ['interruption_signal' => 'not-a-signal']);
     }
 
     public function testGetNameDelegatesToInnerAgent()

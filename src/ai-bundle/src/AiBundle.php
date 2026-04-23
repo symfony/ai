@@ -27,6 +27,7 @@ use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
+use Symfony\AI\Agent\Speech\SpeechSession;
 use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
@@ -1305,6 +1306,12 @@ final class AiBundle extends AbstractBundle
                     null !== $config['speech']['text_to_speech_platform'] ? new Reference($config['speech']['text_to_speech_platform']) : null,
                 ])
                 ->setDecoratedService($agentId, priority: -1024);
+
+            if ($config['speech']['session']) {
+                $container->setDefinition('ai.speech_session.'.$name, new Definition(SpeechSession::class))
+                    ->setArguments([new Reference('.inner')])
+                    ->setDecoratedService($agentId, priority: -2048);
+            }
         }
     }
 
