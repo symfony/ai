@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Postgres\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\Postgres\Store;
+use Symfony\AI\Store\Bridge\Postgres\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
 
@@ -26,7 +26,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
     {
         $pdo = new \PDO('pgsql:host=127.0.0.1;port=5432;dbname=test_database', 'postgres', 'postgres');
 
-        return new Store($pdo, 'test_vectors');
+        return StoreFactory::createStoreFromPDO($pdo, 'test_vectors');
     }
 
     protected static function getSetupOptions(): array

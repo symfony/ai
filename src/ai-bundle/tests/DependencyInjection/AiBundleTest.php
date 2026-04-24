@@ -66,6 +66,7 @@ use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
+use Symfony\AI\Store\Bridge\Postgres\StoreFactory as PostgresStoreFactory;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
@@ -2590,7 +2591,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testPostgresStoreWithDifferentConnectionCanBeConfigured()
+    public function testPostgresStoreCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -2608,13 +2609,16 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPDO'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
         $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('embedding', $definition->getArgument(2));
+        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2647,14 +2651,17 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPDO'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
         $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
         $this->assertSame(['pgsql:host=localhost;port=5432;dbname=testdb', 'foo', 'bar'], $definition->getArgument(0)->getArguments());
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2683,14 +2690,16 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
         $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2720,14 +2729,16 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
         $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2758,14 +2769,58 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
         $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame('english', $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        // Custom lang
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres' => [
+                        'db' => [
+                            'dbal_connection' => 'my_connection',
+                            'table_name' => 'foo',
+                            'vector_field' => 'foo',
+                            'distance' => PostgresDistance::L1->value,
+                            'lang' => 'french',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.postgres.db');
+        $this->assertSame(PostgresStore::class, $definition->getClass());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
+        $this->assertSame('my_connection', (string) $definition->getArgument(0));
+        $this->assertSame('foo', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(2));
+        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame('french', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([

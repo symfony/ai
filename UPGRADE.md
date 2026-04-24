@@ -110,6 +110,16 @@ Store
    +$store->query(new HybridQuery($embedding, 'keyword', 0.5));
    ```
 
+ * Factory methods `fromPdo` and `fromDbal` for `Symfony\AI\Store\Bridge\Postgres\Store` moved to
+   `Symfony\AI\Store\Bridge\Postgres\StoreFactory`:
+
+   ```diff
+   -Store::fromPdo($pdo, $tableName, $vectorFieldName, $distance);
+   +StoreFactory::createStoreFromPdo($pdo, $tableName, $vectorFieldName, $distance, $lang);
+   -Store::fromDbal($connection, $tableName, $vectorFieldName, $distance);
+   +StoreFactory::createStoreFromDbal($connection, $tableName, $vectorFieldName, $distance, $lang);
+   ```
+
 UPGRADE FROM 0.7 to 0.8
 =======================
 

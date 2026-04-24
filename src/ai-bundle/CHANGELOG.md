@@ -12,6 +12,7 @@ CHANGELOG
  * The `api_key` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * Wire `Meilisearch\StoreFactory` from `AiBundle`
+ * Add `lang` option for `Postgres`
 
 0.8
 ---
