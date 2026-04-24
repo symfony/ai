@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Change `public array $calls` to `private array $calls` in `TraceableChat` and `TraceableMessageStore` - use `getCalls()` instead
+ * Fix `MessageNormalizer::denormalize()` crash on `AssistantMessage`/`ToolCallMessage` payloads containing tool calls when the outer serializer chain does not include `ToolCallNormalizer`; denormalization now accepts both the OpenAI-style wrapped shape and the flat shape produced by the default `ObjectNormalizer` fallback
 
 0.7
 ---

@@ -25,6 +25,7 @@ use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
 use Symfony\AI\Chat\MessageNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelCatalog;
@@ -261,6 +262,8 @@ return static function (ContainerConfigurator $container): void {
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+            ->tag('serializer.normalizer')
+        ->set('ai.platform.tool_call.normalizer', ToolCallNormalizer::class)
             ->tag('serializer.normalizer')
 
         // commands
