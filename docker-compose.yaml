@@ -1,0 +1,24 @@
+services:
+    php:
+        build:
+            context: .docker
+        volumes:
+            - .:/app:rw
+            - composer-cache:/home/app/.composer
+        working_dir: /app
+        command: sleep infinity
+        depends_on:
+            - mongodb
+            - redis
+    mongodb:
+        image: mongo:8
+        expose:
+            - "27017"
+
+    redis:
+        image: redis:8-alpine
+        expose:
+            - "6379"
+
+volumes:
+    composer-cache:

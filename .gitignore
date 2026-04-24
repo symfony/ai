@@ -5,3 +5,5 @@
 
 composer.lock
 vendor
+
+docker-compose.override.yaml
