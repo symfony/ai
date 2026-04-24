@@ -151,7 +151,6 @@ class DiscoverCommand extends Command
         $io->comment([
             'Next steps:',
             '  • Edit mate/extensions.php to enable/disable specific extensions',
-            '  • Run "vendor/bin/mate serve" to start the MCP server',
         ]);
 
         return Command::SUCCESS;
