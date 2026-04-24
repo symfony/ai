@@ -223,12 +223,12 @@ class InitCommand extends Command
             $actions[] = ['○', 'Exists', 'extra.ai-mate configuration'];
         }
 
-        if (!isset($composerJson['autoload-dev']['psr-4']['App\\Mate\\'])) {
-            $composerJson['autoload-dev']['psr-4']['App\\Mate\\'] = 'mate/src/';
+        if (!isset($composerJson['autoload-dev']['psr-4']['Mate\\'])) {
+            $composerJson['autoload-dev']['psr-4']['Mate\\'] = 'mate/src/';
             $modified = true;
-            $actions[] = ['✓', 'Added', 'App\\Mate\\ autoloader'];
+            $actions[] = ['✓', 'Added', 'Mate\\ autoloader'];
         } else {
-            $actions[] = ['○', 'Exists', 'App\\Mate\\ autoloader'];
+            $actions[] = ['○', 'Exists', 'Mate\\ autoloader'];
         }
 
         if ($modified) {

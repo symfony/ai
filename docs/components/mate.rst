@@ -56,7 +56,7 @@ It also updates your ``composer.json`` with the following configuration:
     {
         "autoload-dev": {
             "psr-4": {
-                "App\\Mate\\": "mate/src/"
+                "Mate\\": "mate/src/"
             }
         },
         "extra": {
@@ -127,7 +127,7 @@ The easiest way to add tools is to create a ``mate/src`` folder next to your ``s
 then add a class with a method using the ``#[McpTool]`` attribute::
 
     // mate/MyTool.php
-    namespace App\Mate;
+    namespace Mate;
 
     use Mcp\Capability\Attribute\McpTool;
 

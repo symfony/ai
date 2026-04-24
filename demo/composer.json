@@ -90,7 +90,7 @@
     "autoload-dev": {
         "psr-4": {
             "App\\Tests\\": "tests/",
-            "App\\Mate\\": "mate/src/"
+            "Mate\\": "mate/src/"
         }
     },
     "config": {

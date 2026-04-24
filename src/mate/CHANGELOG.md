@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
+
 0.7
 ---
 

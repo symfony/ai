@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace App\Mate;
+namespace Mate;
 
 use Mcp\Capability\Attribute\McpTool;
 use Symfony\Component\Yaml\Yaml;
