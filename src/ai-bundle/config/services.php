@@ -76,6 +76,7 @@ use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 use Symfony\AI\Platform\StructuredOutput\Serializer as StructuredOutputSerializer;
+use Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
@@ -200,6 +201,11 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('ai.platform.response_format_factory'),
                 service('ai.platform.structured_output_serializer'),
+            ])
+            ->tag('kernel.event_subscriber')
+        ->set('ai.platform.structured_output.validator_subscriber', ValidatorSubscriber::class)
+            ->args([
+                service('validator')->nullOnInvalid(),
             ])
             ->tag('kernel.event_subscriber')
 

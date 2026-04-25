@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Validate structured output using `symfony/validator` when available
+
 0.8
 ---
 
