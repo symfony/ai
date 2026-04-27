@@ -133,25 +133,13 @@ class InitCommand extends Command
 
         $io->comment([
             'Next steps:',
-            '  1. Run "composer dump-autoload" to update the autoloader',
-            '  2. Run "vendor/bin/mate discover" to find MCP extensions and refresh AGENT instructions',
-            '  3. Add your custom MCP tools/resources/prompts to the mate/src/ directory',
-            '  4. Run "vendor/bin/mate serve" to start the MCP server',
-            '  5. Run "./bin/codex" to start Codex with project-local Mate MCP integration',
-        ]);
-
-        $io->note([
-            'By default, "extension: false" is set in composer.json to prevent this package',
-            'from being discovered as a Mate extension when installed in other projects.',
-            'If you want this package to BE a Mate extension, set "extension: true" or remove',
-            'the "extension" field from extra.ai-mate configuration.',
+            '  1. Run "composer dump-autoload" to register the Mate\\ autoloader',
+            '  2. Add custom MCP tools/resources/prompts to mate/src/',
+            '  3. Run your preferred coding agent (e.g. Claude Code) — it picks up the generated mcp.json; for Codex, use "./bin/codex"',
         ]);
 
         if (!class_exists(Toon::class)) {
-            $io->note([
-                'For reduced token consumption in tool responses, consider installing the "helgesverre/toon" package:',
-                '  composer require helgesverre/toon',
-            ]);
+            $io->note('Tip: install "helgesverre/toon" (composer require helgesverre/toon) to reduce tokens in tool responses.');
         }
 
         return Command::SUCCESS;

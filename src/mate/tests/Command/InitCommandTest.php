@@ -76,7 +76,7 @@ final class InitCommandTest extends TestCase
         $this->assertStringContainsString('AI Mate Initialization', $output);
         $this->assertStringContainsString('extensions.php', $output);
         $this->assertStringContainsString('config.php', $output);
-        $this->assertStringContainsString('vendor/bin/mate discover', $output);
+        $this->assertStringContainsString('composer dump-autoload', $output);
         $this->assertStringContainsString('./bin/codex', $output);
         $this->assertStringContainsString('Summary', $output);
         $this->assertStringContainsString('Created', $output);
@@ -160,11 +160,6 @@ final class InitCommandTest extends TestCase
         $this->assertArrayHasKey('ai-mate', $composerJson['extra']);
         $this->assertArrayHasKey('extension', $composerJson['extra']['ai-mate']);
         $this->assertFalse($composerJson['extra']['ai-mate']['extension']);
-
-        // Verify note is displayed
-        $output = $tester->getDisplay();
-        $this->assertStringContainsString('extension: false', $output);
-        $this->assertStringContainsString('By default', $output);
     }
 
     private function createCommand(): InitCommand
