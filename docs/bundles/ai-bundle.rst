@@ -456,7 +456,7 @@ Message Template Support
 The Platform's feature for using message templates is set up by the bundle, and conditionally also registers the
 expression language support if the `symfony/expression-language` package is installed.
 
-More about message templates can be found in the :doc:`Platform documentation <components/platform>`.
+More about message templates can be found in the :doc:`Platform documentation </components/platform>`.
 
 Memory Provider Configuration
 -----------------------------
@@ -1062,9 +1062,7 @@ index documents directly in your code without loading them from external sources
                 vectorizer: 'ai.vectorizer.openai_small'
                 store: 'ai.store.chromadb.documents'
 
-The resulting service accepts documents directly:
-
-.. code-block::
+The resulting service accepts documents directly::
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\IndexerInterface;

@@ -5,8 +5,8 @@ The Supabase bridge provides vector storage capabilities using `pgvector`_ exten
 
 .. note::
 
-Unlike the Postgres Store, the Supabase Store requires manual setup of the database schema because Supabase doesn't
-allow arbitrary SQL execution via REST API.
+    Unlike the Postgres Store, the Supabase Store requires manual setup of the
+    database schema because Supabase doesn't allow arbitrary SQL execution via REST API.
 
 Requirements
 ~~~~~~~~~~~~
