@@ -146,7 +146,9 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
-        $currentThinking = null;
+        $itemPhases = [];
+        $currentReasoningSummary = null;
+        $currentCommentary = null;
 
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
@@ -159,22 +161,67 @@ final class ResultConverter implements ResultConverterInterface
                 yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
             }
 
-            if (str_contains($type, 'output_text') && isset($event['delta'])) {
-                yield new TextDelta($event['delta']);
+            // Track phase per output item so output_text.delta can be routed correctly.
+            if ('response.output_item.added' === $type && isset($event['item']['id'])) {
+                $itemPhases[$event['item']['id']] = $event['item']['phase'] ?? null;
             }
 
+            // Dedicated buffer for reasoning summary so it cannot collide with commentary.
             if ('response.reasoning_summary_text.delta' === $type && isset($event['delta'])) {
-                if (null === $currentThinking) {
-                    $currentThinking = '';
+                if (null === $currentReasoningSummary) {
+                    $currentReasoningSummary = '';
                     yield new ThinkingStart();
                 }
-                $currentThinking .= $event['delta'];
+
+                $currentReasoningSummary .= $event['delta'];
                 yield new ThinkingDelta($event['delta']);
+
+                continue;
             }
 
             if ('response.reasoning_summary_text.done' === $type) {
-                yield new ThinkingComplete($currentThinking ?? '');
-                $currentThinking = null;
+                yield new ThinkingComplete($currentReasoningSummary ?? '');
+                $currentReasoningSummary = null;
+
+                continue;
+            }
+
+            // Commentary and final_answer both arrive as output_text.delta; route by tracked phase.
+            // When item_id is absent, keep backward-compatible TextDelta emission rather than dropping the delta.
+            if ('response.output_text.delta' === $type && isset($event['delta'])) {
+                $itemId = $event['item_id'] ?? null;
+                $phase = null !== $itemId ? ($itemPhases[$itemId] ?? null) : null;
+
+                if ('commentary' === $phase) {
+                    if (null === $currentCommentary) {
+                        $currentCommentary = '';
+                        yield new ThinkingStart();
+                    }
+
+                    $currentCommentary .= $event['delta'];
+                    yield new ThinkingDelta($event['delta']);
+
+                    continue;
+                }
+
+                // final_answer, unknown phase, or missing item_id: keep visible TextDelta.
+                yield new TextDelta($event['delta']);
+
+                continue;
+            }
+
+            if ('response.output_item.done' === $type && isset($event['item']['id'])) {
+                $itemId = $event['item']['id'];
+                $phase = $itemPhases[$itemId] ?? ($event['item']['phase'] ?? null);
+
+                if ('commentary' === $phase && null !== $currentCommentary) {
+                    yield new ThinkingComplete($currentCommentary);
+                    $currentCommentary = null;
+                }
+
+                unset($itemPhases[$itemId]);
+
+                continue;
             }
 
             if (!str_contains($type, 'completed')) {
