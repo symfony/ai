@@ -4,7 +4,7 @@
     "type": "project",
     "autoload": {
         "psr-4": {
-            "App\\Mate\\": "mate/src"
+            "Mate\\": "mate/src"
         }
     },
     "extra": {

@@ -145,7 +145,7 @@ Create a simple test script::
     // test-tool.php
     require 'vendor/autoload.php';
 
-    $tool = new App\Mate\MyTool();
+    $tool = new Mate\MyTool();
     var_dump($tool->execute('test-param'));
 
 Clear Cache

@@ -1,3 +1,31 @@
+UPGRADE FROM 0.8 to 0.9
+=======================
+
+Mate
+----
+
+ * The default user namespace scaffolded by `mate init` changed from `App\Mate\` to `Mate\`.
+   Existing projects must update their `composer.json` autoload entry and move user-defined
+   tool classes into the new namespace:
+
+   ```diff
+    {
+        "autoload-dev": {
+            "psr-4": {
+   -            "App\\Mate\\": "mate/src/"
+   +            "Mate\\": "mate/src/"
+            }
+        }
+    }
+   ```
+
+   ```diff
+   -namespace App\Mate;
+   +namespace Mate;
+   ```
+
+   After updating, run `composer dump-autoload`.
+
 UPGRADE FROM 0.7 to 0.8
 =======================
 

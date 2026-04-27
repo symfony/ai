@@ -11,7 +11,7 @@
 
 // This file is loaded into the Symfony DI container
 
-use App\Mate\SymfonyAiFeaturesTool;
+use Mate\SymfonyAiFeaturesTool;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $container): void {
