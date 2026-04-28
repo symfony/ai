@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
+ * Allow Symfony profiler capabilities (`ProfilerResourceTemplate` and `ProfilerTool`) to be instantiated without a `ProfilerDataProvider`, throwing a clear `RuntimeException` when invoked in workspaces without profiler support
 
 0.7
 ---

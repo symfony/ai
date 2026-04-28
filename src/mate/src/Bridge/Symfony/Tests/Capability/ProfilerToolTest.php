@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -140,5 +141,15 @@ final class ProfilerToolTest extends TestCase
         $this->assertArrayHasKey('profiles', $result);
         $keys = array_keys($result['profiles']);
         $this->assertSame([0, 1, 2], $keys);
+    }
+
+    public function testProfilerToolsFailClearlyWhenProfilerSupportIsUnavailable()
+    {
+        $tool = new ProfilerTool();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Symfony profiler tools are not available in this Mate workspace.');
+
+        $tool->listProfiles();
     }
 }
