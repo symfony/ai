@@ -153,4 +153,24 @@ final class MemoryInputProcessorTest extends TestCase
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertNull($input->getMessageBag()->getSystemMessage()?->getContent());
     }
+
+    public function testItMutatesTheCallerMessageBagInPlace()
+    {
+        $memoryProvider = $this->createMock(MemoryProviderInterface::class);
+        $memoryProvider->expects($this->once())
+            ->method('load')
+            ->willReturn([new Memory('Some memory content')]);
+
+        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
+
+        $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
+        $memoryInputProcessor->processInput($input = new Input('gpt-4', $bag, []));
+
+        // Caller's bag must reflect the combined system message so downstream
+        // processors can append messages visible to the caller's reference.
+        // See #1726.
+        $this->assertSame($bag, $input->getMessageBag());
+        $this->assertCount(1, $bag);
+        $this->assertStringContainsString('Some memory content', $bag->getSystemMessage()->getContent());
+    }
 }
