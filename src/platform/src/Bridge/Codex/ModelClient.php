@@ -99,7 +99,12 @@ final class ModelClient implements ModelClientInterface
      */
     public function buildCommand(string $prompt, array $options = []): array
     {
-        $command = [$this->getCliBinary(), '--ask-for-approval', 'never', 'exec', '--json'];
+        if (isset($options['ask_for_approval'])) {
+            @trigger_error('The "ask_for_approval" option is ignored by "codex exec" and has no effect; remove it or use "dangerously_bypass_approvals_and_sandbox" to bypass approvals.', \E_USER_DEPRECATED);
+            unset($options['ask_for_approval']);
+        }
+
+        $command = [$this->getCliBinary(), 'exec', '--json'];
 
         foreach ($options as $key => $value) {
             $flag = self::OPTION_FLAG_MAP[$key] ?? '--'.str_replace('_', '-', $key);
