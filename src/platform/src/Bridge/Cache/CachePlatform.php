@@ -12,7 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -64,19 +67,7 @@ final class CachePlatform implements PlatformInterface
             return $this->platform->invoke($model, $input, $options);
         }
 
-        $normalizedInput = match (true) {
-            \is_string($input) => md5($input),
-            \is_array($input) => json_encode($input),
-            $input instanceof MessageBag => $input->getId()->toString(),
-            default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
-        };
-
-        $cacheKey = (new UnicodeString())->join([
-            $options['prompt_cache_key'] ?? $this->cacheKey,
-            (new UnicodeString($model))->camel(),
-            $normalizedInput,
-        ]);
-
+        $cacheKey = $this->buildCacheKey($model, $input, $options);
         $ttl = $options['prompt_cache_ttl'] ?? $this->cacheTtl;
 
         unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
@@ -101,6 +92,111 @@ final class CachePlatform implements PlatformInterface
             ];
         });
 
+        return $this->buildDeferredResultFromCache($cached, $options);
+    }
+
+    /**
+     * Returns the cached result for the given input without invoking the
+     * underlying platform, or null when there is no cache hit.
+     *
+     * Useful for UI flows where a cache miss should not trigger a costly
+     * model invocation — e.g. show the cached answer if any, otherwise let
+     * the user decide to (re)generate one.
+     *
+     * @param array<string, mixed> $options Must contain a non-empty
+     *                                      `prompt_cache_key`, like
+     *                                      {@see self::invoke()} does.
+     */
+    public function lookup(string $model, array|string|object $input, array $options = []): ?DeferredResult
+    {
+        if (null === $this->cache || !\array_key_exists('prompt_cache_key', $options) || '' === $options['prompt_cache_key']) {
+            return null;
+        }
+
+        $cacheKey = $this->buildCacheKey($model, $input, $options);
+
+        $item = $this->cache->getItem($cacheKey);
+        if (!$item->isHit()) {
+            return null;
+        }
+
+        unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
+
+        return $this->buildDeferredResultFromCache($item->get(), $options);
+    }
+
+    public function getModelCatalog(): ModelCatalogInterface
+    {
+        return $this->platform->getModelCatalog();
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function buildCacheKey(string $model, array|string|object $input, array $options): string
+    {
+        return (new UnicodeString())->join([
+            $options['prompt_cache_key'] ?? $this->cacheKey,
+            (new UnicodeString($model))->camel(),
+            $this->hashInput($input),
+        ]);
+    }
+
+    private function hashInput(array|string|object $input): string
+    {
+        return match (true) {
+            \is_string($input) => md5($input),
+            \is_array($input) => md5(json_encode($input, \JSON_THROW_ON_ERROR)),
+            $input instanceof MessageBag => $this->hashMessageBag($input),
+            default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
+        };
+    }
+
+    private function hashMessageBag(MessageBag $bag): string
+    {
+        // Build a content-only payload so two MessageBag instances with the
+        // same conversation produce the same cache key. The bag's UUID and
+        // each message's UUID are intentionally excluded — they are
+        // per-instance state, not part of the conversation identity.
+        $payload = array_map(
+            fn (MessageInterface $message): array => [
+                'role' => $message->getRole()->value,
+                'content' => $this->normalizeContentForHash($message->getContent()),
+            ],
+            $bag->getMessages(),
+        );
+
+        return md5(json_encode($payload, \JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param string|Template|ContentInterface[]|null $content
+     */
+    private function normalizeContentForHash(string|Template|array|null $content): mixed
+    {
+        if (null === $content || \is_string($content)) {
+            return $content;
+        }
+
+        if ($content instanceof Template) {
+            return ['template' => $content->getTemplate(), 'type' => $content->getType()];
+        }
+
+        return array_map(
+            // ContentInterface implementations are simple value objects with
+            // readonly properties — serialize() gives a stable, content-based
+            // fingerprint without including any UUID.
+            static fn (ContentInterface $item): array => ['class' => $item::class, 'fingerprint' => md5(serialize($item))],
+            $content,
+        );
+    }
+
+    /**
+     * @param array{result: mixed, raw_data: array<string, mixed>, metadata: array<string, mixed>, cached_at: int, cache_key: string} $cached
+     * @param array<string, mixed>                                                                                                    $options
+     */
+    private function buildDeferredResultFromCache(array $cached, array $options): DeferredResult
+    {
         $restoredResult = $this->serializer->denormalize($cached['result'], ResultInterface::class);
 
         $restoredResult->getMetadata()->set([
@@ -119,10 +215,5 @@ final class CachePlatform implements PlatformInterface
         $result->getMetadata()->merge($restoredResult->getMetadata());
 
         return $result;
-    }
-
-    public function getModelCatalog(): ModelCatalogInterface
-    {
-        return $this->platform->getModelCatalog();
     }
 }
