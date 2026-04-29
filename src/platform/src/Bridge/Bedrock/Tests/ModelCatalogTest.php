@@ -39,6 +39,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'claude-opus-4-5-20251101' => ['claude-opus-4-5-20251101', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'claude-sonnet-4-6' => ['claude-sonnet-4-6', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'claude-opus-4-6' => ['claude-opus-4-6', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-opus-4-7' => ['claude-opus-4-7', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'llama-3.2-1b-instruct' => ['llama-3.2-1b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
         yield 'llama-3.2-3b-instruct' => ['llama-3.2-3b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
     }

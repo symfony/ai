@@ -31,7 +31,7 @@ final class ClaudeModelClientTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->model = new Claude('claude-sonnet-4-5-20250929');
+        $this->model = new Claude('claude-sonnet-4-6');
         $this->bedrockClient = $this->getMockBuilder(BedrockRuntimeClient::class)
             ->setConstructorArgs([
                 Configuration::create([Configuration::OPTION_REGION => Configuration::DEFAULT_REGION]),
@@ -40,13 +40,13 @@ final class ClaudeModelClientTest extends TestCase
             ->getMock();
     }
 
-    public function testPassesModelId()
+    public function testPassesModelIdWithoutSuffix()
     {
         $this->bedrockClient->expects($this->once())
             ->method('invokeModel')
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
-                $this->assertSame('us.anthropic.claude-sonnet-4-5-20250929-v1:0', $arg->getModelId());
+                $this->assertSame('us.anthropic.claude-sonnet-4-6', $arg->getModelId());
                 $this->assertSame('application/json', $arg->getContentType());
                 $this->assertTrue(json_validate($arg->getBody()));
 
@@ -57,6 +57,82 @@ final class ClaudeModelClientTest extends TestCase
         $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
 
         $response = $this->modelClient->request($this->model, ['message' => 'test']);
+        $this->assertInstanceOf(RawBedrockResult::class, $response);
+    }
+
+    public function testPassesModelIdWithVersionSuffix()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $this->assertInstanceOf(InvokeModelRequest::class, $arg);
+                $this->assertSame('us.anthropic.claude-sonnet-4-5-20250929-v1:0', $arg->getModelId());
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
+
+        $response = $this->modelClient->request(new Claude('claude-sonnet-4-5-20250929'), ['message' => 'test']);
+        $this->assertInstanceOf(RawBedrockResult::class, $response);
+    }
+
+    public function testPassesModelIdWithV1Suffix()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $this->assertInstanceOf(InvokeModelRequest::class, $arg);
+                $this->assertSame('us.anthropic.claude-opus-4-6-v1', $arg->getModelId());
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
+
+        $response = $this->modelClient->request(new Claude('claude-opus-4-6'), ['message' => 'test']);
+        $this->assertInstanceOf(RawBedrockResult::class, $response);
+    }
+
+    public function testPassesModelIdWithCustomOverride()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $this->assertInstanceOf(InvokeModelRequest::class, $arg);
+                $this->assertSame('us.anthropic.claude-custom-model-v2:0', $arg->getModelId());
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient(
+            $this->bedrockClient,
+            self::VERSION,
+            ['claude-custom-model' => 'claude-custom-model-v2:0']
+        );
+
+        $response = $this->modelClient->request(new Claude('claude-custom-model'), ['message' => 'test']);
+        $this->assertInstanceOf(RawBedrockResult::class, $response);
+    }
+
+    public function testPassesUnknownModelNameAsIs()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $this->assertInstanceOf(InvokeModelRequest::class, $arg);
+                $this->assertSame('us.anthropic.claude-unknown-model', $arg->getModelId());
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
+
+        $response = $this->modelClient->request(new Claude('claude-unknown-model'), ['message' => 'test']);
         $this->assertInstanceOf(RawBedrockResult::class, $response);
     }
 
