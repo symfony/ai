@@ -11,11 +11,17 @@
 
 namespace Symfony\AI\Platform\Bridge\Cache;
 
+use Symfony\AI\Platform\Contract\Normalizer\Message\AssistantMessageNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\AudioNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageUrlNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\TextNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\MessageBagNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
-use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -51,6 +57,15 @@ final class CachePlatform implements PlatformInterface
         private readonly ClockInterface $clock = new MonotonicClock(),
         private readonly (CacheInterface&TagAwareAdapterInterface)|null $cache = null,
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
+            new MessageBagNormalizer(),
+            new AssistantMessageNormalizer(),
+            new SystemMessageNormalizer(),
+            new ToolCallMessageNormalizer(),
+            new UserMessageNormalizer(),
+            new AudioNormalizer(),
+            new ImageNormalizer(),
+            new ImageUrlNormalizer(),
+            new TextNormalizer(),
             new ResultNormalizer(new ObjectNormalizer(
                 propertyTypeExtractor: new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]),
                 classDiscriminatorResolver: new ClassDiscriminatorFromClassMetadata(new ClassMetadataFactory(new AttributeLoader())),
@@ -147,48 +162,13 @@ final class CachePlatform implements PlatformInterface
         return match (true) {
             \is_string($input) => md5($input),
             \is_array($input) => md5(json_encode($input, \JSON_THROW_ON_ERROR)),
-            $input instanceof MessageBag => $this->hashMessageBag($input),
+            // MessageBag is normalized through the platform's Message/Content
+            // normalizers, which expose the conversation content only —
+            // per-instance UUIDs are not part of the output, so two bags
+            // carrying the same conversation hash to the same key.
+            $input instanceof MessageBag => md5($this->serializer->serialize($input, 'json')),
             default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
         };
-    }
-
-    private function hashMessageBag(MessageBag $bag): string
-    {
-        // Build a content-only payload so two MessageBag instances with the
-        // same conversation produce the same cache key. The bag's UUID and
-        // each message's UUID are intentionally excluded — they are
-        // per-instance state, not part of the conversation identity.
-        $payload = array_map(
-            fn (MessageInterface $message): array => [
-                'role' => $message->getRole()->value,
-                'content' => $this->normalizeContentForHash($message->getContent()),
-            ],
-            $bag->getMessages(),
-        );
-
-        return md5(json_encode($payload, \JSON_THROW_ON_ERROR));
-    }
-
-    /**
-     * @param string|Template|ContentInterface[]|null $content
-     */
-    private function normalizeContentForHash(string|Template|array|null $content): mixed
-    {
-        if (null === $content || \is_string($content)) {
-            return $content;
-        }
-
-        if ($content instanceof Template) {
-            return ['template' => $content->getTemplate(), 'type' => $content->getType()];
-        }
-
-        return array_map(
-            // ContentInterface implementations are simple value objects with
-            // readonly properties — serialize() gives a stable, content-based
-            // fingerprint without including any UUID.
-            static fn (ContentInterface $item): array => ['class' => $item::class, 'fingerprint' => md5(serialize($item))],
-            $content,
-        );
     }
 
     /**

@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.4
+0.9
 ---
 
  * Hash `MessageBag` inputs by content rather than by per-instance UUID, so two bags carrying the same conversation hit the same cache entry
