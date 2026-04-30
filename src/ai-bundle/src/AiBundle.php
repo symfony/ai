@@ -374,6 +374,7 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.tool_result_converter');
             $builder->removeDefinition('ai.tool_call_argument_resolver');
             $builder->removeDefinition('ai.tool.agent_processor.abstract');
+            $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
         }
 
         if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
