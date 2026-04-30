@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Metadata\StreamListener as MetaDataStreamListener;
 use Symfony\AI\Platform\Reranking\RerankingEntry;
+use Symfony\AI\Platform\Result\Exception\CancelledResultException;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\StreamListener as TokenUsageStreamListener;
@@ -24,11 +25,12 @@ use Symfony\AI\Platform\Vector\Vector;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class DeferredResult
+final class DeferredResult implements CancellableInterface
 {
     use MetadataAwareTrait;
 
     private bool $isConverted = false;
+    private bool $cancelled = false;
     private ResultInterface $convertedResult;
 
     /**
@@ -46,6 +48,10 @@ final class DeferredResult
      */
     public function getResult(): ResultInterface
     {
+        if ($this->cancelled) {
+            throw new CancelledResultException();
+        }
+
         if (!$this->isConverted) {
             $this->convertedResult = $this->resultConverter->convert($this->rawResult, $this->options);
 
@@ -85,6 +91,28 @@ final class DeferredResult
     public function getRawResult(): RawResultInterface
     {
         return $this->rawResult;
+    }
+
+    public function cancel(): void
+    {
+        if ($this->cancelled) {
+            return;
+        }
+
+        $this->cancelled = true;
+
+        if ($this->rawResult instanceof CancellableInterface) {
+            $this->rawResult->cancel();
+        }
+
+        if ($this->isConverted && $this->convertedResult instanceof CancellableInterface) {
+            $this->convertedResult->cancel();
+        }
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled;
     }
 
     /**

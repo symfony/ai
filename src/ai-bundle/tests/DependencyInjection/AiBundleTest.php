@@ -27,6 +27,7 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
+use Symfony\AI\Agent\Speech\SpeechSession;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -8294,6 +8295,39 @@ class AiBundleTest extends TestCase
         $this->assertSame(['voice_id' => 'abc123'], $speechConfigDefinition->getArgument('$ttsOptions'));
         $this->assertSame('whisper', $speechConfigDefinition->getArgument('$sttModel'));
         $this->assertSame(['language' => 'fr'], $speechConfigDefinition->getArgument('$sttOptions'));
+
+        $this->assertFalse($container->hasDefinition('ai.speech_session.my_agent'));
+
+        // Enabled with session: true
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'elevenlabs' => [
+                        'api_key' => 'test-key',
+                    ],
+                ],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o',
+                        'speech' => [
+                            'text_to_speech_platform' => 'ai.platform.elevenlabs',
+                            'tts_model' => 'eleven_multilingual_v2',
+                            'session' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.speech_session.my_agent'));
+        $sessionDefinition = $container->getDefinition('ai.speech_session.my_agent');
+        $this->assertSame(SpeechSession::class, $sessionDefinition->getClass());
+        $this->assertInstanceOf(Reference::class, $sessionDefinition->getArgument(0));
+        $this->assertSame('.inner', (string) $sessionDefinition->getArgument(0));
+        $this->assertSame(['ai.agent.my_agent', null, -2048], $sessionDefinition->getDecoratedService());
     }
 
     /**

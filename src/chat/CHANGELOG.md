@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * `Chat::submit()` and `Chat::stream()` now work on a cloned `MessageBag`, so the underlying store is only updated when the agent call succeeds (or, for streaming, when `ChatStreamListener::onComplete()` is reached). An interrupted or aborted call leaves the store untouched instead of persisting an orphan user message.
+
 0.8
 ---
 

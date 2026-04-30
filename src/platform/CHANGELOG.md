@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `InterruptionSignalInterface`, `InterruptionSignal` and `InterruptedException` to allow cooperative interruption between phases of multi-step pipelines (e.g. `SpeechAgent` between STT / LLM / TTS). Consumers pass an `InterruptionSignal` via options; the pipeline checks `isInterrupted()` at each phase boundary and throws `InterruptedException` when fired.
+ * Add `CancelledResultException` thrown when a `DeferredResult` is consumed after cancellation. `DeferredResult` implements `CancellableInterface` to cascade cancellation through the pipeline.
+
 0.8
 ---
 

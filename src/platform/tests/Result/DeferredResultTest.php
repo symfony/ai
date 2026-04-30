@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\Exception\CancelledResultException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -181,6 +182,76 @@ final class DeferredResultTest extends TestCase
 
         $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $deferredResult->getMetadata()->get('token_usage'));
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
+    }
+
+    public function testCancelPropagatesToCancellableRawResult()
+    {
+        $httpResponse = $this->createMock(SymfonyHttpResponse::class);
+        $httpResponse->expects($this->once())->method('cancel');
+
+        $rawHttpResult = new RawHttpResult($httpResponse);
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+
+        $deferredResult = new DeferredResult($resultConverter, $rawHttpResult);
+
+        $this->assertFalse($deferredResult->isCancelled());
+
+        $deferredResult->cancel();
+
+        $this->assertTrue($deferredResult->isCancelled());
+        $this->assertTrue($rawHttpResult->isCancelled());
+    }
+
+    public function testGetResultAfterCancelThrows()
+    {
+        $httpResponse = $this->createStub(SymfonyHttpResponse::class);
+        $rawHttpResult = new RawHttpResult($httpResponse);
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
+        $resultConverter->expects($this->never())->method('convert');
+
+        $deferredResult = new DeferredResult($resultConverter, $rawHttpResult);
+        $deferredResult->cancel();
+
+        $this->expectException(CancelledResultException::class);
+        $deferredResult->getResult();
+    }
+
+    public function testCancelIsIdempotent()
+    {
+        $httpResponse = $this->createMock(SymfonyHttpResponse::class);
+        $httpResponse->expects($this->once())->method('cancel');
+
+        $rawHttpResult = new RawHttpResult($httpResponse);
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+
+        $deferredResult = new DeferredResult($resultConverter, $rawHttpResult);
+        $deferredResult->cancel();
+        $deferredResult->cancel();
+        $deferredResult->cancel();
+
+        $this->assertTrue($deferredResult->isCancelled());
+    }
+
+    public function testCancelPropagatesToAlreadyConvertedStreamResult()
+    {
+        $streamResult = new StreamResult((static function () {
+            yield new TextDelta('chunk1');
+            yield new TextDelta('chunk2');
+        })());
+
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+        $resultConverter->method('convert')->willReturn($streamResult);
+
+        $deferredResult = new DeferredResult($resultConverter, new InMemoryRawResult());
+
+        $deferredResult->getResult(); // Force conversion.
+
+        $this->assertFalse($streamResult->isCancelled());
+
+        $deferredResult->cancel();
+
+        $this->assertTrue($streamResult->isCancelled());
+        $this->assertTrue($deferredResult->isCancelled());
     }
 
     /**

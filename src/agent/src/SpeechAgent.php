@@ -26,6 +26,8 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 final class SpeechAgent implements AgentInterface
 {
+    use InterruptibleTrait;
+
     public function __construct(
         private readonly AgentInterface $agent,
         private readonly SpeechConfiguration $configuration,
@@ -36,11 +38,19 @@ final class SpeechAgent implements AgentInterface
 
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
+        $signal = $this->extractInterruptionSignal($options);
+
+        $this->checkInterruptionSignal($signal);
+
         if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
             $messages = $this->transcribe($messages, $options);
         }
 
+        $this->checkInterruptionSignal($signal);
+
         $result = $this->agent->call($messages, $options);
+
+        $this->checkInterruptionSignal($signal);
 
         if (!$this->textToSpeechPlatform instanceof PlatformInterface) {
             return $result;

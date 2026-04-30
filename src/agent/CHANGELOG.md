@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `Symfony\AI\Agent\InterruptibleTrait` centralising the handling of `options['interruption_signal']` across agents. The base `Agent` now checks the signal before input processors, between input processors and platform invoke, and between platform invoke and output processors. `MultiAgent` applies the same checks around orchestration and delegation phases.
+ * Add cooperative interruption between phases in `SpeechAgent`: an `InterruptionSignal` passed via `options['interruption_signal']` is checked before STT, between STT and LLM, and between LLM and TTS, throwing an `InterruptedException` when fired. `SpeechSession` creates and manages the signal automatically so that a new `call()` flips the previous signal for phase-boundary abortion in event-loop contexts (Fibers, ReactPHP, amphp).
+ * Add `SpeechSession` decorator in `Symfony\AI\Agent\Speech\SpeechSession` that retains the last cancellable result and automatically cancels it when a new `call()` arrives, for long-running contexts (WebSocket, CLI daemons) where a fresh user input must supersede an in-flight pipeline.
+
 0.8
 ---
 

@@ -4,6 +4,7 @@ CHANGELOG
 0.8
 ---
 
+ * Add `session` option in agent `speech` configuration to wrap the `SpeechAgent` in a `SpeechSession` decorator. A new `call()` on the session automatically cancels the previous in-flight result and flips its interruption signal, intended for long-running contexts (WebSocket, daemon, event loop).
  * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
  * The `collection` option for `ChromaDb` is now optional.
  * Update `DataCollector` to use `getCalls()` and `getResultCache()` getter methods on Traceable* classes

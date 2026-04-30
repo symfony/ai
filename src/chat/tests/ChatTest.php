@@ -12,6 +12,7 @@
 namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MockResponse;
 use Symfony\AI\Chat\Chat;
@@ -19,6 +20,7 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Exception\InterruptedException;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 
@@ -170,5 +172,50 @@ final class ChatTest extends TestCase
         $assistantMessage = $stored->getMessages()[3];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
         $this->assertSame('Yes, I can!', $assistantMessage->getContent());
+    }
+
+    public function testSubmitDoesNotPolluteStoreWhenAgentThrows()
+    {
+        $agent = $this->createMock(AgentInterface::class);
+        $agent->expects($this->once())
+            ->method('call')
+            ->willThrowException(new InterruptedException());
+
+        $store = new InMemoryStore();
+        $chat = new Chat($agent, $store);
+
+        try {
+            $chat->submit(Message::ofUser('hi'));
+            $this->fail('Expected InterruptedException.');
+        } catch (InterruptedException) {
+            // expected
+        }
+
+        $this->assertCount(0, $store->load(), 'Store must remain empty when the agent throws.');
+    }
+
+    public function testStreamDoesNotPolluteStoreWhenIterationBreaksEarly()
+    {
+        $streamResult = new StreamResult((static function () {
+            yield new TextDelta('chunk1');
+            yield new TextDelta('chunk2');
+            yield new TextDelta('chunk3');
+        })());
+
+        $agent = $this->createMock(AgentInterface::class);
+        $agent->expects($this->once())
+            ->method('call')
+            ->willReturn($streamResult);
+
+        $store = new InMemoryStore();
+        $chat = new Chat($agent, $store);
+
+        $generator = $chat->stream(Message::ofUser('hi'));
+        foreach ($generator as $delta) {
+            break; // consumer aborts immediately
+        }
+
+        // Without onComplete() being reached, nothing is persisted.
+        $this->assertCount(0, $store->load(), 'Store must remain empty when the stream is broken early.');
     }
 }

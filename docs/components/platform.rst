@@ -423,6 +423,44 @@ The following delta types are available:
     To be able to use streaming in your web application,
     an additional layer like `Mercure`_ is needed.
 
+Interruption signal
+~~~~~~~~~~~~~~~~~~~
+
+Multi-step pipelines (for example the speech pipeline STT → LLM → TTS) can accept a
+cooperative interruption signal via their options array. The signal is an object
+implementing :class:`Symfony\\AI\\Platform\\Result\\InterruptionSignalInterface`
+with a single method, ``isInterrupted(): bool``, checked at every phase boundary::
+
+    use Symfony\AI\Platform\Result\Exception\InterruptedException;
+    use Symfony\AI\Platform\Result\InterruptionSignal;
+
+    $signal = new InterruptionSignal();
+
+    try {
+        $result = $agent->call($messages, ['interruption_signal' => $signal]);
+    } catch (InterruptedException) {
+        // an external actor flipped the signal — the pipeline aborted cleanly
+    }
+
+    // From another coroutine / event handler:
+    $signal->interrupt();
+
+When the pipeline detects an interrupted signal at a phase boundary it throws an
+:class:`Symfony\\AI\\Platform\\Result\\Exception\\InterruptedException`. This is the
+building block used by
+:class:`Symfony\\AI\\Agent\\Speech\\SpeechSession` to abort an in-flight speech
+pipeline when a fresh user input arrives in an event-loop context.
+
+.. note::
+
+    Symfony AI uses the signal ``options['interruption_signal']`` across its
+    built-in agents. Third-party components can adopt the same contract by checking
+    :class:`Symfony\\AI\\Platform\\Result\\InterruptionSignalInterface` at their own
+    phase boundaries.
+
+Accessing a :class:`Symfony\\AI\\Platform\\Result\\DeferredResult` after cancellation
+throws a :class:`Symfony\\AI\\Platform\\Result\\Exception\\CancelledResultException`.
+
 Code Examples
 ~~~~~~~~~~~~~
 

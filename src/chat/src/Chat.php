@@ -38,26 +38,28 @@ final class Chat implements ChatInterface
 
     public function submit(UserMessage $message): AssistantMessage
     {
-        $messages = $this->store->load();
+        // Work on a local copy so the store is never mutated before the agent call
+        // succeeds. If the agent throws (e.g. InterruptedException), nothing is persisted.
+        $messages = $this->store->load()->with($message);
 
-        $messages->add($message);
         $result = $this->agent->call($messages);
 
         \assert($result instanceof TextResult);
 
         $assistantMessage = Message::ofAssistant($result->getContent());
         $assistantMessage->getMetadata()->merge($result->getMetadata());
-        $messages->add($assistantMessage);
 
-        $this->store->save($messages);
+        $this->store->save($messages->with($assistantMessage));
 
         return $assistantMessage;
     }
 
     public function stream(UserMessage $message): \Generator
     {
-        $messages = $this->store->load();
-        $messages->add($message);
+        // Same contract as submit(): work on a cloned MessageBag so the store is only
+        // updated when the stream completes (via ChatStreamListener::onComplete). An
+        // interrupted iteration leaves the store untouched.
+        $messages = $this->store->load()->with($message);
 
         $result = $this->agent->call($messages, ['stream' => true]);
 
