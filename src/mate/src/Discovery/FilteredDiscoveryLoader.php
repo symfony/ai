@@ -18,6 +18,7 @@ use Mcp\Capability\Registry\ToolReference;
 use Mcp\Capability\RegistryInterface;
 use Mcp\Schema\Tool;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
 use Symfony\AI\Mate\Mcp\MateToolReference;
 
 /**
@@ -150,17 +151,19 @@ final class FilteredDiscoveryLoader implements LoaderInterface
 
     private function wrapToolReference(ToolReference $toolRef): ToolReference
     {
-        $tool = $this->maybeAddOutputSchema($toolRef);
+        $method = $this->resolveHandlerMethod($toolRef);
+        $structured = null !== $method && [] !== $method->getAttributes(StructuredOutput::class);
+        $tool = $structured && null !== $method ? $this->addOutputSchema($toolRef->tool, $method) : $toolRef->tool;
 
-        return new MateToolReference($tool, $toolRef->handler, $toolRef->isManual);
+        return new MateToolReference($tool, $toolRef->handler, $toolRef->isManual, $structured);
     }
 
-    private function maybeAddOutputSchema(ToolReference $toolRef): Tool
+    private function resolveHandlerMethod(ToolReference $toolRef): ?\ReflectionMethod
     {
         $handler = $toolRef->handler;
 
         if (!\is_array($handler) || 2 !== \count($handler)) {
-            return $toolRef->tool;
+            return null;
         }
 
         [$className, $methodName] = $handler;
@@ -170,28 +173,31 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         }
 
         if (!\is_string($className) || !\is_string($methodName)) {
-            return $toolRef->tool;
+            return null;
         }
 
         try {
-            $method = new \ReflectionMethod($className, $methodName);
+            return new \ReflectionMethod($className, $methodName);
         } catch (\ReflectionException) {
-            return $toolRef->tool;
+            return null;
         }
+    }
 
+    private function addOutputSchema(Tool $tool, \ReflectionMethod $method): Tool
+    {
         $outputSchema = $this->outputSchemaGenerator->generate($method);
 
         if (null === $outputSchema || 'object' !== ($outputSchema['type'] ?? null)) {
-            return $toolRef->tool;
+            return $tool;
         }
 
         return new Tool(
-            $toolRef->tool->name,
-            $toolRef->tool->inputSchema,
-            $toolRef->tool->description,
-            $toolRef->tool->annotations,
-            $toolRef->tool->icons,
-            $toolRef->tool->meta,
+            $tool->name,
+            $tool->inputSchema,
+            $tool->description,
+            $tool->annotations,
+            $tool->icons,
+            $tool->meta,
             $outputSchema,
         );
     }

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Mate\Capability;
 
 use Mcp\Capability\Attribute\McpTool;
+use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -28,6 +29,7 @@ class ServerInfo
      * }
      */
     #[McpTool('server-info', 'Get PHP runtime environment details: version, OS, OS family, and loaded extensions')]
+    #[StructuredOutput]
     public function getInfo(): array
     {
         return [
