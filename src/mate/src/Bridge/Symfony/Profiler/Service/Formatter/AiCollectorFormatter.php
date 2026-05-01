@@ -298,7 +298,7 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
             return null;
         }
 
-        return array_values(array_map(fn (Source $source): array => [
+        return array_values(array_map(static fn (Source $source): array => [
             'name' => $source->getName(),
             'reference' => $source->getReference(),
             'content' => $source->getContent(),
