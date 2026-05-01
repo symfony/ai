@@ -182,6 +182,7 @@ final class AiCollectorFormatterTest extends TestCase
                 };
             }
 
+            /** @return list<object> */
             public function getMessages(): array
             {
                 return [
@@ -193,6 +194,7 @@ final class AiCollectorFormatterTest extends TestCase
                             };
                         }
 
+                        /** @return list<object> */
                         public function getContent(): array
                         {
                             return [
@@ -213,7 +215,7 @@ final class AiCollectorFormatterTest extends TestCase
                             };
                         }
 
-                        public function getContent(): ?string
+                        public function getContent(): string
                         {
                             return 'Calling a tool';
                         }
@@ -223,6 +225,7 @@ final class AiCollectorFormatterTest extends TestCase
                             return true;
                         }
 
+                        /** @return list<object> */
                         public function getToolCalls(): array
                         {
                             return [
@@ -237,6 +240,7 @@ final class AiCollectorFormatterTest extends TestCase
                                         return 'search_docs';
                                     }
 
+                                    /** @return array<string, string> */
                                     public function getArguments(): array
                                     {
                                         return ['query' => 'formatter'];
@@ -283,6 +287,7 @@ final class AiCollectorFormatterTest extends TestCase
                 };
             }
 
+            /** @return array<string, mixed> */
             public function getParameters(): array
             {
                 return [
@@ -295,9 +300,13 @@ final class AiCollectorFormatterTest extends TestCase
         };
     }
 
+    /**
+     * @param array<string, mixed> $arguments
+     */
     private function createToolCall(string $id, string $name, array $arguments): object
     {
         return new class($id, $name, $arguments) {
+            /** @param array<string, mixed> $arguments */
             public function __construct(
                 private readonly string $id,
                 private readonly string $name,
@@ -315,6 +324,7 @@ final class AiCollectorFormatterTest extends TestCase
                 return $this->name;
             }
 
+            /** @return array<string, mixed> */
             public function getArguments(): array
             {
                 return $this->arguments;
@@ -335,6 +345,7 @@ final class AiCollectorFormatterTest extends TestCase
                 return $this->toolCall;
             }
 
+            /** @return array<string, int> */
             public function getResult(): array
             {
                 return ['matches' => 4];
@@ -343,6 +354,7 @@ final class AiCollectorFormatterTest extends TestCase
             public function getSources(): object
             {
                 return new class {
+                    /** @return list<object> */
                     public function all(): array
                     {
                         return [
@@ -369,14 +381,19 @@ final class AiCollectorFormatterTest extends TestCase
         };
     }
 
+    /**
+     * @param array<string, mixed> $values
+     */
     private function createMetadata(array $values): object
     {
         return new class($values) {
+            /** @param array<string, mixed> $values */
             public function __construct(
                 private readonly array $values,
             ) {
             }
 
+            /** @return array<string, mixed> */
             public function all(): array
             {
                 return $this->values;
@@ -394,6 +411,7 @@ final class AiCollectorFormatterTest extends TestCase
                 };
             }
 
+            /** @return list<object> */
             public function getContent(): array
             {
                 return [
@@ -411,6 +429,7 @@ final class AiCollectorFormatterTest extends TestCase
     private function createTextQuery(): object
     {
         return new class {
+            /** @return list<string> */
             public function getTexts(): array
             {
                 return ['formatters', 'collectors'];
