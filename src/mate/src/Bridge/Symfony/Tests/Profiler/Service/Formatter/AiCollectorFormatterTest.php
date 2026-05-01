@@ -12,8 +12,6 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Toolbox\Source\Source;
-use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\AiBundle\Profiler\DataCollector as AiDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\AiCollectorFormatter;
@@ -129,7 +127,7 @@ final class AiCollectorFormatterTest extends TestCase
         $this->assertSame('App\\Tool\\SearchTool', $result['tools'][0]['reference']['class']);
 
         $this->assertSame('search_docs', $result['tool_calls'][0]['tool_call']['name']);
-        $this->assertSame('Documentation', $result['tool_calls'][0]['sources'][0]['name']);
+        $this->assertNull($result['tool_calls'][0]['sources']);
 
         $this->assertSame('2026-04-17T10:00:00+00:00', $result['messages'][0]['saved_at']);
         $this->assertSame(2, $result['messages'][0]['bag']['message_count']);
@@ -223,9 +221,6 @@ final class AiCollectorFormatterTest extends TestCase
         return new ToolResult(
             new ToolCall('call-3', 'search_docs', ['query' => 'bridge']),
             ['matches' => 4],
-            new SourceCollection([
-                new Source('Documentation', 'docs/components/mate.rst', 'Collector formatter guidance'),
-            ]),
         );
     }
 }
