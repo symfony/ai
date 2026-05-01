@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 
+use Symfony\AI\AiBundle\Profiler\DataCollector as AiDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 
@@ -21,12 +22,10 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  *
  * @internal
  *
- * @implements CollectorFormatterInterface<DataCollectorInterface>
+ * @implements CollectorFormatterInterface<AiDataCollector>
  */
 final class AiCollectorFormatter implements CollectorFormatterInterface
 {
-    use ExtractsCollectorDataTrait;
-
     public function getName(): string
     {
         return 'ai';
@@ -34,15 +33,15 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
 
     public function format(DataCollectorInterface $collector): array
     {
-        $data = $this->extractCollectorData($collector);
+        \assert($collector instanceof AiDataCollector);
 
-        $platformCalls = \is_array($data['platform_calls'] ?? null) ? $data['platform_calls'] : [];
-        $tools = \is_array($data['tools'] ?? null) ? $data['tools'] : [];
-        $toolCalls = \is_array($data['tool_calls'] ?? null) ? $data['tool_calls'] : [];
-        $messages = \is_array($data['messages'] ?? null) ? $data['messages'] : [];
-        $chats = \is_array($data['chats'] ?? null) ? $data['chats'] : [];
-        $agents = \is_array($data['agents'] ?? null) ? $data['agents'] : [];
-        $stores = \is_array($data['stores'] ?? null) ? $data['stores'] : [];
+        $platformCalls = $collector->getPlatformCalls();
+        $tools = $collector->getTools();
+        $toolCalls = $collector->getToolCalls();
+        $messages = $collector->getMessages();
+        $chats = $collector->getChats();
+        $agents = $collector->getAgents();
+        $stores = $collector->getStores();
 
         return [
             'platform_call_count' => \count($platformCalls),
@@ -64,16 +63,16 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
 
     public function getSummary(DataCollectorInterface $collector): array
     {
-        $data = $this->extractCollectorData($collector);
+        \assert($collector instanceof AiDataCollector);
 
         return [
-            'platform_call_count' => \count(\is_array($data['platform_calls'] ?? null) ? $data['platform_calls'] : []),
-            'tool_count' => \count(\is_array($data['tools'] ?? null) ? $data['tools'] : []),
-            'tool_call_count' => \count(\is_array($data['tool_calls'] ?? null) ? $data['tool_calls'] : []),
-            'message_count' => \count(\is_array($data['messages'] ?? null) ? $data['messages'] : []),
-            'chat_count' => \count(\is_array($data['chats'] ?? null) ? $data['chats'] : []),
-            'agent_call_count' => \count(\is_array($data['agents'] ?? null) ? $data['agents'] : []),
-            'store_call_count' => \count(\is_array($data['stores'] ?? null) ? $data['stores'] : []),
+            'platform_call_count' => \count($collector->getPlatformCalls()),
+            'tool_count' => \count($collector->getTools()),
+            'tool_call_count' => \count($collector->getToolCalls()),
+            'message_count' => \count($collector->getMessages()),
+            'chat_count' => \count($collector->getChats()),
+            'agent_call_count' => \count($collector->getAgents()),
+            'store_call_count' => \count($collector->getStores()),
         ];
     }
 

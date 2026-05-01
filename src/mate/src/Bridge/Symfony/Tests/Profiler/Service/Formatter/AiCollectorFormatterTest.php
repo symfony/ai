@@ -12,8 +12,9 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\AiBundle\Profiler\DataCollector as AiDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\AiCollectorFormatter;
-use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollector;
+use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -34,7 +35,7 @@ final class AiCollectorFormatterTest extends TestCase
 
     public function testGetSummary()
     {
-        $collector = new TestCollector('ai', [
+        $collector = $this->createAiCollector([
             'platform_calls' => [[]],
             'tools' => [[], []],
             'tool_calls' => [[]],
@@ -59,7 +60,7 @@ final class AiCollectorFormatterTest extends TestCase
 
     public function testFormatNormalizesAiCollectorData()
     {
-        $collector = new TestCollector('ai', [
+        $collector = $this->createAiCollector([
             'platform_calls' => [[
                 'model' => 'gpt-4.1',
                 'input' => $this->createMessageBag(),
@@ -134,7 +135,7 @@ final class AiCollectorFormatterTest extends TestCase
 
     public function testFormatFallsBackToObjectSummaryForUnknownObjects()
     {
-        $collector = new TestCollector('ai', [
+        $collector = $this->createAiCollector([
             'platform_calls' => [[
                 'model' => 'gpt-4.1',
                 'input' => new class {
@@ -155,7 +156,7 @@ final class AiCollectorFormatterTest extends TestCase
 
     public function testFormatReturnsEmptySectionsWhenCollectorDataIsMissing()
     {
-        $collector = new TestCollector('ai', []);
+        $collector = $this->createAiCollector([]);
 
         $result = $this->formatter->format($collector);
 
@@ -167,6 +168,17 @@ final class AiCollectorFormatterTest extends TestCase
         $this->assertSame([], $result['chats']);
         $this->assertSame([], $result['agents']);
         $this->assertSame([], $result['stores']);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function createAiCollector(array $data): AiDataCollector
+    {
+        $collector = (new \ReflectionClass(AiDataCollector::class))->newInstanceWithoutConstructor();
+        (new \ReflectionProperty(DataCollector::class, 'data'))->setValue($collector, $data);
+
+        return $collector;
     }
 
     private function createMessageBag(): object
