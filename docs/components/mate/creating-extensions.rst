@@ -152,11 +152,6 @@ single-resource lookups, configuration introspection. Skip it for bulk or
 hot-path tools that return large or repeated payloads (search, list, dump);
 those keep the TOON-only behavior and stay cheap.
 
-The built-in tools follow this rule: ``server-info``, ``monolog-list-files``,
-``monolog-list-channels``, and ``symfony-profiler-get`` opt in;
-``monolog-search``, ``monolog-context-search``, ``monolog-tail``,
-``symfony-services``, and ``symfony-profiler-list`` do not.
-
 Basic Example
 ~~~~~~~~~~~~~
 
