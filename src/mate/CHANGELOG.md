@@ -7,6 +7,7 @@ CHANGELOG
  * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
  * Allow Symfony profiler capabilities (`ProfilerResourceTemplate` and `ProfilerTool`) to be instantiated without a `ProfilerDataProvider`, throwing a clear `RuntimeException` when invoked in workspaces without profiler support
  * Add `--ignore-missing-file` option to the `discover` command that exits successfully without doing any work when `mate/extensions.php` does not exist (intended for unconditional invocation from Composer scripts wired by the Symfony Flex recipe)
+ * Make `json-input` argument optional in `mcp:tools:call` command (defaults to `{}`)
 
 0.7
 ---
