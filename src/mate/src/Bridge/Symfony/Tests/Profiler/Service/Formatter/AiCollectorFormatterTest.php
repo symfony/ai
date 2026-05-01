@@ -12,8 +12,20 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Toolbox\Source\Source;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\AiBundle\Profiler\DataCollector as AiDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\AiCollectorFormatter;
+use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
+use Symfony\AI\Store\Query\TextQuery;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 
 /**
@@ -69,8 +81,8 @@ final class AiCollectorFormatterTest extends TestCase
                     'tools' => [$this->createTool()],
                 ],
                 'result_type' => 'tool_calls',
-                'result' => [$this->createToolCall('call-2', 'search_docs', ['query' => 'formatter'])],
-                'metadata' => $this->createMetadata(['request_id' => 'req-123']),
+                'result' => [new ToolCall('call-2', 'search_docs', ['query' => 'formatter'])],
+                'metadata' => new Metadata(['request_id' => 'req-123']),
             ]],
             'tools' => [$this->createTool()],
             'tool_calls' => [$this->createToolResult()],
@@ -80,7 +92,7 @@ final class AiCollectorFormatterTest extends TestCase
             ]],
             'chats' => [[
                 'action' => 'submit',
-                'message' => $this->createUserMessage(),
+                'message' => new UserMessage(new Text('Tell me more')),
                 'submitted_at' => new \DateTimeImmutable('2026-04-17T10:01:00+00:00'),
             ]],
             'agents' => [[
@@ -90,7 +102,7 @@ final class AiCollectorFormatterTest extends TestCase
             ]],
             'stores' => [[
                 'method' => 'query',
-                'query' => $this->createTextQuery(),
+                'query' => new TextQuery(['formatters', 'collectors']),
                 'options' => ['limit' => 5],
                 'called_at' => new \DateTimeImmutable('2026-04-17T10:03:00+00:00'),
             ]],
@@ -144,7 +156,7 @@ final class AiCollectorFormatterTest extends TestCase
                 'result_type' => 'text',
                 'result' => new class {
                 },
-                'metadata' => [],
+                'metadata' => new Metadata(),
             ]],
         ]);
 
@@ -181,276 +193,39 @@ final class AiCollectorFormatterTest extends TestCase
         return $collector;
     }
 
-    private function createMessageBag(): object
+    private function createMessageBag(): MessageBag
     {
-        return new class {
-            public function getId(): object
-            {
-                return new class {
-                    public function toRfc4122(): string
-                    {
-                        return '0195f64c-1ba3-7b2b-a4ee-c3adf0a9f001';
-                    }
-                };
-            }
-
-            /** @return list<object> */
-            public function getMessages(): array
-            {
-                return [
-                    new class {
-                        public function getRole(): object
-                        {
-                            return new class {
-                                public string $value = 'user';
-                            };
-                        }
-
-                        /** @return list<object> */
-                        public function getContent(): array
-                        {
-                            return [
-                                new class {
-                                    public function getText(): string
-                                    {
-                                        return 'Find formatter coverage';
-                                    }
-                                },
-                            ];
-                        }
-                    },
-                    new class {
-                        public function getRole(): object
-                        {
-                            return new class {
-                                public string $value = 'assistant';
-                            };
-                        }
-
-                        public function getContent(): string
-                        {
-                            return 'Calling a tool';
-                        }
-
-                        public function hasToolCalls(): bool
-                        {
-                            return true;
-                        }
-
-                        /** @return list<object> */
-                        public function getToolCalls(): array
-                        {
-                            return [
-                                new class {
-                                    public function getId(): string
-                                    {
-                                        return 'call-1';
-                                    }
-
-                                    public function getName(): string
-                                    {
-                                        return 'search_docs';
-                                    }
-
-                                    /** @return array<string, string> */
-                                    public function getArguments(): array
-                                    {
-                                        return ['query' => 'formatter'];
-                                    }
-                                },
-                            ];
-                        }
-
-                        public function hasThinkingContent(): bool
-                        {
-                            return false;
-                        }
-                    },
-                ];
-            }
-        };
+        return new MessageBag(
+            new UserMessage(new Text('Find formatter coverage')),
+            new AssistantMessage('Calling a tool', [new ToolCall('call-1', 'search_docs', ['query' => 'formatter'])]),
+        );
     }
 
-    private function createTool(): object
+    private function createTool(): Tool
     {
-        return new class {
-            public function getName(): string
-            {
-                return 'search_docs';
-            }
-
-            public function getDescription(): string
-            {
-                return 'Search project documentation';
-            }
-
-            public function getReference(): object
-            {
-                return new class {
-                    public function getClass(): string
-                    {
-                        return 'App\\Tool\\SearchTool';
-                    }
-
-                    public function getMethod(): string
-                    {
-                        return '__invoke';
-                    }
-                };
-            }
-
-            /** @return array<string, mixed> */
-            public function getParameters(): array
-            {
-                return [
-                    'type' => 'object',
-                    'properties' => [
-                        'query' => ['type' => 'string'],
-                    ],
-                ];
-            }
-        };
+        return new Tool(
+            new ExecutionReference('App\\Tool\\SearchTool'),
+            'search_docs',
+            'Search project documentation',
+            [
+                'type' => 'object',
+                'properties' => [
+                    'query' => ['type' => 'string', 'description' => 'Search query'],
+                ],
+                'required' => ['query'],
+                'additionalProperties' => false,
+            ],
+        );
     }
 
-    /**
-     * @param array<string, mixed> $arguments
-     */
-    private function createToolCall(string $id, string $name, array $arguments): object
+    private function createToolResult(): ToolResult
     {
-        return new class($id, $name, $arguments) {
-            /** @param array<string, mixed> $arguments */
-            public function __construct(
-                private readonly string $id,
-                private readonly string $name,
-                private readonly array $arguments,
-            ) {
-            }
-
-            public function getId(): string
-            {
-                return $this->id;
-            }
-
-            public function getName(): string
-            {
-                return $this->name;
-            }
-
-            /** @return array<string, mixed> */
-            public function getArguments(): array
-            {
-                return $this->arguments;
-            }
-        };
-    }
-
-    private function createToolResult(): object
-    {
-        return new class($this->createToolCall('call-3', 'search_docs', ['query' => 'bridge'])) {
-            public function __construct(
-                private readonly object $toolCall,
-            ) {
-            }
-
-            public function getToolCall(): object
-            {
-                return $this->toolCall;
-            }
-
-            /** @return array<string, int> */
-            public function getResult(): array
-            {
-                return ['matches' => 4];
-            }
-
-            public function getSources(): object
-            {
-                return new class {
-                    /** @return list<object> */
-                    public function all(): array
-                    {
-                        return [
-                            new class {
-                                public function getName(): string
-                                {
-                                    return 'Documentation';
-                                }
-
-                                public function getReference(): string
-                                {
-                                    return 'docs/components/mate.rst';
-                                }
-
-                                public function getContent(): string
-                                {
-                                    return 'Collector formatter guidance';
-                                }
-                            },
-                        ];
-                    }
-                };
-            }
-        };
-    }
-
-    /**
-     * @param array<string, mixed> $values
-     */
-    private function createMetadata(array $values): object
-    {
-        return new class($values) {
-            /** @param array<string, mixed> $values */
-            public function __construct(
-                private readonly array $values,
-            ) {
-            }
-
-            /** @return array<string, mixed> */
-            public function all(): array
-            {
-                return $this->values;
-            }
-        };
-    }
-
-    private function createUserMessage(): object
-    {
-        return new class {
-            public function getRole(): object
-            {
-                return new class {
-                    public string $value = 'user';
-                };
-            }
-
-            /** @return list<object> */
-            public function getContent(): array
-            {
-                return [
-                    new class {
-                        public function getText(): string
-                        {
-                            return 'Tell me more';
-                        }
-                    },
-                ];
-            }
-        };
-    }
-
-    private function createTextQuery(): object
-    {
-        return new class {
-            /** @return list<string> */
-            public function getTexts(): array
-            {
-                return ['formatters', 'collectors'];
-            }
-
-            public function getText(): string
-            {
-                return 'formatters collectors';
-            }
-        };
+        return new ToolResult(
+            new ToolCall('call-3', 'search_docs', ['query' => 'bridge']),
+            ['matches' => 4],
+            new SourceCollection([
+                new Source('Documentation', 'docs/components/mate.rst', 'Collector formatter guidance'),
+            ]),
+        );
     }
 }
