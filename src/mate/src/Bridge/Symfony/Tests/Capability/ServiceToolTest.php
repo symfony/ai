@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Capability;
 
-use HelgeSverre\Toon\DecodeOptions;
-use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
@@ -34,7 +32,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices());
+        $services = $tool->getServices();
 
         $this->assertArrayHasKey('cache.app', $services);
         $this->assertArrayHasKey('logger', $services);
@@ -50,7 +48,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool('/non/existent/directory', $provider);
 
-        $services = Toon::decode($tool->getServices(), DecodeOptions::lenient());
+        $services = $tool->getServices();
 
         $this->assertEmpty($services);
     }
@@ -60,7 +58,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices());
+        $services = $tool->getServices();
 
         $this->assertArrayHasKey('event_dispatcher', $services);
         $this->assertSame('Symfony\Component\EventDispatcher\EventDispatcher', $services['event_dispatcher']);
@@ -71,7 +69,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices());
+        $services = $tool->getServices();
 
         $this->assertArrayHasKey('cache.app', $services);
         $this->assertArrayHasKey('logger', $services);
@@ -82,7 +80,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices());
+        $services = $tool->getServices();
 
         // my_service is an alias to cache.app
         $this->assertArrayHasKey('my_service', $services);
@@ -94,7 +92,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices());
+        $services = $tool->getServices();
 
         // .service_locator.abc123 should be accessible without the leading dot
         $this->assertArrayHasKey('service_locator.abc123', $services);
@@ -105,7 +103,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices());
+        $services = $tool->getServices();
 
         $this->assertArrayHasKey('router', $services);
         $this->assertSame('Symfony\Component\Routing\Router', $services['router']);
@@ -116,7 +114,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices('cache'));
+        $services = $tool->getServices('cache');
 
         $this->assertArrayHasKey('cache.app', $services);
         $this->assertArrayNotHasKey('logger', $services);
@@ -128,7 +126,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices('NullLogger'));
+        $services = $tool->getServices('NullLogger');
 
         $this->assertArrayHasKey('logger', $services);
         $this->assertArrayNotHasKey('cache.app', $services);
@@ -139,7 +137,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices('CACHE'));
+        $services = $tool->getServices('CACHE');
 
         $this->assertArrayHasKey('cache.app', $services);
     }
@@ -149,8 +147,8 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $allServices = Toon::decode($tool->getServices());
-        $emptyQueryServices = Toon::decode($tool->getServices(''));
+        $allServices = $tool->getServices();
+        $emptyQueryServices = $tool->getServices('');
 
         $this->assertSame($allServices, $emptyQueryServices);
     }
@@ -160,7 +158,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = Toon::decode($tool->getServices('nonexistent_service_xyz'), DecodeOptions::lenient());
+        $services = $tool->getServices('nonexistent_service_xyz');
 
         $this->assertEmpty($services);
     }
@@ -187,7 +185,7 @@ XML;
             $provider = new ContainerProvider();
             $tool = new ServiceTool($tempDir, $provider);
 
-            $services = Toon::decode($tool->getServices());
+            $services = $tool->getServices();
 
             $this->assertArrayHasKey('custom.service', $services);
             $this->assertSame('Custom\ServiceClass', $services['custom.service']);

@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Mate\Bridge\Monolog\Tests\Capability;
 
-use HelgeSverre\Toon\DecodeOptions;
-use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogParser;
@@ -36,7 +34,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByTextTerm()
     {
-        $result = Toon::decode($this->tool->search('logged in'));
+        $result = $this->tool->search('logged in');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -46,7 +44,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByTextTermReturnsEmptyWhenNotFound()
     {
-        $result = Toon::decode($this->tool->search('nonexistent search term xyz'), DecodeOptions::lenient());
+        $result = $this->tool->search('nonexistent search term xyz');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertEmpty($result['entries']);
@@ -54,7 +52,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByLevel()
     {
-        $result = Toon::decode($this->tool->search('', level: 'ERROR'));
+        $result = $this->tool->search('', level: 'ERROR');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -66,7 +64,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByChannel()
     {
-        $result = Toon::decode($this->tool->search('', channel: 'security'));
+        $result = $this->tool->search('', channel: 'security');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -78,7 +76,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchWithLimit()
     {
-        $result = Toon::decode($this->tool->search('', limit: 2));
+        $result = $this->tool->search('', limit: 2);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertLessThanOrEqual(2, \count($result['entries']));
@@ -86,7 +84,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegex()
     {
-        $result = Toon::decode($this->tool->search('Database.*failed', regex: true));
+        $result = $this->tool->search('Database.*failed', regex: true);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -95,7 +93,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexWithDelimiters()
     {
-        $result = Toon::decode($this->tool->search('/User.*logged/i', regex: true));
+        $result = $this->tool->search('/User.*logged/i', regex: true);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -103,7 +101,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexByLevel()
     {
-        $result = Toon::decode($this->tool->search('.*', regex: true, level: 'WARNING'));
+        $result = $this->tool->search('.*', regex: true, level: 'WARNING');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -115,7 +113,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchContext()
     {
-        $result = Toon::decode($this->tool->searchContext('user_id', '123'));
+        $result = $this->tool->searchContext('user_id', '123');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -125,7 +123,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchContextReturnsEmptyWhenKeyNotFound()
     {
-        $result = Toon::decode($this->tool->searchContext('nonexistent_key', 'value'), DecodeOptions::lenient());
+        $result = $this->tool->searchContext('nonexistent_key', 'value');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertEmpty($result['entries']);
@@ -133,7 +131,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchContextByLevel()
     {
-        $result = Toon::decode($this->tool->searchContext('error', 'Connection', level: 'ERROR'));
+        $result = $this->tool->searchContext('error', 'Connection', level: 'ERROR');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -141,7 +139,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testTail()
     {
-        $result = Toon::decode($this->tool->tail(10));
+        $result = $this->tool->tail(10);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -150,7 +148,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testTailWithLevel()
     {
-        $result = Toon::decode($this->tool->tail(10, level: 'INFO'));
+        $result = $this->tool->tail(10, level: 'INFO');
 
         $this->assertArrayHasKey('entries', $result);
         foreach ($result['entries'] as $entry) {
@@ -160,7 +158,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testListFiles()
     {
-        $result = Toon::decode($this->tool->listFiles());
+        $result = $this->tool->listFiles();
 
         $this->assertArrayHasKey('files', $result);
         $this->assertNotEmpty($result['files']);
@@ -175,7 +173,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testListChannels()
     {
-        $result = Toon::decode($this->tool->listChannels());
+        $result = $this->tool->listChannels();
 
         $this->assertArrayHasKey('channels', $result);
         $this->assertNotEmpty($result['channels']);
@@ -185,7 +183,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevel()
     {
-        $result = Toon::decode($this->tool->search('', level: 'INFO'));
+        $result = $this->tool->search('', level: 'INFO');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -197,7 +195,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevelWithLimit()
     {
-        $result = Toon::decode($this->tool->search('', level: 'INFO', limit: 1));
+        $result = $this->tool->search('', level: 'INFO', limit: 1);
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertLessThanOrEqual(1, \count($result['entries']));
@@ -205,7 +203,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchReturnsLogEntryArrayStructure()
     {
-        $result = Toon::decode($this->tool->search('logged'));
+        $result = $this->tool->search('logged');
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);

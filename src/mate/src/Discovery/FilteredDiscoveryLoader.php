@@ -18,6 +18,7 @@ use Mcp\Capability\Registry\ToolReference;
 use Mcp\Capability\RegistryInterface;
 use Mcp\Schema\Tool;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Mate\Mcp\MateToolReference;
 
 /**
  * Create loaded that automatically discover MCP features.
@@ -129,7 +130,7 @@ final class FilteredDiscoveryLoader implements LoaderInterface
 
         $enrichedTools = [];
         foreach ($tools as $name => $toolRef) {
-            $enrichedTools[$name] = $this->enrichToolWithOutputSchema($toolRef);
+            $enrichedTools[$name] = $this->wrapToolReference($toolRef);
         }
 
         return new DiscoveryState(
@@ -147,12 +148,19 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         return $data['enabled'] ?? true;
     }
 
-    private function enrichToolWithOutputSchema(ToolReference $toolRef): ToolReference
+    private function wrapToolReference(ToolReference $toolRef): ToolReference
+    {
+        $tool = $this->maybeAddOutputSchema($toolRef);
+
+        return new MateToolReference($tool, $toolRef->handler, $toolRef->isManual);
+    }
+
+    private function maybeAddOutputSchema(ToolReference $toolRef): Tool
     {
         $handler = $toolRef->handler;
 
         if (!\is_array($handler) || 2 !== \count($handler)) {
-            return $toolRef;
+            return $toolRef->tool;
         }
 
         [$className, $methodName] = $handler;
@@ -162,33 +170,29 @@ final class FilteredDiscoveryLoader implements LoaderInterface
         }
 
         if (!\is_string($className) || !\is_string($methodName)) {
-            return $toolRef;
+            return $toolRef->tool;
         }
 
         try {
             $method = new \ReflectionMethod($className, $methodName);
         } catch (\ReflectionException) {
-            return $toolRef;
+            return $toolRef->tool;
         }
 
         $outputSchema = $this->outputSchemaGenerator->generate($method);
 
-        if (null === $outputSchema) {
-            return $toolRef;
+        if (null === $outputSchema || 'object' !== ($outputSchema['type'] ?? null)) {
+            return $toolRef->tool;
         }
 
-        $meta = $toolRef->tool->meta ?? [];
-        $meta['outputSchema'] = $outputSchema;
-
-        $enrichedTool = new Tool(
+        return new Tool(
             $toolRef->tool->name,
             $toolRef->tool->inputSchema,
             $toolRef->tool->description,
             $toolRef->tool->annotations,
             $toolRef->tool->icons,
-            $meta,
+            $toolRef->tool->meta,
+            $outputSchema,
         );
-
-        return new ToolReference($enrichedTool, $handler, $toolRef->isManual);
     }
 }

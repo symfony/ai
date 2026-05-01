@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Capability;
 
-use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
@@ -36,7 +35,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsAllProfiles()
     {
-        $result = Toon::decode($this->tool->listProfiles());
+        $result = $this->tool->listProfiles();
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -48,7 +47,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithLimit()
     {
-        $result = Toon::decode($this->tool->listProfiles(limit: 2));
+        $result = $this->tool->listProfiles(limit: 2);
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -56,7 +55,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByMethod()
     {
-        $result = Toon::decode($this->tool->listProfiles(method: 'POST'));
+        $result = $this->tool->listProfiles(method: 'POST');
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -66,7 +65,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByStatusCode()
     {
-        $result = Toon::decode($this->tool->listProfiles(statusCode: 404));
+        $result = $this->tool->listProfiles(statusCode: 404);
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -76,7 +75,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByUrl()
     {
-        $result = Toon::decode($this->tool->listProfiles(url: 'users'));
+        $result = $this->tool->listProfiles(url: 'users');
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -84,7 +83,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByIp()
     {
-        $result = Toon::decode($this->tool->listProfiles(ip: '127.0.0.1'));
+        $result = $this->tool->listProfiles(ip: '127.0.0.1');
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -92,7 +91,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByRoute()
     {
-        $result = Toon::decode($this->tool->listProfiles(url: '/api/users'));
+        $result = $this->tool->listProfiles(url: '/api/users');
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -100,7 +99,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testGetProfileReturnsProfileWithResourceUri()
     {
-        $profile = Toon::decode($this->tool->getProfile('abc123'));
+        $profile = $this->tool->getProfile('abc123');
 
         $this->assertArrayHasKey('token', $profile);
         $this->assertArrayHasKey('resource_uri', $profile);
@@ -118,7 +117,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesIncludesResourceUri()
     {
-        $result = Toon::decode($this->tool->listProfiles());
+        $result = $this->tool->listProfiles();
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -135,7 +134,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsIntegerKeys()
     {
-        $result = Toon::decode($this->tool->listProfiles());
+        $result = $this->tool->listProfiles();
 
         $this->assertArrayHasKey('profiles', $result);
         $keys = array_keys($result['profiles']);

@@ -105,7 +105,7 @@ class CapabilityCollector
                 'description' => $toolRef->tool->description,
                 'handler' => $this->getHandlerInfo($toolRef->handler),
                 'input_schema' => $toolRef->tool->inputSchema,
-                'output_schema' => $toolRef->tool->meta['outputSchema'] ?? null,
+                'output_schema' => $toolRef->tool->outputSchema,
             ];
         }
 
