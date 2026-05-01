@@ -124,16 +124,38 @@ Create service configuration files using Symfony DI format::
 Tool Output Schemas
 -------------------
 
-When a tool method declares its return type via a ``@return`` or ``@phpstan-return``
-docblock annotation, Mate converts the PHPStan array shape into a JSON Schema and
-exposes it to AI assistants. ``@phpstan-return`` takes precedence when both are present.
+By default, tool results are encoded with TOON (or JSON when ``helgesverre/toon``
+is not installed) and shipped only in MCP's text content block. The LLM reads the
+encoded payload and the encoding's compactness keeps token usage low.
 
-The generated schema is surfaced in three places:
+Tools that opt in via the ``#[StructuredOutput]`` attribute additionally:
 
-- The MCP ``tools/list`` response, under ``Tool._meta.outputSchema`` (transport mechanism
-  until the official MCP SDK adds native output schema support)
-- The ``mcp:tools:inspect`` command, as an "Output Schema" section
-- The JSON and TOON output of both ``mcp:tools:list`` and ``mcp:tools:inspect``
+- expose a JSON Schema generated from the return type docblock on the tool's
+  ``outputSchema`` field (advertised in the ``tools/list`` response),
+- populate MCP's ``structuredContent`` channel with the raw return value, so
+  clients that validate or consume structured tool output can do so directly.
+
+The schema is also surfaced in the ``mcp:tools:inspect`` command and in the
+JSON / TOON output of ``mcp:tools:list`` and ``mcp:tools:inspect``.
+
+When to opt in
+~~~~~~~~~~~~~~
+
+Modern MCP clients prefer ``structuredContent`` when present and feed it to the
+LLM as JSON, bypassing the text content block. That makes ``#[StructuredOutput]``
+a trade-off: machine-readable structure and schema validation, in exchange for
+losing the TOON encoding's token savings on every call.
+
+Use ``#[StructuredOutput]`` for small, fixed-shape, infrequently called tools
+where structure helps the LLM more than TOON savings would — discovery tools,
+single-resource lookups, configuration introspection. Skip it for bulk or
+hot-path tools that return large or repeated payloads (search, list, dump);
+those keep the TOON-only behavior and stay cheap.
+
+The built-in tools follow this rule: ``server-info``, ``monolog-list-files``,
+``monolog-list-channels``, and ``symfony-profiler-get`` opt in;
+``monolog-search``, ``monolog-context-search``, ``monolog-tail``,
+``symfony-services``, and ``symfony-profiler-list`` do not.
 
 Basic Example
 ~~~~~~~~~~~~~
@@ -141,6 +163,7 @@ Basic Example
 ::
 
     use Mcp\Capability\Attribute\McpTool;
+    use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
 
     final class StatusTool
     {
@@ -148,14 +171,19 @@ Basic Example
          * @return array{status: string, uptime: int, message?: string}
          */
         #[McpTool('server-status', 'Get the current server status')]
+        #[StructuredOutput]
         public function getStatus(): array
         {
             return ['status' => 'ok', 'uptime' => 12345];
         }
     }
 
-This generates a JSON Schema with two required properties (``status``, ``uptime``)
-and one optional property (``message``).
+The schema generator reads ``@phpstan-return`` (preferred) or ``@return`` and
+converts the PHPStan array shape into a JSON Schema with two required properties
+(``status``, ``uptime``) and one optional property (``message``).
+
+Methods without ``#[StructuredOutput]`` may return any type; their result is
+encoded into the text content block via ``ResponseEncoder`` regardless.
 
 Supported PHPStan Syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,6 +198,11 @@ The generator understands common PHPStan type expressions:
 - Maps: ``array<string, mixed>``, ``array<string, class-string|null>``
 - Typed arrays: ``string[]``, ``int[]``
 
+The top-level type must resolve to an object schema (an ``array{...}`` shape or
+``array<string, T>`` map). MCP requires ``structuredContent`` to be a JSON
+object, so a top-level list or scalar return type produces no schema even if
+``#[StructuredOutput]`` is present.
+
 Methods without a docblock return type, with ``mixed``, or with ``void`` return
 types do not produce an output schema.
 
@@ -180,28 +213,31 @@ Use ``@phpstan-type`` to define a reusable shape and ``@phpstan-import-type`` to
 reference it from another class::
 
     /**
-     * @phpstan-type LogEntryArray array{
-     *     datetime: string,
-     *     channel: string,
-     *     level: string,
-     *     message: string
+     * @phpstan-type ProfileData array{
+     *     token: string,
+     *     method: string,
+     *     url: string,
+     *     status_code: int|null
      * }
      */
-    final class LogEntry
+    final class Profile
     {
         // ...
     }
 
+    use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
+
     /**
-     * @phpstan-import-type LogEntryArray from LogEntry
+     * @phpstan-import-type ProfileData from Profile
      */
-    final class LogSearchTool
+    final class ProfileLookupTool
     {
         /**
-         * @phpstan-return array{entries: list<LogEntryArray>}
+         * @phpstan-return ProfileData
          */
-        #[McpTool('log-search', 'Search log entries')]
-        public function search(string $term): array
+        #[McpTool('profile-get', 'Get a profile by token')]
+        #[StructuredOutput]
+        public function get(string $token): array
         {
             // ...
         }
