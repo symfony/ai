@@ -90,8 +90,8 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
 
             $parameterType .= $dimensions;
 
-            if ($this->denormalizer->supportsDenormalization($value, $parameterType)) {
-                $value = $this->denormalizer->denormalize($value, $parameterType);
+            if ($this->denormalizer->supportsDenormalization($value, $parameterType, 'json')) {
+                $value = $this->denormalizer->denormalize($value, $parameterType, 'json');
             }
 
             $arguments[$name] = $value;
