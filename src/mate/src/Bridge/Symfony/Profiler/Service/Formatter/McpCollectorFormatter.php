@@ -12,6 +12,7 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
+use Symfony\AI\McpBundle\Profiler\DataCollector as McpDataCollector;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 
 /**
@@ -21,12 +22,10 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  *
  * @internal
  *
- * @implements CollectorFormatterInterface<DataCollectorInterface>
+ * @implements CollectorFormatterInterface<McpDataCollector>
  */
 final class McpCollectorFormatter implements CollectorFormatterInterface
 {
-    use ExtractsCollectorDataTrait;
-
     public function getName(): string
     {
         return 'mcp';
@@ -34,19 +33,19 @@ final class McpCollectorFormatter implements CollectorFormatterInterface
 
     public function format(DataCollectorInterface $collector): array
     {
-        $data = $this->extractCollectorData($collector);
+        \assert($collector instanceof McpDataCollector);
 
-        $tools = $this->normalizeEntries(\is_array($data['tools'] ?? null) ? $data['tools'] : []);
-        $prompts = $this->normalizeEntries(\is_array($data['prompts'] ?? null) ? $data['prompts'] : []);
-        $resources = $this->normalizeEntries(\is_array($data['resources'] ?? null) ? $data['resources'] : []);
-        $resourceTemplates = $this->normalizeEntries(\is_array($data['resourceTemplates'] ?? null) ? $data['resourceTemplates'] : []);
+        $tools = $this->normalizeEntries($collector->getTools());
+        $prompts = $this->normalizeEntries($collector->getPrompts());
+        $resources = $this->normalizeEntries($collector->getResources());
+        $resourceTemplates = $this->normalizeEntries($collector->getResourceTemplates());
 
         return [
             'tool_count' => \count($tools),
             'prompt_count' => \count($prompts),
             'resource_count' => \count($resources),
             'resource_template_count' => \count($resourceTemplates),
-            'total_count' => \count($tools) + \count($prompts) + \count($resources) + \count($resourceTemplates),
+            'total_count' => $collector->getTotalCount(),
             'tools' => $tools,
             'prompts' => $prompts,
             'resources' => $resources,
@@ -56,19 +55,14 @@ final class McpCollectorFormatter implements CollectorFormatterInterface
 
     public function getSummary(DataCollectorInterface $collector): array
     {
-        $data = $this->extractCollectorData($collector);
-
-        $toolCount = \count(\is_array($data['tools'] ?? null) ? $data['tools'] : []);
-        $promptCount = \count(\is_array($data['prompts'] ?? null) ? $data['prompts'] : []);
-        $resourceCount = \count(\is_array($data['resources'] ?? null) ? $data['resources'] : []);
-        $resourceTemplateCount = \count(\is_array($data['resourceTemplates'] ?? null) ? $data['resourceTemplates'] : []);
+        \assert($collector instanceof McpDataCollector);
 
         return [
-            'tool_count' => $toolCount,
-            'prompt_count' => $promptCount,
-            'resource_count' => $resourceCount,
-            'resource_template_count' => $resourceTemplateCount,
-            'total_count' => $toolCount + $promptCount + $resourceCount + $resourceTemplateCount,
+            'tool_count' => \count($collector->getTools()),
+            'prompt_count' => \count($collector->getPrompts()),
+            'resource_count' => \count($collector->getResources()),
+            'resource_template_count' => \count($collector->getResourceTemplates()),
+            'total_count' => $collector->getTotalCount(),
         ];
     }
 

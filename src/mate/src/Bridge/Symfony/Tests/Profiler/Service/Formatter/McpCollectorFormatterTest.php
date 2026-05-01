@@ -13,7 +13,8 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\McpCollectorFormatter;
-use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollector;
+use Symfony\AI\McpBundle\Profiler\DataCollector as McpDataCollector;
+use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -34,7 +35,7 @@ final class McpCollectorFormatterTest extends TestCase
 
     public function testGetSummary()
     {
-        $collector = new TestCollector('mcp', [
+        $collector = $this->createMcpCollector([
             'tools' => [[], []],
             'prompts' => [[]],
             'resources' => [[]],
@@ -54,7 +55,7 @@ final class McpCollectorFormatterTest extends TestCase
 
     public function testFormatNormalizesMcpCollectorData()
     {
-        $collector = new TestCollector('mcp', [
+        $collector = $this->createMcpCollector([
             'tools' => [[
                 'name' => 'symfony-services',
                 'description' => 'List services',
@@ -105,7 +106,7 @@ final class McpCollectorFormatterTest extends TestCase
 
     public function testFormatReturnsEmptySectionsWhenCollectorDataIsMissing()
     {
-        $collector = new TestCollector('mcp', []);
+        $collector = $this->createMcpCollector([]);
 
         $result = $this->formatter->format($collector);
 
@@ -118,5 +119,16 @@ final class McpCollectorFormatterTest extends TestCase
         $this->assertSame([], $result['prompts']);
         $this->assertSame([], $result['resources']);
         $this->assertSame([], $result['resource_templates']);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function createMcpCollector(array $data): McpDataCollector
+    {
+        $collector = (new \ReflectionClass(McpDataCollector::class))->newInstanceWithoutConstructor();
+        (new \ReflectionProperty(DataCollector::class, 'data'))->setValue($collector, $data);
+
+        return $collector;
     }
 }
