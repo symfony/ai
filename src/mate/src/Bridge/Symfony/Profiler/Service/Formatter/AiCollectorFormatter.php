@@ -11,24 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 
-use Symfony\AI\Agent\Toolbox\ToolResult;
-use Symfony\AI\AiBundle\Profiler\DataCollector as AiDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
-use Symfony\AI\Platform\Message\AssistantMessage;
-use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
-use Symfony\AI\Platform\Message\ToolCallMessage;
-use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Metadata\Metadata;
-use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Tool\ExecutionReference;
-use Symfony\AI\Platform\Tool\Tool;
-use Symfony\AI\Platform\Vector\VectorInterface;
-use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Query\HybridQuery;
-use Symfony\AI\Store\Query\QueryInterface;
-use Symfony\AI\Store\Query\TextQuery;
-use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 
 /**
@@ -38,10 +21,12 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  *
  * @internal
  *
- * @implements CollectorFormatterInterface<AiDataCollector>
+ * @implements CollectorFormatterInterface<DataCollectorInterface>
  */
 final class AiCollectorFormatter implements CollectorFormatterInterface
 {
+    use ExtractsCollectorDataTrait;
+
     public function getName(): string
     {
         return 'ai';
@@ -49,176 +34,196 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
 
     public function format(DataCollectorInterface $collector): array
     {
-        \assert($collector instanceof AiDataCollector);
+        $data = $this->extractCollectorData($collector);
+
+        $platformCalls = \is_array($data['platform_calls'] ?? null) ? $data['platform_calls'] : [];
+        $tools = \is_array($data['tools'] ?? null) ? $data['tools'] : [];
+        $toolCalls = \is_array($data['tool_calls'] ?? null) ? $data['tool_calls'] : [];
+        $messages = \is_array($data['messages'] ?? null) ? $data['messages'] : [];
+        $chats = \is_array($data['chats'] ?? null) ? $data['chats'] : [];
+        $agents = \is_array($data['agents'] ?? null) ? $data['agents'] : [];
+        $stores = \is_array($data['stores'] ?? null) ? $data['stores'] : [];
 
         return [
-            'platform_call_count' => \count($collector->getPlatformCalls()),
-            'tool_count' => \count($collector->getTools()),
-            'tool_call_count' => \count($collector->getToolCalls()),
-            'message_count' => \count($collector->getMessages()),
-            'chat_count' => \count($collector->getChats()),
-            'agent_call_count' => \count($collector->getAgents()),
-            'store_call_count' => \count($collector->getStores()),
-            'platform_calls' => $this->normalizePlatformCalls($collector->getPlatformCalls()),
-            'tools' => $this->normalizeTools($collector->getTools()),
-            'tool_calls' => $this->normalizeToolCalls($collector->getToolCalls()),
-            'messages' => $this->normalizeStoredMessages($collector->getMessages()),
-            'chats' => $this->normalizeChats($collector->getChats()),
-            'agents' => $this->normalizeAgents($collector->getAgents()),
-            'stores' => $this->normalizeStores($collector->getStores()),
+            'platform_call_count' => \count($platformCalls),
+            'tool_count' => \count($tools),
+            'tool_call_count' => \count($toolCalls),
+            'message_count' => \count($messages),
+            'chat_count' => \count($chats),
+            'agent_call_count' => \count($agents),
+            'store_call_count' => \count($stores),
+            'platform_calls' => $this->normalizePlatformCalls($platformCalls),
+            'tools' => $this->normalizeTools($tools),
+            'tool_calls' => $this->normalizeToolCalls($toolCalls),
+            'messages' => $this->normalizeStoredMessages($messages),
+            'chats' => $this->normalizeChats($chats),
+            'agents' => $this->normalizeAgents($agents),
+            'stores' => $this->normalizeStores($stores),
         ];
     }
 
     public function getSummary(DataCollectorInterface $collector): array
     {
-        \assert($collector instanceof AiDataCollector);
+        $data = $this->extractCollectorData($collector);
 
         return [
-            'platform_call_count' => \count($collector->getPlatformCalls()),
-            'tool_count' => \count($collector->getTools()),
-            'tool_call_count' => \count($collector->getToolCalls()),
-            'message_count' => \count($collector->getMessages()),
-            'chat_count' => \count($collector->getChats()),
-            'agent_call_count' => \count($collector->getAgents()),
-            'store_call_count' => \count($collector->getStores()),
+            'platform_call_count' => \count(\is_array($data['platform_calls'] ?? null) ? $data['platform_calls'] : []),
+            'tool_count' => \count(\is_array($data['tools'] ?? null) ? $data['tools'] : []),
+            'tool_call_count' => \count(\is_array($data['tool_calls'] ?? null) ? $data['tool_calls'] : []),
+            'message_count' => \count(\is_array($data['messages'] ?? null) ? $data['messages'] : []),
+            'chat_count' => \count(\is_array($data['chats'] ?? null) ? $data['chats'] : []),
+            'agent_call_count' => \count(\is_array($data['agents'] ?? null) ? $data['agents'] : []),
+            'store_call_count' => \count(\is_array($data['stores'] ?? null) ? $data['stores'] : []),
         ];
     }
 
     /**
-     * @param array<array<string, mixed>> $calls
+     * @param array<mixed> $calls
      *
      * @return list<array<string, mixed>>
      */
     private function normalizePlatformCalls(array $calls): array
     {
-        return array_values(array_map(fn (array $call): array => [
-            'model' => isset($call['model']) && \is_string($call['model']) ? $call['model'] : null,
-            'input' => $this->normalizeValue($call['input'] ?? null),
-            'options' => $this->normalizeAssociativeArray($call['options'] ?? []),
-            'result_type' => isset($call['result_type']) && \is_string($call['result_type']) ? $call['result_type'] : null,
-            'result' => $this->normalizeValue($call['result'] ?? null),
-            'metadata' => $this->normalizeMetadata($call['metadata'] ?? null),
+        return array_values(array_map(fn (mixed $call): array => [
+            'model' => \is_array($call) && isset($call['model']) && \is_string($call['model']) ? $call['model'] : null,
+            'input' => $this->normalizeValue(\is_array($call) ? ($call['input'] ?? null) : null),
+            'options' => $this->normalizeAssociativeArray(\is_array($call) && \is_array($call['options'] ?? null) ? $call['options'] : []),
+            'result_type' => \is_array($call) && isset($call['result_type']) && \is_string($call['result_type']) ? $call['result_type'] : null,
+            'result' => $this->normalizeValue(\is_array($call) ? ($call['result'] ?? null) : null),
+            'metadata' => $this->normalizeMetadata(\is_array($call) ? ($call['metadata'] ?? null) : null),
         ], $calls));
     }
 
     /**
-     * @param Tool[] $tools
+     * @param array<mixed> $tools
      *
      * @return list<array<string, mixed>>
      */
     private function normalizeTools(array $tools): array
     {
-        return array_values(array_map(fn (Tool $tool): array => $this->normalizeTool($tool), $tools));
+        return array_values(array_map(fn (mixed $tool): array => $this->normalizeTool($tool), $tools));
     }
 
     /**
-     * @param ToolResult[] $toolCalls
+     * @param array<mixed> $toolCalls
      *
      * @return list<array<string, mixed>>
      */
     private function normalizeToolCalls(array $toolCalls): array
     {
-        return array_values(array_map(fn (ToolResult $toolResult): array => [
-            'tool_call' => $this->normalizeToolCall($toolResult->getToolCall()),
-            'result' => $this->normalizeValue($toolResult->getResult()),
-            'sources' => $this->normalizeSources($toolResult->getSources()),
+        return array_values(array_map(fn (mixed $toolResult): array => [
+            'tool_call' => \is_object($toolResult) && method_exists($toolResult, 'getToolCall') ? $this->normalizeToolCall($toolResult->getToolCall()) : null,
+            'result' => $this->normalizeValue(\is_object($toolResult) && method_exists($toolResult, 'getResult') ? $toolResult->getResult() : null),
+            'sources' => $this->normalizeSources(\is_object($toolResult) && method_exists($toolResult, 'getSources') ? $toolResult->getSources() : null),
         ], $toolCalls));
     }
 
     /**
-     * @param array<array{bag: MessageBag, saved_at: \DateTimeImmutable}> $messages
+     * @param array<mixed> $messages
      *
      * @return list<array<string, mixed>>
      */
     private function normalizeStoredMessages(array $messages): array
     {
-        return array_values(array_map(fn (array $messageCall): array => [
-            'saved_at' => $this->normalizeDateTime($messageCall['saved_at'] ?? null),
-            'bag' => $this->normalizeMessageBag($messageCall['bag'] ?? null),
+        return array_values(array_map(fn (mixed $messageCall): array => [
+            'saved_at' => $this->normalizeDateTime(\is_array($messageCall) ? ($messageCall['saved_at'] ?? null) : null),
+            'bag' => $this->normalizeMessageBag(\is_array($messageCall) ? ($messageCall['bag'] ?? null) : null),
         ], $messages));
     }
 
     /**
-     * @param array<array<string, mixed>> $chats
+     * @param array<mixed> $chats
      *
      * @return list<array<string, mixed>>
      */
     private function normalizeChats(array $chats): array
     {
-        return array_values(array_map(fn (array $chatCall): array => [
-            'action' => isset($chatCall['action']) && \is_string($chatCall['action']) ? $chatCall['action'] : null,
-            'bag' => $this->normalizeMessageBag($chatCall['bag'] ?? null),
-            'message' => $this->normalizeMessage($chatCall['message'] ?? null),
-            'initiated_at' => $this->normalizeDateTime($chatCall['initiated_at'] ?? null),
-            'submitted_at' => $this->normalizeDateTime($chatCall['submitted_at'] ?? null),
-            'streamed_at' => $this->normalizeDateTime($chatCall['streamed_at'] ?? null),
+        return array_values(array_map(fn (mixed $chatCall): array => [
+            'action' => \is_array($chatCall) && isset($chatCall['action']) && \is_string($chatCall['action']) ? $chatCall['action'] : null,
+            'bag' => $this->normalizeMessageBag(\is_array($chatCall) ? ($chatCall['bag'] ?? null) : null),
+            'message' => $this->normalizeMessage(\is_array($chatCall) ? ($chatCall['message'] ?? null) : null),
+            'initiated_at' => $this->normalizeDateTime(\is_array($chatCall) ? ($chatCall['initiated_at'] ?? null) : null),
+            'submitted_at' => $this->normalizeDateTime(\is_array($chatCall) ? ($chatCall['submitted_at'] ?? null) : null),
+            'streamed_at' => $this->normalizeDateTime(\is_array($chatCall) ? ($chatCall['streamed_at'] ?? null) : null),
         ], $chats));
     }
 
     /**
-     * @param array<array{messages: MessageBag, options: array<string, mixed>, called_at: \DateTimeImmutable}> $agents
+     * @param array<mixed> $agents
      *
      * @return list<array<string, mixed>>
      */
     private function normalizeAgents(array $agents): array
     {
-        return array_values(array_map(fn (array $agentCall): array => [
-            'called_at' => $this->normalizeDateTime($agentCall['called_at'] ?? null),
-            'messages' => $this->normalizeMessageBag($agentCall['messages'] ?? null),
-            'options' => $this->normalizeAssociativeArray($agentCall['options'] ?? []),
+        return array_values(array_map(fn (mixed $agentCall): array => [
+            'called_at' => $this->normalizeDateTime(\is_array($agentCall) ? ($agentCall['called_at'] ?? null) : null),
+            'messages' => $this->normalizeMessageBag(\is_array($agentCall) ? ($agentCall['messages'] ?? null) : null),
+            'options' => $this->normalizeAssociativeArray(\is_array($agentCall) && \is_array($agentCall['options'] ?? null) ? $agentCall['options'] : []),
         ], $agents));
     }
 
     /**
-     * @param array<array<string, mixed>> $stores
+     * @param array<mixed> $stores
      *
      * @return list<array<string, mixed>>
      */
     private function normalizeStores(array $stores): array
     {
-        return array_values(array_map(fn (array $storeCall): array => [
-            'method' => isset($storeCall['method']) && \is_string($storeCall['method']) ? $storeCall['method'] : null,
-            'called_at' => $this->normalizeDateTime($storeCall['called_at'] ?? null),
-            'documents' => $this->normalizeDocuments($storeCall['documents'] ?? null),
-            'query' => $this->normalizeQuery($storeCall['query'] ?? null),
-            'ids' => $this->normalizeIds($storeCall['ids'] ?? null),
-            'options' => $this->normalizeAssociativeArray($storeCall['options'] ?? []),
+        return array_values(array_map(fn (mixed $storeCall): array => [
+            'method' => \is_array($storeCall) && isset($storeCall['method']) && \is_string($storeCall['method']) ? $storeCall['method'] : null,
+            'called_at' => $this->normalizeDateTime(\is_array($storeCall) ? ($storeCall['called_at'] ?? null) : null),
+            'documents' => $this->normalizeDocuments(\is_array($storeCall) ? ($storeCall['documents'] ?? null) : null),
+            'query' => $this->normalizeQuery(\is_array($storeCall) ? ($storeCall['query'] ?? null) : null),
+            'ids' => $this->normalizeIds(\is_array($storeCall) ? ($storeCall['ids'] ?? null) : null),
+            'options' => $this->normalizeAssociativeArray(\is_array($storeCall) && \is_array($storeCall['options'] ?? null) ? $storeCall['options'] : []),
         ], $stores));
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function normalizeTool(Tool $tool): array
+    private function normalizeTool(mixed $tool): array
     {
+        if (!\is_object($tool)) {
+            return [];
+        }
+
         return [
-            'name' => $tool->getName(),
-            'description' => $tool->getDescription(),
-            'reference' => $this->normalizeExecutionReference($tool->getReference()),
-            'parameters' => $this->normalizeValue($tool->getParameters()),
+            'name' => method_exists($tool, 'getName') ? $tool->getName() : null,
+            'description' => method_exists($tool, 'getDescription') ? $tool->getDescription() : null,
+            'reference' => method_exists($tool, 'getReference') ? $this->normalizeExecutionReference($tool->getReference()) : null,
+            'parameters' => $this->normalizeValue(method_exists($tool, 'getParameters') ? $tool->getParameters() : null),
         ];
     }
 
     /**
-     * @return array{class: string, method: string}
+     * @return array{class: string, method: string}|null
      */
-    private function normalizeExecutionReference(ExecutionReference $reference): array
+    private function normalizeExecutionReference(mixed $reference): ?array
     {
+        if (!\is_object($reference)) {
+            return null;
+        }
+
         return [
-            'class' => $reference->getClass(),
-            'method' => $reference->getMethod(),
+            'class' => method_exists($reference, 'getClass') ? $reference->getClass() : '',
+            'method' => method_exists($reference, 'getMethod') ? $reference->getMethod() : '',
         ];
     }
 
     /**
-     * @return array{id: string, name: string, arguments: mixed}
+     * @return array{id: string, name: string, arguments: mixed}|null
      */
-    private function normalizeToolCall(ToolCall $toolCall): array
+    private function normalizeToolCall(mixed $toolCall): ?array
     {
+        if (!\is_object($toolCall)) {
+            return null;
+        }
+
         return [
-            'id' => $toolCall->getId(),
-            'name' => $toolCall->getName(),
-            'arguments' => $this->normalizeValue($toolCall->getArguments()),
+            'id' => method_exists($toolCall, 'getId') ? $toolCall->getId() : null,
+            'name' => method_exists($toolCall, 'getName') ? $toolCall->getName() : null,
+            'arguments' => $this->normalizeValue(method_exists($toolCall, 'getArguments') ? $toolCall->getArguments() : null),
         ];
     }
 
@@ -227,16 +232,23 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
      */
     private function normalizeMessageBag(mixed $messageBag): ?array
     {
-        if (!$messageBag instanceof MessageBag) {
+        if (!\is_object($messageBag)) {
+            return null;
+        }
+
+        if (!method_exists($messageBag, 'getMessages')) {
             return null;
         }
 
         $messages = $messageBag->getMessages();
 
+        $id = method_exists($messageBag, 'getId') ? $messageBag->getId() : null;
+        $idString = \is_object($id) && method_exists($id, 'toRfc4122') ? $id->toRfc4122() : ($id instanceof \Stringable ? (string) $id : null);
+
         return [
-            'id' => $messageBag->getId()->toRfc4122(),
+            'id' => $idString,
             'message_count' => \count($messages),
-            'messages' => array_values(array_map(fn (MessageInterface $message): array => $this->normalizeMessage($message), $messages)),
+            'messages' => array_values(array_map(fn (mixed $message): ?array => $this->normalizeMessage($message), $messages)),
         ];
     }
 
@@ -245,28 +257,34 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
      */
     private function normalizeMessage(mixed $message): ?array
     {
-        if (!$message instanceof MessageInterface) {
+        if (!\is_object($message)) {
             return null;
         }
 
+        if (!method_exists($message, 'getRole') || !method_exists($message, 'getContent')) {
+            return null;
+        }
+
+        $role = $message->getRole();
         $normalized = [
-            'role' => $message->getRole()->value,
+            'role' => \is_object($role) && isset($role->value) ? $role->value : (string) $role,
             'class' => $message::class,
             'content' => $this->normalizeValue($message->getContent()),
         ];
 
-        if ($message instanceof AssistantMessage && $message->hasToolCalls()) {
+        if (method_exists($message, 'hasToolCalls') && $message->hasToolCalls()) {
+            $toolCalls = method_exists($message, 'getToolCalls') ? ($message->getToolCalls() ?? []) : [];
             $normalized['tool_calls'] = array_values(array_map(
-                fn (ToolCall $toolCall): array => $this->normalizeToolCall($toolCall),
-                $message->getToolCalls() ?? [],
+                fn (mixed $toolCall): ?array => $this->normalizeToolCall($toolCall),
+                $toolCalls,
             ));
 
-            if ($message->hasThinkingContent()) {
-                $normalized['thinking_content'] = $message->getThinkingContent();
+            if (method_exists($message, 'hasThinkingContent') && $message->hasThinkingContent()) {
+                $normalized['thinking_content'] = method_exists($message, 'getThinkingContent') ? $message->getThinkingContent() : null;
             }
         }
 
-        if ($message instanceof ToolCallMessage) {
+        if (method_exists($message, 'getToolCall')) {
             $normalized['tool_call'] = $this->normalizeToolCall($message->getToolCall());
         }
 
@@ -278,7 +296,7 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
      */
     private function normalizeMetadata(mixed $metadata): array
     {
-        if ($metadata instanceof Metadata) {
+        if (\is_object($metadata) && method_exists($metadata, 'all')) {
             return $this->normalizeAssociativeArray($metadata->all());
         }
 
@@ -324,19 +342,19 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
     /**
      * @return list<array<string, mixed>>|array<string, mixed>|null
      */
-    private function normalizeDocuments(mixed $documents): array|null
+    private function normalizeDocuments(mixed $documents): ?array
     {
         if (null === $documents) {
             return null;
         }
 
-        if ($documents instanceof VectorDocument) {
+        if (\is_object($documents) && method_exists($documents, 'getId') && method_exists($documents, 'getVector')) {
             return $this->normalizeDocument($documents);
         }
 
         if (\is_array($documents)) {
             return array_values(array_map(
-                fn (VectorDocument $document): array => $this->normalizeDocument($document),
+                fn (mixed $document): array => $this->normalizeDocument($document),
                 $documents,
             ));
         }
@@ -347,13 +365,22 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
     /**
      * @return array<string, mixed>
      */
-    private function normalizeDocument(VectorDocument $document): array
+    private function normalizeDocument(mixed $document): array
     {
+        if (!\is_object($document)) {
+            return [];
+        }
+
+        $metadata = method_exists($document, 'getMetadata') ? $document->getMetadata() : null;
+        if (\is_object($metadata) && method_exists($metadata, 'getArrayCopy')) {
+            $metadata = $metadata->getArrayCopy();
+        }
+
         return [
-            'id' => $document->getId(),
-            'vector' => $this->normalizeVector($document->getVector()),
-            'metadata' => $this->normalizeValue($document->getMetadata()->getArrayCopy()),
-            'score' => $document->getScore(),
+            'id' => method_exists($document, 'getId') ? $document->getId() : null,
+            'vector' => $this->normalizeVector(method_exists($document, 'getVector') ? $document->getVector() : null),
+            'metadata' => $this->normalizeValue($metadata),
+            'score' => method_exists($document, 'getScore') ? $document->getScore() : null,
         ];
     }
 
@@ -362,21 +389,21 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
      */
     private function normalizeQuery(mixed $query): ?array
     {
-        if (!$query instanceof QueryInterface) {
+        if (!\is_object($query)) {
             return null;
         }
 
-        if ($query instanceof HybridQuery) {
+        if (method_exists($query, 'getTexts') && method_exists($query, 'getVector') && method_exists($query, 'getSemanticRatio')) {
             return [
                 'type' => 'hybrid',
                 'texts' => $query->getTexts(),
                 'vector' => $this->normalizeVector($query->getVector()),
                 'semantic_ratio' => $query->getSemanticRatio(),
-                'keyword_ratio' => $query->getKeywordRatio(),
+                'keyword_ratio' => method_exists($query, 'getKeywordRatio') ? $query->getKeywordRatio() : null,
             ];
         }
 
-        if ($query instanceof TextQuery) {
+        if (method_exists($query, 'getTexts') && method_exists($query, 'getText')) {
             return [
                 'type' => 'text',
                 'texts' => $query->getTexts(),
@@ -384,7 +411,7 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
             ];
         }
 
-        if ($query instanceof VectorQuery) {
+        if (method_exists($query, 'getVector')) {
             return [
                 'type' => 'vector',
                 'vector' => $this->normalizeVector($query->getVector()),
@@ -402,7 +429,7 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
      */
     private function normalizeVector(mixed $vector): ?array
     {
-        if (!$vector instanceof VectorInterface) {
+        if (!\is_object($vector) || !method_exists($vector, 'getDimensions') || !method_exists($vector, 'getData')) {
             return null;
         }
 
@@ -469,38 +496,38 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
         }
 
         if (\is_object($value)) {
-            if ($value instanceof MessageBag) {
+            if (method_exists($value, 'getMessages') && method_exists($value, 'getId')) {
                 return $this->normalizeMessageBag($value);
             }
 
-            if ($value instanceof MessageInterface) {
+            if (method_exists($value, 'getRole') && method_exists($value, 'getContent')) {
                 return $this->normalizeMessage($value);
             }
 
-            if ($value instanceof ToolCall) {
+            if (method_exists($value, 'getId') && method_exists($value, 'getName') && method_exists($value, 'getArguments')) {
                 return $this->normalizeToolCall($value);
             }
 
-            if ($value instanceof ExecutionReference) {
+            if (method_exists($value, 'getClass') && method_exists($value, 'getMethod')) {
                 return $this->normalizeExecutionReference($value);
             }
 
-            if ($value instanceof Tool) {
+            if (method_exists($value, 'getName') && method_exists($value, 'getDescription') && method_exists($value, 'getReference')) {
                 return $this->normalizeTool($value);
             }
 
-            if ($value instanceof ToolResult) {
+            if (method_exists($value, 'getToolCall') && method_exists($value, 'getResult')) {
                 return [
                     'tool_call' => $this->normalizeToolCall($value->getToolCall()),
                     'result' => $this->normalizeValue($value->getResult()),
                 ];
             }
 
-            if ($value instanceof VectorInterface) {
+            if (method_exists($value, 'getDimensions') && method_exists($value, 'getData')) {
                 return $this->normalizeVector($value);
             }
 
-            if ($value instanceof \Symfony\AI\Platform\Message\Content\File) {
+            if (method_exists($value, 'getFormat') && method_exists($value, 'getFilename') && method_exists($value, 'asPath')) {
                 return [
                     'type' => 'file',
                     'class' => $value::class,
@@ -510,7 +537,7 @@ final class AiCollectorFormatter implements CollectorFormatterInterface
                 ];
             }
 
-            if ($value instanceof \Symfony\AI\Platform\Message\Content\Text) {
+            if (method_exists($value, 'getText') && !method_exists($value, 'getRole')) {
                 return [
                     'type' => 'text',
                     'text' => $value->getText(),
