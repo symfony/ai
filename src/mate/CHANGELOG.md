@@ -4,6 +4,7 @@ CHANGELOG
 0.9
 ---
 
+ * Add `ResourcesReadCommand` (`mcp:resources:read`) to read MCP resources by URI from the CLI
  * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
 
 0.7
