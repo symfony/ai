@@ -121,6 +121,125 @@ Create service configuration files using Symfony DI format::
             ->arg('$baseUrl', 'https://api.example.com');
     };
 
+Tool Output Schemas
+-------------------
+
+By default, tool results are encoded with TOON (or JSON when ``helgesverre/toon``
+is not installed) and shipped only in MCP's text content block. The LLM reads the
+encoded payload and the encoding's compactness keeps token usage low.
+
+Tools that opt in via the ``#[StructuredOutput]`` attribute additionally:
+
+- expose a JSON Schema generated from the return type docblock on the tool's
+  ``outputSchema`` field (advertised in the ``tools/list`` response),
+- populate MCP's ``structuredContent`` channel with the raw return value, so
+  clients that validate or consume structured tool output can do so directly.
+
+The schema is also surfaced in the ``mcp:tools:inspect`` command and in the
+JSON / TOON output of ``mcp:tools:list`` and ``mcp:tools:inspect``.
+
+When to opt in
+~~~~~~~~~~~~~~
+
+Modern MCP clients prefer ``structuredContent`` when present and feed it to the
+LLM as JSON, bypassing the text content block. That makes ``#[StructuredOutput]``
+a trade-off: machine-readable structure and schema validation, in exchange for
+losing the TOON encoding's token savings on every call.
+
+Use ``#[StructuredOutput]`` for small, fixed-shape, infrequently called tools
+where structure helps the LLM more than TOON savings would — discovery tools,
+single-resource lookups, configuration introspection. Skip it for bulk or
+hot-path tools that return large or repeated payloads (search, list, dump);
+those keep the TOON-only behavior and stay cheap.
+
+Basic Example
+~~~~~~~~~~~~~
+
+::
+
+    use Mcp\Capability\Attribute\McpTool;
+    use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
+
+    final class StatusTool
+    {
+        /**
+         * @return array{status: string, uptime: int, message?: string}
+         */
+        #[McpTool('server-status', 'Get the current server status')]
+        #[StructuredOutput]
+        public function getStatus(): array
+        {
+            return ['status' => 'ok', 'uptime' => 12345];
+        }
+    }
+
+The schema generator reads ``@phpstan-return`` (preferred) or ``@return`` and
+converts the PHPStan array shape into a JSON Schema with two required properties
+(``status``, ``uptime``) and one optional property (``message``).
+
+Methods without ``#[StructuredOutput]`` may return any type; their result is
+encoded into the text content block via ``ResponseEncoder`` regardless.
+
+Supported PHPStan Syntax
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The generator understands common PHPStan type expressions:
+
+- Array shapes: ``array{name: string, age: int}``
+- Optional keys: ``array{status: string, message?: string}``
+- Nullable values: ``array{parent: string|null}``
+- Nested shapes: ``array{entries: list<array{id: int, title: string}>}``
+- Lists: ``list<string>``, ``list<array{...}>``
+- Maps: ``array<string, mixed>``, ``array<string, class-string|null>``
+- Typed arrays: ``string[]``, ``int[]``
+
+The top-level type must resolve to an object schema (an ``array{...}`` shape or
+``array<string, T>`` map). MCP requires ``structuredContent`` to be a JSON
+object, so a top-level list or scalar return type produces no schema even if
+``#[StructuredOutput]`` is present.
+
+Methods without a docblock return type, with ``mixed``, or with ``void`` return
+types do not produce an output schema.
+
+Sharing Types Across Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``@phpstan-type`` to define a reusable shape and ``@phpstan-import-type`` to
+reference it from another class::
+
+    /**
+     * @phpstan-type ProfileData array{
+     *     token: string,
+     *     method: string,
+     *     url: string,
+     *     status_code: int|null
+     * }
+     */
+    final class Profile
+    {
+        // ...
+    }
+
+    use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
+
+    /**
+     * @phpstan-import-type ProfileData from Profile
+     */
+    final class ProfileLookupTool
+    {
+        /**
+         * @phpstan-return ProfileData
+         */
+        #[McpTool('profile-get', 'Get a profile by token')]
+        #[StructuredOutput]
+        public function get(string $token): array
+        {
+            // ...
+        }
+    }
+
+The imported type is resolved against the declaring class at discovery time.
+
 Configuration Reference
 -----------------------
 

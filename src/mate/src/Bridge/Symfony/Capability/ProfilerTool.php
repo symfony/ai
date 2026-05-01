@@ -16,6 +16,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
+use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
 
 /**
  * MCP tools for accessing Symfony profiler data.
@@ -72,9 +73,23 @@ final class ProfilerTool
 
     /**
      * @param string $token The unique profiler token identifying the profile
+     *
+     * @return array{
+     *     token: string,
+     *     ip: string|null,
+     *     method: string,
+     *     url: string,
+     *     time: int,
+     *     time_formatted: string,
+     *     status_code: int|null,
+     *     parent_token: string|null,
+     *     resource_uri: string,
+     *     context?: string,
+     * }
      */
     #[McpTool('symfony-profiler-get', 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
-    public function getProfile(string $token): string
+    #[StructuredOutput]
+    public function getProfile(string $token): array
     {
         $profileData = $this->dataProvider->findProfile($token);
 
@@ -99,6 +114,6 @@ final class ProfilerTool
             $data['context'] = $profileData->getContext();
         }
 
-        return ResponseEncoder::encode($data);
+        return $data;
     }
 }

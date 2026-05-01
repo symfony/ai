@@ -15,6 +15,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
 
 /**
  * MCP tools for searching and analyzing Monolog log files.
@@ -117,9 +118,12 @@ final class LogSearchTool
 
     /**
      * @param string|null $environment Filter log files by Symfony environment (e.g. dev, prod, test)
+     *
+     * @return array{files: list<array{name: string, path: string, size: int, modified: string}>}
      */
     #[McpTool('monolog-list-files', 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching.')]
-    public function listFiles(?string $environment = null): string
+    #[StructuredOutput]
+    public function listFiles(?string $environment = null): array
     {
         $files = null !== $environment
             ? $this->reader->getLogFilesForEnvironment($environment)
@@ -135,13 +139,17 @@ final class LogSearchTool
             ];
         }
 
-        return ResponseEncoder::encode(['files' => $result]);
+        return ['files' => $result];
     }
 
+    /**
+     * @return array{channels: list<string>}
+     */
     #[McpTool('monolog-list-channels', 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
-    public function listChannels(): string
+    #[StructuredOutput]
+    public function listChannels(): array
     {
-        return ResponseEncoder::encode(['channels' => $this->reader->getUniqueChannels()]);
+        return ['channels' => $this->reader->getUniqueChannels()];
     }
 
     /**

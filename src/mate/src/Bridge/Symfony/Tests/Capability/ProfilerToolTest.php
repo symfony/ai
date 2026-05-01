@@ -100,7 +100,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testGetProfileReturnsProfileWithResourceUri()
     {
-        $profile = Toon::decode($this->tool->getProfile('abc123'));
+        $profile = $this->tool->getProfile('abc123');
 
         $this->assertArrayHasKey('token', $profile);
         $this->assertArrayHasKey('resource_uri', $profile);

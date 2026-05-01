@@ -4,6 +4,7 @@ CHANGELOG
 0.9
 ---
 
+ * Add output schema generation for MCP tools from `@return` / `@phpstan-return` docblocks, surfaced via `Tool._meta.outputSchema`, `mcp:tools:inspect`, and JSON/TOON output of list and inspect commands
  * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
 
 0.7

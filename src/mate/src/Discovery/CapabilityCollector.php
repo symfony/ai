@@ -23,7 +23,8 @@ use Mcp\Capability\Registry\ToolReference;
  *         name: string,
  *         description: string|null,
  *         handler: string,
- *         input_schema: array<string, mixed>|null
+ *         input_schema: array<string, mixed>|null,
+ *         output_schema: array<string, mixed>|null
  *     }>,
  *     resources: array<string, array{
  *         uri: string,
@@ -93,7 +94,7 @@ class CapabilityCollector
     /**
      * @param array<string, ToolReference> $tools
      *
-     * @return array<string, array{name: string, description: string|null, handler: string, input_schema: array<string, mixed>|null}>
+     * @return array<string, array{name: string, description: string|null, handler: string, input_schema: array<string, mixed>|null, output_schema: array<string, mixed>|null}>
      */
     private function formatTools(array $tools): array
     {
@@ -104,6 +105,7 @@ class CapabilityCollector
                 'description' => $toolRef->tool->description,
                 'handler' => $this->getHandlerInfo($toolRef->handler),
                 'input_schema' => $toolRef->tool->inputSchema,
+                'output_schema' => $toolRef->tool->outputSchema,
             ];
         }
 

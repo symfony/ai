@@ -12,7 +12,7 @@
 namespace Symfony\AI\Mate\Capability;
 
 use Mcp\Capability\Attribute\McpTool;
-use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Mcp\Attribute\StructuredOutput;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -20,14 +20,23 @@ use Symfony\AI\Mate\Encoding\ResponseEncoder;
  */
 class ServerInfo
 {
+    /**
+     * @return array{
+     *     php_version: string,
+     *     operating_system: string,
+     *     operating_system_family: string,
+     *     extensions: list<string>,
+     * }
+     */
     #[McpTool('server-info', 'Get PHP runtime environment details: version, OS, OS family, and loaded extensions')]
-    public function getInfo(): string
+    #[StructuredOutput]
+    public function getInfo(): array
     {
-        return ResponseEncoder::encode([
+        return [
             'php_version' => \PHP_VERSION,
             'operating_system' => \PHP_OS,
             'operating_system_family' => \PHP_OS_FAMILY,
             'extensions' => get_loaded_extensions(),
-        ]);
+        ];
     }
 }

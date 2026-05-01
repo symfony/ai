@@ -160,7 +160,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testListFiles()
     {
-        $result = Toon::decode($this->tool->listFiles());
+        $result = $this->tool->listFiles();
 
         $this->assertArrayHasKey('files', $result);
         $this->assertNotEmpty($result['files']);
@@ -175,7 +175,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testListChannels()
     {
-        $result = Toon::decode($this->tool->listChannels());
+        $result = $this->tool->listChannels();
 
         $this->assertArrayHasKey('channels', $result);
         $this->assertNotEmpty($result['channels']);
