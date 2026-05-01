@@ -121,6 +121,94 @@ Create service configuration files using Symfony DI format::
             ->arg('$baseUrl', 'https://api.example.com');
     };
 
+Tool Output Schemas
+-------------------
+
+When a tool method declares its return type via a ``@return`` or ``@phpstan-return``
+docblock annotation, Mate converts the PHPStan array shape into a JSON Schema and
+exposes it to AI assistants. ``@phpstan-return`` takes precedence when both are present.
+
+The generated schema is surfaced in three places:
+
+- The MCP ``tools/list`` response, under ``Tool._meta.outputSchema`` (transport mechanism
+  until the official MCP SDK adds native output schema support)
+- The ``mcp:tools:inspect`` command, as an "Output Schema" section
+- The JSON and TOON output of both ``mcp:tools:list`` and ``mcp:tools:inspect``
+
+Basic Example
+~~~~~~~~~~~~~
+
+::
+
+    use Mcp\Capability\Attribute\McpTool;
+
+    final class StatusTool
+    {
+        /**
+         * @return array{status: string, uptime: int, message?: string}
+         */
+        #[McpTool('server-status', 'Get the current server status')]
+        public function getStatus(): array
+        {
+            return ['status' => 'ok', 'uptime' => 12345];
+        }
+    }
+
+This generates a JSON Schema with two required properties (``status``, ``uptime``)
+and one optional property (``message``).
+
+Supported PHPStan Syntax
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The generator understands common PHPStan type expressions:
+
+- Array shapes: ``array{name: string, age: int}``
+- Optional keys: ``array{status: string, message?: string}``
+- Nullable values: ``array{parent: string|null}``
+- Nested shapes: ``array{entries: list<array{id: int, title: string}>}``
+- Lists: ``list<string>``, ``list<array{...}>``
+- Maps: ``array<string, mixed>``, ``array<string, class-string|null>``
+- Typed arrays: ``string[]``, ``int[]``
+
+Methods without a docblock return type, with ``mixed``, or with ``void`` return
+types do not produce an output schema.
+
+Sharing Types Across Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``@phpstan-type`` to define a reusable shape and ``@phpstan-import-type`` to
+reference it from another class::
+
+    /**
+     * @phpstan-type LogEntryArray array{
+     *     datetime: string,
+     *     channel: string,
+     *     level: string,
+     *     message: string
+     * }
+     */
+    final class LogEntry
+    {
+        // ...
+    }
+
+    /**
+     * @phpstan-import-type LogEntryArray from LogEntry
+     */
+    final class LogSearchTool
+    {
+        /**
+         * @phpstan-return array{entries: list<LogEntryArray>}
+         */
+        #[McpTool('log-search', 'Search log entries')]
+        public function search(string $term): array
+        {
+            // ...
+        }
+    }
+
+The imported type is resolved against the declaring class at discovery time.
+
 Configuration Reference
 -----------------------
 
