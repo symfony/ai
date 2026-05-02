@@ -64,6 +64,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaSourceDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
@@ -186,6 +187,11 @@ return static function (ContainerConfigurator $container): void {
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.schema_attribute', SchemaAttributeDescriber::class)
             ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.schema_source', SchemaSourceDescriber::class)
+            ->args([
+                tagged_locator('ai.platform.json_schema.provider'),
+            ])
+            ->tag('ai.platform.json_schema.describer', ['priority' => -100])
         ->set('ai.platform.json_schema.describer', Describer::class)
             ->args([
                 tagged_iterator('ai.platform.json_schema.describer'),

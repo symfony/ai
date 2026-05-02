@@ -14,6 +14,7 @@ Getting Started Guides
     dynamic-tools
     human-in-the-loop
     rag-implementation
+    runtime-driven-tool-parameters
     structured-output-object-instances
 
 Memory & Context Management
@@ -26,6 +27,7 @@ Tools
 
 * :doc:`dynamic-tools` - Build a dynamic Toolbox for flexible tool management at runtime
 * :doc:`human-in-the-loop` - Implement human-in-the-loop confirmation for tool execution
+* :doc:`runtime-driven-tool-parameters` - Constrain tool parameters and structured output with values from env, database or services
 
 Retrieval Augmented Generation
 ------------------------------

@@ -189,6 +189,45 @@ If you already have a JSON Schema defined in a file, you can reference it using 
 
     When using ``ref``, other arguments on the ``#[Schema]`` attribute are not allowed as the entire schema is loaded from the file.
 
+Runtime-driven Schema with ``#[SchemaSource]``
+..............................................
+
+When the allowed values come from runtime state (environment variables, database, injected services), ``#[Schema(enum: [...])]`` is not usable because PHP attributes only accept constant expressions. Use the :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\SchemaSource` attribute to point at a service implementing :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Provider\\SchemaProviderInterface`, which contributes a JSON Schema fragment computed at runtime::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+    use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+    final class PartStatusProvider implements SchemaProviderInterface
+    {
+        public function __construct(
+            #[Autowire('%env(csv:ACME_PART_STATUSES)%')]
+            private readonly array $statuses,
+        ) {
+        }
+
+        public function getSchemaFragment(): array
+        {
+            return ['enum' => $this->statuses];
+        }
+    }
+
+    #[AsTool('search_parts', 'Search parts by status')]
+    final class SearchPartsTool
+    {
+        public function __invoke(
+            #[SchemaSource(PartStatusProvider::class)]
+            string $status,
+        ): array {
+            // ...
+        }
+    }
+
+Fragments are merged on top of the schema built from reflection, ``#[Schema]``, PHPDoc and Validator constraints, and the attribute also works on properties of structured output DTOs.
+
+See :doc:`/cookbook/runtime-driven-tool-parameters` for composing with static constraints, structured output usage, and standalone wiring.
+
 Automatic Enum Validation
 .........................
 

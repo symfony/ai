@@ -4,6 +4,7 @@ CHANGELOG
 0.8
 ---
 
+ * Add `#[SchemaSource]` attribute and `SchemaProviderInterface` to contribute JSON Schema fragments computed at runtime (env, database, services) for tool parameters and structured output properties
  * [BC BREAK] Reduce visibility of `ImageResult::$revisedPrompt` to `private readonly`; use `getRevisedPrompt()` instead
  * Add `MultiPartResult` for exposing the parts inside a message
  * Add `ExecutableCodeResult`, `CodeExecutionResult` for exposing the executed code blocks and results
