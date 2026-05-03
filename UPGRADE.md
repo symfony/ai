@@ -26,6 +26,26 @@ Mate
 
    After updating, run `composer dump-autoload`.
 
+ * Automatic refresh of discovered extensions on `composer install` / `composer update`
+   is now expected to run via the `symfony/ai-mate` Symfony Flex recipe, which wires
+   `vendor/bin/mate discover --composer --ignore-missing-file` into `auto-scripts`.
+   Projects using Symfony Flex don't need to do anything — the recipe handles it.
+
+   Projects **without** Symfony Flex must wire the script manually in their own
+   `composer.json`:
+
+   ```diff
+    {
+        "scripts": {
+   +        "auto-scripts": {
+   +            "vendor/bin/mate discover --composer --ignore-missing-file": "script"
+   +        },
+   +        "post-install-cmd": ["@auto-scripts"],
+   +        "post-update-cmd": ["@auto-scripts"]
+        }
+    }
+   ```
+
 UPGRADE FROM 0.7 to 0.8
 =======================
 

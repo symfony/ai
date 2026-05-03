@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
+ * Automatic refresh of discovered extensions on `composer install` / `composer update` is now expected to run via the `symfony/ai-mate` Symfony Flex recipe
 
 0.7
 ---
