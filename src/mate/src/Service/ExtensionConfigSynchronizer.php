@@ -36,6 +36,11 @@ final class ExtensionConfigSynchronizer
     ) {
     }
 
+    public function extensionsFileExists(): bool
+    {
+        return file_exists($this->rootDir.'/mate/extensions.php');
+    }
+
     /**
      * @param array<string, ExtensionData> $discoveredExtensions
      *

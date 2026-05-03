@@ -55,12 +55,17 @@ class DiscoverCommand extends Command
     protected function configure(): void
     {
         $this->addOption('composer', null, InputOption::VALUE_NONE, 'Compact output for Composer plugin integration');
+        $this->addOption('ignore-missing-file', null, InputOption::VALUE_NONE, 'Exit successfully without doing any work when mate/extensions.php is missing (intended for Composer scripts wired by the Symfony Flex recipe)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $composerMode = $input->getOption('composer');
+
+        if ($input->getOption('ignore-missing-file') && !$this->extensionConfigSynchronizer->extensionsFileExists()) {
+            return Command::SUCCESS;
+        }
 
         $extensions = $this->extensionDiscovery->discover();
         $rootProjectExtension = $this->extensionDiscovery->discoverRootProject();

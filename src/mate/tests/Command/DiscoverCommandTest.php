@@ -155,6 +155,66 @@ PHP
         }
     }
 
+    public function testIgnoreMissingFileExitsEarlyWhenExtensionsFileAbsent()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        try {
+            $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
+            $logger = new NullLogger();
+            $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+            $synchronizer = new ExtensionConfigSynchronizer($rootDir);
+            $aggregator = new AgentInstructionsAggregator($rootDir, [], $logger);
+            $materializer = new AgentInstructionsMaterializer($rootDir, $aggregator, $logger);
+            $command = new DiscoverCommand($discoverer, $synchronizer, $materializer);
+            $tester = new CommandTester($command);
+
+            $tester->execute(['--ignore-missing-file' => true]);
+
+            $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+            $this->assertFileDoesNotExist($tempDir.'/mate/extensions.php');
+            $this->assertFileDoesNotExist($tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+            $this->assertSame('', $tester->getDisplay());
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testIgnoreMissingFileRunsNormallyWhenExtensionsFileExists()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
+        mkdir($tempDir.'/mate', 0755, true);
+
+        try {
+            file_put_contents($tempDir.'/mate/extensions.php', <<<'PHP'
+<?php
+return [];
+PHP
+            );
+
+            $rootDir = $this->createConfiguration($this->fixturesDir.'/with-ai-mate-config', $tempDir);
+            $logger = new NullLogger();
+            $discoverer = new ComposerExtensionDiscovery($rootDir, $logger);
+            $synchronizer = new ExtensionConfigSynchronizer($rootDir);
+            $aggregator = new AgentInstructionsAggregator($rootDir, [], $logger);
+            $materializer = new AgentInstructionsMaterializer($rootDir, $aggregator, $logger);
+            $command = new DiscoverCommand($discoverer, $synchronizer, $materializer);
+            $tester = new CommandTester($command);
+
+            $tester->execute(['--ignore-missing-file' => true]);
+
+            $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+            $extensions = include $tempDir.'/mate/extensions.php';
+            $this->assertIsArray($extensions);
+            $this->assertArrayHasKey('vendor/package-a', $extensions);
+            $this->assertArrayHasKey('vendor/package-b', $extensions);
+            $this->assertFileExists($tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
     public function testDisplaysWarningWhenNoExtensionsFound()
     {
         $tempDir = sys_get_temp_dir().'/mate-discover-test-'.uniqid();
