@@ -19,7 +19,9 @@ namespace Symfony\AI\Platform\Contract\JsonSchema\Provider;
 interface SchemaProviderInterface
 {
     /**
+     * @param array<string, mixed> $context
+     *
      * @return array<string, mixed>
      */
-    public function getSchemaFragment(): array;
+    public function getSchemaFragment(array $context = []): array;
 }

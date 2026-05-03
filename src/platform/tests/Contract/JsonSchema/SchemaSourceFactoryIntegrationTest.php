@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ColorProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ConflictDto;
+use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ContextAwareProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\SearchQueryDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
 
@@ -38,6 +39,7 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
         $container = $this->container([
             StatusProvider::class => new StatusProvider(['active', 'archived']),
             ColorProvider::class => new ColorProvider(['red', 'blue']),
+            ContextAwareProvider::class => new ContextAwareProvider(),
         ]);
 
         $describer = new Describer([
@@ -67,12 +69,16 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
                     'type' => 'string',
                     'enum' => ['red', 'blue'],
                 ],
+                'category' => [
+                    'type' => 'string',
+                    'enum' => ['foo', 'bar'],
+                ],
                 'query' => [
                     'type' => 'string',
                     'minLength' => 3,
                 ],
             ],
-            'required' => ['status', 'color', 'query'],
+            'required' => ['status', 'color', 'category', 'query'],
             'additionalProperties' => false,
         ], $schema);
     }
@@ -108,6 +114,7 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
         $properties = $responseFormat['json_schema']['schema']['properties'];
         $this->assertSame(['active', 'archived'], $properties['status']['enum']);
         $this->assertSame(['red', 'blue'], $properties['color']['enum']);
+        $this->assertSame(['foo', 'bar'], $properties['category']['enum']);
     }
 
     /**

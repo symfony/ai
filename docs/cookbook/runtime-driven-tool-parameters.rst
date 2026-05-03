@@ -39,7 +39,7 @@ the allowed statuses come from an environment variable::
         ) {
         }
 
-        public function getSchemaFragment(): array
+        public function getSchemaFragment(array $context = []): array
         {
             return ['enum' => $this->statuses];
         }
@@ -58,7 +58,7 @@ catalog::
         {
         }
 
-        public function getSchemaFragment(): array
+        public function getSchemaFragment(array $context = []): array
         {
             return ['enum' => $this->catalog->labels()];
         }
@@ -133,6 +133,48 @@ concerns coexist on the same parameter::
         //     'description' => 'The current part status',
         //     'enum' => ['active', 'archived', ...],
         // ]
+    }
+
+Passing Context to Providers
+----------------------------
+
+Providers can be made generic by accepting a context array from the attribute. This
+is useful to reuse the same provider class for different data sets::
+
+    namespace App\Schema;
+
+    use Doctrine\ORM\EntityManagerInterface;
+    use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
+
+    final class EntityEnumProvider implements SchemaProviderInterface
+    {
+        public function __construct(private readonly EntityManagerInterface $em)
+        {
+        }
+
+        public function getSchemaFragment(array $context = []): array
+        {
+            $entity = $context['entity'] ?? throw new \LogicException('Missing entity context.');
+            $field = $context['field'] ?? 'name';
+
+            $values = $this->em->getRepository($entity)->findAll();
+
+            return [
+                'type' => 'string',
+                'enum' => array_map(fn($obj) => $obj->{'get'.ucfirst($field)}(), $values),
+            ];
+        }
+    }
+
+Pass the context as the second argument to ``#[SchemaSource]``::
+
+    public function __invoke(
+        #[SchemaSource(EntityEnumProvider::class, ['entity' => Color::class])]
+        string $color,
+        #[SchemaSource(EntityEnumProvider::class, ['entity' => Category::class, 'field' => 'label'])]
+        string $category,
+    ): array {
+        // ...
     }
 
 Multiple ``#[SchemaSource]`` attributes can also be stacked on the same parameter; they

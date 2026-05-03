@@ -22,7 +22,7 @@ final class ColorProvider implements SchemaProviderInterface
     {
     }
 
-    public function getSchemaFragment(): array
+    public function getSchemaFragment(array $context = []): array
     {
         return ['enum' => $this->colors];
     }

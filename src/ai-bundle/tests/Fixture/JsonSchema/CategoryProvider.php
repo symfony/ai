@@ -22,7 +22,7 @@ final class CategoryProvider implements SchemaProviderInterface
     {
     }
 
-    public function getSchemaFragment(): array
+    public function getSchemaFragment(array $context = []): array
     {
         return ['enum' => $this->categories];
     }

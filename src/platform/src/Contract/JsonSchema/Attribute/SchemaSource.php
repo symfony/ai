@@ -24,9 +24,12 @@ final class SchemaSource
 {
     /**
      * @param class-string<SchemaProviderInterface> $provider
+     * @param array<string, mixed>                  $context
      */
-    public function __construct(public readonly string $provider)
-    {
+    public function __construct(
+        public readonly string $provider,
+        public readonly array $context = [],
+    ) {
         if (!is_subclass_of($provider, SchemaProviderInterface::class)) {
             throw new InvalidArgumentException(\sprintf('The provider "%s" must implement "%s".', $provider, SchemaProviderInterface::class));
         }

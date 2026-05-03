@@ -40,7 +40,7 @@ final class SchemaSourceDescriber implements PropertyDescriberInterface
                 throw new RuntimeException(\sprintf('SchemaSource service for "%s" must implement "%s", got "%s".', $attribute->provider, SchemaProviderInterface::class, get_debug_type($provider)));
             }
 
-            $schema = array_replace_recursive($schema ?? [], $provider->getSchemaFragment());
+            $schema = array_replace_recursive($schema ?? [], $provider->getSchemaFragment($attribute->context));
         }
     }
 }

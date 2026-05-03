@@ -19,11 +19,26 @@ use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ColorProvider;
+use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ContextAwareProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\SearchQueryDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
 
 final class SchemaSourceDescriberTest extends TestCase
 {
+    public function testMergesFragmentWithContext()
+    {
+        $describer = new SchemaSourceDescriber($this->container([
+            ContextAwareProvider::class => new ContextAwareProvider(),
+        ]));
+
+        $subject = new PropertySubject('category', new \ReflectionParameter([SearchQueryDto::class, 'search'], 'category'));
+        $schema = ['type' => 'string'];
+
+        $describer->describeProperty($subject, $schema);
+
+        $this->assertSame(['type' => 'string', 'enum' => ['foo', 'bar']], $schema);
+    }
+
     public function testMergesFragmentFromProviderOnParameter()
     {
         $describer = new SchemaSourceDescriber($this->container([

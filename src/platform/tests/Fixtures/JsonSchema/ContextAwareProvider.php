@@ -13,17 +13,10 @@ namespace Symfony\AI\Platform\Tests\Fixtures\JsonSchema;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 
-final class StatusProvider implements SchemaProviderInterface
+final class ContextAwareProvider implements SchemaProviderInterface
 {
-    /**
-     * @param list<string> $statuses
-     */
-    public function __construct(private readonly array $statuses)
-    {
-    }
-
     public function getSchemaFragment(array $context = []): array
     {
-        return ['enum' => $this->statuses];
+        return ['enum' => $context['values'] ?? []];
     }
 }

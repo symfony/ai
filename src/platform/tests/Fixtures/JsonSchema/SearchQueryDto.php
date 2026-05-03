@@ -21,6 +21,8 @@ final class SearchQueryDto
         public readonly string $status,
         #[SchemaSource(ColorProvider::class)]
         public readonly string $color,
+        #[SchemaSource(ContextAwareProvider::class, ['values' => ['foo', 'bar']])]
+        public readonly string $category,
         #[Schema(minLength: 3)]
         public readonly string $query,
     ) {
@@ -34,9 +36,11 @@ final class SearchQueryDto
         string $status,
         #[SchemaSource(ColorProvider::class)]
         string $color,
+        #[SchemaSource(ContextAwareProvider::class, ['values' => ['foo', 'bar']])]
+        string $category,
         #[Schema(minLength: 3)]
         string $query,
     ): string {
-        return \sprintf('%s/%s/%s', $status, $color, $query);
+        return \sprintf('%s/%s/%s/%s', $status, $color, $category, $query);
     }
 }
