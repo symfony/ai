@@ -118,13 +118,13 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
     }
 
     /**
-     * @param array<class-string<SchemaProviderInterface>, SchemaProviderInterface> $services
+     * @param array<string, SchemaProviderInterface> $services
      */
     private function container(array $services): ContainerInterface
     {
         return new class($services) implements ContainerInterface {
             /**
-             * @param array<class-string, SchemaProviderInterface> $services
+             * @param array<string, SchemaProviderInterface> $services
              */
             public function __construct(private readonly array $services)
             {

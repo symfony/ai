@@ -43,4 +43,14 @@ final class SearchQueryDto
     ): string {
         return \sprintf('%s/%s/%s/%s', $status, $color, $category, $query);
     }
+
+    /**
+     * Exercises resolution by an arbitrary (non-FQCN) service ID.
+     */
+    public function searchByServiceId(
+        #[SchemaSource('app.provider.tag')]
+        string $tag,
+    ): string {
+        return $tag;
+    }
 }

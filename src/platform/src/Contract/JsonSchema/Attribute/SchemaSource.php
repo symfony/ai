@@ -11,9 +11,6 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema\Attribute;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
-
 /**
  * Attaches a runtime-computed JSON Schema fragment to a parameter or property.
  *
@@ -23,15 +20,12 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 final class SchemaSource
 {
     /**
-     * @param class-string<SchemaProviderInterface> $provider
-     * @param array<string, mixed>                  $context
+     * @param string               $provider Service ID of a SchemaProviderInterface implementation (FQCN or any container ID)
+     * @param array<string, mixed> $context
      */
     public function __construct(
         public readonly string $provider,
         public readonly array $context = [],
     ) {
-        if (!is_subclass_of($provider, SchemaProviderInterface::class)) {
-            throw new InvalidArgumentException(\sprintf('The provider "%s" must implement "%s".', $provider, SchemaProviderInterface::class));
-        }
     }
 }

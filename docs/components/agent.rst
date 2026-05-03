@@ -207,7 +207,7 @@ When the allowed values come from runtime state (environment variables, database
         ) {
         }
 
-        public function getSchemaFragment(): array
+        public function getSchemaFragment(array $context = []): array
         {
             return ['enum' => $this->statuses];
         }

@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add autoconfiguration for `SchemaProviderInterface` (tag `ai.platform.json_schema.provider`) and wire `SchemaSourceDescriber` into the JSON Schema describer chain
+ * Add `SchemaSourceValidationPass` compiler pass that validates `#[SchemaSource]` provider references on tagged tools at container build time
  * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
  * The `collection` option for `ChromaDb` is now optional.
  * Update `DataCollector` to use `getCalls()` and `getResultCache()` getter methods on Traceable* classes

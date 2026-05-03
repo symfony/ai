@@ -35,6 +35,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\SchemaSourceValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
@@ -168,6 +169,7 @@ final class AiBundle extends AbstractBundle
 
         $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
+        $container->addCompilerPass(new SchemaSourceValidationPass());
     }
 
     public function configure(DefinitionConfigurator $definition): void

@@ -67,6 +67,31 @@ catalog::
 The AI Bundle autoconfigures every class implementing ``SchemaProviderInterface``, so
 declaring them as services is enough — no tag, no compiler pass.
 
+``#[SchemaSource]`` accepts any container service ID, not only fully-qualified class
+names. This lets you register the same provider class as multiple services with
+different configurations and reference each one by its service ID:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        app.provider.status:
+            class: App\Schema\EnumSchemaProvider
+            arguments:
+                $values: ['draft', 'published', 'archived']
+
+        app.provider.priority:
+            class: App\Schema\EnumSchemaProvider
+            arguments:
+                $values: ['low', 'medium', 'high']
+
+::
+
+    #[SchemaSource('app.provider.status')]
+    string $status,
+    #[SchemaSource('app.provider.priority')]
+    string $priority,
+
 Case 1: Tool Parameters
 -----------------------
 

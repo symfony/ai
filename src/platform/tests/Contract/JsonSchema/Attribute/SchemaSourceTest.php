@@ -13,24 +13,29 @@ namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Attribute;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
-use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
 
 final class SchemaSourceTest extends TestCase
 {
-    public function testStoresValidProviderFqcn()
+    public function testStoresProviderFqcn()
     {
         $attribute = new SchemaSource(StatusProvider::class);
 
         $this->assertSame(StatusProvider::class, $attribute->provider);
+        $this->assertSame([], $attribute->context);
     }
 
-    public function testThrowsWhenProviderDoesNotImplementInterface()
+    public function testAcceptsArbitraryServiceId()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('The provider "%s" must implement "%s".', \stdClass::class, SchemaProviderInterface::class));
+        $attribute = new SchemaSource('app.provider.status');
 
-        new SchemaSource(\stdClass::class); /* @phpstan-ignore-line argument.type */
+        $this->assertSame('app.provider.status', $attribute->provider);
+    }
+
+    public function testStoresContext()
+    {
+        $attribute = new SchemaSource(StatusProvider::class, ['entity' => 'PaintColor']);
+
+        $this->assertSame(['entity' => 'PaintColor'], $attribute->context);
     }
 }

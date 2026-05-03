@@ -31,13 +31,13 @@ final class SchemaSourceDescriber implements PropertyDescriberInterface
     {
         foreach ($subject->getAttributes(SchemaSource::class) as $attribute) {
             if (!$this->providers->has($attribute->provider)) {
-                throw new RuntimeException(\sprintf('SchemaSource "%s" is not registered. Make sure the class implements "%s" and is autoconfigured as a service.', $attribute->provider, SchemaProviderInterface::class));
+                throw new RuntimeException(\sprintf('SchemaSource provider "%s" is not registered. Make sure the service exists and is tagged with "ai.platform.json_schema.provider".', $attribute->provider));
             }
 
             $provider = $this->providers->get($attribute->provider);
 
             if (!$provider instanceof SchemaProviderInterface) {
-                throw new RuntimeException(\sprintf('SchemaSource service for "%s" must implement "%s", got "%s".', $attribute->provider, SchemaProviderInterface::class, get_debug_type($provider)));
+                throw new RuntimeException(\sprintf('SchemaSource service "%s" must implement "%s", got "%s".', $attribute->provider, SchemaProviderInterface::class, get_debug_type($provider)));
             }
 
             $schema = array_replace_recursive($schema ?? [], $provider->getSchemaFragment($attribute->context));

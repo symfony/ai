@@ -92,19 +92,33 @@ final class SchemaSourceDescriberTest extends TestCase
         $schema = ['type' => 'string'];
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('SchemaSource "'.StatusProvider::class.'" is not registered.');
+        $this->expectExceptionMessage('SchemaSource provider "'.StatusProvider::class.'" is not registered.');
 
         $describer->describeProperty($subject, $schema);
     }
 
+    public function testResolvesProviderByArbitraryServiceId()
+    {
+        $describer = new SchemaSourceDescriber($this->container([
+            'app.provider.tag' => new StatusProvider(['draft', 'published']),
+        ]));
+
+        $subject = new PropertySubject('tag', new \ReflectionParameter([SearchQueryDto::class, 'searchByServiceId'], 'tag'));
+        $schema = ['type' => 'string'];
+
+        $describer->describeProperty($subject, $schema);
+
+        $this->assertSame(['type' => 'string', 'enum' => ['draft', 'published']], $schema);
+    }
+
     /**
-     * @param array<class-string<SchemaProviderInterface>, SchemaProviderInterface> $services
+     * @param array<string, SchemaProviderInterface> $services
      */
     private function container(array $services): ContainerInterface
     {
         return new class($services) implements ContainerInterface {
             /**
-             * @param array<class-string, SchemaProviderInterface> $services
+             * @param array<string, SchemaProviderInterface> $services
              */
             public function __construct(private readonly array $services)
             {
