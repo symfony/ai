@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Remove the `symfony/ai-mate-composer-plugin` requirement, the `symfony/ai-mate` Symfony Flex recipe refreshes the discovered extensions through `auto-scripts` instead
+
 0.14
 ----
 

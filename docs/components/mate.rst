@@ -98,12 +98,26 @@ afterwards, see :doc:`mate/integration`.
 Keeping Mate Up to Date
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-``symfony/ai-mate`` installs the Composer plugin ``symfony/ai-mate-composer-plugin``. Once
-``mate/extensions.php`` exists, Composer runs ``vendor/bin/mate discover --composer`` after every
-``composer install`` and ``composer update``. New extensions, their instructions and their skills
-arrive without a manual step.
+With Symfony Flex, the ``symfony/ai-mate`` recipe adds ``vendor/bin/mate discover --composer --ignore-missing-file``
+to ``auto-scripts``. Composer then runs it after every ``composer install`` and ``composer update``.
+New extensions, their instructions and their skills arrive without a manual step.
 
-Before ``mate init`` the plugin changes nothing. It only prints a hint to run ``init``.
+The ``--ignore-missing-file`` option makes the command do nothing until ``mate/extensions.php``
+exists, so it stays quiet before ``mate init``.
+
+Without Flex, add the script to your ``composer.json``:
+
+.. code-block:: diff
+
+     {
+         "scripts": {
+    +        "auto-scripts": {
+    +            "vendor/bin/mate discover --composer --ignore-missing-file": "script"
+    +        },
+    +        "post-install-cmd": ["@auto-scripts"],
+    +        "post-update-cmd": ["@auto-scripts"]
+         }
+     }
 
 Run ``vendor/bin/mate discover`` by hand after you changed the Mate configuration or worked on a
 local extension.
@@ -323,7 +337,7 @@ PHPStan or Rector, are listed in `awesome-mate`_ and installed the same way:
 
     $ composer require --dev matesofmate/phpunit-extension
 
-The Composer plugin then runs ``mate discover``, which enables the extension and installs its
+The next ``composer install`` or ``composer update`` runs ``mate discover``, which enables the extension and installs its
 skills. To write your own extension, see :doc:`mate/creating-extensions`.
 
 Backward Compatibility
