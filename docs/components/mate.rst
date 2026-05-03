@@ -81,18 +81,30 @@ After running ``mate init``, update your autoloader:
 Automatic Discovery
 -------------------
 
-The ``symfony/ai-mate`` package installs the optional Composer plugin
-``symfony/ai-mate-composer-plugin``. After your project has been initialized and
-``mate/extensions.php`` exists, Composer automatically runs::
+When using Symfony Flex, the ``symfony/ai-mate`` recipe wires
+``vendor/bin/mate discover --composer --ignore-missing-file`` into ``auto-scripts``,
+so Composer automatically refreshes discovered extensions and regenerates the managed
+instruction artifacts after ``composer install`` and ``composer update``.
 
-    $ vendor/bin/mate discover --composer
+The ``--ignore-missing-file`` flag makes the command exit successfully without doing any
+work as long as ``mate/extensions.php`` is missing, so installing ``symfony/ai-mate`` in a
+fresh project does not produce noise. Once you run ``vendor/bin/mate init`` and
+``mate/extensions.php`` exists, subsequent ``composer install`` / ``composer update`` runs
+will refresh discovery transparently.
 
-after ``composer install`` and ``composer update``. This refreshes discovered extensions and
-regenerates the managed instruction artifacts.
+Projects **without** Symfony Flex must wire the script manually:
 
-Before initialization, the Composer plugin does not modify your project. It only prints a hint to run::
+.. code-block:: diff
 
-    $ vendor/bin/mate init
+     {
+         "scripts": {
+    +        "auto-scripts": {
+    +            "vendor/bin/mate discover --composer --ignore-missing-file": "script"
+    +        },
+    +        "post-install-cmd": ["@auto-scripts"],
+    +        "post-update-cmd": ["@auto-scripts"]
+         }
+     }
 
 Use ``vendor/bin/mate discover`` whenever you want to refresh extensions manually after changing
 Mate configuration, adding instructions, or working on local extensions.
