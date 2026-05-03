@@ -12,9 +12,8 @@ vendor/bin/mate init
 composer dump-autoload
 ```
 
-The package ships with the optional `symfony/ai-mate-composer-plugin`, which automatically
-refreshes Mate extension discovery after `composer install` and `composer update` once the
-project has been initialized.
+When using Symfony Flex, the matching recipe wires automatic Mate extension discovery
+into `composer install` and `composer update` once the project has been initialized.
 
 ## Installation
 
