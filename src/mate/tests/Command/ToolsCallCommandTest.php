@@ -50,6 +50,27 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringContainsString(\PHP_VERSION, $output);
     }
 
+    public function testExecuteWithoutJsonInputUsesDefault()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'tool-name' => 'server-info',
+        ]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Executing Tool: server-info', $output);
+        $this->assertStringContainsString('Result', $output);
+        $this->assertStringContainsString(\PHP_VERSION, $output);
+    }
+
     public function testExecuteWithJsonFormat()
     {
         $rootDir = __DIR__.'/../..';
