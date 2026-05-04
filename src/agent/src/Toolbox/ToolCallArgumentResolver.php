@@ -27,6 +27,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\TypeInfo\Type\CollectionType;
+use Symfony\Component\TypeInfo\Type\NullableType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 /**
@@ -82,6 +83,16 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
 
             $value = $toolCall->getArguments()[$name];
             $parameterType = $this->typeResolver->resolve($reflectionParameter);
+
+            if ($parameterType instanceof NullableType) {
+                $parameterType = $parameterType->getWrappedType();
+
+                if (null === $value) {
+                    $arguments[$name] = null;
+                    continue;
+                }
+            }
+
             $dimensions = '';
             while ($parameterType instanceof CollectionType) {
                 $dimensions .= '[]';

@@ -11,12 +11,14 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArray;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArrayMultidimensional;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolObjectFloat;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithNullableClass;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
@@ -97,5 +99,21 @@ class ToolCallArgumentResolverTest extends TestCase
         $personArgument = $resolver->resolveArguments($metadata, $toolCall)['person'];
         $this->assertInstanceOf(ToolObjectFloat::class, $personArgument);
         $this->assertSame(1.0, $personArgument->height);
+    }
+
+    /**
+     * @param array{structure: SomeStructure|null}       $expected
+     * @param array{structure: array{some: string}|null} $toolParams
+     */
+    #[TestWith([['structure' => new SomeStructure('value')], ['structure' => ['some' => 'value']]], 'object')]
+    #[TestWith([['structure' => null], ['structure' => null]], 'null')]
+    public function testResolveNullableClassArgumentWhenPresent(array $expected, array $toolParams)
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolWithNullableClass::class, '__invoke'), 'tool_with_nullable_class', 'test');
+        $toolCall = new ToolCall('invocation', 'tool_with_nullable_class', $toolParams);
+
+        $this->assertEquals($expected, $resolver->resolveArguments($metadata, $toolCall));
     }
 }
