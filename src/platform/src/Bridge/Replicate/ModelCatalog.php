@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Replicate;
 
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -134,5 +135,14 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        $class = $modelConfig['class'];
+
+        return Llama::class === $class
+            ? [new Endpoint(MetaPredictionsClient::ENDPOINT)]
+            : [];
     }
 }

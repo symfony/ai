@@ -22,11 +22,13 @@ class Model
      * @param non-empty-string     $name
      * @param Capability[]         $capabilities
      * @param array<string, mixed> $options      The default options for the model usage
+     * @param Endpoint[]           $endpoints    Contracts the model speaks, in priority order; first one is the default
      */
     public function __construct(
         private readonly string $name,
         private readonly array $capabilities = [],
         private readonly array $options = [],
+        private readonly array $endpoints = [],
     ) {
         if ('' === trim($name)) {
             throw new InvalidArgumentException('Model name cannot be empty.');
@@ -60,5 +62,48 @@ class Model
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    /**
+     * @return Endpoint[]
+     */
+    public function getEndpoints(): array
+    {
+        return $this->endpoints;
+    }
+
+    public function hasEndpoints(): bool
+    {
+        return [] !== $this->endpoints;
+    }
+
+    /**
+     * The default endpoint is the first one declared.
+     */
+    public function getDefaultEndpoint(): ?Endpoint
+    {
+        return $this->endpoints[0] ?? null;
+    }
+
+    public function getEndpoint(string $contract): Endpoint
+    {
+        foreach ($this->endpoints as $endpoint) {
+            if ($endpoint->getContract() === $contract) {
+                return $endpoint;
+            }
+        }
+
+        throw new InvalidArgumentException(\sprintf('Model "%s" does not support endpoint "%s". Supported: "%s".', $this->name, $contract, implode(', ', array_map(static fn (Endpoint $e): string => $e->getContract(), $this->endpoints)) ?: '(none)'));
+    }
+
+    public function supportsEndpoint(string $contract): bool
+    {
+        foreach ($this->endpoints as $endpoint) {
+            if ($endpoint->getContract() === $contract) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

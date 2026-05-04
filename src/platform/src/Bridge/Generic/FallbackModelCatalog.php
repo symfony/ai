@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Generic;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
@@ -36,11 +37,15 @@ class FallbackModelCatalog extends AbstractModelCatalog
     public function getModel(string $modelName): Model
     {
         $parsed = self::parseModelName($modelName);
+        $isEmbedding = self::looksLikeEmbedding($parsed['name']);
+        $endpoints = [new Endpoint($isEmbedding ? EmbeddingsClient::ENDPOINT : ChatCompletionsClient::ENDPOINT)];
+        $class = $isEmbedding ? EmbeddingsModel::class : CompletionsModel::class;
 
-        if (str_contains(strtolower($parsed['name']), 'embed')) {
-            return new EmbeddingsModel($parsed['name'], Capability::cases(), $parsed['options']);
-        }
+        return new $class($parsed['name'], Capability::cases(), $parsed['options'], $endpoints);
+    }
 
-        return new CompletionsModel($parsed['name'], Capability::cases(), $parsed['options']);
+    private static function looksLikeEmbedding(string $name): bool
+    {
+        return str_contains(strtolower($name), 'embed');
     }
 }

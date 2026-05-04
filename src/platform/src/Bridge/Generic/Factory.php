@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Generic;
 
+use Symfony\AI\Platform\Bridge\Generic\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -45,18 +46,16 @@ class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        $modelClients = [];
-        $resultConverters = [];
+        $transport = new HttpTransport($httpClient, $baseUrl, $apiKey);
+        $clients = [];
         if ($supportsCompletions) {
-            $modelClients[] = new Completions\ModelClient($httpClient, $baseUrl, $apiKey, $completionsPath);
-            $resultConverters[] = new Completions\ResultConverter();
+            $clients[] = new ChatCompletionsClient($transport, $completionsPath);
         }
         if ($supportsEmbeddings) {
-            $modelClients[] = new Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, $embeddingsPath);
-            $resultConverters[] = new Embeddings\ResultConverter();
+            $clients[] = new EmbeddingsClient($transport, $embeddingsPath);
         }
 
-        return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
+        return new Provider($name, $clients, $clients, $modelCatalog, $contract, $eventDispatcher);
     }
 
     /**

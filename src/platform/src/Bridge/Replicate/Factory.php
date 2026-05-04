@@ -40,10 +40,14 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'replicate',
     ): ProviderInterface {
+        $client = new Client($httpClient ?? HttpClient::create(), new Clock(), $apiKey);
+
+        $clients = [new MetaPredictionsClient($client)];
+
         return new Provider(
             $name,
-            [new LlamaModelClient(new Client($httpClient ?? HttpClient::create(), new Clock(), $apiKey))],
-            [new LlamaResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? Contract::create([new LlamaMessageBagNormalizer()]),
             $eventDispatcher,

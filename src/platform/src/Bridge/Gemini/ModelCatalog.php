@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -202,5 +203,14 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return match ($modelConfig['class']) {
+            Gemini::class => [new Endpoint(GenerateContentClient::ENDPOINT)],
+            Embeddings::class => [new Endpoint(BatchEmbedContentsClient::ENDPOINT)],
+            default => [],
+        };
     }
 }

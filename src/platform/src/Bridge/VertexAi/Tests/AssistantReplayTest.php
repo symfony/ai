@@ -13,9 +13,10 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Gemini\GenerateContentClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
-use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
+use Symfony\AI\Platform\Bridge\VertexAi\Transport\VertexAiTransport;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -46,7 +47,7 @@ final class AssistantReplayTest extends TestCase
     {
         $httpClient = new MockHttpClient(new JsonMockResponse($providerResponse));
         $httpResponse = $httpClient->request('POST', 'https://aiplatform.googleapis.com/v1/projects/p/locations/global/publishers/google/models/gemini-2.5-pro:generateContent');
-        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+        $result = (new GenerateContentClient(new VertexAiTransport(new MockHttpClient(), null, null, 'unused'), GenerateContentClient::RESPONSE_SCHEMA_KEY_VERTEX_AI))->convert(new RawHttpResult($httpResponse));
 
         $bag = $bagBuilder($result);
         $payload = GeminiContract::create()->createRequestPayload(new Model('gemini-2.5-pro'), $bag);

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
+use Symfony\AI\Platform\Bridge\Ollama\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
@@ -50,11 +51,15 @@ final class Factory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
         }
 
+        $catalog = new ModelCatalog($httpClient);
+        $transport = new HttpTransport($httpClient);
+        $clients = [new ChatClient($transport), new EmbedClient($transport)];
+
         return new Provider(
             $name,
-            [new OllamaClient($httpClient)],
-            [new OllamaResultConverter()],
-            new ModelCatalog($httpClient),
+            $clients,
+            $clients,
+            $catalog,
             $contract ?? OllamaContract::create(),
             $eventDispatcher,
         );

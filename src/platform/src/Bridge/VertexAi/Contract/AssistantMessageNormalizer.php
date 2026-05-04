@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Contract;
 
+use Symfony\AI\Platform\Bridge\Gemini\GenerateContentClient as ResultConverter;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
-use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;

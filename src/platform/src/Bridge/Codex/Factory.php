@@ -43,10 +43,12 @@ final class Factory
         LoggerInterface $logger = new NullLogger(),
         string $name = 'codex',
     ): ProviderInterface {
+        $clients = [new CliInvokeClient($cliBinary, $workingDirectory, $timeout, $environment, $logger)];
+
         return new Provider(
             $name,
-            [new ModelClient($cliBinary, $workingDirectory, $timeout, $environment, $logger)],
-            [new ResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? CodexContract::create(),
             $eventDispatcher,

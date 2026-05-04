@@ -12,9 +12,13 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Bridge\Anthropic\MessagesClient;
+use Symfony\AI\Platform\Bridge\Bedrock\Meta\InvokeClient as MetaInvokeClient;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\InvokeClient as NovaInvokeClient;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -185,5 +189,15 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return match ($modelConfig['class']) {
+            Claude::class => [new Endpoint(MessagesClient::ENDPOINT)],
+            Llama::class => [new Endpoint(MetaInvokeClient::ENDPOINT)],
+            Nova::class => [new Endpoint(NovaInvokeClient::ENDPOINT)],
+            default => [],
+        };
     }
 }

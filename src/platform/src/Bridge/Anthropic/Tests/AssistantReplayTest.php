@@ -15,7 +15,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
-use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
+use Symfony\AI\Platform\Bridge\Anthropic\MessagesClient;
+use Symfony\AI\Platform\Bridge\Anthropic\Transport\HttpTransport;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -46,7 +47,7 @@ final class AssistantReplayTest extends TestCase
     {
         $httpClient = new MockHttpClient(new JsonMockResponse($providerResponse));
         $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
-        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+        $result = (new MessagesClient(new HttpTransport(new MockHttpClient(), 'unused')))->convert(new RawHttpResult($httpResponse));
 
         $bag = $bagBuilder($result);
         $payload = AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), $bag);

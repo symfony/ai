@@ -11,9 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\AmazeeAi;
 
+use Symfony\AI\Platform\Bridge\Generic\ChatCompletionsClient;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsClient;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -53,6 +56,15 @@ final class ModelApiCatalog extends AbstractModelCatalog
         $this->preloadRemoteModels();
 
         return parent::getModels();
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return match ($modelConfig['class']) {
+            CompletionsModel::class => [new Endpoint(ChatCompletionsClient::ENDPOINT)],
+            EmbeddingsModel::class => [new Endpoint(EmbeddingsClient::ENDPOINT)],
+            default => [],
+        };
     }
 
     private function preloadRemoteModels(): void

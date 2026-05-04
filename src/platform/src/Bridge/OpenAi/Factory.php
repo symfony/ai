@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
+use Symfony\AI\Platform\Bridge\OpenAi\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -45,22 +46,20 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new HttpTransport($httpClient, $apiKey, $region);
+        $clients = [
+            new ResponsesClient($transport),
+            new ChatCompletionsClient($transport),
+            new EmbeddingsClient($transport),
+            new TextToSpeechClient($transport),
+            new TranscriptionClient($transport),
+            new ImageGenerationClient($transport),
+        ];
+
         return new Provider(
             $name,
-            [
-                new Gpt\ModelClient($httpClient, $apiKey, $region),
-                new Embeddings\ModelClient($httpClient, $apiKey, $region),
-                new DallE\ModelClient($httpClient, $apiKey, $region),
-                new TextToSpeech\ModelClient($httpClient, $apiKey, $region),
-                new Whisper\ModelClient($httpClient, $apiKey, $region),
-            ],
-            [
-                new Gpt\ResultConverter(),
-                new Embeddings\ResultConverter(),
-                new DallE\ResultConverter(),
-                new TextToSpeech\ResultConverter(),
-                new Whisper\ResultConverter(),
-            ],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? OpenAiContract::create(),
             $eventDispatcher,

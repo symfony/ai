@@ -12,12 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\Generic;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
- * Models need to be registered explicitly here to be routed to the correct ModelClient and ResultConverter
- * implementations.
- *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class ModelCatalog extends AbstractModelCatalog
@@ -28,5 +26,14 @@ final class ModelCatalog extends AbstractModelCatalog
     public function __construct(
         protected array $models = [],
     ) {
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return match ($modelConfig['class']) {
+            CompletionsModel::class => [new Endpoint(ChatCompletionsClient::ENDPOINT)],
+            EmbeddingsModel::class => [new Endpoint(EmbeddingsClient::ENDPOINT)],
+            default => [],
+        };
     }
 }

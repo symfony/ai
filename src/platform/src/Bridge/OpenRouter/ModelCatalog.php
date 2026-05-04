@@ -2955,7 +2955,8 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
             $modelConfig['capabilities'][] = Capability::OUTPUT_STREAMING;
         }
 
-        $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options);
+        $endpoints = $this->endpointsForModel($modelConfig);
+        $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options, $endpoints);
         if (!$model instanceof Model) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend "%s".', $modelClass, CompletionsModel::class));
         }

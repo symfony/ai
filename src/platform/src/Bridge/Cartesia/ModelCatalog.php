@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cartesia;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -43,5 +44,12 @@ final class ModelCatalog extends AbstractModelCatalog
             ...$defaultModels,
             ...$additionalModels,
         ];
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return \in_array(Capability::TEXT_TO_SPEECH, $modelConfig['capabilities'], true)
+            ? [new Endpoint(TextToSpeechClient::ENDPOINT)]
+            : [new Endpoint(SpeechToTextClient::ENDPOINT)];
     }
 }

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Decart;
 
 use Symfony\AI\Platform\Bridge\Decart\Contract\DecartContract;
+use Symfony\AI\Platform\Bridge\Decart\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -42,10 +43,13 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new HttpTransport($httpClient, $apiKey, $hostUrl);
+        $clients = [new GenerateClient($transport), new EditClient($transport)];
+
         return new Provider(
             $name,
-            [new DecartClient($httpClient, $apiKey, $hostUrl)],
-            [new DecartResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? DecartContract::create(),
             $eventDispatcher,

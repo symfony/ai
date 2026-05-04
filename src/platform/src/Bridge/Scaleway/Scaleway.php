@@ -19,13 +19,15 @@ use Symfony\AI\Platform\Model;
 final class Scaleway extends Model
 {
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>            $options
+     * @param \Symfony\AI\Platform\Endpoint[] $endpoints
      */
     public function __construct(
         string $name,
         array $capabilities = [],
         array $options = [],
+        array $endpoints = [],
     ) {
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $endpoints);
     }
 }

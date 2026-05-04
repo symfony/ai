@@ -90,7 +90,8 @@ final class Provider implements ProviderInterface
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
         }
 
-        $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);
+        [$rawResult, $boundClient] = $this->doInvoke($model, $payload, $options);
+        $result = $this->convertResult($model, $rawResult, $options, $boundClient);
 
         $resultEvent = new ResultEvent($model, $result, $options, $input);
         $this->eventDispatcher?->dispatch($resultEvent);
@@ -106,12 +107,31 @@ final class Provider implements ProviderInterface
     /**
      * @param array<string, mixed>|string $payload
      * @param array<string, mixed>        $options
+     *
+     * @return array{0: RawResultInterface, 1: ?EndpointClientInterface}
      */
-    private function doInvoke(Model $model, array|string $payload, array $options = []): RawResultInterface
+    private function doInvoke(Model $model, array|string $payload, array $options = []): array
     {
+        $requestedEndpoint = $options['endpoint'] ?? null;
+
         foreach ($this->modelClients as $modelClient) {
+            if ($modelClient instanceof EndpointClientInterface) {
+                if (null !== $requestedEndpoint
+                    ? $modelClient->endpoint() === $requestedEndpoint
+                    : $modelClient->supports($model)
+                ) {
+                    unset($options['endpoint']);
+
+                    return [$modelClient->request($model, $payload, $options), $modelClient];
+                }
+
+                continue;
+            }
+
+            // Legacy ModelClient — pass options through untouched so a
+            // dispatcher inside it can read the `endpoint` override.
             if ($modelClient->supports($model)) {
-                return $modelClient->request($model, $payload, $options);
+                return [$modelClient->request($model, $payload, $options), null];
             }
         }
 
@@ -121,8 +141,12 @@ final class Provider implements ProviderInterface
     /**
      * @param array<string, mixed> $options
      */
-    private function convertResult(Model $model, RawResultInterface $result, array $options): DeferredResult
+    private function convertResult(Model $model, RawResultInterface $result, array $options, ?EndpointClientInterface $boundClient = null): DeferredResult
     {
+        if (null !== $boundClient) {
+            return new DeferredResult($boundClient, $result, $options);
+        }
+
         foreach ($this->resultConverters as $resultConverter) {
             if ($resultConverter->supports($model)) {
                 return new DeferredResult($resultConverter, $result, $options);

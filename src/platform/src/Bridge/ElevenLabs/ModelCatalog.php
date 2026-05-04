@@ -12,40 +12,64 @@
 namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ModelCatalog implements ModelCatalogInterface
+final class ModelCatalog extends AbstractModelCatalog
 {
+    private bool $modelsLoaded = false;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
     ) {
+        $this->models = [];
     }
 
-    public function getModel(string $modelName): ElevenLabs
+    public function getModel(string $modelName): Model
     {
-        $models = $this->getModels();
+        $this->preloadRemoteModels();
 
-        if (!\array_key_exists($modelName, $models)) {
+        if (!\array_key_exists($modelName, $this->models)) {
             throw new InvalidArgumentException(\sprintf('The model "%s" cannot be retrieved from the API.', $modelName));
         }
 
-        if ([] === $models[$modelName]['capabilities']) {
+        if ([] === $this->models[$modelName]['capabilities']) {
             throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the ElevenLabs API.', $modelName));
         }
 
-        return new ElevenLabs($modelName, $models[$modelName]['capabilities']);
+        return parent::getModel($modelName);
     }
 
     public function getModels(): array
     {
-        $response = $this->httpClient->request('GET', 'models');
+        $this->preloadRemoteModels();
 
+        return parent::getModels();
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return \in_array(Capability::TEXT_TO_SPEECH, $modelConfig['capabilities'], true)
+            ? [new Endpoint(TextToSpeechClient::ENDPOINT)]
+            : [new Endpoint(SpeechToTextClient::ENDPOINT)];
+    }
+
+    private function preloadRemoteModels(): void
+    {
+        if ($this->modelsLoaded) {
+            return;
+        }
+
+        $this->modelsLoaded = true;
+
+        $response = $this->httpClient->request('GET', 'models');
         $models = $response->toArray();
 
         $capabilities = static fn (array $model): array => match (true) {
@@ -62,7 +86,7 @@ final class ModelCatalog implements ModelCatalogInterface
             default => [],
         };
 
-        return array_combine(
+        $this->models = array_combine(
             array_map(static fn (array $model): string => $model['model_id'], $models),
             array_map(static fn (array $model): array => [
                 'class' => ElevenLabs::class,

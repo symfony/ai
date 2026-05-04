@@ -19,11 +19,4 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
  */
 class Gpt extends ResponsesModel
 {
-    /**
-     * @param array<mixed> $options The default options for the model usage
-     */
-    public function __construct(string $name, array $capabilities = [], array $options = [])
-    {
-        parent::__construct($name, $capabilities, $options);
-    }
 }

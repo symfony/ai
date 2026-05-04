@@ -12,7 +12,7 @@
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
-use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
+use Symfony\AI\Platform\Bridge\OpenAi\ResponsesClient;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -38,6 +38,6 @@ $result = $platform->invoke('gpt-5.2', new MessageBag(
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 ));
 
-assert($result->getResultConverter() instanceof ResultConverter);
+assert($result->getResultConverter() instanceof ResponsesClient);
 
 echo $result->asText().\PHP_EOL;

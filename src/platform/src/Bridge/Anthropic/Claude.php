@@ -31,14 +31,15 @@ class Claude extends Model
     public const OPUS_4_1 = 'claude-opus-4-1';
 
     /**
-     * @param array<string, mixed> $options The default options for the model usage
+     * @param array<string, mixed>            $options   The default options for the model usage
+     * @param \Symfony\AI\Platform\Endpoint[] $endpoints
      */
-    public function __construct(string $name, array $capabilities = [], array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [], array $endpoints = [])
     {
         if (!isset($options['max_tokens'])) {
             $options['max_tokens'] = 1000;
         }
 
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $endpoints);
     }
 }

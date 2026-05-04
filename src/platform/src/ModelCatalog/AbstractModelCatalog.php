@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\ModelCatalog;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
+use Symfony\AI\Platform\EndpointClientInterface;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Model;
@@ -48,7 +50,8 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException(\sprintf('Model class "%s" does not exist.', $modelClass));
         }
 
-        $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options);
+        $endpoints = $this->endpointsForModel($modelConfig);
+        $model = new $modelClass($actualModelName, $modelConfig['capabilities'], $options, $endpoints);
         if (!$model instanceof Model) {
             throw new InvalidArgumentException(\sprintf('Model class "%s" must extend "%s".', $modelClass, Model::class));
         }
@@ -62,6 +65,23 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
     public function getModels(): array
     {
         return $this->models;
+    }
+
+    /**
+     * Override to declare which contracts each model class speaks. The
+     * returned endpoints are passed to the Model constructor and drive
+     * dispatch via the matching {@see EndpointClientInterface}.
+     *
+     * Default = no endpoints (the catalog produces models that fall through
+     * to legacy ModelClient/ResultConverter dispatch).
+     *
+     * @param array{class: class-string, capabilities: list<Capability>} $modelConfig
+     *
+     * @return list<Endpoint>
+     */
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return [];
     }
 
     /**

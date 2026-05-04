@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
+use Symfony\AI\Platform\Bridge\Generic\ChatCompletionsClient;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsClient;
+use Symfony\AI\Platform\Bridge\Generic\Transport\HttpTransport;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentUrlNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\ImageUrlNormalizer;
@@ -44,10 +47,13 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new HttpTransport($httpClient, 'https://api.mistral.ai', $apiKey, ['Accept' => 'application/json']);
+        $clients = [new ChatCompletionsClient($transport), new EmbeddingsClient($transport)];
+
         return new Provider(
             $name,
-            [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
-            [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? Contract::create([
                 new ToolNormalizer(),

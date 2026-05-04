@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\DeepSeek;
 
+use Symfony\AI\Platform\Bridge\Generic\ChatCompletionsClient;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -46,5 +48,14 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        $class = $modelConfig['class'];
+
+        return DeepSeek::class === $class
+            ? [new Endpoint(ChatCompletionsClient::ENDPOINT)]
+            : [];
     }
 }

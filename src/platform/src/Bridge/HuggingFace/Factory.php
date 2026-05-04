@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\HuggingFace;
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
+use Symfony\AI\Platform\Bridge\HuggingFace\Transport\RouterTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -42,10 +43,34 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new RouterTransport($httpClient, $apiKey, $provider);
+        $clients = [
+            new ChatCompletionClient($transport, $provider),
+            new TextGenerationClient($transport),
+            new ImageToTextClient($transport),
+            new SummarizationClient($transport),
+            new TranslationClient($transport),
+            new AutomaticSpeechRecognitionClient($transport),
+            new FeatureExtractionClient($transport),
+            new TextRankingClient($transport),
+            new TextClassificationClient($transport),
+            new AudioClassificationClient($transport),
+            new ImageClassificationClient($transport),
+            new FillMaskClient($transport),
+            new ImageSegmentationClient($transport),
+            new ObjectDetectionClient($transport),
+            new QuestionAnsweringClient($transport),
+            new SentenceSimilarityClient($transport),
+            new TableQuestionAnsweringClient($transport),
+            new TokenClassificationClient($transport),
+            new ZeroShotClassificationClient($transport),
+            new TextToImageClient($transport),
+        ];
+
         return new PlatformProvider(
             $name,
-            [new ModelClient($httpClient, $provider, $apiKey)],
-            [new ResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? HuggingFaceContract::create(),
             $eventDispatcher,
