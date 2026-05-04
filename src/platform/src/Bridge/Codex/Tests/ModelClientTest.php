@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Codex\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
 use Symfony\AI\Platform\Bridge\Codex\Exception\CliNotFoundException;
@@ -60,7 +61,7 @@ final class ModelClientTest extends TestCase
 
         $command = $client->buildCommand('Hello, World!');
 
-        $this->assertSame([self::$binary, '--ask-for-approval', 'never', 'exec', '--json', 'Hello, World!'], $command);
+        $this->assertSame([self::$binary, 'exec', '--json', 'Hello, World!'], $command);
     }
 
     public function testBuildCommandWithModel()
@@ -116,7 +117,6 @@ final class ModelClientTest extends TestCase
 
         $expected = [
             self::$binary,
-            '--ask-for-approval', 'never',
             'exec', '--json',
             '--model', 'gpt-5-codex',
             '--sandbox', 'workspace-write',
@@ -125,6 +125,35 @@ final class ModelClientTest extends TestCase
         ];
 
         $this->assertSame($expected, $command);
+    }
+
+    #[IgnoreDeprecations]
+    public function testBuildCommandTriggersDeprecationForAskForApproval()
+    {
+        $client = new ModelClient(self::$binary);
+
+        $this->expectUserDeprecationMessageMatches('/ask_for_approval/');
+
+        $command = $client->buildCommand('Hello', ['ask_for_approval' => 'on-request']);
+
+        $this->assertNotContains('--ask-for-approval', $command);
+        $this->assertSame([self::$binary, 'exec', '--json', 'Hello'], $command);
+    }
+
+    public function testBuildCommandWithDangerouslyBypassApprovalsAndSandbox()
+    {
+        $client = new ModelClient(self::$binary);
+
+        $command = $client->buildCommand('Hello', [
+            'dangerously_bypass_approvals_and_sandbox' => true,
+        ]);
+
+        $this->assertSame([
+            self::$binary,
+            'exec', '--json',
+            '--dangerously-bypass-approvals-and-sandbox',
+            'Hello',
+        ], $command);
     }
 
     public function testBuildCommandRewritesToolsToAllowedTools()
