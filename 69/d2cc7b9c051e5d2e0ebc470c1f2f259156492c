@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by stof at 2026-04-28T18:54:52Z
+
+@javiereguiluz would it make sense to add a `symfony-tools/docs-builder` build in the CI (alongside the existing doctor-rst job) to catch such mistake in PRs rather than breaking the website deployment later ? That's what symfony-docs does
