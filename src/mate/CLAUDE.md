@@ -58,6 +58,10 @@ bin/mate mcp:tools:inspect server-info --format=json  # Output in JSON format
 # Tool execution
 bin/mate mcp:tools:call server-info '{}'    # Execute tool with parameters
 bin/mate mcp:tools:call server-info '{}' --format=json    # JSON output format
+
+# Resource reading
+bin/mate mcp:resources:read symfony-profiler://profile/abc123   # Read a resource by URI
+bin/mate mcp:resources:read symfony-profiler://profile/abc123 --format=json   # JSON output format
 ```
 
 ## Architecture
@@ -69,7 +73,7 @@ bin/mate mcp:tools:call server-info '{}' --format=json    # JSON output format
 - **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
 
 ### Key Directories
-- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions, mcp:tools:list, mcp:tools:inspect, mcp:tools:call)
+- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:capabilities, debug:extensions, mcp:tools:list, mcp:tools:inspect, mcp:tools:call, mcp:resources:read)
 - `src/Container/`: DI container management
 - `src/Discovery/`: Extension discovery system
 - `src/Capability/`: Built-in MCP tools

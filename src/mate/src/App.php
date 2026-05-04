@@ -18,6 +18,7 @@ use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
+use Symfony\AI\Mate\Command\ResourcesReadCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
 use Symfony\AI\Mate\Command\StopCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
@@ -52,6 +53,7 @@ final class App
             ToolsListCommand::class,
             ToolsInspectCommand::class,
             ToolsCallCommand::class,
+            ResourcesReadCommand::class,
         ];
 
         foreach ($commands as $commandClass) {
