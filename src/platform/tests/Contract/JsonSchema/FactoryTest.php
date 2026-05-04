@@ -107,7 +107,6 @@ final class FactoryTest extends TestCase
                 ],
                 'products' => [
                     'type' => 'array',
-                    'items' => ['type' => 'string'],
                     'description' => 'The products given to the tool',
                     'minItems' => 1,
                     'maxItems' => 10,
