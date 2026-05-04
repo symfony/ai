@@ -1,0 +1,6 @@
+{
+    "require": {
+        "symfony-tools/docs-builder": "^0.27",
+        "symfony/console": "^7.4"
+    }
+}
