@@ -14,6 +14,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
  * MCP resource templates for accessing Symfony profiler data.
@@ -29,7 +30,7 @@ use Symfony\AI\Mate\Encoding\ResponseEncoder;
 final class ProfilerResourceTemplate
 {
     public function __construct(
-        private readonly ProfilerDataProvider $dataProvider,
+        private readonly ?ProfilerDataProvider $dataProvider = null,
     ) {
     }
 
@@ -43,7 +44,8 @@ final class ProfilerResourceTemplate
     )]
     public function getProfileResource(string $token): array
     {
-        $profileData = $this->dataProvider->findProfile($token);
+        $dataProvider = $this->getDataProvider();
+        $profileData = $dataProvider->findProfile($token);
         if (null === $profileData) {
             return [
                 'uri' => "symfony-profiler://profile/{$token}",
@@ -53,7 +55,7 @@ final class ProfilerResourceTemplate
         }
 
         $profile = $profileData->getProfile();
-        $collectors = $this->dataProvider->listAvailableCollectors($token);
+        $collectors = $dataProvider->listAvailableCollectors($token);
 
         $collectorResources = [];
         foreach ($collectors as $collectorName) {
@@ -96,7 +98,7 @@ final class ProfilerResourceTemplate
     public function getCollectorResource(string $token, string $collector): array
     {
         try {
-            $data = $this->dataProvider->getCollectorData($token, $collector);
+            $data = $this->getDataProvider()->getCollectorData($token, $collector);
 
             return [
                 'uri' => "symfony-profiler://profile/{$token}/{$collector}",
@@ -110,5 +112,14 @@ final class ProfilerResourceTemplate
                 'text' => ResponseEncoder::encode(['error' => $e->getMessage()]),
             ];
         }
+    }
+
+    private function getDataProvider(): ProfilerDataProvider
+    {
+        if (null === $this->dataProvider) {
+            throw new RuntimeException('Symfony profiler resources are not available in this Mate workspace.');
+        }
+
+        return $this->dataProvider;
     }
 }

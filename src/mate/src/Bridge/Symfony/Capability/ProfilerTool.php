@@ -16,6 +16,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
+use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
  * MCP tools for accessing Symfony profiler data.
@@ -25,7 +26,7 @@ use Symfony\AI\Mate\Exception\InvalidArgumentException;
 final class ProfilerTool
 {
     public function __construct(
-        private readonly ProfilerDataProvider $dataProvider,
+        private readonly ?ProfilerDataProvider $dataProvider = null,
     ) {
     }
 
@@ -50,6 +51,7 @@ final class ProfilerTool
         ?string $from = null,
         ?string $to = null,
     ): string {
+        $dataProvider = $this->getDataProvider();
         $criteria = [
             'context' => $context,
             'method' => $method,
@@ -60,7 +62,7 @@ final class ProfilerTool
             'to' => $to,
         ];
 
-        $profiles = $this->dataProvider->searchProfiles(array_filter($criteria), $limit);
+        $profiles = $dataProvider->searchProfiles(array_filter($criteria), $limit);
 
         return ResponseEncoder::encode([
             'profiles' => array_values(array_map(
@@ -76,7 +78,7 @@ final class ProfilerTool
     #[McpTool('symfony-profiler-get', 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
     public function getProfile(string $token): string
     {
-        $profileData = $this->dataProvider->findProfile($token);
+        $profileData = $this->getDataProvider()->findProfile($token);
 
         if (null === $profileData) {
             throw new InvalidArgumentException(\sprintf('Profile with token "%s" not found', $token));
@@ -100,5 +102,14 @@ final class ProfilerTool
         }
 
         return ResponseEncoder::encode($data);
+    }
+
+    private function getDataProvider(): ProfilerDataProvider
+    {
+        if (null === $this->dataProvider) {
+            throw new RuntimeException('Symfony profiler tools are not available in this Mate workspace.');
+        }
+
+        return $this->dataProvider;
     }
 }

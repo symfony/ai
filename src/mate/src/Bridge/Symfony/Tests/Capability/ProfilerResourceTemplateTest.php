@@ -134,4 +134,16 @@ final class ProfilerResourceTemplateTest extends TestCase
         $this->assertIsArray($data);
         $this->assertArrayHasKey('error', $data);
     }
+
+    public function testResourcesReturnAvailabilityErrorWhenProfilerSupportIsUnavailable()
+    {
+        $template = new ProfilerResourceTemplate();
+
+        $resource = $template->getCollectorResource('abc123', 'request');
+
+        $this->assertSame('symfony-profiler://profile/abc123/request', $resource['uri']);
+        $data = Toon::decode($resource['text']);
+        $this->assertIsArray($data);
+        $this->assertSame('Symfony profiler resources are not available in this Mate workspace.', $data['error']);
+    }
 }
