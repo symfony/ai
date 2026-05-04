@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArray;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArrayMultidimensional;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolObjectFloat;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
@@ -84,5 +85,17 @@ class ToolCallArgumentResolverTest extends TestCase
         ]);
 
         $this->assertSame([], $resolver->resolveArguments($metadata, $toolCall));
+    }
+
+    public function testIntCastToFloat()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolObjectFloat::class, '__invoke'), 'tool_object_float', 'A tool with object');
+        $toolCall = new ToolCall('tool_id_1234', 'tool_object_float', ['person' => ['height' => 1]]);
+
+        $personArgument = $resolver->resolveArguments($metadata, $toolCall)['person'];
+        $this->assertInstanceOf(ToolObjectFloat::class, $personArgument);
+        $this->assertSame(1.0, $personArgument->height);
     }
 }
