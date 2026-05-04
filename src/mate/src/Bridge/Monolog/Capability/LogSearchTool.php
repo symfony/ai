@@ -38,7 +38,7 @@ final class LogSearchTool
      * @param string|null $to          End date filter, any PHP-parseable date string
      * @param int         $limit       Maximum number of entries to return
      */
-    #[McpTool('monolog-search', 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only.')]
+    #[McpTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only.')]
     public function search(
         string $term,
         bool $regex = false,
@@ -84,7 +84,7 @@ final class LogSearchTool
      * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
      * @param int         $limit       Maximum number of entries to return
      */
-    #[McpTool('monolog-context-search', 'Search log entries by structured context data. Finds entries where a specific context key contains the given value.')]
+    #[McpTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value.')]
     public function searchContext(
         string $key,
         string $value,
@@ -107,7 +107,7 @@ final class LogSearchTool
      * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
      * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
      */
-    #[McpTool('monolog-tail', 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level and environment.')]
+    #[McpTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level and environment.')]
     public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): string
     {
         $entries = $this->reader->tail($lines, $level, $environment);
@@ -118,7 +118,7 @@ final class LogSearchTool
     /**
      * @param string|null $environment Filter log files by Symfony environment (e.g. dev, prod, test)
      */
-    #[McpTool('monolog-list-files', 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching.')]
+    #[McpTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching.')]
     public function listFiles(?string $environment = null): string
     {
         $files = null !== $environment
@@ -138,7 +138,7 @@ final class LogSearchTool
         return ResponseEncoder::encode(['files' => $result]);
     }
 
-    #[McpTool('monolog-list-channels', 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
+    #[McpTool(name: 'monolog-list-channels', title: 'List Log Channels', description: 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
     public function listChannels(): string
     {
         return ResponseEncoder::encode(['channels' => $this->reader->getUniqueChannels()]);

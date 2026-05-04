@@ -39,7 +39,7 @@ final class ProfilerTool
      * @param string|null $from       Start date filter for profile creation time
      * @param string|null $to         End date filter for profile creation time
      */
-    #[McpTool('symfony-profiler-list', 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
+    #[McpTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
     public function listProfiles(
         int $limit = 20,
         ?string $method = null,
@@ -73,7 +73,7 @@ final class ProfilerTool
     /**
      * @param string $token The unique profiler token identifying the profile
      */
-    #[McpTool('symfony-profiler-get', 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
+    #[McpTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
     public function getProfile(string $token): string
     {
         $profileData = $this->dataProvider->findProfile($token);
