@@ -20,7 +20,7 @@ use Symfony\AI\Mate\Encoding\ResponseEncoder;
  */
 class ServerInfo
 {
-    #[McpTool('server-info', 'Get PHP runtime environment details: version, OS, OS family, and loaded extensions')]
+    #[McpTool(name: 'server-info', title: 'Server Info', description: 'Get PHP runtime environment details: version, OS, OS family, and loaded extensions')]
     public function getInfo(): string
     {
         return ResponseEncoder::encode([

@@ -33,8 +33,8 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 {
     public function testLoadWithEnabledFeatures()
     {
-        $tool1 = new ToolReference(new Tool('tool1', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method1', false);
-        $tool2 = new ToolReference(new Tool('tool2', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method2', false);
+        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
+        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool1, 'tool2' => $tool2],
@@ -75,8 +75,8 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 
     public function testLoadWithDisabledFeatures()
     {
-        $tool1 = new ToolReference(new Tool('tool1', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method1', false);
-        $tool2 = new ToolReference(new Tool('tool2', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method2', false);
+        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
+        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool1, 'tool2' => $tool2],
@@ -123,9 +123,9 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 
     public function testLoadWithMixedEnabledDisabledFeatures()
     {
-        $tool1 = new ToolReference(new Tool('tool1', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method1', false);
-        $tool2 = new ToolReference(new Tool('tool2', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method2', false);
-        $tool3 = new ToolReference(new Tool('tool3', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method3', false);
+        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
+        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
+        $tool3 = new ToolReference(new Tool(name: 'tool3', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method3', false);
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool1, 'tool2' => $tool2, 'tool3' => $tool3],
@@ -315,7 +315,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 
     public function testLoadWithEmptyFiltersConfiguration()
     {
-        $tool = new ToolReference(new Tool('tool1', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method1', false);
+        $tool = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool],
@@ -355,8 +355,8 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 
     public function testLoadWithMultiplePackages()
     {
-        $tool1 = new ToolReference(new Tool('tool1', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method1', false);
-        $tool2 = new ToolReference(new Tool('tool2', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method2', false);
+        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
+        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
 
         $discoveryStateA = new DiscoveryState(tools: ['tool1' => $tool1]);
         $discoveryStateB = new DiscoveryState(tools: ['tool2' => $tool2]);
@@ -399,7 +399,7 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 
     public function testLoadFiltersNonExistentFeatures()
     {
-        $tool = new ToolReference(new Tool('tool1', ['type' => 'object', 'properties' => [], 'required' => []], 'description', null), 'method1', false);
+        $tool = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool],

@@ -30,7 +30,7 @@ class ServiceTool
     /**
      * @param string|null $query Filter services by ID or class name (case-insensitive partial match)
      */
-    #[McpTool('symfony-services', 'Search Symfony dependency injection container services. Optionally filter by service ID or class name. Returns a map of service IDs to their class names.')]
+    #[McpTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID or class name. Returns a map of service IDs to their class names.')]
     public function getServices(?string $query = null): string
     {
         $container = $this->readContainer();

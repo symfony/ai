@@ -14,11 +14,12 @@
         }
     ],
     "require": {
-        "mcp/sdk": "^0.4",
+        "mcp/sdk": "^0.5",
         "php-http/discovery": "^1.20",
         "symfony/config": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dependency-injection": "^7.3|^8.0",
+        "symfony/finder": "^7.3|^8.0",
         "symfony/framework-bundle": "^7.3|^8.0",
         "symfony/http-foundation": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
