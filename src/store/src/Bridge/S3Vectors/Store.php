@@ -230,6 +230,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function count(): int
     {
-        return iterator_count($this->client->listIndexes()->getIndexes());
+        return iterator_count($this->client->listVectors([
+            'vectorBucketName' => $this->vectorBucketName,
+            'indexName' => $this->indexName,
+        ])->getVectors());
     }
 }

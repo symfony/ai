@@ -545,12 +545,17 @@ final class StoreTest extends TestCase
 
     public function testCountReturnsDocumentCount()
     {
+        $vectorResource = $this->createMock(VectorResource::class);
         $dataResource = $this->createMock(DataResource::class);
         $client = $this->createMock(Client::class);
 
         $client->expects($this->once())
             ->method('data')
             ->willReturn($dataResource);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
 
         $response = $this->createMock(Response::class);
         $response->method('json')->willReturn([
@@ -558,8 +563,8 @@ final class StoreTest extends TestCase
             'namespaces' => [],
         ]);
 
-        $dataResource->expects($this->once())
-            ->method('describeIndexStats')
+        $vectorResource->expects($this->once())
+            ->method('stats')
             ->willReturn($response);
 
         $this->assertSame(42, self::createStore($client)->count());
@@ -567,12 +572,17 @@ final class StoreTest extends TestCase
 
     public function testCountReturnsNamespaceDocumentCount()
     {
+        $vectorResource = $this->createMock(VectorResource::class);
         $dataResource = $this->createMock(DataResource::class);
         $client = $this->createMock(Client::class);
 
         $client->expects($this->once())
             ->method('data')
             ->willReturn($dataResource);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
 
         $response = $this->createMock(Response::class);
         $response->method('json')->willReturn([
@@ -582,8 +592,8 @@ final class StoreTest extends TestCase
             ],
         ]);
 
-        $dataResource->expects($this->once())
-            ->method('describeIndexStats')
+        $vectorResource->expects($this->once())
+            ->method('stats')
             ->willReturn($response);
 
         $this->assertSame(42, self::createStore($client, namespace: 'my-namespace')->count());

@@ -100,6 +100,13 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function count(): int
+    {
+        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function drop(array $options = []): void
     {
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s_fts', $this->tableName));

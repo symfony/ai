@@ -17,6 +17,7 @@ use Codewithkyrian\ChromaDB\Responses\QueryItemsResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\ChromaDb\Store;
 use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
