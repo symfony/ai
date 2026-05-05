@@ -1,0 +1,71 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-05-05T14:34:56Z
+
+As I understand the `"type": "string"` comes from here https://github.com/symfony/ai/blob/be69c631e9f13dbaa236c4608fa886d41e217487/src/platform/src/Contract/JsonSchema/Describer/TypeInfoDescriber.php#L153-L155
+
+For constructor promoted properties we describe both, parameters & properties and in this case the property has `@var Step[]` while the parameter is an untyped array (as `@param` is absent).
+
+I don't know the reasoning why we fallback to `string` on unknown type _(this was already the logic before the referenced refactoring)_ – I would think if type is unknown, schema should be untouched. If we removed the fallback-to-string logic, no other fixes would be needed.
+
+```diff
+@@ -150,9 +150,9 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
+             case $type->isIdentifiedBy(TypeIdentifier::NULL):
+                 return ['type' => 'null'];
+             case $type->isIdentifiedBy(TypeIdentifier::STRING):
+-            default:
+-                // Fallback to string for any unhandled types
+                 return ['type' => 'string'];
++            default:
++                return [];
+```
+
+---
+
+That said, I don't think your fix is necessarily wrong either.
+
+---------------------------------------------------------------------------
+
+by HypeMC at 2026-05-05T15:24:54Z
+
+@valtzu Hi, thanks for the feedback. I already tried that approach, but it caused a test to fail:
+
+```
+There was 1 failure:
+
+1) Symfony\AI\Platform\Tests\Contract\JsonSchema\FactoryTest::testBuildParametersDefinitionRequiredWithAdditionalToolParameterAttribute
+Failed asserting that two arrays are identical.
+--- Expected
++++ Actual
+@@ @@
+         ],
+         'products' => Array &10 [
+             'type' => 'array',
+-            'items' => Array &11 [
+-                'type' => 'string',
+-            ],
++            'items' => Array &11 [],
+             'description' => 'The products given to the tool',
+             'minItems' => 1,
+             'maxItems' => 10,
+```
+
+The failure seems legit to me.
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-05-05T15:51:24Z
+
+> The failure seems legit to me.
+
+The parameter is defined as `array<mixed>` so in my opinion it is not correct to treat it as `list<string>` _(should rather just render as `"type": "array"` with no `items` at all)_. For a `mixed` type I would expect the platform is allowed to come up with any structure that is suitable for the request.
+
+https://github.com/symfony/ai/blob/7bdd0ff64e005b89281b0926e8a84f06f54d67e3/src/agent/tests/Fixtures/Tool/ToolWithToolParameterAttribute.php#L27
+
+But again, I don't know the rationale behind this, maybe there is some reasoning like "the platform throws an error if you don't provide `type` at all".
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-05T19:45:46Z
+
+I don't think there was a particular reason to go with the default string - that was a decision early on. from my point of view, taking that route to remove the `['type' => 'string']` is the better solution here.
