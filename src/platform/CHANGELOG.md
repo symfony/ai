@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `ValidatorSubscriber` to validate structured output using Symfony Validator
+
 0.8
 ---
 

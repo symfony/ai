@@ -720,6 +720,35 @@ top this example uses the feature through the agent to leverage tool calling::
 
     dump($result->getContent()); // returns an array
 
+Validating Structured Output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using structured output, you might want to validate the generated data against some constraints. Symfony AI
+provides a ``ValidatorSubscriber`` that uses the Symfony Validator component for this purpose.
+
+To enable validation, register the ``ValidatorSubscriber`` with your platform's event dispatcher::
+
+    use Symfony\AI\Platform\Exception\ValidationException;
+    use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+    use Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addSubscriber(new PlatformSubscriber());
+    $dispatcher->addSubscriber(new ValidatorSubscriber());
+
+    $platform = Factory::createPlatform($apiKey, eventDispatcher: $dispatcher);
+
+    try {
+        $result = $platform->invoke('gpt-4o', $messages, ['response_format' => MathReasoning::class]);
+    } catch (ValidationException $e) {
+        $violations = $e->getViolations();
+        // handle violations
+    }
+
+The ``ValidatorSubscriber`` will automatically validate any :class:`Symfony\\AI\\Platform\\Result\\ObjectResult` produced
+by the ``PlatformSubscriber``. To use this feature, make sure `symfony/validator` is installed in your project.
+
 Code Examples
 ~~~~~~~~~~~~~
 

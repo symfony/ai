@@ -359,6 +359,7 @@ final class AiBundle extends AbstractBundle
 
         if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
+            $builder->removeDefinition('ai.platform.structured_output.validator_subscriber');
         }
 
         if (false === $builder->getParameter('kernel.debug')) {
