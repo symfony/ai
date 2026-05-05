@@ -57,15 +57,27 @@ class MessageBag implements \Countable, \IteratorAggregate
         return $this->messages;
     }
 
-    public function getSystemMessage(): ?SystemMessage
+    public function getSystemMessage(string $separator = \PHP_EOL.\PHP_EOL): ?SystemMessage
     {
-        foreach ($this->messages as $message) {
-            if ($message instanceof SystemMessage) {
-                return $message;
-            }
+        $systemMessages = array_values(array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => $message instanceof SystemMessage,
+        ));
+
+        if ([] === $systemMessages) {
+            return null;
         }
 
-        return null;
+        if (1 === \count($systemMessages)) {
+            return $systemMessages[0];
+        }
+
+        $content = implode($separator, array_map(
+            static fn (SystemMessage $message): string => (string) $message->getContent(),
+            $systemMessages,
+        ));
+
+        return new SystemMessage($content);
     }
 
     public function getUserMessage(): ?UserMessage
