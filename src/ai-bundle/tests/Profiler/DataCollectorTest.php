@@ -23,10 +23,12 @@ use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -38,6 +40,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\AI\Platform\TraceablePlatform;
@@ -160,6 +163,43 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('vectors', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    public function testRecordsErrorWhenResultConversionFails()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
+        $exception = new RateLimitExceededException();
+
+        $failingConverter = $this->createMock(ResultConverterInterface::class);
+        $failingConverter->method('convert')->willThrowException($exception);
+        $failingConverter->method('getTokenUsageExtractor')->willReturn(null);
+
+        $platform->method('invoke')->willReturn(
+            new DeferredResult($failingConverter, $this->createStub(RawResultInterface::class))
+        );
+
+        $deferred = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
+
+        try {
+            $deferred->getResult();
+            $this->fail('Expected RateLimitExceededException to be thrown.');
+        } catch (RateLimitExceededException) {
+        }
+
+        // lateCollect() must not re-throw, otherwise it would replace the user's response with a 500.
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $calls = $dataCollector->getPlatformCalls();
+        $this->assertCount(1, $calls);
+        $this->assertSame('error', $calls[0]['result_type']);
+        $this->assertNull($calls[0]['result']);
+        $this->assertInstanceOf(Metadata::class, $calls[0]['metadata']);
+        $this->assertArrayHasKey('error', $calls[0]);
+        $this->assertSame(RateLimitExceededException::class, $calls[0]['error']['class']);
+        $this->assertSame('Rate limit exceeded.', $calls[0]['error']['message']);
     }
 
     public function testCollectsDataForObjectResult()

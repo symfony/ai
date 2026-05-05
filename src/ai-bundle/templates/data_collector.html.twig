@@ -203,6 +203,9 @@
                                                     <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
                                                 {% endfor %}
                                             </ol>
+                                        {% elseif call.result_type == 'error' %}
+                                            <strong class="status-error">Failed:</strong>
+                                            <code>{{ call.error.class }}</code>: {{ call.error.message }}
                                         {% else %}
                                             {{ dump(call.result) }}
                                         {% endif %}

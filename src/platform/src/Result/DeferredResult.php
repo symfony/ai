@@ -30,6 +30,7 @@ final class DeferredResult
 
     private bool $isConverted = false;
     private ResultInterface $convertedResult;
+    private ?\Throwable $conversionFailure = null;
 
     /**
      * @param array<string, mixed> $options
@@ -46,7 +47,15 @@ final class DeferredResult
      */
     public function getResult(): ResultInterface
     {
-        if (!$this->isConverted) {
+        if (null !== $this->conversionFailure) {
+            throw $this->conversionFailure;
+        }
+
+        if ($this->isConverted) {
+            return $this->convertedResult;
+        }
+
+        try {
             $this->convertedResult = $this->resultConverter->convert($this->rawResult, $this->options);
 
             if (null === $this->convertedResult->getRawResult()) {
@@ -72,6 +81,9 @@ final class DeferredResult
             $this->metadata->set($metadata->all());
 
             $this->isConverted = true;
+        } catch (\Throwable $exception) {
+            $this->conversionFailure = $exception;
+            throw $exception;
         }
 
         return $this->convertedResult;
