@@ -130,10 +130,9 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
             case $type->isIdentifiedBy(TypeIdentifier::ARRAY):
                 \assert($type instanceof CollectionType);
 
-                return [
-                    'type' => 'array',
-                    'items' => $this->getTypeSchema($type->getCollectionValueType()),
-                ];
+                $items = $this->getTypeSchema($type->getCollectionValueType());
+
+                return ['type' => 'array'] + ($items ? ['items' => $items] : []);
 
             case $type->isIdentifiedBy(TypeIdentifier::OBJECT):
                 if ($type instanceof BuiltinType) {
@@ -150,9 +149,9 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
             case $type->isIdentifiedBy(TypeIdentifier::NULL):
                 return ['type' => 'null'];
             case $type->isIdentifiedBy(TypeIdentifier::STRING):
-            default:
-                // Fallback to string for any unhandled types
                 return ['type' => 'string'];
+            default:
+                return [];
         }
     }
 
