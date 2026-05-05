@@ -1038,7 +1038,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.perplexity'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'perplexity']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1062,7 +1062,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'dockermodelrunner']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1086,7 +1086,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'scaleway']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1107,7 +1107,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.model_catalog.transformersphp'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'transformersphp']);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1131,7 +1131,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform');
+                ->addTag('ai.platform', ['name' => 'ovh']);
 
             $container->setDefinition($platformId, $definition);
 
