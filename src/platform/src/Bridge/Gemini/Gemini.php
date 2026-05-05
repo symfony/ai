@@ -29,17 +29,17 @@ final class Gemini extends Model
         parent::__construct($name, $capabilities, $options);
     }
 
-    public function getVersion(): string
+    public function getVersion(): ?string
     {
         return $this->version;
     }
 
-    public function getInputTokenLimit(): int
+    public function getInputTokenLimit(): ?int
     {
         return $this->inputTokenLimit;
     }
 
-    public function getOutputTokenLimit(): int
+    public function getOutputTokenLimit(): ?int
     {
         return $this->outputTokenLimit;
     }

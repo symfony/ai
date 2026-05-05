@@ -13,7 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Gemini;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini\ModelClient;
+use Symfony\AI\Platform\Bridge\Gemini\ModelClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -29,9 +29,7 @@ final class ModelClientTest extends TestCase
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($payload) {
             $this->assertSame('POST', $method);
-            $this->assertSame('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', $url);
-            $this->assertArrayHasKey('headers', $options);
-            $this->assertContains('x-goog-api-key: test-api-key', $options['headers']);
+            $this->assertStringEndsWith('models/gemini-1.5-flash:generateContent', $url);
 
             $body = json_decode($options['body'], true);
             $this->assertSame($payload['contents'], $body['contents']);
@@ -40,7 +38,7 @@ final class ModelClientTest extends TestCase
             return new JsonMockResponse(['candidates' => []]);
         });
 
-        $client = new ModelClient($httpClient, 'test-api-key');
+        $client = new ModelClient($httpClient);
         $client->request(new Gemini('gemini-1.5-flash'), $payload);
     }
 
@@ -66,19 +64,19 @@ final class ModelClientTest extends TestCase
             return new JsonMockResponse(['candidates' => []]);
         });
 
-        $client = new ModelClient($httpClient, 'test-api-key');
+        $client = new ModelClient($httpClient);
         $client->request(new Gemini('gemini-1.5-flash'), $payload, $options);
     }
 
     public function testRequestWithStreamUsesDifferentEndpoint()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {
-            $this->assertSame('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent', $url);
+            $this->assertStringEndsWith('models/gemini-1.5-flash:streamGenerateContent', $url);
 
             return new JsonMockResponse(['candidates' => []]);
         });
 
-        $client = new ModelClient($httpClient, 'test-api-key');
+        $client = new ModelClient($httpClient);
         $client->request(new Gemini('gemini-1.5-flash'), ['contents' => []], ['stream' => true]);
     }
 }

@@ -65,7 +65,7 @@ final class ResultConverter implements ResultConverterInterface
         $data = $result->getData();
 
         if (isset($data['embeddings'])) {
-            return new VectorResult(...array_map(
+            return new VectorResult(array_map(
                 static fn (array $item): VectorInterface => new Vector($item['values']),
                 $data['embeddings'],
             ));

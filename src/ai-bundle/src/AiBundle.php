@@ -684,6 +684,7 @@ final class AiBundle extends AbstractBundle
                     $platform['version'],
                     $platform['api_key'] ?? null,
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    null,
                     new Reference('ai.platform.contract.gemini'),
                     new Reference('event_dispatcher'),
                 ])

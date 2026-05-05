@@ -12,195 +12,203 @@
 namespace Symfony\AI\Platform\Bridge\Gemini;
 
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
+use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * @author Oskar Stark <oskarstark@googlemail.com>
+ * Dynamic ModelCatalog backed by the Gemini "models" REST API.
+ *
+ * @see https://ai.google.dev/api/models
+ *
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ModelCatalog extends AbstractModelCatalog
+final class ModelCatalog implements ModelCatalogInterface
 {
     /**
-     * @param array<string, array{class: string, capabilities: list<Capability>}> $additionalModels
+     * @var array<string, array{class: class-string, capabilities: list<Capability>, version: ?string, inputTokenLimit: ?int, outputTokenLimit: ?int}>|null
      */
-    public function __construct(array $additionalModels = [])
-    {
-        $defaultModels = [
-            'gemini-3.1-pro-preview' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::INPUT_VIDEO,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::OUTPUT_TEXT,
-                    Capability::TOOL_CALLING,
-                    Capability::THINKING,
-                ],
-            ],
-            'gemini-3-flash-preview' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'gemini-3-pro-preview' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::INPUT_VIDEO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                    Capability::THINKING,
-                ],
-            ],
-            'gemini-3-pro-image-preview' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::THINKING,
-                ],
-            ],
-            'gemini-2.5-flash-image' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'gemini-2.5-flash' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::INPUT_VIDEO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                    Capability::THINKING,
-                ],
-            ],
-            'gemini-2.5-pro' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::INPUT_VIDEO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                    Capability::THINKING,
-                ],
-            ],
-            'gemini-2.5-flash-lite-preview-09-2025' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::INPUT_VIDEO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                    Capability::THINKING,
-                ],
-            ],
-            'gemini-2.5-flash-lite' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_PDF,
-                    Capability::INPUT_VIDEO,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                    Capability::THINKING,
-                ],
-            ],
-            // 01/06/2026
-            // https://ai.google.dev/gemini-api/docs/changelog?hl=en#02-18-2026
-            'gemini-2.0-flash' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_VIDEO,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            // TTS
-            'gemini-2.5-flash-native-audio-preview-12-2025' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_VIDEO,
-                    Capability::INPUT_AUDIO,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'gemini-2.5-flash-preview-tts' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            'gemini-2.5-pro-preview-tts' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_AUDIO,
-                    Capability::TEXT_TO_SPEECH,
-                ],
-            ],
-            // Embeddings
-            'gemini-embedding-001' => [
-                'class' => Embeddings::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::EMBEDDINGS,
-                ],
-            ],
-        ];
+    private ?array $models = null;
 
-        $this->models = array_merge($defaultModels, $additionalModels);
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+    ) {
+    }
+
+    public function getModel(string $modelName): Gemini
+    {
+        $models = $this->getModels();
+
+        if (!\array_key_exists($modelName, $models)) {
+            throw new ModelNotFoundException(\sprintf('Model "%s" not found in the Gemini API catalog.', $modelName));
+        }
+
+        $config = $models[$modelName];
+
+        if ([] === $config['capabilities']) {
+            throw new ModelNotFoundException(\sprintf('Model "%s" has no supported capabilities exposed by the Gemini API.', $modelName));
+        }
+
+        return new Gemini(
+            $modelName,
+            $config['capabilities'],
+            [],
+            $config['version'],
+            $config['inputTokenLimit'],
+            $config['outputTokenLimit'],
+        );
+    }
+
+    public function getModels(): array
+    {
+        if (null !== $this->models) {
+            return $this->models;
+        }
+
+        $catalog = [];
+        $pageToken = null;
+
+        do {
+            $query = ['pageSize' => 1000];
+            if (null !== $pageToken) {
+                $query['pageToken'] = $pageToken;
+            }
+
+            try {
+                $response = $this->httpClient->request('GET', 'models', ['query' => $query]);
+            } catch (TransportExceptionInterface $e) {
+                throw new RuntimeException(\sprintf('Cannot connect to the Gemini API: "%s".', $e->getMessage()), previous: $e);
+            }
+
+            $payload = $this->extractPayload($response);
+
+            foreach ($payload['models'] ?? [] as $model) {
+                $key = str_starts_with($model['name'], 'models/') ? substr($model['name'], 7) : $model['name'];
+
+                $catalog[$key] = [
+                    'class' => Gemini::class,
+                    'capabilities' => self::deriveCapabilities($model),
+                    'version' => $model['version'] ?? null,
+                    'inputTokenLimit' => $model['inputTokenLimit'] ?? null,
+                    'outputTokenLimit' => $model['outputTokenLimit'] ?? null,
+                ];
+            }
+
+            $pageToken = $payload['nextPageToken'] ?? null;
+        } while (null !== $pageToken);
+
+        return $this->models = $catalog;
+    }
+
+    /**
+     * @return array{models?: list<array<string, mixed>>, nextPageToken?: string}
+     */
+    private function extractPayload(ResponseInterface $response): array
+    {
+        try {
+            $statusCode = $response->getStatusCode();
+        } catch (TransportExceptionInterface $e) {
+            throw new RuntimeException(\sprintf('Cannot connect to the Gemini API: "%s".', $e->getMessage()), previous: $e);
+        }
+
+        if (200 !== $statusCode) {
+            $errorMessage = $this->extractErrorMessage($response);
+
+            throw new RuntimeException(null !== $errorMessage ? \sprintf('Cannot retrieve models from the Gemini API (Status code: %d): "%s".', $statusCode, $errorMessage) : \sprintf('Cannot retrieve models from the Gemini API (Status code: %d).', $statusCode));
+        }
+
+        return $response->toArray();
+    }
+
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        try {
+            $content = $response->getContent(false);
+        } catch (TransportExceptionInterface) {
+            return null;
+        }
+
+        if ('' === $content) {
+            return null;
+        }
+
+        try {
+            $decoded = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+
+            if (\is_array($decoded) && isset($decoded['error']['message'])) {
+                return $decoded['error']['message'];
+            }
+        } catch (\JsonException) {
+        }
+
+        return $content;
+    }
+
+    /**
+     * @param array<string, mixed> $model
+     *
+     * @return list<Capability>
+     */
+    private static function deriveCapabilities(array $model): array
+    {
+        $methods = $model['supportedGenerationMethods'] ?? [];
+        $name = $model['name'] ?? '';
+
+        if ([] !== array_intersect(['embedContent', 'asyncBatchEmbedContent', 'batchEmbedContents'], $methods)) {
+            return [
+                Capability::INPUT_TEXT,
+                Capability::EMBEDDINGS,
+                Capability::OUTPUT_EMBEDDINGS,
+            ];
+        }
+
+        if (str_contains($name, 'tts') || str_contains($name, 'TTS') || str_contains($name, 'native-audio')) {
+            return [
+                Capability::INPUT_TEXT,
+                Capability::INPUT_MESSAGES,
+                Capability::OUTPUT_AUDIO,
+                Capability::TEXT_TO_SPEECH,
+            ];
+        }
+
+        if (str_contains($name, 'image') || str_contains($name, 'imagen')) {
+            return [
+                Capability::INPUT_MESSAGES,
+                Capability::INPUT_IMAGE,
+                Capability::OUTPUT_IMAGE,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STRUCTURED,
+            ];
+        }
+
+        $capabilities = [];
+
+        if ([] !== array_intersect(['generateContent', 'batchGenerateContent', 'generateAnswer', 'predictLongRunning'], $methods)) {
+            $capabilities = [
+                Capability::INPUT_MESSAGES,
+                Capability::INPUT_TEXT,
+                Capability::INPUT_IMAGE,
+                Capability::INPUT_AUDIO,
+                Capability::INPUT_PDF,
+                Capability::INPUT_VIDEO,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STREAMING,
+                Capability::OUTPUT_STRUCTURED,
+                Capability::TOOL_CALLING,
+            ];
+        }
+
+        if (true === ($model['thinking'] ?? false)) {
+            $capabilities[] = Capability::THINKING;
+        }
+
+        if (\in_array('createCachedContent', $methods, true)) {
+            $capabilities[] = Capability::CACHE;
+        }
+
+        return $capabilities;
     }
 }
