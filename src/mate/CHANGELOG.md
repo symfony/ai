@@ -8,6 +8,7 @@ CHANGELOG
  * Add `channel` filter parameter to `monolog-tail` MCP tool for consistency with `monolog-search`
  * Add `TimeCollectorFormatter` for the Symfony profiler `time` collector, exposing request duration, initialization time, and stopwatch events sorted by duration
  * Add `MemoryCollectorFormatter` for the Symfony profiler `memory` collector, exposing peak memory usage, memory limit, and usage percentage
+ * Add `symfony-service-detail` MCP tool to retrieve full details of a single DI container service by its exact ID (class, tags, method calls, factory)
  * Add `ResourcesReadCommand` (`mcp:resources:read`) to read MCP resources by URI from the CLI
  * Change default user namespace scaffolded by `mate init` from `App\Mate\` to `Mate\`
  * Allow Symfony profiler capabilities (`ProfilerResourceTemplate` and `ProfilerTool`) to be instantiated without a `ProfilerDataProvider`, throwing a clear `RuntimeException` when invoked in workspaces without profiler support

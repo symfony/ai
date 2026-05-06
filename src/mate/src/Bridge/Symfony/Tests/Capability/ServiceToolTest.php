@@ -15,7 +15,9 @@ use HelgeSverre\Toon\DecodeOptions;
 use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
+use Symfony\AI\Mate\Bridge\Symfony\Exception\ServiceNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -209,6 +211,69 @@ final class ServiceToolTest extends TestCase
         $this->assertArrayHasKey('app.event_listener', $services);
         $this->assertArrayNotHasKey('cache.app', $services);
         $this->assertArrayNotHasKey('logger', $services);
+    }
+
+    public function testGetServiceDetailReturnsServiceInfo()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = Toon::decode($tool->getServiceDetail('cache.app'));
+
+        $this->assertSame('cache.app', $detail['id']);
+        $this->assertSame(FilesystemAdapter::class, $detail['class']);
+        $this->assertIsArray($detail['tags']);
+        $this->assertIsArray($detail['calls']);
+    }
+
+    public function testGetServiceDetailIncludesTags()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = Toon::decode($tool->getServiceDetail('logger'));
+
+        $this->assertCount(1, $detail['tags']);
+        $this->assertSame('monolog.logger', $detail['tags'][0]['name']);
+        $this->assertSame('app', $detail['tags'][0]['channel']);
+    }
+
+    public function testGetServiceDetailIncludesCalls()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = Toon::decode($tool->getServiceDetail('event_dispatcher'));
+
+        $this->assertContains('addListener', $detail['calls']);
+    }
+
+    public function testGetServiceDetailIncludesFactory()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = Toon::decode($tool->getServiceDetail('router'));
+
+        $this->assertSame('RouterFactory::create', $detail['factory']);
+    }
+
+    public function testGetServiceDetailThrowsForUnknownService()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $this->expectException(ServiceNotFoundException::class);
+        $tool->getServiceDetail('nonexistent.service.xyz');
+    }
+
+    public function testGetServiceDetailThrowsWhenContainerNotFound()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool('/non/existent/directory', $provider);
+
+        $this->expectException(ServiceNotFoundException::class);
+        $tool->getServiceDetail('cache.app');
     }
 
     public function testGetServicesDetectsCustomKernelClassName()
