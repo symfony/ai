@@ -158,7 +158,7 @@ final class LogReader
     /**
      * @return LogEntry[]
      */
-    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): array
+    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null, ?string $channel = null): array
     {
         $files = null !== $environment
             ? $this->getLogFilesForEnvironment($environment)
@@ -173,7 +173,7 @@ final class LogReader
             return [];
         }
 
-        return $this->tailFromFile($file, $lines, $level);
+        return $this->tailFromFile($file, $lines, $level, $channel);
     }
 
     /**
@@ -193,7 +193,7 @@ final class LogReader
     /**
      * @return LogEntry[]
      */
-    private function tailFromFile(string $file, int $lines, ?string $level = null): array
+    private function tailFromFile(string $file, int $lines, ?string $level = null, ?string $channel = null): array
     {
         $handle = fopen($file, 'r');
         if (false === $handle) {
@@ -223,6 +223,10 @@ final class LogReader
                 }
 
                 if (null !== $level && strtoupper($level) !== $entry->getLevel()) {
+                    continue;
+                }
+
+                if (null !== $channel && strtolower($channel) !== strtolower($entry->getChannel())) {
                     continue;
                 }
 
