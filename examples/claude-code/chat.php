@@ -28,15 +28,11 @@ $result = $platform->invoke('sonnet', $messages, [
     'permission_mode' => 'plan',
     'max_turns' => 3,
 ]);
+continue_chat($messages, $result->asText());
 
-echo $result->asText().\PHP_EOL;
-
-// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
-$messages->add(Message::ofAssistant($result->asText()));
 $messages->add(Message::ofUser('Which directory would you start with to understand the test setup?'));
 $result = $platform->invoke('sonnet', $messages, [
     'permission_mode' => 'plan',
     'max_turns' => 3,
 ]);
-
-echo $result->asText().\PHP_EOL;
+continue_chat($messages, $result->asText());

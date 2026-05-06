@@ -14,6 +14,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
@@ -150,6 +152,16 @@ function print_token_usage(?TokenUsageInterface $tokenUsage): void
     if ($tokenUsage instanceof TokenUsageAggregation) {
         output()->writeln(sprintf('<comment>Aggregated token usage from %d calls.</comment>', $tokenUsage->count()));
     }
+}
+
+/**
+ * Echoes the assistant's reply and appends it back to the message bag so a
+ * subsequent user turn keeps the assistant context.
+ */
+function continue_chat(MessageBag $messages, string $content): void
+{
+    echo $content.\PHP_EOL;
+    $messages->add(Message::ofAssistant($content));
 }
 
 function print_vectors(DeferredResult $result): void

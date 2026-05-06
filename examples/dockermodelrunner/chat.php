@@ -24,10 +24,8 @@ $messages = new MessageBag(
     Message::ofUser('What is the Symfony framework?'),
 );
 $result = $agent->call($messages);
-echo $result->getContent().\PHP_EOL;
+continue_chat($messages, $result->getContent());
 
-// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
-$messages->add(Message::ofAssistant($result->getContent()));
 $messages->add(Message::ofUser('And which versions are LTS?'));
 $result = $agent->call($messages);
-echo $result->getContent().\PHP_EOL;
+continue_chat($messages, $result->getContent());

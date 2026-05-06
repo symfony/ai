@@ -22,12 +22,8 @@ $messages = new MessageBag(
     Message::ofUser('Yesterday I had a Déjà vu. It is a funny feeling, no?'),
 );
 $result = $platform->invoke('deepseek-chat', $messages);
+continue_chat($messages, $result->asText());
 
-echo $result->asText().\PHP_EOL;
-
-// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
-$messages->add(Message::ofAssistant($result->asText()));
 $messages->add(Message::ofUser('Could it have been a glitch in the Matrix?'));
 $result = $platform->invoke('deepseek-chat', $messages);
-
-echo $result->asText().\PHP_EOL;
+continue_chat($messages, $result->asText());

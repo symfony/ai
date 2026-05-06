@@ -21,14 +21,10 @@ $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
 $result = $platform->invoke('mistral-large-latest', $messages, [
     'temperature' => 0.7,
 ]);
+continue_chat($messages, $result->asText());
 
-echo $result->asText().\PHP_EOL;
-
-// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
-$messages->add(Message::ofAssistant($result->asText()));
 $messages->add(Message::ofUser('Which one pairs best with red wine?'));
 $result = $platform->invoke('mistral-large-latest', $messages, [
     'temperature' => 0.7,
 ]);
-
-echo $result->asText().\PHP_EOL;
+continue_chat($messages, $result->asText());

@@ -54,17 +54,13 @@ $messages = new MessageBag(
 $result = $platform->invoke('openai/gpt-4.1', $messages, [
     'max_tokens' => 500,
 ]);
+continue_chat($messages, $result->asText());
 
-echo $result->asText().\PHP_EOL;
-
-// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
-$messages->add(Message::ofAssistant($result->asText()));
 $messages->add(Message::ofUser('And which versions are LTS?'));
 $result = $platform->invoke('openai/gpt-4.1', $messages, [
     'max_tokens' => 500,
 ]);
-
-echo $result->asText().\PHP_EOL;
+continue_chat($messages, $result->asText());
 
 $tokenUsage = $result->getMetadata()->get('token_usage');
 if (null !== $tokenUsage) {

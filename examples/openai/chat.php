@@ -24,14 +24,10 @@ $messages = new MessageBag(
 $result = $platform->invoke('gpt-4o-mini', $messages, [
     'max_output_tokens' => 500, // specific options just for this call
 ]);
+continue_chat($messages, $result->asText());
 
-echo $result->asText().\PHP_EOL;
-
-// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
-$messages->add(Message::ofAssistant($result->asText()));
 $messages->add(Message::ofUser('And which versions are LTS?'));
 $result = $platform->invoke('gpt-4o-mini', $messages, [
     'max_output_tokens' => 500,
 ]);
-
-echo $result->asText().\PHP_EOL;
+continue_chat($messages, $result->asText());
