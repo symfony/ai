@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add rerank capabilities
+
 0.8
 ---
 
