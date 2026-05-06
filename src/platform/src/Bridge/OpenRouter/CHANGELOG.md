@@ -6,12 +6,12 @@ CHANGELOG
 
  * Add rerank capabilities
  * Add text-to-speech capabilities
+ * Add support for video generation via the `POST /api/v1/videos` endpoint
 
 0.8
 ---
 
  * [BC BREAK] Rename `PlatformFactory` to `Factory` with explicit `createProvider()` and `createPlatform()` methods
- * Add support for video generation via the `POST /api/v1/videos` endpoint
 
 0.7
 ---
