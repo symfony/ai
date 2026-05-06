@@ -56,6 +56,7 @@ final class ToolNormalizer extends ModelContractNormalizer
      * Normalizes a JSON Schema for Gemini compatibility.
      *
      * - Removes 'additionalProperties' (not supported by Gemini)
+     * - Removes '$schema' (Gemini's strict OpenAPI-flavored parser rejects this JSON-Schema meta-key)
      * - Converts array-style nullable types ['string', 'null'] to ['type' => 'string', 'nullable' => true]
      *
      * @template T of array
@@ -66,7 +67,7 @@ final class ToolNormalizer extends ModelContractNormalizer
      */
     private function normalizeSchema(array $data): array
     {
-        unset($data['additionalProperties']);
+        unset($data['additionalProperties'], $data['$schema']);
 
         // Convert array-style nullable types to Gemini format
         if (isset($data['type']) && \is_array($data['type'])) {
