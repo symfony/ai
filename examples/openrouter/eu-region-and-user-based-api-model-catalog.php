@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
-use Symfony\AI\Platform\Bridge\OpenRouter\PlatformFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
 use Symfony\AI\Platform\Bridge\OpenRouter\Region;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -19,7 +19,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $modelCatalog = new ModelApiCatalog(http_client(), region: Region::EU, apiKey: env('OPENROUTER_KEY'));
 
-$platform = PlatformFactory::create(env('OPENROUTER_KEY'), http_client(), $modelCatalog, region: Region::EU);
+$platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client(), $modelCatalog, region: Region::EU);
 
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
