@@ -12,7 +12,11 @@
 namespace Symfony\AI\Chat\Bridge\Doctrine;
 
 use Doctrine\DBAL\Connection as DBALConnection;
+use Doctrine\DBAL\Platforms\OraclePlatform;
 use Doctrine\DBAL\Schema\ComparatorConfig;
+use Doctrine\DBAL\Schema\Name\Identifier;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
+use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Types;
 use Psr\Clock\ClockInterface;
@@ -104,7 +108,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             $this->dbalConnection->executeStatement(
                 $this->dbalConnection->createQueryBuilder()
                     ->insert($this->tableName)
-                    ->values(['messages' => '?', 'updated_at' => '?'])
+                    ->values(['messages' => '?', 'added_at' => '?'])
                     ->getSQL(),
                 [$serialized, $now],
             );
@@ -113,7 +117,7 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
                 $this->dbalConnection->createQueryBuilder()
                     ->update($this->tableName)
                     ->set('messages', '?')
-                    ->set('updated_at', '?')
+                    ->set('added_at', '?')
                     ->getSQL(),
                 [$serialized, $now],
             );
@@ -144,8 +148,31 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
 
         $table = $schema->createTable($this->tableName);
         $table->addOption('_symfony_ai_chat_table_name', $this->tableName);
-        $table->addColumn('messages', Types::TEXT)->setNotnull(true);
-        $table->addColumn('updated_at', Types::INTEGER)->setNotnull(true);
+        $idColumn = $table->addColumn('id', Types::BIGINT)
+            ->setAutoincrement(true)
+            ->setNotnull(true);
+        $table->addColumn('messages', Types::TEXT)
+            ->setNotnull(true);
+        $table->addColumn('added_at', Types::INTEGER)
+            ->setNotnull(true);
+        if (class_exists(PrimaryKeyConstraint::class)) {
+            $table->addPrimaryKeyConstraint(new PrimaryKeyConstraint(null, [
+                new UnqualifiedName(Identifier::unquoted('id')),
+            ], true));
+        } else {
+            $table->setPrimaryKey(['id']);
+        }
+
+        // We need to create a sequence for Oracle and set the id column to get the correct nextval
+        if ($this->dbalConnection->getDatabasePlatform() instanceof OraclePlatform) {
+            $serverVersion = $this->dbalConnection->executeQuery("SELECT version FROM product_component_version WHERE product LIKE 'Oracle Database%'")->fetchOne();
+            if (version_compare($serverVersion, '12.1.0', '>=')) {
+                $idColumn->setAutoincrement(false); // disable the creation of SEQUENCE and TRIGGER
+                $idColumn->setDefault($this->tableName.'_seq.nextval');
+
+                $schema->createSequence($this->tableName.'_seq');
+            }
+        }
 
         return $schema;
     }
