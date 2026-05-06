@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Bridge\S3Vectors\Tests;
 use AsyncAws\Core\Test\ResultMockFactory;
 use AsyncAws\S3Vectors\Enum\DataType;
 use AsyncAws\S3Vectors\Enum\DistanceMetric;
+use AsyncAws\S3Vectors\Input\ListVectorsInput;
 use AsyncAws\S3Vectors\Result\ListVectorsOutput;
 use AsyncAws\S3Vectors\Result\QueryVectorsOutput;
 use AsyncAws\S3Vectors\S3VectorsClient;
@@ -341,6 +342,7 @@ final class StoreTest extends TestCase
         $client = $this->createMock(S3VectorsClient::class);
 
         $result = ResultMockFactory::create(ListVectorsOutput::class, [
+            'input' => new ListVectorsInput(),
             'vectors' => [
                 new ListOutputVector(['key' => 'doc-1']),
                 new ListOutputVector(['key' => 'doc-2']),
