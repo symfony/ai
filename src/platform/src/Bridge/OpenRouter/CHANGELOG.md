@@ -5,6 +5,8 @@ CHANGELOG
 ---
 
  * Add rerank capabilities
+ * Add support for region routing via `$region` enum in `Factory` and `ModelApiCatalog`
+ * Add support for user specific models, by adding the OpenRouter API Key to the `ModelApiCatalog`
 
 0.8
 ---
