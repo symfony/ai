@@ -16,12 +16,12 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client());
 
-// Note: The rendering takes several minutes (!!!) and cost about $ 1.6
+// Note: The rendering takes about 1-2 minutes and cost about $ 0.2
 // Suggest: Execute it with verbosity (-vv) to get information of the polling requests
 
-$result = $platform->invoke('google/veo-3.1', new Text('A serene ocean with dolphins jumping at sunset'), [
+$result = $platform->invoke('google/veo-3.1-lite', new Text('A serene ocean with dolphins jumping at sunset'), [
     'duration' => 4,
-    'resolution' => '1080p',
+    'resolution' => '720p',
     'aspect_ratio' => '16:9',
 ]);
 
