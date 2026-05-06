@@ -43,7 +43,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
     }
 
     /**
-     * @param array{functionResponse: array{id: string, name: string, response: array<int|string, mixed>}}[] $expected
+     * @param array{functionResponse: array{name: string, response: array{result: mixed}, id?: string}}[] $expected
      */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(ToolCallMessage $message, array $expected)
@@ -67,9 +67,9 @@ final class ToolCallMessageNormalizerTest extends TestCase
             ),
             [[
                 'functionResponse' => [
-                    'id' => 'id1',
                     'name' => 'name1',
-                    'response' => ['rawResponse' => 'true'],
+                    'response' => ['result' => 'true'],
+                    'id' => 'id1',
                 ],
             ]],
         ];
@@ -81,9 +81,36 @@ final class ToolCallMessageNormalizerTest extends TestCase
             ),
             [[
                 'functionResponse' => [
-                    'id' => 'id1',
                     'name' => 'name1',
-                    'response' => ['structured' => 'response'],
+                    'response' => ['result' => ['structured' => 'response']],
+                    'id' => 'id1',
+                ],
+            ]],
+        ];
+
+        yield 'list response is wrapped as a Protobuf Struct' => [
+            new ToolCallMessage(
+                new ToolCall('id1', 'name1', ['foo' => 'bar']),
+                '["foo","bar"]',
+            ),
+            [[
+                'functionResponse' => [
+                    'name' => 'name1',
+                    'response' => ['result' => ['foo', 'bar']],
+                    'id' => 'id1',
+                ],
+            ]],
+        ];
+
+        yield 'empty id is omitted' => [
+            new ToolCallMessage(
+                new ToolCall('', 'name1', ['foo' => 'bar']),
+                '{"structured":"response"}',
+            ),
+            [[
+                'functionResponse' => [
+                    'name' => 'name1',
+                    'response' => ['result' => ['structured' => 'response']],
                 ],
             ]],
         ];

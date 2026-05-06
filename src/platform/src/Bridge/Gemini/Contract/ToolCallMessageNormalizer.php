@@ -26,9 +26,9 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
      *
      * @return array{
      *      functionResponse: array{
-     *          id: string,
+     *          id?: string,
      *          name: string,
-     *          response: array<int|string, mixed>
+     *          response: array{result: array<int|string, mixed>|string}
      *      }
      *  }[]
      */
@@ -37,14 +37,20 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
         $resultContent = json_validate($data->getContent())
             ? json_decode($data->getContent(), true) : $data->getContent();
 
+        // Gemini's API requires `response` (FunctionResponse) to be a Protobuf Struct
+        $functionResponse = [
+            'name' => $data->getToolCall()->getName(),
+            'response' => ['result' => $resultContent],
+        ];
+
+        // Gemini < 3.0 may return an empty string as the ID which is invalid
+        $id = $data->getToolCall()->getId();
+        if ('' !== $id) {
+            $functionResponse['id'] = $id;
+        }
+
         return [[
-            'functionResponse' => array_filter([
-                'id' => $data->getToolCall()->getId(),
-                'name' => $data->getToolCall()->getName(),
-                'response' => \is_array($resultContent) ? $resultContent : [
-                    'rawResponse' => $resultContent, // Gemini expects the response to be an object, but not everyone uses objects as their responses.
-                ],
-            ]),
+            'functionResponse' => $functionResponse,
         ]];
     }
 
