@@ -24,3 +24,10 @@ $messages = new MessageBag(
 $result = $platform->invoke('gpt-oss-120b', $messages);
 
 echo $result->asText().\PHP_EOL;
+
+// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
+$messages->add(Message::ofAssistant($result->asText()));
+$messages->add(Message::ofUser('And which versions are LTS?'));
+$result = $platform->invoke('gpt-oss-120b', $messages);
+
+echo $result->asText().\PHP_EOL;

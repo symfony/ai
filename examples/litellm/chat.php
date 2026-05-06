@@ -49,6 +49,15 @@ $result = $platform->invoke('mistral-small-latest', $messages, [
 
 echo $result->asText().\PHP_EOL;
 
+// Multi-turn: feed the assistant's reply back into the bag and ask a follow-up.
+$messages->add(Message::ofAssistant($result->asText()));
+$messages->add(Message::ofUser('And which versions are LTS?'));
+$result = $platform->invoke('mistral-small-latest', $messages, [
+    'max_tokens' => 500,
+]);
+
+echo $result->asText().\PHP_EOL;
+
 print_token_usage($result->getMetadata()->get('token_usage'));
 
 echo \PHP_EOL;
