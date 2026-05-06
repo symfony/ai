@@ -53,6 +53,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
                 ...$this->fetchRemoteModels(),
                 ...$this->fetchRemoteEmbeddings(),
             ];
+            ksort($this->models);
             $this->modelsAreLoaded = true;
         }
     }

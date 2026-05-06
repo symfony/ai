@@ -1,0 +1,100 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+require __DIR__.'/vendor/autoload.php';
+
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\OpenRouter\AbstractOpenRouterModelCatalog;
+use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
+use Symfony\AI\Platform\Capability;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\SingleCommandApplication;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\HttpClient\HttpClient;
+
+(new SingleCommandApplication())
+    ->setName('OpenRouter Update Static Model Catalog')
+    ->setDescription('Update the list of models in the static ModelCatalog class')
+    ->setCode(function (InputInterface $input, OutputInterface $output): int {
+        $io = new SymfonyStyle($input, $output);
+
+        $httpClient = HttpClient::create();
+        $apiCatalog = new ModelApiCatalog($httpClient);
+
+        $staticRouters = array_keys((new class extends AbstractOpenRouterModelCatalog {
+            public function expose(): array
+            {
+                return $this->models;
+            }
+        })->expose());
+
+        $models = $apiCatalog->getModels();
+        $counter = 0;
+
+
+        $code = "        // STATIC LIST START\n";
+        $code .= "        // Date: " . date(\DateTime::ATOM). "\n";
+        $code .= "        \$defaultModels = [\n";
+        foreach ($models as $modelName => $modelConfig) {
+            if (\in_array($modelName, $staticRouters, true)) {
+                continue;
+            }
+            $counter++;
+
+            $shortClass = EmbeddingsModel::class === $modelConfig['class']
+                ? (new ReflectionClass(EmbeddingsModel::class))->getShortName()
+                : (new ReflectionClass(CompletionsModel::class))->getShortName();
+
+            $code .= "            '".$modelName."' => [\n";
+            $code .= '                \'class\' => '.$shortClass."::class,\n";
+            $code .= "                'capabilities' => [\n";
+            foreach ($modelConfig['capabilities'] as $capability) {
+                $code .= '                    Capability::'.$capability->name.",\n";
+            }
+            $code .= "                ],\n";
+            $code .= "            ],\n";
+        }
+        $code .= "        ];\n";
+        $code .= "        // STATIC LIST END\n";
+
+        $catalogPath = __DIR__.'/ModelCatalog.php';
+        $catalogContent = file_get_contents($catalogPath);
+        if (false === $catalogContent) {
+            $io->error(\sprintf('Unable to read "%s".', $catalogPath));
+
+            return Command::FAILURE;
+        }
+
+        $updatedContent = preg_replace(
+            '/[ \t]*\/\/ STATIC LIST START.*?\/\/ STATIC LIST END\n/s',
+            ltrim($code, "\n"),
+            $catalogContent,
+            1,
+            $replacements,
+        );
+
+        if (null === $updatedContent || 1 !== $replacements) {
+            $io->error('Could not locate the "// STATIC LIST START" / "// STATIC LIST END" markers in ModelCatalog.php.');
+
+            return Command::FAILURE;
+        }
+
+        file_put_contents($catalogPath, $updatedContent);
+
+        $io->success(\sprintf('Add %d models', $counter));
+
+        return Command::SUCCESS;
+    })
+    ->run();
