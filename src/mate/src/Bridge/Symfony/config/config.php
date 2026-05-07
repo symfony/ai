@@ -17,9 +17,11 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorF
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\SecurityCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
+use Symfony\Bundle\SecurityBundle\DataCollector\SecurityDataCollector;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 
@@ -76,6 +78,12 @@ return static function (ContainerConfigurator $configurator) {
         $services->set(DoctrineCollectorFormatter::class)
             ->lazy()
             ->tag('ai_mate.profiler_collector_formatter');
+
+        if (class_exists(SecurityDataCollector::class)) {
+            $services->set(SecurityCollectorFormatter::class)
+                ->lazy()
+                ->tag('ai_mate.profiler_collector_formatter');
+        }
 
         // MCP Capabilities
         $services->set(ProfilerTool::class)
