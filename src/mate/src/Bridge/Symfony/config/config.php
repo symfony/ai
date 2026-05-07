@@ -16,12 +16,14 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MessengerCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Profiler\Profile;
+use Symfony\Component\Messenger\DataCollector\MessengerDataCollector;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
@@ -76,6 +78,12 @@ return static function (ContainerConfigurator $configurator) {
         $services->set(DoctrineCollectorFormatter::class)
             ->lazy()
             ->tag('ai_mate.profiler_collector_formatter');
+
+        if (class_exists(MessengerDataCollector::class)) {
+            $services->set(MessengerCollectorFormatter::class)
+                ->lazy()
+                ->tag('ai_mate.profiler_collector_formatter');
+        }
 
         // MCP Capabilities
         $services->set(ProfilerTool::class)

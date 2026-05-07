@@ -40,6 +40,7 @@
         "phpunit/phpunit": "^11.5.53",
         "symfony/http-kernel": "^7.3|^8.0",
         "symfony/mailer": "^7.3|^8.0",
+        "symfony/messenger": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0",
         "symfony/web-profiler-bundle": "^7.3|^8.0"
@@ -48,6 +49,7 @@
         "doctrine/doctrine-bundle": "Required for Doctrine database profiler formatter",
         "symfony/http-kernel": "Required for profiler data access tools",
         "symfony/mailer": "Required for mailer profiler formatter",
+        "symfony/messenger": "Required for Messenger profiler formatter",
         "symfony/translation": "Required for translation profiler collector formatter",
         "symfony/web-profiler-bundle": "Required for profiler data access tools"
     },
