@@ -17,5 +17,8 @@
         <service id="router" class="Symfony\Component\Routing\Router">
             <factory class="RouterFactory" method="create"/>
         </service>
+        <service id="app.event_listener" class="App\EventListener\RequestListener">
+            <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest"/>
+        </service>
     </services>
 </container>

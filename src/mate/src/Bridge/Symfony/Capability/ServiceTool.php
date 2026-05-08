@@ -28,10 +28,11 @@ class ServiceTool
     }
 
     /**
-     * @param string|null $query Filter services by ID or class name (case-insensitive partial match)
+     * @param string|null $query Filter by service ID or class name (case-insensitive partial match)
+     * @param string|null $tag   Filter by DI tag name (e.g. kernel.event_listener, twig.extension)
      */
-    #[McpTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID or class name. Returns a map of service IDs to their class names.')]
-    public function getServices(?string $query = null): string
+    #[McpTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID, class name, or tag name. Returns a map of service IDs to their class names.')]
+    public function getServices(?string $query = null, ?string $tag = null): string
     {
         $container = $this->readContainer();
         if (null === $container) {
@@ -47,6 +48,20 @@ class ServiceTool
                     continue;
                 }
             }
+
+            if (null !== $tag && '' !== $tag) {
+                $hasTag = false;
+                foreach ($service->getTags() as $serviceTag) {
+                    if ($serviceTag->getName() === $tag) {
+                        $hasTag = true;
+                        break;
+                    }
+                }
+                if (!$hasTag) {
+                    continue;
+                }
+            }
+
             $output[$service->getId()] = $service->getClass();
         }
 

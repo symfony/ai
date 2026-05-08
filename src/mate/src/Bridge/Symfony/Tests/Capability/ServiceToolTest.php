@@ -165,6 +165,52 @@ final class ServiceToolTest extends TestCase
         $this->assertEmpty($services);
     }
 
+    public function testGetServicesFiltersByTag()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $services = Toon::decode($tool->getServices(tag: 'kernel.event_listener'));
+
+        $this->assertArrayHasKey('app.event_listener', $services);
+        $this->assertSame('App\EventListener\RequestListener', $services['app.event_listener']);
+    }
+
+    public function testGetServicesFiltersByTagReturnsOnlyMatchingServices()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $services = Toon::decode($tool->getServices(tag: 'cache.pool'));
+
+        $this->assertArrayHasKey('cache.app', $services);
+        $this->assertArrayNotHasKey('logger', $services);
+        $this->assertArrayNotHasKey('event_dispatcher', $services);
+        $this->assertArrayNotHasKey('app.event_listener', $services);
+    }
+
+    public function testGetServicesFiltersByTagWithNoMatch()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $services = Toon::decode($tool->getServices(tag: 'nonexistent.tag'), DecodeOptions::lenient());
+
+        $this->assertEmpty($services);
+    }
+
+    public function testGetServicesFiltersByTagAndQuery()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $services = Toon::decode($tool->getServices(query: 'listener', tag: 'kernel.event_listener'));
+
+        $this->assertArrayHasKey('app.event_listener', $services);
+        $this->assertArrayNotHasKey('cache.app', $services);
+        $this->assertArrayNotHasKey('logger', $services);
+    }
+
     public function testGetServicesDetectsCustomKernelClassName()
     {
         $tempDir = sys_get_temp_dir().'/symfony_ai_mate_test_'.uniqid();
