@@ -22,7 +22,7 @@ You also need to add few lines in the routing configuration for this bundle:
 .. code-block:: yaml
 
     # config/routes.yaml
-    mcp:
+    _mcp:
         resource: .
         type: mcp
 
