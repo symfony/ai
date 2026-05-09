@@ -14,10 +14,12 @@ namespace Symfony\AI\Platform\Bridge\Cache;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -59,6 +61,14 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                     fn (ResultInterface $result): array => $this->normalize($result, $format, $context),
                     $data->getContent(),
                 ),
+                MultiPartResult::class => array_map(
+                    fn (ResultInterface $result): array => $this->normalize($result, $format, $context),
+                    $data->getContent(),
+                ),
+                ThinkingResult::class => [
+                    'content' => $data->getContent(),
+                    'signature' => $data->getSignature(),
+                ],
                 ObjectResult::class => [
                     'type' => get_debug_type($data->getContent()),
                     'content' => \is_array($data->getContent()) ? $data->getContent() : $this->objectNormalizer->normalize($data->getContent(), $format, $context),
@@ -94,6 +104,11 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                 fn (array $choice): ResultInterface => $this->denormalize($choice, $type, $format, $context),
                 $data['payload']
             )),
+            MultiPartResult::class => new MultiPartResult(array_map(
+                fn (array $part): ResultInterface => $this->denormalize($part, $type, $format, $context),
+                $data['payload']
+            )),
+            ThinkingResult::class => new ThinkingResult($data['payload']['content'], $data['payload']['signature']),
             ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context)),
             TextResult::class => new TextResult($data['payload']),
             ToolCallResult::class => new ToolCallResult(array_map(

@@ -1,6 +1,27 @@
 UPGRADE FROM 0.8 to 0.9
 =======================
 
+Platform
+--------
+
+ * The OpenAI Responses bridges return `MultiPartResult` instead of `ChoiceResult` for multi-item output. Iterate parts instead of treating them as alternative completions:
+
+   ```diff
+   -if ($result instanceof ChoiceResult) {
+   -    foreach ($result->getContent() as $alternative) { /* ... */ }
+   -}
+   +if ($result instanceof MultiPartResult) {
+   +    foreach ($result as $part) { /* ... */ }
+   +}
+   ```
+
+ * Reasoning summaries from OpenAI Responses bridges are exposed as one `ThinkingResult` per `summary_text` chunk instead of being folded into a `TextResult`:
+
+   ```diff
+   -$part instanceof TextResult ? $part->getContent() : null
+   +$part instanceof ThinkingResult ? $part->getContent() : null
+   ```
+
 Mate
 ----
 
