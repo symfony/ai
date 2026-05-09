@@ -58,6 +58,57 @@ To use a specific AI platform, install the corresponding bridge package:
 **This repository is a READ-ONLY sub-tree split**. See
 https://github.com/symfony/ai to create issues or submit pull requests.
 
+## Exception strategy
+
+The Platform component defines its own exception taxonomy. Consumers of this component should depend on Platform exceptions rather than on exceptions from lower-level libraries such as HTTP clients, process execution libraries, or provider SDKs.
+
+In other words, the public contract of this component is expressed through exceptions in the `Symfony\AI\Platform\Exception\` namespace. Bridge implementations are expected to normalize provider-specific and transport-specific failures into these Platform exceptions before they cross the `PlatformInterface`, `ModelClientInterface`, or `ResultConverterInterface` boundaries.
+
+### Exception categories
+
+The current exception set is intended to cover several different kinds of failures, including:
+
+- authentication and authorization problems, for example `AuthenticationException`
+- invalid input or request problems:
+  - `InvalidArgumentException` for invalid usage of the Platform API by the caller
+  - `InvalidRequestException` for semantically invalid requests in the Platform/provider contract
+  - `BadRequestException` for generic provider-side request rejection when no narrower Platform exception applies
+- model resolution and support problems, for example `ModelNotFoundException` or `MissingModelSupportException`
+- provider-side runtime limits or policies, for example `RateLimitExceededException`, `ExceedContextSizeException`, or `ContentFilterException`
+- conversion or contract mismatches, for example `UnexpectedResultTypeException`
+- broader component-level failures, through `LogicException`, `RuntimeException`, and `ExceptionInterface`
+
+### Recoverable and unrecoverable failures
+
+When handling failures, consumers will often want to distinguish between:
+
+- recoverable runtime failures, such as temporary transport errors, transient provider failures, or rate limiting, where retry, backoff, or failover may be appropriate
+- unrecoverable failures, such as authentication errors, invalid requests, unsupported models, or invalid configuration, where the request is not expected to succeed without changing the input or setup
+
+Concrete Platform exceptions should make that distinction clear enough for consumers to write reliable error-handling and retry logic.
+
+### What consumers should catch
+
+Code that depends on this component should prefer catching Platform exceptions at the appropriate level of specificity.
+
+Typical strategies include:
+
+- catching a specific exception, such as `RateLimitExceededException`, when a dedicated reaction is needed
+- catching a broader Platform runtime exception when multiple provider/runtime failures should be handled the same way
+- catching `ExceptionInterface` as a final fallback for component-level handling
+
+Consumers should avoid coupling application code to bridge-specific exceptions or to exceptions from lower-level dependencies, because that reduces the value of the Platform abstraction and makes switching providers harder.
+
+### What bridge authors should do
+
+Implementers of Platform bridges should normalize lower-level failures into Platform exceptions as close as possible to where the failure is detected.
+
+As a rule of thumb:
+
+- `ModelClientInterface` implementations should normalize transport, provider, authentication, throttling, and model lookup/support failures
+- `ResultConverterInterface` implementations should normalize response-shape, content filtering, context-size, and conversion failures
+- `PlatformInterface` implementations should preserve the Platform-level exception contract and should not leak raw dependency exceptions across the abstraction boundary
+
 ## Resources
 
 - [Documentation](https://symfony.com/doc/current/ai/components/platform.html)
