@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\UserMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -82,6 +83,50 @@ final class ContractTest extends TestCase
                 'system' => [['text' => 'You are a cat. Your name is Neko.']],
                 'messages' => [
                     ['role' => 'user', 'content' => [['text' => 'Hello there']]],
+                ],
+            ],
+        ];
+
+        yield 'with text and tool use interleaved' => [
+            new MessageBag(
+                Message::ofUser('Hello there, what is the time?'),
+                Message::ofAssistant(
+                    new Text('Let me check.'),
+                    new ToolCall('123456', 'clock', []),
+                ),
+                Message::ofToolCall(new ToolCall('123456', 'clock', []), '2023-10-01T10:00:00+00:00'),
+                Message::ofAssistant('It is 10:00 AM.'),
+            ),
+            [
+                'messages' => [
+                    ['role' => 'user', 'content' => [['text' => 'Hello there, what is the time?']]],
+                    [
+                        'role' => 'assistant',
+                        'content' => [
+                            ['text' => 'Let me check.'],
+                            [
+                                'toolUse' => [
+                                    'toolUseId' => '123456',
+                                    'name' => 'clock',
+                                    'input' => new \stdClass(),
+                                ],
+                            ],
+                        ],
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            [
+                                'toolResult' => [
+                                    'toolUseId' => '123456',
+                                    'content' => [
+                                        ['json' => '2023-10-01T10:00:00+00:00'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    ['role' => 'assistant', 'content' => [['text' => 'It is 10:00 AM.']]],
                 ],
             ],
         ];

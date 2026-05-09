@@ -12,9 +12,13 @@
 namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -96,6 +100,14 @@ final class Message
             return array_values($part->getContent());
         }
 
+        if ($part instanceof ExecutableCodeResult) {
+            return [new ExecutableCode($part->getContent(), $part->getLanguage(), $part->getId())];
+        }
+
+        if ($part instanceof CodeExecutionResult) {
+            return [new CodeExecution($part->isSucceeded(), $part->getContent(), $part->getId())];
+        }
+
         if ($part instanceof MultiPartResult) {
             $content = [];
             foreach ($part->getContent() as $inner) {
@@ -105,6 +117,11 @@ final class Message
             return $content;
         }
 
+        // Aggressive on purpose: we'd rather fail loudly than silently drop a part
+        // and leave the next turn's request missing context. If you hit this with a
+        // legitimate response, please open an issue at https://github.com/symfony/ai
+        // with a minimal reproducer (model, request, raw provider response) so we
+        // can add a mapping.
         throw new InvalidArgumentException(\sprintf('Unsupported assistant message part of type "%s".', $part::class));
     }
 }

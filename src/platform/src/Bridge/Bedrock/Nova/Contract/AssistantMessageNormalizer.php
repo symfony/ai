@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
@@ -39,24 +40,31 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        if ($data->hasToolCalls()) {
-            return [
-                'role' => 'assistant',
-                'content' => array_map(static function (ToolCall $toolCall) {
-                    return [
-                        'toolUse' => [
-                            'toolUseId' => $toolCall->getId(),
-                            'name' => $toolCall->getName(),
-                            'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
-                        ],
-                    ];
-                }, $data->getToolCalls()),
-            ];
+        $blocks = [];
+        foreach ($data->getContent() as $part) {
+            if ($part instanceof Text) {
+                $blocks[] = ['text' => $part->getText()];
+                continue;
+            }
+
+            if ($part instanceof ToolCall) {
+                $blocks[] = [
+                    'toolUse' => [
+                        'toolUseId' => $part->getId(),
+                        'name' => $part->getName(),
+                        'input' => [] !== $part->getArguments() ? $part->getArguments() : new \stdClass(),
+                    ],
+                ];
+            }
+        }
+
+        if ([] === $blocks) {
+            $blocks[] = ['text' => ''];
         }
 
         return [
             'role' => 'assistant',
-            'content' => [['text' => $data->asText() ?? '']],
+            'content' => $blocks,
         ];
     }
 

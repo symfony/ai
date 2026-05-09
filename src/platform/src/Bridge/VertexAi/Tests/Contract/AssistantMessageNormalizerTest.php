@@ -17,6 +17,8 @@ use Symfony\AI\Platform\Bridge\VertexAi\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\CodeExecution;
+use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -109,6 +111,22 @@ final class AssistantMessageNormalizerTest extends TestCase
             new AssistantMessage(new ToolCall('id1', 'run', ['x' => 1], 'sig_call')),
             [
                 ['functionCall' => ['name' => 'run', 'args' => ['x' => 1]], 'thoughtSignature' => 'sig_call'],
+            ],
+        ];
+        yield 'paired executable code and result' => [
+            new AssistantMessage(
+                new ExecutableCode('print(1)', 'PYTHON', 'exec_1'),
+                new CodeExecution(true, '1', 'exec_1'),
+            ),
+            [
+                ['executableCode' => ['language' => 'PYTHON', 'code' => 'print(1)', 'id' => 'exec_1']],
+                ['codeExecutionResult' => ['outcome' => 'OUTCOME_OK', 'output' => '1', 'id' => 'exec_1']],
+            ],
+        ];
+        yield 'code execution result failure without id' => [
+            new AssistantMessage(new CodeExecution(false, 'oops')),
+            [
+                ['codeExecutionResult' => ['outcome' => 'OUTCOME_FAILED', 'output' => 'oops']],
             ],
         ];
     }

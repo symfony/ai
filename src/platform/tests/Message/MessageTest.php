@@ -12,11 +12,22 @@
 namespace Symfony\AI\Platform\Tests\Message;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 final class MessageTest extends TestCase
 {
@@ -114,6 +125,55 @@ final class MessageTest extends TestCase
         );
 
         $this->assertCount(4, $message->getContent());
+    }
+
+    public function testCreateAssistantMessageFromMultiPartResultMapsKnownResultTypes()
+    {
+        $result = new MultiPartResult([
+            new ThinkingResult('Reasoning...', 'sig'),
+            new TextResult('Visible answer.'),
+            new ToolCallResult([new ToolCall('id1', 'fn', ['x' => 1])]),
+            new ExecutableCodeResult('echo hi', 'bash', 'srvtoolu_1'),
+            new CodeExecutionResult(true, 'hi', 'srvtoolu_1'),
+        ]);
+
+        $message = Message::ofAssistant($result);
+
+        $parts = $message->getContent();
+        $this->assertCount(5, $parts);
+        $this->assertInstanceOf(Thinking::class, $parts[0]);
+        $this->assertInstanceOf(Text::class, $parts[1]);
+        $this->assertInstanceOf(ToolCall::class, $parts[2]);
+        $this->assertInstanceOf(ExecutableCode::class, $parts[3]);
+        $this->assertSame('echo hi', $parts[3]->getCode());
+        $this->assertSame('bash', $parts[3]->getLanguage());
+        $this->assertSame('srvtoolu_1', $parts[3]->getId());
+        $this->assertInstanceOf(CodeExecution::class, $parts[4]);
+        $this->assertTrue($parts[4]->isSucceeded());
+        $this->assertSame('hi', $parts[4]->getOutput());
+        $this->assertSame('srvtoolu_1', $parts[4]->getId());
+    }
+
+    public function testCreateAssistantMessageFromUnsupportedResultThrows()
+    {
+        $result = BinaryResult::fromBase64(base64_encode('binary'), 'image/png');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('Unsupported assistant message part of type "%s".', $result::class));
+
+        Message::ofAssistant($result);
+    }
+
+    public function testCreateAssistantMessageFromMultiPartResultThrowsOnUnsupportedInnerPart()
+    {
+        $result = new MultiPartResult([
+            new TextResult('Visible answer.'),
+            BinaryResult::fromBase64(base64_encode('binary'), 'image/png'),
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Message::ofAssistant($result);
     }
 
     public function testCreateToolCallMessage()

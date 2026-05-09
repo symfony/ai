@@ -122,8 +122,21 @@
                                                 {% for message in call.input.messages %}
                                                     <li>
                                                         <strong>{{ message.role.value|title }}:</strong>
-                                                        {% if 'assistant' == message.role.value and message.hasToolCalls%}
-                                                            {{ _self.tool_calls(message.toolCalls) }}
+                                                        {% if 'assistant' == message.role.value %}
+                                                            {% for part in message.content %}
+                                                                {% if part.text is defined %}{# Text #}
+                                                                    {{ part.text|nl2br }}
+                                                                {% elseif part.code is defined %}{# ExecutableCode #}
+                                                                    <pre><code>{{ part.code }}</code></pre>
+                                                                {% elseif part.output is defined %}{# CodeExecution #}
+                                                                    <pre>{{ part.output }}</pre>
+                                                                {% elseif part.arguments is defined %}{# ToolCall #}
+                                                                    <strong>{{ part.name }}({{ part.arguments|map((value, key) => "#{key}: #{value|json_encode}")|join(', ') }})</strong>
+                                                                    <i>(ID: {{ part.id }})</i>
+                                                                {% elseif part.content is defined %}{# Thinking #}
+                                                                    <details><summary><i>Thinking</i></summary>{{ part.content|nl2br }}</details>
+                                                                {% endif %}
+                                                            {% endfor %}
                                                         {% elseif 'tool' == message.role.value %}
                                                             <i>Result of tool call with ID {{ message.toolCall.id }}</i><br />
                                                             {{ message.content|nl2br }}
