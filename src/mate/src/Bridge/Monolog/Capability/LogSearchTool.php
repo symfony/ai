@@ -106,11 +106,12 @@ final class LogSearchTool
      * @param int         $lines       Number of most recent log entries to return
      * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
      * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
+     * @param string|null $channel     Filter by Monolog channel name (e.g. app, security, doctrine)
      */
-    #[McpTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level and environment.')]
-    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null): string
+    #[McpTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel.')]
+    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null, ?string $channel = null): string
     {
-        $entries = $this->reader->tail($lines, $level, $environment);
+        $entries = $this->reader->tail($lines, $level, $environment, $channel);
 
         return ResponseEncoder::encode(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
     }

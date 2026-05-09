@@ -158,6 +158,17 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
+    public function testTailWithChannel()
+    {
+        $result = Toon::decode($this->tool->tail(10, channel: 'security'));
+
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertNotEmpty($result['entries']);
+        foreach ($result['entries'] as $entry) {
+            $this->assertSame('security', $entry['channel']);
+        }
+    }
+
     public function testListFiles()
     {
         $result = Toon::decode($this->tool->listFiles());
