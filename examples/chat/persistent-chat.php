@@ -31,4 +31,4 @@ $chat->initiate($messages);
 $chat->submit(Message::ofUser('My name is Christopher.'));
 $message = $chat->submit(Message::ofUser('What is my name?'));
 
-echo $message->getContent().\PHP_EOL;
+echo $message->asText().\PHP_EOL;

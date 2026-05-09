@@ -29,6 +29,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -460,8 +461,14 @@ final class ResultConverterTest extends TestCase
 
         $result = $converter->convert(new RawHttpResult($httpResponse));
 
-        $this->assertInstanceOf(TextResult::class, $result);
-        $this->assertSame('The answer is 42.', $result->getContent());
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(ThinkingResult::class, $parts[0]);
+        $this->assertSame('Let me reason about this...', $parts[0]->getContent());
+        $this->assertSame('sig_abc123', $parts[0]->getSignature());
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('The answer is 42.', $parts[1]->getContent());
     }
 
     public function testNonStreamingResponseWithOnlyThinkingContent()
@@ -479,10 +486,11 @@ final class ResultConverterTest extends TestCase
         $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
         $converter = new ResultConverter();
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Response content does not contain any supported content.');
+        $result = $converter->convert(new RawHttpResult($httpResponse));
 
-        $converter->convert(new RawHttpResult($httpResponse));
+        $this->assertInstanceOf(ThinkingResult::class, $result);
+        $this->assertSame('Reasoning only...', $result->getContent());
+        $this->assertSame('sig_xyz', $result->getSignature());
     }
 
     /**

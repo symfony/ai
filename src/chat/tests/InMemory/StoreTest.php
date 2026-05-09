@@ -109,7 +109,7 @@ final class StoreTest extends TestCase
         $store = new Store();
         $store->setup();
         $store->save(new MessageBag(new UserMessage(new Text('Hello'))));
-        $store->save(new MessageBag(new UserMessage(new Text('Hello')), new AssistantMessage('Hi')));
+        $store->save(new MessageBag(new UserMessage(new Text('Hello')), new AssistantMessage(new Text('Hi'))));
 
         $this->assertCount(2, $store->load());
 

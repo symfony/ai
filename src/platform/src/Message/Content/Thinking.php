@@ -9,12 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Result;
+namespace Symfony\AI\Platform\Message\Content;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
+ * Represents a thinking/reasoning block emitted by an assistant.
+ *
+ * The optional signature is used by providers such as Anthropic to verify
+ * thinking blocks when they are replayed on a subsequent turn.
  */
-final class TextResult extends BaseResult
+final class Thinking implements ContentInterface
 {
     public function __construct(
         private readonly string $content,
@@ -27,10 +30,6 @@ final class TextResult extends BaseResult
         return $this->content;
     }
 
-    /**
-     * Provider-scoped signature guarding this text part when replayed on a subsequent turn.
-     * Currently only Google Gemini / Vertex AI emit signatures on non-thought text parts.
-     */
     public function getSignature(): ?string
     {
         return $this->signature;

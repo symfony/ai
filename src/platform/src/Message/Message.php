@@ -11,9 +11,16 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -35,12 +42,14 @@ final class Message
         return new SystemMessage($content instanceof \Stringable ? (string) $content : $content);
     }
 
-    /**
-     * @param ?ToolCall[] $toolCalls
-     */
-    public static function ofAssistant(?string $content = null, ?array $toolCalls = null): AssistantMessage
+    public static function ofAssistant(string|ContentInterface|ResultInterface ...$parts): AssistantMessage
     {
-        return new AssistantMessage($content, $toolCalls);
+        $content = [];
+        foreach ($parts as $part) {
+            array_push($content, ...self::toContent($part));
+        }
+
+        return new AssistantMessage(...$content);
     }
 
     public static function ofUser(\Stringable|string|ContentInterface ...$content): UserMessage
@@ -60,5 +69,42 @@ final class Message
     public static function ofToolCall(ToolCall $toolCall, string $content): ToolCallMessage
     {
         return new ToolCallMessage($toolCall, $content);
+    }
+
+    /**
+     * @return list<ContentInterface>
+     */
+    private static function toContent(string|ContentInterface|ResultInterface $part): array
+    {
+        if (\is_string($part)) {
+            return [new Text($part)];
+        }
+
+        if ($part instanceof ContentInterface) {
+            return [$part];
+        }
+
+        if ($part instanceof TextResult) {
+            return [new Text($part->getContent(), $part->getSignature())];
+        }
+
+        if ($part instanceof ThinkingResult) {
+            return [new Thinking($part->getContent() ?? '', $part->getSignature())];
+        }
+
+        if ($part instanceof ToolCallResult) {
+            return array_values($part->getContent());
+        }
+
+        if ($part instanceof MultiPartResult) {
+            $content = [];
+            foreach ($part->getContent() as $inner) {
+                array_push($content, ...self::toContent($inner));
+            }
+
+            return $content;
+        }
+
+        throw new InvalidArgumentException(\sprintf('Unsupported assistant message part of type "%s".', $part::class));
     }
 }

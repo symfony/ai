@@ -46,7 +46,7 @@ final class ChatStreamListenerTest extends TestCase
 
         $assistantMessage = $stored->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('I am doing well!', $assistantMessage->getContent());
+        $this->assertSame('I am doing well!', $assistantMessage->asText());
     }
 
     public function testItIgnoresNonStringChunks()
@@ -69,7 +69,7 @@ final class ChatStreamListenerTest extends TestCase
         $stored = $store->load();
         $assistantMessage = $stored->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('Hello World', $assistantMessage->getContent());
+        $this->assertSame('Hello World', $assistantMessage->asText());
     }
 
     public function testItMergesMetadataOntoAssistantMessage()
@@ -119,6 +119,6 @@ final class ChatStreamListenerTest extends TestCase
 
         $assistantMessage = $stored->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('chunk1chunk2', $assistantMessage->getContent());
+        $this->assertSame('chunk1chunk2', $assistantMessage->asText());
     }
 }

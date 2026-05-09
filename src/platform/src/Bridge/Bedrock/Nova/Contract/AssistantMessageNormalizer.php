@@ -56,7 +56,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
 
         return [
             'role' => 'assistant',
-            'content' => [['text' => $data->getContent()]],
+            'content' => [['text' => $data->asText() ?? '']],
         ];
     }
 

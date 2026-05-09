@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
@@ -40,10 +41,17 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             return $this->normalizer->normalize($data->getToolCalls(), $format, $context);
         }
 
+        $text = '';
+        foreach ($data->getContent() as $part) {
+            if ($part instanceof Text) {
+                $text .= $part->getText();
+            }
+        }
+
         return [
             'role' => $data->getRole()->value,
             'type' => 'message',
-            'content' => $data->getContent(),
+            'content' => '' === $text ? null : $text,
         ];
     }
 

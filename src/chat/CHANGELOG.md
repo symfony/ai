@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+* [BC BREAK] `MessageNormalizer` now serializes assistant messages with an ordered `parts` field to preserve the sequence of `Text`, `Thinking`, and `ToolCall` blocks across round-trips. Legacy payloads (no `parts`, only `content` + `toolsCalls`) still denormalize, but ordering is no longer guaranteed for them.
+
 0.8
 ---
 

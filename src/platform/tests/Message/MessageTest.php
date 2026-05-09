@@ -43,7 +43,9 @@ final class MessageTest extends TestCase
     {
         $message = Message::ofAssistant('It is time to sleep.');
 
-        $this->assertSame('It is time to sleep.', $message->getContent());
+        $this->assertCount(1, $message->getContent());
+        $this->assertInstanceOf(Text::class, $message->getContent()[0]);
+        $this->assertSame('It is time to sleep.', $message->asText());
     }
 
     public function testCreateAssistantMessageWithToolCalls()
@@ -52,7 +54,7 @@ final class MessageTest extends TestCase
             new ToolCall('call_123456', 'my_tool', ['foo' => 'bar']),
             new ToolCall('call_456789', 'my_faster_tool'),
         ];
-        $message = Message::ofAssistant(toolCalls: $toolCalls);
+        $message = Message::ofAssistant(...$toolCalls);
 
         $this->assertCount(2, $message->getToolCalls());
         $this->assertTrue($message->hasToolCalls());

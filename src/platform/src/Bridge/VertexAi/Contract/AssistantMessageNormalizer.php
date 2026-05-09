@@ -12,43 +12,63 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi\Contract;
 
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
+use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Model as BaseModel;
+use Symfony\AI\Platform\Result\ToolCall;
 
 /**
  * @author Junaid Farooq <ulislam.junaid125@gmail.com>
+ *
+ * @phpstan-import-type Part from ResultConverter
  */
 final class AssistantMessageNormalizer extends ModelContractNormalizer
 {
     /**
      * @param AssistantMessage $data
      *
-     * @return array{
-     *     array{
-     *         text: string,
-     *         functionCall?: array{
-     *             name: string,
-     *             args?: array<int|string, mixed>
-     *         }
-     *     }
-     * }
+     * @return list<Part>
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $normalized = [];
 
-        if (null !== $data->getContent()) {
-            $normalized[] = ['text' => $data->getContent()];
-        }
+        foreach ($data->getContent() as $part) {
+            if ($part instanceof Text) {
+                $textPart = ['text' => $part->getText()];
+                if (null !== $part->getSignature()) {
+                    $textPart['thoughtSignature'] = $part->getSignature();
+                }
+                $normalized[] = $textPart;
+                continue;
+            }
 
-        if ($data->hasToolCalls()) {
-            $normalized['functionCall'] = [
-                'name' => $data->getToolCalls()[0]->getName(),
-            ];
+            if ($part instanceof Thinking) {
+                $thoughtPart = ['text' => $part->getContent(), 'thought' => true];
+                if (null !== $part->getSignature()) {
+                    $thoughtPart['thoughtSignature'] = $part->getSignature();
+                }
+                $normalized[] = $thoughtPart;
+                continue;
+            }
 
-            if ($data->getToolCalls()[0]->getArguments()) {
-                $normalized['functionCall']['args'] = $data->getToolCalls()[0]->getArguments();
+            if ($part instanceof ToolCall) {
+                $functionCall = [
+                    'name' => $part->getName(),
+                ];
+
+                if ([] !== $part->getArguments()) {
+                    $functionCall['args'] = $part->getArguments();
+                }
+
+                $toolPart = ['functionCall' => $functionCall];
+                if (null !== $part->getSignature()) {
+                    $toolPart['thoughtSignature'] = $part->getSignature();
+                }
+                $normalized[] = $toolPart;
             }
         }
 

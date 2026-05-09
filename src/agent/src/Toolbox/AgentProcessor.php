@@ -111,7 +111,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         ++$this->nestingLevel;
         $messages = $this->excludeToolMessages ? clone $output->getMessageBag() : $output->getMessageBag();
 
-        if (null !== $streamedAssistantResponse && '' !== $streamedAssistantResponse->getContent()) {
+        if (null !== $streamedAssistantResponse && [] !== $streamedAssistantResponse->getContent()) {
             $messages->add($streamedAssistantResponse);
         }
 
@@ -123,7 +123,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
                 }
 
                 $toolCalls = $result->getContent();
-                $messages->add(Message::ofAssistant(toolCalls: $toolCalls));
+                $messages->add(Message::ofAssistant(...$toolCalls));
 
                 $results = [];
                 foreach ($toolCalls as $toolCall) {

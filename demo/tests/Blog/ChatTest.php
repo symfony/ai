@@ -66,7 +66,7 @@ final class ChatTest extends TestCase
         // Check assistant message
         $assistantMessage = $messageList[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $assistantMessage->getContent());
+        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $assistantMessage->asText());
     }
 
     public function testSubmitMessageWithUnknownQueryUsesDefaultResponse()
@@ -87,7 +87,8 @@ final class ChatTest extends TestCase
 
         // Check assistant used default response
         $assistantMessage = $messageList[1];
-        $this->assertSame('I can help you with Symfony-related questions!', $assistantMessage->getContent());
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertSame('I can help you with Symfony-related questions!', $assistantMessage->asText());
     }
 
     public function testMultipleMessagesAreTrackedCorrectly()
@@ -169,7 +170,8 @@ final class ChatTest extends TestCase
         $this->assertCount(1, $messages[0]->getContent());
         $this->assertInstanceOf(Text::class, $messages[0]->getContent()[0]);
         $this->assertSame('What is Symfony?', $messages[0]->getContent()[0]->getText()); // user1
-        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $messages[1]->getContent()); // assistant1
+        $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
+        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $messages[1]->asText()); // assistant1
         $this->assertInstanceOf(UserMessage::class, $messages[2]);
         $this->assertCount(1, $messages[2]->getContent());
         $this->assertInstanceOf(Text::class, $messages[2]->getContent()[0]);

@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Meta\LlamaPromptConverter;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
@@ -119,7 +120,7 @@ final class LlamaPromptConverterTest extends TestCase
 
                 I am an assistant.<|eot_id|>
                 ASSISTANT,
-            new AssistantMessage('I am an assistant.'),
+            new AssistantMessage(new Text('I am an assistant.')),
         ];
 
         yield 'AssistantMessage with null content' => [

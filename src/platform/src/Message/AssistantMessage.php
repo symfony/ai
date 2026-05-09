@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform\Message;
 
+use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Uid\Uuid;
@@ -24,14 +27,13 @@ final class AssistantMessage implements MessageInterface
     use MetadataAwareTrait;
 
     /**
-     * @param ?ToolCall[] $toolCalls
+     * @var ContentInterface[]
      */
-    public function __construct(
-        private readonly ?string $content = null,
-        private readonly ?array $toolCalls = null,
-        private readonly ?string $thinkingContent = null,
-        private readonly ?string $thinkingSignature = null,
-    ) {
+    private readonly array $content;
+
+    public function __construct(ContentInterface ...$content)
+    {
+        $this->content = $content;
         $this->id = Uuid::v7();
     }
 
@@ -40,36 +42,71 @@ final class AssistantMessage implements MessageInterface
         return Role::Assistant;
     }
 
-    public function hasToolCalls(): bool
-    {
-        return null !== $this->toolCalls && [] !== $this->toolCalls;
-    }
-
     /**
-     * @return ?ToolCall[]
+     * @return ContentInterface[]
      */
-    public function getToolCalls(): ?array
-    {
-        return $this->toolCalls;
-    }
-
-    public function getContent(): ?string
+    public function getContent(): array
     {
         return $this->content;
     }
 
-    public function hasThinkingContent(): bool
+    public function hasToolCalls(): bool
     {
-        return null !== $this->thinkingContent;
+        foreach ($this->content as $part) {
+            if ($part instanceof ToolCall) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public function getThinkingContent(): ?string
+    /**
+     * @return ToolCall[]
+     */
+    public function getToolCalls(): array
     {
-        return $this->thinkingContent;
+        return array_values(array_filter(
+            $this->content,
+            static fn (ContentInterface $part) => $part instanceof ToolCall,
+        ));
     }
 
-    public function getThinkingSignature(): ?string
+    public function hasThinking(): bool
     {
-        return $this->thinkingSignature;
+        foreach ($this->content as $part) {
+            if ($part instanceof Thinking) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return Thinking[]
+     */
+    public function getThinking(): array
+    {
+        return array_values(array_filter(
+            $this->content,
+            static fn (ContentInterface $part) => $part instanceof Thinking,
+        ));
+    }
+
+    public function asText(): ?string
+    {
+        $textParts = [];
+        foreach ($this->content as $part) {
+            if ($part instanceof Text) {
+                $textParts[] = $part->getText();
+            }
+        }
+
+        if ([] === $textParts) {
+            return null;
+        }
+
+        return implode('', $textParts);
     }
 }

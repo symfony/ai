@@ -61,7 +61,7 @@ final class Chat
         \assert($recipe instanceof Recipe);
 
         $assistantMessage = Message::ofAssistant($recipe->toString());
-        $assistantMessage->getMetadata()->add('recipe', $result->getContent());
+        $assistantMessage->getMetadata()->add('recipe', $recipe);
         $messages->add($assistantMessage);
 
         $this->saveMessages($messages);

@@ -32,6 +32,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -105,6 +106,8 @@ class ResultConverter implements ResultConverterInterface
                 );
             } elseif ('text_editor_code_execution_tool_result' === $content['type']) {
                 $results[] = new CodeExecutionResult(true, null, $content['tool_use_id']);
+            } elseif ('thinking' === $content['type']) {
+                $results[] = new ThinkingResult($content['thinking'], $content['signature'] ?? null);
             }
         }
 
