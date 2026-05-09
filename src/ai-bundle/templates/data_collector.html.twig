@@ -146,10 +146,15 @@
                                                                     {{ item.text|nl2br }}
                                                                 {% elseif item.format is defined and item.format starts with 'image/'  %}
                                                                     <img src="{{ item.asDataUrl }}" style="max-width: 100%;"/>
-                                                                {% elseif item.asDataUrl  %}
+                                                                {% elseif item.asDataUrl is defined %}
                                                                     <a href="{{ item.asDataUrl }}" download="{{ item.filename ?? 'View File' }}">{{ item.filename ?? 'View File' }}</a>
+                                                                {% elseif item.url is defined %}{# ImageUrl, DocumentUrl #}
+                                                                    <a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.url }}</a>
                                                                 {% endif %}
                                                             {% endfor %}
+                                                        {% elseif message.content.template is defined %}{# SystemMessage holding a Template #}
+                                                            {{ message.content.template|nl2br }}
+                                                            <small><i>(template type: {{ message.content.type }})</i></small>
                                                         {% else %}
                                                             {{ message.content|nl2br }}
                                                         {% endif %}
