@@ -73,4 +73,35 @@ final class PlatformInvokeCommandTest extends TestCase
             'message' => 'Test message',
         ]);
     }
+
+    public function testExecuteInteractivelyPromptsForMissingArguments()
+    {
+        $textResult = new TextResult('Hello! How can I assist you?');
+        $rawResult = new InMemoryRawResult([]);
+        $promise = new DeferredResult(new PlainConverter($textResult), $rawResult);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')
+            ->with('gpt-4o-mini', $this->anything())
+            ->willReturn($promise);
+
+        $platforms = $this->createMock(ServiceLocator::class);
+        $platforms->method('getProvidedServices')->willReturn(['openai' => 'service_class', 'anthropic' => 'service_class']);
+        $platforms->method('has')->with('openai')->willReturn(true);
+        $platforms->method('get')->with('openai')->willReturn($platform);
+
+        $command = new PlatformInvokeCommand($platforms);
+        $commandTester = new CommandTester($command);
+
+        $commandTester->setInputs(['openai', 'gpt-4o-mini', 'Hello!']);
+
+        $exitCode = $commandTester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $exitCode);
+        $display = $commandTester->getDisplay();
+        $this->assertStringContainsString('Select a platform', $display);
+        $this->assertStringContainsString('Which model do you want to use?', $display);
+        $this->assertStringContainsString('Enter the message to send', $display);
+        $this->assertStringContainsString('Hello! How can I assist you?', $display);
+    }
 }

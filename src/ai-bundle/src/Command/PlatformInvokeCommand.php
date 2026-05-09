@@ -35,10 +35,6 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 )]
 final class PlatformInvokeCommand extends Command
 {
-    private string $message;
-    private PlatformInterface $platform;
-    private string $model;
-
     /**
      * @param ServiceLocator<PlatformInterface> $platforms
      */
@@ -58,9 +54,9 @@ final class PlatformInvokeCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('platform', InputArgument::REQUIRED, 'The name of the configured platform to invoke')
-            ->addArgument('model', InputArgument::REQUIRED, 'The model to use for the request')
-            ->addArgument('message', InputArgument::REQUIRED, 'The message to send to the AI platform')
+            ->addArgument('platform', InputArgument::OPTIONAL, 'The name of the configured platform to invoke')
+            ->addArgument('model', InputArgument::OPTIONAL, 'The model to use for the request')
+            ->addArgument('message', InputArgument::OPTIONAL, 'The message to send to the AI platform')
             ->setHelp(
                 <<<'HELP'
                 The <info>%command.name%</info> command allows you to invoke configured AI platforms with a message.
@@ -72,33 +68,48 @@ final class PlatformInvokeCommand extends Command
                   <info>%command.full_name% openai gpt-4o-mini "Hello, world!"</info>
                   <info>%command.full_name% anthropic claude-3-5-sonnet-20241022 "Explain quantum physics"</info>
 
+                Any missing argument will be prompted for in interactive mode.
+
                 Available platforms depend on your configuration in config/packages/ai.yaml
                 HELP
             );
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output): void
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
+        $io = new SymfonyStyle($input, $output);
+
+        if (null === $input->getArgument('platform')) {
+            $input->setArgument('platform', $io->choice('Select a platform', array_keys($this->platforms->getProvidedServices())));
+        }
+
+        if (null === $input->getArgument('model')) {
+            $input->setArgument('model', $io->ask('Which model do you want to use?'));
+        }
+
+        if (null === $input->getArgument('message')) {
+            $input->setArgument('message', $io->ask('Enter the message to send'));
+        }
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
         $platformName = trim((string) $input->getArgument('platform'));
 
         if (!$this->platforms->has($platformName)) {
             throw new InvalidArgumentException(\sprintf('Platform "%s" not found. Available platforms: "%s"', $platformName, implode(', ', array_keys($this->platforms->getProvidedServices()))));
         }
 
-        $this->platform = $this->platforms->get($platformName);
-        $this->model = trim((string) $input->getArgument('model'));
-        $this->message = trim((string) $input->getArgument('message'));
-    }
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $io = new SymfonyStyle($input, $output);
+        $platform = $this->platforms->get($platformName);
+        $model = trim((string) $input->getArgument('model'));
+        $message = trim((string) $input->getArgument('message'));
 
         try {
             $messages = new MessageBag();
-            $messages->add(Message::ofUser($this->message));
+            $messages->add(Message::ofUser($message));
 
-            $result = $this->platform->invoke($this->model, $messages)->getResult();
+            $result = $platform->invoke($model, $messages)->getResult();
 
             if ($result instanceof TextResult) {
                 $io->writeln('<info>Response:</info> '.$result->getContent());
