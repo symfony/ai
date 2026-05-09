@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\StructuredOutput;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -42,10 +44,28 @@ final class ResultConverter implements ResultConverterInterface
     {
         $innerResult = $this->innerConverter->convert($result, $options);
 
-        if (!$innerResult instanceof TextResult) {
-            return $innerResult;
+        if ($innerResult instanceof TextResult) {
+            return $this->convertTextToObject($innerResult, $result);
         }
 
+        if ($innerResult instanceof MultiPartResult) {
+            return $this->convertMultiPart($innerResult, $result);
+        }
+
+        if ($innerResult instanceof ChoiceResult) {
+            return $this->convertChoice($innerResult, $result);
+        }
+
+        return $innerResult;
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return $this->innerConverter->getTokenUsageExtractor();
+    }
+
+    private function convertTextToObject(TextResult $textResult, RawResultInterface $result): ObjectResult
+    {
         try {
             $context = [];
             if (null !== $this->objectToPopulate) {
@@ -53,9 +73,9 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             $structure = null === $this->outputType
-                ? json_decode($innerResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
+                ? json_decode($textResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
                 : $this->serializer->deserialize(
-                    $innerResult->getContent(),
+                    $textResult->getContent(),
                     $this->outputType,
                     'json',
                     $context
@@ -68,13 +88,79 @@ final class ResultConverter implements ResultConverterInterface
 
         $objectResult = new ObjectResult($structure);
         $objectResult->setRawResult($result);
-        $objectResult->getMetadata()->set($innerResult->getMetadata()->all());
+        $objectResult->getMetadata()->set($textResult->getMetadata()->all());
+
+        // Preserve the provider-scoped signature (Vertex/Gemini) alongside the metadata so
+        // it survives the swap from TextResult to ObjectResult and can still be replayed.
+        if (null !== $signature = $textResult->getSignature()) {
+            $objectResult->getMetadata()->add('signature', $signature);
+        }
 
         return $objectResult;
     }
 
-    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    private function convertMultiPart(MultiPartResult $multiPart, RawResultInterface $result): MultiPartResult
     {
-        return $this->innerConverter->getTokenUsageExtractor();
+        $parts = $multiPart->getContent();
+        $converted = false;
+        $newParts = [];
+
+        foreach ($parts as $part) {
+            if (!$converted && $part instanceof TextResult) {
+                $newParts[] = $this->convertTextToObject($part, $result);
+                $converted = true;
+
+                continue;
+            }
+
+            $newParts[] = $part;
+        }
+
+        if (!$converted) {
+            return $multiPart;
+        }
+
+        $rebuilt = new MultiPartResult($newParts);
+        $rebuilt->setRawResult($result);
+        $rebuilt->getMetadata()->set($multiPart->getMetadata()->all());
+
+        return $rebuilt;
+    }
+
+    private function convertChoice(ChoiceResult $choices, RawResultInterface $result): ChoiceResult
+    {
+        $newChoices = [];
+        $converted = false;
+
+        foreach ($choices->getContent() as $choice) {
+            if ($choice instanceof TextResult) {
+                $newChoices[] = $this->convertTextToObject($choice, $result);
+                $converted = true;
+
+                continue;
+            }
+
+            if ($choice instanceof MultiPartResult) {
+                $convertedChoice = $this->convertMultiPart($choice, $result);
+                if ($convertedChoice !== $choice) {
+                    $converted = true;
+                }
+                $newChoices[] = $convertedChoice;
+
+                continue;
+            }
+
+            $newChoices[] = $choice;
+        }
+
+        if (!$converted) {
+            return $choices;
+        }
+
+        $rebuilt = new ChoiceResult($newChoices);
+        $rebuilt->setRawResult($result);
+        $rebuilt->getMetadata()->set($choices->getMetadata()->all());
+
+        return $rebuilt;
     }
 }

@@ -17,8 +17,8 @@ use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -27,6 +27,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
@@ -82,7 +83,7 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
     }
 
-    public function testConvertMultipleChoices()
+    public function testConvertMultipleMessagesIntoMultiPartResult()
     {
         $converter = new ResultConverter();
         $httpResponse = $this->createMock(ResponseInterface::class);
@@ -93,14 +94,14 @@ class ResultConverterTest extends TestCase
                     'type' => 'message',
                     'content' => [[
                         'type' => 'output_text',
-                        'text' => 'Choice 1',
+                        'text' => 'Part 1',
                     ]],
                 ],
                 [
                     'role' => 'assistant',
                     'content' => [[
                         'type' => 'output_text',
-                        'text' => 'Choice 2',
+                        'text' => 'Part 2',
                     ]],
                     'type' => 'message',
                 ],
@@ -109,11 +110,115 @@ class ResultConverterTest extends TestCase
 
         $result = $converter->convert(new RawHttpResult($httpResponse));
 
-        $this->assertInstanceOf(ChoiceResult::class, $result);
+        $this->assertInstanceOf(MultiPartResult::class, $result);
         $output = $result->getContent();
         $this->assertCount(2, $output);
-        $this->assertSame('Choice 1', $output[0]->getContent());
-        $this->assertSame('Choice 2', $output[1]->getContent());
+        $this->assertSame('Part 1', $output[0]->getContent());
+        $this->assertSame('Part 2', $output[1]->getContent());
+    }
+
+    public function testConvertReasoningPlusMessageIntoMultiPartResult()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'reasoning',
+                    'id' => 'rs_1',
+                    'summary' => [
+                        ['type' => 'summary_text', 'text' => 'Let me work through this.'],
+                    ],
+                ],
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => '{"answer": 42}',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(ThinkingResult::class, $parts[0]);
+        $this->assertSame('Let me work through this.', $parts[0]->getContent());
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('{"answer": 42}', $parts[1]->getContent());
+    }
+
+    public function testConvertReasoningEmitsOneThinkingResultPerSummaryChunk()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'reasoning',
+                    'id' => 'rs_1',
+                    'summary' => [
+                        ['type' => 'summary_text', 'text' => 'First, I subtract 7.'],
+                        ['type' => 'summary_text', 'text' => 'Then I divide by 8.'],
+                    ],
+                ],
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'x = -3.75',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(3, $parts);
+        $this->assertInstanceOf(ThinkingResult::class, $parts[0]);
+        $this->assertSame('First, I subtract 7.', $parts[0]->getContent());
+        $this->assertInstanceOf(ThinkingResult::class, $parts[1]);
+        $this->assertSame('Then I divide by 8.', $parts[1]->getContent());
+        $this->assertInstanceOf(TextResult::class, $parts[2]);
+        $this->assertSame('x = -3.75', $parts[2]->getContent());
+    }
+
+    public function testConvertReasoningWithoutSummaryIsDropped()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'reasoning',
+                    'id' => 'rs_1',
+                    'summary' => [],
+                ],
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'final',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('final', $result->getContent());
     }
 
     public function testContentFilterException()

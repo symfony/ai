@@ -18,10 +18,12 @@ use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -120,6 +122,32 @@ final class ResultNormalizerTest extends TestCase
                         'payload' => 'bar',
                     ],
                 ],
+            ],
+        ];
+        yield MultiPartResult::class => [
+            new MultiPartResult([
+                new ThinkingResult('thinking…'),
+                new TextResult('answer'),
+            ]),
+            [
+                'class' => MultiPartResult::class,
+                'payload' => [
+                    [
+                        'class' => ThinkingResult::class,
+                        'payload' => ['content' => 'thinking…', 'signature' => null],
+                    ],
+                    [
+                        'class' => TextResult::class,
+                        'payload' => 'answer',
+                    ],
+                ],
+            ],
+        ];
+        yield ThinkingResult::class => [
+            new ThinkingResult('reasoning summary', 'sig_abc'),
+            [
+                'class' => ThinkingResult::class,
+                'payload' => ['content' => 'reasoning summary', 'signature' => 'sig_abc'],
             ],
         ];
         yield ObjectResult::class.'-array' => [

@@ -14,9 +14,12 @@ namespace Symfony\AI\Platform\Tests\StructuredOutput;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlainConverter;
+use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\StructuredOutput\ResultConverter;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
@@ -134,6 +137,19 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('test_value', $result->getMetadata()->get('test_key'));
     }
 
+    public function testConvertPreservesTextResultSignatureInMetadata()
+    {
+        $textResult = new TextResult('{"some": "data"}', 'sig_replay_token');
+
+        $innerConverter = new PlainConverter($textResult);
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertTrue($result->getMetadata()->has('signature'));
+        $this->assertSame('sig_replay_token', $result->getMetadata()->get('signature'));
+    }
+
     public function testConvertSetsRawResultOnObjectResult()
     {
         $innerConverter = new PlainConverter(new TextResult('{"some": "data"}'));
@@ -165,5 +181,118 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(ObjectResult::class, $result);
         $this->assertInstanceOf(UserWithAccessors::class, $result->getContent());
         $this->assertSame(10, $result->getContent()->getAge());
+    }
+
+    public function testConvertMultiPartResultWithReasoningAndMessage()
+    {
+        $reasoning = new ThinkingResult('Thinking step by step…');
+        $textResult = new TextResult('{"some": "data"}');
+        $multiPart = new MultiPartResult([$reasoning, $textResult]);
+
+        $innerConverter = new PlainConverter($multiPart);
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertSame($reasoning, $parts[0]);
+        $this->assertInstanceOf(ObjectResult::class, $parts[1]);
+        $this->assertInstanceOf(SomeStructure::class, $parts[1]->getContent());
+        $this->assertSame('data', $parts[1]->getContent()->some);
+    }
+
+    public function testConvertMultiPartResultWithoutTextResultIsUntouched()
+    {
+        $reasoning = new ThinkingResult('Just thinking, no answer.');
+        $multiPart = new MultiPartResult([$reasoning, $reasoning]);
+
+        $innerConverter = new PlainConverter($multiPart);
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertSame($multiPart, $result);
+    }
+
+    public function testConvertChoiceResultOfTextResults()
+    {
+        $choices = new ChoiceResult([
+            new TextResult('{"some": "first"}'),
+            new TextResult('{"some": "second"}'),
+        ]);
+
+        $innerConverter = new PlainConverter($choices);
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(ChoiceResult::class, $result);
+
+        $entries = $result->getContent();
+        $this->assertCount(2, $entries);
+        $this->assertInstanceOf(ObjectResult::class, $entries[0]);
+        $this->assertInstanceOf(ObjectResult::class, $entries[1]);
+
+        $first = $entries[0]->getContent();
+        $second = $entries[1]->getContent();
+        $this->assertInstanceOf(SomeStructure::class, $first);
+        $this->assertInstanceOf(SomeStructure::class, $second);
+        $this->assertSame('first', $first->some);
+        $this->assertSame('second', $second->some);
+    }
+
+    public function testConvertChoiceResultOfMultiPartResultsWithReasoning()
+    {
+        $reasoningA = new ThinkingResult('Thinking about choice A.');
+        $reasoningB = new ThinkingResult('Thinking about choice B.');
+
+        $choices = new ChoiceResult([
+            new MultiPartResult([$reasoningA, new TextResult('{"some": "a"}')]),
+            new MultiPartResult([$reasoningB, new TextResult('{"some": "b"}')]),
+        ]);
+
+        $innerConverter = new PlainConverter($choices);
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(ChoiceResult::class, $result);
+
+        $entries = $result->getContent();
+        $this->assertCount(2, $entries);
+
+        $this->assertInstanceOf(MultiPartResult::class, $entries[0]);
+        $partsA = $entries[0]->getContent();
+        $this->assertSame($reasoningA, $partsA[0]);
+        $this->assertInstanceOf(ObjectResult::class, $partsA[1]);
+        $contentA = $partsA[1]->getContent();
+        $this->assertInstanceOf(SomeStructure::class, $contentA);
+        $this->assertSame('a', $contentA->some);
+
+        $this->assertInstanceOf(MultiPartResult::class, $entries[1]);
+        $partsB = $entries[1]->getContent();
+        $this->assertSame($reasoningB, $partsB[0]);
+        $this->assertInstanceOf(ObjectResult::class, $partsB[1]);
+        $contentB = $partsB[1]->getContent();
+        $this->assertInstanceOf(SomeStructure::class, $contentB);
+        $this->assertSame('b', $contentB->some);
+    }
+
+    public function testConvertChoiceResultWithoutAnyConvertibleEntryIsUntouched()
+    {
+        $reasoningOnly = new MultiPartResult([new ThinkingResult('No answer here.')]);
+        $objectChoice = new ObjectResult(['already' => 'converted']);
+
+        $choices = new ChoiceResult([$reasoningOnly, $objectChoice]);
+
+        $innerConverter = new PlainConverter($choices);
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertSame($choices, $result);
     }
 }

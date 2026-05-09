@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -29,6 +29,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -41,7 +42,7 @@ use Symfony\AI\Platform\ResultConverterInterface;
  * @phpstan-type OutputText array{type: 'output_text', text: string}
  * @phpstan-type Refusal array{type: 'refusal', refusal: string}
  * @phpstan-type FunctionCall array{id: string, arguments: string, call_id: string, name: string, type: 'function_call'}
- * @phpstan-type Reasoning array{summary: array{text?: string}, id: string}
+ * @phpstan-type Thinking array{summary: list<array{type: string, text?: string}>, id: string}
  * @phpstan-type Error array{code?: string|null, type?: string|null, param?: string|null, message?: string|null}
  */
 final class ResultConverter implements ResultConverterInterface
@@ -96,7 +97,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $results = $this->convertOutputArray($data[self::KEY_OUTPUT]);
 
-        return 1 === \count($results) ? array_pop($results) : new ChoiceResult($results);
+        return 1 === \count($results) ? array_pop($results) : new MultiPartResult(array_values($results));
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
@@ -105,7 +106,7 @@ final class ResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @param array<OutputMessage|FunctionCall|Reasoning> $output
+     * @param array<OutputMessage|FunctionCall|Thinking> $output
      *
      * @return ResultInterface[]
      */
@@ -113,7 +114,12 @@ final class ResultConverter implements ResultConverterInterface
     {
         [$toolCallResult, $output] = $this->extractFunctionCalls($output);
 
-        $results = array_filter(array_map($this->processOutputItem(...), $output));
+        $results = [];
+        foreach ($output as $item) {
+            foreach ($this->processOutputItem($item) as $result) {
+                $results[] = $result;
+            }
+        }
         if ($toolCallResult) {
             $results[] = $toolCallResult;
         }
@@ -122,9 +128,11 @@ final class ResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @param OutputMessage|Reasoning $item
+     * @param OutputMessage|Thinking $item
+     *
+     * @return iterable<ResultInterface>
      */
-    private function processOutputItem(array $item): ?ResultInterface
+    private function processOutputItem(array $item): iterable
     {
         $type = $item['type'] ?? null;
 
@@ -181,9 +189,9 @@ final class ResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @param array<OutputMessage|FunctionCall|Reasoning> $output
+     * @param array<OutputMessage|FunctionCall|Thinking> $output
      *
-     * @return list<ToolCallResult|array<OutputMessage|Reasoning>|null>
+     * @return list<ToolCallResult|array<OutputMessage|Thinking>|null>
      */
     private function extractFunctionCalls(array $output): array
     {
@@ -204,20 +212,24 @@ final class ResultConverter implements ResultConverterInterface
 
     /**
      * @param OutputMessage $output
+     *
+     * @return \Generator<TextResult>
      */
-    private function convertOutputMessage(array $output): ?TextResult
+    private function convertOutputMessage(array $output): \Generator
     {
         $content = $output['content'] ?? [];
         if ([] === $content) {
-            return null;
+            return;
         }
 
         $content = array_pop($content);
         if ('refusal' === $content['type']) {
-            return new TextResult(\sprintf('Model refused to generate output: %s', $content['refusal']));
+            yield new TextResult(\sprintf('Model refused to generate output: %s', $content['refusal']));
+
+            return;
         }
 
-        return new TextResult($content['text']);
+        yield new TextResult($content['text']);
     }
 
     /**
@@ -253,14 +265,18 @@ final class ResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @param Reasoning $item
+     * @param Thinking $item
+     *
+     * @return \Generator<ThinkingResult>
      */
-    private function convertReasoning(array $item): ?ResultInterface
+    private function convertReasoning(array $item): \Generator
     {
         // Reasoning is sometimes missing if it exceeds the context limit.
-        $summary = $item['summary']['text'] ?? null;
-
-        return $summary ? new TextResult($summary) : null;
+        foreach ($item['summary'] ?? [] as $entry) {
+            if ('' !== ($entry['text'] ?? '')) {
+                yield new ThinkingResult($entry['text']);
+            }
+        }
     }
 
     /**

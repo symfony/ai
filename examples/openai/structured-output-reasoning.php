@@ -1,0 +1,48 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+require_once dirname(__DIR__).'/bootstrap.php';
+
+$dispatcher = new EventDispatcher();
+$dispatcher->addSubscriber(new PlatformSubscriber());
+
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client(), eventDispatcher: $dispatcher);
+$messages = new MessageBag(
+    Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
+    Message::ofUser('how can I solve 8x + 7 = -23'),
+);
+
+$result = $platform->invoke('gpt-5-mini', $messages, [
+    'response_format' => MathReasoning::class,
+    'reasoning' => ['summary' => 'auto'],
+]);
+
+$converted = $result->getResult();
+assert($converted instanceof MultiPartResult);
+
+output()->writeln('<info><reasoning></info>');
+foreach ($converted as $part) {
+    if ($part instanceof ThinkingResult && null !== $part->getContent()) {
+        output()->writeln('<fg=#999999>'.$part->getContent().'</>');
+    }
+}
+output()->writeln('<info></reasoning></info>');
+
+dump($result->asObject());
