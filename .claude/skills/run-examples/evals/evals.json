@@ -1,0 +1,23 @@
+{
+  "skill_name": "run-examples",
+  "evals": [
+    {
+      "id": 0,
+      "name": "narrow-bridge-change",
+      "prompt": "I'm in /tmp/run-examples-eval/pr-2045 (a worktree with PR #2045 checked out — base ref is `_test_base_2045`, NOT main). Run the run-examples skill: figure out which examples should be executed for this change, propose them with reasons and skip notes, and stop before executing anything. Output the proposal in plain markdown.",
+      "expected_output": "Proposal that focuses on examples/anthropic/*.php (the Bridge change is in src/platform/src/Bridge/Anthropic/ModelCatalog.php). No docker services needed. Should classify ANTHROPIC_API_KEY-gated examples as runnable or skipped depending on .env.local."
+    },
+    {
+      "id": 1,
+      "name": "broad-core-change",
+      "prompt": "I'm in /tmp/run-examples-eval/pr-1853 (a worktree with PR #1853 checked out — base ref is `_test_base_1853`, NOT main). Run the run-examples skill: figure out which examples should be executed for this change, propose them with reasons and skip notes, and stop before executing anything. Output the proposal in plain markdown.",
+      "expected_output": "Proposal recognises this is a broad cross-cutting Platform/Agent/Chat change (AssistantMessage rework, ~69 files). Should pick a small REPRESENTATIVE set per affected capability (chat, persistent-chat, structured output, tool calling, streaming) rather than enumerating hundreds of scripts. Should call out the broadness explicitly."
+    },
+    {
+      "id": 2,
+      "name": "bundle-only",
+      "prompt": "I'm in /tmp/run-examples-eval/pr-1881 (a worktree with PR #1881 checked out — base ref is `_test_base_1881`, NOT main). Run the run-examples skill: figure out which examples should be executed for this change, propose them with reasons and skip notes, and stop before executing anything. Output the proposal in plain markdown.",
+      "expected_output": "Proposal recognises that the diff only touches src/ai-bundle/ — examples/ does not cover bundle wiring. Should NOT propose example runs; should suggest the demo/ app instead and explicitly say there's nothing in examples/ to run."
+    }
+  ]
+}
