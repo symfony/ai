@@ -1,0 +1,94 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-03T20:34:32Z
+
+Thanks @valtzu, I like that proposal - and I'd skip the `Collection` - is more consistent with `UserMessage`.
+
+cc @OskarStark @fabpot WDYT?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-03T22:42:42Z
+
+Sounds like a good and flexible approach
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-04-06T18:30:58Z
+
+I like it a lot!
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-04-07T13:51:23Z
+
+@valtzu can you finish this one?
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-04-07T16:37:16Z
+
+@OskarStark Sorry I was afk the whole Easter; I'll try
+
+Thanks all for comments
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-04-08T17:00:40Z
+
+Ok I think I may have taken a too big bite here. I'm struggling quite much on how to glue results & contents.
+
+It could be easier to start from the lower layer (in a separate PR) and add some `MultiPartResult`/`CollectionResult` first to tackle https://github.com/symfony/ai/issues/1053 – and only then think of how to map that to `AssistantMessage`
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-04-12T18:01:26Z
+
+> I'm struggling quite much on how to glue results & contents.
+
+After https://github.com/symfony/ai/pull/1900 this could be adjusted to use `ResultInterface` instead of `ContentInterface` which would solve the issue.
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-04-18T22:15:59Z
+
+> After https://github.com/symfony/ai/pull/1900 this could be adjusted to use ResultInterface instead of ContentInterface which would solve the issue.
+
+I tried this (pushed here) – it mostly works, but one of the issues is that as result objects contain raw results (`AsyncResponse`) they cannot be serialized.
+
+Still somehow using `ContentInterface` felt more fitting _(though much bigger change and something I cannot finish myself)_
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-19T23:17:11Z
+
+yeah, having second thoughts as well. i agree that `ContentInterface` would be cleaner and maybe try to keep `Message` classes and `Result` classes decoupled
+
+```php
+new AssistantMessage(
+    new Thinking('foo', 'bar'),
+    new Text('Hello'),
+    new ToolCall('id1', 'function1', ['param1' => 'value1']),
+    new new ToolCall('id2', 'function2', ['param2' => 'value2']),
+),
+```
+
+---------------------------------------------------------------------------
+
+by xprojects-de at 2026-04-21T13:14:37Z
+
+i think that´s great and i like it!
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-05-07T18:19:10Z
+
+Merged the work by @chr-hertel from https://github.com/valtzu/symfony-ai/pull/1, squashed and rebased on `main` + updated changelogs to 0.9 _(please let me know if I should remove the `Co-authored-by` which causes commit to be Unverified)_
+
+Tested with demo (excl. crop/speech/video)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-09T14:02:51Z
+
+I also gave it another read, ran some tests, will merge for now, and bring in a one or two follow ups - thanks @valtzu!
