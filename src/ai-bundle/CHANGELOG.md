@@ -12,6 +12,7 @@ CHANGELOG
  * [BC BREAK] Rename service ID `ai.agent.response_format_factory` to `ai.platform.response_format_factory`
  * The `collection` option for `ChromaDb` is now optional.
  * Update `DataCollector` to use `getCalls()` and `getResultCache()` getter methods on Traceable* classes
+ * Register `ToolCallNormalizer` as a `serializer.normalizer` service so `MessageNormalizer` can round-trip `AssistantMessage`/`ToolCallMessage` payloads containing tool calls
 
 0.7
 ---

@@ -177,4 +177,73 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame('get_weather', $denormalized->getToolCall()->getName());
         $this->assertSame(['city' => 'Paris'], $denormalized->getToolCall()->getArguments());
     }
+
+    public function testItCanDenormalizeAssistantMessageWithFlatToolCalls()
+    {
+        // Flat payloads are produced when the outer serializer chain does
+        // not include ToolCallNormalizer (as was the case before
+        // ai-bundle's config was fixed). Restoring such payloads must
+        // still work — otherwise conversations persisted before the fix
+        // become unreadable.
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $uuid = Uuid::v7();
+        $payload = [
+            'id' => $uuid->toRfc4122(),
+            'type' => AssistantMessage::class,
+            'content' => '',
+            'contentAsBase64' => [],
+            'toolsCalls' => [
+                [
+                    'id' => 'call-1',
+                    'name' => 'get_weather',
+                    'arguments' => ['city' => 'Paris'],
+                ],
+            ],
+            'metadata' => [],
+            'addedAt' => 0,
+        ];
+
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(AssistantMessage::class, $denormalized);
+        $toolCalls = $denormalized->getToolCalls();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call-1', $toolCalls[0]->getId());
+        $this->assertSame('get_weather', $toolCalls[0]->getName());
+        $this->assertSame(['city' => 'Paris'], $toolCalls[0]->getArguments());
+    }
+
+    public function testItCanDenormalizeToolCallMessageWithFlatToolCall()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $uuid = Uuid::v7();
+        $payload = [
+            'id' => $uuid->toRfc4122(),
+            'type' => ToolCallMessage::class,
+            'content' => 'Sunny, 22°C',
+            'contentAsBase64' => [],
+            'toolsCalls' => [
+                'id' => 'call-1',
+                'name' => 'get_weather',
+                'arguments' => ['city' => 'Paris'],
+            ],
+            'metadata' => [],
+            'addedAt' => 0,
+        ];
+
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(ToolCallMessage::class, $denormalized);
+        $this->assertSame('call-1', $denormalized->getToolCall()->getId());
+        $this->assertSame('get_weather', $denormalized->getToolCall()->getName());
+        $this->assertSame(['city' => 'Paris'], $denormalized->getToolCall()->getArguments());
+    }
 }

@@ -55,11 +55,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         $message = match ($type) {
             SystemMessage::class => new SystemMessage($content),
             AssistantMessage::class => new AssistantMessage($content, array_map(
-                static fn (array $toolsCall): ToolCall => new ToolCall(
-                    $toolsCall['id'],
-                    $toolsCall['function']['name'],
-                    json_decode($toolsCall['function']['arguments'], true)
-                ),
+                self::toolCallFromPayload(...),
                 $data['toolsCalls'],
             )),
             UserMessage::class => new UserMessage(...array_map(
@@ -69,11 +65,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $contentAsBase64,
             )),
             ToolCallMessage::class => new ToolCallMessage(
-                new ToolCall(
-                    $data['toolsCalls']['id'],
-                    $data['toolsCalls']['function']['name'],
-                    json_decode($data['toolsCalls']['function']['arguments'], true)
-                ),
+                self::toolCallFromPayload($data['toolsCalls']),
                 $content
             ),
             default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
@@ -153,5 +145,33 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         return [
             MessageInterface::class => true,
         ];
+    }
+
+    /**
+     * Builds a ToolCall from either the OpenAI-style wrapped payload
+     * (`{id, function: {name, arguments: JSON string}}`, produced when the
+     * outer serializer chain includes {@see \Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer})
+     * or the flat payload (`{id, name, arguments: array}`) produced by the
+     * default ObjectNormalizer fallback. The latter shape allows restoring
+     * conversations stored before the ToolCallNormalizer was wired into the
+     * ai-bundle configuration.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private static function toolCallFromPayload(array $payload): ToolCall
+    {
+        if (isset($payload['function'])) {
+            return new ToolCall(
+                $payload['id'],
+                $payload['function']['name'],
+                json_decode($payload['function']['arguments'], true) ?? [],
+            );
+        }
+
+        return new ToolCall(
+            $payload['id'],
+            $payload['name'],
+            $payload['arguments'] ?? [],
+        );
     }
 }

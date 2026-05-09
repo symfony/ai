@@ -244,6 +244,23 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.chat.message_bag.normalizer'));
     }
 
+    public function testToolCallNormalizerIsRegistered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.tool_call.normalizer'));
+        $definition = $container->getDefinition('ai.platform.tool_call.normalizer');
+        $this->assertArrayHasKey('serializer.normalizer', $definition->getTags());
+    }
+
     public function testResponseFormatFactoryServiceIsRegistered()
     {
         $container = $this->buildContainer($this->getFullConfig());
