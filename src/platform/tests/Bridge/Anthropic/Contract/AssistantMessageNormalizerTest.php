@@ -16,6 +16,8 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\CodeExecution;
+use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -57,13 +59,13 @@ final class AssistantMessageNormalizerTest extends TestCase
         ], $this->normalizer->normalize($message));
     }
 
-    public function testNormalizeWithEmptyMessageProducesEmptyBlocks()
+    public function testNormalizeWithEmptyMessageProducesEmptyString()
     {
         $message = new AssistantMessage();
 
         $this->assertSame([
             'role' => 'assistant',
-            'content' => [],
+            'content' => '',
         ], $this->normalizer->normalize($message));
     }
 
@@ -136,6 +138,92 @@ final class AssistantMessageNormalizerTest extends TestCase
                     'signature' => 'sig-abc',
                 ],
                 ['type' => 'text', 'text' => 'The answer is 42.'],
+            ],
+        ], $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithBashCodeExecutionAndResult()
+    {
+        $message = new AssistantMessage(
+            new ExecutableCode('echo hi', 'bash', 'srvtoolu_1'),
+            new CodeExecution(true, 'hi', 'srvtoolu_1'),
+        );
+
+        $this->assertSame([
+            'role' => 'assistant',
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'name' => 'bash_code_execution',
+                    'input' => ['command' => 'echo hi'],
+                    'id' => 'srvtoolu_1',
+                ],
+                [
+                    'type' => 'bash_code_execution_tool_result',
+                    'tool_use_id' => 'srvtoolu_1',
+                    'content' => [
+                        'type' => 'bash_code_execution_result',
+                        'stdout' => 'hi',
+                        'stderr' => '',
+                        'return_code' => 0,
+                        'content' => [],
+                    ],
+                ],
+            ],
+        ], $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithTextEditorCodeExecutionAndResult()
+    {
+        $message = new AssistantMessage(
+            new ExecutableCode("print('x')", null, 'srvtoolu_2'),
+            new CodeExecution(true, null, 'srvtoolu_2'),
+        );
+
+        $this->assertSame([
+            'role' => 'assistant',
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'name' => 'text_editor_code_execution',
+                    'input' => ['file_text' => "print('x')"],
+                    'id' => 'srvtoolu_2',
+                ],
+                [
+                    'type' => 'text_editor_code_execution_tool_result',
+                    'tool_use_id' => 'srvtoolu_2',
+                ],
+            ],
+        ], $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithFailedBashExecution()
+    {
+        $message = new AssistantMessage(
+            new ExecutableCode('false', 'bash', 'srvtoolu_3'),
+            new CodeExecution(false, 'oops', 'srvtoolu_3'),
+        );
+
+        $this->assertSame([
+            'role' => 'assistant',
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'name' => 'bash_code_execution',
+                    'input' => ['command' => 'false'],
+                    'id' => 'srvtoolu_3',
+                ],
+                [
+                    'type' => 'bash_code_execution_tool_result',
+                    'tool_use_id' => 'srvtoolu_3',
+                    'content' => [
+                        'type' => 'bash_code_execution_result',
+                        'stdout' => 'oops',
+                        'stderr' => '',
+                        'return_code' => 1,
+                        'content' => [],
+                    ],
+                ],
             ],
         ], $this->normalizer->normalize($message));
     }

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Nova `AssistantMessageNormalizer` interleaves `text` and `toolUse` blocks in their original order instead of dropping text whenever tool calls are present.
+
 0.8
 ---
 

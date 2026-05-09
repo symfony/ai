@@ -1,7 +1,8 @@
 {% if message.role.value == 'assistant' %}
-    {% for content in message.content %}
-        {{ content.text is defined ? _self.bot(content.text, latest: latest) }}
-    {% endfor %}
+    {% set text = message.asText %}
+    {% if text is not null %}
+        {{ _self.bot(text, latest: latest) }}
+    {% endif %}
 {% else %}
     {{ _self.user(message.content) }}
 {% endif %}

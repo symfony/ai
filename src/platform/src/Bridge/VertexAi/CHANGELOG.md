@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `thoughtSignature` round-trip: `ResultConverter` emits `ThinkingResult` for parts with `thought: true` and preserves `thoughtSignature` on `text`/`functionCall`/thought parts; `AssistantMessageNormalizer` sends them back on replay.
+ * `AssistantMessageNormalizer` emits `executableCode` and `codeExecutionResult` parts for `Message\Content\ExecutableCode` and `Message\Content\CodeExecution` content so multi-turn code-execution conversations replay end-to-end.
+
 0.8
 ---
 

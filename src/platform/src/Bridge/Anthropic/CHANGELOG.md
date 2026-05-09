@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * [BC BREAK] `ResultConverter` now emits `ThinkingResult` for `thinking` content blocks. A thinking-only response previously raised `RuntimeException`; it now returns a `ThinkingResult` (or `MultiPartResult` combined with text/tool calls).
+ * `AssistantMessageNormalizer` emits `thinking`, `text`, `tool_use`, `server_tool_use`, and `*_code_execution_tool_result` blocks in their original order so multi-turn replays of thinking and code-execution conversations round-trip end-to-end.
+
 0.8
 ---
 

@@ -37,11 +37,10 @@ Chat
 Platform
 --------
 
- * `AssistantMessage` now takes a variadic list of `ContentInterface` parts instead of a single string
-   content plus separate `toolCalls`/`thinkingContent`/`thinkingSignature` arguments. A new
-   `Symfony\AI\Platform\Message\Content\Thinking` class represents thinking/reasoning blocks, and
-   `Symfony\AI\Platform\Result\ToolCall` now implements `ContentInterface` so it can be passed directly
-   as an assistant part:
+ * `AssistantMessage` takes a variadic list of `ContentInterface` parts instead of separate
+   `content`/`toolCalls`/`thinkingContent`/`thinkingSignature` arguments. New content classes:
+   `Message\Content\Thinking`, `Message\Content\ExecutableCode`, `Message\Content\CodeExecution`.
+   `Result\ToolCall` now implements `ContentInterface` and can be passed directly:
 
    ```diff
    -new AssistantMessage(
@@ -57,24 +56,24 @@ Platform
    +);
    ```
 
-   `AssistantMessage::getContent()` now returns `ContentInterface[]` (symmetric with `UserMessage`).
-   Use `AssistantMessage::asText()` to get the concatenated text. `getToolCalls()` returns a (possibly
-   empty) array of `ToolCall`s — no longer `?array`. `getThinking()` returns a (possibly empty) array of
-   `Thinking` parts and replaces `hasThinkingContent()`/`getThinkingContent()`/`getThinkingSignature()`.
+   `getContent()` returns `ContentInterface[]`; use `asText()` for the concatenated text.
+   `getToolCalls()` returns `ToolCall[]` (no longer `?array`). `getThinking()` returns `Thinking[]` and
+   replaces `hasThinkingContent()`/`getThinkingContent()`/`getThinkingSignature()`.
 
- * `Message::ofAssistant()` is now variadic and accepts `string`, `ContentInterface`, or `ResultInterface`
-   arguments. Strings and `TextResult` become `Text`; `ThinkingResult` becomes `Thinking`; `ToolCallResult`
-   is unwrapped to its inner `ToolCall`s; `MultiPartResult` is recursively mapped. Structured outputs
-   (`ObjectResult`, `BinaryResult`, …) are not auto-mapped and must be stringified by the caller:
+ * `Message::ofAssistant()` is variadic and accepts `string`, `ContentInterface`, or `ResultInterface`
+   arguments — `TextResult`/`ThinkingResult`/`ToolCallResult`/`ExecutableCodeResult`/`CodeExecutionResult`
+   map to their content equivalents and `MultiPartResult` is unwrapped recursively. Result types without
+   a known mapping (e.g. `BinaryResult`, `ObjectResult`) throw `InvalidArgumentException` so unhandled
+   cases surface; stringify them in the caller before passing them in:
 
    ```diff
    -Message::ofAssistant($objectResult);
    +Message::ofAssistant($objectResult->getContent()->toString());
    ```
 
- * `MessageInterface::getContent()` return type no longer includes `ResultInterface`. Any custom
-   implementation of `MessageInterface` that previously declared `ResultInterface` in its union return
-   type must be updated accordingly.
+ * Anthropic `ResultConverter` returns a `ThinkingResult` (or a `MultiPartResult` containing one) for
+   responses with `thinking` blocks. A thinking-only response previously raised `RuntimeException`. Update
+   any `try`/`catch` and any code that assumed the converter only returned `TextResult` or `ToolCallResult`.
 
 UPGRADE FROM 0.7 to 0.8
 =======================

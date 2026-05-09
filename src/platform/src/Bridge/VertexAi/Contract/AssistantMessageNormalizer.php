@@ -15,6 +15,8 @@ use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\CodeExecution;
+use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Model as BaseModel;
@@ -69,6 +71,30 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
                     $toolPart['thoughtSignature'] = $part->getSignature();
                 }
                 $normalized[] = $toolPart;
+                continue;
+            }
+
+            if ($part instanceof ExecutableCode) {
+                $executableCode = [
+                    'language' => $part->getLanguage() ?? 'PYTHON',
+                    'code' => $part->getCode(),
+                ];
+                if (null !== $part->getId()) {
+                    $executableCode['id'] = $part->getId();
+                }
+                $normalized[] = ['executableCode' => $executableCode];
+                continue;
+            }
+
+            if ($part instanceof CodeExecution) {
+                $codeExecutionResult = [
+                    'outcome' => $part->isSucceeded() ? ResultConverter::OUTCOME_OK : ResultConverter::OUTCOME_FAILED,
+                    'output' => $part->getOutput() ?? '',
+                ];
+                if (null !== $part->getId()) {
+                    $codeExecutionResult['id'] = $part->getId();
+                }
+                $normalized[] = ['codeExecutionResult' => $codeExecutionResult];
             }
         }
 
