@@ -205,6 +205,32 @@ Platform
    `GeminiContract` (Gemini and VertexAi bridges), `HuggingFaceContract`, `OllamaContract`,
    `OpenAiContract`, `OpenResponsesContract`, `PerplexityContract`, `VoyageContract`.
 
+ * The Gemini bridge `ModelCatalog` is now dynamic: instead of a static list of hardcoded
+   models, it queries the Gemini `models` REST API on first use and caches the response
+   in memory. The `Embeddings` model class and the `Embeddings/ModelClient` /
+   `Embeddings/ResultConverter` pair were merged into the unified `Gemini`,
+   `ModelClient`, and `ResultConverter` at the bridge root. Embedding models are
+   now identified by `Capability::EMBEDDINGS` on a `Gemini` instance:
+
+   ```diff
+   -use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
+   -$model = new Embeddings('gemini-embedding-001');
+   +use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+   +use Symfony\AI\Platform\Capability;
+   +$model = new Gemini('gemini-embedding-001', [Capability::EMBEDDINGS]);
+   ```
+
+   Code that instantiated the Gemini catalog directly must now provide an HTTP client:
+
+   ```diff
+   -$catalog = new \Symfony\AI\Platform\Bridge\Gemini\ModelCatalog();
+   +$catalog = new \Symfony\AI\Platform\Bridge\Gemini\ModelCatalog($httpClient);
+   ```
+
+   `Factory::createPlatform()` and `Factory::createProvider()` now also accept
+   `endpoint` and `version` parameters as their first two arguments to allow
+   targeting a custom Gemini API host (the defaults match the public Google API).
+
 Store
 -----
 

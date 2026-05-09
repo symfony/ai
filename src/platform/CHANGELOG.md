@@ -24,6 +24,8 @@ CHANGELOG
  * Add `ModelRoutingEvent` dispatched by `Platform` before resolution, allowing listeners to observe/modify routing or short-circuit it by setting a provider
  * [BC BREAK] `Platform` constructor signature changed from `(modelClients, resultConverters, modelCatalog, contract, eventDispatcher)` to `(providers, modelRouter, eventDispatcher)`
  * Add `HttpStatusErrorHandlingTrait` and expose API errors (`AuthenticationException`, `BadRequestException`, `RateLimitExceededException`) across the Mistral, DeepSeek, Cerebras, Perplexity, Cohere, Gemini and OpenAI (Embeddings, DallE, TextToSpeech) bridges
+ * Add `Capability::OUTPUT_EMBEDDINGS` to denote models that produce embedding vectors as output
+ * Add `Capability::CACHE` to denote models that support context caching (e.g. Gemini `createCachedContent`)
 
 0.7
 ---

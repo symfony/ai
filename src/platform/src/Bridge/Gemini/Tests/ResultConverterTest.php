@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Embeddings;
+namespace Symfony\AI\Platform\Bridge\Gemini\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ResultConverter;
+use Symfony\AI\Platform\Bridge\Gemini\ResultConverter;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
