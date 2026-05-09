@@ -83,9 +83,20 @@ final class JsonFileLoader implements LoaderInterface
 
             $docMetadata[Metadata::KEY_SOURCE] = $source;
 
+            $idValue = $id;
+            $contentValue = $contents[$index];
+
+            if (\is_array($idValue) || \is_object($idValue) && !$idValue instanceof \Stringable) {
+                $idValue = json_encode($idValue);
+            }
+
+            if (\is_array($contentValue) || \is_object($contentValue) && !$contentValue instanceof \Stringable) {
+                $contentValue = json_encode($contentValue);
+            }
+
             yield new TextDocument(
-                id: (string) $id,
-                content: (string) $contents[$index],
+                id: (string) $idValue,
+                content: (string) $contentValue,
                 metadata: new Metadata($docMetadata),
             );
         }

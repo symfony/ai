@@ -33,14 +33,14 @@ use Symfony\AI\Platform\Result\StreamResult;
 final class MockAgent implements AgentInterface
 {
     /**
-     * @var array<string, string|MockResponse|\Closure>
+     * @var array<string, string|MockResponse|StreamResult|\Closure>
      */
     private array $responses = [];
 
     private int $callCount = 0;
 
     /**
-     * @var array<array{messages: MessageBag, options: array<string, mixed>, input: string, response: string}>
+     * @var array<array{messages: MessageBag, options: array<string, mixed>, input: string, response: string|StreamResult}>
      */
     private array $calls = [];
 
@@ -127,7 +127,7 @@ final class MockAgent implements AgentInterface
     /**
      * Get all configured responses.
      *
-     * @return array<string, string|MockResponse|\Closure>
+     * @return array<string, string|MockResponse|StreamResult|\Closure>
      */
     public function getResponses(): array
     {
@@ -145,7 +145,7 @@ final class MockAgent implements AgentInterface
     /**
      * Get all recorded calls.
      *
-     * @return array<array{messages: MessageBag, options: array<string, mixed>, input: string, response: string}>
+     * @return array<array{messages: MessageBag, options: array<string, mixed>, input: string, response: string|StreamResult}>
      */
     public function getCalls(): array
     {
@@ -155,7 +155,7 @@ final class MockAgent implements AgentInterface
     /**
      * Get a specific call by index.
      *
-     * @return array{messages: MessageBag, options: array<string, mixed>, input: string, response: string}
+     * @return array{messages: MessageBag, options: array<string, mixed>, input: string, response: string|StreamResult}
      *
      * @throws \OutOfBoundsException If the call index doesn't exist
      */
@@ -171,7 +171,7 @@ final class MockAgent implements AgentInterface
     /**
      * Get the last call made (most recent).
      *
-     * @return array{messages: MessageBag, options: array<string, mixed>, input: string, response: string}
+     * @return array{messages: MessageBag, options: array<string, mixed>, input: string, response: string|StreamResult}
      *
      * @throws \LogicException If no calls have been made
      */

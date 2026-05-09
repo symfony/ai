@@ -89,7 +89,10 @@ final class Toolbox implements ToolboxInterface
         }
 
         if ($event->hasResult()) {
-            return $event->getResult();
+            $eventResult = $event->getResult();
+            \assert($eventResult instanceof ToolResult);
+
+            return $eventResult;
         }
 
         $tool = $this->getExecutable($metadata);

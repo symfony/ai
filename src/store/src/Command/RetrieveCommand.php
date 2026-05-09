@@ -115,7 +115,7 @@ final class RetrieveCommand extends Command
                 }
 
                 if ($document->getMetadata()->hasText()) {
-                    $text = $document->getMetadata()->getText();
+                    $text = $document->getMetadata()->getText() ?? '';
                     if (\strlen($text) > 200) {
                         $text = substr($text, 0, 200).'...';
                     }

@@ -32,6 +32,10 @@ final class ModelOverrideInputProcessor implements InputProcessorInterface
             throw new InvalidArgumentException('Option "model" must be a string.');
         }
 
+        if ('' === $options['model']) {
+            throw new InvalidArgumentException('Option "model" cannot be empty.');
+        }
+
         $input->setModel($options['model']);
     }
 }

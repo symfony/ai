@@ -47,9 +47,9 @@ final class RssItem
      *     title: string,
      *     date: string,
      *     link: string,
-     *     author: string,
+     *     author: string|null,
      *     description: string,
-     *     content: string,
+     *     content: string|null,
      * }
      */
     public function toArray(): array

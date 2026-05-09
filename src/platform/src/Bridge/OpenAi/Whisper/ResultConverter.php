@@ -67,7 +67,12 @@ final class ResultConverter implements ResultConverterInterface
         if (!($options['verbose'] ?? false) && !isset($data['text'])) {
             throw new RuntimeException(\sprintf('The response is missing the required "text" field. Response data: "%s"', json_encode($data)));
         }
-        $result = ($options['verbose'] ?? false) ? $this->getVerboseResult($data) : new TextResult($data['text']);
+        if ($options['verbose'] ?? false) {
+            /** @var array{text: string, language: string, duration: float, segments: array<array{start: float, end: float, text: string}>} $data */
+            $result = $this->getVerboseResult($data);
+        } else {
+            $result = new TextResult($data['text']);
+        }
 
         if (isset($data['usage'])) {
             $result->getMetadata()->add('usage', $data['usage']);

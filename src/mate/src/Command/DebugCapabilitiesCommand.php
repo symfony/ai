@@ -30,7 +30,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @phpstan-type CapabilitiesByExtension array<string, Capabilities>
  * @phpstan-type DebugCapabilitiesArrayResult array{
- *     extensions: CapabilitiesByExtension,
+ *     extensions: array<string, array<string, mixed>>,
  *     summary: array{
  *         extensions: int,
  *         tools: int,
@@ -118,6 +118,7 @@ HELP
             return Command::FAILURE;
         }
 
+        /** @var CapabilitiesByExtension $capabilities */
         $capabilities = [];
         foreach ($this->extensions as $extensionName => $extension) {
             $capabilities[$extensionName] = $this->collector->collectCapabilities($extensionName, $extension);
@@ -137,7 +138,7 @@ HELP
         }
 
         if ('json' === $format) {
-            $output->writeln(json_encode($this->getArrayResult($capabilities), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+            $output->writeln((string) json_encode($this->getArrayResult($capabilities), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
         } elseif ('toon' === $format) {
             $output->writeln(Toon::encode($this->getArrayResult($capabilities)));
         } else {
@@ -164,7 +165,7 @@ HELP
     /**
      * @param CapabilitiesByExtension $capabilities
      *
-     * @return array<string, array<string, array<string, array<string, mixed>>>>
+     * @return array<string, array<string, mixed>>
      */
     private function filterByType(array $capabilities, string $type): array
     {
@@ -180,10 +181,11 @@ HELP
             'template' => 'resource_templates',
         ];
 
+        $key = $typeMap[$type];
         $filtered = [];
         foreach ($capabilities as $extension => $caps) {
             $filtered[$extension] = [
-                $typeMap[$type] => $caps[$typeMap[$type]],
+                $key => $caps[$key],
             ];
         }
 
@@ -191,7 +193,7 @@ HELP
     }
 
     /**
-     * @param CapabilitiesByExtension $capabilitiesByExtension
+     * @param array<string, array<string, mixed>> $capabilitiesByExtension
      */
     private function outputText(array $capabilitiesByExtension, SymfonyStyle $io): void
     {
@@ -278,7 +280,7 @@ HELP
     }
 
     /**
-     * @param CapabilitiesByExtension $capabilitiesByExtension
+     * @param array<string, array<string, mixed>> $capabilitiesByExtension
      *
      * @return DebugCapabilitiesArrayResult
      */

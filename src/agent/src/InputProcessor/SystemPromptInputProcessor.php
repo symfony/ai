@@ -56,6 +56,7 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
         if ($this->systemPrompt instanceof File) {
             $message = $this->systemPrompt->asBinary();
         } elseif ($this->systemPrompt instanceof TranslatableInterface) {
+            \assert(null !== $this->translator);
             $message = $this->systemPrompt->trans($this->translator);
         } else {
             $message = (string) $this->systemPrompt;

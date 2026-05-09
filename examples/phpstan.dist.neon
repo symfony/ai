@@ -2,8 +2,47 @@ includes:
     - ../.phpstan/extension.neon
 
 parameters:
-    level: 6
+    level: 8
     paths:
         - ./
     excludePaths:
         - vendor
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # Examples are illustrative scripts that consume the wide ResultInterface::getContent()
+        # union (string|iterable|object|null) directly without instanceof narrowing.
+        -
+            message: '#Binary operation "\." between .* results in an error\.#'
+        -
+            message: '#supplied for foreach, only iterables are supported\.#'
+        -
+            message: '#expects (string|array<mixed>\|object\|string), iterable\|object\|string\|null given\.#'
+        # Examples often pass plain strings to non-empty-string params
+        -
+            message: '#expects non-empty-string, string given\.#'
+        # Examples use the wide return types directly
+        -
+            message: '#expects array<.*>, iterable\|object\|string\|null given\.#'
+            reportUnmatched: false
+        -
+            message: '#Cannot access offset .* on iterable\|object\|string\|null\.#'
+            reportUnmatched: false
+        # Examples that pretty-print results from open-ended platforms
+        -
+            message: '#Access to an undefined property [a-zA-Z\\]+::\$#'
+            reportUnmatched: false
+        # Indexer examples format VectorDocument metadata via mixed-type ids
+        -
+            message: '#expects string, int\|string given\.#'
+        # Examples pass result content (wide union) to message constructors
+        -
+            message: '#expects string\|null, iterable\|object\|string\|null given\.#'
+        # Examples slice iterables for sample output
+        -
+            message: '#expects array, iterable<.*> given\.#'
+        # Examples consume read*/cli input as string|false
+        -
+            message: '#expects string, string\|false given\.#'
+        # Examples capture command output as list<string>|false
+        -
+            message: '#expects array, list<string>\|false given\.#'

@@ -81,10 +81,15 @@ class Contract
      */
     final public function createRequestPayload(Model $model, object|array|string $input, array $options = []): string|array
     {
-        return $this->normalizer->normalize($input, context: [
+        $payload = $this->normalizer->normalize($input, context: [
             self::CONTEXT_MODEL => $model,
             self::CONTEXT_OPTIONS => $options,
         ]);
+
+        \assert(\is_array($payload) || \is_string($payload));
+
+        /** @var array<string, mixed>|string */
+        return $payload;
     }
 
     /**
@@ -94,9 +99,14 @@ class Contract
      */
     final public function createToolOption(array $tools, Model $model): array
     {
-        return $this->normalizer->normalize($tools, context: [
+        $payload = $this->normalizer->normalize($tools, context: [
             self::CONTEXT_MODEL => $model,
             AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true,
         ]);
+
+        \assert(\is_array($payload));
+
+        /** @var array<string, mixed> */
+        return $payload;
     }
 }

@@ -3,7 +3,7 @@ includes:
     - ../../.phpstan/extension.neon
 
 parameters:
-    level: 6
+    level: 8
     paths:
         - src/
         - tests/
@@ -24,6 +24,21 @@ parameters:
         -
             identifier: empty.notAllowed
             path: config/options.php
+        # Bundle tests creating containers/extensions: getExtension() returns null until registered
+        -
+            message: '#Cannot call method load\(\) on Symfony\\Component\\DependencyInjection\\Extension\\ExtensionInterface\|null\.#'
+            path: tests/*
+        # AiBundleTest checks ContainerBuilder service definitions of mixed shape
+        -
+            message: '#Call to an undefined method object::getModelCatalog\(\)\.#'
+            path: tests/*
+        # BridgeConfigCompilationTest scans config dir; glob returns array<string>|false
+        -
+            message: '#getConfigFileNames\(\) should return list<string> but returns array<string>\.#'
+            path: tests/*
+        -
+            message: '#expects array, list<string>\|false given\.#'
+            path: tests/*
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

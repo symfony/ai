@@ -63,9 +63,15 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $data['toolsCalls'],
             )),
             UserMessage::class => new UserMessage(...array_map(
-                static fn (array $contentAsBase64): ContentInterface => \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
-                    ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
-                    : new $contentAsBase64['type']($contentAsBase64['content']),
+                static function (array $contentAsBase64): ContentInterface {
+                    $instance = \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
+                        ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
+                        : new $contentAsBase64['type']($contentAsBase64['content']);
+
+                    \assert($instance instanceof ContentInterface);
+
+                    return $instance;
+                },
                 $contentAsBase64,
             )),
             ToolCallMessage::class => new ToolCallMessage(

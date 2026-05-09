@@ -47,8 +47,11 @@ final class MessageBagNormalizer implements NormalizerInterface, NormalizerAware
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $messages = $this->normalizer->normalize($data->getMessages(), $format, $context);
+        \assert(\is_array($messages));
+        /** @var array<string, mixed> $messages */
         $array = [
-            'messages' => $this->normalizer->normalize($data->getMessages(), $format, $context),
+            'messages' => $messages,
         ];
 
         if (isset($context[Contract::CONTEXT_MODEL]) && $context[Contract::CONTEXT_MODEL] instanceof Model) {

@@ -99,10 +99,12 @@ EOF
     }
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     private function getStoreNames(): array
     {
-        return array_keys($this->stores->getProvidedServices());
+        $names = array_keys($this->stores->getProvidedServices());
+
+        return array_map(static fn ($name): string => (string) $name, $names);
     }
 }

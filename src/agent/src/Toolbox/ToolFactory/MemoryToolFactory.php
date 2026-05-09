@@ -33,10 +33,13 @@ final class MemoryToolFactory implements ToolFactoryInterface
     ) {
     }
 
+    /**
+     * @param class-string|object $class
+     */
     public function addTool(string|object $class, string $name, string $description, string $method = '__invoke'): self
     {
         $className = \is_object($class) ? $class::class : $class;
-        $key = \is_object($class) ? (string) spl_object_id($class) : $className;
+        $key = \is_object($class) ? 'obj_'.spl_object_id($class) : $className;
 
         try {
             $this->tools[$key][] = new Tool(
@@ -55,7 +58,7 @@ final class MemoryToolFactory implements ToolFactoryInterface
     public function getTool(object|string $reference): iterable
     {
         if (\is_object($reference)) {
-            $key = (string) spl_object_id($reference);
+            $key = 'obj_'.spl_object_id($reference);
 
             if (isset($this->tools[$key])) {
                 yield from $this->tools[$key];

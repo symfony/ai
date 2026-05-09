@@ -3,7 +3,7 @@ includes:
     - ../../.phpstan/extension.neon
 
 parameters:
-    level: 6
+    level: 8
     paths:
         - src/
         - tests/
@@ -28,6 +28,58 @@ parameters:
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*
             reportUnmatched: false
+        # Tests that use traits via anonymous classes (object::traitMethod) - PHPStan cannot infer
+        -
+            message: '#Call to an undefined method object::.*\(\)\.#'
+            path: tests/*
+        # Tests asserting on offsets of partial array shapes returned from normalizers
+        -
+            message: "#Offset '(tool_calls|reasoning_content)' might not exist on array#"
+            path: tests/Contract/Normalizer/*
+        # Tests calling methods on first()/last() etc. that return nullable
+        -
+            message: '#Cannot call method (getContent|asText|getObject)\(\) on .*\|null\.#'
+            path: tests/*
+        # Tests using string|false from file_get_contents directly
+        -
+            message: '#expects (string|iterable<string\|Throwable>\|string|array<string>\|string), string\|false given#'
+            path: tests/*
+        # Anonymous class with trait property type widening
+        -
+            message: '#AbstractStreamListener@anonymous.*does not accept.*Generator#'
+            path: tests/Result/StreamResultTest.php
+        # Test tests assertCount() with possibly-null content union
+        -
+            message: '~Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert::assertCount\(\) expects Countable\|iterable, .*\|null given\.~'
+            path: tests/*
+        # Tests accessing offset 0 on union including non-array types
+        -
+            message: '#Cannot access offset 0 on .*\|null\.#'
+            path: tests/EventListener/*
+        # Test factory variant returns deliberate looser shape
+        -
+            message: '#ConfigurableResponseFormatFactory::create\(\) should return .* but returns array<mixed>\.#'
+            path: tests/*
+        # ResponseFormatFactory test passes string instead of class-string
+        -
+            message: '#expects class-string, string given\.#'
+            path: tests/*
+        # ReflectionProperty in test passes string instead of class-string
+        -
+            message: '#expects class-string\|object, string given\.#'
+            path: tests/*
+        # Tests calling getModel with raw string instead of non-empty-string
+        -
+            message: '#expects non-empty-string, string given\.#'
+            path: tests/*
+        # array_search returning int|false in test array search assertions
+        -
+            message: '#expects array<mixed>\|ArrayAccess.*<\(int\|string\), mixed>, array<string, mixed>\|string given\.#'
+            path: tests/*
+        # Generator iteration argument type
+        -
+            message: '#iterator_to_array expects iterable, iterable\|object\|string\|null given\.#'
+            path: tests/*
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

@@ -33,6 +33,8 @@ final class Provider implements ProviderInterface
      */
     private ?Model $resolvedModel = null;
 
+    private readonly Contract $contract;
+
     /**
      * @param non-empty-string                   $name
      * @param iterable<ModelClientInterface>     $modelClients
@@ -43,7 +45,7 @@ final class Provider implements ProviderInterface
         private readonly iterable $modelClients,
         private readonly iterable $resultConverters,
         private readonly ModelCatalogInterface $modelCatalog,
-        private ?Contract $contract = null,
+        ?Contract $contract = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
         $this->contract = $contract ?? Contract::create();

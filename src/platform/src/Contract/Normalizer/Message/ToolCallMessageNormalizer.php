@@ -46,9 +46,12 @@ final class ToolCallMessageNormalizer implements NormalizerInterface, Normalizer
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $content = $this->normalizer->normalize($data->getContent(), $format, $context);
+        \assert(\is_string($content));
+
         return [
-            'role' => $data->getRole()->value,
-            'content' => $this->normalizer->normalize($data->getContent(), $format, $context),
+            'role' => 'tool',
+            'content' => $content,
             'tool_call_id' => $data->getToolCall()->getId(),
         ];
     }

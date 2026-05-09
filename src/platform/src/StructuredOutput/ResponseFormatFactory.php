@@ -31,7 +31,7 @@ final class ResponseFormatFactory implements ResponseFormatFactoryInterface
             'type' => 'json_schema',
             'json_schema' => [
                 'name' => u($responseClass)->afterLast('\\')->toString(),
-                'schema' => $this->schemaFactory->buildProperties($responseClass),
+                'schema' => $this->schemaFactory->buildProperties($responseClass) ?? [],
                 'strict' => true,
             ],
         ];

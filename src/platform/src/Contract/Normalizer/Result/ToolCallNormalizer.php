@@ -45,12 +45,18 @@ final class ToolCallNormalizer implements NormalizerInterface
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $arguments = json_encode($data->getArguments() ?: new \stdClass());
+
+        if (false === $arguments) {
+            $arguments = '{}';
+        }
+
         return [
             'id' => $data->getId(),
             'type' => 'function',
             'function' => [
                 'name' => $data->getName(),
-                'arguments' => json_encode($data->getArguments() ?: new \stdClass()),
+                'arguments' => $arguments,
             ],
         ];
     }

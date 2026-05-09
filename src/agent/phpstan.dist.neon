@@ -3,7 +3,7 @@ includes:
     - ../../.phpstan/extension.neon
 
 parameters:
-    level: 6
+    level: 8
     paths:
         - src/
         - tests/
@@ -23,6 +23,26 @@ parameters:
         -
             identifier: trait.unused
             reportUnmatched: false
+        # Tests calling methods on first()/last()/getSystemMessage() etc. that return nullable
+        -
+            message: '#Cannot call method (getContent|asText|all)\(\) on .*\|null\.#'
+            path: tests/*
+        # Tests using null|iterable|object|string from streams
+        -
+            message: '#supplied for foreach, only iterables are supported\.#'
+            path: tests/*
+        # Tests passing nullable string to str_contains
+        -
+            message: '#Parameter \#1 \$haystack of function str_contains expects string, string\|null given\.#'
+            path: tests/*
+        # Tests using iterator_to_array on stream methods
+        -
+            message: '#iterator_to_array expects iterable, iterable\|object\|string\|null given\.#'
+            path: tests/*
+        # Tests assertCount on nullable SourceCollection etc.
+        -
+            message: '~Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert::assertCount\(\) expects Countable\|iterable, .*\|null given\.~'
+            path: tests/*
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

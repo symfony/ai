@@ -69,7 +69,7 @@ final class DeferredResult
                 }
             }
 
-            $this->metadata->set($metadata->all());
+            $this->getMetadata()->set($metadata->all());
 
             $this->isConverted = true;
         }
@@ -100,7 +100,13 @@ final class DeferredResult
      */
     public function asObject(): object
     {
-        return $this->as(ObjectResult::class)->getContent();
+        $content = $this->as(ObjectResult::class)->getContent();
+
+        if (\is_array($content)) {
+            $content = (object) $content;
+        }
+
+        return $content;
     }
 
     /**
@@ -196,7 +202,11 @@ final class DeferredResult
     }
 
     /**
-     * @param class-string $type
+     * @template T of ResultInterface
+     *
+     * @param class-string<T> $type
+     *
+     * @return T
      *
      * @throws ExceptionInterface
      */

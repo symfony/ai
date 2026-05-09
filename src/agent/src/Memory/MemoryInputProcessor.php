@@ -43,12 +43,14 @@ final class MemoryInputProcessor implements InputProcessorInterface
         unset($options['use_memory']);
         $input->setOptions($options);
 
-        if (false === $useMemory || 0 === \count($this->memoryProviders)) {
+        $providers = \is_array($this->memoryProviders) ? $this->memoryProviders : iterator_to_array($this->memoryProviders);
+
+        if (false === $useMemory || 0 === \count($providers)) {
             return;
         }
 
         $memory = '';
-        foreach ($this->memoryProviders as $provider) {
+        foreach ($providers as $provider) {
             $memoryMessages = $provider->load($input);
 
             if (0 === \count($memoryMessages)) {

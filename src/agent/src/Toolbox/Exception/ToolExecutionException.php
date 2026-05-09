@@ -35,6 +35,6 @@ final class ToolExecutionException extends \RuntimeException implements ToolExec
 
     public function getToolCallResult(): string
     {
-        return \sprintf('An error occurred while executing tool "%s".', $this->toolCall->getName());
+        return \sprintf('An error occurred while executing tool "%s".', $this->toolCall?->getName() ?? 'unknown');
     }
 }

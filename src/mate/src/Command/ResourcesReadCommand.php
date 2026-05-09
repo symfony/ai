@@ -119,6 +119,7 @@ HELP
         }
 
         $session = new CliSession();
+        \assert('' !== $uri);
         $request = new ReadResourceRequest(uri: $uri);
 
         $arguments = [
@@ -162,7 +163,7 @@ HELP
         }
 
         if ('json' === $format) {
-            $output->writeln(json_encode($contents, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+            $output->writeln((string) json_encode($contents, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
 
             return Command::SUCCESS;
         }

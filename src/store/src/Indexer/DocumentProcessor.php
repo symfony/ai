@@ -74,13 +74,19 @@ final class DocumentProcessor
             ++$counter;
 
             if ($chunkSize === \count($chunk)) {
-                $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []));
+                $vectorized = $this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []);
+                \assert(\is_array($vectorized));
+                /** @var array<\Symfony\AI\Store\Document\VectorDocument> $vectorized */
+                $this->store->add($vectorized);
                 $chunk = [];
             }
         }
 
         if ([] !== $chunk) {
-            $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []));
+            $vectorized = $this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []);
+            \assert(\is_array($vectorized));
+            /** @var array<\Symfony\AI\Store\Document\VectorDocument> $vectorized */
+            $this->store->add($vectorized);
         }
 
         $this->logger->debug('Document processing completed', ['total_documents' => $counter]);

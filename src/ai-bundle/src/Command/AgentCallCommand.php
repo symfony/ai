@@ -182,10 +182,10 @@ final class AgentCallCommand extends Command
     }
 
     /**
-     * @return string[]
+     * @return list<string>
      */
     private function getAvailableAgentNames(): array
     {
-        return array_keys($this->agents->getProvidedServices());
+        return array_map(static fn ($name): string => (string) $name, array_keys($this->agents->getProvidedServices()));
     }
 }

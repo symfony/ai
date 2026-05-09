@@ -31,7 +31,7 @@ final class TraceableMessageStore implements ManagedStoreInterface, MessageStore
     private array $calls = [];
 
     public function __construct(
-        private readonly MessageStoreInterface|ManagedStoreInterface $messageStore,
+        private readonly MessageStoreInterface $messageStore,
         private readonly ClockInterface $clock,
     ) {
     }

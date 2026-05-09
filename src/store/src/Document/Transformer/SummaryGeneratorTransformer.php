@@ -31,6 +31,9 @@ final class SummaryGeneratorTransformer implements TransformerInterface
 {
     private const DEFAULT_SYSTEM_PROMPT = 'Summarize the following text in 2-3 sentences, capturing the key concepts and any technical terms. Be concise and precise.';
 
+    /**
+     * @param non-empty-string $model
+     */
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly string $model,
@@ -42,7 +45,11 @@ final class SummaryGeneratorTransformer implements TransformerInterface
     public function transform(iterable $documents, array $options = []): iterable
     {
         foreach ($documents as $document) {
-            $summary = $this->generateSummary($document->getContent());
+            $content = $document->getContent();
+            if (!\is_string($content)) {
+                $content = $content instanceof \Stringable ? (string) $content : json_encode($content);
+            }
+            $summary = $this->generateSummary((string) $content);
             $document->getMetadata()->setSummary($summary);
 
             yield $document;

@@ -37,6 +37,9 @@ final class Agent implements AgentInterface
     ) {
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getModel(): string
     {
         return $this->model;

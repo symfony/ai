@@ -3,7 +3,7 @@ includes:
     - ../../.phpstan/extension.neon
 
 parameters:
-    level: 6
+    level: 8
     paths:
         - src/
         - tests/
@@ -20,6 +20,41 @@ parameters:
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*
             reportUnmatched: false
+        # Integration test base class uses ordered tests with static $store; PHPStan cannot follow dependsOn
+        -
+            message: '#Cannot call method (add|query|remove|supports)\(\) on Symfony\\AI\\Store\\StoreInterface\|null\.#'
+            path: src/Test/AbstractStoreIntegrationTestCase.php
+        -
+            message: '#expects string, string\|null given\.#'
+            path: src/Test/AbstractStoreIntegrationTestCase.php
+        # Tests calling get*() that return string|null on Metadata
+        -
+            message: '#expects string, string\|null given\.#'
+            path: tests/*
+        # Tests using TextDocument and casting object|string content
+        -
+            message: '#(expects string, object\|string given\.|between object\|string and .* results in an error\.)#'
+            path: tests/*
+        # Tests with mixed/string|false from JSON or fgetcsv
+        -
+            message: '#expects string, string\|false given\.#'
+            path: tests/*
+        # Tests passing potentially-null int/string values to setters
+        -
+            message: '#expects (int|int\|string), int\|.*null given\.#'
+            path: tests/*
+        # Tests passing string instead of non-empty-string (filter constructors)
+        -
+            message: '#expects non-empty-string, string given\.#'
+            path: tests/*
+        # Tests using Uuid with int|string
+        -
+            message: '#expects string, int\|string given\.#'
+            path: tests/*
+        # Tests using array as list (vectors)
+        -
+            message: '#expects list<float>, array<float> given\.#'
+            path: tests/*
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

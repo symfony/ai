@@ -29,8 +29,9 @@ final class ChainFactory implements ToolFactoryInterface
 
     public function getTool(object|string $reference): iterable
     {
+        $factories = \is_array($this->factories) ? $this->factories : iterator_to_array($this->factories, false);
         $invalid = 0;
-        foreach ($this->factories as $factory) {
+        foreach ($factories as $factory) {
             try {
                 yield from $factory->getTool($reference);
             } catch (ToolException) {
@@ -42,7 +43,7 @@ final class ChainFactory implements ToolFactoryInterface
             return;
         }
 
-        if ($invalid === \count($this->factories)) {
+        if ($invalid === \count($factories)) {
             throw ToolException::invalidReference($reference);
         }
     }

@@ -34,7 +34,7 @@ final class FrameworkSessionStore implements SessionStoreInterface
     public function read(Uuid $id): string|false
     {
         $raw = $this->handler->read($this->getKey($id));
-        if ('' === $raw) {
+        if ('' === $raw || false === $raw) {
             return false;
         }
 

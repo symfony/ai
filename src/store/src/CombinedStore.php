@@ -88,13 +88,13 @@ final class CombinedStore implements StoreInterface
      */
     private function hybridQuery(HybridQuery $query, array $options): array
     {
-        $vectorResults = iterator_to_array(
+        $vectorResults = array_values(iterator_to_array(
             $this->vectorStore->query(new VectorQuery($query->getVector()), $options),
-        );
+        ));
 
-        $textResults = iterator_to_array(
+        $textResults = array_values(iterator_to_array(
             $this->textStore->query(new TextQuery($query->getText()), $options),
-        );
+        ));
 
         return $this->reciprocalRankFusion($vectorResults, $textResults);
     }

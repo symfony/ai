@@ -120,7 +120,13 @@ class MessageBag implements \Countable, \IteratorAggregate
 
         $currentMessage = array_search(array_values($messagesByUuid)[0], $this->messages, true);
 
-        $this->messages[$currentMessage] = $newMessage;
+        if (false === $currentMessage) {
+            throw new InvalidArgumentException(\sprintf('Message for Uuid "%s" could not be located.', $uuid->toRfc4122()));
+        }
+
+        $messages = $this->messages;
+        $messages[$currentMessage] = $newMessage;
+        $this->messages = array_values($messages);
 
         return $this;
     }

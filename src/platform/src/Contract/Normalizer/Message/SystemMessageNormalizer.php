@@ -38,9 +38,11 @@ final class SystemMessageNormalizer implements NormalizerInterface
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $content = $data->getContent();
+
         return [
-            'role' => $data->getRole()->value,
-            'content' => $data->getContent(),
+            'role' => 'system',
+            'content' => \is_string($content) ? $content : (string) $content,
         ];
     }
 }

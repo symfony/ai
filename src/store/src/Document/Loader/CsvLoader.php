@@ -82,6 +82,8 @@ final class CsvLoader implements LoaderInterface
                     continue;
                 }
 
+                $row = array_map(static fn ($value): string => (string) $value, $row);
+
                 if ($hasHeader && null === $headers) {
                     $headers = $row;
 

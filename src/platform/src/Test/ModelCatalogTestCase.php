@@ -27,11 +27,12 @@ use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 abstract class ModelCatalogTestCase extends TestCase
 {
     /**
-     * @return iterable<string, array{string, class-string<Model>, list<Capability>}>
+     * @return iterable<string, array{non-empty-string, class-string<Model>, list<Capability>}>
      */
     abstract public static function modelsProvider(): iterable;
 
     /**
+     * @param non-empty-string    $modelName
      * @param class-string<Model> $expectedClass
      * @param list<Capability>    $expectedCapabilities
      */

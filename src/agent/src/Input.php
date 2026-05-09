@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 final class Input
 {
     /**
+     * @param non-empty-string     $model
      * @param array<string, mixed> $options
      */
     public function __construct(
@@ -28,11 +29,17 @@ final class Input
     ) {
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getModel(): string
     {
         return $this->model;
     }
 
+    /**
+     * @param non-empty-string $model
+     */
     public function setModel(string $model): void
     {
         $this->model = $model;

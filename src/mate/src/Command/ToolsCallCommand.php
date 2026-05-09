@@ -171,7 +171,7 @@ HELP
         }
 
         if ('json' === $format) {
-            $output->writeln(json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+            $output->writeln((string) json_encode($result, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
         } elseif ('toon' === $format) {
             $output->writeln(Toon::encode($result));
         } else {
@@ -206,7 +206,7 @@ HELP
     private function formatValue(mixed $value): string
     {
         if (\is_array($value)) {
-            return json_encode($value, \JSON_UNESCAPED_SLASHES);
+            return (string) json_encode($value, \JSON_UNESCAPED_SLASHES);
         }
 
         if (\is_bool($value)) {

@@ -58,9 +58,23 @@ class File implements ContentInterface
             throw new InvalidArgumentException(\sprintf('The file "%s" does not exist or is not readable.', $path));
         }
 
+        $format = mime_content_type($path);
+
+        if (false === $format) {
+            throw new RuntimeException(\sprintf('Could not determine MIME type of file "%s".', $path));
+        }
+
         return new static(
-            static fn (): string => file_get_contents($path),
-            mime_content_type($path),
+            static function () use ($path): string {
+                $contents = file_get_contents($path);
+
+                if (false === $contents) {
+                    throw new RuntimeException(\sprintf('Could not read file "%s".', $path));
+                }
+
+                return $contents;
+            },
+            $format,
             $path,
         );
     }

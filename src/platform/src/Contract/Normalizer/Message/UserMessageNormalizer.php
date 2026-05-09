@@ -39,11 +39,11 @@ final class UserMessageNormalizer implements NormalizerInterface, NormalizerAwar
     /**
      * @param UserMessage $data
      *
-     * @return array{role: 'assistant', content: string}
+     * @return array{role: 'user', content: string|array<mixed>}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $array = ['role' => $data->getRole()->value];
+        $array = ['role' => 'user'];
 
         if (1 === \count($data->getContent()) && $data->getContent()[0] instanceof Text) {
             $array['content'] = $data->getContent()[0]->getText();
@@ -51,7 +51,10 @@ final class UserMessageNormalizer implements NormalizerInterface, NormalizerAwar
             return $array;
         }
 
-        $array['content'] = $this->normalizer->normalize($data->getContent(), $format, $context);
+        $content = $this->normalizer->normalize($data->getContent(), $format, $context);
+        \assert(\is_array($content));
+        /** @var array<mixed> $content */
+        $array['content'] = $content;
 
         return $array;
     }

@@ -51,18 +51,24 @@ final class TextSplitTransformer implements TransformerInterface
         }
 
         foreach ($documents as $document) {
-            if (mb_strlen($document->getContent()) <= $chunkSize) {
+            $content = $document->getContent();
+            if (!\is_string($content)) {
+                $content = $content instanceof \Stringable ? (string) $content : json_encode($content);
+            }
+            $content = (string) $content;
+
+            if (mb_strlen($content) <= $chunkSize) {
                 $metadata = new Metadata([
                     ...$document->getMetadata(),
-                    Metadata::KEY_TEXT => $document->getContent(),
+                    Metadata::KEY_TEXT => $content,
                 ]);
 
-                yield new TextDocument($document->getId(), $document->getContent(), $metadata);
+                yield new TextDocument($document->getId(), $content, $metadata);
 
                 continue;
             }
 
-            $text = $document->getContent();
+            $text = $content;
             $length = mb_strlen($text);
             $start = 0;
 

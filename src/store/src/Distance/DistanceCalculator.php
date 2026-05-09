@@ -36,7 +36,7 @@ final class DistanceCalculator
      */
     public function calculate(array $documents, Vector $vector, ?int $maxItems = null): array
     {
-        if (null !== $maxItems && $this->batchSize <= \count($documents)) {
+        if (null !== $maxItems && $maxItems > 0 && $this->batchSize <= \count($documents)) {
             return $this->calculateBatched($documents, $vector, $maxItems);
         }
 

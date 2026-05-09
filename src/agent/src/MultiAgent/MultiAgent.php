@@ -70,7 +70,7 @@ final class MultiAgent implements AgentInterface
         if (null === $userMessage) {
             throw new RuntimeException('No user message found in conversation.');
         }
-        $userText = $userMessage->asText();
+        $userText = $userMessage->asText() ?? '';
         $this->logger->debug('MultiAgent: Processing user message', ['user_text' => $userText]);
 
         $this->logger->debug('MultiAgent: Available agents for routing', ['agents' => array_map(static fn ($handoff) => [

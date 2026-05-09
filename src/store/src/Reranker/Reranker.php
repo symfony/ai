@@ -23,6 +23,9 @@ use Symfony\AI\Store\Document\VectorDocument;
  */
 final class Reranker implements RerankerInterface
 {
+    /**
+     * @param non-empty-string $model
+     */
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly string $model,

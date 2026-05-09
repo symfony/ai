@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
@@ -40,9 +41,18 @@ final class AudioNormalizer implements NormalizerInterface
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        $resource = $data->asResource();
+
+        if (false === $resource) {
+            throw new RuntimeException('Could not open audio file as resource.');
+        }
+
+        $model = $context[Contract::CONTEXT_MODEL];
+        \assert($model instanceof Whisper);
+
         return [
-            'model' => $context[Contract::CONTEXT_MODEL]->getName(),
-            'file' => $data->asResource(),
+            'model' => $model->getName(),
+            'file' => $resource,
         ];
     }
 }

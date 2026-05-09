@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\CompleteEvent;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
@@ -65,8 +66,14 @@ final class StreamListener extends AbstractStreamListener
 
         $this->result = ($this->handleToolCallsCallback)(new ToolCallResult($delta->getToolCalls()), Message::ofAssistant($this->buffer));
 
+        \assert(null !== $this->result);
         $content = $this->result->getContent();
-        $event->setDelta(\is_string($content) ? new TextDelta($content) : $content);
+
+        if (\is_string($content)) {
+            $event->setDelta(new TextDelta($content));
+        } elseif ($content instanceof DeltaInterface || $content instanceof \Generator) {
+            $event->setDelta($content);
+        }
 
         $this->toolHandled = true;
     }

@@ -98,6 +98,7 @@ final class PlatformInvokeCommand extends Command
             $messages = new MessageBag();
             $messages->add(Message::ofUser($this->message));
 
+            \assert('' !== $this->model);
             $result = $this->platform->invoke($this->model, $messages)->getResult();
 
             if ($result instanceof TextResult) {

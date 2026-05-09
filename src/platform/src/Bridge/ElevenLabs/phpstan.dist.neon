@@ -1,6 +1,7 @@
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon
     - ../../../../../.phpstan/extension.neon
+    - ../../../../../.phpstan/bridge-ignores.neon
 
 parameters:
     level: 8

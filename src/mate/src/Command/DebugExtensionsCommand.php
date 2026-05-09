@@ -149,7 +149,7 @@ HELP
         }
 
         if ('json' === $format) {
-            $output->writeln(json_encode($this->getArrayResult(), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+            $output->writeln((string) json_encode($this->getArrayResult(), \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
         } elseif ('toon' === $format) {
             $output->writeln(Toon::encode($this->getArrayResult()));
         } else {

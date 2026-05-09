@@ -18,12 +18,14 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
  */
 final class Vector implements VectorInterface
 {
+    private readonly int $dimensions;
+
     /**
      * @param list<float> $data
      */
     public function __construct(
         private readonly array $data,
-        private ?int $dimensions = null,
+        ?int $dimensions = null,
     ) {
         if (null !== $dimensions && $dimensions !== \count($data)) {
             throw new InvalidArgumentException(\sprintf('Vector must have %d dimensions', $dimensions));
@@ -33,9 +35,7 @@ final class Vector implements VectorInterface
             throw new InvalidArgumentException('Vector must have at least one dimension.');
         }
 
-        if (null === $this->dimensions) {
-            $this->dimensions = \count($data);
-        }
+        $this->dimensions = $dimensions ?? \count($data);
     }
 
     /**

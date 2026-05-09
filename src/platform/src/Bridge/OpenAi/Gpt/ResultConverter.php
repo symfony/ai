@@ -128,11 +128,17 @@ final class ResultConverter implements ResultConverterInterface
     {
         $type = $item['type'] ?? null;
 
-        return match ($type) {
-            'message' => $this->convertOutputMessage($item),
-            'reasoning' => $this->convertReasoning($item),
-            default => throw new RuntimeException(\sprintf('Unsupported output type "%s".', $type)),
-        };
+        if ('message' === $type) {
+            /** @var OutputMessage $item */
+            return $this->convertOutputMessage($item);
+        }
+
+        if ('reasoning' === $type) {
+            /** @var Reasoning $item */
+            return $this->convertReasoning($item);
+        }
+
+        throw new RuntimeException(\sprintf('Unsupported output type "%s".', $type));
     }
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
@@ -183,23 +189,27 @@ final class ResultConverter implements ResultConverterInterface
     /**
      * @param array<OutputMessage|FunctionCall|Reasoning> $output
      *
-     * @return list<ToolCallResult|array<OutputMessage|Reasoning>|null>
+     * @return array{0: ToolCallResult|null, 1: array<OutputMessage|Reasoning>}
      */
     private function extractFunctionCalls(array $output): array
     {
         $functionCalls = [];
-        foreach ($output as $key => $item) {
+        $remaining = [];
+        foreach ($output as $item) {
             if ('function_call' === ($item['type'] ?? null)) {
+                /** @var FunctionCall $item */
                 $functionCalls[] = $item;
-                unset($output[$key]);
+                continue;
             }
+            /** @var OutputMessage|Reasoning $item */
+            $remaining[] = $item;
         }
 
         $toolCallResult = $functionCalls ? new ToolCallResult(
             array_map($this->convertFunctionCall(...), $functionCalls)
         ) : null;
 
-        return [$toolCallResult, $output];
+        return [$toolCallResult, $remaining];
     }
 
     /**

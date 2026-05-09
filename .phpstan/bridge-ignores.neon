@@ -1,0 +1,103 @@
+parameters:
+    ignoreErrors:
+        # RawHttpResult::getObject() declares ResponseInterface but RawResultInterface declares object;
+        # bridges read response status/content directly. Real fix: assert in source. Documented at level 8.
+        -
+            message: '#Call to an undefined method object::(getStatusCode|getContent|getHeaders)\(\)\.#'
+            reportUnmatched: false
+        -
+            message: '#expects Symfony\\Contracts\\HttpClient\\ResponseInterface, object given\.#'
+            reportUnmatched: false
+        # Symfony Serializer's parent normalize() return type is array|ArrayObject|bool|float|int|string|null —
+        # the strict array shapes declared on bridge normalizers cannot be enforced via inheritance.
+        -
+            message: '#Method .*Normalizer::normalize\(\) should return .* but returns array.*ArrayObject.*\|bool\|float\|int\|string\|null.*\.#'
+            reportUnmatched: false
+        # Bridge ModelCatalog implementations use string instead of class-string in their static models map
+        -
+            message: '#Property Symfony\\AI\\Platform\\ModelCatalog\\AbstractModelCatalog::\$models .* does not accept non-empty-array<string, array\{class: string, capabilities: list<Symfony\\AI\\Platform\\Capability>\}>\.#'
+            reportUnmatched: false
+        # Tests using HttpStatusErrorHandlingTrait via anonymous classes
+        -
+            message: '#Call to an undefined method object::throwOnHttpError\(\)\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Test traits using anonymous classes - phpstan cannot infer trait methods
+        -
+            message: '#Call to an undefined method object::(getMetadata|setRawResult|getRawResult)\(\)\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests reading test fixtures returning string|false
+        -
+            message: '#expects (string|iterable<string\|Throwable>\|string|array<string>\|string), string\|false given\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests with json_decode/file_get_contents returning string|false
+        -
+            message: '#Parameter \#1 \$json of function json_decode expects string, string\|false given\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests passing non-class-string in ReflectionClass etc.
+        -
+            message: '#expects class-string(\|object)?, string given\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests calling first()/last()/getSystemMessage() and using the nullable result
+        -
+            message: '#Cannot call method (getContent|asText|all|getCachedTokens|getCacheCreationTokens|getCacheReadTokens|getObject|getName)\(\) on .*\|null\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests asserting count on nullable iterables
+        -
+            message: '~Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert::assertCount\(\) expects Countable\|iterable, .*\|null given\.~'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests passing string to non-empty-string params
+        -
+            message: '#expects non-empty-string, string given\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests using stream content as iterable directly
+        -
+            message: '#supplied for foreach, only iterables are supported\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests passing nullable strings to assertions
+        -
+            message: '#expects string, string\|null given\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests using iterator_to_array on stream methods (wide content union)
+        -
+            message: '#iterator_to_array expects iterable, iterable\|object\|string\|null given\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false
+        # Tests accessing offsets on the wide ResultInterface::getContent() union
+        -
+            message: '#Cannot access offset .* on iterable\|object\|string\|null\.#'
+            paths:
+                - */Tests/*
+                - tests/*
+            reportUnmatched: false

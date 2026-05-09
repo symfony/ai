@@ -59,6 +59,8 @@ final class SerializerDescriber implements ObjectDescriberInterface, ObjectDescr
         $discriminatorMapping = $classMetadata->getClassDiscriminatorMapping();
         if ($discriminatorMapping) {
             $typeProperty = $discriminatorMapping->getTypeProperty();
+            $schema ??= [];
+            $schema['anyOf'] ??= [];
             foreach ($discriminatorMapping->getTypesMapping() as $discriminatorValue => $discriminatorClass) {
                 $subSchema = &$schema['anyOf'][];
                 $this->describer->describeObject(new ObjectSubject($discriminatorClass, new \ReflectionClass($discriminatorClass)), $subSchema);

@@ -21,6 +21,9 @@ use Symfony\AI\Store\Exception\RuntimeException;
 
 final class Vectorizer implements VectorizerInterface
 {
+    /**
+     * @param non-empty-string $model
+     */
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly string $model,
@@ -47,16 +50,31 @@ final class Vectorizer implements VectorizerInterface
         if ($firstElement instanceof EmbeddableDocumentInterface) {
             $this->validateArray($values, EmbeddableDocumentInterface::class);
 
+            /** @var array<EmbeddableDocumentInterface> $values */
             return $this->vectorizeEmbeddableDocuments($values, $options);
         }
 
         if (\is_string($firstElement) || $firstElement instanceof \Stringable) {
             $this->validateArray($values, 'string|stringable');
 
+            /** @var array<string|\Stringable> $values */
             return $this->vectorizeStrings($values, $options);
         }
 
         throw new RuntimeException('Array must contain only strings, Stringable objects, or EmbeddableDocumentInterface instances.');
+    }
+
+    private function stringifyContent(string|object $content): string
+    {
+        if (\is_string($content)) {
+            return $content;
+        }
+
+        if ($content instanceof \Stringable) {
+            return (string) $content;
+        }
+
+        return json_encode($content) ?: '';
     }
 
     /**
@@ -103,7 +121,8 @@ final class Vectorizer implements VectorizerInterface
     private function vectorizeEmbeddableDocument(EmbeddableDocumentInterface $document, array $options = []): VectorDocument
     {
         $this->logger->debug('Vectorizing embeddable document', ['document_id' => $document->getId()]);
-        $result = $this->platform->invoke($this->model, $document->getContent(), $options);
+        $content = $document->getContent();
+        $result = $this->platform->invoke($this->model, $content, $options);
         $vectors = $result->asVectors();
 
         if (!isset($vectors[0])) {
@@ -114,7 +133,7 @@ final class Vectorizer implements VectorizerInterface
         // (e.g. text search, reranking) can access it via Metadata::getText().
         $metadata = $document->getMetadata();
         if ($this->includeText && !$metadata->hasText()) {
-            $metadata->setText($document->getContent());
+            $metadata->setText($this->stringifyContent($content));
         }
 
         return new VectorDocument($document->getId(), $vectors[0], $metadata);
@@ -198,7 +217,7 @@ final class Vectorizer implements VectorizerInterface
             // (e.g. text search, reranking) can access it via Metadata::getText().
             $metadata = $document->getMetadata();
             if ($this->includeText && !$metadata->hasText()) {
-                $metadata->setText($document->getContent());
+                $metadata->setText($this->stringifyContent($document->getContent()));
             }
 
             $vectorDocuments[] = new VectorDocument($document->getId(), $vectors[$i], $metadata);

@@ -368,6 +368,10 @@ class ModelClientTest extends TestCase
     /**
      * @param array{type: string, ttl?: string} $expectedCacheControl
      */
+    /**
+     * @param 'long'|'none'|'short'             $retention
+     * @param array{type: string, ttl?: string} $expectedCacheControl
+     */
     #[DataProvider('cacheRetentionProvider')]
     public function testCacheControlShapeForRetentionValue(string $retention, array $expectedCacheControl)
     {

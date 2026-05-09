@@ -46,17 +46,29 @@ final class SpeechAgent implements AgentInterface
             return $result;
         }
 
-        if (!$this->configuration->supportsTextToSpeech()) {
+        $ttsModel = $this->configuration->getTextToSpeechModel();
+
+        if (null === $ttsModel || '' === $ttsModel) {
             return $result;
         }
 
+        $content = $result->getContent();
+
+        if (null === $content) {
+            return $result;
+        }
+
+        if (\is_iterable($content) && !\is_array($content)) {
+            $content = iterator_to_array($content);
+        }
+
         $speechResult = $this->textToSpeechPlatform->invoke(
-            $this->configuration->getTextToSpeechModel(),
-            $result->getContent(),
+            $ttsModel,
+            $content,
             $this->configuration->getTextToSpeechOptions(),
         );
 
-        $speechResult->getMetadata()->add('text', $result->getContent());
+        $speechResult->getMetadata()->add('text', $content);
 
         return $speechResult->getResult();
     }
@@ -87,8 +99,16 @@ final class SpeechAgent implements AgentInterface
 
         $audio = $latestUserMessage->getAudioContent();
 
+        \assert($this->speechToTextPlatform instanceof PlatformInterface);
+
+        $sttModel = $this->configuration->getSpeechToTextModel();
+
+        if (null === $sttModel || '' === $sttModel) {
+            return $messages;
+        }
+
         $result = $this->speechToTextPlatform->invoke(
-            $this->configuration->getSpeechToTextModel(),
+            $sttModel,
             $audio,
             [
                 ...$this->configuration->getSpeechToTextOptions(),

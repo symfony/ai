@@ -70,7 +70,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         if ($data->hasToolCalls()) {
-            foreach ($data->getToolCalls() as $toolCall) {
+            foreach ($data->getToolCalls() ?? [] as $toolCall) {
                 $blocks[] = [
                     'type' => 'tool_use',
                     'id' => $toolCall->getId(),
@@ -80,6 +80,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             }
         }
 
+        /** @var list<array{type: 'thinking'|'text'|'tool_use', id?: string, name?: string, input?: array<string, mixed>, text?: string, thinking?: string, signature?: string}> $blocks */
         return [
             'role' => 'assistant',
             'content' => $blocks,

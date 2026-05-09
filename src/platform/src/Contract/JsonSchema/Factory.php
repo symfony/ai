@@ -57,6 +57,8 @@ final class Factory
     }
 
     /**
+     * @param class-string $className
+     *
      * @return JsonSchema|null
      */
     public function buildParameters(string $className, string $methodName): ?array
@@ -64,10 +66,13 @@ final class Factory
         $schema = null;
         $this->objectDescriber->describeObject(new ObjectSubject($className.'::'.$methodName, new \ReflectionMethod($className, $methodName)), $schema);
 
+        /** @var JsonSchema|null $schema */
         return $schema;
     }
 
     /**
+     * @param class-string $className
+     *
      * @return JsonSchema|null
      */
     public function buildProperties(string $className): ?array
@@ -75,6 +80,7 @@ final class Factory
         $schema = null;
         $this->objectDescriber->describeObject(new ObjectSubject($className, new \ReflectionClass($className)), $schema);
 
+        /** @var JsonSchema|null $schema */
         return $schema;
     }
 }

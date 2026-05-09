@@ -66,7 +66,8 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
     public function describeProperty(PropertySubject $subject, ?array &$schema): void
     {
         $reflector = $subject->getReflector();
-        if (!$reflector->getDeclaringClass()->isUserDefined()) {
+        $declaringClass = $reflector->getDeclaringClass();
+        if (null === $declaringClass || !$declaringClass->isUserDefined()) {
             return;
         }
         $type = $this->typeResolver->resolve($subject->getReflector());
@@ -91,14 +92,20 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
     {
         // Handle BackedEnumType directly
         if ($type instanceof BackedEnumType) {
-            return $this->buildEnumSchema($type->getClassName());
+            /** @var class-string<\UnitEnum> $className */
+            $className = $type->getClassName();
+
+            return $this->buildEnumSchema($className);
         }
 
         // Handle NullableType that wraps a BackedEnumType
         if ($type instanceof NullableType) {
             $wrappedType = $type->getWrappedType();
             if ($wrappedType instanceof BackedEnumType) {
-                return $this->buildEnumSchema($wrappedType->getClassName());
+                /** @var class-string<\UnitEnum> $className */
+                $className = $wrappedType->getClassName();
+
+                return $this->buildEnumSchema($className);
             }
         }
 
@@ -142,7 +149,9 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
 
                 $schema = null;
                 // Recursively build the schema for an object type
-                $this->objectDescriber->describeObject(new ObjectSubject($type->getClassName(), new \ReflectionClass($type->getClassName())), $schema);
+                /** @var class-string $className */
+                $className = $type->getClassName();
+                $this->objectDescriber->describeObject(new ObjectSubject($className, new \ReflectionClass($className)), $schema);
 
                 return $schema ?? ['type' => 'object'];
 
@@ -156,6 +165,8 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
     }
 
     /**
+     * @param class-string<\UnitEnum> $enumClassName
+     *
      * @return array<string, mixed>
      */
     private function buildEnumSchema(string $enumClassName): array

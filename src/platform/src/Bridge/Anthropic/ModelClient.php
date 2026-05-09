@@ -59,7 +59,11 @@ final class ModelClient implements ModelClientInterface
             'anthropic-version' => '2023-06-01',
         ];
 
-        $payload = $this->injectCacheControl($payload);
+        $stringKeyedPayload = [];
+        foreach ($payload as $k => $v) {
+            $stringKeyedPayload[(string) $k] = $v;
+        }
+        $payload = $this->injectCacheControl($stringKeyedPayload);
 
         if (isset($options['tools'])) {
             $options['tool_choice'] = ['type' => 'auto'];

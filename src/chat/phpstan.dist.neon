@@ -3,7 +3,7 @@ includes:
     - ../../.phpstan/extension.neon
 
 parameters:
-    level: 6
+    level: 8
     paths:
         - src/
         - tests/
@@ -20,6 +20,17 @@ parameters:
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*
             reportUnmatched: false
+        # Tests dereference normalizer output (Symfony Serializer's wide return type)
+        -
+            message: "#Cannot access offset 'type' on .*ArrayObject.*\\|bool\\|float\\|int\\|string\\|null\\.#"
+            path: tests/*
+        # Tests using getToolCalls() returning nullable
+        -
+            message: '~Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert::assertCount\(\) expects Countable\|iterable, .*\|null given\.~'
+            path: tests/*
+        -
+            message: '#Offset [0-9]+ might not exist on array<.*>\|null\.#'
+            path: tests/*
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

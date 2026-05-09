@@ -84,9 +84,13 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
                 throw new InvalidArgumentException('Model name cannot be empty.');
             }
 
-            parse_str($queryString, $options);
-
-            $options = self::convertScalarStrings($options);
+            $parsed = [];
+            parse_str($queryString, $parsed);
+            $stringKeyed = [];
+            foreach ($parsed as $k => $v) {
+                $stringKeyed[(string) $k] = $v;
+            }
+            $options = self::convertScalarStrings($stringKeyed);
         }
 
         // Determine catalog key: try exact match first, then fall back to base model

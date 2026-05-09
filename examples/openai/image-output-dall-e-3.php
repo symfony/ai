@@ -29,5 +29,5 @@ assert($result instanceof ImageResult);
 echo 'Revised Prompt: '.$result->getRevisedPrompt().\PHP_EOL.\PHP_EOL;
 
 foreach ($result->getContent() as $index => $image) {
-    echo 'Image '.$index.': '.$image->url.\PHP_EOL;
+    echo 'Image '.$index.': '.($image->url ?? '').\PHP_EOL;
 }

@@ -157,7 +157,7 @@ HELP
 
         if (null !== $toolData['input_schema']) {
             $io->section('Input Schema');
-            $io->text(json_encode($toolData['input_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+            $io->text((string) json_encode($toolData['input_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
 
             return;
         }
@@ -171,6 +171,6 @@ HELP
      */
     private function outputJson(array $toolData, OutputInterface $output): void
     {
-        $output->writeln(json_encode($toolData, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        $output->writeln((string) json_encode($toolData, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
     }
 }

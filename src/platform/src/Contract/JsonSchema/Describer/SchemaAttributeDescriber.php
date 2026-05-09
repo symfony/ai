@@ -25,8 +25,12 @@ final class SchemaAttributeDescriber implements PropertyDescriberInterface
     {
         foreach ($subject->getAttributes(Schema::class) as $attribute) {
             if ($attribute->ref) {
+                $contents = file_get_contents($attribute->ref);
+                if (false === $contents) {
+                    throw new IOException(\sprintf('Failed to load the schema from "%s"', $attribute->ref));
+                }
                 try {
-                    $attributeSchema = json_decode(file_get_contents($attribute->ref), true, flags: \JSON_THROW_ON_ERROR);
+                    $attributeSchema = json_decode($contents, true, flags: \JSON_THROW_ON_ERROR);
                 } catch (\JsonException $e) {
                     throw new IOException(\sprintf('Failed to load the schema from "%s"', $attribute->ref), 0, $e);
                 }

@@ -98,6 +98,7 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
     private function createTraceableStreamResult(DeferredResult $originalStream): StreamResult
     {
         return $result = new StreamResult((function () use (&$result, $originalStream) {
+            /** @var StreamResult $result */
             $this->resultCache[$result] = '';
             foreach ($originalStream->asStream() as $chunk) {
                 yield $chunk;

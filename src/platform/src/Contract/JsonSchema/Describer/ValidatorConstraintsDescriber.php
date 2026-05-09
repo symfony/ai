@@ -68,7 +68,7 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
             $constraint instanceof Assert\Compound => $this->describeCompound($schema, $constraint, $class),
             $constraint instanceof Assert\Count => $this->describeCount($schema, $constraint),
             $constraint instanceof Assert\Country => $this->describeCountry($schema, $constraint),
-            $constraint instanceof Assert\CssColor => $this->appendDescription('CSS color in one of the following formats: '.implode(', ', $constraint->formats), $schema),
+            $constraint instanceof Assert\CssColor => $this->appendDescription('CSS color in one of the following formats: '.implode(', ', (array) $constraint->formats), $schema),
             $constraint instanceof Assert\Currency => $this->describeCurrency($schema),
             $constraint instanceof Assert\Date => $schema['format'] = 'date',
             $constraint instanceof Assert\DateTime => $schema['format'] = 'date-time',
@@ -453,12 +453,12 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
      */
     private function appendDescription(string $description, ?array &$schema): void
     {
-        $schema['description'] ??= '';
-        if ($schema['description']) {
-            $schema['description'] .= "\n";
+        $current = (string) ($schema['description'] ?? '');
+        if ('' !== $current) {
+            $current .= "\n";
         }
 
-        $schema['description'] .= $description;
+        $schema['description'] = $current.$description;
     }
 
     /**

@@ -11,6 +11,10 @@
 
 namespace Symfony\AI\McpBundle\Profiler;
 
+use Mcp\Schema\Prompt;
+use Mcp\Schema\Resource;
+use Mcp\Schema\ResourceTemplate;
+use Mcp\Schema\Tool;
 use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,6 +40,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     {
         $tools = [];
         foreach ($this->registry->getTools()->references as $tool) {
+            \assert($tool instanceof Tool);
             $tools[] = [
                 'name' => $tool->name,
                 'description' => $tool->description,
@@ -45,6 +50,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
         $prompts = [];
         foreach ($this->registry->getPrompts()->references as $prompt) {
+            \assert($prompt instanceof Prompt);
             $prompts[] = [
                 'name' => $prompt->name,
                 'description' => $prompt->description,
@@ -58,6 +64,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
         $resources = [];
         foreach ($this->registry->getResources()->references as $resource) {
+            \assert($resource instanceof Resource);
             $resources[] = [
                 'uri' => $resource->uri,
                 'name' => $resource->name,
@@ -68,6 +75,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
         $resourceTemplates = [];
         foreach ($this->registry->getResourceTemplates()->references as $template) {
+            \assert($template instanceof ResourceTemplate);
             $resourceTemplates[] = [
                 'uriTemplate' => $template->uriTemplate,
                 'name' => $template->name,

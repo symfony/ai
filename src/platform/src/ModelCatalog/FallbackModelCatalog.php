@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\ModelCatalog;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Model;
 
 /**
@@ -32,8 +33,15 @@ class FallbackModelCatalog extends AbstractModelCatalog
 
     public function getModel(string $modelName): Model
     {
+        if ('' === $modelName) {
+            throw new ModelNotFoundException('Model name cannot be empty.');
+        }
+
         $parsed = self::parseModelName($modelName);
 
-        return new Model($parsed['name'], Capability::cases(), $parsed['options']);
+        $name = $parsed['name'];
+        \assert('' !== $name);
+
+        return new Model($name, Capability::cases(), $parsed['options']);
     }
 }

@@ -49,6 +49,7 @@ class ResultConverter implements ResultConverterInterface
     public function convert(RawHttpResult|RawResultInterface $result, array $options = []): ResultInterface
     {
         $response = $result->getObject();
+        \assert($response instanceof \Symfony\Contracts\HttpClient\ResponseInterface);
 
         if (401 === $response->getStatusCode()) {
             $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Unauthorized';

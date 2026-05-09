@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Indexer;
 
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\IndexerInterface;
 
 /**
@@ -34,6 +35,23 @@ final class ConfiguredSourceIndexer implements IndexerInterface
 
     public function index(string|iterable|object|null $input = null, array $options = []): void
     {
-        $this->indexer->index($input ?? $this->defaultSource, $options);
+        $resolved = $input ?? $this->defaultSource;
+
+        if (\is_object($resolved)) {
+            throw new InvalidArgumentException('ConfiguredSourceIndexer requires a string or iterable of strings, got an object.');
+        }
+
+        if (!\is_string($resolved)) {
+            $strings = [];
+            foreach ($resolved as $value) {
+                if (!\is_string($value)) {
+                    throw new InvalidArgumentException('ConfiguredSourceIndexer requires an iterable of strings.');
+                }
+                $strings[] = $value;
+            }
+            $resolved = $strings;
+        }
+
+        $this->indexer->index($resolved, $options);
     }
 }
