@@ -513,17 +513,19 @@ Multi-Turn Conversations with Thinking
 
 When using thinking in multi-turn conversations, Anthropic requires that
 thinking blocks from previous assistant turns be included in the conversation
-history. The :class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` supports
-this through :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`::
+history. The :class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` accepts a
+variadic list of :class:`Symfony\\AI\\Platform\\Message\\Content\\ContentInterface`
+parts, including :class:`Symfony\\AI\\Platform\\Message\\Content\\Thinking` blocks
+that carry the original reasoning text and its provider-specific signature::
 
     use Symfony\AI\Platform\Message\AssistantMessage;
-    use Symfony\AI\Platform\Result\TextResult;
-    use Symfony\AI\Platform\Result\ThinkingResult;
+    use Symfony\AI\Platform\Message\Content\Text;
+    use Symfony\AI\Platform\Message\Content\Thinking;
 
     // Include the model's thinking from a previous turn
     $assistant = new AssistantMessage(
-        new ThinkingResult('Let me work through this step by step...', 'sig_abc123...'),
-        new TextResult('The answer is 42.'),
+        new Thinking('Let me work through this step by step...', 'sig_abc123...'),
+        new Text('The answer is 42.'),
     );
 
     $messages = new MessageBag(
@@ -531,6 +533,23 @@ this through :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`::
         $assistant,
         Message::ofUser('Can you elaborate?'),
     );
+
+In practice you usually do not have to build the parts yourself.
+:method:`Symfony\\AI\\Platform\\Message\\Message::ofAssistant` accepts strings,
+content parts, and result objects, and unwraps them into the matching content
+parts (including thinking blocks with their signatures). Passing the result of a
+previous invocation back into the message bag is therefore a one-liner::
+
+    use Symfony\AI\Platform\Message\Message;
+
+    $result = $platform->invoke($model, $messages)->getResult();
+
+    $messages->add(Message::ofAssistant($result));
+
+:class:`Symfony\\AI\\Platform\\Result\\MultiPartResult` is unwrapped recursively,
+so a result that contains a :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`
+followed by a :class:`Symfony\\AI\\Platform\\Result\\TextResult` (and any tool
+calls) is replayed in the same order on the next turn.
 
 Checking for Thinking Support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -492,7 +492,7 @@ confirmation system using the ``ToolCallRequested`` event.
 Excluding Tool Messages from MessageBag
 ---------------------------------------
 
-Sometimes you might wish to exclude the tool messages (:class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` containing the ``toolCalls`` and :class:`Symfony\\AI\\Platform\\Message\\ToolCallMessage`
+Sometimes you might wish to exclude the tool messages (:class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` containing :class:`Symfony\\AI\\Platform\\Result\\ToolCall` parts and :class:`Symfony\\AI\\Platform\\Message\\ToolCallMessage`
 containing the result) in the context. Enable the ``excludeToolMessages`` flag of the toolbox' :class:`Symfony\\AI\\Agent\\Toolbox\\AgentProcessor`
 to ensure those messages will be removed from your :class:`Symfony\\AI\\Platform\\Message\\MessageBag`::
 
@@ -592,7 +592,7 @@ and are able to mutate both on top of the :class:`Symfony\\AI\\Agent\\Input` ins
 
     use Symfony\AI\Agent\Input;
     use Symfony\AI\Agent\InputProcessorInterface;
-    use Symfony\AI\Platform\Message\AssistantMessage;
+    use Symfony\AI\Platform\Message\Message;
 
     final class MyProcessor implements InputProcessorInterface
     {
@@ -604,7 +604,7 @@ and are able to mutate both on top of the :class:`Symfony\\AI\\Agent\\Input` ins
             $input->setOptions($options);
 
             // mutate MessageBag
-            $input->getMessageBag()->append(new AssistantMessage(sprintf('Please answer using the locale %s', $this->locale)));
+            $input->getMessageBag()->append(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
         }
     }
 
