@@ -11,12 +11,15 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
-use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
+use Symfony\AI\Platform\Bridge\Generic;
+use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -39,16 +42,20 @@ final class Factory
         string $name = 'openrouter',
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+        $baseUrl = 'https://openrouter.ai/api';
 
-        return GenericFactory::createProvider(
-            baseUrl: 'https://openrouter.ai/api',
-            apiKey: $apiKey,
-            httpClient: $httpClient,
-            modelCatalog: $modelCatalog,
-            contract: $contract,
-            eventDispatcher: $eventDispatcher,
-            name: $name,
-        );
+        $modelClients = [
+            new Generic\Completions\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/chat/completions'),
+            new Generic\Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/embeddings'),
+            new ModelClient($httpClient, $apiKey),
+        ];
+        $resultConverters = [
+            new Generic\Completions\ResultConverter(),
+            new Generic\Embeddings\ResultConverter(),
+            new ResultConverter(),
+        ];
+
+        return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
     }
 
     /**
