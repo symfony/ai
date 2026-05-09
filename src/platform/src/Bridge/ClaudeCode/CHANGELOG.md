@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `ToolCallStart`, `ToolInputDelta` and `ToolCallComplete` deltas to streaming responses
+
 0.8
 ---
 

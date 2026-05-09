@@ -16,8 +16,12 @@ use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
@@ -63,6 +67,10 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface $result): \Generator
     {
+        $toolCalls = [];
+        $currentToolCall = null;
+        $currentToolCallJson = '';
+
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
 
@@ -72,6 +80,57 @@ final class ResultConverter implements ResultConverterInterface
                 && 'text_delta' === ($data['event']['delta']['type'] ?? '')
             ) {
                 yield new TextDelta($data['event']['delta']['text']);
+            }
+
+            // Handle tool_use content block start
+            if ('stream_event' === $type
+                && 'content_block_start' === ($data['event']['type'] ?? '')
+                && 'tool_use' === ($data['event']['content_block']['type'] ?? '')
+            ) {
+                $currentToolCall = [
+                    'id' => $data['event']['content_block']['id'],
+                    'name' => $data['event']['content_block']['name'],
+                ];
+                $currentToolCallJson = '';
+                yield new ToolCallStart($currentToolCall['id'], $currentToolCall['name']);
+            }
+
+            // Handle tool_use input JSON deltas
+            if ('stream_event' === $type
+                && 'content_block_delta' === ($data['event']['type'] ?? '')
+                && 'input_json_delta' === ($data['event']['delta']['type'] ?? '')
+            ) {
+                $partialJson = $data['event']['delta']['partial_json'] ?? '';
+                $currentToolCallJson .= $partialJson;
+                if (null !== $currentToolCall) {
+                    yield new ToolInputDelta($currentToolCall['id'], $currentToolCall['name'], $partialJson);
+                }
+            }
+
+            // Handle content block stop - finalize current tool call
+            if ('stream_event' === $type
+                && 'content_block_stop' === ($data['event']['type'] ?? '')
+                && null !== $currentToolCall
+            ) {
+                $input = '' !== $currentToolCallJson
+                    ? json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR)
+                    : [];
+                $toolCalls[] = new ToolCall(
+                    $currentToolCall['id'],
+                    $currentToolCall['name'],
+                    $input
+                );
+                $currentToolCall = null;
+                $currentToolCallJson = '';
+            }
+
+            // Handle message stop - yield tool calls if any were collected
+            if ('stream_event' === $type
+                && 'message_stop' === ($data['event']['type'] ?? '')
+                && [] !== $toolCalls
+            ) {
+                yield new ToolCallComplete($toolCalls);
+                $toolCalls = [];
             }
         }
     }
