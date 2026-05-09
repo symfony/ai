@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-05-06T05:35:49Z
+
+Thanks @chr-hertel! 🙏
+
+Applied the suggestion as-is in [`b97b0c88`](https://github.com/symfony/ai/pull/1986/commits/b97b0c88) — inlined the `array_keys()` call so we skip the lookup entirely when the argument is provided.
+
+I also rebased on `main` to clear the merge conflict (CHANGELOG bullet right next to the `symfony/validator` one from #2002).
+
+Should be good to go now! 🚀
