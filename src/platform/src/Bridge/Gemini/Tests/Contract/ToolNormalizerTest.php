@@ -163,6 +163,58 @@ final class ToolNormalizerTest extends TestCase
             ],
         ];
 
+        yield 'call with $schema meta-key' => [
+            new Tool(
+                new ExecutionReference(ToolRequiredParams::class, 'bar'),
+                'tool_with_schema_meta_key',
+                'A tool whose schema carries the JSON-Schema $schema meta-key (e.g. produced by an MCP server)',
+                // @phpstan-ignore argument.type (testing JSON-Schema meta-keys that get stripped)
+                [
+                    '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => [
+                            'type' => 'string',
+                            'description' => 'Name parameter',
+                        ],
+                        'nested' => [
+                            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+                            'type' => 'object',
+                            'properties' => [
+                                'inner' => [
+                                    'type' => 'string',
+                                ],
+                            ],
+                        ],
+                    ],
+                    'required' => ['name'],
+                    'additionalProperties' => false,
+                ],
+            ),
+            [
+                'description' => 'A tool whose schema carries the JSON-Schema $schema meta-key (e.g. produced by an MCP server)',
+                'name' => 'tool_with_schema_meta_key',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => [
+                            'type' => 'string',
+                            'description' => 'Name parameter',
+                        ],
+                        'nested' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'inner' => [
+                                    'type' => 'string',
+                                ],
+                            ],
+                        ],
+                    ],
+                    'required' => ['name'],
+                ],
+            ],
+        ];
+
         yield 'call with nested nullable parameter' => [
             new Tool(
                 new ExecutionReference(ToolRequiredParams::class, 'bar'),
