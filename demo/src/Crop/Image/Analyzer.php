@@ -11,14 +11,24 @@
 
 namespace App\Crop\Image;
 
+use Symfony\AI\Platform\Bridge\HuggingFace\Output\DetectedObject;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\ObjectDetectionResult;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
+/**
+ * Detects the relevant area in an image using Hugging Face with an object detection model.
+ *
+ * Detections below {@see self::CONFIDENCE_THRESHOLD} are dropped before the
+ * union is computed; if every detection is below the threshold, the single
+ * highest-scored one is used instead.
+ */
 final readonly class Analyzer
 {
+    private const float CONFIDENCE_THRESHOLD = 0.5;
+
     public function __construct(
         #[Autowire(service: 'ai.platform.huggingface')]
         private PlatformInterface $platform,
@@ -33,31 +43,51 @@ final readonly class Analyzer
 
         \assert($result instanceof ObjectDetectionResult);
 
-        if ([] === $result->getObjects()) {
+        $objects = $result->getObjects();
+        if ([] === $objects) {
             throw new \RuntimeException('No objects detected.');
         }
 
-        $init = $result->getObjects()[0];
-        $xMin = $init->getXmin();
-        $yMin = $init->getYmin();
-        $xMax = $init->getXmax();
-        $yMax = $init->getYmax();
+        $relevant = $this->pickRelevant(array_values($objects));
 
-        foreach ($result->getObjects() as $object) {
-            if ($object->getXmin() < $xMin) {
-                $xMin = $object->getXmin();
-            }
-            if ($object->getYmin() < $yMin) {
-                $yMin = $object->getYmin();
-            }
-            if ($object->getXmax() > $xMax) {
-                $xMax = $object->getXmax();
-            }
-            if ($object->getYmax() > $yMax) {
-                $yMax = $object->getYmax();
+        $xMin = $relevant[0]->getXmin();
+        $yMin = $relevant[0]->getYmin();
+        $xMax = $relevant[0]->getXmax();
+        $yMax = $relevant[0]->getYmax();
+
+        foreach ($relevant as $object) {
+            $xMin = min($xMin, $object->getXmin());
+            $yMin = min($yMin, $object->getYmin());
+            $xMax = max($xMax, $object->getXmax());
+            $yMax = max($yMax, $object->getYmax());
+        }
+
+        return new RelevantArea((int) floor($xMin), (int) floor($yMin), (int) ceil($xMax), (int) ceil($yMax));
+    }
+
+    /**
+     * @param list<DetectedObject> $objects
+     *
+     * @return non-empty-list<DetectedObject>
+     */
+    private function pickRelevant(array $objects): array
+    {
+        $confident = array_values(array_filter(
+            $objects,
+            static fn (DetectedObject $object) => $object->getScore() >= self::CONFIDENCE_THRESHOLD,
+        ));
+
+        if ([] !== $confident) {
+            return $confident;
+        }
+
+        $best = $objects[0];
+        foreach ($objects as $object) {
+            if ($object->getScore() > $best->getScore()) {
+                $best = $object;
             }
         }
 
-        return new RelevantArea((int) $xMin, (int) $yMin, (int) $xMax, (int) $yMax);
+        return [$best];
     }
 }

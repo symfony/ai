@@ -52,4 +52,16 @@ final class SmokeTest extends WebTestCase
         yield 'Wikipedia' => ['/wikipedia', 'Wikipedia Research'];
         yield 'YouTube' => ['/youtube', 'Chat about a YouTube Video'];
     }
+
+    public function testCrop()
+    {
+        $client = static::createClient();
+        $client->request('GET', '/crop');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.card-header strong', 'Smart Image Cropping');
+        $this->assertSelectorCount(3, 'input[name="ratio"]');
+        $this->assertSelectorCount(4, 'input[name="width"]');
+        $this->assertSelectorCount(5, 'button[data-live-action-param="selectPreset"]');
+    }
 }

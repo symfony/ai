@@ -25,4 +25,27 @@
             color: #ffffff;
         }
     }
+
+    .inline-radios fieldset {
+        margin-bottom: 0 !important;
+    }
+
+    .inline-radios fieldset > legend {
+        float: none;
+        width: auto;
+        padding: 0;
+        margin: 0 0 0.25rem 0;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .inline-radios fieldset > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1rem;
+    }
+
+    .inline-radios .form-check {
+        margin-bottom: 0;
+    }
 }

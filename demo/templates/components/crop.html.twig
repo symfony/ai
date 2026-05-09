@@ -7,9 +7,11 @@
         </button>
     </div>
     <div id="chat-body" class="card-body p-4">
+        {% set selectedPreset = this.selectedPreset %}
+        {% set originalSrc = selectedPreset ? asset('images/samples/' ~ selectedPreset.file) : imageData %}
+
         {% if not croppedImage %}
             <div data-loading="action(crop)|hide">
-                <h5>Upload</h5>
                 {% set form = this.form %}
                 {{ form_start(form, {
                     attr: {
@@ -18,19 +20,44 @@
                         'data-model': 'norender|*'
                     }
                 }) }}
-                    <div class="row">
-                        <div class="col-md-8">
-                            {{ form_row(form.originalImage) }}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            {{ form_row(form.originalImage, {row_attr: {'data-live-ignore': true}}) }}
                         </div>
-                        <div class="col-md-2 mb-3">
-                            {{ form_row(form.format) }}
+                        <div class="col-md-6">
+                            <label class="form-label">Demo image</label>
+                            <div class="d-flex gap-1">
+                                {% for preset in this.presets %}
+                                    <button type="button"
+                                            class="btn p-0 border border-3 {{ presetId == preset.id ? 'border-primary' : 'border-transparent' }} flex-fill"
+                                            style="min-width: 0;"
+                                            title="{{ preset.label }} - {{ preset.scenario }}"
+                                            {{ live_action('selectPreset', {id: preset.id}) }}>
+                                        <img src="{{ asset('images/samples/' ~ preset.file) }}"
+                                             alt="{{ preset.label }}"
+                                             style="display: block; width: 100%; height: 56px; object-fit: cover;" />
+                                    </button>
+                                {% endfor %}
+                            </div>
+                            {% if selectedPreset %}
+                                <div class="small text-muted mt-1">
+                                    Image by {{ selectedPreset.author }} -
+                                    <a href="{{ selectedPreset.licenseUrl }}" target="_blank" rel="noopener">{{ selectedPreset.license }}</a> -
+                                    <a href="{{ selectedPreset.sourceUrl }}" target="_blank" rel="noopener">source on Wikimedia Commons</a>
+                                </div>
+                            {% endif %}
                         </div>
-                        <div class="col-md-2">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6 inline-radios">
+                            {{ form_row(form.ratio) }}
+                        </div>
+                        <div class="col-md-6 inline-radios">
                             {{ form_row(form.width) }}
                         </div>
                     </div>
                     <div class="text-center">
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary" {{ this.hasImage ? '' : 'disabled' }}>
                             {{ ux_icon('crop') }}
                             Crop My Image!
                         </button>
@@ -43,7 +70,14 @@
                     <div class="col-md-6">
                         <h5>Original Image</h5>
                         <div class="bg-body-secondary rounded text-center p-3">
-                            <img src="{{ imageData }}" alt="Original Image" class="img-fluid mt-2" />
+                            <img src="{{ originalSrc }}" alt="Original Image" class="img-fluid mt-2" />
+                            {% if selectedPreset %}
+                                <div class="small text-muted mt-2">
+                                    Image by {{ selectedPreset.author }} -
+                                    <a href="{{ selectedPreset.licenseUrl }}" target="_blank" rel="noopener">{{ selectedPreset.license }}</a> -
+                                    <a href="{{ selectedPreset.sourceUrl }}" target="_blank" rel="noopener">source on Wikimedia Commons</a>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-6">
