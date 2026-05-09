@@ -224,10 +224,46 @@ final class StoreTest extends TestCase
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
-    public function testStoreDoesNotSupportTextQuery()
+    public function testStoreSupportsTextQuery()
     {
         $store = new Store(new MockHttpClient(), 'http://localhost:8108', 'test-key', 'test_collection');
-        $this->assertFalse($store->supports(TextQuery::class));
+        $this->assertTrue($store->supports(TextQuery::class));
+    }
+
+    public function testStoreCanQueryText()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'results' => [
+                    [
+                        'hits' => [
+                            [
+                                'document' => [
+                                    'id' => Uuid::v4()->toRfc4122(),
+                                    'content' => 'The quick brown fox',
+                                    'metadata' => '{"_text":"The quick brown fox"}',
+                                ],
+                                'text_match' => 100,
+                            ],
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:8108',
+            'test',
+            'test',
+        );
+
+        $results = iterator_to_array($store->query(new TextQuery('quick brown fox')));
+
+        $this->assertCount(1, $results);
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testStoreDoesNotSupportHybridQuery()
