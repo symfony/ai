@@ -104,7 +104,7 @@ final class AssistantReplayTest extends TestCase
                         ['functionResponse' => [
                             'id' => 'call_1',
                             'name' => 'clock',
-                            'response' => ['rawResponse' => '12:00'],
+                            'response' => ['result' => '12:00'],
                         ]],
                     ]],
                 ],
@@ -160,7 +160,7 @@ final class AssistantReplayTest extends TestCase
                         ['functionResponse' => [
                             'id' => 'call_2',
                             'name' => 'search',
-                            'response' => ['rawResponse' => 'PHP framework.'],
+                            'response' => ['result' => 'PHP framework.'],
                         ]],
                     ]],
                 ],
@@ -194,7 +194,7 @@ final class AssistantReplayTest extends TestCase
                         ['functionResponse' => [
                             'id' => 'call_3',
                             'name' => 'lookup',
-                            'response' => ['rawResponse' => 'ok'],
+                            'response' => ['result' => 'ok'],
                         ]],
                     ]],
                 ],
