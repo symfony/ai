@@ -66,7 +66,8 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (429 === $response->getStatusCode()) {
-            throw new RateLimitExceededException();
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
+            throw new RateLimitExceededException(null, $errorMessage);
         }
 
         if ($options['stream'] ?? false) {

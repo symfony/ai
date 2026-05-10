@@ -32,7 +32,7 @@ final class ResultConverterRateLimitTest extends TestCase
         $handler = new ResultConverter();
 
         $this->expectException(RateLimitExceededException::class);
-        $this->expectExceptionMessage('Rate limit exceeded.');
+        $this->expectExceptionMessage('Rate limit exceeded. Resource has been exhausted (e.g. check quota).');
 
         try {
             $handler->convert(new RawHttpResult($httpResponse));

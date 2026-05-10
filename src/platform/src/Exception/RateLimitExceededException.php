@@ -18,8 +18,14 @@ final class RateLimitExceededException extends RuntimeException
 {
     public function __construct(
         private readonly ?int $retryAfter = null,
+        ?string $errorMessage = null,
     ) {
-        parent::__construct('Rate limit exceeded.');
+        $message = 'Rate limit exceeded.';
+        if (null !== $errorMessage && '' !== $errorMessage) {
+            $message .= ' '.$errorMessage;
+        }
+
+        parent::__construct($message);
     }
 
     public function getRetryAfter(): ?int

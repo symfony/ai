@@ -73,8 +73,9 @@ final class ResultConverter implements ResultConverterInterface
             $resetTime = $headers['x-ratelimit-reset-requests'][0]
                 ?? $headers['x-ratelimit-reset-tokens'][0]
                 ?? null;
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
 
-            throw new RateLimitExceededException($resetTime ? self::parseResetTime($resetTime) : null);
+            throw new RateLimitExceededException($resetTime ? self::parseResetTime($resetTime) : null, $errorMessage);
         }
 
         if ($options['stream'] ?? false) {

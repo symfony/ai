@@ -149,6 +149,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->fail('Expected RateLimitExceededException.');
         } catch (RateLimitExceededException $e) {
             $this->assertSame(42, $e->getRetryAfter());
+            $this->assertSame('Rate limit exceeded. Too many requests', $e->getMessage());
         }
     }
 
@@ -161,6 +162,38 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->fail('Expected RateLimitExceededException.');
         } catch (RateLimitExceededException $e) {
             $this->assertNull($e->getRetryAfter());
+            $this->assertSame('Rate limit exceeded. Too many requests', $e->getMessage());
+        }
+    }
+
+    /**
+     * Nested `error.message` is emitted by OpenAI, Anthropic, Gemini and others.
+     */
+    public function testThrowsRateLimitExceededExceptionOn429WithNestedErrorMessage()
+    {
+        $response = $this->response(json_encode([
+            'error' => [
+                'message' => 'You exceeded your current quota, please check your plan and billing details.',
+            ],
+        ]), 429);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame('Rate limit exceeded. You exceeded your current quota, please check your plan and billing details.', $e->getMessage());
+        }
+    }
+
+    public function testThrowsRateLimitExceededExceptionOn429WithEmptyBody()
+    {
+        $response = $this->response('', 429);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame('Rate limit exceeded.', $e->getMessage());
         }
     }
 
