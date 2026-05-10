@@ -195,6 +195,29 @@ Based on the generic bridge, you can configure any service, that complies with t
                         - !php/const 'Symfony\AI\Platform\Capability::INPUT_IMAGE'
                         - !php/const 'Symfony\AI\Platform\Capability::TOOL_CALLING'
 
+OpenResponses Platform
+----------------------
+
+The ``openresponses`` platform exposes the ``OpenResponses`` bridge so any service that speaks the
+OpenAI Responses API (``POST /v1/responses``) can be configured directly through the bundle, including
+self-hosted gateways, internal model brokers, or vLLM deployments that implement the Responses shape:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openresponses:
+                local_observe:
+                    base_url: '%env(AI_TOOLS_BASE_URI)%'
+                    api_key: '%env(default::AI_TOOLS_API_KEY)%'
+                    responses_path: '/v1/responses'
+                    model_catalog: 'App\Ai\LocalObserveModelCatalog' # optional
+        agent:
+            observe:
+                platform: 'ai.platform.openresponses.local_observe'
+                model: 'auto'
+
 Cached Platform
 ---------------
 

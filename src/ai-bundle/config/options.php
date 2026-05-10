@@ -48,6 +48,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/mistral'))
                     ->append($import('platform/ollama'))
                     ->append($import('platform/openai'))
+                    ->append($import('platform/openresponses'))
                     ->append($import('platform/openrouter'))
                     ->append($import('platform/ovh'))
                     ->append($import('platform/perplexity'))

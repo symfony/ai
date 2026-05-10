@@ -7984,7 +7984,8 @@ class AiBundleTest extends TestCase
         $this->assertSame('generic-test-key', $arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('http_client', (string) $arguments[2]);
-        $this->assertNull($arguments[3], 'Model catalog should be null when not configured');
+        $this->assertInstanceOf(Definition::class, $arguments[3], 'Model catalog should default to a FallbackModelCatalog Definition when not configured');
+        $this->assertSame(\Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog::class, $arguments[3]->getClass());
         $this->assertNull($arguments[4], 'Contract should be null');
         $this->assertInstanceOf(Reference::class, $arguments[5]);
         $this->assertSame('event_dispatcher', (string) $arguments[5]);

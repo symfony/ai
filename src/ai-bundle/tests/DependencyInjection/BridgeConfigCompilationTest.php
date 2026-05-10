@@ -78,6 +78,41 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue($container->has('ai.platform.cache.main'));
     }
 
+    /**
+     * Regression: keyed-by-name OpenAI-compatible bridges used to wire `null`
+     * for the optional model_catalog, which TypeError'd on instantiation
+     * because the factory parameter is non-nullable with an object default.
+     *
+     * @param array<string, mixed> $config
+     */
+    #[DataProvider('provideKeyedOpenAiCompatibleConfigs')]
+    #[TestDox('Platform bridge "$type" instantiates without explicit model_catalog')]
+    public function testKeyedOpenAiCompatiblePlatformInstantiatesWithDefaultModelCatalog(string $type, array $config, string $expectedServiceId)
+    {
+        $container = $this->loadContainer([
+            'ai' => [
+                'platform' => [$type => $config],
+                'agent' => ['test' => ['model' => 'test']],
+            ],
+        ]);
+
+        $container->getDefinition($expectedServiceId)->setPublic(true)->setLazy(false);
+        $container->getCompiler()->getPassConfig()->setRemovingPasses([]);
+        $container->getCompiler()->getPassConfig()->setAfterRemovingPasses([]);
+        $container->compile();
+
+        $this->assertInstanceOf(\Symfony\AI\Platform\Platform::class, $container->get($expectedServiceId));
+    }
+
+    /**
+     * @return iterable<string, array{string, array<string, mixed>, string}>
+     */
+    public static function provideKeyedOpenAiCompatibleConfigs(): iterable
+    {
+        yield 'generic' => ['generic', ['inst' => ['base_url' => 'http://localhost:8080']], 'ai.platform.generic.inst'];
+        yield 'openresponses' => ['openresponses', ['inst' => ['base_url' => 'http://localhost:8080']], 'ai.platform.openresponses.inst'];
+    }
+
     #[TestDox('Failover platform config compiles with referenced platforms')]
     public function testFailoverPlatformConfigCompiles()
     {
@@ -280,6 +315,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'mistral' => ['mistral', ['api_key' => 'k'], 'ai.platform.mistral'];
         yield 'ollama' => ['ollama', [], 'ai.platform.ollama'];
         yield 'openai' => ['openai', ['api_key' => 'k'], 'ai.platform.openai'];
+        yield 'openresponses' => ['openresponses', ['inst' => ['base_url' => 'http://localhost:8080']], 'ai.platform.openresponses.inst'];
         yield 'openrouter' => ['openrouter', ['api_key' => 'k'], 'ai.platform.openrouter'];
         yield 'ovh' => ['ovh', ['api_key' => 'k'], 'ai.platform.ovh'];
         yield 'perplexity' => ['perplexity', ['api_key' => 'k'], 'ai.platform.perplexity'];
