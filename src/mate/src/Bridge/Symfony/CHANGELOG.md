@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `SymfonyDocsProvider` registering the official Symfony documentation as a knowledge provider when `symfony/ai-knowledge-mate-extension` is installed
+
 0.7
 ---
 
