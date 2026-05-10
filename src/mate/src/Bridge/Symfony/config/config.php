@@ -9,9 +9,12 @@
  * file that was distributed with this source code.
  */
 
+use Symfony\AI\Mate\Bridge\Knowledge\Provider\DocsProviderInterface;
+use Symfony\AI\Mate\Bridge\Knowledge\Service\GitFetcher;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
+use Symfony\AI\Mate\Bridge\Symfony\Knowledge\SymfonyDocsProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
@@ -83,5 +86,12 @@ return static function (ContainerConfigurator $configurator) {
 
         $services->set(ProfilerResourceTemplate::class)
             ->args([service(ProfilerDataProvider::class)]);
+    }
+
+    // Knowledge provider (optional - only when the Knowledge bridge is installed)
+    if (interface_exists(DocsProviderInterface::class)) {
+        $services->set(SymfonyDocsProvider::class)
+            ->args([service(GitFetcher::class)])
+            ->tag('ai_mate.knowledge_provider');
     }
 };

@@ -38,14 +38,25 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "symfony/ai-knowledge-mate-extension": "@dev",
         "symfony/http-kernel": "^7.3|^8.0",
         "symfony/mailer": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/var-dumper": "^7.3|^8.0",
         "symfony/web-profiler-bundle": "^7.3|^8.0"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../Knowledge",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
     "suggest": {
         "doctrine/doctrine-bundle": "Required for Doctrine database profiler formatter",
+        "symfony/ai-knowledge-mate-extension": "Required to expose the Symfony documentation as a knowledge provider",
         "symfony/http-kernel": "Required for profiler data access tools",
         "symfony/mailer": "Required for mailer profiler formatter",
         "symfony/translation": "Required for translation profiler collector formatter",
