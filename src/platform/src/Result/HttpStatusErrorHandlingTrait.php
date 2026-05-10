@@ -50,7 +50,7 @@ trait HttpStatusErrorHandlingTrait
         }
 
         if (429 === $status) {
-            throw new RateLimitExceededException($this->extractRetryAfter($response));
+            throw new RateLimitExceededException($this->extractRetryAfter($response), $this->extractErrorMessage($response));
         }
     }
 

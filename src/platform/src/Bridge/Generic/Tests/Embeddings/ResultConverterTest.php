@@ -40,6 +40,7 @@ class ResultConverterTest extends TestCase
         $httpResponse = $this->createStub(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(429);
         $httpResponse->method('getHeaders')->willReturn(['retry-after' => ['60']]);
+        $httpResponse->method('getContent')->willReturn('{"error":{"message":"You exceeded your current quota, please check your plan and billing details."}}');
 
         $exception = null;
         try {
@@ -50,6 +51,7 @@ class ResultConverterTest extends TestCase
 
         $this->assertNotNull($exception);
         $this->assertSame(60, $exception->getRetryAfter());
+        $this->assertSame('Rate limit exceeded. You exceeded your current quota, please check your plan and billing details.', $exception->getMessage());
     }
 
     public function testThrowsRateLimitExceededExceptionWithoutRetryAfterHeader()
@@ -67,6 +69,7 @@ class ResultConverterTest extends TestCase
 
         $this->assertNotNull($exception);
         $this->assertNull($exception->getRetryAfter());
+        $this->assertSame('Rate limit exceeded.', $exception->getMessage());
     }
 
     private function getEmbeddingStub(): string

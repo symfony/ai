@@ -317,8 +317,10 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
         $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(429);
+        $httpResponse->method('getContent')->willReturn('{"error":{"message":"You exceeded your current quota, please check your plan and billing details."}}');
 
         $this->expectException(RateLimitExceededException::class);
+        $this->expectExceptionMessage('Rate limit exceeded. You exceeded your current quota, please check your plan and billing details.');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

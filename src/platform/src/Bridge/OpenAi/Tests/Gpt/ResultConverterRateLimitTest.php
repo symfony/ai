@@ -37,7 +37,7 @@ final class ResultConverterRateLimitTest extends TestCase
         $handler = new ResultConverter();
 
         $this->expectException(RateLimitExceededException::class);
-        $this->expectExceptionMessage('Rate limit exceeded.');
+        $this->expectExceptionMessage('Rate limit exceeded. Rate limit reached for requests');
 
         try {
             $handler->convert(new RawHttpResult($httpResponse));
@@ -64,7 +64,7 @@ final class ResultConverterRateLimitTest extends TestCase
         $handler = new ResultConverter();
 
         $this->expectException(RateLimitExceededException::class);
-        $this->expectExceptionMessage('Rate limit exceeded.');
+        $this->expectExceptionMessage('Rate limit exceeded. Rate limit reached for tokens');
 
         try {
             $handler->convert(new RawHttpResult($httpResponse));
