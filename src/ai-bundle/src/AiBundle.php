@@ -70,12 +70,15 @@ use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
+use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\Factory as LmStudioFactory;
 use Symfony\AI\Platform\Bridge\Mistral\Factory as MistralFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+use Symfony\AI\Platform\Bridge\OpenResponses\Factory as OpenResponsesFactory;
+use Symfony\AI\Platform\Bridge\OpenResponses\FallbackModelCatalog as OpenResponsesFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory as OpenRouterFactory;
 use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
@@ -712,7 +715,7 @@ final class AiBundle extends AbstractBundle
                         $config['base_url'],
                         $config['api_key'] ?? null,
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        isset($config['model_catalog']) ? new Reference($config['model_catalog']) : null,
+                        isset($config['model_catalog']) ? new Reference($config['model_catalog']) : new Definition(GenericFallbackModelCatalog::class),
                         null, // $contract
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
@@ -826,6 +829,34 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'openai']);
 
             $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('openresponses' === $type) {
+            foreach ($platform as $name => $config) {
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-open-responses-platform', OpenResponsesFactory::class, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('OpenResponses platform configuration requires "symfony/ai-open-responses-platform" package. Try running "composer require symfony/ai-open-responses-platform".');
+                }
+
+                $platformId = 'ai.platform.openresponses.'.$name;
+                $definition = (new Definition(Platform::class))
+                    ->setFactory(OpenResponsesFactory::class.'::createPlatform')
+                    ->setLazy(true)
+                    ->addTag('proxy', ['interface' => PlatformInterface::class])
+                    ->setArguments([
+                        $config['base_url'],
+                        $config['api_key'] ?? null,
+                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                        isset($config['model_catalog']) ? new Reference($config['model_catalog']) : new Definition(OpenResponsesFallbackModelCatalog::class),
+                        null, // $contract
+                        new Reference('event_dispatcher'),
+                        $config['responses_path'],
+                    ])
+                    ->addTag('ai.platform', ['name' => 'openresponses.'.$name]);
+
+                $container->setDefinition($platformId, $definition);
+            }
 
             return;
         }

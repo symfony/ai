@@ -7,6 +7,7 @@ CHANGELOG
  * Validate structured output using `symfony/validator` when available
  * Make `ai:platform:invoke` arguments optional and prompt for them interactively when missing
  * Visualize failed calls with `result_type: 'error'` in profiler
+ * Add `openresponses` platform configuration for OpenAI Responses-compatible endpoints
 
 0.8
 ---
