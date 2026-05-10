@@ -29,6 +29,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class ResultConverterTest extends TestCase
@@ -398,5 +399,102 @@ final class ResultConverterTest extends TestCase
                 ],
             ],
         ], ChoiceDelta::class];
+    }
+
+    public function testStreamingYieldsTokenUsageWhenUsageMetadataIsPresent()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createStub(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($response);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'Hello']]],
+                ]],
+            ];
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => ' world']]],
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 15,
+                    'candidatesTokenCount' => 25,
+                    'thoughtsTokenCount' => 3,
+                    'totalTokenCount' => 43,
+                ],
+            ];
+        })());
+
+        $result = (new ResultConverter())->convert($rawResult, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $items = iterator_to_array($result->getContent(), false);
+
+        $this->assertCount(3, $items);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Hello', $items[0]->getText());
+
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[1]);
+        $this->assertSame(15, $items[1]->getPromptTokens());
+        $this->assertSame(25, $items[1]->getCompletionTokens());
+        $this->assertSame(3, $items[1]->getThinkingTokens());
+        $this->assertSame(43, $items[1]->getTotalTokens());
+
+        $this->assertInstanceOf(TextDelta::class, $items[2]);
+        $this->assertSame(' world', $items[2]->getText());
+    }
+
+    public function testStreamingSkipsEmptyOrPartialUsageMetadataChunks()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createStub(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($response);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'Hello']]],
+                ]],
+                'usageMetadata' => [],
+            ];
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => ' world']]],
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 15,
+                ],
+            ];
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => '!']]],
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 15,
+                    'candidatesTokenCount' => 25,
+                    'totalTokenCount' => 40,
+                ],
+            ];
+        })());
+
+        $result = (new ResultConverter())->convert($rawResult, ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $items = iterator_to_array($result->getContent(), false);
+
+        $this->assertCount(4, $items);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Hello', $items[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $items[1]);
+        $this->assertSame(' world', $items[1]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[2]);
+        $this->assertSame(40, $items[2]->getTotalTokens());
+        $this->assertInstanceOf(TextDelta::class, $items[3]);
+        $this->assertSame('!', $items[3]->getText());
     }
 }

@@ -98,6 +98,10 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface $result): \Generator
     {
         foreach ($result->getDataStream() as $data) {
+            if (isset($data['usageMetadata']['totalTokenCount']) && 0 < $data['usageMetadata']['totalTokenCount']) {
+                yield $this->getTokenUsageExtractor()->fromUsageMetadata($data['usageMetadata']);
+            }
+
             $choices = array_values(array_filter(array_map($this->convertChoice(...), $data['candidates'] ?? [])));
 
             if (!$choices) {

@@ -34,7 +34,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             return null;
         }
 
-        return $this->extractUsageMetadata($content['usageMetadata']);
+        return $this->fromUsageMetadata($content['usageMetadata']);
     }
 
     /**
@@ -46,7 +46,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
      *     totalTokenCount?: int
      * } $usage
      */
-    private function extractUsageMetadata(array $usage): TokenUsage
+    public function fromUsageMetadata(array $usage): TokenUsage
     {
         return new TokenUsage(
             promptTokens: $usage['promptTokenCount'] ?? null,
