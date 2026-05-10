@@ -28,6 +28,7 @@ final class Tool
         private readonly string $name,
         private readonly string $description,
         private readonly ?array $parameters = null,
+        private readonly ?string $responseDescription = null,
     ) {
     }
 
@@ -43,7 +44,11 @@ final class Tool
 
     public function getDescription(): string
     {
-        return $this->description;
+        if (null === $this->responseDescription) {
+            return $this->description;
+        }
+
+        return $this->description."\n\nResponse description: ".$this->responseDescription;
     }
 
     /**
