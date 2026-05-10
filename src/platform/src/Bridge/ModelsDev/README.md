@@ -14,6 +14,13 @@ requirements.
 See the [full documentation](https://symfony.com/doc/current/ai/components/platform/models-dev.html)
 for usage and configuration details.
 
+models.dev Documentation
+------------------------
+
+ * [models.dev](https://models.dev/)
+ * [Catalog JSON (`api.json`)](https://models.dev/api.json)
+ * [Source](https://github.com/sst/models.dev)
+
 Resources
 ---------
 

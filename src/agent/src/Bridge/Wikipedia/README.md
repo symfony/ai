@@ -3,6 +3,13 @@ Wikipedia AI Tool
 
 Provides [Wikipedia](https://www.wikipedia.org/) integration for Symfony AI Agent.
 
+Wikipedia Documentation
+-----------------------
+
+ * [MediaWiki API:Search](https://www.mediawiki.org/wiki/API:Search)
+ * [Extension:TextExtracts (plain-text extracts)](https://www.mediawiki.org/wiki/Extension:TextExtracts)
+ * [MediaWiki API main page](https://www.mediawiki.org/wiki/API:Main_page)
+
 Resources
 ---------
 

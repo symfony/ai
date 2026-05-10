@@ -3,6 +3,14 @@ Meilisearch Message Store
 
 Provides [Meilisearch](https://www.meilisearch.com/) message store integration for Symfony AI Chat.
 
+Meilisearch Documentation
+-------------------------
+
+ * [Indexes API](https://www.meilisearch.com/docs/reference/api/indexes)
+ * [Documents API](https://www.meilisearch.com/docs/reference/api/documents)
+ * [Settings API](https://www.meilisearch.com/docs/reference/api/settings)
+ * [Async tasks](https://www.meilisearch.com/docs/learn/async/asynchronous_operations)
+
 Resources
 ---------
 

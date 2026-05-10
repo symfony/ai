@@ -3,6 +3,12 @@ Claude Code Platform
 
 Claude Code platform bridge for Symfony AI.
 
+Claude Code Documentation
+-------------------------
+
+ * [CLI reference](https://code.claude.com/docs/en/cli-reference)
+ * [Agent SDK streaming output](https://code.claude.com/docs/en/agent-sdk/streaming-output)
+
 Resources
 ---------
 

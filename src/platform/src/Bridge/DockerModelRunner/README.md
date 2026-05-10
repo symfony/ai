@@ -3,6 +3,12 @@ DockerModelRunner Platform
 
 Docker Model Runner platform bridge for Symfony AI.
 
+Docker Model Runner Documentation
+---------------------------------
+
+ * [Docker Model Runner overview](https://docs.docker.com/ai/model-runner/)
+ * [API reference](https://docs.docker.com/ai/model-runner/api-reference/)
+
 Resources
 ---------
 

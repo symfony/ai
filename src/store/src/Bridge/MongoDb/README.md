@@ -3,6 +3,11 @@ MongoDB Atlas Store
 
 Provides [MongoDB Atlas](https://www.mongodb.com/atlas) vector store integration for Symfony AI Store.
 
+MongoDB Documentation
+---------------------
+
+ * [Atlas Vector Search overview (`$vectorSearch`)](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/)
+
 Resources
 ---------
 

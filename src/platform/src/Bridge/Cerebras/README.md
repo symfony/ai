@@ -3,6 +3,12 @@ Cerebras Platform
 
 Cerebras platform bridge for Symfony AI.
 
+Cerebras Documentation
+----------------------
+
+ * [Chat completions](https://inference-docs.cerebras.ai/api-reference/chat-completions)
+ * [Inference docs](https://inference-docs.cerebras.ai/)
+
 Resources
 ---------
 

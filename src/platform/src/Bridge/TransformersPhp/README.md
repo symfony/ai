@@ -3,6 +3,12 @@ TransformersPhp Platform
 
 TransformersPhp platform bridge for Symfony AI.
 
+TransformersPHP Documentation
+-----------------------------
+
+ * [TransformersPHP docs](https://transformers.codewithkyrian.com/introduction)
+ * [Source](https://github.com/CodeWithKyrian/transformers-php)
+
 Resources
 ---------
 

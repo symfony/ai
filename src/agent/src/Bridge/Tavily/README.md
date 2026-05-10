@@ -3,6 +3,12 @@ Tavily AI Tool
 
 Provides [Tavily](https://tavily.com/) integration for Symfony AI Agent.
 
+Tavily Documentation
+--------------------
+
+ * [Search](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+ * [Extract](https://docs.tavily.com/documentation/api-reference/endpoint/extract)
+
 Resources
 ---------
 

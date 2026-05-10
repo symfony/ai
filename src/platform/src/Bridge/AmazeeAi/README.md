@@ -3,6 +3,13 @@ amazee.ai Platform
 
 amazee.ai platform bridge for Symfony AI.
 
+amazee.ai Documentation
+-----------------------
+
+ * [amazee.ai](https://amazee.ai/)
+ * [LiteLLM proxy endpoints](https://docs.litellm.ai/docs/proxy/user_keys)
+ * [LiteLLM OpenAI-compatible providers](https://docs.litellm.ai/docs/providers/openai_compatible)
+
 Resources
 ---------
 

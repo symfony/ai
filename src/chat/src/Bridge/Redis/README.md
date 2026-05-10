@@ -3,6 +3,13 @@ Redis Message Store
 
 Provides [Redis](https://redis.io/) message store integration for Symfony AI Chat.
 
+Redis Documentation
+-------------------
+
+ * [phpredis](https://github.com/phpredis/phpredis)
+ * [Redis `SET`](https://redis.io/docs/latest/commands/set/)
+ * [Redis `GET`](https://redis.io/docs/latest/commands/get/)
+
 Resources
 ---------
 

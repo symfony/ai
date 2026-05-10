@@ -3,6 +3,12 @@ SerpApi AI Tool
 
 Provides [SerpApi](https://serpapi.com/) integration for Symfony AI Agent.
 
+SerpApi Documentation
+---------------------
+
+ * [Search API](https://serpapi.com/search-api)
+ * [Organic results](https://serpapi.com/organic-results)
+
 Resources
 ---------
 

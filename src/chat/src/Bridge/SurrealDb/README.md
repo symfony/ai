@@ -3,6 +3,11 @@ SurrealDB Message Store
 
 Provides [SurrealDB](https://surrealdb.com/) message store integration for Symfony AI Chat.
 
+SurrealDB Documentation
+-----------------------
+
+ * [HTTP integration](https://surrealdb.com/docs/surrealdb/integration/http)
+
 Resources
 ---------
 

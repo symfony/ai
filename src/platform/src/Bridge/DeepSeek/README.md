@@ -3,6 +3,13 @@ DeepSeek Platform
 
 DeepSeek platform bridge for Symfony AI.
 
+DeepSeek Documentation
+----------------------
+
+ * [Create chat completion](https://api-docs.deepseek.com/api/create-chat-completion)
+ * [Function calling](https://api-docs.deepseek.com/guides/function_calling)
+ * [Multi-round chat](https://api-docs.deepseek.com/guides/multi_round_chat)
+
 Resources
 ---------
 

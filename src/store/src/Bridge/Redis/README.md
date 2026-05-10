@@ -3,6 +3,15 @@ Redis Store
 
 Provides [Redis](https://redis.io/) vector store integration for Symfony AI Store.
 
+Redis Documentation
+-------------------
+
+ * [Vector search](https://redis.io/docs/latest/develop/ai/search-and-query/vectors/)
+ * [Vector indexing](https://redis.io/docs/latest/develop/ai/search-and-query/indexing/)
+ * [Vector querying (KNN, DIALECT 2)](https://redis.io/docs/latest/develop/ai/search-and-query/query/)
+ * [`FT.CREATE`](https://redis.io/commands/ft.create/)
+ * [`FT.SEARCH`](https://redis.io/commands/ft.search/)
+
 Resources
 ---------
 

@@ -3,6 +3,11 @@ OpenMeteo AI Tool
 
 Provides [OpenMeteo](https://openmeteo.com/) integration for Symfony AI Agent.
 
+Open-Meteo Documentation
+------------------------
+
+ * [Forecast API](https://open-meteo.com/en/docs)
+
 Resources
 ---------
 

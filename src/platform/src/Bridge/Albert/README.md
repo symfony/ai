@@ -3,6 +3,13 @@ Albert Platform
 
 Albert platform bridge for Symfony AI.
 
+Albert Documentation
+--------------------
+
+ * [API reference (ReDoc)](https://albert.api.etalab.gouv.fr/reference)
+ * [Models / OpenAI compatibility](https://docs.opengatellm.org/features/supported_models/)
+ * [Source](https://github.com/etalab-ia/OpenGateLLM)
+
 Resources
 ---------
 

@@ -3,6 +3,11 @@ Neo4j Store
 
 Provides [Neo4j](https://neo4j.com/) vector store integration for Symfony AI Store.
 
+Neo4j Documentation
+-------------------
+
+ * [Vector indexes (Cypher manual)](https://neo4j.com/docs/cypher-manual/current/indexes/semantic-indexes/vector-indexes/)
+
 Resources
 ---------
 

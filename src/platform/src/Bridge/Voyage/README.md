@@ -3,6 +3,12 @@ Voyage Platform
 
 Voyage platform bridge for Symfony AI.
 
+Voyage Documentation
+--------------------
+
+ * [Text embeddings](https://docs.voyageai.com/reference/embeddings-api)
+ * [Multimodal embeddings](https://docs.voyageai.com/reference/multimodal-embeddings-api)
+
 Resources
 ---------
 

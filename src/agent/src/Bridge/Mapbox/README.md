@@ -3,6 +3,12 @@ Mapbox AI Tool
 
 Provides [Mapbox](https://www.mapbox.com/) integration for Symfony AI Agent.
 
+Mapbox Documentation
+--------------------
+
+ * [Geocoding v5 (forward)](https://docs.mapbox.com/api/search/geocoding-v5/)
+ * [Geocoding v6 (reverse)](https://docs.mapbox.com/api/search/geocoding/)
+
 Resources
 ---------
 

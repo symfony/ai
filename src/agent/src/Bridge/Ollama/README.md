@@ -3,6 +3,12 @@ Ollama Web search AI Tool
 
 Provides [Ollama Web search](https://docs.ollama.com/capabilities/web-search) integration for Symfony AI Agent.
 
+Ollama Documentation
+--------------------
+
+ * [Web Search capability](https://docs.ollama.com/capabilities/web-search)
+ * [Announcement](https://ollama.com/blog/web-search)
+
 Resources
 ---------
 

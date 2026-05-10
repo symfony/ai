@@ -3,6 +3,11 @@ Perplexity Platform
 
 Perplexity platform bridge for Symfony AI.
 
+Perplexity Documentation
+------------------------
+
+ * [Chat completions (Sonar)](https://docs.perplexity.ai/api-reference/chat-completions-post)
+
 Resources
 ---------
 

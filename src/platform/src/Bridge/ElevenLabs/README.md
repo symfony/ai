@@ -3,6 +3,13 @@ ElevenLabs Platform
 
 ElevenLabs platform bridge for Symfony AI.
 
+ElevenLabs Documentation
+------------------------
+
+ * [Introduction / authentication](https://elevenlabs.io/docs/api-reference/introduction)
+ * [Text-to-speech (convert)](https://elevenlabs.io/docs/api-reference/text-to-speech/convert)
+ * [Text-to-speech (stream)](https://elevenlabs.io/docs/api-reference/text-to-speech/stream)
+ * [Speech-to-text](https://elevenlabs.io/docs/api-reference/speech-to-text/convert)
 
 Test Fixtures
 -------------
