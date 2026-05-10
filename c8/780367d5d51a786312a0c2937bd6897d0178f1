@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-05-10T06:48:44Z
+
+Just a though: would it better to have separate exception class for "out of credits"? I would assume its quite common to set up an alert when getting this error, and now it will require checking the message which will differ on every platform.
+
+Of course this here we can have regardless
