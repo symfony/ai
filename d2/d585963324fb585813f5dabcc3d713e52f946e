@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-05-05T04:34:04Z
+
+Done in 507b863 — , mirroring the openai bridge example. Thanks for the review! 🙏
+
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-05-06T05:24:39Z
+
+Thanks for catching that! 🙏
+
+The streaming behavior of `usageMetadata` isn't really spelled out in the Vertex AI / Gemini docs — it just happens that the API sends a `usageMetadata` field on most chunks, mostly with empty or partial values, with the actual totals landing in the final chunk. So we were yielding indiscriminately.
+
+Pushed a fix in the spirit of your remark: only yield a `TokenUsage` when the chunk carries an actual `totalTokenCount > 0`. Added a regression test covering empty + partial intermediate chunks alongside the populated one.
+
+Would be happy if you could re-run the example to confirm you now see exactly one usage event instead of seventeen. 🙂
