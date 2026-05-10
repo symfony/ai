@@ -41,8 +41,9 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *     input: array<mixed>|string|object,
  *     options: array<string, mixed>,
  *     result: string|iterable<mixed>|object|null,
- *     result_type: 'tool_calls'|'vectors'|'text',
+ *     result_type: 'tool_calls'|'vectors'|'text'|'error',
  *     metadata: Metadata,
+ *     error?: array{class: class-string, message: string},
  * }
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
@@ -214,22 +215,30 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $calls = $platform->getCalls();
         $resultCache = $platform->getResultCache();
         foreach ($calls as $key => $call) {
-            $result = $call['result']->getResult();
+            try {
+                $result = $call['result']->getResult();
 
-            if (isset($resultCache[$result])) {
-                $call['result'] = $resultCache[$result];
-                $call['result_type'] = 'text';
-            } else {
-                $content = $result->getContent();
-                $call['result'] = $content instanceof \Generator ? null : $content;
-                $call['result_type'] = match (true) {
-                    $result instanceof ToolCallResult => 'tool_calls',
-                    $result instanceof VectorResult => 'vectors',
-                    default => 'text',
-                };
+                if (isset($resultCache[$result])) {
+                    $call['result'] = $resultCache[$result];
+                    $call['result_type'] = 'text';
+                } else {
+                    $content = $result->getContent();
+                    $call['result'] = $content instanceof \Generator ? null : $content;
+                    $call['result_type'] = match (true) {
+                        $result instanceof ToolCallResult => 'tool_calls',
+                        $result instanceof VectorResult => 'vectors',
+                        default => 'text',
+                    };
+                }
+
+                $call['metadata'] = $result->getMetadata();
+            } catch (\Throwable $exception) {
+                // Recording instead of re-throwing prevents replacing the user's response with a 500 during kernel.response.
+                $call['result'] = null;
+                $call['result_type'] = 'error';
+                $call['metadata'] = new Metadata();
+                $call['error'] = ['class' => $exception::class, 'message' => $exception->getMessage()];
             }
-
-            $call['metadata'] = $result->getMetadata();
 
             $calls[$key] = $call;
         }

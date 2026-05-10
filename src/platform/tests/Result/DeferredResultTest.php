@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -166,6 +167,34 @@ final class DeferredResultTest extends TestCase
 
         $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $converted->getMetadata()->get('token_usage'));
         $this->assertSame(123456, $tokenUsage->getPromptTokens());
+    }
+
+    public function testItSavesConversionFailureAndDoesNotRetryConvert()
+    {
+        $rawHttpResult = new RawHttpResult($this->createStub(SymfonyHttpResponse::class));
+        $exception = new RateLimitExceededException();
+
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
+        $resultConverter->expects($this->once())
+            ->method('convert')
+            ->with($rawHttpResult, [])
+            ->willThrowException($exception);
+
+        $deferredResult = new DeferredResult($resultConverter, $rawHttpResult);
+
+        try {
+            $deferredResult->getResult();
+            $this->fail('Expected RateLimitExceededException on first call.');
+        } catch (RateLimitExceededException $first) {
+            $this->assertSame($exception, $first);
+        }
+
+        try {
+            $deferredResult->getResult();
+            $this->fail('Expected RateLimitExceededException on second call.');
+        } catch (RateLimitExceededException $second) {
+            $this->assertSame($exception, $second, 'Second call must re-throw the cached exception instance.');
+        }
     }
 
     public function testTokenUsageGetsPromotedToDeferredResultFromStream()
