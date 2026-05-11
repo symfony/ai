@@ -9,8 +9,8 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
+use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Region;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
