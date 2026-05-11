@@ -85,43 +85,61 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
             return;
         }
 
-        $queryBuilder = $this->dbalConnection->createQueryBuilder()
-            ->delete($this->tableName);
-
-        $this->dbalConnection->executeStatement($queryBuilder->getSQL());
+        $this->dbalConnection->executeStatement(
+            $this->dbalConnection->createQueryBuilder()
+                ->delete($this->tableName)
+                ->getSQL()
+        );
     }
 
     public function save(MessageBag $messages): void
     {
-        $queryBuilder = $this->dbalConnection->createQueryBuilder()
-            ->insert($this->tableName)
-            ->values([
-                'messages' => '?',
-                'added_at' => '?',
-            ]);
+        $serialized = $this->serializer->serialize($messages->getMessages(), 'json');
+        $now = $this->clock->now()->getTimestamp();
 
-        $this->dbalConnection->executeStatement($queryBuilder->getSQL(), [
-            $this->serializer->serialize($messages->getMessages(), 'json'),
-            $this->clock->now()->getTimestamp(),
-        ]);
+        $rowCount = (int) $this->dbalConnection->executeQuery(
+            $this->dbalConnection->createQueryBuilder()
+                ->select('COUNT(*)')
+                ->from($this->tableName)
+                ->getSQL()
+        )->fetchOne();
+
+        if (0 === $rowCount) {
+            $this->dbalConnection->executeStatement(
+                $this->dbalConnection->createQueryBuilder()
+                    ->insert($this->tableName)
+                    ->values(['messages' => '?', 'added_at' => '?'])
+                    ->getSQL(),
+                [$serialized, $now],
+            );
+        } else {
+            $this->dbalConnection->executeStatement(
+                $this->dbalConnection->createQueryBuilder()
+                    ->update($this->tableName)
+                    ->set('messages', '?')
+                    ->set('added_at', '?')
+                    ->getSQL(),
+                [$serialized, $now],
+            );
+        }
     }
 
     public function load(): MessageBag
     {
-        $queryBuilder = $this->dbalConnection->createQueryBuilder()
-            ->select('messages')
-            ->from($this->tableName)
-            ->orderBy('added_at', 'ASC')
-        ;
+        $payload = $this->dbalConnection->executeQuery(
+            $this->dbalConnection->createQueryBuilder()
+                ->select('messages')
+                ->from($this->tableName)
+                ->getSQL()
+        )->fetchAssociative();
 
-        $result = $this->dbalConnection->executeQuery($queryBuilder->getSQL());
+        if (false === $payload) {
+            return new MessageBag();
+        }
 
-        $messages = array_map(
-            fn (array $payload): array => $this->serializer->deserialize($payload['messages'], MessageInterface::class.'[]', 'json'),
-            $result->fetchAllAssociative(),
+        return new MessageBag(
+            ...$this->serializer->deserialize($payload['messages'], MessageInterface::class.'[]', 'json'),
         );
-
-        return new MessageBag(...array_merge(...$messages));
     }
 
     private function addTableToSchema(Schema $currentSchema): Schema
