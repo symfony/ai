@@ -3,6 +3,12 @@ ChromaDB Store
 
 Provides [ChromaDB](https://www.trychroma.com/) vector store integration for Symfony AI Store.
 
+Chroma Documentation
+--------------------
+
+ * [Manage collections](https://docs.trychroma.com/docs/collections/manage-collections)
+ * [Query and Get](https://docs.trychroma.com/docs/querying-collections/query-and-get)
+
 Resources
 ---------
 

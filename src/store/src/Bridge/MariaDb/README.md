@@ -5,6 +5,12 @@ Provides [MariaDB](https://mariadb.org/) vector store integration for Symfony AI
 
 Requires MariaDB >=11.7 for vector support.
 
+MariaDB Documentation
+---------------------
+
+ * [Vector overview (`VECTOR`, `VECTOR INDEX`, distance functions)](https://mariadb.com/kb/en/vector-overview/)
+ * [RAG with MariaDB Vector](https://mariadb.org/rag-with-mariadb-vector/)
+
 Resources
 ---------
 

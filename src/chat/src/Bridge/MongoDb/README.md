@@ -3,6 +3,12 @@ MongoDB Message Store
 
 Provides [MongoDB](https://www.mongodb.com/) message store integration for Symfony AI Chat.
 
+MongoDB Documentation
+---------------------
+
+ * [MongoDB PHP library](https://www.mongodb.com/docs/php-library/current/)
+ * [`createCollection`](https://www.mongodb.com/docs/php-library/current/reference/method/mongodbdatabase-createcollection/)
+
 Resources
 ---------
 

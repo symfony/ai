@@ -3,6 +3,12 @@ Decart Platform
 
 Decart platform bridge for Symfony AI.
 
+Decart Documentation
+--------------------
+
+ * [Platform docs](https://docs.platform.decart.ai/)
+ * [Lucy model](https://platform.decart.ai/models/lucy)
+
 Resources
 ---------
 

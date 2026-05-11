@@ -3,6 +3,12 @@ Supabase Store
 
 Provides [Supabase](https://supabase.com/) vector store integration for Symfony AI Store using pgvector.
 
+Supabase Documentation
+----------------------
+
+ * [Vector columns guide (pgvector, `match_documents` RPC)](https://supabase.com/docs/guides/ai/vector-columns)
+ * [pgvector](https://github.com/pgvector/pgvector)
+
 Resources
 ---------
 

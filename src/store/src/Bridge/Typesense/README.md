@@ -3,6 +3,11 @@ Typesense Store
 
 Provides [Typesense](https://typesense.org/) vector store integration for Symfony AI Store.
 
+Typesense Documentation
+-----------------------
+
+ * [Vector search](https://typesense.org/docs/29.0/api/vector-search.html)
+
 Resources
 ---------
 

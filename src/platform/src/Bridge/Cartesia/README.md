@@ -3,6 +3,13 @@ Cartesia Platform
 
 Cartesia platform bridge for Symfony AI.
 
+Cartesia Documentation
+----------------------
+
+ * [Make an API request](https://docs.cartesia.ai/get-started/make-an-api-request)
+ * [Text-to-speech (bytes)](https://docs.cartesia.ai/api-reference/tts/bytes)
+ * [Speech-to-text](https://docs.cartesia.ai/api-reference/stt/transcribe)
+
 Resources
 ---------
 

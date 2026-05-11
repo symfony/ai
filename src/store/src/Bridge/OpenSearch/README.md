@@ -3,6 +3,13 @@ OpenSearch Store
 
 Provides [OpenSearch](https://opensearch.org/) vector store integration for Symfony AI Store.
 
+OpenSearch Documentation
+------------------------
+
+ * [`knn_vector` field type](https://docs.opensearch.org/latest/mappings/supported-field-types/knn-vector/)
+ * [k-NN query DSL](https://docs.opensearch.org/latest/query-dsl/specialized/k-nn/index/)
+ * [Approximate k-NN](https://docs.opensearch.org/latest/vector-search/vector-search-techniques/approximate-knn/)
+
 Resources
 ---------
 

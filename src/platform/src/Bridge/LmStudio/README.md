@@ -3,6 +3,11 @@ LmStudio Platform
 
 LM Studio platform bridge for Symfony AI.
 
+LM Studio Documentation
+-----------------------
+
+ * [OpenAI-compatible endpoints](https://lmstudio.ai/docs/app/api/endpoints/openai)
+
 Resources
 ---------
 

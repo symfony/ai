@@ -3,6 +3,12 @@ Mistral Platform
 
 Mistral platform bridge for Symfony AI.
 
+Mistral Documentation
+---------------------
+
+ * [API reference](https://docs.mistral.ai/api/)
+ * [Chat completions](https://docs.mistral.ai/api/endpoint/chat)
+
 Test Fixtures
 -------------
 

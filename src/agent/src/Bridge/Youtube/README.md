@@ -3,6 +3,11 @@ YouTube AI Tool
 
 Provides [YouTube](https://www.youtube.com/) transcript integration for Symfony AI Agent.
 
+YouTube Documentation
+---------------------
+
+ * [Underlying transcript library](https://github.com/MrMySQL/youtube-transcript)
+
 Resources
 ---------
 

@@ -3,6 +3,14 @@ VertexAi Platform
 
 Google Vertex AI platform bridge for Symfony AI.
 
+Vertex AI Documentation
+-----------------------
+
+ * [Gemini inference on Vertex](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference)
+ * [Text embeddings](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings)
+ * [Embeddings task types](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/embeddings/task-types)
+ * [ADC authentication](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth)
+
 Test Fixtures
 -------------
 

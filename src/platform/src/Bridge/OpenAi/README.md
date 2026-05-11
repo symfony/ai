@@ -10,6 +10,17 @@ This bridge includes support for:
 - Whisper (audio transcription)
 - Text-to-Speech
 
+OpenAI Documentation
+--------------------
+
+ * [Responses API](https://developers.openai.com/api/reference/responses/overview)
+ * [Responses streaming](https://developers.openai.com/api/reference/resources/responses/streaming-events)
+ * [Tools (function calling)](https://platform.openai.com/docs/guides/tools?api-mode=responses)
+ * [Embeddings](https://developers.openai.com/api/reference/resources/embeddings)
+ * [Images (DALL·E)](https://developers.openai.com/api/reference/resources/images)
+ * [Text-to-speech](https://developers.openai.com/api/reference/resources/audio/subresources/speech)
+ * [Transcription (Whisper)](https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions)
+
 Resources
 ---------
 

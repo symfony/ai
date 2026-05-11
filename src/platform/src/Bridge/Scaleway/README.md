@@ -3,6 +3,13 @@ Scaleway Platform
 
 Scaleway platform bridge for Symfony AI.
 
+Scaleway Documentation
+----------------------
+
+ * [Generative APIs](https://www.scaleway.com/en/docs/generative-apis/)
+ * [Using the chat API](https://www.scaleway.com/en/docs/generative-apis/api-cli/using-chat-api/)
+ * [OpenAI compatibility](https://www.scaleway.com/en/docs/generative-apis/reference-content/openai-compatibility/)
+
 Resources
 ---------
 

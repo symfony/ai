@@ -3,6 +3,11 @@ ManticoreSearch Store
 
 Provides [ManticoreSearch](https://manticoresearch.com/) vector store integration for Symfony AI Store.
 
+Manticore Search Documentation
+------------------------------
+
+ * [KNN search](https://manual.manticoresearch.com/Searching/KNN)
+
 Resources
 ---------
 

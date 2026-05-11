@@ -3,6 +3,13 @@ Pogocache Message Store
 
 Provides [Pogocache](https://pogocache.com/) message store integration for Symfony AI Chat.
 
+Pogocache Documentation
+-----------------------
+
+ * [Project home](https://pogocache.com/)
+ * [HTTP protocol](https://pogocache.com/docs/http-protocol)
+ * [Auth](https://pogocache.com/docs/auth-password)
+
 Resources
 ---------
 

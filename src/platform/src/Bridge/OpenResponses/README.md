@@ -3,6 +3,14 @@ Open Responses Platform
 
 Integrates [Open Responses](https://www.openresponses.org/) into Symfony AI Platform.
 
+Open Responses Documentation
+----------------------------
+
+ * [Open Responses](https://www.openresponses.org/)
+ * [Specification](https://www.openresponses.org/specification)
+ * [Source](https://github.com/open-responses/open-responses)
+ * [OpenAI Responses API (canonical contract)](https://platform.openai.com/docs/api-reference/responses)
+
 Resources
 ---------
 

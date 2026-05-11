@@ -3,6 +3,13 @@ Weaviate Store
 
 Provides [Weaviate](https://weaviate.io/) vector store integration for Symfony AI Store.
 
+Weaviate Documentation
+----------------------
+
+ * [REST API](https://docs.weaviate.io/weaviate/api/rest)
+ * [GraphQL Get](https://docs.weaviate.io/weaviate/api/graphql/get)
+ * [Similarity search (nearVector)](https://docs.weaviate.io/weaviate/search/similarity)
+
 Resources
 ---------
 

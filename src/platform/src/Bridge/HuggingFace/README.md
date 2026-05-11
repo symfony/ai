@@ -4,6 +4,12 @@ The HuggingFace bridge provides integration with the [HuggingFace Inference API]
 enabling access to thousands of pre-trained models for various AI tasks including natural language processing, computer
 vision, audio processing, and more.
 
+## HuggingFace Documentation
+
+- [Inference Providers overview](https://huggingface.co/docs/inference-providers/index)
+- [Tasks reference](https://huggingface.co/docs/inference-providers/tasks/index)
+- [Authentication / access tokens](https://huggingface.co/docs/hub/en/security-tokens)
+
 ## Features
 
 - **Multi-Provider Support**: Access models through multiple inference providers (HuggingFace Inference, Cerebras, Cohere, Groq, Together, and others)

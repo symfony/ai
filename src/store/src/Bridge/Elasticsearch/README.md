@@ -3,6 +3,12 @@ Elasticsearch Store
 
 Provides [Elasticsearch](https://www.elastic.co/elasticsearch) vector store integration for Symfony AI Store.
 
+Elasticsearch Documentation
+---------------------------
+
+ * [kNN search](https://www.elastic.co/docs/solutions/search/vector/knn)
+ * [`dense_vector` field type](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector)
+
 Resources
 ---------
 

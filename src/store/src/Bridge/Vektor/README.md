@@ -3,6 +3,11 @@ Vektor Store
 
 Provides [Vektor](https://github.com/centamiv/vektor) vector store integration for Symfony AI Store.
 
+Vektor Documentation
+--------------------
+
+ * [Library README](https://github.com/centamiv/vektor)
+
 Resources
 ---------
 

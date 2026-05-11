@@ -3,6 +3,14 @@ Gemini Platform
 
 Google Gemini platform bridge for Symfony AI.
 
+Gemini Documentation
+--------------------
+
+ * [API reference](https://ai.google.dev/api)
+ * [Generate content (`generateContent` / streaming)](https://ai.google.dev/api/generate-content)
+ * [Embeddings (`batchEmbedContents`, task types)](https://ai.google.dev/api/embeddings)
+ * [Text generation guide](https://ai.google.dev/gemini-api/docs/text-generation)
+
 Test Fixtures
 -------------
 

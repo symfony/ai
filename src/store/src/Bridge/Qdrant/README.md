@@ -3,6 +3,14 @@ Qdrant Store
 
 Provides [Qdrant](https://qdrant.tech/) vector store integration for Symfony AI Store.
 
+Qdrant Documentation
+--------------------
+
+ * [Collections](https://qdrant.tech/documentation/concepts/collections/)
+ * [Points (manage data)](https://qdrant.tech/documentation/manage-data/points/)
+ * [Query points (unified search)](https://api.qdrant.tech/api-reference/search/query-points)
+ * [Filter syntax](https://qdrant.tech/documentation/concepts/filtering/)
+
 Resources
 ---------
 

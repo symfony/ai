@@ -5,6 +5,12 @@ Provides [SQLite](https://www.sqlite.org/) vector store integration for Symfony 
 
 Uses SQLite FTS5 for full-text search and PHP-side distance calculation for vector similarity.
 
+SQLite Documentation
+--------------------
+
+ * [sqlite-vec extension (`vec0` virtual table)](https://github.com/asg017/sqlite-vec)
+ * [SQLite FTS5](https://www.sqlite.org/fts5.html)
+
 Resources
 ---------
 

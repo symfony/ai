@@ -3,6 +3,13 @@ SurrealDB Store
 
 Provides [SurrealDB](https://surrealdb.com/) vector store integration for Symfony AI Store.
 
+SurrealDB Documentation
+-----------------------
+
+ * [Vector search reference](https://surrealdb.com/docs/surrealdb/models/vector)
+ * [`DEFINE INDEX` (MTREE/HNSW)](https://surrealdb.com/docs/surrealql/statements/define/indexes)
+ * [Vector functions](https://surrealdb.com/docs/surrealql/functions/database/vector)
+
 Resources
 ---------
 
