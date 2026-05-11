@@ -76,6 +76,8 @@ final class ModelClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed>|string $payload
      * @param array<string, mixed>            $options
+     *
+     * @return array<string, mixed>
      */
     private function extractImageFrame(array|string $payload, array $options): array
     {
