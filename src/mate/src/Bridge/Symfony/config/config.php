@@ -14,6 +14,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\EventCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
@@ -74,6 +75,10 @@ return static function (ContainerConfigurator $configurator) {
             ->tag('ai_mate.profiler_collector_formatter');
 
         $services->set(DoctrineCollectorFormatter::class)
+            ->lazy()
+            ->tag('ai_mate.profiler_collector_formatter');
+
+        $services->set(EventCollectorFormatter::class)
             ->lazy()
             ->tag('ai_mate.profiler_collector_formatter');
 
