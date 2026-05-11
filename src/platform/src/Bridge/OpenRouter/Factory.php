@@ -38,11 +38,15 @@ final class Factory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        Region $region = Region::WORLD,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'openrouter',
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-        $baseUrl = 'https://openrouter.ai/api';
+        $baseUrl = match ($region) {
+            Region::EU => 'https://eu.openrouter.ai/api',
+            default => 'https://openrouter.ai/api',
+        };
 
         $modelClients = [
             new Generic\Completions\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/chat/completions'),
@@ -66,12 +70,13 @@ final class Factory
         ?HttpClientInterface $httpClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
+        Region $region = Region::WORLD,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'openrouter',
         ?ModelRouterInterface $modelRouter = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($apiKey, $httpClient, $modelCatalog, $contract, $eventDispatcher, $name)],
+            [self::createProvider($apiKey, $httpClient, $modelCatalog, $contract, $region, $eventDispatcher, $name)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );

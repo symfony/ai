@@ -80,6 +80,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\Factory as OpenResponsesFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\FallbackModelCatalog as OpenResponsesFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory as OpenRouterFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Region as OpenRouterRegion;
 use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\Factory as ScalewayFactory;
@@ -876,6 +877,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.model_catalog.openrouter'),
                     null,
+                    OpenRouterRegion::from($platform['region']),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'openrouter']);
