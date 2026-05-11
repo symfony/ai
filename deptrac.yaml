@@ -241,6 +241,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\TransformersPhp\\.*
+    - name: VeniceAiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Venice\\.*
     - name: VertexAiPlatform
       collectors:
         - type: classLike
@@ -517,6 +521,9 @@ deptrac:
       - GenericPlatform
     TransformersPhpPlatform:
       - PlatformComponent
+    VeniceAiPlatform:
+      - PlatformComponent
+      - GeminiPlatform
     VertexAiPlatform:
       - PlatformComponent
       - GeminiPlatform
