@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Vektor\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Uid\Uuid;
@@ -86,5 +87,14 @@ final class StoreTest extends TestCase
         $this->assertCount(1, iterator_to_array($results));
 
         $store->drop();
+    }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Count method not implemented in Vektor store.');
+
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->count();
     }
 }

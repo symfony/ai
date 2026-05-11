@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore;
+use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\RuntimeException;
@@ -150,6 +151,29 @@ final class SearchStoreTest extends TestCase
         $this->assertEquals($uuid2, $results[1]->getId());
         $this->assertSame('First Document', $results[0]->getMetadata()['title']);
         $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
+    }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                '@odata.count' => 42,
+                'value' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = StoreFactory::create(
+            indexName: 'test-index',
+            endpoint: 'https://test.search.windows.net',
+            apiKey: 'test-api-key',
+            apiVersion: '2023-11-01',
+            httpClient: $httpClient,
+        );
+
+        $this->assertSame(42, $store->count());
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testQueryWithCustomVectorFieldName()

@@ -496,4 +496,19 @@ final class StoreTest extends TestCase
         $store = new Store(new ArrayAdapter());
         $this->assertTrue($store->supports(HybridQuery::class));
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $store = new Store(new ArrayAdapter());
+
+        $this->assertSame(0, $store->count());
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
+        ]);
+
+        $this->assertSame(3, $store->count());
+    }
 }

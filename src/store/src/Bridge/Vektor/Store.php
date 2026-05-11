@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -119,6 +120,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
+    }
+
+    public function count(): int
+    {
+        throw new RuntimeException('Count method not implemented in Vektor store.');
     }
 
     /**

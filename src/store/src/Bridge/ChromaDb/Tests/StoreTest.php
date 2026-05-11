@@ -17,6 +17,7 @@ use Codewithkyrian\ChromaDB\Responses\QueryItemsResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\ChromaDb\Store;
 use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -753,5 +754,24 @@ final class StoreTest extends TestCase
         $store = StoreFactory::create($client, 'test-collection');
 
         $this->assertFalse($store->supports(HybridQuery::class));
+    }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->willReturn(42);
+
+        $store = new Store($client, 'test-collection');
+
+        $this->assertSame(42, $store->count());
     }
 }

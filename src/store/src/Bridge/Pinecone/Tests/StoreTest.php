@@ -543,6 +543,62 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'totalVectorCount' => 42,
+            'namespaces' => [],
+        ]);
+
+        $vectorResource->expects($this->once())
+            ->method('stats')
+            ->willReturn($response);
+
+        $this->assertSame(42, self::createStore($client)->count());
+    }
+
+    public function testCountReturnsNamespaceDocumentCount()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'totalVectorCount' => 100,
+            'namespaces' => [
+                'my-namespace' => ['vectorCount' => 42],
+            ],
+        ]);
+
+        $vectorResource->expects($this->once())
+            ->method('stats')
+            ->willReturn($response);
+
+        $this->assertSame(42, self::createStore($client, namespace: 'my-namespace')->count());
+    }
+
     /**
      * @param array<string, mixed> $filter
      */

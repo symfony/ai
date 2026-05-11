@@ -185,6 +185,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ], true);
     }
 
+    public function count(): int
+    {
+        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+
+        return (int) $statement->fetchColumn();
+    }
+
     /**
      * @param array{
      *     maxItems?: positive-int,

@@ -57,6 +57,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('cli', \sprintf('DROP TABLE %s', $this->table));
     }
 
+    public function count(): int
+    {
+        $result = $this->request('cli', \sprintf('SELECT COUNT(*) AS cnt FROM %s', $this->table));
+
+        return (int) ($result['result'] ?? 0);
+    }
+
     /**
      * @throws \Random\RandomException {@see random_int()}
      */

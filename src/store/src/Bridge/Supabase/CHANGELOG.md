@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.8
+---
+
+ * Add `count` method
+
 0.7
 ---
 
