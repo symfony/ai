@@ -126,6 +126,17 @@ Store
    +$total = $store->count();
    ```
 
+ * The `endpoint` parameter of the Elasticsearch `Store` has been removed; the `Store` now expects an HTTP
+   client scoped to the Elasticsearch instance. Use the new `StoreFactory` to keep passing an endpoint:
+
+   ```diff
+   -use Symfony\AI\Store\Bridge\Elasticsearch\Store;
+   +use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory;
+
+   -$store = new Store($httpClient, 'http://127.0.0.1:9200', 'movies');
+   +$store = StoreFactory::create('movies', 'http://127.0.0.1:9200', $httpClient);
+   ```
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 
