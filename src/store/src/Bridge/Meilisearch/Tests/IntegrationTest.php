@@ -12,10 +12,9 @@
 namespace Symfony\AI\Store\Bridge\Meilisearch\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\Meilisearch\Store;
+use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
-use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -25,11 +24,10 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
+        return StoreFactory::create(
+            'test_index',
             'http://127.0.0.1:7700',
             'changeMe',
-            'test_index',
             embeddingsDimension: 3,
         );
     }

@@ -107,6 +107,7 @@ use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
+use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
@@ -1583,14 +1584,14 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $definition = new Definition(MeilisearchStore::class);
-                $definition
+                $definition = (new Definition(MeilisearchStore::class))
+                    ->setFactory(MeilisearchStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference('http_client'),
-                        $store['endpoint'],
-                        $store['api_key'],
                         $store['index_name'] ?? $name,
+                        $store['endpoint'] ?? null,
+                        $store['api_key'] ?? null,
+                        new Reference($store['http_client']),
                         $store['embedder'],
                         $store['vector_field'],
                         $store['dimensions'],

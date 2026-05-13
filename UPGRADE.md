@@ -96,6 +96,14 @@ Platform
    responses with `thinking` blocks. A thinking-only response previously raised `RuntimeException`. Update
    any `try`/`catch` and any code that assumed the converter only returned `TextResult` or `ToolCallResult`.
 
+Store
+-----
+
+ * Add support for `ScopingHttpClient` in Meilisearch `Store`
+ * The `endpointUrl` parameter for Meilisearch `Store` has been removed
+ * The `apiKey` parameter for Meilisearch `Store` has been removed
+ * A `StoreFactory` has been introduced for Meilisearch `Store`
+
 UPGRADE FROM 0.7 to 0.8
 =======================
 
