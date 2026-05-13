@@ -12,8 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
 use Symfony\AI\Platform\Bridge\Generic;
-use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient;
-use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter;
+use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient as RerankModelClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter as RerankResultConverter;
+use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ModelClient as SpeechModelClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ResultConverter as SpeechResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -47,12 +49,14 @@ final class Factory
         $modelClients = [
             new Generic\Completions\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/chat/completions'),
             new Generic\Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/embeddings'),
-            new ModelClient($httpClient, $apiKey),
+            new RerankModelClient($httpClient, $apiKey),
+            new SpeechModelClient($httpClient, $apiKey),
         ];
         $resultConverters = [
             new Generic\Completions\ResultConverter(),
             new Generic\Embeddings\ResultConverter(),
-            new ResultConverter(),
+            new RerankResultConverter(),
+            new SpeechResultConverter(),
         ];
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
