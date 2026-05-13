@@ -64,6 +64,7 @@
         "symfony/ai-gemini-platform": "^0.11",
         "symfony/ai-generic-platform": "^0.11",
         "symfony/ai-hugging-face-platform": "^0.11",
+        "symfony/ai-inworld-platform": "^0.11",
         "symfony/ai-lm-studio-platform": "^0.11",
         "symfony/ai-manticore-search-store": "^0.11",
         "symfony/ai-maria-db-store": "^0.11",

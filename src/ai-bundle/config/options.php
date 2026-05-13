@@ -46,6 +46,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/gemini'))
                     ->append($import('platform/generic'))
                     ->append($import('platform/huggingface'))
+                    ->append($import('platform/inworld'))
                     ->append($import('platform/lmstudio'))
                     ->append($import('platform/minimax'))
                     ->append($import('platform/mistral'))
