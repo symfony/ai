@@ -127,6 +127,7 @@ use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
+use Symfony\AI\Store\Bridge\SurrealDb\StoreFactory as SurrealDbStoreFactory;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
@@ -2066,12 +2067,12 @@ final class AiBundle extends AbstractBundle
 
             foreach ($stores as $name => $store) {
                 $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['username'],
-                    $store['password'],
                     $store['namespace'],
                     $store['database'],
+                    $store['username'],
+                    $store['password'],
+                    $store['endpoint'] ?? null,
+                    new Reference($store['http_client']),
                     $store['table'] ?? $name,
                     $store['vector_field'],
                     $store['strategy'],
@@ -2082,8 +2083,8 @@ final class AiBundle extends AbstractBundle
                     $arguments[10] = $store['namespaced_user'];
                 }
 
-                $definition = new Definition(SurrealDbStore::class);
-                $definition
+                $definition = (new Definition(SurrealDbStore::class))
+                    ->setFactory(SurrealDbStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
