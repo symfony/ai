@@ -71,12 +71,14 @@ class ToolsListCommand extends Command
 
     protected function configure(): void
     {
+        $script = $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate';
+
         $this
             ->addOption('filter', null, InputOption::VALUE_REQUIRED, 'Filter by tool name pattern (supports wildcards)')
             ->addOption('extension', null, InputOption::VALUE_REQUIRED, 'Filter by extension package name')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json, toon)', 'table')
             ->setHelp(
-                <<<'HELP'
+                <<<HELP
 The <info>%command.name%</info> command displays all available MCP tools with their metadata.
 
 <info>Usage Examples:</info>
@@ -98,7 +100,7 @@ The <info>%command.name%</info> command displays all available MCP tools with th
   %command.full_name% --extension=symfony/ai-monolog-mate-extension --filter="search*"
 
   <comment># For detailed tool information with schema, use:</comment>
-  bin/mate.php mcp:tools:inspect <tool-name>
+  {$script} mcp:tools:inspect <tool-name>
 HELP
             );
     }

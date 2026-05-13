@@ -67,11 +67,13 @@ class ResourcesReadCommand extends Command
 
     protected function configure(): void
     {
+        $script = $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate';
+
         $this
             ->addArgument('uri', InputArgument::REQUIRED, 'URI of the resource to read')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (pretty, json, toon)', 'pretty')
             ->setHelp(
-                <<<'HELP'
+                <<<HELP
 The <info>%command.name%</info> command reads an MCP resource by its URI.
 
 Both static resource URIs and URIs matching a registered resource template are supported.
@@ -88,8 +90,8 @@ Both static resource URIs and URIs matching a registered resource template are s
   %command.full_name% symfony-profiler://profile/abc123 --format=json
 
   <comment># For a list of available resource templates, use:</comment>
-  bin/mate.php debug:capabilities --type=resource
-  bin/mate.php debug:capabilities --type=template
+  {$script} debug:capabilities --type=resource
+  {$script} debug:capabilities --type=template
 HELP
             );
     }
@@ -113,7 +115,7 @@ HELP
             $reference = $this->registry->getResource($uri);
         } catch (ResourceNotFoundException $e) {
             $io->error(\sprintf('Resource "%s" not found', $uri));
-            $io->note('Use "bin/mate.php debug:capabilities --type=resource" to see all available resources');
+            $io->note(\sprintf('Use "%s debug:capabilities --type=resource" to see all available resources', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate'));
 
             return Command::FAILURE;
         }

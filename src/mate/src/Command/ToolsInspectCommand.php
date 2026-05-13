@@ -70,11 +70,13 @@ class ToolsInspectCommand extends Command
 
     protected function configure(): void
     {
+        $script = $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate';
+
         $this
             ->addArgument('tool-name', InputArgument::REQUIRED, 'Name of the tool to inspect')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
             ->setHelp(
-                <<<'HELP'
+                <<<HELP
 The <info>%command.name%</info> command displays detailed information about a specific MCP tool including its full JSON schema.
 
 <info>Usage Examples:</info>
@@ -89,7 +91,7 @@ The <info>%command.name%</info> command displays detailed information about a sp
   %command.full_name% search-logs
 
   <comment># For a list of all available tools, use:</comment>
-  bin/mate.php mcp:tools:list
+  {$script} mcp:tools:list
 HELP
             );
     }
@@ -118,7 +120,7 @@ HELP
 
         if (!isset($allTools[$toolName])) {
             $io->error(\sprintf('Tool "%s" not found', $toolName));
-            $io->note('Use "bin/mate.php mcp:tools:list" to see all available tools');
+            $io->note(\sprintf('Use "%s mcp:tools:list" to see all available tools', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate'));
 
             return Command::FAILURE;
         }
