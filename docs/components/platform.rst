@@ -137,6 +137,7 @@ Supported Models & Platforms
   * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
   * `LiteLLM`_ as unified Platform
+  * `Bifrost`_ as unified self-hosted Platform (chat, embeddings, audio, image)
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
   * `Vertex AI Text Embeddings`_ with `Vertex AI`_
@@ -167,7 +168,7 @@ Supported Models & Platforms
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
 
-Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multiple models from different providers.
+Platforms like `LiteLLM`_, `OpenRouter`_ or `Bifrost`_ provide a unified API to access multiple models from different providers.
 Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
 standard in the industry. Platforms using this de facto standard can be used with the generic bridge::
 
@@ -195,6 +196,10 @@ model catalogs.
 
 See :doc:`platform/model-catalogs` for keeping catalogs current, adding custom
 models, or bypassing the catalog.
+
+`Bifrost`_ additionally ships a dedicated bridge covering chat, embeddings,
+text-to-speech, speech-to-text and image generation; see the
+:doc:`Bifrost bridge guide <platform/bifrost>`.
 
 Providers and Multi-Provider Platforms
 --------------------------------------
@@ -1593,6 +1598,7 @@ Code Examples
 .. _`Anthropic's Claude`: https://www.anthropic.com/claude
 .. _`Anthropic`: https://www.anthropic.com/
 .. _`AWS Bedrock`: https://aws.amazon.com/bedrock/
+.. _`Bifrost`: https://docs.getbifrost.ai/
 .. _`LiteLLM`: https://docs.litellm.ai/docs/
 .. _`Cartesia`: https://cartesia.ai/
 .. _`Cartesia STT`: https://cartesia.ai/ink

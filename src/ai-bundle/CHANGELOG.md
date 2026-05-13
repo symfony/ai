@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `bifrost` platform configuration for self-hosted OpenAI-compatible LLM gateways
+
 0.11
 ----
 

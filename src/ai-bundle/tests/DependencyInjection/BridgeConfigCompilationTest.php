@@ -301,6 +301,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'anthropic' => ['anthropic', ['api_key' => 'k'], 'ai.platform.anthropic'];
         yield 'azure' => ['azure', ['inst' => ['api_key' => 'k', 'base_url' => 'https://a.openai.azure.com/', 'deployment' => 'd', 'api_version' => 'v']], 'ai.platform.azure.inst'];
         yield 'bedrock' => ['bedrock', ['default' => []], 'ai.platform.bedrock.default'];
+        yield 'bifrost' => ['bifrost', ['endpoint' => 'http://localhost:8080', 'api_key' => 'sk-bf-test'], 'ai.platform.bifrost'];
         yield 'cartesia' => ['cartesia', ['api_key' => 'k', 'version' => '2025-04-16'], 'ai.platform.cartesia'];
         yield 'cerebras' => ['cerebras', ['api_key' => 'k'], 'ai.platform.cerebras'];
         yield 'cohere' => ['cohere', ['api_key' => 'k'], 'ai.platform.cohere'];
