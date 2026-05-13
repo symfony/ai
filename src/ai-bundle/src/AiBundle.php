@@ -108,6 +108,7 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
+use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
@@ -1564,13 +1565,13 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $definition = new Definition(ElasticsearchStore::class);
-                $definition
+                $definition = (new Definition(ElasticsearchStore::class))
+                    ->setFactory(ElasticsearchStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference($store['http_client']),
-                        $store['endpoint'],
                         $store['index_name'] ?? $name,
+                        $store['endpoint'] ?? null,
+                        new Reference($store['http_client']),
                         $store['vectors_field'],
                         $store['dimensions'],
                         $store['similarity'],

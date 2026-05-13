@@ -27,25 +27,18 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class Store implements ManagedStoreInterface, StoreInterface
 {
-    private readonly string $endpoint;
-
-    /**
-     * @param string $endpoint URL of the Elasticsearch instance, with or without a trailing slash
-     */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        string $endpoint,
         private readonly string $indexName,
         private readonly string $vectorsField = '_vectors',
         private readonly int $dimensions = 1536,
         private readonly string $similarity = 'cosine',
     ) {
-        $this->endpoint = rtrim($endpoint, '/');
     }
 
     public function setup(array $options = []): void
     {
-        $indexExistResponse = $this->httpClient->request('HEAD', \sprintf('%s/%s', $this->endpoint, $this->indexName));
+        $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (200 === $indexExistResponse->getStatusCode()) {
             return;
@@ -66,7 +59,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $indexExistResponse = $this->httpClient->request('HEAD', \sprintf('%s/%s', $this->endpoint, $this->indexName));
+        $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (404 === $indexExistResponse->getStatusCode()) {
             throw new InvalidArgumentException(\sprintf('The index "%s" does not exist.', $this->indexName));
@@ -152,8 +145,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $vector = $query->getVector();
+
         $k = $options['k'] ?? 100;
+        if (!\is_int($k)) {
+            throw new InvalidArgumentException('The "k" option must be an integer.');
+        }
+
         $numCandidates = $options['num_candidates'] ?? max($k * 2, 100);
+        if (!\is_int($numCandidates)) {
+            throw new InvalidArgumentException('The "num_candidates" option must be an integer.');
+        }
 
         $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), [
             'knn' => [
@@ -164,7 +165,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ]);
 
-        foreach ($documents['hits']['hits'] as $document) {
+        $hits = $documents['hits'] ?? null;
+        if (!\is_array($hits)) {
+            throw new RuntimeException('The Elasticsearch search response is malformed.');
+        }
+
+        $innerHits = $hits['hits'] ?? null;
+        if (!\is_array($innerHits)) {
+            throw new RuntimeException('The Elasticsearch search response does not contain a result set.');
+        }
+
+        foreach ($innerHits as $document) {
+            if (!\is_array($document)) {
+                throw new RuntimeException('The Elasticsearch search response contains an invalid hit.');
+            }
+
             yield $this->convertToVectorDocument($document);
         }
     }
@@ -172,7 +187,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param \Closure|array<string, mixed> $payload
      *
-     * @return array<string, mixed>
+     * @return array<mixed>
      */
     private function request(string $method, string $path, \Closure|array $payload = []): array
     {
@@ -191,26 +206,75 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ];
         }
 
-        $response = $this->httpClient->request($method, \sprintf('%s/%s', $this->endpoint, $path), $finalOptions);
+        $response = $this->httpClient->request($method, $path, $finalOptions);
 
         return $response->toArray();
     }
 
     /**
-     * @param array{
-     *     '_id'?: string,
-     *     '_source': array<string, mixed>,
-     *     '_score': float,
-     * } $document
+     * @param array<mixed> $document
      */
     private function convertToVectorDocument(array $document): VectorDocument
     {
         $id = $document['_id'] ?? throw new InvalidArgumentException('Missing "_id" field in the document data.');
+        if (!\is_string($id)) {
+            throw new InvalidArgumentException('The document "_id" field must be a string.');
+        }
 
-        $vector = !\array_key_exists($this->vectorsField, $document['_source']) || null === $document['_source'][$this->vectorsField]
-            ? new NullVector()
-            : new Vector($document['_source'][$this->vectorsField]);
+        $source = $document['_source'] ?? null;
+        if (!\is_array($source)) {
+            throw new InvalidArgumentException('Missing "_source" field in the document data.');
+        }
 
-        return new VectorDocument(Uuid::fromString($id), $vector, new Metadata(json_decode($document['_source']['metadata'], true)), $document['_score'] ?? null);
+        $rawVector = $source[$this->vectorsField] ?? null;
+        if (null === $rawVector) {
+            $vector = new NullVector();
+        } else {
+            if (!\is_array($rawVector)) {
+                throw new InvalidArgumentException('The document vector must be an array of numbers.');
+            }
+
+            $components = [];
+            foreach ($rawVector as $component) {
+                if (!\is_int($component) && !\is_float($component)) {
+                    throw new InvalidArgumentException('The document vector must contain only numbers.');
+                }
+
+                $components[] = (float) $component;
+            }
+
+            $vector = new Vector($components);
+        }
+
+        $rawMetadata = $source['metadata'] ?? null;
+        if (!\is_string($rawMetadata)) {
+            throw new InvalidArgumentException('The document metadata must be a JSON encoded string.');
+        }
+
+        $metadata = json_decode($rawMetadata, true);
+        if (!\is_array($metadata)) {
+            throw new InvalidArgumentException('The document metadata is not a valid JSON object.');
+        }
+
+        $normalizedMetadata = [];
+        foreach ($metadata as $key => $value) {
+            if (!\is_string($key)) {
+                throw new InvalidArgumentException('The document metadata must be keyed by strings.');
+            }
+
+            $normalizedMetadata[$key] = $value;
+        }
+
+        $score = $document['_score'] ?? null;
+        if (null !== $score && !\is_int($score) && !\is_float($score)) {
+            throw new InvalidArgumentException('The document "_score" field must be a number.');
+        }
+
+        return new VectorDocument(
+            Uuid::fromString($id),
+            $vector,
+            new Metadata($normalizedMetadata),
+            null === $score ? null : (float) $score,
+        );
     }
 }

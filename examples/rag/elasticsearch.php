@@ -17,7 +17,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Elasticsearch\Store;
+use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -29,10 +29,10 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(
-    httpClient: http_client(),
-    endpoint: env('ELASTICSEARCH_ENDPOINT'),
+$store = StoreFactory::create(
     indexName: 'movies',
+    endpoint: env('ELASTICSEARCH_ENDPOINT'),
+    httpClient: http_client(),
 );
 
 // create embeddings and documents
