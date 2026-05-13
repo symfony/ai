@@ -42,6 +42,7 @@
         "symfony/ai-azure-platform": "^0.9",
         "symfony/ai-azure-search-store": "^0.9",
         "symfony/ai-bedrock-platform": "^0.9",
+        "symfony/ai-bifrost-platform": "^0.9",
         "symfony/ai-cache-message-store": "^0.9",
         "symfony/ai-cache-platform": "^0.9",
         "symfony/ai-cache-store": "^0.9",

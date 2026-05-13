@@ -13,6 +13,7 @@ CHANGELOG
  * The `endpoint` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * Wire `Meilisearch\StoreFactory` from `AiBundle`
  * Add `lang` option for `Postgres`
+ * Add `bifrost` platform configuration for self-hosted OpenAI-compatible LLM gateways
 
 0.8
 ---

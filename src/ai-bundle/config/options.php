@@ -32,6 +32,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/anthropic'))
                     ->append($import('platform/azure'))
                     ->append($import('platform/bedrock'))
+                    ->append($import('platform/bifrost'))
                     ->append($import('platform/cache'))
                     ->append($import('platform/cartesia'))
                     ->append($import('platform/cerebras'))
