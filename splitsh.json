@@ -60,6 +60,7 @@
         "ai-gemini-platform": "src/platform/src/Bridge/Gemini",
         "ai-generic-platform": "src/platform/src/Bridge/Generic",
         "ai-hugging-face-platform": "src/platform/src/Bridge/HuggingFace",
+        "ai-inworld-platform": "src/platform/src/Bridge/Inworld",
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
         "ai-mistral-platform": "src/platform/src/Bridge/Mistral",

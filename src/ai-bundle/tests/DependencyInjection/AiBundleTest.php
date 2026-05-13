@@ -38,6 +38,7 @@ use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
+use Symfony\AI\Platform\Bridge\Inworld\Factory as InworldFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
@@ -4564,6 +4565,156 @@ class AiBundleTest extends TestCase
         $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+    }
+
+    public function testInworldPlatformCanBeConfigured()
+    {
+        // Default endpoint + API key
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'inworld' => [
+                        'api_key' => 'api-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.inworld'));
+
+        $definition = $container->getDefinition('ai.platform.inworld');
+        $this->assertSame([InworldFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertSame('https://api.inworld.ai/', $definition->getArgument(0));
+        $this->assertSame('api-key', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.inworld', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'inworld']], $definition->getTag('ai.platform'));
+        $this->assertTrue($definition->hasTag('ai.platform.speech'));
+        $this->assertSame([['name' => 'inworld']], $definition->getTag('ai.platform.speech'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $inworld'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+
+        // Custom endpoint + API key
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'inworld' => [
+                        'endpoint' => 'https://staging.api.inworld.ai/',
+                        'api_key' => 'api-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.inworld'));
+
+        $definition = $container->getDefinition('ai.platform.inworld');
+        $this->assertSame([InworldFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertSame('https://staging.api.inworld.ai/', $definition->getArgument(0));
+        $this->assertSame('api-key', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.inworld', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'inworld']], $definition->getTag('ai.platform'));
+        $this->assertTrue($definition->hasTag('ai.platform.speech'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $inworld'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+
+        // Custom http client + API key
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'inworld' => [
+                        'api_key' => 'api-key',
+                        'http_client' => 'custom_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.inworld'));
+
+        $definition = $container->getDefinition('ai.platform.inworld');
+        $this->assertSame([InworldFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertSame('https://api.inworld.ai/', $definition->getArgument(0));
+        $this->assertSame('api-key', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('custom_http_client', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.inworld', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'inworld']], $definition->getTag('ai.platform'));
+        $this->assertTrue($definition->hasTag('ai.platform.speech'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $inworld'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class));
+
+        // Scoped http client (preconfigured with the API key externally)
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'inworld' => [
+                        'http_client' => 'custom_scoped',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.inworld'));
+
+        $definition = $container->getDefinition('ai.platform.inworld');
+        $this->assertSame([InworldFactory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $this->assertCount(5, $definition->getArguments());
+        $this->assertSame('https://api.inworld.ai/', $definition->getArgument(0));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('custom_scoped', (string) $definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.inworld', (string) $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'inworld']], $definition->getTag('ai.platform'));
+        $this->assertTrue($definition->hasTag('ai.platform.speech'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $inworld'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
     }
 

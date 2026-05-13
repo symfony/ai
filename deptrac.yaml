@@ -189,6 +189,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\HuggingFace\\.*
+    - name: InworldPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Inworld\\.*
     - name: LmStudioPlatform
       collectors:
         - type: classLike
@@ -478,6 +482,8 @@ deptrac:
     GenericPlatform:
       - PlatformComponent
     HuggingFacePlatform:
+      - PlatformComponent
+    InworldPlatform:
       - PlatformComponent
     LmStudioPlatform:
       - PlatformComponent
