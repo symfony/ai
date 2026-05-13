@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `AiCollectorFormatter` and `McpCollectorFormatter` to expose Symfony AI and MCP profiler collector data via the bridge
+
 0.7
 ---
 
