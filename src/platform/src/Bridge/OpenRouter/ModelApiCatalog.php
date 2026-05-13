@@ -143,6 +143,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
         foreach ($responseVideos->toArray()['data'] as $video) {
             $capabilities = [
                 Capability::INPUT_TEXT,
+                Capability::OUTPUT_VIDEO,
                 Capability::TEXT_TO_VIDEO,
             ];
 
