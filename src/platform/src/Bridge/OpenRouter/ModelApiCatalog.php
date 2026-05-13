@@ -81,7 +81,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
                         $capabilities[] = Capability::INPUT_PDF;
                         break;
                     case 'video':
-                        $capabilities[] = Capability::INPUT_MULTIMODAL; // Video?
+                        $capabilities[] = Capability::INPUT_VIDEO;
                         break;
                     default:
                         throw new InvalidArgumentException('Unknown model '.$inputModality.' input modality.', 1763717587);
@@ -107,9 +107,12 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
             // Streaming is allowed for any model: https://openrouter.ai/docs/api/reference/streaming
             $capabilities[] = Capability::OUTPUT_STREAMING;
 
-            // Structured Output via PlatformSubscriber
             if (\in_array('structured_outputs', $model['supported_parameters'] ?? [])) {
                 $capabilities[] = Capability::OUTPUT_STRUCTURED;
+            }
+
+            if (\in_array('tool_choice', $model['supported_parameters'] ?? [])) {
+                $capabilities[] = Capability::TOOL_CALLING;
             }
 
             yield $model['id'] => [

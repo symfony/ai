@@ -206,7 +206,7 @@ final class ModelApiCatalogTest extends TestCase
         $model = $catalog->getModel('google/gemini-video');
 
         $this->assertContains(Capability::INPUT_TEXT, $model->getCapabilities());
-        $this->assertContains(Capability::INPUT_MULTIMODAL, $model->getCapabilities());
+        $this->assertContains(Capability::INPUT_VIDEO, $model->getCapabilities());
         $this->assertContains(Capability::OUTPUT_TEXT, $model->getCapabilities());
     }
 
