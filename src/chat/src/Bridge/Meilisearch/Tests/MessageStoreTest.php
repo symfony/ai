@@ -95,6 +95,50 @@ final class MessageStoreTest extends TestCase
         $this->assertSame(4, $httpClient->getRequestsCount());
     }
 
+    public function testSetupDoesNotHangWhenTaskFails()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'taskUid' => 1,
+                'indexUid' => 'test',
+                'status' => 'enqueued',
+                'type' => 'indexCreation',
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+            new JsonMockResponse([
+                'taskUid' => 1,
+                'indexUid' => 'test',
+                'status' => 'failed',
+                'type' => 'indexCreation',
+                'error' => [
+                    'message' => 'Index `test` already exists.',
+                    'code' => 'index_already_exists',
+                    'type' => 'invalid_request',
+                ],
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 200,
+            ]),
+            new JsonMockResponse([
+                'taskUid' => 2,
+                'indexUid' => 'test',
+                'status' => 'succeeded',
+                'type' => 'settingsUpdate',
+                'enqueuedAt' => '2025-01-01T00:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new MessageStore($httpClient, 'http://127.0.0.1:7700', 'test', new MonotonicClock(), 'test');
+
+        $store->setup();
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
     public function testStoreCannotDropOnInvalidResponse()
     {
         $httpClient = new MockHttpClient([

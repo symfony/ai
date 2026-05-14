@@ -126,7 +126,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
             ],
         ]);
 
-        while ('succeeded' !== $currentTaskStatusCallback()->toArray()['status']) {
+        while (\in_array($currentTaskStatusCallback()->toArray()['status'], ['enqueued', 'processing'], true)) {
             $this->clock->sleep(1);
         }
 
