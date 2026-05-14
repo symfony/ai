@@ -130,6 +130,39 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testModelCatalogCanReturnInsertModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    [
+                        'name' => 'qwen2.5-coder',
+                        'details' => [],
+                    ],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['insert'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $models = $modelCatalog->getModels();
+
+        $this->assertCount(1, $models);
+        $this->assertArrayHasKey('qwen2.5-coder', $models);
+
+        $model = $models['qwen2.5-coder'];
+        $this->assertSame(Ollama::class, $model['class']);
+        $this->assertCount(2, $model['capabilities']);
+        $this->assertSame([
+            Capability::FILL_IN_THE_MIDDLE,
+            Capability::OUTPUT_STRUCTURED,
+        ], $model['capabilities']);
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
     #[TestDox('Returns empty array when Ollama has no models')]
     public function testGetModelsReturnsEmptyArrayWhenNoModels()
     {
