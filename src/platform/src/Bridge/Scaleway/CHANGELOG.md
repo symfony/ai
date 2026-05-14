@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add Responses API support via the Open Responses bridge
+
 0.8
 ---
 
