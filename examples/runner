@@ -24,6 +24,7 @@ $app = (new SingleCommandApplication('Symfony AI Example Runner'))
     ->addArgument('subdirectories', InputArgument::OPTIONAL | InputArgument::IS_ARRAY, 'List of subdirectories to run examples from, e.g. "anthropic" or "huggingface".')
     ->addOption('filter', 'f', InputOption::VALUE_REQUIRED, 'Filter examples by name, e.g. "audio" or "toolcall".')
     ->addOption('chunk', 'c', InputOption::VALUE_REQUIRED, 'Number of examples to run in parallel per chunk.', 30)
+    ->addOption('report', 'r', InputOption::VALUE_OPTIONAL, 'Write a Markdown report of the results to the given file (failed examples include error output for Claude Code to investigate).', false)
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $io = new SymfonyStyle($input, $output);
         $io->title('Symfony AI Examples');
@@ -169,6 +170,103 @@ $app = (new SingleCommandApplication('Symfony AI Example Runner'))
                     $io->text('' !== $output ? $output : $run['process']->getOutput());
                 }
             }
+        }
+
+        $reportOption = $input->getOption('report');
+        if (false !== $reportOption) {
+            $reportPath = null === $reportOption ? __DIR__.'/report.md' : $reportOption;
+            if (!str_starts_with($reportPath, '/')) {
+                $reportPath = getcwd().'/'.$reportPath;
+            }
+
+            $reportDir = \dirname($reportPath);
+            if (!is_dir($reportDir) && !@mkdir($reportDir, 0777, true) && !is_dir($reportDir)) {
+                $io->error(sprintf('Unable to create report directory "%s".', $reportDir));
+
+                return Command::FAILURE;
+            }
+
+            $report = "# Symfony AI Examples Report\n\n";
+            $report .= sprintf("Generated: %s\n\n", date('Y-m-d H:i:s'));
+
+            $totals = ['successful' => 0, 'skipped' => 0, 'failed' => 0];
+            foreach ($resultsByDirectory as $stats) {
+                $totals['successful'] += $stats['successful'];
+                $totals['skipped'] += $stats['skipped'];
+                $totals['failed'] += $stats['failed'];
+            }
+
+            $report .= "## Summary\n\n";
+            $report .= sprintf("- Total: %d\n", $totalCount);
+            $report .= sprintf("- Successful: %d\n", $totals['successful']);
+            $report .= sprintf("- Skipped: %d\n", $totals['skipped']);
+            $report .= sprintf("- Failed: %d\n\n", $totals['failed']);
+
+            $report .= "## Results by Directory\n\n";
+            $report .= "| Directory | Successful | Skipped | Failed |\n";
+            $report .= "| --- | ---: | ---: | ---: |\n";
+            foreach ($resultsByDirectory as $directory => $stats) {
+                $report .= sprintf(
+                    "| %s | %d | %d | %d |\n",
+                    '' === $directory ? '.' : $directory,
+                    $stats['successful'],
+                    $stats['skipped'],
+                    $stats['failed'],
+                );
+            }
+            $report .= "\n";
+
+            $failedReports = [];
+            foreach ($exampleRuns as $run) {
+                $process = $run['process'];
+                $stdout = $process->getOutput();
+                $emptyOutput = 0 === strlen(trim($stdout));
+                if ($process->isSuccessful() && !$emptyOutput) {
+                    continue;
+                }
+                if (!(1 === $process->getExitCode() || $emptyOutput)) {
+                    // Skipped (e.g. missing API key) — not a failure
+                    continue;
+                }
+                $failedReports[] = $run;
+            }
+
+            if ([] === $failedReports) {
+                $report .= "## Failed Examples\n\nNone.\n";
+            } else {
+                $report .= "## Failed Examples\n\n";
+                $report .= "The following examples failed. Use the output below to investigate the cause and propose a fix.\n\n";
+                foreach ($failedReports as $run) {
+                    /** @var SplFileInfo $example */
+                    /** @var Process $process */
+                    ['example' => $example, 'process' => $process] = $run;
+
+                    $report .= sprintf("### %s\n\n", $example->getRelativePathname());
+                    $report .= sprintf("- Path: `%s`\n", $example->getRealPath());
+                    $report .= sprintf("- Exit code: %s\n\n", null === $process->getExitCode() ? 'n/a' : (string) $process->getExitCode());
+
+                    $stderr = $process->getErrorOutput();
+                    $stdout = $process->getOutput();
+
+                    $report .= "**Stderr:**\n\n";
+                    $report .= '' !== trim($stderr)
+                        ? "```\n".rtrim($stderr)."\n```\n\n"
+                        : "_(empty)_\n\n";
+
+                    $report .= "**Stdout:**\n\n";
+                    $report .= '' !== trim($stdout)
+                        ? "```\n".rtrim($stdout)."\n```\n\n"
+                        : "_(empty)_\n\n";
+                }
+            }
+
+            if (false === @file_put_contents($reportPath, $report)) {
+                $io->error(sprintf('Unable to write report to "%s".', $reportPath));
+
+                return Command::FAILURE;
+            }
+
+            $io->success(sprintf('Report written to %s', $reportPath));
         }
 
         // Interactive retry for failed examples
