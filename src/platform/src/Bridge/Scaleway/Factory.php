@@ -11,10 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Scaleway;
 
-use Symfony\AI\Platform\Bridge\Scaleway\Embeddings\ModelClient as ScalewayEmbeddingsModelClient;
-use Symfony\AI\Platform\Bridge\Scaleway\Embeddings\ResultConverter as ScalewayEmbeddingsResponseConverter;
-use Symfony\AI\Platform\Bridge\Scaleway\Llm\ModelClient as ScalewayModelClient;
-use Symfony\AI\Platform\Bridge\Scaleway\Llm\ResultConverter as ScalewayResponseConverter;
+use Symfony\AI\Platform\Bridge\Generic\ChatCompletionsClient;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsClient;
+use Symfony\AI\Platform\Bridge\Generic\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -44,20 +43,10 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return new Provider(
-            $name,
-            [
-                new ScalewayModelClient($httpClient, $apiKey),
-                new ScalewayEmbeddingsModelClient($httpClient, $apiKey),
-            ],
-            [
-                new ScalewayResponseConverter(),
-                new ScalewayEmbeddingsResponseConverter(),
-            ],
-            $modelCatalog,
-            $contract,
-            $eventDispatcher,
-        );
+        $transport = new HttpTransport($httpClient, 'https://api.scaleway.ai', $apiKey);
+        $clients = [new ChatCompletionsClient($transport), new EmbeddingsClient($transport)];
+
+        return new Provider($name, $clients, $clients, $modelCatalog, $contract, $eventDispatcher);
     }
 
     /**

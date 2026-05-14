@@ -12,11 +12,9 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi;
 
 use Google\Auth\ApplicationDefaultCredentials;
+use Symfony\AI\Platform\Bridge\Gemini\GenerateContentClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract;
-use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ModelClient as EmbeddingsModelClient;
-use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ResultConverter as EmbeddingsResultConverter;
-use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ModelClient as GeminiModelClient;
-use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter as GeminiResultConverter;
+use Symfony\AI\Platform\Bridge\VertexAi\Transport\VertexAiTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -62,10 +60,16 @@ final class Factory
 
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new VertexAiTransport($httpClient, $location, $projectId, $apiKey);
+        $clients = [
+            new GenerateContentClient($transport, GenerateContentClient::RESPONSE_SCHEMA_KEY_VERTEX_AI),
+            new PredictEmbeddingsClient($transport),
+        ];
+
         return new Provider(
             $name,
-            [new GeminiModelClient($httpClient, $location, $projectId, $apiKey), new EmbeddingsModelClient($httpClient, $location, $projectId, $apiKey)],
-            [new GeminiResultConverter(), new EmbeddingsResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? GeminiContract::create(),
             $eventDispatcher,

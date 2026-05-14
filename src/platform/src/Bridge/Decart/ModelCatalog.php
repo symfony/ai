@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Decart;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -75,5 +76,27 @@ final class ModelCatalog extends AbstractModelCatalog
             ...$defaultModels,
             ...$additionalModels,
         ];
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        $capabilities = $modelConfig['capabilities'];
+
+        // Pure text-in tasks → /generate (text body); image/video editing →
+        // /generate with file upload. A model can declare both.
+        $endpoints = [];
+        if (\in_array(Capability::TEXT_TO_IMAGE, $capabilities, true)
+            || \in_array(Capability::TEXT_TO_VIDEO, $capabilities, true)
+        ) {
+            $endpoints[] = new Endpoint(GenerateClient::ENDPOINT);
+        }
+        if (\in_array(Capability::IMAGE_TO_IMAGE, $capabilities, true)
+            || \in_array(Capability::IMAGE_TO_VIDEO, $capabilities, true)
+            || \in_array(Capability::VIDEO_TO_VIDEO, $capabilities, true)
+        ) {
+            $endpoints[] = new Endpoint(EditClient::ENDPOINT);
+        }
+
+        return $endpoints;
     }
 }

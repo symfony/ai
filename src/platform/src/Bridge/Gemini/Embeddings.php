@@ -22,8 +22,8 @@ class Embeddings extends Model
     /**
      * @param array{dimensions?: int, task_type?: TaskType|string} $options
      */
-    public function __construct(string $name, array $capabilities = [], array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [], array $endpoints = [])
     {
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $endpoints);
     }
 }

@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Nova;
 
+use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
+use AsyncAws\Core\Configuration;
 use AsyncAws\Core\Test\ResultMockFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -20,8 +22,8 @@ use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\MessageBagNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\UserMessageNormalizer;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\InvokeClient as NovaResultConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaResultConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Message;
@@ -53,7 +55,7 @@ final class AssistantReplayTest extends TestCase
         $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
             'body' => json_encode($providerResponse),
         ]);
-        $result = (new NovaResultConverter())->convert(new RawBedrockResult($invokeResponse));
+        $result = (new NovaResultConverter(new BedrockRuntimeClient(Configuration::create([Configuration::OPTION_REGION => Configuration::DEFAULT_REGION]))))->convert(new RawBedrockResult($invokeResponse));
 
         $contract = Contract::create([
             new AssistantMessageNormalizer(),

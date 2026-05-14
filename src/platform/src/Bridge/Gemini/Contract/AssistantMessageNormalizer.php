@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Contract;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
-use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
+use Symfony\AI\Platform\Bridge\Gemini\GenerateContentClient as ResultConverter;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;

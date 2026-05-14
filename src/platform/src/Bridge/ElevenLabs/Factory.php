@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
@@ -49,11 +50,15 @@ final class Factory
             ]);
         }
 
+        $catalog = new ModelCatalog($httpClient);
+        $transport = new HttpTransport($httpClient);
+        $clients = [new TextToSpeechClient($transport, $httpClient), new SpeechToTextClient($transport)];
+
         return new Provider(
             $name,
-            [new ElevenLabsClient($httpClient)],
-            [new ElevenLabsResultConverter($httpClient)],
-            new ModelCatalog($httpClient),
+            $clients,
+            $clients,
+            $catalog,
             $contract ?? ElevenLabsContract::create(),
             $eventDispatcher,
         );

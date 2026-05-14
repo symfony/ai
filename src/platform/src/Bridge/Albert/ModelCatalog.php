@@ -11,9 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\Albert;
 
+use Symfony\AI\Platform\Bridge\Generic\ChatCompletionsClient;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\EmbeddingsClient;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
@@ -59,5 +62,14 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return match ($modelConfig['class']) {
+            CompletionsModel::class => [new Endpoint(ChatCompletionsClient::ENDPOINT)],
+            EmbeddingsModel::class => [new Endpoint(EmbeddingsClient::ENDPOINT)],
+            default => [],
+        };
     }
 }

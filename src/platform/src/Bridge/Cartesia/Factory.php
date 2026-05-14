@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cartesia;
 
 use Symfony\AI\Platform\Bridge\Cartesia\Contract\CartesiaContract;
+use Symfony\AI\Platform\Bridge\Cartesia\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -42,10 +43,13 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new HttpTransport($httpClient, $apiKey, $version);
+        $clients = [new TextToSpeechClient($transport), new SpeechToTextClient($transport)];
+
         return new Provider(
             $name,
-            [new CartesiaClient($httpClient, $apiKey, $version)],
-            [new CartesiaResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? CartesiaContract::create(),
             $eventDispatcher,

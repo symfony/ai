@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 final class ModelCatalog extends AbstractModelCatalog
@@ -73,5 +74,14 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        // Multimodal models hit /v1/multimodalembeddings (different field names),
+        // text-only models hit /v1/embeddings.
+        return \in_array(Capability::INPUT_MULTIMODAL, $modelConfig['capabilities'], true)
+            ? [new Endpoint(MultimodalEmbeddingsClient::ENDPOINT)]
+            : [new Endpoint(EmbeddingsClient::ENDPOINT)];
     }
 }

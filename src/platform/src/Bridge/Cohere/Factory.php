@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Cohere;
 
+use Symfony\AI\Platform\Bridge\Cohere\Transport\HttpTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -40,10 +41,13 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
+        $transport = new HttpTransport($httpClient, $apiKey);
+        $clients = [new ChatClient($transport), new EmbedClient($transport), new RerankClient($transport), new TranscriptionClient($transport)];
+
         return new Provider(
             $name,
-            [new Embeddings\ModelClient($httpClient, $apiKey), new Reranker\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey), new SpeechToText\ModelClient($httpClient, $apiKey)],
-            [new Embeddings\ResultConverter(), new Reranker\ResultConverter(), new Llm\ResultConverter(), new SpeechToText\ResultConverter()],
+            $clients,
+            $clients,
             $modelCatalog,
             $contract ?? Contract::create([new SpeechToText\AudioNormalizer()]),
             $eventDispatcher,

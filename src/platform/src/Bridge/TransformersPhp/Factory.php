@@ -38,7 +38,9 @@ final class Factory
             throw new RuntimeException('For using the TransformersPHP with FFI to run models in PHP, the codewithkyrian/transformers package is required. Try running "composer require codewithkyrian/transformers".');
         }
 
-        return new Provider($name, [new ModelClient()], [new ResultConverter()], $modelCatalog, eventDispatcher: $eventDispatcher);
+        $clients = [new PipelineClient()];
+
+        return new Provider($name, $clients, $clients, $modelCatalog, eventDispatcher: $eventDispatcher);
     }
 
     /**

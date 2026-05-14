@@ -33,7 +33,9 @@ class FallbackModelCatalog extends AbstractModelCatalog
     public function getModel(string $modelName): Model
     {
         $parsed = self::parseModelName($modelName);
+        $capabilities = Capability::cases();
+        $endpoints = $this->endpointsForModel(['class' => Model::class, 'capabilities' => $capabilities]);
 
-        return new Model($parsed['name'], Capability::cases(), $parsed['options']);
+        return new Model($parsed['name'], $capabilities, $parsed['options'], $endpoints);
     }
 }

@@ -11,9 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi;
 
+use Symfony\AI\Platform\Bridge\Gemini\GenerateContentClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\Model as EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model as GeminiModel;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -174,5 +176,14 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        return match ($modelConfig['class']) {
+            GeminiModel::class => [new Endpoint(GenerateContentClient::ENDPOINT)],
+            EmbeddingsModel::class => [new Endpoint(PredictEmbeddingsClient::ENDPOINT)],
+            default => [],
+        };
     }
 }

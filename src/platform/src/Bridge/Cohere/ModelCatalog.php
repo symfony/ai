@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cohere;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 
 /**
@@ -163,5 +164,18 @@ final class ModelCatalog extends AbstractModelCatalog
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
+    }
+
+    protected function endpointsForModel(array $modelConfig): array
+    {
+        $class = $modelConfig['class'];
+
+        return match ($class) {
+            Cohere::class => [new Endpoint(ChatClient::ENDPOINT)],
+            Embeddings::class => [new Endpoint(EmbedClient::ENDPOINT)],
+            Reranker::class => [new Endpoint(RerankClient::ENDPOINT)],
+            SpeechToText::class => [new Endpoint(TranscriptionClient::ENDPOINT)],
+            default => [],
+        };
     }
 }
