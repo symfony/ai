@@ -55,12 +55,20 @@ $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
+// Meilisearch indexes documents asynchronously - wait for pending tasks before querying
+echo "Waiting for Meilisearch to index documents...\n";
+sleep(1);
+
 // Create a query embedding
 $queryText = 'futuristic technology and artificial intelligence';
 echo "Query: \"$queryText\"\n\n";
 $queryEmbedding = $vectorizer->vectorize($queryText);
 
-// Test different semantic ratios to compare results
+// Test different semantic ratios to compare results.
+// Note: Meilisearch's semanticRatio is a retrieval weight, not a smooth score blend.
+// At intermediate ratios, both retrievals run and results are merged, but each
+// document keeps its own scorer's score - so top-K can look identical at 0.0 and
+// 0.5 when keyword scores outrank vector scores.
 $ratios = [
     ['ratio' => 0.0, 'description' => '100% Full-text search (keyword matching)'],
     ['ratio' => 0.5, 'description' => 'Balanced hybrid (50% semantic + 50% full-text)'],
@@ -71,16 +79,16 @@ foreach ($ratios as $config) {
     echo "--- {$config['description']} ---\n";
 
     // Override the semantic ratio for this specific query
-    $results = $store->query(new HybridQuery($queryEmbedding, 'technology', $config['ratio']));
+    $results = iterator_to_array($store->query(new HybridQuery($queryEmbedding, 'space', $config['ratio'])));
 
-    echo "Top 3 results:\n";
-    foreach (array_slice($results, 0, 3) as $i => $result) {
-        $metadata = $result->metadata->getArrayCopy();
+    echo "Top 5 results:\n";
+    foreach (array_slice($results, 0, 5) as $i => $result) {
+        $metadata = $result->getMetadata()->getArrayCopy();
         echo sprintf(
             "  %d. %s (Score: %.4f)\n",
             $i + 1,
             $metadata['title'] ?? 'Unknown',
-            $result->score ?? 0.0
+            $result->getScore() ?? 0.0
         );
     }
     echo "\n";
@@ -89,16 +97,16 @@ foreach ($ratios as $config) {
 echo "--- Custom query with pure semantic search ---\n";
 echo "Query: Movies about space exploration\n";
 $spaceEmbedding = $vectorizer->vectorize('space exploration and cosmic adventures');
-$results = $store->query(new VectorQuery($spaceEmbedding));
+$results = iterator_to_array($store->query(new VectorQuery($spaceEmbedding)));
 
-echo "Top 3 results:\n";
-foreach (array_slice($results, 0, 3) as $i => $result) {
-    $metadata = $result->metadata->getArrayCopy();
+echo "Top 5 results:\n";
+foreach (array_slice($results, 0, 5) as $i => $result) {
+    $metadata = $result->getMetadata()->getArrayCopy();
     echo sprintf(
         "  %d. %s (Score: %.4f)\n",
         $i + 1,
         $metadata['title'] ?? 'Unknown',
-        $result->score ?? 0.0
+        $result->getScore() ?? 0.0
     );
 }
 echo "\n";

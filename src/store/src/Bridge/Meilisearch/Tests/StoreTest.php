@@ -468,9 +468,65 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testStoreDoesNotSupportHybridQuery()
+    public function testStoreSupportsHybridQuery()
     {
         $store = new Store(new MockHttpClient(), 'test-index');
-        $this->assertFalse($store->supports(HybridQuery::class));
+        $this->assertTrue($store->supports(HybridQuery::class));
+    }
+
+    public function testQueryWithHybridQuery()
+    {
+        $responses = [
+            new MockResponse(json_encode([
+                'hits' => [
+                    [
+                        'id' => '550e8400-e29b-41d4-a716-446655440000',
+                        '_vectors' => [
+                            'default' => [
+                                'embeddings' => [0.1, 0.2, 0.3],
+                            ],
+                        ],
+                        '_rankingScore' => 0.9,
+                        'title' => 'Symfony AI',
+                    ],
+                ],
+            ])),
+        ];
+
+        $httpClient = new MockHttpClient($responses);
+        $store = new Store($httpClient, 'index', semanticRatio: 1.0);
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        $results = iterator_to_array($store->query(new HybridQuery($vector, 'symfony', 0.3)));
+
+        $this->assertCount(1, $results);
+        $this->assertInstanceOf(VectorDocument::class, $results[0]);
+
+        $request = $responses[0]->getRequestOptions();
+        $body = json_decode($request['body'], true);
+
+        $this->assertSame('symfony', $body['q']);
+        $this->assertSame([0.1, 0.2, 0.3], $body['vector']);
+        $this->assertSame(0.3, $body['hybrid']['semanticRatio']);
+    }
+
+    public function testQueryCanOverrideSemanticRatioOnHybridQuery()
+    {
+        $responses = [
+            new MockResponse(json_encode([
+                'hits' => [],
+            ])),
+        ];
+
+        $httpClient = new MockHttpClient($responses);
+        $store = new Store($httpClient, 'index');
+
+        $vector = new Vector([0.1, 0.2, 0.3]);
+        iterator_to_array($store->query(new HybridQuery($vector, 'symfony', 0.3), ['semanticRatio' => 0.8]));
+
+        $request = $responses[0]->getRequestOptions();
+        $body = json_decode($request['body'], true);
+
+        $this->assertSame(0.8, $body['hybrid']['semanticRatio']);
     }
 }

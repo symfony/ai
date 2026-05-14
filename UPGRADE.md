@@ -103,6 +103,12 @@ Store
  * The `endpointUrl` parameter for Meilisearch `Store` has been removed
  * The `apiKey` parameter for Meilisearch `Store` has been removed
  * A `StoreFactory` has been introduced for Meilisearch `Store`
+ * The Meilisearch `Store` no longer reads `$options['q']` in `query()`. Use `HybridQuery` to combine vector and full-text search:
+
+   ```diff
+   -$store->query(new VectorQuery($embedding), ['q' => 'keyword', 'semanticRatio' => 0.5]);
+   +$store->query(new HybridQuery($embedding, 'keyword', 0.5));
+   ```
 
 UPGRADE FROM 0.7 to 0.8
 =======================

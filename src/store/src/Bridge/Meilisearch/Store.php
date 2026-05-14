@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
@@ -96,24 +97,32 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function supports(string $queryClass): bool
     {
-        return VectorQuery::class === $queryClass;
+        return \in_array($queryClass, [
+            VectorQuery::class,
+            HybridQuery::class,
+        ], true);
     }
 
     public function query(QueryInterface $query, array $options = []): iterable
     {
-        if (!$query instanceof VectorQuery) {
+        if ($query instanceof HybridQuery) {
+            $vector = $query->getVector();
+            $text = $query->getText();
+            $semanticRatio = $options['semanticRatio'] ?? $query->getSemanticRatio();
+        } elseif ($query instanceof VectorQuery) {
+            $vector = $query->getVector();
+            $text = '';
+            $semanticRatio = $options['semanticRatio'] ?? $this->semanticRatio;
+        } else {
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
-
-        $vector = $query->getVector();
-        $semanticRatio = $options['semanticRatio'] ?? $this->semanticRatio;
 
         if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
             throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
         }
 
         $result = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), [
-            'q' => $options['q'] ?? '',
+            'q' => $text,
             'vector' => $vector->getData(),
             'showRankingScore' => true,
             'retrieveVectors' => true,
