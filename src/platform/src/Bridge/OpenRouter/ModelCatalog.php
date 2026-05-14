@@ -2917,9 +2917,127 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
             $defaultModels[$modelName]['capabilities'][] = Capability::OUTPUT_STRUCTURED;
         }
 
+        // Video generation models, see https://openrouter.ai/api/v1/videos/models
+        $videoModels = [
+            'kwaivgi/kling-v3.0-pro' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'kwaivgi/kling-v3.0-std' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'google/veo-3.1-fast' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'google/veo-3.1-lite' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'kwaivgi/kling-video-o1' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'minimax/hailuo-2.3' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'bytedance/seedance-2.0' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'bytedance/seedance-2.0-fast' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'bytedance/seedance-1-5-pro' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'alibaba/wan-2.7' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'alibaba/wan-2.6' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::TEXT_TO_VIDEO,
+                    Capability::IMAGE_TO_VIDEO,
+                ],
+            ],
+            'openai/sora-2-pro' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::TEXT_TO_VIDEO,
+                ],
+            ],
+            'google/veo-3.1' => [
+                'class' => VideoGenerationModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::TEXT_TO_VIDEO,
+                ],
+            ],
+        ];
+
         $this->models = [
             ...$this->models,
             ...$defaultModels,
+            ...$videoModels,
             ...$additionalModels,
         ];
     }

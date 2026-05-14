@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
+use Symfony\AI\Platform\Bridge\OpenRouter\VideoGenerationModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -41,6 +42,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -50,7 +54,7 @@ final class ModelApiCatalogTest extends TestCase
         $this->assertContains(Capability::INPUT_TEXT, $model->getCapabilities());
         $this->assertContains(Capability::INPUT_IMAGE, $model->getCapabilities());
         $this->assertContains(Capability::OUTPUT_TEXT, $model->getCapabilities());
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testGetModelsLoadsFromApi()
@@ -81,24 +85,44 @@ final class ModelApiCatalogTest extends TestCase
                     ],
                 ],
             ]),
+            new JsonMockResponse([
+                'data' => [
+                    [
+                        'id' => 'google/veo-3.1',
+                        'supported_frame_images' => null,
+                    ],
+                    [
+                        'id' => 'bytedance/seedance-2.0',
+                        'supported_frame_images' => ['first_frame', 'last_frame'],
+                    ],
+                ],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
         $models = $catalog->getModels();
 
-        // Should include base models (openrouter/auto, @preset) + API models + embeddings
+        // Should include base models (openrouter/auto, @preset) + API models + embeddings + videos
         $this->assertArrayHasKey('openrouter/auto', $models);
         $this->assertArrayHasKey('openrouter/free', $models);
         $this->assertArrayHasKey('@preset', $models);
         $this->assertArrayHasKey('openai/gpt-4', $models);
         $this->assertArrayHasKey('google/gemini-pro-vision', $models);
         $this->assertArrayHasKey('openai/text-embedding-ada-002', $models);
+        $this->assertArrayHasKey('google/veo-3.1', $models);
+        $this->assertArrayHasKey('bytedance/seedance-2.0', $models);
 
         $this->assertSame(CompletionsModel::class, $models['openai/gpt-4']['class']);
         $this->assertSame(CompletionsModel::class, $models['google/gemini-pro-vision']['class']);
         $this->assertSame(EmbeddingsModel::class, $models['openai/text-embedding-ada-002']['class']);
+        $this->assertSame(VideoGenerationModel::class, $models['google/veo-3.1']['class']);
+        $this->assertSame(VideoGenerationModel::class, $models['bytedance/seedance-2.0']['class']);
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertContains(Capability::TEXT_TO_VIDEO, $models['google/veo-3.1']['capabilities']);
+        $this->assertNotContains(Capability::IMAGE_TO_VIDEO, $models['google/veo-3.1']['capabilities']);
+        $this->assertContains(Capability::IMAGE_TO_VIDEO, $models['bytedance/seedance-2.0']['capabilities']);
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testModelsAreOnlyLoadedOnce()
@@ -118,6 +142,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -126,8 +153,8 @@ final class ModelApiCatalogTest extends TestCase
         $catalog->getModels();
         $catalog->getModels();
 
-        // Should only make 2 API calls total (models + embeddings), not 4
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        // Should only make 3 API calls total (models + embeddings + videos), not 6
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testGetModelWithAudioInputModality()
@@ -143,6 +170,9 @@ final class ModelApiCatalogTest extends TestCase
                         ],
                     ],
                 ],
+            ]),
+            new JsonMockResponse([
+                'data' => [],
             ]),
             new JsonMockResponse([
                 'data' => [],
@@ -169,6 +199,9 @@ final class ModelApiCatalogTest extends TestCase
                         ],
                     ],
                 ],
+            ]),
+            new JsonMockResponse([
+                'data' => [],
             ]),
             new JsonMockResponse([
                 'data' => [],
@@ -200,6 +233,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -227,6 +263,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -239,6 +278,9 @@ final class ModelApiCatalogTest extends TestCase
     public function testPresetModelStillWorksWithApiCatalog()
     {
         $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [],
+            ]),
             new JsonMockResponse([
                 'data' => [],
             ]),
@@ -263,6 +305,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -270,5 +315,35 @@ final class ModelApiCatalogTest extends TestCase
 
         $this->assertSame('openrouter/auto', $model->getName());
         $this->assertSame(Capability::cases(), $model->getCapabilities());
+    }
+
+    public function testGetVideoGenerationModelFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [],
+            ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
+            new JsonMockResponse([
+                'data' => [
+                    [
+                        'id' => 'bytedance/seedance-2.0',
+                        'supported_frame_images' => ['first_frame', 'last_frame'],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $catalog = new ModelApiCatalog($httpClient);
+        $model = $catalog->getModel('bytedance/seedance-2.0');
+
+        $this->assertSame('bytedance/seedance-2.0', $model->getName());
+        $this->assertInstanceOf(VideoGenerationModel::class, $model);
+        $this->assertContains(Capability::INPUT_TEXT, $model->getCapabilities());
+        $this->assertContains(Capability::TEXT_TO_VIDEO, $model->getCapabilities());
+        $this->assertContains(Capability::INPUT_IMAGE, $model->getCapabilities());
+        $this->assertContains(Capability::IMAGE_TO_VIDEO, $model->getCapabilities());
     }
 }

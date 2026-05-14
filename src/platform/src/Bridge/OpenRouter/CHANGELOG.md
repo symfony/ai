@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add rerank capabilities
  * Add text-to-speech capabilities
+ * Add support for video generation via the `POST /api/v1/videos` endpoint
 
 0.8
 ---

@@ -36,6 +36,7 @@ enum Capability: string
     case OUTPUT_STREAMING = 'output-streaming';
     case OUTPUT_STRUCTURED = 'output-structured';
     case OUTPUT_TEXT = 'output-text';
+    case OUTPUT_VIDEO = 'output-video';
 
     // FUNCTIONALITY
     case TOOL_CALLING = 'tool-calling';

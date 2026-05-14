@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog;
+use Symfony\AI\Platform\Bridge\OpenRouter\VideoGenerationModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
@@ -136,6 +137,26 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             [
                 Capability::INPUT_TEXT,
                 Capability::EMBEDDINGS,
+            ],
+        ];
+
+        yield 'google/veo-3.1' => [
+            'google/veo-3.1',
+            VideoGenerationModel::class,
+            [
+                Capability::INPUT_TEXT,
+                Capability::TEXT_TO_VIDEO,
+            ],
+        ];
+
+        yield 'bytedance/seedance-2.0' => [
+            'bytedance/seedance-2.0',
+            VideoGenerationModel::class,
+            [
+                Capability::INPUT_TEXT,
+                Capability::INPUT_IMAGE,
+                Capability::TEXT_TO_VIDEO,
+                Capability::IMAGE_TO_VIDEO,
             ],
         ];
     }
