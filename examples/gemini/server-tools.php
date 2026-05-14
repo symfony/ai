@@ -21,9 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());
 
-$toolbox = new Toolbox([new Clock()], logger: logger());
-$processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gemini-2.5-pro', [$processor], [$processor]);
+$agent = new Agent($platform, 'gemini-2.5-pro');
 
 $messages = new MessageBag(
     Message::ofUser(
