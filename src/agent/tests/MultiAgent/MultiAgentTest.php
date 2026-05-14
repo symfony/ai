@@ -341,7 +341,7 @@ class MultiAgentTest extends TestCase
 
     public function testBuildAgentSelectionPromptIncludesFallback()
     {
-        $decision = new Decision('');
+        $decision = new Decision('', 'no agent matched');
 
         // Create a mock result that returns the Decision object
         $orchestratorResult = $this->createMock(ResultInterface::class);
