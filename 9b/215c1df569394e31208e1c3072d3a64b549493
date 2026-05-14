@@ -1,0 +1,64 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-05-12T08:46:05Z
+
+Can we have extra tests for this capability? Just to ensure that we cover any regression 🙂
+
+---------------------------------------------------------------------------
+
+by vkost at 2026-05-12T13:57:21Z
+
+@Guikingone I don't mind the work, but I would need some guidance. I just checked the other Capabilities, and the way they were used in tests. Most of the bridges have a hardcoded list of models in the ModelCatalog, and then they test the class by extending ModelCatalogTestCase. Ollama, however, reads the models from the server. This is where the crash was happening - the code was unable to process the 'insert' capability returned by some models.
+
+The only thing that comes to mind is mocking the OllamaClient to return a list of models, where one of the models would have this 'insert' capability. Not sure how much this would help.
+
+If you have another suggestion on how to test - I will gladly do what I can.
+
+Vic
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-05-13T07:56:50Z
+
+Hi @vkost 👋🏻
+
+Sorry for the delay, for the test, you can find inspiration in `OllamaApiCatalogTest` (wrong name BTW, something to change 😄):
+
+```php
+# ..
+public function testModelCatalogCanReturnModelFromApi()
+{
+    $httpClient = new MockHttpClient([
+        new JsonMockResponse([
+            'capabilities' => ['completion'],
+        ]),
+    ], 'http://127.0.0.1:11434');
+
+    $modelCatalog = new ModelCatalog($httpClient);
+
+    $model = $modelCatalog->getModel('foo');
+
+    $this->assertSame('foo', $model->getName());
+    $this->assertSame([
+        Capability::INPUT_MESSAGES,
+        Capability::OUTPUT_STRUCTURED,
+    ], $model->getCapabilities());
+    $this->assertSame(1, $httpClient->getRequestsCount());
+}
+# ...
+```
+
+By adding a new test that change `completion` to `insert`, you can test that the `getCapabilities` array returns the new capability, should be enough for a first test 👍🏻
+
+---------------------------------------------------------------------------
+
+by vkost at 2026-05-13T13:26:17Z
+
+Hi @Guikingone
+Thank you for the pointers. I was fooled by the file name and did not check there.
+I added the test in a fashion of other similar tests I found. I thought it best to go with the example that returns the model and the capability - this way I was able to leave a trace that the 'insert' capability was returned by qwen2.5-coder.
+
+I apologize for multiple commits - I pushed too early.
+
+Let me know if I missed anything.
+Vic
