@@ -1282,6 +1282,31 @@ Speech is disabled by default and can be disabled when needed with ``speech: fal
                 model: gpt-4o
                 speech: false
 
+Streaming TTS
+~~~~~~~~~~~~~
+
+Bridges that support streaming text-to-speech (e.g. ElevenLabs) can be used in stream mode
+by setting ``tts_stream: true``:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: gpt-4o
+                speech:
+                    text_to_speech_platform: 'ai.platform.elevenlabs'
+                    tts_model: eleven_multilingual_v2
+                    tts_stream: true
+
+In this mode, ``$agent->call($messages)`` returns a
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` of
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` chunks instead of a fully
+buffered :class:`Symfony\\AI\\Platform\\Result\\BinaryResult`. The stream implements
+:class:`Symfony\\AI\\Platform\\Result\\CancellableInterface` and can be interrupted at any
+moment through ``cancel()``. See the Agent component documentation for an end-to-end
+example showing how to interrupt a TTS stream (barge-in pattern).
+
 Using the result
 ~~~~~~~~~~~~~~~~
 

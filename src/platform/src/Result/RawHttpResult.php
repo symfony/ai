@@ -18,8 +18,10 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class RawHttpResult implements RawResultInterface
+final class RawHttpResult implements RawResultInterface, CancellableInterface
 {
+    private bool $cancelled = false;
+
     public function __construct(
         private readonly ResponseInterface $response,
         private readonly HttpStreamInterface $httpStream = new SseStream(),
@@ -39,5 +41,20 @@ final class RawHttpResult implements RawResultInterface
     public function getObject(): ResponseInterface
     {
         return $this->response;
+    }
+
+    public function cancel(): void
+    {
+        if ($this->cancelled) {
+            return;
+        }
+
+        $this->cancelled = true;
+        $this->response->cancel();
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled;
     }
 }

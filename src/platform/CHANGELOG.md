@@ -9,6 +9,8 @@ CHANGELOG
  * [BC BREAK] Rework `AssistantMessage` to hold `ContentInterface` parts (variadic constructor) instead of a single string content plus separate tool-call/thinking fields. Adds `Message\Content\Thinking`, `Message\Content\ExecutableCode`, and `Message\Content\CodeExecution` content classes, and makes `Result\ToolCall` implement `ContentInterface`. `Message::ofAssistant()` accepts strings, `ContentInterface`, and `ResultInterface` values, mapping `TextResult`/`ThinkingResult`/`ToolCallResult`/`ExecutableCodeResult`/`CodeExecutionResult`/`MultiPartResult` to their content equivalents; result types without a known mapping throw `InvalidArgumentException` so unhandled cases surface instead of being silently dropped.
  * Add optional `signature` field to `Message\Content\Text`, `Result\ToolCall`, and `Result\TextResult` for provider-scoped signatures (currently used by Gemini/Vertex AI for `thoughtSignature` round-trip).
  * Memoize conversion failures in `DeferredResult::getResult()` so subsequent calls re-throw the cached exception instead of re-running the converter
+ * Add `stop()` / `isStopRequested()` to `Symfony\AI\Platform\Result\Stream\Event` so stream listeners can request an early termination from `onStart()` / `onDelta()`. `StreamResult` honours the request by cancelling the underlying HTTP response and returning from its generator.
+ * Add `CancellableInterface` to allow cancelling in-flight results; implemented by `RawHttpResult` and `StreamResult`. `cancel()` propagates to the underlying `Symfony\Contracts\HttpClient\ResponseInterface::cancel()`, stopping streaming TTS or aborting an unresolved deferred result.
 
 0.8
 ---

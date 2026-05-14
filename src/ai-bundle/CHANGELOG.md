@@ -12,6 +12,7 @@ CHANGELOG
  * The `api_key` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * The `endpoint` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * Wire `Meilisearch\StoreFactory` from `AiBundle`
+ * Add `tts_stream` option in agent `speech` configuration to enable streaming text-to-speech (returns a cancellable `StreamResult` of `BinaryDelta` chunks; requires bridge support, e.g. ElevenLabs)
 
 0.8
 ---
