@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add rerank capabilities
+ * Add text-to-speech capabilities
 
 0.8
 ---
