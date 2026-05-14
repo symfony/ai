@@ -1,0 +1,62 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2025-12-20T09:49:00Z
+
+Hi @daFish, what's the benefit of introducing this? feels a bit odd to have both, a lot of duplicated code and only fixed for one model
+
+so ideally we should decide for one API here to ease the implementation
+
+---------------------------------------------------------------------------
+
+by daFish at 2025-12-20T11:13:33Z
+
+> Hi @daFish, what's the benefit of introducing this? feels a bit odd to have both, a lot of duplicated code and only fixed for one model
+>
+> so ideally we should decide for one API here to ease the implementation
+
+Scaleway currently supports both but to use `gpt-oss-120b` with tools you need to use the responses API.
+
+From the Scaleway documentation:
+> Most supported Generative API models can be used with both Chat Completions and Responses API. For the gpt-oss-120b model, use of the Responses API is recommended, as it will allow you to access all of its features, especially tool-calling.
+
+As the responses API is currently in beta, I'd opt to support both for the time being. Once it is GA then it is the best option to move to responses API only.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-01-04T08:18:24Z
+
+@daFish yup, sounds reasonable - even if that brings in another dimension of coupling/duplicating code :see_no_evil:
+
+could you please split into two different `ModelClient` implementations please? you could do the `'gpt-oss-120b` === $model->getName()` check already in the `supports` method and maybe share stuff in an abstract class if needed.
+
+Thanks already!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-04T21:53:06Z
+
+Hi @daFish, nowadays we have an Open Responses bridge that we could just rely on here - basically scaleway adopting it as dependency and building on top - still up for working on that topic, continuing in that direction?
+
+---------------------------------------------------------------------------
+
+by daFish at 2026-03-05T10:06:49Z
+
+Hi @chr-hertel, yes, I was waiting for some more progress on this to avoid unnecessary work. Will start working on that direction.
+
+---------------------------------------------------------------------------
+
+by daFish at 2026-03-17T08:34:07Z
+
+Fabbot failure is a false-positive.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-22T23:03:36Z
+
+@daFish Thanks for the update - not that familiar with Scaleway, do we actually need to keep that generic bridge here or could we completely rely on the Open Responses API instead?
+
+In that case you could trim down the bridge I guess :)
+
+---
+
+Note to myself: currently open responses is in really early shape at scaleway - def keep completions for now.
