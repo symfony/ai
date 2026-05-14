@@ -11,7 +11,7 @@
 
 use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
-use Symfony\AI\Store\Bridge\Meilisearch\Store;
+use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -28,11 +28,11 @@ echo "This example demonstrates how to configure the semantic ratio to balance\n
 echo "between semantic (vector) search and full-text search in Meilisearch.\n\n";
 
 // Initialize the store with a balanced hybrid search (50/50)
-$store = new Store(
-    httpClient: http_client(),
-    endpointUrl: env('MEILISEARCH_HOST'),
-    apiKey: env('MEILISEARCH_API_KEY'),
+$store = StoreFactory::create(
     indexName: 'movies_hybrid',
+    endpoint: env('MEILISEARCH_HOST'),
+    apiKey: env('MEILISEARCH_API_KEY'),
+    httpClient: http_client(),
     semanticRatio: 0.5, // Balanced hybrid search by default
 );
 

@@ -40,12 +40,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes".');
@@ -76,12 +71,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->setup();
 
@@ -101,12 +91,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes/test".');
@@ -127,12 +112,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes/test/documents".');
@@ -154,12 +134,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
@@ -179,12 +154,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes/test/search".');
@@ -223,13 +193,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-            embeddingsDimension: 3,
-        );
+        $store = new Store($httpClient, 'test', embeddingsDimension: 3);
 
         $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -264,13 +228,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-            embeddingsDimension: 3,
-        );
+        $store = new Store($httpClient, 'test', embeddingsDimension: 3);
 
         $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
         $expected = [
@@ -285,7 +243,7 @@ final class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient();
 
-        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
+        $store = new Store($httpClient, 'index', semanticRatio: 0.5);
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -296,7 +254,7 @@ final class StoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $httpClient = new MockHttpClient();
-        new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 1.5);
+        new Store($httpClient, 'index', semanticRatio: 1.5);
     }
 
     public function testConstructorThrowsExceptionForNegativeSemanticRatio()
@@ -305,7 +263,7 @@ final class StoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $httpClient = new MockHttpClient();
-        new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: -0.1);
+        new Store($httpClient, 'index', semanticRatio: -0.1);
     }
 
     public function testQueryUsesDefaultSemanticRatio()
@@ -328,7 +286,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.7);
+        $store = new Store($httpClient, 'index', semanticRatio: 0.7);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         iterator_to_array($store->query(new VectorQuery($vector)));
@@ -349,7 +307,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
+        $store = new Store($httpClient, 'index', semanticRatio: 0.5);
 
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['semanticRatio' => 0.2]));
 
@@ -365,7 +323,7 @@ final class StoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $httpClient = new MockHttpClient();
-        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index');
+        $store = new Store($httpClient, 'index');
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         iterator_to_array($store->query(new VectorQuery($vector), ['semanticRatio' => 2.0]));
@@ -391,7 +349,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index');
+        $store = new Store($httpClient, 'index');
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         $results = iterator_to_array($store->query(new VectorQuery($vector), ['semanticRatio' => 0.0]));
@@ -413,7 +371,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'http://localhost:7700', 'key', 'index', semanticRatio: 0.5);
+        $store = new Store($httpClient, 'index', semanticRatio: 0.5);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         iterator_to_array($store->query(new VectorQuery($vector)));
@@ -437,12 +395,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7700/indexes/test/documents/delete-batch".');
@@ -464,12 +417,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->remove('doc-id-1');
 
@@ -490,12 +438,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->remove(['doc-id-1', 'doc-id-2', 'doc-id-3']);
 
@@ -506,12 +449,7 @@ final class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient([], 'http://127.0.0.1:7700');
 
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7700',
-            'test',
-            'test',
-        );
+        $store = new Store($httpClient, 'test');
 
         $store->remove([]);
 
@@ -520,19 +458,19 @@ final class StoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:7700', 'test-key', 'test-index');
+        $store = new Store(new MockHttpClient(), 'test-index');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:7700', 'test-key', 'test-index');
+        $store = new Store(new MockHttpClient(), 'test-index');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:7700', 'test-key', 'test-index');
+        $store = new Store(new MockHttpClient(), 'test-index');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

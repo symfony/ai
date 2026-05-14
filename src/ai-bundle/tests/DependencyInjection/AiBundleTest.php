@@ -58,6 +58,7 @@ use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
+use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
@@ -1491,15 +1492,16 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.meilisearch.custom');
+        $this->assertSame([MeilisearchStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(MeilisearchStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('custom', $definition->getArgument(0));
         $this->assertSame('http://127.0.0.1:7700', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame('custom', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
         $this->assertSame('default', $definition->getArgument(4));
         $this->assertSame('_vectors', $definition->getArgument(5));
         $this->assertSame(768, $definition->getArgument(6));
@@ -1516,10 +1518,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    public function testMeilisearchStoreWithCustomIndexNameCanBeConfigured()
-    {
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -1538,15 +1537,16 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.meilisearch.custom');
+        $this->assertSame([MeilisearchStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(MeilisearchStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('test', $definition->getArgument(0));
         $this->assertSame('http://127.0.0.1:7700', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
         $this->assertSame('default', $definition->getArgument(4));
         $this->assertSame('_vectors', $definition->getArgument(5));
         $this->assertSame(768, $definition->getArgument(6));
@@ -1563,11 +1563,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
-    }
 
-    #[TestDox('Meilisearch store with custom semantic_ratio can be configured')]
-    public function testMeilisearchStoreWithCustomSemanticRatioCanBeConfigured()
-    {
+        // Custom semantic ratio
         $container = $this->buildContainer([
             'ai' => [
                 'store' => [
@@ -1587,19 +1584,61 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.meilisearch.custom');
+        $this->assertSame([MeilisearchStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(MeilisearchStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(8, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('test', $definition->getArgument(0));
         $this->assertSame('http://127.0.0.1:7700', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(3));
         $this->assertSame('default', $definition->getArgument(4));
         $this->assertSame('_vectors', $definition->getArgument(5));
         $this->assertSame(768, $definition->getArgument(6));
         $this->assertSame(0.5, $definition->getArgument(7));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+
+        // Custom HttpClient
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'meilisearch' => [
+                        'custom' => [
+                            'http_client' => 'my.scoped_http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.meilisearch.custom');
+        $this->assertSame([MeilisearchStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(MeilisearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertSame('custom', $definition->getArgument(0));
+        $this->assertNull($definition->getArgument(1));
+        $this->assertNull($definition->getArgument(2));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('my.scoped_http_client', (string) $definition->getArgument(3));
+        $this->assertSame('default', $definition->getArgument(4));
+        $this->assertSame('_vectors', $definition->getArgument(5));
+        $this->assertSame(1536, $definition->getArgument(6));
+        $this->assertSame(1.0, $definition->getArgument(7));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([

@@ -38,8 +38,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $indexName,
         private readonly string $embedder = 'default',
         private readonly string $vectorFieldName = '_vectors',
@@ -142,11 +140,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array $payload): array
     {
-        $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-        $result = $this->httpClient->request($method, $url, [
-            'headers' => [
-                'Authorization' => \sprintf('Bearer %s', $this->apiKey),
-            ],
+        $result = $this->httpClient->request($method, $endpoint, [
             'json' => $payload,
         ]);
 

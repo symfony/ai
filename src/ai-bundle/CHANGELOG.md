@@ -8,6 +8,10 @@ CHANGELOG
  * Make `ai:platform:invoke` arguments optional and prompt for them interactively when missing
  * Visualize failed calls with `result_type: 'error'` in profiler
  * Add `openresponses` platform configuration for OpenAI Responses-compatible endpoints
+ * Add support for `ScopingHttpClient` usage in `Meilisearch` store via `http_client` option
+ * The `api_key` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * The `endpoint` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
+ * Wire `Meilisearch\StoreFactory` from `AiBundle`
 
 0.8
 ---
