@@ -64,12 +64,14 @@ class ToolsCallCommand extends Command
 
     protected function configure(): void
     {
+        $script = $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate';
+
         $this
             ->addArgument('tool-name', InputArgument::REQUIRED, 'Name of the tool to execute')
             ->addArgument('json-input', InputArgument::OPTIONAL, 'JSON object with tool parameters', '{}')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (json, pretty, toon)', 'pretty')
             ->setHelp(
-                <<<'HELP'
+                <<<HELP
 The <info>%command.name%</info> command executes MCP tools with JSON input parameters.
 
 <info>Usage Examples:</info>
@@ -87,10 +89,10 @@ The <info>%command.name%</info> command executes MCP tools with JSON input param
   %command.full_name% server-info --format=json
 
   <comment># For a list of available tools, use:</comment>
-  bin/mate.php mcp:tools:list
+  {$script} mcp:tools:list
 
   <comment># For detailed tool information and schema, use:</comment>
-  bin/mate.php mcp:tools:inspect <tool-name>
+  {$script} mcp:tools:inspect <tool-name>
 HELP
             );
     }
@@ -130,7 +132,7 @@ HELP
             $tool = $this->registry->getTool($toolName);
         } catch (ToolNotFoundException $e) {
             $io->error(\sprintf('Tool "%s" not found', $toolName));
-            $io->note('Use "bin/mate.php mcp:tools:list" to see all available tools');
+            $io->note(\sprintf('Use "%s mcp:tools:list" to see all available tools', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate'));
 
             return Command::FAILURE;
         }
