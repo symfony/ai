@@ -126,6 +126,8 @@ Supported Models & Platforms
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
   * `Cartesia TTS`_ with `Cartesia`_ as Platform
   * `Cartesia STT`_ with `Cartesia`_ as Platform
+  * `Deepgram TTS`_ with `Deepgram`_ as Platform (HTTP and WebSocket transports)
+  * `Deepgram STT`_ with `Deepgram`_ as Platform (HTTP and WebSocket transports)
 * **Image/Video Models**
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
@@ -787,6 +789,8 @@ Some platforms provide built-in server-side tools for enhanced capabilities with
 
 For complete Vertex AI setup and usage guide, see :doc:`platform/vertexai`.
 
+For complete Deepgram setup and usage guide (REST + WebSocket, TTS + STT), see :doc:`platform/deepgram`.
+
 Parallel Platform Calls
 -----------------------
 
@@ -1005,6 +1009,9 @@ Code Examples
 .. _`Decart`: https://decart.ai/
 .. _`Decart T2I`: https://platform.decart.ai/models/lucy-image
 .. _`Decart T2V`: https://platform.decart.ai/models/lucy
+.. _`Deepgram`: https://deepgram.com/
+.. _`Deepgram STT`: https://deepgram.com/product/speech-to-text
+.. _`Deepgram TTS`: https://deepgram.com/product/text-to-speech
 .. _`ElevenLabs`: https://elevenlabs.io/
 .. _`ElevenLabs STT`: https://elevenlabs.io/speech-to-text
 .. _`ElevenLabs TTS`: https://elevenlabs.io/text-to-speech

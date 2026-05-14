@@ -3,6 +3,9 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {"type": "path", "url": "../src/platform/src/Bridge/Deepgram" }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.8",

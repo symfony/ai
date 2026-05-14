@@ -63,6 +63,7 @@ use Symfony\AI\Platform\Bridge\Cartesia\Factory as CartesiaFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\Factory as CerebrasFactory;
 use Symfony\AI\Platform\Bridge\Cohere\Factory as CohereFactory;
 use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
+use Symfony\AI\Platform\Bridge\Deepgram\PlatformFactory as DeepgramPlatformFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\Factory as DeepSeekFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Factory as DockerModelRunnerFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
@@ -1001,6 +1002,33 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'cohere']);
 
             $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('deepgram' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-deepgram-platform', DeepgramPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Deepgram platform configuration requires "symfony/ai-deepgram-platform" package. Try running "composer require symfony/ai-deepgram-platform".');
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(DeepgramPlatformFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['api_key'] ?? null,
+                    $platform['endpoint'] ?? 'https://api.deepgram.com/v1/',
+                    $platform['websocket_endpoint'] ?? 'wss://api.deepgram.com/v1',
+                    $platform['use_websockets'] ?? false,
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    null,
+                    new Reference('ai.platform.contract.deepgram'),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => 'deepgram']);
+
+            $container->setDefinition('ai.platform.deepgram', $definition);
+            $container->registerAliasForArgument('ai.platform.deepgram', PlatformInterface::class, 'deepgram');
 
             return;
         }
