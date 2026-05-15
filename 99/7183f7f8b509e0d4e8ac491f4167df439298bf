@@ -1,0 +1,50 @@
+---------------------------------------------------------------------------
+
+by Genmin at 2026-05-02T03:26:39Z
+
+Checked the one failing CI job. It fails during dependency installation for `Unit / Tool / Tavily / PHP 8.2 / lowest`, before any tests run, because Composer reports `phpunit/phpunit` requires `ext-xml` and the job environment does not expose that extension. This PR only touches the MCP Bundle profiler wrapper, and the MCP Bundle jobs plus PHPStan/Fabbot/deptrac are green.\n\nLocal validation from this branch remains:\n- `composer install --no-interaction --no-progress` in `src/mcp-bundle`\n- `vendor/bin/phpunit` -> 43 tests, 143 assertions\n- `php -l src/Profiler/TraceableRegistry.php`\n- `php -l tests/Profiler/TraceableRegistryTest.php`
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-04T21:58:04Z
+
+Thanks for jumping on that @Genmin :+1:
+@ineersa I guess this is more or less the outcome you need for your use-case, right?
+
+I'd say we could just drop the `ResetInterface` from `TraceableRegistry` instead of an empty method, WDYT?
+
+---------------------------------------------------------------------------
+
+by ineersa at 2026-05-04T23:16:31Z
+
+> @ineersa I guess this is more or less the outcome you need for your use-case, right?
+
+Yes!
+I think it should be safe to remove `ResetInterface`.
+
+---------------------------------------------------------------------------
+
+by Genmin at 2026-05-11T19:45:29Z
+
+Thanks, agreed. I updated the PR to drop `ResetInterface` from `TraceableRegistry` instead of keeping an empty `reset()` method, and adjusted the regression test/changelog accordingly.
+
+Validation from this branch:
+- `vendor/bin/phpunit tests/Profiler/TraceableRegistryTest.php` -> 1 test, 1 assertion
+- `vendor/bin/phpunit` in `src/mcp-bundle` -> 43 tests, 143 assertions
+- `php -l src/Profiler/TraceableRegistry.php`
+- `php -l tests/Profiler/TraceableRegistryTest.php`
+- `git diff --check`
+
+---------------------------------------------------------------------------
+
+by Genmin at 2026-05-11T20:02:22Z
+
+Updated again after the CI failures: removing `ResetInterface` also required removing the manual `kernel.reset` tag from `mcp.traceable_registry`, otherwise the demo container still tried to call the removed `reset()` method. I added a bundle regression test for that registration path too.
+
+Validation from this branch:
+- `vendor/bin/phpunit` in `src/mcp-bundle` -> 44 tests, 144 assertions
+- `bin/console lint:container` in `demo`
+- `vendor/bin/phpunit tests/SmokeTest.php` in `demo` -> 5 tests, 20 assertions
+- `vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.dist.php --allow-unsupported-php-version=yes -- src/mcp-bundle/src/McpBundle.php src/mcp-bundle/src/Profiler/TraceableRegistry.php src/mcp-bundle/tests/DependencyInjection/McpBundleTest.php src/mcp-bundle/tests/Profiler/TraceableRegistryTest.php`
+- `php -l` on the changed PHP files
+- `git diff --check`
