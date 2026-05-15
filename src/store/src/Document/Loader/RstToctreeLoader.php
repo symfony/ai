@@ -29,7 +29,11 @@ final class RstToctreeLoader implements LoaderInterface
         private RstLoader $rstLoader = new RstLoader(),
         private bool $throwOnMissingEntry = false,
         private LoggerInterface $logger = new NullLogger(),
+        private ?int $maxDepth = null,
     ) {
+        if (null !== $maxDepth && $maxDepth < 0) {
+            throw new InvalidArgumentException(\sprintf('The maximum depth must be a non-negative integer or null, %d given.', $maxDepth));
+        }
     }
 
     /**
@@ -62,6 +66,10 @@ final class RstToctreeLoader implements LoaderInterface
         }
 
         yield from $this->rstLoader->loadContent($content, $path, ['depth' => $depth]);
+
+        if (null !== $this->maxDepth && $depth >= $this->maxDepth) {
+            return;
+        }
 
         foreach ($this->parseToctreeEntries($content, \dirname($path), $rootDir) as $entryPath) {
             yield from $this->processFile($entryPath, $depth + 1, $rootDir);
