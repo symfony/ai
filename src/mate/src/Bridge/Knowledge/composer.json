@@ -1,0 +1,69 @@
+{
+    "name": "symfony/ai-knowledge-mate-extension",
+    "description": "Knowledge bridge for AI Mate - structured access to official documentation as MCP tools (browse TOC, read pages, substring search; no semantic/RAG search)",
+    "license": "MIT",
+    "type": "symfony-ai-mate",
+    "keywords": [
+        "ai",
+        "mcp",
+        "docs",
+        "documentation",
+        "knowledge",
+        "rst",
+        "bridge"
+    ],
+    "authors": [
+        {
+            "name": "Johannes Wachter",
+            "email": "johannes@sulu.io"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-mate": "^0.8",
+        "symfony/ai-store": "^0.8",
+        "symfony/dependency-injection": "^7.3|^8.0",
+        "symfony/process": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "helgesverre/toon": "^3.1",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.53"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Mate\\Bridge\\Knowledge\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Mate\\Bridge\\Knowledge\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        },
+        "ai-mate": {
+            "scan-dirs": [
+                "Capability"
+            ],
+            "includes": [
+                "config/config.php"
+            ],
+            "instructions": "INSTRUCTIONS.md"
+        }
+    }
+}

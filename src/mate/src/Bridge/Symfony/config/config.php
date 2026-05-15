@@ -9,9 +9,12 @@
  * file that was distributed with this source code.
  */
 
+use Symfony\AI\Mate\Bridge\Knowledge\Provider\DocsProviderInterface;
+use Symfony\AI\Mate\Bridge\Knowledge\Service\GitFetcher;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
+use Symfony\AI\Mate\Bridge\Symfony\Knowledge\SymfonyDocsProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
@@ -88,5 +91,23 @@ return static function (ContainerConfigurator $configurator) {
 
         $services->set(ProfilerResourceTemplate::class)
             ->args([service(ProfilerDataProvider::class)]);
+    }
+
+    // Knowledge provider (optional - only when the Knowledge bridge is installed)
+    if (interface_exists(DocsProviderInterface::class)) {
+        // `docs_branch: null` lets SymfonyDocsProvider auto-detect the
+        // major.minor branch from the host application's installed Symfony
+        // (Composer\InstalledVersions). Set it explicitly to pin a branch.
+        $configurator->parameters()
+            ->set('ai_mate_symfony.docs_repository_url', 'https://github.com/symfony/symfony-docs.git')
+            ->set('ai_mate_symfony.docs_branch', null);
+
+        $services->set(SymfonyDocsProvider::class)
+            ->args([
+                service(GitFetcher::class),
+                '%ai_mate_symfony.docs_repository_url%',
+                '%ai_mate_symfony.docs_branch%',
+            ])
+            ->tag('ai_mate.knowledge_provider');
     }
 };

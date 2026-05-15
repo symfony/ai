@@ -406,6 +406,62 @@ log files are stored.
 2. Check file permissions on log files
 3. Ensure log files are not empty or corrupted
 
+Knowledge Bridge
+~~~~~~~~~~~~~~~~
+
+The Knowledge bridge (``symfony/ai-knowledge-mate-extension``) lets agents crawl
+official documentation through MCP tools. Documentation sources are pluggable:
+any service tagged ``ai_mate.knowledge_provider`` is exposed automatically. The
+Symfony bridge ships a built-in ``SymfonyDocsProvider`` that becomes available
+when both bridges are installed.
+
+**MCP Tools:**
+
+* ``knowledge-toc`` - Without arguments, lists registered providers. With a ``provider``, returns its table of contents at the given ``path`` (or the root if no path is given)
+* ``knowledge-read`` - Read a documentation page split into RST sections (chunks)
+* ``knowledge-search`` - Case-insensitive substring search across a provider's chunks
+
+**Behavior:**
+
+The first call for a provider clones its source repository into the local cache.
+Subsequent calls are served from disk. The cache is automatically refreshed
+(re-pulled and re-indexed) once it is older than ``ai_mate_knowledge.cache_ttl_seconds``
+(default: 24 hours).
+
+**Configuration:**
+
+Override the cache directory or refresh interval::
+
+    $container->parameters()
+        ->set('ai_mate_knowledge.cache_dir', '%mate.root_dir%/var/cache/knowledge')
+        ->set('ai_mate_knowledge.cache_ttl_seconds', 86400);
+
+**Adding a custom provider:**
+
+Implement ``Symfony\AI\Mate\Bridge\Knowledge\Provider\DocsProviderInterface`` and tag
+the service with ``ai_mate.knowledge_provider``::
+
+    use Symfony\AI\Mate\Bridge\Knowledge\Provider\DocsProviderInterface;
+    use Symfony\AI\Mate\Bridge\Knowledge\Service\GitFetcher;
+
+    final class MyDocsProvider implements DocsProviderInterface
+    {
+        public function __construct(private GitFetcher $fetcher) {}
+
+        public function getName(): string { return 'my-docs'; }
+        public function getTitle(): string { return 'My Docs'; }
+        public function getDescription(): string { return 'My project documentation'; }
+        public function getFormat(): string { return 'rst'; }
+
+        public function sync(string $cacheDir): string
+        {
+            $repo = $cacheDir.'/docs';
+            $this->fetcher->fetch('https://github.com/me/docs.git', 'main', $repo);
+
+            return $repo.'/index.rst';
+        }
+    }
+
 Built-in Tools
 --------------
 
