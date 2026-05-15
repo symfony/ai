@@ -23,6 +23,7 @@ use Symfony\AI\Mate\Bridge\Knowledge\Service\KnowledgeCache;
 use Symfony\AI\Mate\Bridge\Knowledge\Service\TocBuilder;
 use Symfony\AI\Mate\Bridge\Symfony\Knowledge\SymfonyDocsProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Store\Document\Loader\RstLoader;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -38,12 +39,16 @@ use Symfony\Component\Process\Process;
  */
 final class SymfonyDocsProviderIntegrationTest extends TestCase
 {
-    private string $sandbox;
-    private string $remoteRepo;
-    private string $cacheDir;
+    private string $sandbox = '';
+    private string $remoteRepo = '';
+    private string $cacheDir = '';
 
     protected function setUp(): void
     {
+        if (!class_exists(RstLoader::class)) {
+            $this->markTestSkipped('symfony/ai-store version with RstLoader is required for this end-to-end test.');
+        }
+
         if (null === (new ExecutableFinder())->find('git')) {
             $this->markTestSkipped('git binary is not available in PATH.');
         }
@@ -59,7 +64,9 @@ final class SymfonyDocsProviderIntegrationTest extends TestCase
 
     protected function tearDown(): void
     {
-        $this->removeDirectory($this->sandbox);
+        if ('' !== $this->sandbox) {
+            $this->removeDirectory($this->sandbox);
+        }
     }
 
     public function testKnowledgeToolsServeSymfonyProviderEndToEnd()

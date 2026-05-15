@@ -25,7 +25,7 @@
     "require": {
         "php": ">=8.2",
         "symfony/ai-mate": "^0.8",
-        "symfony/ai-store": "^0.1|^0.8",
+        "symfony/ai-store": "^0.8",
         "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/process": "^7.3|^8.0"
     },
