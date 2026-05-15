@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `maxDepth` constructor parameter to `RstToctreeLoader` to limit toctree recursion depth
+
 0.8
 ---
 

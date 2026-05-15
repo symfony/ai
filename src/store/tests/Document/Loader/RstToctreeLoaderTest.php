@@ -270,6 +270,58 @@ final class RstToctreeLoaderTest extends TestCase
         }
     }
 
+    public function testConstructorRejectsNegativeMaxDepth()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The maximum depth must be a non-negative integer or null, -1 given.');
+        new RstToctreeLoader(maxDepth: -1);
+    }
+
+    public function testMaxDepthZeroLoadsOnlySourceFile()
+    {
+        $loader = new RstToctreeLoader(maxDepth: 0);
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
+
+        $titles = array_map(
+            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            $documents,
+        );
+
+        $this->assertContains('Main Documentation', $titles);
+        $this->assertNotContains('Getting Started', $titles);
+        $this->assertNotContains('Setup', $titles);
+    }
+
+    public function testMaxDepthOneFollowsDirectEntriesOnly()
+    {
+        $loader = new RstToctreeLoader(maxDepth: 1);
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
+
+        $titles = array_map(
+            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            $documents,
+        );
+
+        $this->assertContains('Main Documentation', $titles);
+        $this->assertContains('Getting Started', $titles);
+        $this->assertNotContains('Setup', $titles);
+    }
+
+    public function testNullMaxDepthLoadsEntireTree()
+    {
+        $loader = new RstToctreeLoader(maxDepth: null);
+        $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
+
+        $titles = array_map(
+            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            $documents,
+        );
+
+        $this->assertContains('Main Documentation', $titles);
+        $this->assertContains('Getting Started', $titles);
+        $this->assertContains('Setup', $titles);
+    }
+
     public function testLoadSectionOverflowCreatesMultipleChunks()
     {
         // Create a temporary file with a very long section

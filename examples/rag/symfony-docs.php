@@ -47,11 +47,11 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger(), includeText: true);
 $processor = new DocumentProcessor($vectorizer, $store, logger: logger());
 
-$loader = new RstToctreeLoader();
+$loader = new RstToctreeLoader(maxDepth: (int) env('SYMFONY_DOCS_MAX_DEPTH'));
 $indexer = new SourceIndexer($loader, $processor);
 
 output()->writeln('Indexing Symfony docs — this will produce many chunks and use embedding API credits...');
-$indexer->index($docsDir.'/index.rst');
+$indexer->index($docsDir.'/'.env('SYMFONY_DOCS_ENTRY'));
 output()->writeln('<info>Indexing complete.</info>');
 
 // 3. Retrieve
