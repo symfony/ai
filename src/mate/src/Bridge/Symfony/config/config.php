@@ -16,6 +16,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MemoryCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TimeCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
@@ -79,6 +80,10 @@ return static function (ContainerConfigurator $configurator) {
             ->tag('ai_mate.profiler_collector_formatter');
 
         $services->set(TimeCollectorFormatter::class)
+            ->lazy()
+            ->tag('ai_mate.profiler_collector_formatter');
+
+        $services->set(MemoryCollectorFormatter::class)
             ->lazy()
             ->tag('ai_mate.profiler_collector_formatter');
 
