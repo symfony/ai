@@ -364,9 +364,9 @@ final class ResultConverterStreamTest extends TestCase
     /**
      * @param list<array<string, mixed>> $events
      *
-     * @throws ExceptionInterface
-     *
      * @return list<DeltaInterface>
+     *
+     * @throws ExceptionInterface
      */
     private static function collectDeltas(ResultConverter $converter, array $events): array
     {

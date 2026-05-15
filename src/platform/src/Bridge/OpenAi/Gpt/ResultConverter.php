@@ -210,6 +210,14 @@ final class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
+            // Backward-compatible fallback for legacy event types that carry "output_text" in their name
+            // (e.g. "message.delta.output_text.delta") and don't go through the Responses API phase routing.
+            if (str_contains($type, 'output_text') && isset($event['delta'])) {
+                yield new TextDelta($event['delta']);
+
+                continue;
+            }
+
             if ('response.output_item.done' === $type && isset($event['item']['id'])) {
                 $itemId = $event['item']['id'];
                 $phase = $itemPhases[$itemId] ?? ($event['item']['phase'] ?? null);
