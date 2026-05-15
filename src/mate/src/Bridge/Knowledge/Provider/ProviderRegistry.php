@@ -49,7 +49,7 @@ final class ProviderRegistry
     public function get(string $name): DocsProviderInterface
     {
         if (!isset($this->providers[$name])) {
-            throw new ProviderNotFoundException(\sprintf('Knowledge provider "%s" is not registered. Available providers: %s', $name, '' === ($list = implode(', ', array_keys($this->providers))) ? '(none)' : $list));
+            throw new ProviderNotFoundException(\sprintf('Knowledge provider "%s" is not registered. Available providers: "%s".', $name, '' === ($list = implode(', ', array_keys($this->providers))) ? '(none)' : $list));
         }
 
         return $this->providers[$name];
