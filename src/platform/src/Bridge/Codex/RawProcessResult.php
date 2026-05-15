@@ -22,6 +22,8 @@ use Symfony\Component\Process\Process;
  */
 final class RawProcessResult implements RawResultInterface
 {
+    private const TOOL_CALLS = 'tool_calls';
+
     public function __construct(
         private readonly Process $process,
     ) {
@@ -45,6 +47,7 @@ final class RawProcessResult implements RawResultInterface
         $lastAgentMessage = [];
         $lastError = [];
         $usage = [];
+        $events = [];
 
         foreach (explode(\PHP_EOL, $output) as $line) {
             $line = trim($line);
@@ -58,6 +61,8 @@ final class RawProcessResult implements RawResultInterface
             if (null === $decoded) {
                 continue;
             }
+
+            $events[] = $decoded;
 
             $type = $decoded['type'] ?? '';
 
@@ -84,7 +89,7 @@ final class RawProcessResult implements RawResultInterface
             $lastAgentMessage['usage'] = $usage;
         }
 
-        return $lastAgentMessage;
+        return $this->attachToolCalls($lastAgentMessage, $lastError, $events);
     }
 
     /**
@@ -150,5 +155,255 @@ final class RawProcessResult implements RawResultInterface
     public function getObject(): Process
     {
         return $this->process;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $events
+     * @param array<string, mixed>       $lastAgentMessage
+     * @param array<string, mixed>       $lastError
+     *
+     * @return array<string, mixed>
+     */
+    private function attachToolCalls(array $lastAgentMessage, array $lastError, array $events): array
+    {
+        $toolCalls = $this->extractToolCalls($events);
+
+        if ([] === $toolCalls) {
+            return [] !== $lastAgentMessage ? $lastAgentMessage : $lastError;
+        }
+
+        if ([] !== $lastAgentMessage) {
+            $lastAgentMessage[self::TOOL_CALLS] = $toolCalls;
+
+            return $lastAgentMessage;
+        }
+
+        if ([] !== $lastError) {
+            $lastError[self::TOOL_CALLS] = $toolCalls;
+
+            return $lastError;
+        }
+
+        return [self::TOOL_CALLS => $toolCalls];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $events
+     *
+     * @return list<array{id: string, name: string, arguments: array<string, mixed>}>
+     */
+    private function extractToolCalls(array $events): array
+    {
+        $started = [];
+        $toolCalls = [];
+
+        foreach ($events as $index => $event) {
+            $type = $event['type'] ?? null;
+            if (!\is_string($type)) {
+                continue;
+            }
+
+            $toolCall = match ($type) {
+                'item.started', 'item.completed' => $this->extractLegacyToolCall($event),
+                'event_msg' => $this->extractEventMessageToolCall($event),
+                default => null,
+            };
+            if (null === $toolCall) {
+                continue;
+            }
+
+            $key = '' !== $toolCall['id'] ? $toolCall['id'] : \sprintf('%s-%d', $toolCall['name'], $index);
+
+            if ('item.started' === $type || ('event_msg' === $type && ($event['payload']['type'] ?? null) === 'mcp_tool_call_start')) {
+                $started[$key] = $toolCall;
+                continue;
+            }
+
+            if (isset($started[$key])) {
+                $toolCall = $this->mergeStartedToolCall($started[$key], $toolCall);
+                unset($started[$key]);
+            }
+
+            if ('' !== $toolCall['id']) {
+                $toolCalls[] = $toolCall;
+            }
+        }
+
+        foreach ($started as $toolCall) {
+            if ('' !== $toolCall['id']) {
+                $toolCalls[] = $toolCall;
+            }
+        }
+
+        return $toolCalls;
+    }
+
+    /**
+     * @param array<string, mixed> $event
+     *
+     * @return array{id: string, name: string, arguments: array<string, mixed>}|null
+     */
+    private function extractLegacyToolCall(array $event): ?array
+    {
+        $item = $event['item'] ?? null;
+        if (!\is_array($item) || !$this->isToolCallItem($item)) {
+            return null;
+        }
+
+        $name = $this->extractToolCallName($item);
+        if (null === $name) {
+            return null;
+        }
+
+        return [
+            'id' => $this->extractString($item, ['id', 'call_id']) ?? '',
+            'name' => $name,
+            'arguments' => $this->extractToolCallArguments($item),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $event
+     *
+     * @return array{id: string, name: string, arguments: array<string, mixed>}|null
+     */
+    private function extractEventMessageToolCall(array $event): ?array
+    {
+        $payload = $event['payload'] ?? null;
+        if (!\is_array($payload)) {
+            return null;
+        }
+
+        $payloadType = $payload['type'] ?? null;
+        if (!\is_string($payloadType) || !\in_array($payloadType, ['mcp_tool_call_start', 'mcp_tool_call_end'], true)) {
+            return null;
+        }
+
+        $invocation = $payload['invocation'] ?? null;
+        if (!\is_array($invocation)) {
+            return null;
+        }
+
+        $name = $this->extractString($invocation, ['tool']);
+        if (null === $name) {
+            return null;
+        }
+
+        return [
+            'id' => $this->extractString($payload, ['call_id']) ?? '',
+            'name' => $name,
+            'arguments' => $this->extractToolCallArguments($invocation),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     */
+    private function isToolCallItem(array $item): bool
+    {
+        $type = $item['type'] ?? null;
+        if (!\is_string($type) || '' === $type) {
+            return false;
+        }
+
+        if (\in_array($type, ['agent_message', 'command_execution'], true)) {
+            return false;
+        }
+
+        if (str_contains($type, 'tool')) {
+            return true;
+        }
+
+        if (\in_array($type, ['function_call', 'mcp_call'], true)) {
+            return true;
+        }
+
+        return isset($item['name']) || isset($item['tool_name']) || isset($item['function']);
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     */
+    private function extractToolCallName(array $item): ?string
+    {
+        $name = $this->extractString($item, ['name', 'tool_name', 'tool']);
+        if (null !== $name) {
+            return $name;
+        }
+
+        $function = $item['function'] ?? null;
+        if (\is_array($function) && isset($function['name']) && \is_string($function['name']) && '' !== $function['name']) {
+            return $function['name'];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     *
+     * @return array<string, mixed>
+     */
+    private function extractToolCallArguments(array $item): array
+    {
+        foreach (['arguments', 'input'] as $key) {
+            if (!isset($item[$key])) {
+                continue;
+            }
+
+            if (\is_array($item[$key])) {
+                return $item[$key];
+            }
+
+            if (\is_string($item[$key]) && '' !== $item[$key]) {
+                try {
+                    $decoded = json_decode($item[$key], true, 512, \JSON_THROW_ON_ERROR);
+                } catch (\JsonException) {
+                    continue;
+                }
+
+                if (\is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+        }
+
+        $function = $item['function'] ?? null;
+        if (\is_array($function)) {
+            return $this->extractToolCallArguments($function);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array{id: string, name: string, arguments: array<string, mixed>} $started
+     * @param array{id: string, name: string, arguments: array<string, mixed>} $completed
+     *
+     * @return array{id: string, name: string, arguments: array<string, mixed>}
+     */
+    private function mergeStartedToolCall(array $started, array $completed): array
+    {
+        if ([] === $completed['arguments']) {
+            $completed['arguments'] = $started['arguments'];
+        }
+
+        return $completed;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param list<string>         $keys
+     */
+    private function extractString(array $data, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = $data[$key] ?? null;
+            if (\is_string($value) && '' !== $value) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 }

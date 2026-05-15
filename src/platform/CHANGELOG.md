@@ -9,6 +9,7 @@ CHANGELOG
  * [BC BREAK] Rework `AssistantMessage` to hold `ContentInterface` parts (variadic constructor) instead of a single string content plus separate tool-call/thinking fields. Adds `Message\Content\Thinking`, `Message\Content\ExecutableCode`, and `Message\Content\CodeExecution` content classes, and makes `Result\ToolCall` implement `ContentInterface`. `Message::ofAssistant()` accepts strings, `ContentInterface`, and `ResultInterface` values, mapping `TextResult`/`ThinkingResult`/`ToolCallResult`/`ExecutableCodeResult`/`CodeExecutionResult`/`MultiPartResult` to their content equivalents; result types without a known mapping throw `InvalidArgumentException` so unhandled cases surface instead of being silently dropped.
  * Add optional `signature` field to `Message\Content\Text`, `Result\ToolCall`, and `Result\TextResult` for provider-scoped signatures (currently used by Gemini/Vertex AI for `thoughtSignature` round-trip).
  * Memoize conversion failures in `DeferredResult::getResult()` so subsequent calls re-throw the cached exception instead of re-running the converter
+ * Surface tool calls executed by the `ClaudeCode` and `Codex` CLI bridges as `ToolCallResult` parts of a `MultiPartResult`, mirroring the inference-API behavior of the Anthropic and Gemini bridges
 
 0.8
 ---

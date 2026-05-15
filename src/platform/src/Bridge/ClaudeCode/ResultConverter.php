@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\ClaudeCode;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -22,6 +23,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
@@ -57,7 +59,22 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Claude Code CLI result does not contain a "result" field.');
         }
 
-        return new TextResult($data['result']);
+        $results = [];
+        foreach ($data['tool_calls'] ?? [] as $toolCall) {
+            $results[] = new ToolCallResult([new ToolCall(
+                $toolCall['id'],
+                $toolCall['name'],
+                $toolCall['arguments'] ?? [],
+            )]);
+        }
+
+        $results[] = new TextResult($data['result']);
+
+        if (1 === \count($results)) {
+            return $results[0];
+        }
+
+        return new MultiPartResult($results);
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface

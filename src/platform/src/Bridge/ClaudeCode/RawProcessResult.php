@@ -22,6 +22,8 @@ use Symfony\Component\Process\Process;
  */
 final class RawProcessResult implements RawResultInterface
 {
+    private const TOOL_CALLS = 'tool_calls';
+
     public function __construct(
         private readonly Process $process,
     ) {
@@ -43,6 +45,7 @@ final class RawProcessResult implements RawResultInterface
 
         $output = $this->process->getOutput();
         $result = [];
+        $events = [];
 
         foreach (explode(\PHP_EOL, $output) as $line) {
             $line = trim($line);
@@ -57,9 +60,16 @@ final class RawProcessResult implements RawResultInterface
                 continue;
             }
 
+            $events[] = $decoded;
+
             if (isset($decoded['type']) && 'result' === $decoded['type']) {
                 $result = $decoded;
             }
+        }
+
+        $toolCalls = $this->extractToolCalls($events);
+        if ([] !== $toolCalls && [] !== $result) {
+            $result[self::TOOL_CALLS] = $toolCalls;
         }
 
         return $result;
@@ -128,5 +138,124 @@ final class RawProcessResult implements RawResultInterface
     public function getObject(): Process
     {
         return $this->process;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $events
+     *
+     * @return list<array{id: string, name: string, arguments: array<string, mixed>}>
+     */
+    private function extractToolCalls(array $events): array
+    {
+        $toolCalls = [];
+        $started = [];
+        $seenIds = [];
+
+        foreach ($events as $index => $event) {
+            $type = $event['type'] ?? null;
+            if ('assistant' === $type) {
+                $message = $event['message'] ?? null;
+                if (\is_array($message)) {
+                    $this->collectCompletedToolUsesFromMessage($toolCalls, $seenIds, $message);
+                }
+
+                continue;
+            }
+
+            if ('stream_event' !== $type) {
+                continue;
+            }
+
+            $streamEvent = $event['event'] ?? null;
+            if (!\is_array($streamEvent)) {
+                continue;
+            }
+
+            $streamType = $streamEvent['type'] ?? null;
+            $key = (string) ($streamEvent['index'] ?? $index);
+
+            if ('content_block_start' === $streamType) {
+                $contentBlock = $streamEvent['content_block'] ?? null;
+                if (\is_array($contentBlock) && 'tool_use' === ($contentBlock['type'] ?? null)) {
+                    $started[$key] = [
+                        'id' => isset($contentBlock['id']) && \is_string($contentBlock['id']) ? $contentBlock['id'] : '',
+                        'name' => (string) ($contentBlock['name'] ?? ''),
+                        'arguments' => \is_array($contentBlock['input'] ?? null) ? $contentBlock['input'] : [],
+                        'partial_input' => '',
+                    ];
+                }
+
+                continue;
+            }
+
+            if ('content_block_delta' === $streamType && isset($started[$key])) {
+                $delta = $streamEvent['delta'] ?? null;
+                if (\is_array($delta) && 'input_json_delta' === ($delta['type'] ?? null) && \is_string($delta['partial_json'] ?? null)) {
+                    $started[$key]['partial_input'] .= $delta['partial_json'];
+                }
+
+                continue;
+            }
+
+            if ('content_block_stop' === $streamType && isset($started[$key])) {
+                $toolCall = $started[$key];
+                unset($started[$key]);
+
+                if ([] === $toolCall['arguments'] && '' !== $toolCall['partial_input']) {
+                    try {
+                        $decoded = json_decode($toolCall['partial_input'], true, 512, \JSON_THROW_ON_ERROR);
+                    } catch (\JsonException) {
+                        $decoded = null;
+                    }
+
+                    if (\is_array($decoded)) {
+                        $toolCall['arguments'] = $decoded;
+                    }
+                }
+
+                unset($toolCall['partial_input']);
+
+                if ('' !== $toolCall['name'] && '' !== $toolCall['id']) {
+                    $toolCalls[] = $toolCall;
+                    $seenIds[$toolCall['id']] = true;
+                }
+            }
+        }
+
+        return $toolCalls;
+    }
+
+    /**
+     * @param list<array{id: string, name: string, arguments: array<string, mixed>}> $toolCalls
+     * @param array<string, true>                                                    $seenIds
+     * @param array<string, mixed>                                                   $message
+     */
+    private function collectCompletedToolUsesFromMessage(array &$toolCalls, array &$seenIds, array $message): void
+    {
+        $content = $message['content'] ?? null;
+        if (!\is_array($content)) {
+            return;
+        }
+
+        foreach ($content as $block) {
+            if (!\is_array($block) || 'tool_use' !== ($block['type'] ?? null) || !\is_string($block['name'] ?? null) || '' === $block['name']) {
+                continue;
+            }
+
+            $id = isset($block['id']) && \is_string($block['id']) ? $block['id'] : '';
+            if ('' === $id || isset($seenIds[$id])) {
+                continue;
+            }
+
+            /** @var array<string, mixed> $arguments */
+            $arguments = \is_array($block['input'] ?? null) ? $block['input'] : [];
+            $toolCalls[] = [
+                'id' => $id,
+                'name' => $block['name'],
+                'arguments' => $arguments,
+            ];
+
+            $seenIds[$id] = true;
+        }
     }
 }
