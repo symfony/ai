@@ -7,6 +7,7 @@ CHANGELOG
  * Add `tag` filter parameter to `symfony-services` MCP tool to filter services by DI tag name (e.g. `kernel.event_listener`, `twig.extension`)
  * Add `channel` filter parameter to `monolog-tail` MCP tool for consistency with `monolog-search`
  * Add `TimeCollectorFormatter` for the Symfony profiler `time` collector, exposing request duration, initialization time, and stopwatch events sorted by duration
+ * Add `LoggerCollectorFormatter` for the Symfony profiler `logger` collector, exposing error/warning/deprecation/scream counts and individual log entries
  * Add `MemoryCollectorFormatter` for the Symfony profiler `memory` collector, exposing peak memory usage, memory limit, and usage percentage
  * Add `symfony-service-detail` MCP tool to retrieve full details of a single DI container service by its exact ID (class, tags, method calls, factory)
  * Add `ResourcesReadCommand` (`mcp:resources:read`) to read MCP resources by URI from the CLI
