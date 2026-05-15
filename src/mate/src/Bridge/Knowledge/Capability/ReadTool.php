@@ -22,6 +22,15 @@ use Symfony\AI\Mate\Encoding\ResponseEncoder;
  */
 final class ReadTool
 {
+    /**
+     * Caps to keep MCP responses bounded. The total budget is the soft ceiling
+     * for the whole page; per-section caps protect against single huge
+     * sections eating the entire budget.
+     */
+    private const MAX_SECTIONS = 50;
+    private const MAX_SECTION_CONTENT = 8000;
+    private const MAX_TOTAL_CONTENT = 60000;
+
     public function __construct(
         private ProviderRegistry $registry,
         private KnowledgeCache $cache,
@@ -40,15 +49,64 @@ final class ReadTool
 
         $pageTitle = $chunks[0]->getPageTitle();
 
-        return ResponseEncoder::encode([
+        $totalSections = \count($chunks);
+        $emittedSections = [];
+        $totalContent = 0;
+        $sectionTruncated = false;
+        $pageTruncated = false;
+
+        foreach ($chunks as $index => $chunk) {
+            if ($index >= self::MAX_SECTIONS) {
+                $pageTruncated = true;
+                break;
+            }
+
+            $content = $chunk->getContent();
+            if (\strlen($content) > self::MAX_SECTION_CONTENT) {
+                $content = substr($content, 0, self::MAX_SECTION_CONTENT);
+                $sectionTruncated = true;
+            }
+
+            $totalContent += \strlen($content);
+            if ($totalContent > self::MAX_TOTAL_CONTENT) {
+                $overflow = $totalContent - self::MAX_TOTAL_CONTENT;
+                $content = substr($content, 0, max(0, \strlen($content) - $overflow));
+                $emittedSections[] = $this->toArray($chunk, $content);
+                $pageTruncated = true;
+                break;
+            }
+
+            $emittedSections[] = $this->toArray($chunk, $content);
+        }
+
+        $payload = [
             'provider' => $provider,
             'path' => $path,
             'title' => $pageTitle,
-            'sections' => array_map(static fn (PageChunk $chunk) => [
-                'title' => $chunk->getSectionTitle(),
-                'depth' => $chunk->getDepth(),
-                'content' => $chunk->getContent(),
-            ], $chunks),
-        ]);
+            'sections' => $emittedSections,
+        ];
+
+        if ($pageTruncated || $sectionTruncated) {
+            $payload['truncated'] = [
+                'page' => $pageTruncated,
+                'sections' => $sectionTruncated,
+                'total_sections' => $totalSections,
+                'returned_sections' => \count($emittedSections),
+            ];
+        }
+
+        return ResponseEncoder::encode($payload);
+    }
+
+    /**
+     * @return array{title: string, depth: int, content: string}
+     */
+    private function toArray(PageChunk $chunk, string $content): array
+    {
+        return [
+            'title' => $chunk->getSectionTitle(),
+            'depth' => $chunk->getDepth(),
+            'content' => $content,
+        ];
     }
 }

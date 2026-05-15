@@ -17,6 +17,7 @@ use Symfony\AI\Mate\Bridge\Knowledge\Service\ChunkBuilder;
 use Symfony\AI\Mate\Bridge\Knowledge\Service\GitFetcher;
 use Symfony\AI\Mate\Bridge\Knowledge\Service\KeywordSearcher;
 use Symfony\AI\Mate\Bridge\Knowledge\Service\KnowledgeCache;
+use Symfony\AI\Mate\Bridge\Knowledge\Service\SearcherInterface;
 use Symfony\AI\Mate\Bridge\Knowledge\Service\TocBuilder;
 use Symfony\AI\Store\Document\Loader\RstLoader;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -48,6 +49,7 @@ return static function (ContainerConfigurator $configurator) {
         ]);
 
     $services->set(KeywordSearcher::class);
+    $services->alias(SearcherInterface::class, KeywordSearcher::class);
 
     $services->set(ProviderRegistry::class)
         ->args([tagged_iterator('ai_mate.knowledge_provider')]);
@@ -68,6 +70,6 @@ return static function (ContainerConfigurator $configurator) {
         ->args([
             service(ProviderRegistry::class),
             service(KnowledgeCache::class),
-            service(KeywordSearcher::class),
+            service(SearcherInterface::class),
         ]);
 };

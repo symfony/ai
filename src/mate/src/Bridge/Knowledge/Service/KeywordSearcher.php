@@ -21,7 +21,7 @@ use Symfony\AI\Mate\Bridge\Knowledge\Model\PageChunk;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-final class KeywordSearcher
+final class KeywordSearcher implements SearcherInterface
 {
     private const SNIPPET_RADIUS = 100;
 

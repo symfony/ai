@@ -1,6 +1,11 @@
 ## Knowledge Bridge
 
-Crawl official documentation through MCP tools instead of guessing from training data.
+Structured access to official documentation through MCP tools. Browse the
+table of contents, read specific pages, and run substring search across
+cached content — instead of guessing from training data.
+
+This is **not** semantic / RAG search. Matches are case-insensitive substring
+hits.
 
 | Tool               | Purpose                                                                                       |
 |--------------------|-----------------------------------------------------------------------------------------------|
@@ -20,3 +25,5 @@ Crawl official documentation through MCP tools instead of guessing from training
 - The first call for a provider clones the source repository into the local Mate cache. Expect a delay on cold start.
 - Subsequent calls are served from the cache.
 - The cache is automatically refreshed (re-pulled and re-indexed) once it is older than the configured TTL (default: 24 hours).
+- `knowledge-search` caps results at 50 regardless of the requested `limit`.
+- `knowledge-read` truncates very large pages and reports `truncated: true` in the response.

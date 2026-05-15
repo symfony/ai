@@ -90,8 +90,19 @@ return static function (ContainerConfigurator $configurator) {
 
     // Knowledge provider (optional - only when the Knowledge bridge is installed)
     if (interface_exists(DocsProviderInterface::class)) {
+        // `docs_branch: null` lets SymfonyDocsProvider auto-detect the
+        // major.minor branch from the host application's installed Symfony
+        // (Composer\InstalledVersions). Set it explicitly to pin a branch.
+        $configurator->parameters()
+            ->set('ai_mate_symfony.docs_repository_url', 'https://github.com/symfony/symfony-docs.git')
+            ->set('ai_mate_symfony.docs_branch', null);
+
         $services->set(SymfonyDocsProvider::class)
-            ->args([service(GitFetcher::class)])
+            ->args([
+                service(GitFetcher::class),
+                '%ai_mate_symfony.docs_repository_url%',
+                '%ai_mate_symfony.docs_branch%',
+            ])
             ->tag('ai_mate.knowledge_provider');
     }
 };

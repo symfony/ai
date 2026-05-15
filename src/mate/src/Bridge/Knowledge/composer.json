@@ -1,6 +1,6 @@
 {
     "name": "symfony/ai-knowledge-mate-extension",
-    "description": "Knowledge bridge for AI Mate - exposes documentation sources (RST, Markdown, ...) as crawlable MCP tools",
+    "description": "Knowledge bridge for AI Mate - structured access to official documentation as MCP tools (browse TOC, read pages, substring search; no semantic/RAG search)",
     "license": "MIT",
     "type": "symfony-ai-mate",
     "keywords": [

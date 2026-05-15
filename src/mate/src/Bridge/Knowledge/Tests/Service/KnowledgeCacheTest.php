@@ -114,6 +114,39 @@ final class KnowledgeCacheTest extends TestCase
         $this->assertSame($originalMtime, filemtime($tocFile));
     }
 
+    public function testEnsureWritesMetadataFile()
+    {
+        $cache = $this->createCache();
+        $provider = $this->createProvider();
+
+        $cache->ensure($provider);
+
+        $metadataFile = $this->cacheDir.'/fixture/metadata.json';
+        $this->assertFileExists($metadataFile);
+
+        $contents = file_get_contents($metadataFile);
+        $this->assertNotFalse($contents);
+        $metadata = json_decode($contents, true);
+
+        $this->assertSame('fixture', $metadata['provider']);
+        $this->assertIsInt($metadata['chunk_count']);
+        $this->assertGreaterThan(0, $metadata['chunk_count']);
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $metadata['synced_at']);
+        $this->assertArrayHasKey('revision', $metadata);
+        $this->assertArrayHasKey('docs_dir', $metadata);
+    }
+
+    public function testJsonArtifactsAreWrittenAtomicallyWithoutLeftoverTempFiles()
+    {
+        $cache = $this->createCache();
+        $provider = $this->createProvider();
+
+        $cache->ensure($provider);
+
+        $files = glob($this->cacheDir.'/fixture/*.tmp.*');
+        $this->assertSame([], $files, 'No temp files should be left behind after atomic writes.');
+    }
+
     public function testTtlOfZeroDisablesAutoRebuild()
     {
         $cache = new KnowledgeCache($this->cacheDir, new TocBuilder(), new ChunkBuilder(), ttlSeconds: 0);

@@ -11,7 +11,9 @@
 
 namespace Symfony\AI\Mate\Bridge\Knowledge\Tests\Provider;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Mate\Bridge\Knowledge\Exception\InvalidProviderNameException;
 use Symfony\AI\Mate\Bridge\Knowledge\Exception\ProviderNotFoundException;
 use Symfony\AI\Mate\Bridge\Knowledge\Provider\ProviderRegistry;
 use Symfony\AI\Mate\Bridge\Knowledge\Tests\Fixtures\FixtureProvider;
@@ -48,5 +50,29 @@ final class ProviderRegistryTest extends TestCase
         $registry = new ProviderRegistry([$a, $b]);
 
         $this->assertSame(['a' => $a, 'b' => $b], $registry->all());
+    }
+
+    #[DataProvider('invalidNameProvider')]
+    public function testRegistrationRejectsUnsafeProviderNames(string $name)
+    {
+        $this->expectException(InvalidProviderNameException::class);
+
+        new ProviderRegistry([new FixtureProvider('/tmp', $name)]);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function invalidNameProvider(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'path traversal' => ['../escape'];
+        yield 'slash' => ['foo/bar'];
+        yield 'backslash' => ['foo\\bar'];
+        yield 'uppercase' => ['Symfony'];
+        yield 'shell metacharacter' => ['foo;rm'];
+        yield 'leading dash' => ['-foo'];
+        yield 'leading underscore' => ['_foo'];
+        yield 'null byte' => ["foo\0bar"];
     }
 }
