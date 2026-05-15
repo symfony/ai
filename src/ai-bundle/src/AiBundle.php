@@ -113,8 +113,9 @@ use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
-use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
+use Symfony\AI\Store\Bridge\Postgres\Distance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
+use Symfony\AI\Store\Bridge\Postgres\StoreFactory as PostgresStoreFactory;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
@@ -1807,12 +1808,15 @@ final class AiBundle extends AbstractBundle
                 $definition = new Definition(PostgresStore::class);
 
                 if (\array_key_exists('dbal_connection', $store)) {
-                    $definition->setFactory([PostgresStore::class, 'fromDbal']);
-                    $arguments = [
-                        new Reference($store['dbal_connection']),
-                        $store['table_name'] ?? $name,
-                        $store['vector_field'],
-                    ];
+                    $definition
+                        ->setFactory([PostgresStoreFactory::class, 'createStoreFromDbal'])
+                        ->setArguments([
+                            new Reference($store['dbal_connection']),
+                            $store['table_name'] ?? $name,
+                            $store['vector_field'],
+                            Distance::tryFrom($store['distance']),
+                            $store['lang'],
+                        ]);
                 } else {
                     $pdo = new Definition(\PDO::class);
                     $pdo->setArguments([
@@ -1821,18 +1825,19 @@ final class AiBundle extends AbstractBundle
                         $store['password'] ?? null,
                     ]);
 
-                    $arguments = [
-                        $pdo,
-                        $store['table_name'] ?? $name,
-                        $store['vector_field'],
-                    ];
+                    $definition
+                        ->setFactory([PostgresStoreFactory::class, 'createStoreFromPDO'])
+                        ->setArguments([
+                            $pdo,
+                            $store['table_name'] ?? $name,
+                            $store['vector_field'],
+                            Distance::tryFrom($store['distance']),
+                            $store['lang'],
+                        ]);
                 }
-
-                $arguments[3] = PostgresDistance::from($store['distance']);
 
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');

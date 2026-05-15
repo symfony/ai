@@ -16,9 +16,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Postgres\Distance;
 use Symfony\AI\Store\Bridge\Postgres\Store;
+use Symfony\AI\Store\Bridge\Postgres\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -462,7 +463,7 @@ final class StoreTest extends TestCase
     {
         $pdo = $this->createMock(\PDO::class);
 
-        $store = Store::fromPdo($pdo, 'test_table', 'vector_field');
+        $store = StoreFactory::createStoreFromPDO($pdo, 'test_table', 'vector_field');
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -476,23 +477,9 @@ final class StoreTest extends TestCase
             ->method('getNativeConnection')
             ->willReturn($pdo);
 
-        $store = Store::fromDbal($connection, 'test_table', 'vector_field');
+        $store = StoreFactory::createStoreFromDbal($connection, 'test_table', 'vector_field');
 
         $this->assertInstanceOf(Store::class, $store);
-    }
-
-    public function testFromDbalWithNonPdoDriverThrowsException()
-    {
-        $connection = $this->createMock(Connection::class);
-
-        $connection->expects($this->once())
-            ->method('getNativeConnection')
-            ->willReturn(new \stdClass());
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Only DBAL connections using PDO driver are supported.');
-
-        Store::fromDbal($connection, 'test_table');
     }
 
     public function testQueryWithNullMetadata()
@@ -880,6 +867,12 @@ final class StoreTest extends TestCase
 
     private function normalizeQuery(string $query): string
     {
-        return trim(preg_replace('/\s+/', ' ', $query));
+        $replacedQuery = preg_replace('/\s+/', ' ', $query);
+
+        if (null === $replacedQuery) {
+            throw new RuntimeException('Query cannot be normalized.');
+        }
+
+        return trim($replacedQuery);
     }
 }

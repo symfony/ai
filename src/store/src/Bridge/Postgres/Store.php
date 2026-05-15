@@ -11,12 +11,10 @@
 
 namespace Symfony\AI\Store\Bridge\Postgres;
 
-use Doctrine\DBAL\Connection;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
-use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -39,6 +37,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $tableName,
         private readonly string $vectorFieldName = 'embedding',
         private readonly Distance $distance = Distance::L2,
+        private readonly string $lang = 'english',
     ) {
     }
 
@@ -82,30 +81,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function drop(array $options = []): void
     {
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
-    }
-
-    public static function fromPdo(
-        \PDO $connection,
-        string $tableName,
-        string $vectorFieldName = 'embedding',
-        Distance $distance = Distance::L2,
-    ): self {
-        return new self($connection, $tableName, $vectorFieldName, $distance);
-    }
-
-    public static function fromDbal(
-        Connection $connection,
-        string $tableName,
-        string $vectorFieldName = 'embedding',
-        Distance $distance = Distance::L2,
-    ): self {
-        $pdo = $connection->getNativeConnection();
-
-        if (!$pdo instanceof \PDO) {
-            throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
-        }
-
-        return self::fromPdo($pdo, $tableName, $vectorFieldName, $distance);
     }
 
     public function add(VectorDocument|array $documents): void
@@ -250,12 +225,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         // Build OR-combined tsquery for multiple texts
         foreach ($texts as $i => $text) {
             $paramName = 'search_text_'.$i;
-            $tsqueryParts[] = "plainto_tsquery('english', :{$paramName})";
+            $tsqueryParts[] = \sprintf("plainto_tsquery('%s', :%s)", $this->lang, $paramName);
             $params[$paramName] = $text;
         }
 
         $tsqueryExpression = implode(' || ', $tsqueryParts); // OR operator in PostgreSQL
-        $tsvectorExpression = "to_tsvector('english', metadata->>'_text')";
+        $tsvectorExpression = \sprintf("to_tsvector('%s', metadata->>'_text')", $this->lang);
 
         $sql = \sprintf(<<<SQL
             SELECT id, %s AS embedding, metadata,
@@ -309,12 +284,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         // Build OR-combined tsquery for multiple texts
         foreach ($texts as $i => $text) {
             $paramName = 'search_text_'.$i;
-            $tsqueryParts[] = "plainto_tsquery('english', :{$paramName})";
+            $tsqueryParts[] = \sprintf("plainto_tsquery('%s', :%s)", $this->lang, $paramName);
             $params[$paramName] = $text;
         }
 
         $tsqueryExpression = '('.implode(' || ', $tsqueryParts).')'; // OR operator in PostgreSQL
-        $tsvectorExpression = "to_tsvector('english', metadata->>'_text')";
+        $tsvectorExpression = \sprintf("to_tsvector('%s', metadata->>'_text')", $this->lang);
 
         $where = \sprintf('WHERE %s @@ %s', $tsvectorExpression, $tsqueryExpression);
 
@@ -371,7 +346,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @return float[]
+     * @return list<float>
      */
     private function fromPgvector(string $vector): array
     {
