@@ -18,9 +18,11 @@ use Symfony\AI\Platform\Bridge\Codex\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -53,6 +55,39 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello, World!', $result->getContent());
+    }
+
+    public function testConvertReturnsMultiPartResultWithToolCalls()
+    {
+        $converter = new ResultConverter();
+        $rawResult = new InMemoryRawResult([
+            'type' => 'item.completed',
+            'item' => ['type' => 'agent_message', 'text' => 'Hello, World!'],
+            'tool_calls' => [
+                [
+                    'id' => 'call-1',
+                    'name' => 'symfony_logs',
+                    'arguments' => ['channel' => 'app'],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(ToolCallResult::class, $parts[0]);
+        $toolCalls = $parts[0]->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call-1', $toolCalls[0]->getId());
+        $this->assertSame('symfony_logs', $toolCalls[0]->getName());
+        $this->assertSame(['channel' => 'app'], $toolCalls[0]->getArguments());
+
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('Hello, World!', $parts[1]->getContent());
     }
 
     public function testConvertThrowsOnEmptyData()

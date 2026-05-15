@@ -62,6 +62,83 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame('Final answer', $data['item']['text']);
     }
 
+    public function testGetDataCollectsToolCalls()
+    {
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode(['type' => 'item.started', 'item' => ['id' => 'call-1', 'type' => 'mcp_tool_call', 'name' => 'symfony_logs', 'arguments' => ['channel' => 'app']]]),
+            json_encode(['type' => 'item.completed', 'item' => ['id' => 'call-1', 'type' => 'mcp_tool_call', 'name' => 'symfony_logs', 'arguments' => ['channel' => 'app']]]),
+            json_encode(['type' => 'item.completed', 'item' => ['type' => 'agent_message', 'text' => 'Final answer']]),
+        ]);
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', escapeshellarg($jsonOutput))]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+        $data = $rawResult->getData();
+
+        $this->assertCount(1, $data['tool_calls']);
+        $this->assertSame('call-1', $data['tool_calls'][0]['id']);
+        $this->assertSame('symfony_logs', $data['tool_calls'][0]['name']);
+        $this->assertSame(['channel' => 'app'], $data['tool_calls'][0]['arguments']);
+    }
+
+    public function testGetDataCollectsMcpToolCallsThatUseToolField()
+    {
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode(['type' => 'item.started', 'item' => ['id' => 'call-21', 'type' => 'mcp_tool_call', 'server' => 'symfony-ai-mate', 'tool' => 'list_mcp_resources', 'arguments' => ['server' => 'symfony-ai-mate']]]),
+            json_encode(['type' => 'item.completed', 'item' => ['id' => 'call-21', 'type' => 'mcp_tool_call', 'server' => 'symfony-ai-mate', 'tool' => 'list_mcp_resources', 'arguments' => ['server' => 'symfony-ai-mate']]]),
+            json_encode(['type' => 'item.completed', 'item' => ['type' => 'agent_message', 'text' => 'Final answer']]),
+        ]);
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', escapeshellarg($jsonOutput))]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+        $data = $rawResult->getData();
+
+        $this->assertCount(1, $data['tool_calls']);
+        $this->assertSame('call-21', $data['tool_calls'][0]['id']);
+        $this->assertSame('list_mcp_resources', $data['tool_calls'][0]['name']);
+        $this->assertSame(['server' => 'symfony-ai-mate'], $data['tool_calls'][0]['arguments']);
+    }
+
+    public function testGetDataCollectsEventMessageMcpToolCalls()
+    {
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode([
+                'type' => 'event_msg',
+                'timestamp' => '2026-04-28T12:06:44.510Z',
+                'payload' => [
+                    'type' => 'mcp_tool_call_end',
+                    'call_id' => 'call-I1oCGF',
+                    'invocation' => [
+                        'server' => 'symfony_ai_mate_local',
+                        'tool' => 'monolog-search',
+                        'arguments' => ['term' => 'service', 'level' => 'ERROR', 'limit' => 20],
+                    ],
+                    'result' => [
+                        'Ok' => [
+                            'content' => [['type' => 'text', 'text' => '{"entries":[]}']],
+                            'isError' => false,
+                        ],
+                    ],
+                ],
+            ]),
+            json_encode(['type' => 'item.completed', 'item' => ['type' => 'agent_message', 'text' => 'Final answer']]),
+        ]);
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', escapeshellarg($jsonOutput))]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+        $data = $rawResult->getData();
+
+        $this->assertCount(1, $data['tool_calls']);
+        $this->assertSame('call-I1oCGF', $data['tool_calls'][0]['id']);
+        $this->assertSame('monolog-search', $data['tool_calls'][0]['name']);
+        $this->assertSame(['term' => 'service', 'level' => 'ERROR', 'limit' => 20], $data['tool_calls'][0]['arguments']);
+    }
+
     public function testGetDataReturnsEmptyArrayWhenNoAgentMessage()
     {
         $jsonOutput = implode(\PHP_EOL, [

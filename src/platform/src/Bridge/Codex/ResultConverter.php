@@ -13,11 +13,14 @@ namespace Symfony\AI\Platform\Bridge\Codex;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
@@ -55,7 +58,22 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Codex CLI result does not contain a text field.');
         }
 
-        return new TextResult($text);
+        $results = [];
+        foreach ($data['tool_calls'] ?? [] as $toolCall) {
+            $results[] = new ToolCallResult([new ToolCall(
+                $toolCall['id'],
+                $toolCall['name'],
+                $toolCall['arguments'] ?? [],
+            )]);
+        }
+
+        $results[] = new TextResult($text);
+
+        if (1 === \count($results)) {
+            return $results[0];
+        }
+
+        return new MultiPartResult($results);
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
