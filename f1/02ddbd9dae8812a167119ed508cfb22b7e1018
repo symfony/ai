@@ -1,0 +1,14 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-14T22:39:37Z
+
+okay, that's interesting - especially how to compare as being an inference api with built-in tool calls, like gemini or claude => it should be a part of the result - not metadata.
+
+see Anthropic bridge:
+https://github.com/symfony/ai/blob/ac2c6b5a74070a65e7aebe299bc7c7aa3b6be523/src/platform/src/Bridge/Anthropic/ResultConverter.php#L96-L112
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-05-15T19:19:51Z
+
+@chr-hertel fixed and rebased
