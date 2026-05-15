@@ -54,10 +54,17 @@ class ModelClient implements ModelClientInterface
         // endpoints, which reject unknown request body fields with a 400 error.
         unset($options['cacheRetention']);
 
+        // Encode the body explicitly with JSON_UNESCAPED_SLASHES instead of relying on the
+        // HttpClient "json" option: its encoder escapes forward slashes, so a namespaced
+        // model name like "qwen/qwen3.5-4b" goes on the wire as "qwen\/qwen3.5-4b", which
+        // some OpenAI-compatible backends fail to match. The remaining flags mirror
+        // Symfony's HttpClientTrait::jsonEncode() defaults.
+        $body = json_encode(array_merge($options, $payload), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_HEX_TAG | \JSON_HEX_APOS | \JSON_HEX_AMP | \JSON_HEX_QUOT | \JSON_PRESERVE_ZERO_FRACTION);
+
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, $payload),
+            'body' => $body,
         ]));
     }
 }

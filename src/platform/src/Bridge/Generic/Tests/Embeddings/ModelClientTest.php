@@ -84,6 +84,19 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new EmbeddingsModel('text-embedding-3-small'), ['text1', 'text2', 'text3']);
     }
 
+    public function testItDoesNotEscapeForwardSlashesInModelName()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertStringContainsString('"model":"qwen/qwen3-embedding"', $options['body']);
+            self::assertStringNotContainsString('qwen\/qwen3-embedding', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-api-key');
+        $modelClient->request(new EmbeddingsModel('qwen/qwen3-embedding'), 'test text');
+    }
+
     #[TestWith(['https://api.inference.eu', 'https://api.inference.eu/v1/embeddings'])]
     #[TestWith(['https://api.inference.com', 'https://api.inference.com/v1/embeddings'])]
     public function testItUsesCorrectBaseUrl(string $baseUrl, string $expectedUrl)
