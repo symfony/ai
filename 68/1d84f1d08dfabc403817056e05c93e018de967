@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by stof at 2026-04-28T19:05:17Z
+
+btw, changing the phpstan level should probably be a dedicated PR instead of hiding that inside a PR adding a feature (and then getting issues due to other parts of the code changing in ways where phpstan level 8 complains while the review of the feature takes time)
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-04-29T07:43:41Z
+
+The only change introduced by PHPStan at level `8` is the following [here](https://github.com/symfony/ai/pull/1993/changes#diff-1f6e652d903a7b110e3ff32bfd8ae9e1430c0c82a50b35310e20b2fc9582e14eR868):
+
+```php
+if (null === $replacedQuery) {
+    throw new RuntimeException('Query cannot be normalized.');
+}
+```
