@@ -370,6 +370,88 @@ class AgentProcessorTest extends TestCase
         $this->assertSame('bar', $metadata->get('foo'));
     }
 
+    public function testStreamedToolCallWithoutPrecedingTextDoesNotAddEmptyAssistantMessage()
+    {
+        $toolCall = new ToolCall('call_empty', 'tool_empty', ['foo' => 'bar']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        // Streamed response that issues a tool call without any preceding text delta.
+        $result = new StreamResult((static function () use ($toolCall) {
+            yield new ToolCallComplete([$toolCall]);
+        })());
+
+        $capturedMessages = null;
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(static function (MessageBag $messages) use (&$capturedMessages) {
+                $capturedMessages = $messages;
+
+                return new TextResult('Final response');
+            });
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, new MessageBag());
+        $processor->processOutput($output);
+        iterator_to_array($output->getResult()->getContent());
+
+        $this->assertNotNull($capturedMessages);
+        foreach ($capturedMessages->getMessages() as $message) {
+            if ($message instanceof AssistantMessage && !$message->hasToolCalls() && '' === (string) $message->asText()) {
+                $this->fail('An empty assistant message must not be added to the message bag when the streamed tool call has no preceding text.');
+            }
+        }
+    }
+
+    public function testStreamedToolCallWithPrecedingTextKeepsAssistantMessage()
+    {
+        $toolCall = new ToolCall('call_text', 'tool_text', ['foo' => 'bar']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $result = new StreamResult((static function () use ($toolCall) {
+            yield new TextDelta('Let me ');
+            yield new TextDelta('check that.');
+            yield new ToolCallComplete([$toolCall]);
+        })());
+
+        $capturedMessages = null;
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(static function (MessageBag $messages) use (&$capturedMessages) {
+                $capturedMessages = $messages;
+
+                return new TextResult('Final response');
+            });
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, new MessageBag());
+        $processor->processOutput($output);
+        iterator_to_array($output->getResult()->getContent());
+
+        $this->assertNotNull($capturedMessages);
+        $textMessages = array_filter(
+            $capturedMessages->getMessages(),
+            static fn ($message) => $message instanceof AssistantMessage && !$message->hasToolCalls(),
+        );
+        $this->assertCount(1, $textMessages);
+        $this->assertSame('Let me check that.', reset($textMessages)->asText());
+    }
+
     public function testUsageMetadataGetsPropagatedInStreaming()
     {
         $toolCall = new ToolCall('call_meta_1', 'tool_meta', ['foo' => 'bar']);
