@@ -150,6 +150,46 @@ final class MessageBagTest extends TestCase
         $this->assertSame('My amazing system prompt.', $newMessageBagMessage->getContent());
     }
 
+    public function testPrependMutatesInPlace()
+    {
+        $messageBag = new MessageBag(
+            Message::ofAssistant('It is time to sleep.'),
+            Message::ofUser('Hello, world!'),
+        );
+
+        $messageBag->prepend(Message::forSystem('My amazing system prompt.'));
+
+        $this->assertCount(3, $messageBag);
+
+        $first = $messageBag->getMessages()[0];
+        $this->assertInstanceOf(SystemMessage::class, $first);
+        $this->assertSame('My amazing system prompt.', $first->getContent());
+    }
+
+    public function testRemoveSystemMessageMutatesInPlace()
+    {
+        $messageBag = new MessageBag(
+            Message::forSystem('My amazing system prompt.'),
+            Message::ofAssistant('It is time to sleep.'),
+            Message::forSystem('A system prompt in the middle.'),
+            Message::ofUser('Hello, world!'),
+            Message::forSystem('Another system prompt at the end'),
+        );
+
+        $messageBag->removeSystemMessage();
+
+        $this->assertCount(2, $messageBag);
+
+        $assistantMessage = $messageBag->getMessages()[0];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertSame('It is time to sleep.', $assistantMessage->getContent());
+
+        $userMessage = $messageBag->getMessages()[1];
+        $this->assertInstanceOf(UserMessage::class, $userMessage);
+        $this->assertInstanceOf(Text::class, $userMessage->getContent()[0]);
+        $this->assertSame('Hello, world!', $userMessage->getContent()[0]->getText());
+    }
+
     public function testContainsImageReturnsFalseWithoutImage()
     {
         $messageBag = new MessageBag(

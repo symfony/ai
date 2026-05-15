@@ -45,6 +45,22 @@ final class SystemPromptInputProcessorTest extends TestCase
         $this->assertSame('This is a system prompt', $messages[0]->getContent());
     }
 
+    public function testProcessInputMutatesTheCallerMessageBagInPlace()
+    {
+        $processor = new SystemPromptInputProcessor('This is a system prompt');
+
+        $bag = new MessageBag(Message::ofUser('This is a user message'));
+        $input = new Input('gpt-4o', $bag);
+        $processor->processInput($input);
+
+        // Caller's bag must reflect the injected system message so downstream
+        // processors (e.g. tool-call output processors) can append messages
+        // visible to the caller's reference. See #1726.
+        $this->assertSame($bag, $input->getMessageBag());
+        $this->assertCount(2, $bag);
+        $this->assertInstanceOf(SystemMessage::class, $bag->getMessages()[0]);
+    }
+
     public function testProcessInputDoesNotAddSystemMessageWhenOneExists()
     {
         $processor = new SystemPromptInputProcessor('This is a system prompt');

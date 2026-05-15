@@ -73,9 +73,8 @@ final class MemoryInputProcessor implements InputProcessorInterface
             $combinedMessage .= \PHP_EOL.\PHP_EOL.'# System Prompt'.\PHP_EOL.\PHP_EOL.$systemMessage;
         }
 
-        $messages = $input->getMessageBag()
-            ->withSystemMessage(Message::forSystem($combinedMessage));
-
-        $input->setMessageBag($messages);
+        $messages = $input->getMessageBag();
+        $messages->removeSystemMessage();
+        $messages->prepend(Message::forSystem($combinedMessage));
     }
 }
