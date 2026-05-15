@@ -90,8 +90,10 @@ final class StreamListenerTest extends TestCase
             yield new ToolCallComplete([new ToolCall('test-id', 'test_tool')]);
         })());
 
+        $callbackCalled = false;
         $capturedAssistantMessage = null;
-        $handleToolCallsCallback = static function (ToolCallResult $tcr, AssistantMessage $msg) use (&$capturedAssistantMessage) {
+        $handleToolCallsCallback = static function (ToolCallResult $tcr, ?AssistantMessage $msg) use (&$callbackCalled, &$capturedAssistantMessage) {
+            $callbackCalled = true;
             $capturedAssistantMessage = $msg;
 
             return new TextResult('Immediate tool response');
@@ -103,8 +105,8 @@ final class StreamListenerTest extends TestCase
         $this->assertCount(1, $result);
         $this->assertInstanceOf(TextDelta::class, $result[0]);
         $this->assertSame('Immediate tool response', $result[0]->getText());
-        $this->assertNotNull($capturedAssistantMessage);
-        $this->assertSame('', $capturedAssistantMessage->asText());
+        $this->assertTrue($callbackCalled);
+        $this->assertNull($capturedAssistantMessage);
     }
 
     public function testGetContentWithToolCallCompleteReturningGenerator()
