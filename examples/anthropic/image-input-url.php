@@ -21,7 +21,7 @@ $platform = Factory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_c
 $messages = new MessageBag(
     Message::forSystem('You are an image analyzer bot that helps identify the content of images.'),
     Message::ofUser(
-        new ImageUrl('https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg'),
+        new ImageUrl('https://christopher-hertel.de/images/projects/llmchain.png'),
         'Describe this image.',
     ),
 );
