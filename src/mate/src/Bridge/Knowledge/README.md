@@ -1,12 +1,18 @@
 Knowledge Bridge
 ================
 
-Exposes documentation sources (RST today, more formats later) as crawlable MCP tools
-for Symfony AI Mate. Other extensions can register additional providers by tagging
-a service with `ai_mate.knowledge_provider`.
+Provides structured, offline access to official documentation as crawlable MCP
+tools for Symfony AI Mate. Agents browse the table of contents, read specific
+pages, and run substring search across cached content instead of guessing from
+training data.
 
-The Symfony bridge ships a `SymfonyDocsProvider` that becomes available when this
-package is installed alongside it.
+This bridge does **not** perform semantic / vector / RAG search. A
+`SearcherInterface` seam is provided so a future implementation can plug in
+embedding-based search without changing the tool surface.
+
+Other extensions can register additional providers by tagging a service with
+`ai_mate.knowledge_provider`. The Symfony bridge ships a `SymfonyDocsProvider`
+that becomes available when this package is installed alongside it.
 
 Resources
 ---------

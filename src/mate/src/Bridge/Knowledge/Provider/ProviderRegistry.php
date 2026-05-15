@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Knowledge\Provider;
 
+use Symfony\AI\Mate\Bridge\Knowledge\Exception\InvalidProviderNameException;
 use Symfony\AI\Mate\Bridge\Knowledge\Exception\ProviderNotFoundException;
 
 /**
@@ -18,6 +19,12 @@ use Symfony\AI\Mate\Bridge\Knowledge\Exception\ProviderNotFoundException;
  */
 final class ProviderRegistry
 {
+    /**
+     * Provider names must be safe to use as a single path component (the cache
+     * dir lives at `{cacheDir}/{provider-name}/`) and as a tool argument.
+     */
+    private const PROVIDER_NAME_PATTERN = '/^[a-z0-9][a-z0-9_-]{0,63}$/';
+
     /**
      * @var array<string, DocsProviderInterface>
      */
@@ -29,7 +36,13 @@ final class ProviderRegistry
     public function __construct(iterable $providers = [])
     {
         foreach ($providers as $provider) {
-            $this->providers[$provider->getName()] = $provider;
+            $name = $provider->getName();
+
+            if (1 !== preg_match(self::PROVIDER_NAME_PATTERN, $name)) {
+                throw new InvalidProviderNameException(\sprintf('Knowledge provider "%s" (class "%s") has an invalid name. Allowed characters: lowercase letters, digits, "-" and "_"; must start with a letter or digit; max 64 characters.', $name, $provider::class));
+            }
+
+            $this->providers[$name] = $provider;
         }
     }
 
