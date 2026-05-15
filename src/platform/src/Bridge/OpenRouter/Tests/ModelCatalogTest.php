@@ -31,12 +31,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'openrouter/auto' => [
             'openrouter/auto',
             CompletionsModel::class,
-            [
-                Capability::OUTPUT_STREAMING,
-                Capability::INPUT_TEXT,
-                Capability::OUTPUT_TEXT,
-                Capability::OUTPUT_STRUCTURED,
-            ],
+            Capability::cases(),
         ];
 
         yield 'anthropic/claude-sonnet-4.5' => [
@@ -184,7 +179,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         $this->assertInstanceOf(Model::class, $model);
         $this->assertInstanceOf(CompletionsModel::class, $model);
         $this->assertSame('deepseek/deepseek-v3.1-terminus:exacto', $model->getName());
-        $this->assertSame([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING], $model->getCapabilities());
+        $this->assertSame([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED], $model->getCapabilities());
     }
 
     /**

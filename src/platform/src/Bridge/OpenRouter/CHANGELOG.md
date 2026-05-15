@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add rerank capabilities
  * Add text-to-speech capabilities
+ * Update Static model list
 
 0.8
 ---
