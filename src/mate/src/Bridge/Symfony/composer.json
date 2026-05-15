@@ -45,15 +45,6 @@
         "symfony/var-dumper": "^7.3|^8.0",
         "symfony/web-profiler-bundle": "^7.3|^8.0"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../Knowledge",
-            "options": {
-                "symlink": false
-            }
-        }
-    ],
     "suggest": {
         "doctrine/doctrine-bundle": "Required for Doctrine database profiler formatter",
         "symfony/ai-knowledge-mate-extension": "Required to expose the Symfony documentation as a knowledge provider",
