@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-14T14:50:53Z
+
+Does it make sense to use a symlink? from one to the other instead of having two separate ones? there is already drift between them or is that intended?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-05-15T19:30:58Z
+
+Good point — instead of a symlink I went with a different approach that achieves the same goal:
+
+- `AGENTS.md` is now the canonical, general AI-agent guidance file (carries the design principles + all the component docs).
+- `CLAUDE.md` is reduced to an `@AGENTS.md` Claude Code import plus a small Claude Code-specific section.
+
+That way the shared content lives in one place and the two files can't drift, while CLAUDE.md can still carry anything that's specifically Claude Code-related.
