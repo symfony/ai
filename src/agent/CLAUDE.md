@@ -13,7 +13,7 @@ The Agent component follows a processor-based architecture:
 ### Core Classes
 - **Agent** (`src/Agent.php`): Main agent class that orchestrates input/output processing
 - **AgentInterface** (`src/AgentInterface.php`): Contract for agent implementations
-- **Chat** (`src/Chat.php`): High-level chat interface with conversation management
+- **SpeechAgent** (`src/SpeechAgent.php`): Agent variant specialized for speech interactions
 - **Input/Output** (`src/Input.php`, `src/Output.php`): Data containers for processing pipeline
 
 ### Processing Pipeline
@@ -23,8 +23,8 @@ The Agent component follows a processor-based architecture:
 ### Key Features
 - **Memory System** (`src/Memory/`): Conversation memory with embedding support
 - **Toolbox** (`src/Toolbox/`): Tool integration for function calling capabilities
-- **Structured Output** (`src/StructuredOutput/`): Support for typed responses
-- **Message Stores** (`src/Chat/MessageStore/`): Persistence for chat conversations
+- **MultiAgent** (`src/MultiAgent/`): Orchestration across multiple specialized agents
+- **Bridge** (`src/Bridge/`): Third-party tool integrations (Brave, Tavily, Wikipedia, etc.)
 
 ## Development Commands
 
@@ -84,7 +84,7 @@ The Agent component depends on:
 - Use `MockHttpClient` for HTTP mocking instead of response mocking
 - Test processors independently from the main Agent class
 - Use fixtures from `/fixtures` for multimodal content testing
-- Prefer `self::assert*` over `$this->assert*` in tests
+- Prefer `$this->assert*` over `self::assert*` in tests
 
 ## Development Notes
 

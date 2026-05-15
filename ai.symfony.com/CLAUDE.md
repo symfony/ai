@@ -31,7 +31,7 @@ There is no test suite for this application.
 
 - **Single route**: `DefaultController::homepage()` serves `/` rendering `homepage.html.twig`
 - **Asset Mapper** (not Webpack): Frontend assets managed via Symfony's importmap system (`importmap.php`). No npm/node required.
-- **Stimulus controllers** in `assets/controllers/`: `typed_controller.js` (typing animation for hero code example), `csrf_protection_controller.js`
+- **Stimulus controllers** in `assets/controllers/`: `typed_controller.js` (typing animation for hero code example), `hero_slider_controller.js`, `feature_tabs_controller.js`, `clipboard_controller.js`, `csrf_protection_controller.js`
 - **Bootstrap 5** for layout/styling, with custom CSS variables in `assets/styles/app.css` supporting light/dark theme toggle
 - **Templates**: `templates/base.html.twig` (layout), `templates/homepage.html.twig` (page content), `templates/_header.html.twig` (navigation partial)
 

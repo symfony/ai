@@ -173,7 +173,7 @@ The `mcp.json` file in the project root enables automatic MCP client detection:
   "mcpServers": {
     "symfony-ai-mate": {
       "command": "./vendor/bin/mate",
-      "args": ["serve"]
+      "args": ["serve", "--force-keep-alive"]
     }
   }
 }
@@ -183,7 +183,7 @@ For other projects, add AI Mate to your MCP client settings (e.g., `~/.claude/mc
 
 ### Custom Capability Example
 
-This demo includes a **`symfony-ai-features`** tool (see `mate/SymfonyAiFeaturesTool.php`) that analyzes the project's
+This demo includes a **`symfony-ai-features`** tool (see `mate/src/SymfonyAiFeaturesTool.php`) that analyzes the project's
 AI configuration and reports all available platforms, agents, tools, stores, and packages.
 
 **Try it in your MCP-enabled chat:**

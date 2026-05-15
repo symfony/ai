@@ -21,8 +21,8 @@ Framework for building AI agents with user interaction and task execution. Built
 ### Key Features
 - **Memory** (`src/Memory/`): Conversation memory with embeddings
 - **Toolbox** (`src/Toolbox/`): Function calling capabilities
-- **Structured Output**: Typed response support
-- **Message Stores** (`src/Chat/MessageStore/`): Chat persistence
+- **MultiAgent** (`src/MultiAgent/`): Orchestration across multiple specialized agents
+- **Bridge** (`src/Bridge/`): Third-party tool integrations (Brave, Tavily, Wikipedia, etc.)
 
 ## Essential Commands
 
@@ -71,7 +71,7 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/agent/
 - Use `MockHttpClient` over response mocking
 - Test processors independently
 - Use `/fixtures` for multimodal content
-- Prefer `self::assert*` in tests
+- Prefer `$this->assert*` over `self::assert*` in tests
 
 ## Development Notes
 

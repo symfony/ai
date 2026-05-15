@@ -77,9 +77,9 @@ $result = $platform->invoke('google/vit-base-patch16-224', $image, [
     'task' => Task::IMAGE_CLASSIFICATION,
 ]);
 
-$classifications = $result->asObject();
+$classifications = $result->asObject()->getClassifications();
 foreach ($classifications as $classification) {
-    echo $classification->label . ': ' . $classification->score . PHP_EOL;
+    echo $classification->getLabel() . ': ' . $classification->getScore() . PHP_EOL;
 }
 ```
 
@@ -90,7 +90,7 @@ $result = $platform->invoke('sentence-transformers/all-MiniLM-L6-v2', 'Hello wor
     'task' => Task::FEATURE_EXTRACTION,
 ]);
 
-$vector = $result->asVector();
+$vectors = $result->asVectors();
 ```
 
 ## Providers

@@ -14,6 +14,26 @@ are not covered by Symfony's
 composer require symfony/ai-agent
 ```
 
+## Tool Bridges
+
+To use a specific tool, install the corresponding bridge package:
+
+| Tool              | Package                             |
+|-------------------|-------------------------------------|
+| Brave Search      | `symfony/ai-brave-tool`             |
+| Clock             | `symfony/ai-clock-tool`             |
+| Filesystem        | `symfony/ai-filesystem-tool`        |
+| Firecrawl         | `symfony/ai-firecrawl-tool`         |
+| Mapbox            | `symfony/ai-mapbox-tool`            |
+| Ollama Web Search | `symfony/ai-ollama-tool`            |
+| OpenMeteo         | `symfony/ai-open-meteo-tool`        |
+| SerpApi           | `symfony/ai-serp-api-tool`          |
+| SimilaritySearch  | `symfony/ai-similarity-search-tool` |
+| Tavily            | `symfony/ai-tavily-tool`            |
+| Web Scraper       | `symfony/ai-scraper-tool`           |
+| Wikipedia         | `symfony/ai-wikipedia-tool`         |
+| YouTube           | `symfony/ai-youtube-tool`           |
+
 **This repository is a READ-ONLY sub-tree split**. See
 https://github.com/symfony/ai to create issues or submit pull requests.
 

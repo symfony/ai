@@ -14,9 +14,9 @@ Run the full test suite:
 vendor/bin/phpunit
 ```
 
-Run tests for a specific bridge (e.g., InMemory):
+Run tests for a specific store (e.g., InMemory):
 ```bash
-vendor/bin/phpunit tests/Bridge/Local/InMemoryStoreTest.php
+vendor/bin/phpunit tests/InMemory/StoreTest.php
 ```
 
 Run a single test method:
@@ -41,7 +41,7 @@ composer install
 ### Core Interfaces
 - **StoreInterface**: Main interface defining `add()` and `query()` methods for vector document storage and retrieval
 - **ManagedStoreInterface**: Extension interface providing `setup()` and `drop()` methods for store lifecycle management
-- **Indexer**: High-level service that converts TextDocuments to VectorDocuments and stores them in batches
+- **IndexerInterface** (`src/IndexerInterface.php`, implementations in `src/Indexer/`): high-level services that convert TextDocuments to VectorDocuments and store them in batches
 
 ### Bridge Pattern Architecture
 The component follows a bridge pattern with implementations for multiple vector stores:
@@ -49,7 +49,7 @@ The component follows a bridge pattern with implementations for multiple vector 
 **Database Bridges**: Postgres, MariaDB, ClickHouse, MongoDB, Neo4j, SurrealDB
 **Cloud Service Bridges**: Azure AI Search, Pinecone
 **Search Engine Bridges**: Meilisearch, Typesense, Weaviate, Qdrant, Milvus
-**Local Bridges**: InMemoryStore, CacheStore (PSR-6)
+**Local stores**: InMemory (`src/InMemory/Store.php`, not a bridge), Cache bridge (`src/Bridge/Cache/Store.php`, PSR-6)
 **External Service Bridges**: ChromaDb (requires codewithkyrian/chromadb-php)
 
 ### Document System

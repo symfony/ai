@@ -1,5 +1,5 @@
 MongoDB Atlas Store
-==================
+===================
 
 Provides [MongoDB Atlas](https://www.mongodb.com/atlas) vector store integration for Symfony AI Store.
 
