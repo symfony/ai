@@ -93,7 +93,7 @@ final class GitFetcher
         try {
             $process->mustRun();
         } catch (ProcessFailedException $e) {
-            throw new SyncFailedException(\sprintf('Git command failed: %s', $e->getMessage()), 0, $e);
+            throw new SyncFailedException(\sprintf('Git command failed: "%s".', $e->getMessage()), 0, $e);
         }
     }
 }
