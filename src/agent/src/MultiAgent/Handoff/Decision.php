@@ -15,6 +15,8 @@ namespace Symfony\AI\Agent\MultiAgent\Handoff;
  * Represents the orchestrator's decision on which agent should handle a request.
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
+ *
+ * @internal
  */
 final class Decision
 {
@@ -24,7 +26,7 @@ final class Decision
      */
     public function __construct(
         private readonly string $agentName,
-        private readonly string $reasoning = 'No reasoning provided',
+        private readonly string $reasoning,
     ) {
     }
 
