@@ -27,8 +27,8 @@
     "require": {
         "php": ">=8.2",
         "ext-pdo": "*",
-        "symfony/ai-platform": "^0.8",
-        "symfony/ai-store": "^0.8",
+        "symfony/ai-platform": "^0.9",
+        "symfony/ai-store": "^0.9",
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
