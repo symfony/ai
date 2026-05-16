@@ -26,7 +26,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
     {
         $pdo = new \PDO('pgsql:host=127.0.0.1;port=5432;dbname=test_database', 'postgres', 'postgres');
 
-        return StoreFactory::createStoreFromPDO($pdo, 'test_vectors');
+        return StoreFactory::createStoreFromPdo($pdo, 'test_vectors');
     }
 
     protected static function getSetupOptions(): array
