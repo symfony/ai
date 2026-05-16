@@ -78,7 +78,7 @@ Examples are self-contained and can be run individually:
 ```bash
 cd examples
 php anthropic/chat.php
-php openai/function-calling.php
+php openai/toolcall.php
 ```
 
 Many examples require environment variables (see `.env` files in example directories).
@@ -115,7 +115,7 @@ Each component uses:
 - Do not use void return type for testcase methods
 - Always run PHP-CS-Fixer to ensure proper code style
 - Always add a newline at the end of the file
-- Prefer self::assert* over $this->assert* in tests
+- Prefer $this->assert* over self::assert* in tests
 - Add @author tags to newly introduced classes by the user
 - Prefer classic if statements over short-circuit evaluation when possible
 - Define array shapes for parameters and return types

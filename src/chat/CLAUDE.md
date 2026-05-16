@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in the Agent component.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in the Chat component.
 
 ## Component Overview
 
@@ -22,7 +22,7 @@ Library for building chats with agents using messages. Built on Platform and Age
 ### Testing
 ```bash
 vendor/bin/phpunit
-vendor/bin/phpunit tests/ChatTests.php
+vendor/bin/phpunit tests/ChatTest.php
 vendor/bin/phpunit --coverage-html coverage/
 ```
 
@@ -34,10 +34,11 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/chat/
 
 ## Processing Architecture
 
-### Built-in bridges
-- **CacheStore**: PSR-16 compliant storage
-- **InMemoryStore**: In-memory storage
-- **SessionStore**: Symfony HttpFoundation session storage
+### Built-in message stores
+- **InMemory** (`src/InMemory/Store.php`): in-memory storage, not a bridge
+- **Cache bridge** (`src/Bridge/Cache/MessageStore.php`): PSR-6 cache-backed storage
+- **Session bridge** (`src/Bridge/Session/MessageStore.php`): Symfony HttpFoundation session storage
+- Additional bridges under `src/Bridge/`: Cloudflare, Doctrine, Meilisearch, MongoDb, Pogocache, Redis, SurrealDb
 
 ## Dependencies
 
@@ -49,7 +50,7 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/chat/
 
 - Use `MockHttpClient` over response mocking
 - Test bridges independently
-- Prefer `self::assert*` in tests
+- Prefer `$this->assert*` over `self::assert*` in tests
 
 ## Development Notes
 

@@ -85,7 +85,7 @@ Examples are self-contained and can be run individually:
 ```bash
 cd examples
 php anthropic/chat.php
-php openai/function-calling.php
+php openai/toolcall.php
 ```
 
 Many examples require environment variables (see `.env` files in example directories).

@@ -77,5 +77,5 @@ The `speech` agent demonstrates two composition features:
 
 - `composer.json` pins Symfony recipes to `8.0.*` — new bundles installed via Flex will target 8.0.
 - `mcp.json` is symlinked to `.mcp.json` so Claude Code auto-discovers the AI Mate server (the demo MCP server is started manually).
-- `AGENTS.md` contains outdated notes (says Symfony 7.3 / ChromaDB) — trust this file and `config/packages/ai.yaml` over it.
+- `config/packages/ai.yaml` is the source of truth for agents, models, platforms, and the vector store — trust it over any prose docs if they diverge.
 - The AI Mate MCP server exposes monolog/profiler/container tools. Prefer those over raw `bin/console debug:container`, `tail`, `grep` on `var/log/*` — see `mate/AGENT_INSTRUCTIONS.md`.

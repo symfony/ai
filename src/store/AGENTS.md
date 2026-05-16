@@ -11,7 +11,7 @@ Low-level abstraction for vector stores enabling RAG applications. Unified inter
 ### Core Interfaces
 - **StoreInterface**: Main interface with `add()` and `query()` methods
 - **ManagedStoreInterface**: Extends with `setup()` and `drop()` lifecycle methods
-- **Indexer**: High-level service converting TextDocuments to VectorDocuments
+- **IndexerInterface** (implementations in `src/Indexer/`): high-level services converting TextDocuments to VectorDocuments
 
 ### Bridge Pattern
 Multiple vector store implementations:
@@ -19,7 +19,7 @@ Multiple vector store implementations:
 **Database**: Postgres, MariaDB, ClickHouse, MongoDB, Neo4j, SurrealDB
 **Cloud**: Azure AI Search, Pinecone
 **Search**: Meilisearch, Typesense, Weaviate, Qdrant, Milvus
-**Local**: InMemoryStore, CacheStore (PSR-6)
+**Local**: InMemory (`src/InMemory/Store.php`, not a bridge), Cache bridge (`src/Bridge/Cache/Store.php`, PSR-6)
 **External**: ChromaDb (requires codewithkyrian/chromadb-php)
 
 ### Document System
@@ -33,7 +33,7 @@ Multiple vector store implementations:
 ### Testing
 ```bash
 vendor/bin/phpunit
-vendor/bin/phpunit tests/Bridge/Local/InMemoryStoreTest.php
+vendor/bin/phpunit tests/InMemory/StoreTest.php
 vendor/bin/phpunit --filter testMethodName
 ```
 

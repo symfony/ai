@@ -42,6 +42,7 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 
 - [Getting Started](https://symfony.com/doc/current/ai/index.html): Official documentation index
 - [Platform Component](https://symfony.com/doc/current/ai/components/platform.html): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, Ollama, Mistral, Bedrock, and more)
+- [Anthropic Server Tools](https://symfony.com/doc/current/ai/components/platform/anthropic-server-tools.html): Anthropic built-in server-side tools for code execution and file editing in a sandboxed environment
 - [Vertex AI](https://symfony.com/doc/current/ai/components/platform/vertexai.html): Google Vertex AI platform setup and usage
 - [Vertex AI Server Tools](https://symfony.com/doc/current/ai/components/platform/vertexai-server-tools.html): Server-side tool calling with Vertex AI
 - [Gemini Server Tools](https://symfony.com/doc/current/ai/components/platform/gemini-server-tools.html): Server-side tool calling with Gemini
@@ -72,7 +73,7 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 ## Code
 
 - [GitHub Repository](https://github.com/symfony/ai): Source code and issue tracker
-- [Examples](https://github.com/symfony/ai/tree/main/examples): 275+ standalone examples for all components and platforms
+- [Examples](https://github.com/symfony/ai/tree/main/examples): 320+ standalone examples for all components and platforms
 - [Demo Application](https://github.com/symfony/ai-demo): Full Symfony web application with 8 AI use cases
 
 ## Components
@@ -100,7 +101,7 @@ Symfony integration for the official MCP SDK. Install with `composer require sym
 
 ## Supported AI Platforms
 
-OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Decart, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, TransformersPHP, and more.
+OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, TransformersPHP, and more.
 
 ## Supported Vector Stores
 
