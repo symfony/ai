@@ -190,6 +190,47 @@ class AgentProcessorTest extends TestCase
         $this->assertSame($result, $output->getResult());
     }
 
+    public function testProcessOutputWithMultiPartResultContainingMultipleToolCallResultsExecutesAllToolCalls()
+    {
+        // Models like Anthropic Claude emit one tool_use block per parallel tool call,
+        // which the Anthropic ResultConverter (since v0.8.1) maps to one ToolCallResult per call.
+        // AgentProcessor must execute every ToolCall, not just the first ToolCallResult.
+        $toolCall1 = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolCall2 = new ToolCall('id2', 'tool2', ['arg2' => 'value2']);
+
+        $executedToolCalls = [];
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(static function (ToolCall $tc) use (&$executedToolCalls): ToolResult {
+                $executedToolCalls[] = $tc->getName();
+
+                return new ToolResult($tc, 'Result of '.$tc->getName());
+            });
+
+        $messageBag = new MessageBag();
+        $result = new MultiPartResult([
+            new TextResult('Let me look that up for you.'),
+            new ToolCallResult([$toolCall1]),
+            new ToolCallResult([$toolCall2]),
+        ]);
+
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('Final response'));
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $this->assertSame(['tool1', 'tool2'], $executedToolCalls);
+        $this->assertInstanceOf(TextResult::class, $output->getResult());
+        $this->assertSame('Final response', $output->getResult()->getContent());
+    }
+
     public function testSourcesEndUpInResultMetadataWithSettingOn()
     {
         $toolCall = new ToolCall('call_1234', 'tool_sources', ['arg1' => 'value1']);
