@@ -72,6 +72,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
 use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
+use Symfony\AI\Platform\Bridge\Inworld\Factory as InworldFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\Factory as LmStudioFactory;
 use Symfony\AI\Platform\Bridge\Mistral\Factory as MistralFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
@@ -632,6 +633,31 @@ final class AiBundle extends AbstractBundle
 
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['endpoint'],
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client']),
+                    new Reference('ai.platform.contract.'.$type),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform.speech', ['name' => $type])
+                ->addTag('ai.platform', ['name' => $type]);
+
+            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
+
+            return;
+        }
+
+        if ('inworld' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-inworld-platform', InworldFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Inworld platform configuration requires "symfony/ai-inworld-platform" package. Try running "composer require symfony/ai-inworld-platform".');
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(InworldFactory::class.'::createPlatform')
                 ->setLazy(true)
                 ->setArguments([
                     $platform['endpoint'],
