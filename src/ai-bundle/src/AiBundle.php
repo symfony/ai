@@ -57,6 +57,7 @@ use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatal
 use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory as AzureOpenAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
+use Symfony\AI\Platform\Bridge\Bifrost\Factory as BifrostFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\Factory as CartesiaFactory;
@@ -540,6 +541,31 @@ final class AiBundle extends AbstractBundle
 
                 $container->setDefinition($platformId, $definition);
             }
+
+            return;
+        }
+
+        if ('bifrost' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-bifrost-platform', BifrostFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Bifrost platform configuration requires "symfony/ai-bifrost-platform" package. Try running "composer require symfony/ai-bifrost-platform".');
+            }
+
+            $platformId = 'ai.platform.bifrost';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(BifrostFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    $platform['endpoint'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    null,
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'bifrost']);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }

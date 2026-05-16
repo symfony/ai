@@ -4788,6 +4788,85 @@ class AiBundleTest extends TestCase
         $this->assertSame('event_dispatcher', (string) $arguments[1]);
     }
 
+    public function testBifrostPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'bifrost' => [
+                        'endpoint' => 'http://localhost:8080',
+                        'api_key' => 'sk-bf-test',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.bifrost'));
+        $this->assertFalse(
+            $container->hasDefinition('ai.platform.model_catalog.bifrost'),
+            'Bifrost catalog is built lazily by the Factory and must not be registered as a bundle service.',
+        );
+
+        $definition = $container->getDefinition('ai.platform.bifrost');
+        $this->assertSame([\Symfony\AI\Platform\Bridge\Bifrost\Factory::class, 'createPlatform'], $definition->getFactory());
+        $this->assertTrue($definition->isLazy());
+
+        $arguments = $definition->getArguments();
+        $this->assertCount(6, $arguments);
+        $this->assertSame('sk-bf-test', $arguments[0]);
+        $this->assertSame('http://localhost:8080', $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('http_client', (string) $arguments[2]);
+        $this->assertNull($arguments[3]);
+        $this->assertNull($arguments[4]);
+        $this->assertInstanceOf(Reference::class, $arguments[5]);
+        $this->assertSame('event_dispatcher', (string) $arguments[5]);
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'bifrost']], $definition->getTag('ai.platform'));
+    }
+
+    #[TestDox('Bifrost platform accepts a custom http_client without endpoint')]
+    public function testBifrostPlatformWithCustomHttpClientAndNoEndpoint()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'bifrost' => [
+                        'http_client' => 'my_scoped_bifrost_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.bifrost'));
+        $this->assertFalse($container->hasDefinition('ai.platform.model_catalog.bifrost'));
+
+        $arguments = $container->getDefinition('ai.platform.bifrost')->getArguments();
+        $this->assertNull($arguments[0]);
+        $this->assertNull($arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('my_scoped_bifrost_client', (string) $arguments[2]);
+        $this->assertNull($arguments[3]);
+    }
+
+    #[TestDox('Bifrost platform rejects null endpoint paired with the default http_client')]
+    public function testBifrostPlatformRejectsMissingEndpointWithDefaultHttpClient()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Either "endpoint" must be set, or a custom "http_client" service with a pre-configured base URI must be provided.');
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'bifrost' => [],
+                ],
+            ],
+        ]);
+    }
+
     #[TestDox('System prompt with array structure works correctly')]
     public function testSystemPromptWithArrayStructure()
     {
@@ -8461,6 +8540,10 @@ class AiBundleTest extends TestCase
                         'us' => [
                             'bedrock_runtime_client' => 'async_aws.client.bedrock_us',
                         ],
+                    ],
+                    'bifrost' => [
+                        'endpoint' => 'http://localhost:8080',
+                        'api_key' => 'sk-bf-test-key',
                     ],
                     'cache' => [
                         'azure' => [

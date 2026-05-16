@@ -56,6 +56,10 @@ Advanced Example with Multiple Agents
                 default: ~
                 eu:
                     bedrock_runtime_client: 'async_aws.client.bedrock_runtime_eu'
+            bifrost:
+                # self-hosted OpenAI-compatible LLM gateway
+                endpoint: '%env(BIFROST_ENDPOINT)%' # defaults to null when using a scoped HTTP client with base URI
+                api_key: '%env(BIFROST_API_KEY)%' # optional, may be null when Bifrost runs without auth
             elevenlabs:
                 api_key: '%env(ELEVEN_LABS_API_KEY)%'
             gemini:
@@ -194,6 +198,54 @@ Based on the generic bridge, you can configure any service, that complies with t
                         - !php/const 'Symfony\AI\Platform\Capability::OUTPUT_STRUCTURED'
                         - !php/const 'Symfony\AI\Platform\Capability::INPUT_IMAGE'
                         - !php/const 'Symfony\AI\Platform\Capability::TOOL_CALLING'
+
+Bifrost Platform
+----------------
+
+`Bifrost`_ is a self-hosted, OpenAI-compatible LLM gateway that routes ``provider/model``
+identifiers (``openai/gpt-4o-mini``, ``anthropic/claude-3-5-sonnet``, ``cohere/embed-english-v3``…)
+to the underlying provider transparently. The ``bifrost`` platform exposes the gateway as a
+first-class Symfony AI platform — chat, embeddings, audio (TTS + STT) and image generation
+share the same configuration block:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            bifrost:
+                endpoint: '%env(BIFROST_ENDPOINT)%'  # e.g. http://localhost:8080
+                api_key: '%env(BIFROST_API_KEY)%'    # optional, may be null when Bifrost runs without auth
+
+The catalogue is fetched lazily from ``GET /v1/models`` the first time a model is resolved.
+When the gateway is unreachable, the bridge falls back to a naming convention so that the
+bundle keeps booting (``*-embed*`` → embeddings, ``*whisper*`` → transcription,
+``*tts*`` / ``*-speech`` → text-to-speech, ``*dall-e*`` / ``*flux*`` / ``*imagen*`` → image,
+everything else → completions).
+
+You may also drop the ``endpoint`` entirely and inject a pre-configured HTTP client with
+its own base URI — typically a scoped HTTP client. The bridge then issues relative paths
+that the scoped client resolves itself:
+
+.. code-block:: yaml
+
+    framework:
+        http_client:
+            scoped_clients:
+                bifrost.client:
+                    base_uri: 'https://bifrost.internal.example.com'
+                    auth_bearer: '%env(BIFROST_API_KEY)%'
+
+    ai:
+        platform:
+            bifrost:
+                http_client: 'bifrost.client'
+
+.. note::
+
+    Either ``endpoint`` must be set, **or** ``http_client`` must point to a service whose
+    base URI is already configured. The combination ``endpoint: ~`` + the default
+    ``http_client`` service is rejected at compile time.
 
 OpenResponses Platform
 ----------------------
@@ -1303,6 +1355,7 @@ When only STT is configured (no TTS), the agent returns the same result type as 
 
     Handling both speech-to-text and text-to-speech introduces latency as most of the process is synchronous.
 
+.. _`Bifrost`: https://docs.getbifrost.ai/
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform
