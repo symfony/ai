@@ -30,13 +30,13 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 
         $payload = $rawResult->getData();
 
-        if (!isset($payload['prompt_eval_count'], $payload['eval_count'])) {
+        $promptEvalCount = $payload['prompt_eval_count'] ?? null;
+        $evalCount = $payload['eval_count'] ?? null;
+
+        if (!\is_int($promptEvalCount) || !\is_int($evalCount)) {
             return null;
         }
 
-        return new TokenUsage(
-            $payload['prompt_eval_count'],
-            $payload['eval_count'],
-        );
+        return new TokenUsage($promptEvalCount, $evalCount);
     }
 }
