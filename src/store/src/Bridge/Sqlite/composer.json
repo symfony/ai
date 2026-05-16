@@ -29,8 +29,8 @@
         "ext-pdo": "*",
         "ext-pdo_sqlite": "*",
         "oskarstark/enum-helper": "^1.5",
-        "symfony/ai-platform": "^0.8",
-        "symfony/ai-store": "^0.8"
+        "symfony/ai-platform": "^0.9",
+        "symfony/ai-store": "^0.9"
     },
     "require-dev": {
         "doctrine/dbal": "^3.3|^4.0",

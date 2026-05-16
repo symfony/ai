@@ -28,8 +28,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-agent": "^0.8",
-        "symfony/ai-store": "^0.8"
+        "symfony/ai-agent": "^0.9",
+        "symfony/ai-store": "^0.9"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
