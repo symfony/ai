@@ -12,13 +12,11 @@
 namespace Symfony\AI\Platform\Tests\Fixtures\JsonSchema;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
 
 final class ConflictDto
 {
     public function __construct(
-        #[Schema(enum: ['a', 'b'])]
-        #[SchemaSource(StatusProvider::class)]
+        #[Schema(enum: ['a', 'b'], provider: StatusProvider::class)]
         public readonly string $status,
     ) {
     }

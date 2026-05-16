@@ -12,14 +12,14 @@
 namespace Symfony\AI\AiBundle\Tests\Fixture\Tool;
 
 use Symfony\AI\AiBundle\Tests\Fixture\JsonSchema\CategoryProvider;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
-final class ToolWithSchemaSource
+final class ToolWithSchemaProvider
 {
     public function __invoke(
-        #[SchemaSource(CategoryProvider::class)]
+        #[Schema(provider: CategoryProvider::class)]
         string $category,
-        #[SchemaSource('app.provider.tag')]
+        #[Schema(provider: 'app.provider.tag')]
         string $tag,
     ): string {
         return $category.'/'.$tag;

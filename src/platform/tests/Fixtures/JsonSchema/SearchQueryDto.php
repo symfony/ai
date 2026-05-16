@@ -12,16 +12,15 @@
 namespace Symfony\AI\Platform\Tests\Fixtures\JsonSchema;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
 
 final class SearchQueryDto
 {
     public function __construct(
-        #[SchemaSource(StatusProvider::class)]
+        #[Schema(provider: StatusProvider::class)]
         public readonly string $status,
-        #[SchemaSource(ColorProvider::class)]
+        #[Schema(provider: ColorProvider::class)]
         public readonly string $color,
-        #[SchemaSource(ContextAwareProvider::class, ['values' => ['foo', 'bar']])]
+        #[Schema(provider: ContextAwareProvider::class, context: ['values' => ['foo', 'bar']])]
         public readonly string $category,
         #[Schema(minLength: 3)]
         public readonly string $query,
@@ -32,11 +31,11 @@ final class SearchQueryDto
      * Same shape as a tool method, exercises buildParameters().
      */
     public function search(
-        #[SchemaSource(StatusProvider::class)]
+        #[Schema(provider: StatusProvider::class)]
         string $status,
-        #[SchemaSource(ColorProvider::class)]
+        #[Schema(provider: ColorProvider::class)]
         string $color,
-        #[SchemaSource(ContextAwareProvider::class, ['values' => ['foo', 'bar']])]
+        #[Schema(provider: ContextAwareProvider::class, context: ['values' => ['foo', 'bar']])]
         string $category,
         #[Schema(minLength: 3)]
         string $query,
@@ -48,7 +47,7 @@ final class SearchQueryDto
      * Exercises resolution by an arbitrary (non-FQCN) service ID.
      */
     public function searchByServiceId(
-        #[SchemaSource('app.provider.tag')]
+        #[Schema(provider: 'app.provider.tag')]
         string $tag,
     ): string {
         return $tag;

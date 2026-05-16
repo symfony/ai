@@ -11,12 +11,12 @@
 
 namespace Symfony\AI\AiBundle\Tests\Fixture\JsonSchema;
 
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
 final class ProductDto
 {
     public function __construct(
-        #[SchemaSource(CategoryProvider::class)]
+        #[Schema(provider: CategoryProvider::class)]
         public readonly string $category,
     ) {
     }

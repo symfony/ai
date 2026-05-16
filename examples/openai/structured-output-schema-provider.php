@@ -9,15 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
-use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaSourceDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
@@ -51,38 +48,20 @@ final class IssueQuery
      * @param string $category Category of the issue
      */
     public function __construct(
-        #[SchemaSource(CategoryProvider::class)]
+        #[Schema(provider: CategoryProvider::class)]
         public readonly string $category,
     ) {
     }
 }
-
-$providers = new class([CategoryProvider::class => new CategoryProvider(['bug', 'feature', 'docs', 'chore'])]) implements ContainerInterface {
-    /**
-     * @param array<class-string<SchemaProviderInterface>, SchemaProviderInterface> $services
-     */
-    public function __construct(private readonly array $services)
-    {
-    }
-
-    public function get(string $id): SchemaProviderInterface
-    {
-        return $this->services[$id] ?? throw new class("Service \"$id\" not found.") extends RuntimeException implements NotFoundExceptionInterface {};
-    }
-
-    public function has(string $id): bool
-    {
-        return isset($this->services[$id]);
-    }
-};
 
 $schemaFactory = new SchemaFactory(new Describer([
     new SerializerDescriber(),
     new TypeInfoDescriber(),
     new MethodDescriber(),
     new PropertyInfoDescriber(),
-    new SchemaAttributeDescriber(),
-    new SchemaSourceDescriber($providers),
+    new SchemaAttributeDescriber([
+        CategoryProvider::class => new CategoryProvider(['bug', 'feature', 'docs', 'chore']),
+    ]),
 ]));
 
 $dispatcher = new EventDispatcher();

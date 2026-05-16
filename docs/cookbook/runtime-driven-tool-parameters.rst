@@ -14,10 +14,9 @@ Prerequisites
 
 The ``#[Schema(enum: [...])]`` attribute is convenient for static allowlists, but PHP
 attributes only accept constant expressions. As soon as the allowed values come from
-``.env``, a database table, or any service, the attribute is no longer usable. The
-:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\SchemaSource` attribute
-fills that gap by referencing a service implementing
-:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Provider\\SchemaProviderInterface`,
+``.env``, a database table, or any service, ``enum`` alone is no longer usable. Setting
+the ``provider`` argument on ``#[Schema]`` fills that gap by referencing a service
+implementing :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Provider\\SchemaProviderInterface`,
 which contributes a JSON Schema fragment computed at runtime.
 
 Setting up a Schema Provider
@@ -67,8 +66,8 @@ catalog::
 The AI Bundle autoconfigures every class implementing ``SchemaProviderInterface``, so
 declaring them as services is enough — no tag, no compiler pass.
 
-``#[SchemaSource]`` accepts any container service ID, not only fully-qualified class
-names. This lets you register the same provider class as multiple services with
+The ``provider`` argument accepts any container service ID, not only fully-qualified
+class names. This lets you register the same provider class as multiple services with
 different configurations and reference each one by its service ID:
 
 .. code-block:: yaml
@@ -87,28 +86,28 @@ different configurations and reference each one by its service ID:
 
 ::
 
-    #[SchemaSource('app.provider.status')]
+    #[Schema(provider: 'app.provider.status')]
     string $status,
-    #[SchemaSource('app.provider.priority')]
+    #[Schema(provider: 'app.provider.priority')]
     string $priority,
 
 Case 1: Tool Parameters
 -----------------------
 
-Reference each provider from a tool parameter via ``#[SchemaSource]``::
+Reference each provider from a tool parameter via ``#[Schema(provider: ...)]``::
 
     use App\Schema\PartColorProvider;
     use App\Schema\PartStatusProvider;
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
     #[AsTool('search_parts', 'Search parts by status and color')]
     final class SearchPartsTool
     {
         public function __invoke(
-            #[SchemaSource(PartStatusProvider::class)]
+            #[Schema(provider: PartStatusProvider::class)]
             string $status,
-            #[SchemaSource(PartColorProvider::class)]
+            #[Schema(provider: PartColorProvider::class)]
             string $color,
         ): array {
             // ...
@@ -125,14 +124,14 @@ The same attribute works on properties of a DTO used as ``response_format``::
 
     use App\Schema\PartColorProvider;
     use App\Schema\PartStatusProvider;
-    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 
     final class PartQuery
     {
         public function __construct(
-            #[SchemaSource(PartStatusProvider::class)]
+            #[Schema(provider: PartStatusProvider::class)]
             public readonly string $status,
-            #[SchemaSource(PartColorProvider::class)]
+            #[Schema(provider: PartColorProvider::class)]
             public readonly string $color,
         ) {
         }
@@ -144,13 +143,12 @@ duplication.
 Composing with Static Constraints
 ---------------------------------
 
-Fragments are merged with ``array_replace_recursive`` on top of the schema built from
-reflection, ``#[Schema]``, PHPDoc and Validator constraints, so static and dynamic
-concerns coexist on the same parameter::
+The runtime fragment is merged with ``array_replace_recursive`` on top of the static
+schema built from the same attribute, reflection, PHPDoc and Validator constraints, so
+static and dynamic concerns coexist on the same parameter::
 
     public function __invoke(
-        #[SchemaSource(PartStatusProvider::class)]
-        #[Schema(description: 'The current part status')]
+        #[Schema(provider: PartStatusProvider::class, description: 'The current part status')]
         string $status,
     ): array {
         // schema['properties']['status'] = [
@@ -159,6 +157,9 @@ concerns coexist on the same parameter::
         //     'enum' => ['active', 'archived', ...],
         // ]
     }
+
+When the provider returns a key already present in the static schema, the provider's
+value wins.
 
 Passing Context to Providers
 ----------------------------
@@ -191,31 +192,29 @@ is useful to reuse the same provider class for different data sets::
         }
     }
 
-Pass the context as the second argument to ``#[SchemaSource]``::
+Pass the context via the ``context`` argument of ``#[Schema]``::
 
     public function __invoke(
-        #[SchemaSource(EntityEnumProvider::class, ['entity' => Color::class])]
+        #[Schema(provider: EntityEnumProvider::class, context: ['entity' => Color::class])]
         string $color,
-        #[SchemaSource(EntityEnumProvider::class, ['entity' => Category::class, 'field' => 'label'])]
+        #[Schema(provider: EntityEnumProvider::class, context: ['entity' => Category::class, 'field' => 'label'])]
         string $category,
     ): array {
         // ...
     }
 
-Multiple ``#[SchemaSource]`` attributes can also be stacked on the same parameter; they
-are applied in declaration order, so a later provider's keys override an earlier one's.
-
 Standalone Wiring (without the AI Bundle)
 -----------------------------------------
 
 When using the components directly, build a ``Describer`` chain that includes
-:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Describer\\SchemaSourceDescriber`
-and provide it with a PSR-11 container exposing your providers, then pass the resulting
+:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Describer\\SchemaAttributeDescriber`
+and pass it an iterable of providers indexed by the identifier referenced from
+``#[Schema(provider: ...)]`` (FQCN by default), then pass the resulting
 :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Factory` to
 :class:`Symfony\\AI\\Agent\\Toolbox\\ToolFactory\\ReflectionToolFactory` for tool
 parameters or to :class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactory`
-for structured output. See ``examples/toolbox/schema-source.php`` and
-``examples/openai/structured-output-schema-source.php`` in the repository for complete
+for structured output. See ``examples/toolbox/schema-provider.php`` and
+``examples/openai/structured-output-schema-provider.php`` in the repository for complete
 runnable setups.
 
 .. note::
@@ -231,8 +230,3 @@ runnable setups.
     The describer does not validate the shape of the fragment returned by
     ``getSchemaFragment()``. Returning a malformed JSON Schema produces a malformed
     schema sent to the LLM — stick to documented JSON Schema keys.
-
-.. note::
-
-    ``#[SchemaSource]`` only accepts a ``class-string<SchemaProviderInterface>``. Service
-    IDs as strings are not supported, which guarantees refactor-safe references.

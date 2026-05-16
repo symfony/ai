@@ -15,14 +15,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\AiBundle\AiBundle;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaSourceDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
-use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
-final class SchemaSourceWiringTest extends TestCase
+final class SchemaProviderWiringTest extends TestCase
 {
     public function testInterfaceIsRegisteredForAutoconfiguration()
     {
@@ -36,22 +35,20 @@ final class SchemaSourceWiringTest extends TestCase
         );
     }
 
-    public function testDescriberServiceIsTaggedAndUsesTaggedLocator()
+    public function testSchemaAttributeDescriberReceivesTaggedIterator()
     {
         $container = $this->buildContainer();
 
-        $this->assertTrue($container->hasDefinition('ai.platform.json_schema.describer.schema_source'));
+        $this->assertTrue($container->hasDefinition('ai.platform.json_schema.describer.schema_attribute'));
 
-        $definition = $container->getDefinition('ai.platform.json_schema.describer.schema_source');
-        $this->assertSame(SchemaSourceDescriber::class, $definition->getClass());
+        $definition = $container->getDefinition('ai.platform.json_schema.describer.schema_attribute');
+        $this->assertSame(SchemaAttributeDescriber::class, $definition->getClass());
         $this->assertArrayHasKey('ai.platform.json_schema.describer', $definition->getTags());
 
         $argument = $definition->getArgument(0);
-        $this->assertInstanceOf(ServiceLocatorArgument::class, $argument);
-
-        $tagged = $argument->getTaggedIteratorArgument();
-        $this->assertInstanceOf(TaggedIteratorArgument::class, $tagged);
-        $this->assertSame('ai.platform.json_schema.provider', $tagged->getTag());
+        $this->assertInstanceOf(TaggedIteratorArgument::class, $argument);
+        $this->assertSame('ai.platform.json_schema.provider', $argument->getTag());
+        $this->assertSame('key', $argument->getIndexAttribute());
     }
 
     private function buildContainer(): ContainerBuilder

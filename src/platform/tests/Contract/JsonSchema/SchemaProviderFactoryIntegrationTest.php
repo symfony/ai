@@ -12,17 +12,13 @@
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaSourceDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ColorProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ConflictDto;
@@ -30,31 +26,28 @@ use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ContextAwareProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\SearchQueryDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
 
-final class SchemaSourceFactoryIntegrationTest extends TestCase
+final class SchemaProviderFactoryIntegrationTest extends TestCase
 {
     private Factory $factory;
 
     protected function setUp(): void
     {
-        $container = $this->container([
-            StatusProvider::class => new StatusProvider(['active', 'archived']),
-            ColorProvider::class => new ColorProvider(['red', 'blue']),
-            ContextAwareProvider::class => new ContextAwareProvider(),
-        ]);
-
         $describer = new Describer([
             new SerializerDescriber(),
             new TypeInfoDescriber(),
             new MethodDescriber(),
             new PropertyInfoDescriber(),
-            new SchemaAttributeDescriber(),
-            new SchemaSourceDescriber($container),
+            new SchemaAttributeDescriber([
+                StatusProvider::class => new StatusProvider(['active', 'archived']),
+                ColorProvider::class => new ColorProvider(['red', 'blue']),
+                ContextAwareProvider::class => new ContextAwareProvider(),
+            ]),
         ]);
 
         $this->factory = new Factory($describer);
     }
 
-    public function testBuildParametersAppliesSchemaSourceOnToolMethodSignature()
+    public function testBuildParametersAppliesProviderOnToolMethodSignature()
     {
         $schema = $this->factory->buildParameters(SearchQueryDto::class, 'search');
 
@@ -83,7 +76,7 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
         ], $schema);
     }
 
-    public function testBuildPropertiesAppliesSchemaSourceOnDtoForStructuredOutput()
+    public function testBuildPropertiesAppliesProviderOnDtoForStructuredOutput()
     {
         $schema = $this->factory->buildProperties(SearchQueryDto::class);
 
@@ -92,12 +85,10 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
         $this->assertSame(3, $schema['properties']['query']['minLength']);
     }
 
-    public function testRuntimeSchemaWinsOverStaticSchemaOnConflict()
+    public function testRuntimeProviderWinsOverStaticEnumOnConflict()
     {
-        // SchemaAttributeDescriber runs first (statique), SchemaSourceDescriber runs last (runtime).
-        // array_replace_recursive lets the last one win — same convention as the AI Bundle wiring.
-        // See ConflictDto fixture: #[Schema(enum: ['a','b'])] + #[SchemaSource(StatusProvider::class)]
-        // returning ['active','archived'] should yield ['active','archived'].
+        // ConflictDto: #[Schema(enum: ['a','b'], provider: StatusProvider::class)] - provider applied after
+        // the static fragment via array_replace_recursive, so the runtime values override.
         $schema = $this->factory->buildProperties(ConflictDto::class);
 
         $this->assertSame(['active', 'archived'], $schema['properties']['status']['enum']);
@@ -115,34 +106,5 @@ final class SchemaSourceFactoryIntegrationTest extends TestCase
         $this->assertSame(['active', 'archived'], $properties['status']['enum']);
         $this->assertSame(['red', 'blue'], $properties['color']['enum']);
         $this->assertSame(['foo', 'bar'], $properties['category']['enum']);
-    }
-
-    /**
-     * @param array<string, SchemaProviderInterface> $services
-     */
-    private function container(array $services): ContainerInterface
-    {
-        return new class($services) implements ContainerInterface {
-            /**
-             * @param array<string, SchemaProviderInterface> $services
-             */
-            public function __construct(private readonly array $services)
-            {
-            }
-
-            public function get(string $id): SchemaProviderInterface
-            {
-                if (!isset($this->services[$id])) {
-                    throw new class('Service '.$id.' not found.') extends \RuntimeException implements NotFoundExceptionInterface {};
-                }
-
-                return $this->services[$id];
-            }
-
-            public function has(string $id): bool
-            {
-                return isset($this->services[$id]);
-            }
-        };
     }
 }

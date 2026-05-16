@@ -189,13 +189,13 @@ If you already have a JSON Schema defined in a file, you can reference it using 
 
     When using ``ref``, other arguments on the ``#[Schema]`` attribute are not allowed as the entire schema is loaded from the file.
 
-Runtime-driven Schema with ``#[SchemaSource]``
-..............................................
+Runtime-driven Schema with ``#[Schema(provider: ...)]``
+.......................................................
 
-When the allowed values come from runtime state (environment variables, database, injected services), ``#[Schema(enum: [...])]`` is not usable because PHP attributes only accept constant expressions. Use the :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\SchemaSource` attribute to point at a service implementing :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Provider\\SchemaProviderInterface`, which contributes a JSON Schema fragment computed at runtime::
+When the allowed values come from runtime state (environment variables, database, injected services), ``#[Schema(enum: [...])]`` is not usable because PHP attributes only accept constant expressions. Set the ``provider`` argument on :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribute\\Schema` to point at a service implementing :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Provider\\SchemaProviderInterface`, which contributes a JSON Schema fragment computed at runtime::
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\SchemaSource;
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
     use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
     use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -217,14 +217,14 @@ When the allowed values come from runtime state (environment variables, database
     final class SearchPartsTool
     {
         public function __invoke(
-            #[SchemaSource(PartStatusProvider::class)]
+            #[Schema(provider: PartStatusProvider::class)]
             string $status,
         ): array {
             // ...
         }
     }
 
-Fragments are merged on top of the schema built from reflection, ``#[Schema]``, PHPDoc and Validator constraints, and the attribute also works on properties of structured output DTOs.
+The fragment returned by the provider is merged on top of the static schema built from reflection, ``#[Schema]``, PHPDoc and Validator constraints, and the attribute also works on properties of structured output DTOs.
 
 See :doc:`/cookbook/runtime-driven-tool-parameters` for composing with static constraints, structured output usage, and standalone wiring.
 

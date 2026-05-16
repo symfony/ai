@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Tests\Fixture\Tool;
 
-final class ToolWithoutSchemaSource
+final class ToolWithoutSchemaProvider
 {
     public function __invoke(string $query): string
     {
