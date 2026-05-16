@@ -23,7 +23,12 @@ $root = null;
 foreach ($autoloadPaths as $autoloadPath) {
     if (file_exists($autoloadPath)) {
         require_once $autoloadPath;
-        $root = dirname(realpath($autoloadPath), 2);
+        if (method_exists(Composer\InstalledVersions::class, 'getInstallPath')) {
+            $root = Composer\InstalledVersions::getInstallPath('__root__');
+        } else {
+            $root = dirname(realpath($autoloadPath), 2);
+        }
+
         break;
     }
 }
