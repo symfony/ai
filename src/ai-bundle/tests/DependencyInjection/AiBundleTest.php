@@ -2609,7 +2609,7 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPDO'], $definition->getFactory());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(5, $definition->getArguments());
@@ -2651,7 +2651,7 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPDO'], $definition->getFactory());
+        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(5, $definition->getArguments());

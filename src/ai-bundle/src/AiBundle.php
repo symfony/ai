@@ -1826,7 +1826,7 @@ final class AiBundle extends AbstractBundle
                     ]);
 
                     $definition
-                        ->setFactory([PostgresStoreFactory::class, 'createStoreFromPDO'])
+                        ->setFactory([PostgresStoreFactory::class, 'createStoreFromPdo'])
                         ->setArguments([
                             $pdo,
                             $store['table_name'] ?? $name,

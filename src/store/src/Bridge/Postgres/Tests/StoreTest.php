@@ -463,7 +463,7 @@ final class StoreTest extends TestCase
     {
         $pdo = $this->createMock(\PDO::class);
 
-        $store = StoreFactory::createStoreFromPDO($pdo, 'test_table', 'vector_field');
+        $store = StoreFactory::createStoreFromPdo($pdo, 'test_table', 'vector_field');
 
         $this->assertInstanceOf(Store::class, $store);
     }

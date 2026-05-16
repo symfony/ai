@@ -21,7 +21,7 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class StoreFactory
 {
-    public static function createStoreFromPDO(
+    public static function createStoreFromPdo(
         \PDO $connection,
         string $tableName,
         string $vectorFieldName = 'embedding',
@@ -44,6 +44,6 @@ final class StoreFactory
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return static::createStoreFromPDO($pdo, $tableName, $vectorFieldName, $distance, $lang);
+        return static::createStoreFromPdo($pdo, $tableName, $vectorFieldName, $distance, $lang);
     }
 }
