@@ -119,6 +119,9 @@ Store
    -Store::fromDbal($connection, $tableName, $vectorFieldName, $distance);
    +StoreFactory::createStoreFromDbal($connection, $tableName, $vectorFieldName, $distance, $lang);
    ```
+ * Add support for `ScopingHttpClient` in SurrealDB `Store`
+ * The `endpointUrl` parameter for SurrealDB `Store` has been removed
+ * A `StoreFactory` has been introduced for SurrealDB `Store`
 
 UPGRADE FROM 0.7 to 0.8
 =======================

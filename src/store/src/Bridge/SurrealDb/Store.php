@@ -33,7 +33,6 @@ class Store implements ManagedStoreInterface, StoreInterface
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
         private readonly string $user,
         #[\SensitiveParameter] private readonly string $password,
         private readonly string $namespace,
@@ -119,8 +118,6 @@ class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array|string $payload): array
     {
-        $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-
         $finalPayload = [];
 
         if (\is_array($payload) && [] !== $payload) {
@@ -135,7 +132,7 @@ class Store implements ManagedStoreInterface, StoreInterface
             ];
         }
 
-        $response = $this->httpClient->request($method, $url, [
+        $response = $this->httpClient->request($method, $endpoint, [
             ...$finalPayload,
             ...[
                 'headers' => [
@@ -201,7 +198,7 @@ class Store implements ManagedStoreInterface, StoreInterface
             $authenticationPayload['db'] = $this->database;
         }
 
-        $authenticationResponse = $this->httpClient->request('POST', \sprintf('%s/signin', $this->endpointUrl), [
+        $authenticationResponse = $this->httpClient->request('POST', 'signin', [
             'headers' => [
                 'Accept' => 'application/json',
             ],

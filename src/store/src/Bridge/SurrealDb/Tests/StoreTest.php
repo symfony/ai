@@ -33,7 +33,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/signin".');
@@ -56,7 +56,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/sql".');
@@ -85,7 +85,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
 
         $store->setup();
 
@@ -107,7 +107,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'test');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:8000/key/test".');
@@ -146,7 +146,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
 
         $store->setup();
         $store->drop();
@@ -178,7 +178,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'test');
         $store->setup();
 
         $this->expectException(ClientException::class);
@@ -211,7 +211,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'test');
         $store->setup();
 
         $this->expectException(ClientException::class);
@@ -265,7 +265,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'test');
         $store->setup();
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
@@ -321,7 +321,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'test');
         $store->setup();
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
@@ -399,7 +399,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'test');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'test');
 
         $store->add([new VectorDocument(Uuid::v4(), new Vector(array_fill(0, 1275, 0.1)))]);
 
@@ -410,19 +410,19 @@ final class StoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $store = new Store(new MockHttpClient(), 'test', 'test', 'test_namespace', 'test_database', 'test_table');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $store = new Store(new MockHttpClient(), 'test', 'test', 'test_namespace', 'test_database', 'test_table');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');
+        $store = new Store(new MockHttpClient(), 'test', 'test', 'test_namespace', 'test_database', 'test_table');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 }

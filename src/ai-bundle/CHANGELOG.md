@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Add support for `ScopingHttpClient` usage in `SurrealDB` store via `http_client` option
+ * Wire `SurrealDb\StoreFactory` from `AiBundle`
+
 0.9
 ---
 

@@ -77,6 +77,7 @@ use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
+use Symfony\AI\Store\Bridge\SurrealDb\StoreFactory as SurrealDbStoreFactory;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
 use Symfony\AI\Store\Bridge\Vektor\Store as VektorStore;
 use Symfony\AI\Store\Bridge\Weaviate\Store as WeaviateStore;
@@ -3649,17 +3650,18 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.surrealdb.my_surrealdb_store'));
 
         $definition = $container->getDefinition('ai.store.surrealdb.my_surrealdb_store');
+        $this->assertSame([SurrealDbStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(SurrealDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(10, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
-        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('bar', $definition->getArgument(1));
         $this->assertSame('test', $definition->getArgument(2));
         $this->assertSame('test', $definition->getArgument(3));
-        $this->assertSame('foo', $definition->getArgument(4));
-        $this->assertSame('bar', $definition->getArgument(5));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('http_client', (string) $definition->getArgument(5));
         $this->assertSame('my_surrealdb_store', $definition->getArgument(6));
         $this->assertSame('_vectors', $definition->getArgument(7));
         $this->assertSame('cosine', $definition->getArgument(8));
@@ -3701,17 +3703,18 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.surrealdb.my_surrealdb_store'));
 
         $definition = $container->getDefinition('ai.store.surrealdb.my_surrealdb_store');
+        $this->assertSame([SurrealDbStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(SurrealDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(10, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
-        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('bar', $definition->getArgument(1));
         $this->assertSame('test', $definition->getArgument(2));
         $this->assertSame('test', $definition->getArgument(3));
-        $this->assertSame('foo', $definition->getArgument(4));
-        $this->assertSame('bar', $definition->getArgument(5));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('http_client', (string) $definition->getArgument(5));
         $this->assertSame('custom', $definition->getArgument(6));
         $this->assertSame('_vectors', $definition->getArgument(7));
         $this->assertSame('cosine', $definition->getArgument(8));
@@ -3757,22 +3760,74 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.surrealdb.my_surrealdb_store'));
 
         $definition = $container->getDefinition('ai.store.surrealdb.my_surrealdb_store');
+        $this->assertSame([SurrealDbStoreFactory::class, 'create'], $definition->getFactory());
         $this->assertSame(SurrealDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
         $this->assertCount(11, $definition->getArguments());
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame('http_client', (string) $definition->getArgument(0));
-        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(1));
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('bar', $definition->getArgument(1));
         $this->assertSame('test', $definition->getArgument(2));
         $this->assertSame('test', $definition->getArgument(3));
-        $this->assertSame('foo', $definition->getArgument(4));
-        $this->assertSame('bar', $definition->getArgument(5));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('http_client', (string) $definition->getArgument(5));
         $this->assertSame('bar', $definition->getArgument(6));
         $this->assertSame('_vectors', $definition->getArgument(7));
         $this->assertSame('cosine', $definition->getArgument(8));
         $this->assertSame(768, $definition->getArgument(9));
         $this->assertTrue($definition->getArgument(10));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testSurrealDbStoreWithCustomHttpClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'surrealdb' => [
+                        'my_surrealdb_store' => [
+                            'endpoint' => 'http://127.0.0.1:8000',
+                            'username' => 'test',
+                            'password' => 'test',
+                            'namespace' => 'foo',
+                            'database' => 'bar',
+                            'http_client' => 'my.scoped_http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.surrealdb.my_surrealdb_store');
+        $this->assertSame([SurrealDbStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(SurrealDbStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('bar', $definition->getArgument(1));
+        $this->assertSame('test', $definition->getArgument(2));
+        $this->assertSame('test', $definition->getArgument(3));
+        $this->assertSame('http://127.0.0.1:8000', $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('my.scoped_http_client', (string) $definition->getArgument(5));
+        $this->assertSame('my_surrealdb_store', $definition->getArgument(6));
+        $this->assertSame('_vectors', $definition->getArgument(7));
+        $this->assertSame('cosine', $definition->getArgument(8));
+        $this->assertSame(1536, $definition->getArgument(9));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
