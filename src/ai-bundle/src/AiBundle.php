@@ -35,6 +35,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
@@ -87,6 +88,7 @@ use Symfony\AI\Platform\Bridge\TransformersPhp\Factory as TransformersPhpFactory
 use Symfony\AI\Platform\Bridge\VertexAi\Factory as VertexAiFactory;
 use Symfony\AI\Platform\Bridge\Voyage\Factory as VoyageFactory;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -172,6 +174,7 @@ final class AiBundle extends AbstractBundle
 
         $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
+        $container->addCompilerPass(new SchemaProviderValidationPass());
     }
 
     public function configure(DefinitionConfigurator $definition): void
@@ -353,6 +356,8 @@ final class AiBundle extends AbstractBundle
             ->addTag('ai.platform.model_client');
         $builder->registerForAutoconfiguration(ResultConverterInterface::class)
             ->addTag('ai.platform.result_converter');
+        $builder->registerForAutoconfiguration(SchemaProviderInterface::class)
+            ->addTag('ai.platform.json_schema.provider');
 
         if (!ContainerBuilder::willBeAvailable('symfony/security-core', AuthorizationCheckerInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.security.is_granted_attribute_listener');

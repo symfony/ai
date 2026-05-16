@@ -22,7 +22,9 @@ final class Schema
     /**
      * @param list<int|float|string|null>|null $enum
      * @param string|int|string[]|null         $const
-     * @param string|null                      $ref   A path to external schema file. This is mutually exclusive with all the other arguments.
+     * @param string|null                      $ref      A path to external schema file. This is mutually exclusive with all the other arguments.
+     * @param string|null                      $provider Service ID of a SchemaProviderInterface implementation (FQCN or any container ID) contributing a runtime fragment merged on top of the static schema
+     * @param array<string, mixed>             $context  Passed to the provider's getSchemaFragment() call
      */
     public function __construct(
         // can be used by many types
@@ -57,9 +59,14 @@ final class Schema
 
         // a reference to a schema file
         public readonly ?string $ref = null,
+
+        // runtime-computed fragment
+        public readonly ?string $provider = null,
+        public readonly array $context = [],
     ) {
         if ($this->ref) {
-            if (\count(array_filter((array) $this, static fn (mixed $value) => null !== $value)) > 1) {
+            $values = array_filter((array) $this, static fn (mixed $value) => null !== $value && [] !== $value);
+            if (\count($values) > 1) {
                 throw new InvalidArgumentException('When "ref" is defined, no other arguments are allowed.');
             }
 

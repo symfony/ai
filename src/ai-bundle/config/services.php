@@ -186,6 +186,9 @@ return static function (ContainerConfigurator $container): void {
             ])
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.schema_attribute', SchemaAttributeDescriber::class)
+            ->args([
+                tagged_iterator('ai.platform.json_schema.provider', indexAttribute: 'key'),
+            ])
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer', Describer::class)
             ->args([
