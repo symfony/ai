@@ -26,8 +26,11 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/cache": "^7.3|^8.0",
+        "psr/cache": "^2.0|^3.0",
         "symfony/ai-chat": "^0.9"
+    },    
+    "suggest": {
+        "symfony/cache": "PSR cache implementation"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
