@@ -100,6 +100,7 @@ final class Toolbox implements ToolboxInterface
             $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
             $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
 
+            $sourceCollection = null;
             if ($tool instanceof HasSourcesInterface) {
                 $tool->setSourceCollection($sourceCollection = new SourceCollection());
             }
@@ -107,7 +108,7 @@ final class Toolbox implements ToolboxInterface
             $result = new ToolResult(
                 $toolCall,
                 $tool->{$metadata->getReference()->getMethod()}(...$arguments),
-                $tool instanceof HasSourcesInterface ? $sourceCollection : null,
+                $sourceCollection,
             );
 
             $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
