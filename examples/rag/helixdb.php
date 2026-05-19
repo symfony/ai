@@ -1,0 +1,70 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
+use Symfony\AI\Agent\Toolbox\AgentProcessor;
+use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Fixtures\Movies;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Store\Bridge\HelixDb\Store;
+use Symfony\AI\Store\Document\Metadata;
+use Symfony\AI\Store\Document\TextDocument;
+use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Indexer\DocumentIndexer;
+use Symfony\AI\Store\Indexer\DocumentProcessor;
+use Symfony\AI\Store\Retriever;
+use Symfony\Component\Uid\Uuid;
+
+require_once dirname(__DIR__).'/bootstrap.php';
+
+// HelixDB exposes no generic API: the bridge's Resources/schema.hx and Resources/queries.hx
+// files must be compiled and deployed to the instance ("helix compile" then "helix deploy")
+// before running this example.
+$store = new Store(
+    httpClient: http_client(),
+    endpointUrl: env('HELIXDB_HOST'),
+);
+
+// verify the canonical HelixQL queries are deployed and the instance is reachable
+$store->setup();
+
+// create embeddings and documents
+$documents = [];
+foreach (Movies::all() as $i => $movie) {
+    $documents[] = new TextDocument(
+        id: Uuid::v4(),
+        content: 'Title: '.$movie['title'].\PHP_EOL.'Director: '.$movie['director'].\PHP_EOL.'Description: '.$movie['description'],
+        metadata: new Metadata($movie),
+    );
+}
+
+// create embeddings for documents
+$platform = Factory::createPlatform($_SERVER['OPENAI_API_KEY']);
+$vectorizer = new Vectorizer($platform, 'text-embedding-3-small', logger());
+$indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
+$indexer->index($documents);
+
+$retriever = new Retriever($store, $vectorizer);
+$similaritySearch = new SimilaritySearch($retriever);
+$toolbox = new Toolbox([$similaritySearch], logger: logger());
+$processor = new AgentProcessor($toolbox);
+$agent = new Agent($platform, 'gpt-5-mini', [$processor], [$processor]);
+
+$messages = new MessageBag(
+    Message::forSystem('Please answer all user questions only using SimilaritySearch function.'),
+    Message::ofUser('Which movie fits the theme of technology?')
+);
+$response = $agent->call($messages);
+
+echo $response->getContent().\PHP_EOL;

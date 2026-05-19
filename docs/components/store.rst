@@ -95,6 +95,7 @@ Similarity Search Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Similarity Search with Cloudflare (RAG)`_
+* `Similarity Search with HelixDB (RAG)`_
 * `Similarity Search with Manticore Search (RAG)`_
 * `Similarity Search with MariaDB (RAG)`_
 * `Similarity Search with Meilisearch (RAG)`_
@@ -127,6 +128,7 @@ Supported Stores
 * `ClickHouse`_
 * `Cloudflare`_
 * `Elasticsearch`_
+* `HelixDB`_ (requires deploying the bundled HelixQL queries)
 * `InMemory`_
 * `Manticore Search`_
 * `MariaDB`_ (requires ``ext-pdo``)
@@ -329,6 +331,7 @@ Its index is the storage directory itself, which is simply recreated.
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
+.. _`Similarity Search with HelixDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/helixdb.php
 .. _`Similarity Search with Manticore Search (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php
 .. _`Similarity Search with Meilisearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
@@ -351,6 +354,7 @@ Its index is the storage directory itself, which is simply recreated.
 .. _`ClickHouse`: https://clickhouse.com/
 .. _`Cloudflare`: https://developers.cloudflare.com/vectorize/
 .. _`Elasticsearch`: https://www.elastic.co/elasticsearch
+.. _`HelixDB`: https://www.helix-db.com/
 .. _`Manticore Search`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
 .. _`Pinecone`: https://www.pinecone.io/
