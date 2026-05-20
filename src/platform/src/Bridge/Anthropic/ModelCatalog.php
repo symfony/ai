@@ -25,68 +25,6 @@ final class ModelCatalog extends AbstractModelCatalog
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
-            'claude-3-haiku-20240307' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-opus-20240229' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-5-haiku-latest' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-5-haiku-20241022' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-7-sonnet-latest' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::THINKING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'claude-3-7-sonnet-20250219' => [
-                'class' => Claude::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::THINKING,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
             'claude-sonnet-4-20250514' => [
                 'class' => Claude::class,
                 'capabilities' => [
