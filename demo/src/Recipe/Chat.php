@@ -13,6 +13,8 @@ namespace App\Recipe;
 
 use App\Recipe\Data\Recipe;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ObjectResult;
@@ -40,11 +42,15 @@ final class Chat
 
         $message = $messages[\count($messages) - 1];
 
-        if (!$message->getMetadata()->has('recipe')) {
-            throw new \RuntimeException('The last message does not contain a recipe.');
+        if ($message instanceof AssistantMessage) {
+            foreach ($message->getContent() as $part) {
+                if ($part instanceof Json && $part->getObject() instanceof Recipe) {
+                    return $part->getObject();
+                }
+            }
         }
 
-        return $message->getMetadata()->get('recipe');
+        throw new \RuntimeException('The last message does not contain a recipe.');
     }
 
     public function submitMessage(string $message): void
@@ -60,9 +66,7 @@ final class Chat
 
         \assert($recipe instanceof Recipe);
 
-        $assistantMessage = Message::ofAssistant($recipe->toString());
-        $assistantMessage->getMetadata()->add('recipe', $recipe);
-        $messages->add($assistantMessage);
+        $messages->add(Message::ofAssistant($recipe));
 
         $this->saveMessages($messages);
     }

@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message\AssistantMessageNo
 use Symfony\AI\Platform\Bridge\OpenResponses\Contract\ToolCallNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Model;
@@ -61,6 +62,18 @@ class AssistantMessageNormalizerTest extends TestCase
                     'name' => $toolCall->getName(),
                     'type' => 'function_call',
                 ],
+            ],
+        ];
+
+        $payload = new \stdClass();
+        $payload->title = 'Pasta';
+
+        yield 'with json content' => [
+            new AssistantMessage(new Json($payload)),
+            [
+                'role' => 'assistant',
+                'type' => 'message',
+                'content' => '{"title":"Pasta"}',
             ],
         ];
     }

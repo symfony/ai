@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
@@ -46,7 +47,12 @@ final class Message
         return new SystemMessage($content instanceof \Stringable ? (string) $content : $content);
     }
 
-    public static function ofAssistant(string|ContentInterface|ResultInterface ...$parts): AssistantMessage
+    /**
+     * @param string|ContentInterface|ResultInterface|object ...$parts Strings become Text parts; known ResultInterface
+     *                                                                 variants map to their Content equivalents; other
+     *                                                                 objects are wrapped as Json content.
+     */
+    public static function ofAssistant(string|object ...$parts): AssistantMessage
     {
         $content = [];
         foreach ($parts as $part) {
@@ -78,7 +84,7 @@ final class Message
     /**
      * @return list<ContentInterface>
      */
-    private static function toContent(string|ContentInterface|ResultInterface $part): array
+    private static function toContent(string|object $part): array
     {
         if (\is_string($part)) {
             return [new Text($part)];
@@ -115,6 +121,11 @@ final class Message
             }
 
             return $content;
+        }
+
+        // Domain object passed directly — wrap it so it round-trips as JSON in the next request.
+        if (!$part instanceof ResultInterface) {
+            return [new Json($part)];
         }
 
         // Aggressive on purpose: we'd rather fail loudly than silently drop a part

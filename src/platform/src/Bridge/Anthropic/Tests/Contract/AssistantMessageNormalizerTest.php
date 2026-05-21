@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -206,6 +207,35 @@ final class AssistantMessageNormalizerTest extends TestCase
                 'content' => [
                     ['type' => 'thinking', 'thinking' => 'I should read this file.', 'signature' => 'sig_123'],
                     ['type' => 'tool_use', 'id' => 'id1', 'name' => 'read', 'input' => ['path' => '/etc/hosts']],
+                ],
+            ],
+        ];
+
+        $json = new Json(new class implements \JsonSerializable {
+            /**
+             * @return array{title: string}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['title' => 'Pasta'];
+            }
+        });
+
+        yield 'json content only emits string content' => [
+            new AssistantMessage($json),
+            [
+                'role' => 'assistant',
+                'content' => '{"title":"Pasta"}',
+            ],
+        ];
+
+        yield 'json content alongside thinking emits text block' => [
+            new AssistantMessage(new Thinking('Picking recipe'), $json),
+            [
+                'role' => 'assistant',
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'Picking recipe'],
+                    ['type' => 'text', 'text' => '{"title":"Pasta"}'],
                 ],
             ],
         ];

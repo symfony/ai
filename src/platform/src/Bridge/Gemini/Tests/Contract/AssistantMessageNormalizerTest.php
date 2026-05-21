@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -153,6 +154,14 @@ final class AssistantMessageNormalizerTest extends TestCase
                 ['executableCode' => ['language' => 'PYTHON', 'code' => 'print(1)', 'id' => 'exec_1']],
                 ['codeExecutionResult' => ['outcome' => 'OUTCOME_OK', 'output' => '1', 'id' => 'exec_1']],
             ],
+        ];
+
+        $payload = new \stdClass();
+        $payload->title = 'Pasta';
+
+        yield 'json content is serialized to text part' => [
+            new AssistantMessage(new Json($payload)),
+            [['text' => '{"title":"Pasta"}']],
         ];
     }
 }
