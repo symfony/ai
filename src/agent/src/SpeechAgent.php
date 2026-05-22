@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Speech\InterruptionStreamListener;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -20,12 +21,15 @@ use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
 final class SpeechAgent implements AgentInterface
 {
+    use InterruptibleTrait;
+
     public function __construct(
         private readonly AgentInterface $agent,
         private readonly SpeechConfiguration $configuration,
@@ -36,11 +40,19 @@ final class SpeechAgent implements AgentInterface
 
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
+        $signal = $this->extractInterruptionSignal($options);
+
+        $this->checkInterruptionSignal($signal);
+
         if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
             $messages = $this->transcribe($messages, $options);
         }
 
+        $this->checkInterruptionSignal($signal);
+
         $result = $this->agent->call($messages, $options);
+
+        $this->checkInterruptionSignal($signal);
 
         if (!$this->textToSpeechPlatform instanceof PlatformInterface) {
             return $result;
@@ -50,15 +62,27 @@ final class SpeechAgent implements AgentInterface
             return $result;
         }
 
+        $ttsOptions = $this->configuration->getTextToSpeechOptions();
+
+        if ($this->configuration->shouldStreamTextToSpeech()) {
+            $ttsOptions['stream'] = true;
+        }
+
         $speechResult = $this->textToSpeechPlatform->invoke(
             $this->configuration->getTextToSpeechModel(),
             $result->getContent(),
-            $this->configuration->getTextToSpeechOptions(),
+            $ttsOptions,
         );
 
         $speechResult->getMetadata()->add('text', $result->getContent());
 
-        return $speechResult->getResult();
+        $resolved = $speechResult->getResult();
+
+        if (null !== $signal && $resolved instanceof StreamResult) {
+            $resolved->addListener(new InterruptionStreamListener($signal));
+        }
+
+        return $resolved;
     }
 
     public function getName(): string

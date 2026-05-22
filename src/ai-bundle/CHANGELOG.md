@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `session` option in agent `speech` configuration to wrap the `SpeechAgent` in a `SpeechSession` decorator. A new `call()` on the session automatically cancels the previous in-flight result and flips its interruption signal, intended for long-running contexts (WebSocket, daemon, event loop).
+
 0.11
 ----
 
