@@ -36,9 +36,6 @@ final class TextResult extends BaseResult
         return $this->signature;
     }
 
-    /**
-     * Returns a new instance with the given content and preserved signature/metadata.
-     */
     public function withContent(string $content): self
     {
         if ($content === $this->content) {
