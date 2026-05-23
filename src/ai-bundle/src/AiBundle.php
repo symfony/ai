@@ -93,6 +93,7 @@ use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\Normalizer\TextNormalizerInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
@@ -353,6 +354,8 @@ final class AiBundle extends AbstractBundle
             ->addTag('ai.platform.model_client');
         $builder->registerForAutoconfiguration(ResultConverterInterface::class)
             ->addTag('ai.platform.result_converter');
+        $builder->registerForAutoconfiguration(TextNormalizerInterface::class)
+            ->addTag('ai.platform.result_normalizer');
 
         if (!ContainerBuilder::willBeAvailable('symfony/security-core', AuthorizationCheckerInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.security.is_granted_attribute_listener');

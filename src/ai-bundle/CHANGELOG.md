@@ -4,6 +4,7 @@ CHANGELOG
 0.9
 ---
 
+ * Wire result text normalizers: register `JsonFenceStripNormalizer` and `UnicodeNormalizer` services and auto-tag `TextNormalizerInterface` implementations with `ai.platform.result_normalizer`
  * Validate structured output using `symfony/validator` when available
  * Make `ai:platform:invoke` arguments optional and prompt for them interactively when missing
  * Visualize failed calls with `result_type: 'error'` in profiler
