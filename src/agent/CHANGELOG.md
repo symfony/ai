@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `ttsStream` flag to `SpeechConfiguration`. When enabled, `SpeechAgent` propagates `stream: true` to the TTS bridge and returns a cancellable `StreamResult` of `BinaryDelta` chunks, supporting barge-in via `cancel()`.
+
 0.11
 ----
 
@@ -12,7 +17,6 @@ CHANGELOG
 
  * Add `SystemPromptInputProcessor::getSystemPrompt()` to read the configured system prompt without reflection
  * [BC BREAK] Change the default value of the `maxToolCalls` parameter of `AgentProcessor` from `null` (unbounded) to `50`. Pass `null` explicitly to restore the previous unbounded behaviour.
- * Add `ttsStream` flag to `SpeechConfiguration`. When enabled, `SpeechAgent` propagates `stream: true` to the TTS bridge and returns a cancellable `StreamResult` of `BinaryDelta` chunks, supporting barge-in via `cancel()`.
 
 0.8
 ---

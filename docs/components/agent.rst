@@ -1028,7 +1028,22 @@ A full speech-to-speech pipeline (STT + TTS) can be created by configuring both 
 Interrupting a streaming TTS
 ............................
 
-For platforms that support streaming TTS (e.g. ElevenLabs), the
+Streaming TTS depends on the underlying provider's API. Current support across the
+Symfony AI bridges:
+
+==================== ==============================================================
+Bridge               Streaming TTS support
+==================== ==============================================================
+**ElevenLabs**       Supported (``stream=true``) — returns :class:`Symfony\\AI\\Platform\\Result\\StreamResult` of :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` chunks
+ElevenLabs *(STT)*   Buffered (non-streamed)
+Cartesia             Buffered (the bridge does not yet expose the streaming endpoint)
+OpenAI               Not yet supported (the upstream API does not stream TTS)
+Cohere               STT only, buffered
+HuggingFace          Buffered
+Gemini               Buffered
+==================== ==============================================================
+
+For the providers that support streaming TTS, the
 :class:`Symfony\\AI\\Agent\\Speech\\SpeechConfiguration` exposes a ``ttsStream`` flag. When enabled, the
 decorator returns a :class:`Symfony\\AI\\Platform\\Result\\StreamResult` of
 :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` chunks instead of a fully buffered

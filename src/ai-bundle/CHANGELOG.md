@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `tts_stream` option in agent `speech` configuration to enable streaming text-to-speech (returns a cancellable `StreamResult` of `BinaryDelta` chunks; requires bridge support, e.g. ElevenLabs)
+
 0.11
 ----
 
@@ -37,7 +42,6 @@ CHANGELOG
  * The `endpoint` option for `Meilisearch` is now `null` by default to allow the usage of a `ScopingHttpClient`
  * Wire `Meilisearch\StoreFactory` from `AiBundle`
  * Add `lang` option for `Postgres`
- * Add `tts_stream` option in agent `speech` configuration to enable streaming text-to-speech (returns a cancellable `StreamResult` of `BinaryDelta` chunks; requires bridge support, e.g. ElevenLabs)
 
 0.8
 ---
