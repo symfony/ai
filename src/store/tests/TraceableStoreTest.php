@@ -118,6 +118,11 @@ final class TraceableStoreTest extends TestCase
             {
                 return false;
             }
+
+            public function count(): int
+            {
+                return 0;
+            }
         };
 
         $traceableStore = new TraceableStore($innerStore);
@@ -172,6 +177,11 @@ final class TraceableStoreTest extends TestCase
             public function supports(string $queryClass): bool
             {
                 return false;
+            }
+
+            public function count(): int
+            {
+                return 0;
             }
         };
 

@@ -156,6 +156,12 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
         );
     }
 
+    #[Depends('testAddDocuments')]
+    public function testCountDocumentsAfterInsert()
+    {
+        $this->assertCount(3, self::$store);
+    }
+
     #[Depends('testQueryDocuments')]
     #[Depends('testQueryDocumentsWithTextQuery')]
     #[Depends('testQueryDocumentsWithHybridQuery')]
@@ -174,6 +180,12 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
         foreach ($results as $result) {
             $this->assertNotSame(self::DOCUMENT_ID_3, $result->getId());
         }
+    }
+
+    #[Depends('testRemoveDocuments')]
+    public function testCountDocumentsAfterRemove()
+    {
+        $this->assertCount(2, self::$store);
     }
 
     #[Depends('testRemoveDocuments')]

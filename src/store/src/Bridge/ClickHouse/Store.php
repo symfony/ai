@@ -55,6 +55,13 @@ class Store implements ManagedStoreInterface, StoreInterface
         $this->execute('POST', 'DROP TABLE IF EXISTS {{ table }}');
     }
 
+    public function count(): int
+    {
+        $result = $this->execute('GET', 'SELECT count() AS cnt FROM {{ table }}')->toArray();
+
+        return (int) ($result['data'][0]['cnt'] ?? 0);
+    }
+
     public function add(VectorDocument|array $documents): void
     {
         if ($documents instanceof VectorDocument) {

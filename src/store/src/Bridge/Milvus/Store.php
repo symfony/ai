@@ -161,6 +161,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    public function count(): int
+    {
+        $result = $this->request('POST', 'v2/vectordb/entities/query', [
+            'collectionName' => $this->collection,
+            'filter' => '',
+            'outputFields' => ['count(*)'],
+        ]);
+
+        return (int) ($result['data'][0]['count(*)'] ?? 0);
+    }
+
     /**
      * @param array<string, mixed> $payload
      *

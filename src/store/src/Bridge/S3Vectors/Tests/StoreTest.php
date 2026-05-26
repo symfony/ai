@@ -14,8 +14,11 @@ namespace Symfony\AI\Store\Bridge\S3Vectors\Tests;
 use AsyncAws\Core\Test\ResultMockFactory;
 use AsyncAws\S3Vectors\Enum\DataType;
 use AsyncAws\S3Vectors\Enum\DistanceMetric;
+use AsyncAws\S3Vectors\Input\ListVectorsInput;
+use AsyncAws\S3Vectors\Result\ListVectorsOutput;
 use AsyncAws\S3Vectors\Result\QueryVectorsOutput;
 use AsyncAws\S3Vectors\S3VectorsClient;
+use AsyncAws\S3Vectors\ValueObject\ListOutputVector;
 use AsyncAws\S3Vectors\ValueObject\QueryOutputVector;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
@@ -332,6 +335,29 @@ final class StoreTest extends TestCase
             }));
 
         self::createStore($client)->drop();
+    }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $result = ResultMockFactory::create(ListVectorsOutput::class, [
+            'input' => new ListVectorsInput(),
+            'vectors' => [
+                new ListOutputVector(['key' => 'doc-1']),
+                new ListOutputVector(['key' => 'doc-2']),
+            ],
+        ]);
+
+        $client->expects($this->once())
+            ->method('listVectors')
+            ->with($this->callback(static function ($input) {
+                return 'test-bucket' === $input['vectorBucketName']
+                    && 'test-index' === $input['indexName'];
+            }))
+            ->willReturn($result);
+
+        $this->assertSame(2, self::createStore($client)->count());
     }
 
     /**

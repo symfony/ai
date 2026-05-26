@@ -101,6 +101,17 @@ final class SearchStore implements StoreInterface
         }
     }
 
+    public function count(): int
+    {
+        $result = $this->request('search', [
+            'search' => '*',
+            'top' => 0,
+            'count' => true,
+        ]);
+
+        return $result['@odata.count'] ?? 0;
+    }
+
     /**
      * @param array<string, mixed> $payload
      *

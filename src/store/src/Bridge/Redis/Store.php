@@ -80,6 +80,21 @@ class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function count(): int
+    {
+        try {
+            $result = $this->redis->rawCommand('FT.SEARCH', $this->indexName, '*', 'LIMIT', 0, 0);
+        } catch (\RedisException $e) {
+            throw new RuntimeException(\sprintf('Failed to count documents in Redis: "%s".', $e->getMessage()), previous: $e);
+        }
+
+        if (!\is_array($result) || !isset($result[0])) {
+            return 0;
+        }
+
+        return (int) $result[0];
+    }
+
     public function add(VectorDocument|array $documents): void
     {
         if ($documents instanceof VectorDocument) {

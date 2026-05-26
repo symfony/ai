@@ -54,6 +54,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function count(): int
+    {
+        $collection = $this->client->getOrCreateCollection($this->collectionName);
+
+        return max(0, $collection->count());
+    }
+
     public function add(VectorDocument|array $documents): void
     {
         if ($documents instanceof VectorDocument) {

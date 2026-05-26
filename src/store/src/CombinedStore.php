@@ -81,6 +81,15 @@ final class CombinedStore implements StoreInterface
             || $this->textStore->supports($queryClass);
     }
 
+    public function count(): int
+    {
+        if ($this->textStore !== $this->vectorStore) {
+            return $this->vectorStore->count() + $this->textStore->count();
+        }
+
+        return $this->vectorStore->count();
+    }
+
     /**
      * @param array<string, mixed> $options
      *
