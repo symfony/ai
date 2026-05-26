@@ -113,6 +113,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->getCollection()->drop();
     }
 
+    public function count(): int
+    {
+        return $this->getCollection()->countDocuments();
+    }
+
     public function add(VectorDocumentInterface|array $documents): void
     {
         if ($documents instanceof VectorDocumentInterface) {

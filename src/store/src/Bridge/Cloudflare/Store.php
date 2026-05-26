@@ -60,6 +60,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', \sprintf('vectorize/v2/indexes/%s', $this->index));
     }
 
+    public function count(): int
+    {
+        $result = $this->request('GET', \sprintf('vectorize/v2/indexes/%s', $this->index));
+
+        $index = $result['result'] ?? null;
+        if (!\is_array($index)) {
+            return 0;
+        }
+
+        $count = $index['vectorsCount'] ?? null;
+        if (!\is_int($count)) {
+            return 0;
+        }
+
+        return max(0, $count);
+    }
+
     public function add(VectorDocumentInterface|array $documents): void
     {
         if ($documents instanceof VectorDocumentInterface) {

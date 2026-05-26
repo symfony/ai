@@ -165,9 +165,16 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
         );
     }
 
+    #[Depends('testAddDocuments')]
+    public function testCountDocumentsAfterInsert()
+    {
+        $this->assertCount(3, self::$store);
+    }
+
     #[Depends('testQueryDocuments')]
     #[Depends('testQueryDocumentsWithTextQuery')]
     #[Depends('testQueryDocumentsWithHybridQuery')]
+    #[Depends('testCountDocumentsAfterInsert')]
     public function testRemoveDocuments()
     {
         try {
@@ -190,6 +197,12 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     }
 
     #[Depends('testRemoveDocuments')]
+    public function testCountDocumentsAfterRemove()
+    {
+        $this->assertCount(2, self::$store);
+    }
+
+    #[Depends('testCountDocumentsAfterRemove')]
     public function testClearStore()
     {
         self::$store->clear();

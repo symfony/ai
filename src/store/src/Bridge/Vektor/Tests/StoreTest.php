@@ -121,4 +121,21 @@ final class StoreTest extends TestCase
 
         $store->drop();
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $this->assertCount(0, $store);
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument(Uuid::v4(), new Vector([0.4, 0.5, 0.6])),
+        ]);
+
+        $this->assertCount(2, $store);
+
+        $store->drop();
+    }
 }

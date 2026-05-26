@@ -171,6 +171,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ->delete();
     }
 
+    public function count(): int
+    {
+        // data() is what resolves the index host and points the client at it, so it is called
+        // for that effect before the statistics request is sent through the client itself
+        $this->pinecone->data();
+
+        $stats = $this->pinecone->send(new DescribeIndexStats())->json();
+
+        if (null !== $this->namespace) {
+            $namespaces = $stats['namespaces'] ?? [];
+
+            return $namespaces[$this->namespace]['vectorCount'] ?? 0;
+        }
+
+        return $stats['totalVectorCount'] ?? 0;
+    }
+
     private function getVectors(): VectorResource
     {
         return $this->pinecone->data()->vectors();

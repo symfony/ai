@@ -373,4 +373,27 @@ final class StoreTest extends TestCase
         $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());
         $this->assertFalse($store->supports(HybridQuery::class));
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('http://127.0.0.1:6333/collections/test/points/count', $url);
+            $this->assertSame(['exact' => true], json_decode($options['body'], true, 512, \JSON_THROW_ON_ERROR));
+
+            return new JsonMockResponse([
+                'status' => 'ok',
+                'result' => [
+                    'count' => 42,
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->assertSame(42, $store->count());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

@@ -20,6 +20,7 @@ use Probots\Pinecone\Resources\DataResource;
 use Saloon\Http\Response;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\Pinecone\DescribeIndexStats;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -567,11 +568,64 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $client = self::createClientReturningStats([
+            'totalVectorCount' => 42,
+            'namespaces' => [],
+        ]);
+
+        $this->assertSame(42, self::createStore($client)->count());
+    }
+
+    public function testCountReturnsNamespaceDocumentCount()
+    {
+        $client = self::createClientReturningStats([
+            'totalVectorCount' => 100,
+            'namespaces' => [
+                'my-namespace' => ['vectorCount' => 42],
+            ],
+        ]);
+
+        $this->assertSame(42, self::createStore($client, namespace: 'my-namespace')->count());
+    }
+
+    public function testCountSendsAnEmptyJsonObjectAsBody()
+    {
+        $request = new DescribeIndexStats();
+
+        $this->assertSame('{}', (string) $request->body());
+        $this->assertSame('application/json', $request->headers()->get('Content-Type'));
+    }
+
     /**
      * @param array<string, mixed> $filter
      */
     private static function createStore(Client $client, string $indexName = 'test-index', ?string $namespace = null, array $filter = [], int $topK = 3): Store
     {
         return new Store($client, $indexName, $namespace, $filter, $topK);
+    }
+
+    /**
+     * @param array<string, mixed> $stats
+     */
+    private function createClientReturningStats(array $stats): Client
+    {
+        $client = $this->createMock(Client::class);
+
+        // the store calls data() to have the client resolve and point at the index host
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($this->createMock(DataResource::class));
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn($stats);
+
+        $client->expects($this->once())
+            ->method('send')
+            ->with($this->isInstanceOf(DescribeIndexStats::class))
+            ->willReturn($response);
+
+        return $client;
     }
 }

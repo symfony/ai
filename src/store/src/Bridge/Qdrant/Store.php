@@ -156,6 +156,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', \sprintf('collections/%s', $this->collectionName));
     }
 
+    public function count(): int
+    {
+        // the collection info reports an estimated "points_count" derived from segment metadata,
+        // so the dedicated count endpoint is asked for an exact figure instead
+        $response = $this->request(
+            'POST',
+            \sprintf('collections/%s/points/count', $this->collectionName),
+            ['exact' => true],
+        );
+
+        return $response['result']['count'] ?? 0;
+    }
+
     /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $queryParameters

@@ -15,6 +15,7 @@ use Centamiv\Vektor\Core\Config;
 use Centamiv\Vektor\Services\Indexer;
 use Centamiv\Vektor\Services\Optimizer;
 use Centamiv\Vektor\Services\Searcher;
+use Centamiv\Vektor\Storage\Binary\VectorFile;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
@@ -133,6 +134,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
+    }
+
+    public function count(): int
+    {
+        // Vektor has no count operation, but the vector file only yields the entries
+        // that are not soft-deleted, so scanning it gives the exact document count
+        return iterator_count((new VectorFile())->scan());
     }
 
     /**

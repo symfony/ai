@@ -73,6 +73,28 @@ Store
    The same applies to anything typed on the documents a store returns: `RetrieverInterface`,
    `Reranker\RerankerInterface` and `VectorizerInterface` now speak in terms of the interface too.
 
+ * `StoreInterface` extends `\Countable`, so every store reports how many documents it holds and can be
+   passed to `count()` directly - `$store->count()` and `count($store)` are the same call, and
+   `assertCount()` works on a store in tests. Custom stores have to implement the new method:
+
+   ```diff
+    final class MyStore implements StoreInterface
+    {
+        // ...
+   +
+   +    public function count(): int
+   +    {
+   +        return $this->connection->countDocuments();
+   +    }
+    }
+   ```
+
+   ```diff
+   -$documents = iterator_to_array($store->query(new VectorQuery($vector)));
+   -$total = \count($documents);
+   +$total = $store->count();
+   ```
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 

@@ -140,6 +140,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    public function count(): int
+    {
+        $response = $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
+            'statement' => \sprintf('MATCH (n:%s) RETURN count(n) AS count', $this->nodeName),
+        ]);
+
+        return $response['data']['values'][0][0] ?? 0;
+    }
+
     /**
      * @param array{batch_size?: int} $options
      */
