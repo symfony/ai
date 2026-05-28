@@ -980,6 +980,85 @@ This allows fast and isolated testing of AI-powered features without relying on 
 
     This requires `cURL` and the `ext-curl` extension to be installed.
 
+Routing-Aware Mock Provider
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``InMemoryPlatform`` replaces the *whole* platform, so it ignores routing and returns text only.
+When a test needs to go through real model routing, coexist with real providers, return non-text
+results, or assert on exactly what was sent, use the provider-level mock from
+:class:`Symfony\\AI\\Platform\\Mock\\Factory` instead. It registers as a regular provider and
+threads a scripted :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` through unchanged, so
+every result type is supported.
+
+The scripted response can be a fixed string, a map keyed by model name, or a closure::
+
+    use Symfony\AI\Platform\Mock\Factory;
+
+    // 1. Fixed string - every call returns a TextResult
+    $platform = Factory::createPlatform('Mock result');
+    echo $platform->invoke('gpt-4o-mini', 'What is the capital of France?')->asText(); // "Mock result"
+
+    // 2. Map keyed by model name - per-model response
+    $platform = Factory::createPlatform([
+        'gpt-4o-mini' => 'cheap answer',
+        'gpt-4o' => 'expensive answer',
+    ]);
+
+    // 3. Closure - full control, branch on the payload or options
+    $platform = Factory::createPlatform(
+        fn ($model, $payload, $options) => "Echo: {$payload}"
+    );
+
+Because the result is passed through verbatim, structured output, embeddings, streams and tool
+calls work the same way::
+
+    use Symfony\AI\Platform\Mock\Factory;
+    use Symfony\AI\Platform\Result\ObjectResult;
+    use Symfony\AI\Platform\Result\VectorResult;
+    use Symfony\AI\Platform\Vector\Vector;
+
+    $platform = Factory::createPlatform(fn () => new ObjectResult((object) ['city' => 'Paris']));
+    echo $platform->invoke('gpt-4o-mini', 'extract the city')->asObject()->city; // "Paris"
+
+    $platform = Factory::createPlatform(fn () => new VectorResult([new Vector([0.1, 0.2, 0.3])]));
+    $vectors = $platform->invoke('text-embedding-3-small', 'vectorize')->asVectors();
+
+The mock records every call, so a test can assert on the exact payload and options the platform
+built (tool option translation, merged model options, and so on). Build the provider yourself to
+keep a reference to its :class:`Symfony\\AI\\Platform\\Mock\\MockModelClient`::
+
+    use Symfony\AI\Platform\Mock\MockModelClient;
+    use Symfony\AI\Platform\Mock\MockResultConverter;
+    use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
+    use Symfony\AI\Platform\Platform;
+    use Symfony\AI\Platform\Provider;
+
+    $client = new MockModelClient('ok');
+    $provider = new Provider('mock', [$client], [new MockResultConverter()], new FallbackModelCatalog());
+    $platform = new Platform([$provider]);
+
+    $platform->invoke('gpt-4o-mini', 'Hello', ['temperature' => 0.5]);
+
+    $calls = $client->getCalls();
+    // $calls[0]['model']->getName() === 'gpt-4o-mini'
+    // $calls[0]['options'] === ['temperature' => 0.5]
+
+By default the factory uses a :class:`Symfony\\AI\\Platform\\ModelCatalog\\FallbackModelCatalog`,
+so any model name resolves to the mock. To gate which model names route to the mock - for example
+in a multi-provider routing test - pass a :class:`Symfony\\AI\\Platform\\Mock\\ModelCatalog` with
+explicit models instead::
+
+    use Symfony\AI\Platform\Capability;
+    use Symfony\AI\Platform\Mock\Factory;
+    use Symfony\AI\Platform\Mock\ModelCatalog;
+    use Symfony\AI\Platform\Model;
+
+    $provider = Factory::createProvider('mock answer', new ModelCatalog([
+        'mock-model' => ['class' => Model::class, 'capabilities' => [Capability::INPUT_MESSAGES]],
+    ]));
+    // $provider->supports('mock-model') === true
+    // $provider->supports('gpt-4o') === false
+
 Code Examples
 ~~~~~~~~~~~~~
 
