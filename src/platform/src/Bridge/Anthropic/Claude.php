@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCard;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -33,12 +34,12 @@ class Claude extends Model
     /**
      * @param array<string, mixed> $options The default options for the model usage
      */
-    public function __construct(string $name, array $capabilities = [], array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [], ?ModelCard $card = null)
     {
         if (!isset($options['max_tokens'])) {
             $options['max_tokens'] = 1000;
         }
 
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $card);
     }
 }

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Voyage;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCard;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -24,8 +25,8 @@ class Voyage extends Model
     /**
      * @param array{dimensions?: int, input_type?: self::INPUT_TYPE_*, truncation?: bool} $options
      */
-    public function __construct(string $name, array $capabilities = [], array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [], ?ModelCard $card = null)
     {
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $card);
     }
 }

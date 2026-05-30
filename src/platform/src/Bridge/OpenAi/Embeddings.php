@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCard;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -21,8 +22,8 @@ class Embeddings extends Model
     /**
      * @param array<string, mixed> $options
      */
-    public function __construct(string $name, array $capabilities = [], array $options = [])
+    public function __construct(string $name, array $capabilities = [], array $options = [], ?ModelCard $card = null)
     {
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $card);
     }
 }

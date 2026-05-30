@@ -10,6 +10,7 @@ CHANGELOG
  * Add optional `signature` field to `Message\Content\Text`, `Result\ToolCall`, and `Result\TextResult` for provider-scoped signatures (currently used by Gemini/Vertex AI for `thoughtSignature` round-trip).
  * Memoize conversion failures in `DeferredResult::getResult()` so subsequent calls re-throw the cached exception instead of re-running the converter
  * Surface tool calls executed by the `ClaudeCode` and `Codex` CLI bridges as `ToolCallResult` parts of a `MultiPartResult`, mirroring the inference-API behavior of the Anthropic and Gemini bridges
+ * Add `ModelCatalog\ModelCard` and `ModelCatalog\ModelPricing`, exposed via `Model::getCard()`, with an optional `metadata` key in `ModelCatalog` entries (pricing, region, and an open `extra` bag)
 
 0.8
 ---

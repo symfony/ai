@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\ModelCatalog\ModelCard;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -27,6 +28,7 @@ class Model
         private readonly string $name,
         private readonly array $capabilities = [],
         private readonly array $options = [],
+        private readonly ?ModelCard $card = null,
     ) {
         if ('' === trim($name)) {
             throw new InvalidArgumentException('Model name cannot be empty.');
@@ -60,5 +62,10 @@ class Model
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    public function getCard(): ?ModelCard
+    {
+        return $this->card;
     }
 }

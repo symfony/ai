@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCard;
+use Symfony\AI\Platform\ModelCatalog\ModelPricing;
 
 final class ModelTest extends TestCase
 {
@@ -63,5 +65,22 @@ final class ModelTest extends TestCase
         $model = new Model('gpt-4');
 
         $this->assertSame([], $model->getOptions());
+    }
+
+    public function testCardIsNullByDefault()
+    {
+        $model = new Model('gpt-4');
+
+        $this->assertNull($model->getCard());
+    }
+
+    public function testExposesProvidedCard()
+    {
+        $card = new ModelCard(new ModelPricing(5.0, 30.0), 'us', ['tier' => 'flagship']);
+        $model = new Model('gpt-4', [], [], $card);
+
+        $this->assertSame($card, $model->getCard());
+        $this->assertSame('us', $model->getCard()->getRegion());
+        $this->assertSame('flagship', $model->getCard()->get('tier'));
     }
 }

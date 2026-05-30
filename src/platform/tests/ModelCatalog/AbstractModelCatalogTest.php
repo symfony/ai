@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\ModelCatalog;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
@@ -171,17 +172,95 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertSame(2.5E3, $options['presence_penalty']);
     }
 
+    public function testGetModelWithoutMetadataYieldsNullCard()
+    {
+        $catalog = $this->createTestCatalog();
+        $model = $catalog->getModel('test-model');
+
+        $this->assertNull($model->getCard());
+    }
+
+    public function testGetModelWithMetadataYieldsPopulatedCard()
+    {
+        $catalog = $this->createCatalog([
+            'gpt-4' => [
+                'class' => Model::class,
+                'capabilities' => [Capability::INPUT_TEXT],
+                'metadata' => [
+                    'pricing' => ['input' => 5.0, 'output' => 30.0, 'cachedInput' => 0.5],
+                    'region' => 'us',
+                    'extra' => ['tier' => 'flagship'],
+                ],
+            ],
+        ]);
+
+        $card = $catalog->getModel('gpt-4')->getCard();
+
+        $this->assertNotNull($card);
+        $this->assertSame(5.0, $card->getPricing()->getInputPerMillion());
+        $this->assertSame(0.5, $card->getPricing()->getCachedInputPerMillion());
+        $this->assertSame('us', $card->getRegion());
+        $this->assertSame('flagship', $card->get('tier'));
+    }
+
+    public function testMetadataIsParsedAlongsideQueryStringOptions()
+    {
+        $catalog = $this->createCatalog([
+            'gpt-4' => [
+                'class' => Model::class,
+                'capabilities' => [Capability::INPUT_TEXT],
+                'metadata' => ['region' => 'eu'],
+            ],
+        ]);
+
+        $model = $catalog->getModel('gpt-4?temperature=0.7');
+
+        $this->assertSame(['temperature' => 0.7], $model->getOptions());
+        $this->assertSame('eu', $model->getCard()->getRegion());
+    }
+
+    public function testMetadataSurvivesThroughSubclassConstructor()
+    {
+        // Claude overrides __construct; guards the positional-arg trap where a subclass
+        // that does not forward the 4th argument would silently drop the card.
+        $catalog = $this->createCatalog([
+            'claude-3-7-sonnet' => [
+                'class' => Claude::class,
+                'capabilities' => [Capability::INPUT_MESSAGES],
+                'metadata' => ['region' => 'us', 'extra' => ['tier' => 'flagship']],
+            ],
+        ]);
+
+        $model = $catalog->getModel('claude-3-7-sonnet');
+
+        $this->assertInstanceOf(Claude::class, $model);
+        $this->assertNotNull($model->getCard());
+        $this->assertSame('us', $model->getCard()->getRegion());
+        $this->assertSame('flagship', $model->getCard()->get('tier'));
+    }
+
     private function createTestCatalog(): AbstractModelCatalog
     {
-        return new class extends AbstractModelCatalog {
-            public function __construct()
+        return $this->createCatalog([
+            'test-model' => [
+                'class' => Model::class,
+                'capabilities' => [Capability::INPUT_TEXT],
+            ],
+        ]);
+    }
+
+    /**
+     * @param array<string, array{class: class-string, capabilities: list<Capability>, metadata?: array<string, mixed>}> $models
+     */
+    private function createCatalog(array $models): AbstractModelCatalog
+    {
+        return new class($models) extends AbstractModelCatalog {
+            /**
+             * @param array<string, array{class: class-string, capabilities: list<Capability>, metadata?: array<string, mixed>}> $models
+             */
+            public function __construct(array $models)
             {
-                $this->models = [
-                    'test-model' => [
-                        'class' => Model::class,
-                        'capabilities' => [Capability::INPUT_TEXT],
-                    ],
-                ];
+                $this->models = $models;
             }
         };
     }

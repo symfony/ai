@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Scaleway;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCard;
 
 /**
  * @author Marcus Stöhr <marcus@fischteich.net>
@@ -25,7 +26,8 @@ final class Scaleway extends Model
         string $name,
         array $capabilities = [],
         array $options = [],
+        ?ModelCard $card = null,
     ) {
-        parent::__construct($name, $capabilities, $options);
+        parent::__construct($name, $capabilities, $options, $card);
     }
 }
