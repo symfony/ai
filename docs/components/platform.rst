@@ -1059,6 +1059,45 @@ explicit models instead::
     // $provider->supports('mock-model') === true
     // $provider->supports('gpt-4o') === false
 
+Recording Real Responses
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+To exercise a bridge's *internals* — its Contract normalizers, ``ModelClient`` payload building and
+``ResultConverter`` — against realistic data without a network, record a real HTTP response once and
+replay it offline. :class:`Symfony\\AI\\Platform\\Mock\\Http\\CassetteHttpClient` is an
+``HttpClientInterface`` you pass to any real bridge ``Factory``; because replay serves a real
+``MockResponse``, the **real** converter runs on replay (unlike the mocks above, which bypass it).
+
+By default the mode follows the cassette file: record when it is missing, replay when it exists
+(override with an explicit ``record:`` argument). Record once with a real API key, commit the
+generated cassette, and replay it in CI::
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Mock\Http\CassetteHttpClient;
+    use Symfony\AI\Platform\Mock\Http\HttpCassette;
+    use Symfony\Component\HttpClient\HttpClient;
+
+    $cassette = new HttpCassette(__DIR__.'/fixtures/mistral_chat.json');
+
+    // cassette missing (+ real key) -> hits the live API and writes the cassette (secrets redacted)
+    // cassette exists -> serves the recorded response; the real Mistral ResultConverter runs
+    $http = new CassetteHttpClient($cassette, HttpClient::create());
+
+    $platform = Factory::createPlatform($apiKey, $http);
+    $result = $platform->invoke('mistral-large-latest', new MessageBag(Message::ofUser('Hello')));
+
+    echo $result->asText(); // produced by the real converter from the recorded bytes
+
+Recorded interactions replay first-in-first-out (like ``MockHttpClient`` with an array of responses),
+streamed Server-Sent Events round-trip as well, and ``Authorization``/``x-api-key``/``auth_bearer``
+secrets are stripped before the cassette is written.
+
+.. note::
+
+    This requires `symfony/http-client` (the ``CassetteHttpClient`` builds on ``MockHttpClient``).
+
 Code Examples
 ~~~~~~~~~~~~~
 

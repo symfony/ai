@@ -1,0 +1,35 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/chat/completions",
+                "body": {
+                    "model": "mistral-large-latest",
+                    "messages": [
+                        {"role": "user", "content": "Hello"}
+                    ]
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": ["application/json"]
+                },
+                "body": {
+                    "id": "cmpl-text",
+                    "object": "chat.completion",
+                    "model": "mistral-large-latest",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {"role": "assistant", "content": "Hello from Mistral!"},
+                            "finish_reason": "stop"
+                        }
+                    ],
+                    "usage": {"prompt_tokens": 5, "completion_tokens": 4, "total_tokens": 9}
+                }
+            }
+        }
+    ]
+}
