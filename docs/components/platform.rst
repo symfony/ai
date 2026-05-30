@@ -1059,6 +1059,45 @@ explicit models instead::
     // $provider->supports('mock-model') === true
     // $provider->supports('gpt-4o') === false
 
+Recording Real Provider Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a test only needs a realistic, deterministic answer from a provider, wrap a real provider in
+:class:`Symfony\\AI\\Platform\\Mock\\Recording\\RecordingProvider`. The first run, when the cassette
+file does not exist yet, calls the real provider and captures its result into the cassette; commit
+the cassette and later runs replay it offline - the real provider is never called and needs no API
+key. Delete the cassette to re-record::
+
+    use Symfony\AI\Platform\Bridge\Anthropic\Factory;
+    use Symfony\AI\Platform\Mock\Recording\Cassette;
+    use Symfony\AI\Platform\Mock\Recording\RecordingProvider;
+
+    $provider = new RecordingProvider(
+        Factory::createProvider($_SERVER['ANTHROPIC_API_KEY'] ?? 'no-key-needed-on-replay'),
+        new Cassette(__DIR__.'/fixtures/weather.json'),
+    );
+
+    $result = $provider->invoke('claude-3-7-sonnet-latest', $messages);
+
+By default the mode follows the cassette file: record when it is missing, replay when it exists. Pass
+the third constructor argument to force a mode - for example ``record: false`` in CI to fail loudly
+instead of issuing a real request when a cassette is missing::
+
+    // force replay (never call the real provider)
+    $provider = new RecordingProvider($realProvider, $cassette, record: false);
+
+The recorded interaction is matched by a signature derived from the model, input and options, so a
+replayed call must use the same arguments. Supported result types are text, structured output
+(``ObjectResult``), embeddings (``VectorResult``), tool calls (``ToolCallResult``) and text streams;
+result metadata and token usage are not preserved.
+
+.. note::
+
+    On replay the recorded result is returned verbatim, so the bridge
+    :class:`Symfony\\AI\\Platform\\ResultConverter` runs only at record time. To exercise bridge
+    internals (converter, formatter) offline, record at the HTTP boundary with
+    :class:`Symfony\\AI\\Platform\\Mock\\Http\\CassetteHttpClient` instead.
+
 Code Examples
 ~~~~~~~~~~~~~
 
