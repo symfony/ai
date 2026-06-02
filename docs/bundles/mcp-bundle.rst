@@ -237,6 +237,72 @@ This wraps the configured Symfony session handler (e.g. Redis, database, filesys
 your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
 Expired sessions are cleaned up lazily on read.
 
+OAuth Authorization Server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The bundle can turn your MCP server into its own OAuth 2.1 authorization server: it
+registers clients (RFC 7591), authorizes users, issues and validates its own RS256 JWT
+access tokens, and exposes the discovery documents MCP clients (e.g. Claude.ai) need —
+without an external identity provider.
+
+Generate an RSA key and enable the ``oauth`` section:
+
+.. code-block:: bash
+
+    openssl genrsa -out config/jwt/private.pem 2048
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        client_transports:
+            http: true
+        oauth:
+            enabled: true
+            issuer: '%env(MCP_BASE_URL)%'          # public base URL of this server
+            signing_key:
+                private_key: '%kernel.project_dir%/config/jwt/private.pem'
+                # passphrase: '%env(MCP_OAUTH_PASSPHRASE)%'
+            scopes: ['mcp:tools', 'mcp:resources']
+
+This registers the endpoints (defaults shown):
+
+============================================  =========================================
+Endpoint                                      Purpose
+============================================  =========================================
+``/.well-known/oauth-authorization-server``   RFC 8414 authorization server metadata
+``/.well-known/oauth-protected-resource``     RFC 9728 protected resource metadata
+``/.well-known/jwks.json``                    Public signing key (JWK Set)
+``/oauth/authorize``                          Authorization endpoint (PKCE, code grant)
+``/oauth/token``                              Token endpoint (code + refresh grants)
+``/oauth/register``                           Dynamic client registration (RFC 7591)
+============================================  =========================================
+
+Protect the MCP endpoint with the bundled firewall authenticator, which validates the
+bearer token and loads the user from its ``sub`` claim:
+
+.. code-block:: yaml
+
+    # config/packages/security.yaml
+    security:
+        firewalls:
+            mcp:
+                pattern: ^/_mcp
+                stateless: true
+                custom_authenticators:
+                    - Symfony\AI\McpBundle\Security\AccessTokenAuthenticator
+
+By default the authenticated firewall user in front of ``/oauth/authorize`` becomes the
+OAuth subject and consent is auto-approved. Override ``oauth.resource_owner_resolver`` or
+``oauth.consent`` with your own service ids to customize identity resolution or render a
+consent screen. Clients, authorization codes and refresh tokens are stored in the
+``oauth.cache_pool`` (defaults to ``cache.app``); back it with a durable pool in production.
+
+.. note::
+
+    The OAuth feature requires the ``firebase/php-jwt`` package for token signing and
+    validation: ``composer require firebase/php-jwt``.
+
 Act as Client
 ~~~~~~~~~~~~~
 

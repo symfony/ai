@@ -21,9 +21,13 @@ final class RouteLoader extends Loader
 {
     private bool $loaded = false;
 
+    /**
+     * @param list<array{name: string, path: string, controller: string, methods: list<string>}> $oauthRoutes
+     */
     public function __construct(
         private bool $httpTransportEnabled,
         private string $httpPath,
+        private array $oauthRoutes = [],
     ) {
         parent::__construct();
     }
@@ -36,13 +40,15 @@ final class RouteLoader extends Loader
 
         $this->loaded = true;
 
-        if (!$this->httpTransportEnabled) {
-            return new RouteCollection();
-        }
-
         $collection = new RouteCollection();
 
-        $collection->add('_mcp_endpoint', new Route($this->httpPath, ['_controller' => 'mcp.server.controller::handle'], methods: [Request::METHOD_GET, Request::METHOD_POST, Request::METHOD_DELETE, Request::METHOD_OPTIONS]));
+        if ($this->httpTransportEnabled) {
+            $collection->add('_mcp_endpoint', new Route($this->httpPath, ['_controller' => 'mcp.server.controller::handle'], methods: [Request::METHOD_GET, Request::METHOD_POST, Request::METHOD_DELETE, Request::METHOD_OPTIONS]));
+        }
+
+        foreach ($this->oauthRoutes as $route) {
+            $collection->add($route['name'], new Route($route['path'], ['_controller' => $route['controller']], methods: $route['methods']));
+        }
 
         return $collection;
     }

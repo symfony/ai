@@ -14,7 +14,7 @@
         }
     ],
     "require": {
-        "mcp/sdk": "^0.5",
+        "mcp/sdk": "^0.6",
         "php-http/discovery": "^1.20",
         "symfony/config": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
@@ -28,11 +28,20 @@
         "symfony/service-contracts": "^2.5|^3"
     },
     "require-dev": {
+        "firebase/php-jwt": "^6.10 || ^7.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/monolog-bundle": "^3.10 || ^4.0"
+        "psr/simple-cache": "^2.0 || ^3.0",
+        "symfony/cache": "^7.3|^8.0",
+        "symfony/monolog-bundle": "^3.10 || ^4.0",
+        "symfony/security-bundle": "^7.3|^8.0"
+    },
+    "suggest": {
+        "firebase/php-jwt": "Required to enable the OAuth authorization server (mcp.oauth)",
+        "symfony/cache": "Required for OAuth token/client storage and cache-based session storage",
+        "symfony/security-bundle": "Required to protect the MCP endpoint with the OAuth bearer authenticator"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
