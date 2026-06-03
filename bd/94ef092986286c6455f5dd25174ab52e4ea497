@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-03-03T16:02:33Z
+
+As I recall it was done for a reason, otherwise the calls dont show up in the toolbar? For streamed responses this is of course expected, but for non-streamed not
+
+If that's the case, then maybe we can detect the `StreamedResponse` and only then skip early collect?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-03T22:11:46Z
+
+@valtzu - you made the change with #173 for the stream example in the demo - it still works here :+1:
