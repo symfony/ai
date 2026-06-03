@@ -78,8 +78,7 @@ final class CachePlatformTest extends TestCase
         ]);
 
         $this->assertCount(3, $adapter->getValues());
-        $this->assertArrayHasKey(\sprintf('symfonyfoo%s', $messageBag->getId()->toRfc4122()), $adapter->getValues());
-        $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
+         $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
         $this->assertSame('test content', $deferredResult->getResult()->getContent());
 
         $secondDeferredResult = $cachedPlatform->invoke('foo', $messageBag, [
@@ -87,71 +86,118 @@ final class CachePlatformTest extends TestCase
         ]);
 
         $this->assertCount(3, $adapter->getValues());
-        $this->assertArrayHasKey(\sprintf('symfonyfoo%s', $messageBag->getId()->toRfc4122()), $adapter->getValues());
         $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
         $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
         $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
     }
 
-    public function testPlatformCanReturnCachedResultWhenCalledTwiceWithSeparateMessageBag()
+    public function testPlatformReturnsCachedResultForSeparateMessageBagsWithSameContent()
+    {
+        // Two MessageBag instances with the same conversation must hit the
+        // same cache entry — see #1245. The bag's UUID is per-instance state
+        // and is intentionally excluded from the cache key.
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')->willReturn(new DeferredResult(
+            new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
+        ));
+
+        $cachedPlatform = new CachePlatform(
+            $platform,
+            cache: new TagAwareAdapter(new ArrayAdapter()),
+        );
+
+        $deferredResult = $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello there')), [
+            'prompt_cache_key' => 'symfony',
+        ]);
+
+        $this->assertSame('test content', $deferredResult->getResult()->getContent());
+        $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
+        $cachedAt = $deferredResult->getMetadata()->get('cached_at');
+
+        $secondDeferredResult = $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello there')), [
+            'prompt_cache_key' => 'symfony',
+        ]);
+
+        $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
+        $this->assertSame($cachedAt, $secondDeferredResult->getMetadata()->get('cached_at'));
+    }
+
+    public function testPlatformDistinguishesMessageBagsWithDifferentContent()
     {
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->exactly(2))->method('invoke')->willReturn(new DeferredResult(
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $adapter = new ArrayAdapter();
+        $cachedPlatform = new CachePlatform(
+            $platform,
+            cache: new TagAwareAdapter(new ArrayAdapter()),
+        );
+
+        $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello there')), [
+            'prompt_cache_key' => 'symfony',
+        ]);
+
+        // Different user message → cache miss → second underlying invocation.
+        $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello world')), [
+            'prompt_cache_key' => 'symfony',
+        ]);
+    }
+
+    public function testLookupReturnsNullOnCacheMiss()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
 
         $cachedPlatform = new CachePlatform(
             $platform,
-            cache: new TagAwareAdapter($adapter),
+            cache: new TagAwareAdapter(new ArrayAdapter()),
         );
 
-        $messageBag = new MessageBag(
-            Message::ofUser('Hello there'),
+        $this->assertNull($cachedPlatform->lookup('foo', new MessageBag(Message::ofUser('Hello there')), [
+            'prompt_cache_key' => 'symfony',
+        ]));
+    }
+
+    public function testLookupReturnsCachedResultOnCacheHitWithoutInvokingPlatform()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')->willReturn(new DeferredResult(
+            new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
+        ));
+
+        $cachedPlatform = new CachePlatform(
+            $platform,
+            cache: new TagAwareAdapter(new ArrayAdapter()),
         );
 
-        $deferredResult = $cachedPlatform->invoke('foo', $messageBag, [
+        $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello there')), [
             'prompt_cache_key' => 'symfony',
         ]);
 
-        $this->assertCount(3, $adapter->getValues());
-        $this->assertArrayHasKey(\sprintf('symfonyfoo%s', $messageBag->getId()->toRfc4122()), $adapter->getValues());
-        $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
-        $this->assertSame('test content', $deferredResult->getResult()->getContent());
-
-        $secondDeferredResult = $cachedPlatform->invoke('foo', $messageBag, [
+        // A second `invoke()` here would also hit the cache, but `lookup()`
+        // must not even attempt to invoke the underlying platform.
+        $cached = $cachedPlatform->lookup('foo', new MessageBag(Message::ofUser('Hello there')), [
             'prompt_cache_key' => 'symfony',
         ]);
 
-        $this->assertCount(3, $adapter->getValues());
-        $this->assertArrayHasKey(\sprintf('symfonyfoo%s', $messageBag->getId()->toRfc4122()), $adapter->getValues());
-        $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
-        $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
-        $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
+        $this->assertNotNull($cached);
+        $this->assertSame('test content', $cached->getResult()->getContent());
+        $this->assertTrue($cached->getMetadata()->has('cached_at'));
+    }
 
-        $secondMessageBag = new MessageBag(
-            Message::ofUser('Hello there'),
+    public function testLookupReturnsNullWhenCacheKeyIsMissing()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
+
+        $cachedPlatform = new CachePlatform(
+            $platform,
+            cache: new TagAwareAdapter(new ArrayAdapter()),
         );
 
-        $deferredResult = $cachedPlatform->invoke('foo', $secondMessageBag, [
-            'prompt_cache_key' => 'symfony',
-        ]);
-
-        $this->assertCount(5, $adapter->getValues());
-        $this->assertArrayHasKey(\sprintf('symfonyfoo%s', $secondMessageBag->getId()->toRfc4122()), $adapter->getValues());
-        $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
-        $this->assertSame('test content', $deferredResult->getResult()->getContent());
-
-        $secondDeferredResult = $cachedPlatform->invoke('foo', $secondMessageBag, [
-            'prompt_cache_key' => 'symfony',
-        ]);
-
-        $this->assertCount(5, $adapter->getValues());
-        $this->assertArrayHasKey(\sprintf('symfonyfoo%s', $secondMessageBag->getId()->toRfc4122()), $adapter->getValues());
-        $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
-        $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
-        $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
+        $this->assertNull($cachedPlatform->lookup('foo', 'bar'));
+        $this->assertNull($cachedPlatform->lookup('foo', 'bar', ['prompt_cache_key' => '']));
     }
 
     public function testPlatformCannotReturnCachedResultWhenCalledTwiceWhileUsingShortCustomTtl()
