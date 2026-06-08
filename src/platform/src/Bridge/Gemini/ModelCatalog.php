@@ -25,6 +25,46 @@ final class ModelCatalog extends AbstractModelCatalog
     public function __construct(array $additionalModels = [])
     {
         $defaultModels = [
+            'gemini-3.5-flash' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_AUDIO,
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_VIDEO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'gemini-3.1-flash-image' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
+            'gemini-3.1-flash-lite' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_AUDIO,
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_VIDEO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
             'gemini-3.1-pro-preview' => [
                 'class' => Gemini::class,
                 'capabilities' => [
@@ -146,22 +186,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                     Capability::TOOL_CALLING,
                     Capability::THINKING,
-                ],
-            ],
-            // 01/06/2026
-            // https://ai.google.dev/gemini-api/docs/changelog?hl=en#02-18-2026
-            'gemini-2.0-flash' => [
-                'class' => Gemini::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_IMAGE,
-                    Capability::INPUT_AUDIO,
-                    Capability::INPUT_VIDEO,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
                 ],
             ],
             // TTS
