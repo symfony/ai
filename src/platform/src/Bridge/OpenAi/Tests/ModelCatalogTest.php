@@ -51,9 +51,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'gpt-5.5-pro' => ['gpt-5.5-pro', Gpt::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::TOOL_CALLING, Capability::INPUT_IMAGE, Capability::INPUT_PDF, Capability::OUTPUT_STRUCTURED]];
 
         // Embedding models
-        yield 'text-embedding-ada-002' => ['text-embedding-ada-002', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
-        yield 'text-embedding-3-large' => ['text-embedding-3-large', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
-        yield 'text-embedding-3-small' => ['text-embedding-3-small', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+        yield 'text-embedding-ada-002' => ['text-embedding-ada-002', Embeddings::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-embedding-3-large' => ['text-embedding-3-large', Embeddings::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'text-embedding-3-small' => ['text-embedding-3-small', Embeddings::class, [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
 
         // Text-to-speech models
         yield 'tts-1' => ['tts-1', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO]];
