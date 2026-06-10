@@ -5257,6 +5257,60 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_custom_http_client', (string) $arguments[1]);
     }
 
+    public function testTogetherPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'together' => [
+                        'api_key' => 'together-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.together'));
+
+        $definition = $container->getDefinition('ai.platform.together');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(5, $arguments);
+        $this->assertNull($arguments[0]);
+        $this->assertSame('together-test-key', $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('http_client', (string) $arguments[2]);
+        $this->assertInstanceOf(Reference::class, $arguments[3]);
+        $this->assertSame('ai.platform.contract.together', (string) $arguments[3]);
+        $this->assertInstanceOf(Reference::class, $arguments[4]);
+        $this->assertSame('event_dispatcher', (string) $arguments[4]);
+    }
+
+    #[TestDox('Together platform uses custom endpoint and http_client when configured')]
+    public function testTogetherPlatformUsesCustomEndpointAndHttpClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'together' => [
+                        'api_key' => 'together-test-key',
+                        'endpoint' => 'https://example.test',
+                        'http_client' => 'my_custom_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.together'));
+
+        $definition = $container->getDefinition('ai.platform.together');
+        $arguments = $definition->getArguments();
+
+        $this->assertSame('https://example.test', $arguments[0]);
+        $this->assertSame('together-test-key', $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('my_custom_http_client', (string) $arguments[2]);
+    }
+
     public function testTransformersPhpConfiguration()
     {
         $container = $this->buildContainer([
@@ -9034,6 +9088,9 @@ class AiBundleTest extends TestCase
                     ],
                     'scaleway' => [
                         'api_key' => 'scaleway_key_full',
+                    ],
+                    'together' => [
+                        'api_key' => 'together_key_full',
                     ],
                     'voyage' => [
                         'api_key' => 'voyage_key_full',

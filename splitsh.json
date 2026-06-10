@@ -74,6 +74,7 @@
         "ai-perplexity-platform": "src/platform/src/Bridge/Perplexity",
         "ai-replicate-platform": "src/platform/src/Bridge/Replicate",
         "ai-scaleway-platform": "src/platform/src/Bridge/Scaleway",
+        "ai-together-platform": "src/platform/src/Bridge/Together",
         "ai-transformers-php-platform": "src/platform/src/Bridge/TransformersPhp",
         "ai-vertex-ai-platform": "src/platform/src/Bridge/VertexAi",
         "ai-voyage-platform": "src/platform/src/Bridge/Voyage",

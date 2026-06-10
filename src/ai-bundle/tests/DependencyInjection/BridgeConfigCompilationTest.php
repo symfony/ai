@@ -322,6 +322,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'ovh' => ['ovh', ['api_key' => 'k'], 'ai.platform.ovh'];
         yield 'perplexity' => ['perplexity', ['api_key' => 'k'], 'ai.platform.perplexity'];
         yield 'scaleway' => ['scaleway', ['api_key' => 'k'], 'ai.platform.scaleway'];
+        yield 'together' => ['together', ['api_key' => 'k'], 'ai.platform.together'];
         yield 'transformersphp' => ['transformersphp', [], 'ai.platform.transformersphp'];
         yield 'vertexai' => ['vertexai', ['location' => 'global', 'project_id' => '123'], 'ai.platform.vertexai'];
         yield 'voyage' => ['voyage', ['api_key' => 'k'], 'ai.platform.voyage'];

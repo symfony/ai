@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add Together platform bridge with chat completions, embeddings, image generation, text-to-speech, speech-to-text and reranking support
+
 0.11
 ----
 

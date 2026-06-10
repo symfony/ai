@@ -136,6 +136,7 @@ Supported Models & Platforms
   * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
   * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
+  * Open-weight models like Llama, Qwen, Kimi or GLM with `Together`_ as Platform
   * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
@@ -144,6 +145,7 @@ Supported Models & Platforms
   * `Voyage's Embeddings`_ with `Voyage`_ as Platform
   * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Qwen`_ with `OpenRouter`_ as Platform
+  * Embedding models like BGE or E5 with `Together`_ as Platform
 * **Other Models**
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
@@ -158,11 +160,15 @@ Supported Models & Platforms
   * `Cartesia STT`_ with `Cartesia`_ as Platform
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
+  * Text-to-speech and speech-to-text with `Together`_ as Platform
 
   For complete Deepgram setup and usage guide (TTS + STT), see :doc:`platform/deepgram`.
 * **Image/Video Models**
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
+  * Image generation with `Together`_ as Platform
+* **Reranking Models**
+  * Reranking with `Together`_ as Platform
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
@@ -1582,6 +1588,12 @@ Code Examples
 * `Parallel Embeddings Calls`_
 * `Cerebras Chat`_
 * `Cerebras Streaming`_
+* `Together Chat`_
+* `Together Embeddings`_
+* `Together Image`_
+* `Together Text-to-Speech`_
+* `Together Speech-to-Text`_
+* `Together Rerank`_
 
 .. note::
 
@@ -1660,3 +1672,10 @@ Code Examples
 .. _`LM Studio Catalog`: https://lmstudio.ai/models
 .. _`Cerebras Chat`: https://github.com/symfony/ai/blob/main/examples/cerebras/chat.php
 .. _`Cerebras Streaming`: https://github.com/symfony/ai/blob/main/examples/cerebras/stream.php
+.. _`Together`: https://www.together.ai/
+.. _`Together Chat`: https://github.com/symfony/ai/blob/main/examples/together/chat.php
+.. _`Together Embeddings`: https://github.com/symfony/ai/blob/main/examples/together/embeddings.php
+.. _`Together Image`: https://github.com/symfony/ai/blob/main/examples/together/image.php
+.. _`Together Text-to-Speech`: https://github.com/symfony/ai/blob/main/examples/together/text-to-speech.php
+.. _`Together Speech-to-Text`: https://github.com/symfony/ai/blob/main/examples/together/speech-to-text.php
+.. _`Together Rerank`: https://github.com/symfony/ai/blob/main/examples/together/rerank.php

@@ -58,6 +58,7 @@ use Symfony\AI\Platform\Bridge\Perplexity\Contract\PerplexityContract;
 use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog;
 use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
 use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog as ScalewayModelCatalog;
+use Symfony\AI\Platform\Bridge\Together\Contract\TogetherContract;
 use Symfony\AI\Platform\Bridge\TransformersPhp\ModelCatalog as TransformersPhpModelCatalog;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
 use Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog as VertexAiModelCatalog;
@@ -112,6 +113,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([OllamaContract::class, 'create'])
         ->set('ai.platform.contract.perplexity', Contract::class)
             ->factory([PerplexityContract::class, 'create'])
+        ->set('ai.platform.contract.together', Contract::class)
+            ->factory([TogetherContract::class, 'create'])
 
         // model catalog
         ->set('ai.platform.model_catalog.aimlapi', AiMlApiModelCatalog::class)

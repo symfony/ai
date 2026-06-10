@@ -71,6 +71,7 @@
         "symfony/ai-surreal-db-message-store": "^0.11",
         "symfony/ai-surreal-db-store": "^0.11",
         "symfony/ai-tavily-tool": "^0.11",
+        "symfony/ai-together-platform": "^0.11",
         "symfony/ai-transformers-php-platform": "^0.11",
         "symfony/ai-typesense-store": "^0.11",
         "symfony/ai-vektor-store": "^0.11",

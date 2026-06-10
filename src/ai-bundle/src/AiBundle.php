@@ -86,6 +86,7 @@ use Symfony\AI\Platform\Bridge\OpenRouter\Factory as OpenRouterFactory;
 use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\Factory as ScalewayFactory;
+use Symfony\AI\Platform\Bridge\Together\Factory as TogetherFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\Factory as TransformersPhpFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\Factory as VertexAiFactory;
 use Symfony\AI\Platform\Bridge\Voyage\Factory as VoyageFactory;
@@ -1180,6 +1181,30 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'scaleway']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('together' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-together-platform', TogetherFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Together platform configuration requires "symfony/ai-together-platform" package. Try running "composer require symfony/ai-together-platform".');
+            }
+
+            $platformId = 'ai.platform.together';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(TogetherFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['endpoint'] ?? null,
+                    $platform['api_key'],
+                    new Reference($platform['http_client']),
+                    new Reference('ai.platform.contract.together'),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'together']);
 
             $container->setDefinition($platformId, $definition);
 
