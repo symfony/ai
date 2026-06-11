@@ -1,0 +1,36 @@
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2026-06-05T07:55:48Z
+
+My take: bots don't hold copyright, so this part is fine. And the imported data are facts, not copyrightable either.
+There could be an issue if OpenRouter were in the EU, because data compilation are protected there. But it's a Delaware company so all is fine :)
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-06-05T09:50:56Z
+
+I think this is the wrong approach anyway. Models are changing very frequently and we won't release new versions everytime there is a model chage. So, we need to move these to something else. Good news is that we already have the models-dev package that does the job.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-05T10:06:39Z
+
+So in my mind there are multiple approaches that make sense right now:
+1. Configure it yourself, see #2139 and #2140, also allow to decouple from model catalog completely, covering also db-based configs etc
+2. API based for some bridges where Provider have Models endpoints -> enables to skip package updates completely as well - needs some standarization maybe and proper bundle integration with caching
+3. ModelsDev as central provider routing via bridge+package
+
+Not clear to me, do we want to kill those static files here completely?
+We could make ModelsDev first level citizen instead of a bridge, but Not having something in place as starting point might create friction for users
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2026-06-05T10:22:09Z
+
+See https://github.com/symfony/models-dev
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-05T10:52:30Z
+
+Well aware, but currently optional and installed via bridge
