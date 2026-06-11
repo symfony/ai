@@ -197,7 +197,7 @@ final class ChatTuiCommand extends Command
         // Debug pane state (only mounted when $debug is true).
         $debugWidget = new TextWidget('Waiting for the first message...');
         $debugLines = [];
-        $logDebug = function (string $line) use ($tui, $debugWidget, &$debugLines): void {
+        $logDebug = static function (string $line) use ($tui, $debugWidget, &$debugLines): void {
             $debugLines[] = $line;
             $debugLines = \array_slice($debugLines, -14);
             $debugWidget->setText(implode("\n", $debugLines));
@@ -368,7 +368,7 @@ final class ChatTuiCommand extends Command
     /**
      * Full details for the highlighted agent: model, model capabilities, and the
      * complete system prompt. (Temperature isn't configured per-agent here, and
-     * the platform's Model carries no pricing, so neither is shown.)
+     * the platform's Model carries no pricing, so neither is shown.).
      */
     private function agentDetailMarkdown(string $name): string
     {
