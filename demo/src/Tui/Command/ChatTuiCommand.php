@@ -211,6 +211,8 @@ final class ChatTuiCommand extends Command
         $pane->expandVertically(true);
         $pane->add($markdown);
 
+        $status = new TextWidget('Ready.');
+        $status->addStyleClass('hint');
         $hint = new TextWidget(
             $debug
                 ? 'Enter: send   ·   exit / quit / Esc: main menu   ·   debug pane: ON (-v)'
@@ -228,12 +230,12 @@ final class ChatTuiCommand extends Command
             $tui->add($debugPane);
         }
 
-        $tui->add($prompt)->add($hint);
+        $tui->add($prompt)->add($status)->add($hint);
         $tui->setFocus($prompt);
 
         $prompt->onCancel(static fn () => $tui->stop());
 
-        $prompt->onSubmit(function (SubmitEvent $event) use ($tui, $agent, $agentName, $prompt, $markdown, $messages, $debug, $logDebug, &$transcript): void {
+        $prompt->onSubmit(function (SubmitEvent $event) use ($tui, $agent, $agentName, $prompt, $status, $markdown, $messages, $debug, $logDebug, &$transcript): void {
             $question = trim($event->getValue());
             $prompt->setValue('');
 
@@ -246,6 +248,10 @@ final class ChatTuiCommand extends Command
 
                 return;
             }
+
+            $status->setText(\sprintf('%s: -- thinking --', $agentName));
+            $tui->requestRender();
+            $tui->processRender();
 
             $messages->add(Message::ofUser($question));
             $transcript .= \sprintf("**You:** %s\n\n**%s:** ", $question, $agentName);
@@ -261,21 +267,41 @@ final class ChatTuiCommand extends Command
                 if ($result instanceof StreamResult) {
                     $answer = '';
                     $thinkingLogged = false;
+                    if ($debug) {
+                        $logDebug('  stream opened');
+                    }
                     foreach ($result->getContent() as $delta) {
                         if ($delta instanceof TextDelta) {
+                            if ('' === $answer) {
+                                $status->setText(\sprintf('%s: streaming...', $agentName));
+                                if ($debug) {
+                                    $logDebug('  first token received');
+                                }
+                            }
                             $answer .= (string) $delta;
                             $this->flush($tui, $markdown, $transcript.$answer);
                         } elseif ($debug && $delta instanceof ToolCallStart) {
-                            $logDebug('  tool -> '.$delta->getName());
+                            $logDebug('  tool start: '.$delta->getName());
                         } elseif ($debug && !$thinkingLogged && $delta instanceof ThinkingStart) {
                             $thinkingLogged = true;
-                            $logDebug('  thinking...');
+                            $logDebug('  model thinking');
+                        } elseif ($debug) {
+                            $logDebug('  delta: '.(new \ReflectionClass($delta))->getShortName());
                         }
+                    }
+                    if ($debug) {
+                        $logDebug(\sprintf('  stream closed, answer chars: %d', mb_strlen($answer)));
                     }
                 } elseif ($result instanceof TextResult) {
                     $answer = $result->getContent();
+                    if ($debug) {
+                        $logDebug(\sprintf('  text result chars: %d', mb_strlen($answer)));
+                    }
                 } else {
                     $answer = '_(unexpected response type from agent)_';
+                    if ($debug) {
+                        $logDebug('  unexpected result: '.(new \ReflectionClass($result))->getShortName());
+                    }
                 }
 
                 $messages->add(Message::ofAssistant($answer));
@@ -284,10 +310,15 @@ final class ChatTuiCommand extends Command
                 if ($debug && null !== ($usage = $this->tokenUsageLine($result))) {
                     $logDebug($usage);
                 }
+
+                $status->setText('Ready.');
             } catch (\Throwable $e) {
+                $status->setText('Error. Ready.');
                 $transcript .= \sprintf("\n> Error: %s\n\n", $e->getMessage());
                 if ($debug) {
-                    $logDebug('  '.$e->getMessage());
+                    $logDebug('  exception: '.(new \ReflectionClass($e))->getShortName());
+                    $logDebug('  message: '.$this->trim($e->getMessage(), 160));
+                    $logDebug(\sprintf('  at %s:%d', basename($e->getFile()), $e->getLine()));
                 }
             }
 
@@ -504,9 +535,10 @@ final class ChatTuiCommand extends Command
             return null;
         }
 
-        $usage = $result->getMetadata()->get('token_usage');
+        $metadata = $result->getMetadata();
+        $usage = $metadata->get('token_usage');
         if (!$usage instanceof TokenUsage) {
-            return null;
+            return '  tokens: unavailable';
         }
 
         $parts = [];
@@ -523,7 +555,7 @@ final class ChatTuiCommand extends Command
             $parts[] = 'rem/min '.$usage->getRemainingTokensMinute();
         }
 
-        return $parts ? '  📊 tokens: '.implode('  ', $parts) : null;
+        return $parts ? '  tokens: '.implode('  ', $parts) : '  tokens: unavailable';
     }
 
     private function trim(string $text, int $max = 48): string
