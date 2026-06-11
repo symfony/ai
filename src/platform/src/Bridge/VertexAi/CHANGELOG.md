@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Fix: `ToolCallMessageNormalizer` now wraps list-array tool responses as `{items: [...]}` so they pass Gemini's `Struct`-proto validation on `functionResponse.response`. Tools that returned a JSON list previously caused the whole turn to fail with `Proto field is not repeating, cannot start list`; associative arrays and scalar/null wrap (`{rawResponse: ...}`) behavior is unchanged.
+
 0.9
 ---
 
