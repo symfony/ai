@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Event\ModelRoutingEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouterInterface;
@@ -140,6 +142,87 @@ final class PlatformTest extends TestCase
         $result = $platform->invoke('gpt-4o', 'Hello');
 
         $this->assertSame($deferredResult, $result);
+    }
+
+    public function testInvokeWithModelObjectRoutesViaSupports()
+    {
+        $model = new Model('custom-model', []);
+        $deferredResult = new DeferredResult(new PlainConverter(new TextResult('Hello')), $this->createStub(RawResultInterface::class));
+
+        $provider = $this->createMock(ProviderInterface::class);
+        $provider->expects($this->once())
+            ->method('supports')
+            ->with($model)
+            ->willReturn(true);
+        $provider->expects($this->once())
+            ->method('invoke')
+            ->with($model, 'Hello', [])
+            ->willReturn($deferredResult);
+
+        $router = $this->createMock(ModelRouterInterface::class);
+        $router->expects($this->never())->method('resolve');
+
+        $platform = new Platform([$provider], $router);
+
+        $result = $platform->invoke($model, 'Hello');
+
+        $this->assertSame($deferredResult, $result);
+    }
+
+    public function testInvokeWithModelObjectPicksFirstSupportingProvider()
+    {
+        $model = new Model('custom-model', []);
+        $deferredResult = new DeferredResult(new PlainConverter(new TextResult('Hello')), $this->createStub(RawResultInterface::class));
+
+        $firstProvider = $this->createMock(ProviderInterface::class);
+        $firstProvider->method('supports')->with($model)->willReturn(false);
+        $firstProvider->expects($this->never())->method('invoke');
+
+        $secondProvider = $this->createMock(ProviderInterface::class);
+        $secondProvider->method('supports')->with($model)->willReturn(true);
+        $secondProvider->expects($this->once())
+            ->method('invoke')
+            ->with($model, 'Hello', [])
+            ->willReturn($deferredResult);
+
+        $platform = new Platform([$firstProvider, $secondProvider]);
+
+        $result = $platform->invoke($model, 'Hello');
+
+        $this->assertSame($deferredResult, $result);
+    }
+
+    public function testInvokeWithModelObjectThrowsWhenNoProviderSupports()
+    {
+        $model = new Model('custom-model', []);
+
+        $provider = $this->createMock(ProviderInterface::class);
+        $provider->method('supports')->with($model)->willReturn(false);
+        $provider->expects($this->never())->method('invoke');
+
+        $platform = new Platform([$provider]);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('No provider found for model "custom-model"');
+
+        $platform->invoke($model, 'Hello');
+    }
+
+    public function testInvokeWithModelObjectDoesNotDispatchModelRoutingEvent()
+    {
+        $model = new Model('custom-model', []);
+        $deferredResult = new DeferredResult(new PlainConverter(new TextResult('Hello')), $this->createStub(RawResultInterface::class));
+
+        $provider = $this->createStub(ProviderInterface::class);
+        $provider->method('supports')->willReturn(true);
+        $provider->method('invoke')->willReturn($deferredResult);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects($this->never())->method('dispatch');
+
+        $platform = new Platform([$provider], eventDispatcher: $eventDispatcher);
+
+        $platform->invoke($model, 'Hello');
     }
 
     public function testGetModelCatalogBuildsComposite()

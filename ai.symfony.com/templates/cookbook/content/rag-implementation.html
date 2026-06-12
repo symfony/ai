@@ -1,0 +1,367 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>This guide walks you through implementing a complete RAG (Retrieval Augmented Generation) system
+using Symfony AI. Instead of relying solely on the model's training data, a RAG system converts
+documents into vector embeddings, stores them in a vector database, finds the documents most
+similar to the user's query, and feeds that context to the language model to generate accurate,
+context-aware responses. It is ideal for knowledge bases, product catalogs, customer support
+systems, and domain-specific chatbots.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+<li>Symfony AI Store component</li>
+<li>An embeddings model (e.g., OpenAI's text-embedding-3-small)</li>
+<li>A language model (e.g., gpt-4o-mini)</li>
+<li>Optional: A vector store (or use in-memory for testing)</li>
+</ul>
+<p>You can follow the complete example here: <a href="https://github.com/symfony/ai/blob/main/examples/rag/in-memory.php" class="reference external" rel="external noopener noreferrer" target="_blank">in-memory.php</a></p>
+</div>
+<div class="section">
+<h2 id="step-1-initialize-the-vector-store">
+    Step 1: Initialize the Vector Store
+    
+</h2>
+<p>First, create a store to hold your vector embeddings:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">InMemory</span>\<span class="hljs-title">Store</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Store</span>();</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>This in-memory store is ideal for getting started. See <a href="/cookbook/rag-implementation#going-to-production" class="reference internal">Going to Production</a> for persistent stores.</p>
+</div>
+<div class="section">
+<h2 id="step-2-prepare-your-documents">
+    Step 2: Prepare Your Documents
+    
+</h2>
+<p>Create text documents with relevant content and metadata:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Document</span>\<span class="hljs-title">Metadata</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Document</span>\<span class="hljs-title">TextDocument</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">Uid</span>\<span class="hljs-title">Uuid</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>documents</span> = [];
+<span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>movies</span> <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>movie</span>) {
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>documents</span>[] = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">TextDocument</span>(
+        <span class="hljs-attr">id</span>: Uuid::<span class="hljs-title invoke__">v4</span>(),
+        <span class="hljs-attr">content</span>: <span class="hljs-string">'Title: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>movie</span>[<span class="hljs-string">'title'</span>].<span class="hljs-keyword">PHP_EOL</span>.
+                <span class="hljs-string">'Director: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>movie</span>[<span class="hljs-string">'director'</span>].<span class="hljs-keyword">PHP_EOL</span>.
+                <span class="hljs-string">'Description: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>movie</span>[<span class="hljs-string">'description'</span>],
+        <span class="hljs-attr">metadata</span>: <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Metadata</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>movie</span>),
+    );
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Each document should contain:</p>
+<ul>
+    <li><strong>ID</strong>: Unique identifier (UUID v4 recommended)</li>
+<li><strong>Content</strong>: The text to be embedded and searched</li>
+<li><strong>Metadata</strong>: Additional information preserved with the document</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-3-create-embeddings-and-index-documents">
+    Step 3: Create Embeddings and Index Documents
+    
+</h2>
+<p>Use a vectorizer to convert documents into embeddings and store them:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Document</span>\<span class="hljs-title">Vectorizer</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Indexer</span>\<span class="hljs-title">DocumentIndexer</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Indexer</span>\<span class="hljs-title">DocumentProcessor</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span> = Factory::<span class="hljs-title invoke__">createPlatform</span>(<span class="hljs-title invoke__">env</span>(<span class="hljs-string">'OPENAI_API_KEY'</span>));
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>vectorizer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Vectorizer</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>, <span class="hljs-string">'text-embedding-3-small'</span>);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>indexer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">DocumentIndexer</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">DocumentProcessor</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>vectorizer</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span>));
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>indexer</span>-&gt;<span class="hljs-title invoke__">index</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>documents</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/store/src/Indexer/DocumentIndexer.php" class="reference external" title="Symfony\AI\Store\Indexer\DocumentIndexer" rel="external noopener noreferrer" target="_blank">DocumentIndexer</a> accepts
+<a href="https://github.com/symfony/ai/blob/main/src/store/src/Document/EmbeddableDocumentInterface.php" class="reference external" title="Symfony\AI\Store\Document\EmbeddableDocumentInterface" rel="external noopener noreferrer" target="_blank">EmbeddableDocumentInterface</a> instances (or iterables of them) directly.
+It handles:</p>
+<ul>
+    <li>Transforming and/or filtering documents (optional)</li>
+<li>Generating vector embeddings</li>
+<li>Storing vectors in the vector store</li>
+</ul>
+<p>Alternatively, you can use the <a href="https://github.com/symfony/ai/blob/main/src/store/src/Indexer/SourceIndexer.php" class="reference external" title="Symfony\AI\Store\Indexer\SourceIndexer" rel="external noopener noreferrer" target="_blank">SourceIndexer</a> when you want to load
+documents from a source (file path, URL, etc.) via a <a href="https://github.com/symfony/ai/blob/main/src/store/src/Document/LoaderInterface.php" class="reference external" title="Symfony\AI\Store\Document\LoaderInterface" rel="external noopener noreferrer" target="_blank">LoaderInterface</a>:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Document</span>\<span class="hljs-title">Loader</span>\<span class="hljs-title">TextFileLoader</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Indexer</span>\<span class="hljs-title">SourceIndexer</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>loader</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">TextFileLoader</span>();
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>indexer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SourceIndexer</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>loader</span>, <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">DocumentProcessor</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>vectorizer</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span>));
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>indexer</span>-&gt;<span class="hljs-title invoke__">index</span>(<span class="hljs-string">'/path/to/document.txt'</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-configure-similarity-search-tool">
+    Step 4: Configure Similarity Search Tool
+    
+</h2>
+<p>Create a tool that performs semantic search on your vector store:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">SimilaritySearch</span>\<span class="hljs-title">SimilaritySearch</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">AgentProcessor</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Toolbox</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Retriever</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>retriever</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Retriever</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>vectorizer</span>);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>similaritySearch</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SimilaritySearch</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>retriever</span>);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Toolbox</span>([<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>similaritySearch</span>]);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">AgentProcessor</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Bridge/SimilaritySearch/SimilaritySearch.php" class="reference external" title="Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch" rel="external noopener noreferrer" target="_blank">SimilaritySearch</a> tool:</p>
+<ul>
+    <li>Uses the retriever to find similar documents in the store</li>
+<li>Returns the most relevant documents</li>
+</ul>
+<p>You can customize the result header by passing a prompt template:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>similaritySearch</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SimilaritySearch</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>retriever</span>, <span class="hljs-string">'Here are the relevant results:'</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-5-create-rag-enabled-agent">
+    Step 5: Create RAG-Enabled Agent
+    
+</h2>
+<p>Configure the agent with the similarity search processor:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-4o-mini'</span>,
+    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span>],  <span class="hljs-comment">// Input processors</span>
+    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span>]   <span class="hljs-comment">// Output processors</span>
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The agent will automatically use the similarity search tool when needed.</p>
+</div>
+<div class="section">
+<h2 id="step-6-query-with-context">
+    Step 6: Query with Context
+    
+</h2>
+<p>Create messages that instruct the agent to use the similarity search:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">Message</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
+    Message::<span class="hljs-title invoke__">forSystem</span>(<span class="hljs-string">'Please answer all user questions only using SimilaritySearch function.'</span>),
+    Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-string">'Which movie fits the theme of the mafia?'</span>)
+);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The agent will:</p>
+<ol class="arabic">
+    <li>Analyze the user's question</li>
+<li>Call the similarity search tool</li>
+<li>Retrieve relevant documents</li>
+<li>Generate a response based on the retrieved context</li>
+</ol>
+</div>
+<div class="section">
+<h2 id="going-to-production">
+    Going to Production
+    
+</h2>
+<p>The in-memory store above is perfect for testing, but production systems need a persistent
+vector store such as ChromaDB, Pinecone, MongoDB Atlas, or Weaviate. Swap the store for a
+bridge implementation and keep the rest of the pipeline unchanged. See <a href="https://symfony.com/doc/current/ai/components/store.html" class="reference internal">Symfony AI - Store Component</a>
+for the available stores, similarity strategies, metadata filtering, and document chunking via
+<a href="https://github.com/symfony/ai/blob/main/src/store/src/Document/Transformer/TextSplitTransformer.php" class="reference external" title="Symfony\AI\Store\Document\Transformer\TextSplitTransformer" rel="external noopener noreferrer" target="_blank">TextSplitTransformer</a>.</p>
+<p>If you use the AI Bundle, the same pipeline is wired through YAML (platform, vectorizer, store,
+indexer, and agent) and populated with the <code translate="no" class="notranslate">ai:store:setup</code> and <code translate="no" class="notranslate">ai:store:index</code> commands.
+See <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> for the full configuration reference.</p>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://github.com/symfony/ai/tree/main/examples/rag" class="reference external" rel="external noopener noreferrer" target="_blank">RAG examples (ChromaDB, MongoDB, Pinecone, Meilisearch)</a></li>
+<li><a href="https://symfony.com/doc/current/ai/components/store.html" class="reference internal">Symfony AI - Store Component</a> - Store component documentation</li>
+<li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Agent component documentation</li>
+<li><a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> - AI Bundle configuration</li>
+<li><a href="/cookbook/chatbot-with-memory" class="reference internal">Building a Chatbot with Memory</a> - Memory management guide</li>
+</ul>
+</div>
+</div>

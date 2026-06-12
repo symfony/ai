@@ -121,4 +121,96 @@ final class ModelClientTest extends TestCase
         $this->assertNotNull($capturedBody);
         $this->assertArrayNotHasKey('cache_control', $capturedBody['tools'][0]);
     }
+
+    public function testSystemCacheControlIsInjectedWithShortRetention()
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$capturedBody) {
+            $capturedBody = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode([
+                'type' => 'message',
+                'content' => [['type' => 'text', 'text' => 'Hello']],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 5],
+            ]));
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key', 'short');
+
+        $payload = [
+            'model' => Claude::SONNET_4,
+            'system' => [['type' => 'text', 'text' => 'You are a helpful assistant.']],
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ];
+
+        $client->request(new Claude(Claude::SONNET_4), $payload);
+
+        $this->assertNotNull($capturedBody);
+        $this->assertSame(['type' => 'ephemeral'], $capturedBody['system'][0]['cache_control']);
+    }
+
+    public function testSystemCacheControlIsInjectedOnLastBlockWithLongRetention()
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$capturedBody) {
+            $capturedBody = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode([
+                'type' => 'message',
+                'content' => [['type' => 'text', 'text' => 'Hello']],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 5],
+            ]));
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key', 'long');
+
+        $payload = [
+            'model' => Claude::SONNET_4,
+            'system' => [
+                ['type' => 'text', 'text' => 'First block.'],
+                ['type' => 'text', 'text' => 'Second block.'],
+            ],
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ];
+
+        $client->request(new Claude(Claude::SONNET_4), $payload);
+
+        $this->assertNotNull($capturedBody);
+
+        // Last system block should have the long-retention cache_control
+        $this->assertSame(['type' => 'ephemeral', 'ttl' => '1h'], $capturedBody['system'][1]['cache_control']);
+
+        // First system block should NOT have cache_control
+        $this->assertArrayNotHasKey('cache_control', $capturedBody['system'][0]);
+    }
+
+    public function testSystemCacheControlIsNotInjectedWithNoneRetention()
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$capturedBody) {
+            $capturedBody = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode([
+                'type' => 'message',
+                'content' => [['type' => 'text', 'text' => 'Hello']],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 5],
+            ]));
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key', 'none');
+
+        $payload = [
+            'model' => Claude::SONNET_4,
+            'system' => [['type' => 'text', 'text' => 'You are a helpful assistant.']],
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ];
+
+        $client->request(new Claude(Claude::SONNET_4), $payload);
+
+        $this->assertNotNull($capturedBody);
+        $this->assertArrayNotHasKey('cache_control', $capturedBody['system'][0]);
+    }
 }

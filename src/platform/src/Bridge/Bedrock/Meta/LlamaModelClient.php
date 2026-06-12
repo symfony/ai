@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Bridge\Bedrock\RegionMapper;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -45,7 +46,7 @@ class LlamaModelClient implements ModelClientInterface
     private function getModelId(Model $model): string
     {
         $configuredRegion = $this->bedrockRuntimeClient->getConfiguration()->get('region');
-        $regionPrefix = substr((string) $configuredRegion, 0, 2);
+        $regionPrefix = RegionMapper::map((string) $configuredRegion);
         $modifiedModelName = str_replace('llama-3', 'llama3', $model->getName());
 
         return $regionPrefix.'.meta.'.str_replace('.', '-', $modifiedModelName).'-v1:0';

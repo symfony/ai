@@ -1,0 +1,252 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>Memory providers allow your agents to access conversation history and user-specific information,
+enabling more personalized and context-aware responses. In this guide you will build a personal
+trainer chatbot that remembers facts about the user across conversations.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+<li>OpenAI API key (or any other supported platform)</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-packages">
+    Step 1: Install Packages
+    
+</h2>
+<p>Install the Platform and Agent components via Composer:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-create-a-memory-provider">
+    Step 2: Create a Memory Provider
+    
+</h2>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Memory/StaticMemoryProvider.php" class="reference external" title="Symfony\AI\Agent\Memory\StaticMemoryProvider" rel="external noopener noreferrer" target="_blank">StaticMemoryProvider</a> stores fixed information that should
+be consistently available to the agent:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Memory</span>\<span class="hljs-title">StaticMemoryProvider</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>personalFacts</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">StaticMemoryProvider</span>(
+    <span class="hljs-string">'My name is Wilhelm Tell'</span>,
+    <span class="hljs-string">'I wish to be a swiss national hero'</span>,
+    <span class="hljs-string">'I am struggling with hitting apples but want to be professional with the bow and arrow'</span>,
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>This information is automatically injected into the system prompt, providing the agent with
+context about the user without cluttering the conversation messages.</p>
+</div>
+<div class="section">
+<h2 id="step-3-add-the-memory-input-processor">
+    Step 3: Add the Memory Input Processor
+    
+</h2>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Memory/MemoryInputProcessor.php" class="reference external" title="Symfony\AI\Agent\Memory\MemoryInputProcessor" rel="external noopener noreferrer" target="_blank">MemoryInputProcessor</a> handles the injection of memory
+content into the agent's context:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Memory</span>\<span class="hljs-title">MemoryInputProcessor</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>memoryProcessor</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MemoryInputProcessor</span>([<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>personalFacts</span>]);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>This processor works alongside other input processors like
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> to build a complete
+context for the agent.</p>
+</div>
+<div class="section">
+<h2 id="step-4-configure-the-agent">
+    Step 4: Configure the Agent
+    
+</h2>
+<p>The agent is configured with both the system prompt and memory processors. Processors are applied
+in order, allowing you to build up the context progressively:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-4o-mini'</span>,
+    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemPromptProcessor</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>memoryProcessor</span>],
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>When a user message is submitted, the <code translate="no" class="notranslate">MemoryInputProcessor</code> loads relevant facts from the
+memory provider and prepends them to the system prompt. The agent then generates a personalized
+response based on both the current message and the remembered context. Because the memory
+persists across calls, the conversation stays personalized over time.</p>
+</div>
+<div class="section">
+<h2 id="step-5-recall-facts-semantically-optional">
+    Step 5: Recall Facts Semantically (Optional)
+    
+</h2>
+<p>To recall facts from a large knowledge base instead of a fixed list, swap the static provider for
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Memory/EmbeddingProvider.php" class="reference external" title="Symfony\AI\Agent\Memory\EmbeddingProvider" rel="external noopener noreferrer" target="_blank">EmbeddingProvider</a>, which retrieves relevant context by
+semantic similarity:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Memory</span>\<span class="hljs-title">EmbeddingProvider</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>embeddingsMemory</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">EmbeddingProvider</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>model</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Pass it to the <code translate="no" class="notranslate">MemoryInputProcessor</code> just like the static provider.</p>
+</div>
+<div class="section">
+<h2 id="using-the-ai-bundle">
+    Using the AI Bundle?
+    
+</h2>
+<p>If you use the AI Bundle, configure memory declaratively on the agent:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/packages/ai.yaml</span>
+<span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">trainer:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span>
+                <span class="hljs-attr">text:</span> <span class="hljs-string">'Provide short, motivating claims'</span>
+            <span class="hljs-attr">memory:</span> <span class="hljs-string">'You are a professional trainer with personalized advice'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>For a dynamic provider, point <code translate="no" class="notranslate">memory</code> at a service instead. See <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a>.</p>
+</div>
+<div class="section">
+<h2 id="best-practices">
+    Best Practices
+    
+</h2>
+<ul>
+    <li><strong>Keep Static Memory Concise</strong>: Only include essential facts to avoid overwhelming the agent</li>
+<li><strong>Separate Concerns</strong>: Use the system prompt for behavior, memory for context</li>
+<li><strong>Mind Token Usage</strong>: Memory content consumes input tokens, so balance comprehensiveness with cost</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Agent component documentation</li>
+<li><a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> - AI Bundle configuration reference</li>
+<li><a href="/cookbook/rag-implementation" class="reference internal">Implementing Retrieval Augmented Generation (RAG)</a> - Retrieval Augmented Generation guide</li>
+</ul>
+</div>
+</div>

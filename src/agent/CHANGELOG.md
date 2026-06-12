@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Add `SystemPromptInputProcessor::getSystemPrompt()` to read the configured system prompt without reflection
+
 0.8
 ---
 

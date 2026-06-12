@@ -15,6 +15,7 @@ use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Bridge\Bedrock\RegionMapper;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -104,7 +105,7 @@ final class ClaudeModelClient implements ModelClientInterface
 
     private function getModelId(Model $model): string
     {
-        $regionPrefix = substr((string) $this->bedrockRuntimeClient->getConfiguration()->get('region'), 0, 2);
+        $regionPrefix = RegionMapper::map((string) $this->bedrockRuntimeClient->getConfiguration()->get('region'));
         $name = $model->getName();
 
         return $regionPrefix.'.anthropic.'.($this->modelMap[$name] ?? $name);

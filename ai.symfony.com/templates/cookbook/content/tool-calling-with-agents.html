@@ -1,0 +1,357 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>Tool calling lets an AI agent invoke your PHP functions to fetch data or trigger actions.
+In this guide you will create a custom tool, wire it into an agent, and let the LLM decide
+when to call it — including streaming support.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-packages">
+    Step 1: Install Packages
+    
+</h2>
+<p>You need Platform for the LLM connection and Agent for the toolbox and processor pipeline:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-create-a-tool-class">
+    Step 2: Create a Tool Class
+    
+</h2>
+<p>Annotate a class with the <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Attribute/AsTool.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Attribute\AsTool" rel="external noopener noreferrer" target="_blank">AsTool</a> attribute to
+register it. The agent reads the attribute name and description to tell the LLM what the tool
+does. Parameter descriptions come from <code translate="no" class="notranslate">@param</code> docblocks on the <code translate="no" class="notranslate">__invoke()</code> method:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Tool</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AsTool</span>;
+
+<span class="hljs-meta">#[AsTool(<span class="hljs-string">'weather'</span>, <span class="hljs-string">'Fetches the current weather for a given city'</span>)]</span>
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">WeatherTool</span>
+</span>{
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@param</span> string $city  The name of the city to look up
+     * <span class="hljs-doctag">@param</span> string $units "metric" or "imperial"
+     */</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__invoke</span><span class="hljs-params">(<span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>city</span>, <span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>units</span> = <span class="hljs-string">'metric'</span>)</span>: <span class="hljs-title">array</span>
+    </span>{
+        <span class="hljs-comment">// Call a weather API, query a database, etc.</span>
+        <span class="hljs-keyword">return</span> [
+            <span class="hljs-string">'city'</span> =&gt; <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>city</span>,
+            <span class="hljs-string">'temperature'</span> =&gt; <span class="hljs-string">'22°C'</span>,
+            <span class="hljs-string">'condition'</span> =&gt; <span class="hljs-string">'sunny'</span>,
+        ];
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="admonition admonition-tip ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span>Tip</span>
+    </p><p>A tool can return more than a <code translate="no" class="notranslate">string</code> — arrays, objects, scalars, and <code translate="no" class="notranslate">DateTimeInterface</code>
+are converted automatically by the <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/ToolResultConverter.php" class="reference external" title="Symfony\AI\Agent\Toolbox\ToolResultConverter" rel="external noopener noreferrer" target="_blank">ToolResultConverter</a>,
+so you rarely need to <code translate="no" class="notranslate">json_encode()</code> yourself.</p>
+</div>
+</div>
+<div class="section">
+<h2 id="step-3-build-the-agent">
+    Step 3: Build the Agent
+    
+</h2>
+<p>Pass your tool instances into a <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Toolbox.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Toolbox" rel="external noopener noreferrer" target="_blank">Toolbox</a>, wrap it in an
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/AgentProcessor.php" class="reference external" title="Symfony\AI\Agent\Toolbox\AgentProcessor" rel="external noopener noreferrer" target="_blank">AgentProcessor</a>, and construct the
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a>. The processor acts as both an input and output processor:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">App</span>\<span class="hljs-title">Tool</span>\<span class="hljs-title">WeatherTool</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">AgentProcessor</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Toolbox</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">OpenAi</span>\<span class="hljs-title">PlatformFactory</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">HttpClient</span>\<span class="hljs-title">HttpClient</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span> = PlatformFactory::<span class="hljs-title invoke__">create</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>apiKey</span>, HttpClient::<span class="hljs-title invoke__">create</span>());
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Toolbox</span>([<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">WeatherTool</span>()]);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">AgentProcessor</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span>);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>, <span class="hljs-string">'gpt-5-mini'</span>, [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span>], [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span>]);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-let-the-agent-call-tools">
+    Step 4: Let the Agent Call Tools
+    
+</h2>
+<p>Send a user message. The agent will automatically discover the available tools, decide whether
+to call one, execute it, and incorporate the result into its response:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">Message</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
+    Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-string">'What is the weather like in Paris right now?'</span>),
+);
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>);
+
+<span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span>-&gt;<span class="hljs-title invoke__">getContent</span>();
+<span class="hljs-comment">// "The current weather in Paris is 22°C and sunny."</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-5-use-built-in-tools">
+    Step 5: Use Built-In Tools
+    
+</h2>
+<p>The Agent component ships ready-made tools — Wikipedia, YouTube, SimilaritySearch, Brave, and
+SerpApi — each as a separate Composer package:</p>
+<div translate="no" class="highlight-terminal highlight-bash notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>composer require symfony/ai-wikipedia-tool</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Add it to the toolbox alongside your custom tools:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">Wikipedia</span>\<span class="hljs-title">Wikipedia</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Toolbox</span>([
+    <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">WeatherTool</span>(),
+    <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Wikipedia</span>(HttpClient::<span class="hljs-title invoke__">create</span>()),
+]);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>See <a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> for the full list of built-in tools and their configuration.</p>
+</div>
+<div class="section">
+<h2 id="step-6-stream-with-tool-calling">
+    Step 6: Stream with Tool Calling
+    
+</h2>
+<p>Enable streaming with <code translate="no" class="notranslate">'stream' =&gt; true</code>. Tool calls are still handled transparently, and
+<code translate="no" class="notranslate">getContent()</code> yields semantic <em>delta</em> objects — filter them by type. Reasoning models also
+emit <code translate="no" class="notranslate">ThinkingDelta</code> deltas when you pass the <code translate="no" class="notranslate">reasoning</code> option:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">Stream</span>\<span class="hljs-title">Delta</span>\<span class="hljs-title">TextDelta</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">Stream</span>\<span class="hljs-title">Delta</span>\<span class="hljs-title">ThinkingDelta</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>, [
+    <span class="hljs-string">'stream'</span> =&gt; <span class="hljs-keyword">true</span>,
+    <span class="hljs-string">'reasoning'</span> =&gt; [<span class="hljs-string">'summary'</span> =&gt; <span class="hljs-string">'auto'</span>],
+]);
+
+<span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span>-&gt;<span class="hljs-title invoke__">getContent</span>() <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>delta</span>) {
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>delta</span> <span class="hljs-keyword">instanceof</span> ThinkingDelta) {
+        <span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>delta</span>-&gt;<span class="hljs-title invoke__">getThinking</span>();
+    }
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>delta</span> <span class="hljs-keyword">instanceof</span> TextDelta) {
+        <span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>delta</span>;
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Once the stream is drained, token usage is available from the metadata as a
+<a href="https://github.com/symfony/ai/blob/main/src/platform/src/TokenUsage/TokenUsage.php" class="reference external" title="Symfony\AI\Platform\TokenUsage\TokenUsage" rel="external noopener noreferrer" target="_blank">TokenUsage</a> object:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>usage</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span>-&gt;<span class="hljs-title invoke__">getMetadata</span>()-&gt;<span class="hljs-title invoke__">get</span>(<span class="hljs-string">'token_usage'</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>See <a href="https://symfony.com/doc/current/ai/components/platform.html" class="reference internal">Symfony AI - Platform Component</a> for the full list of delta types.</p>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Processors, memory, and advanced agent patterns</li>
+<li><a href="https://symfony.com/doc/current/ai/components/platform.html" class="reference internal">Symfony AI - Platform Component</a> - Supported providers and models</li>
+<li><a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> - Auto-wiring tools as Symfony services</li>
+</ul>
+</div>
+</div>

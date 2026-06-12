@@ -1,0 +1,44 @@
+<div{{ attributes }}>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <h2 class="ff-title fw-bold h3 mb-1 section-heading">Cookbook</h2>
+            <p class="text-muted mb-0">Step-by-step recipes for common AI use cases with Symfony.</p>
+        </div>
+        <div class="cookbook-filters d-flex flex-wrap gap-2" role="group" aria-label="Filter recipes by component">
+            {% for tag in this.tags %}
+                <button
+                    type="button"
+                    class="cookbook-filter{{ this.isActive(tag) ? ' is-active' }}"
+                    data-action="live#action"
+                    data-live-action-param="toggleTag"
+                    data-live-tag-param="{{ tag }}"
+                    aria-pressed="{{ this.isActive(tag) ? 'true' : 'false' }}"
+                >{{ tag }}</button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for article in this.articles %}
+            <div class="col-md-6 col-lg-3">
+                <article class="sf-ai-card sf-ai-card-hover sf-ai-card-glow p-4 h-100 position-relative d-flex flex-column">
+                    <div class="cookbook-card-icon mb-3">
+                        {{ ux_icon('tabler:' ~ article.icon, {width: 24, height: 24}) }}
+                    </div>
+                    <h3 class="ff-title fw-bold h6 mb-2">{{ article.title }}</h3>
+                    <p class="text-muted small mb-3">{{ article.description }}</p>
+                    <div class="d-flex flex-wrap gap-1 mt-auto">
+                        {% for component in article.components %}
+                            <span class="cookbook-badge">{{ component }}</span>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ path('cookbook_article', {slug: article.slug}) }}" class="stretched-link"></a>
+                </article>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <p class="text-muted text-center py-5 mb-0">No recipes match the selected filters.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>

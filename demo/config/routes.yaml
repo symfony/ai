@@ -11,6 +11,13 @@ blog:
         template:  'chat.html.twig'
         context: { chat: 'blog' }
 
+document:
+    path: '/document'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template:  'chat.html.twig'
+        context: { chat: 'document' }
+
 crop:
     path: '/crop'
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'

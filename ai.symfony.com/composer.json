@@ -5,6 +5,7 @@
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
+        "ext-dom": "*",
         "ext-iconv": "*",
         "symfony/asset": "^8.0",
         "symfony/asset-mapper": "^8.0",
@@ -12,15 +13,20 @@
         "symfony/dotenv": "^8.0",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "^8.0",
+        "symfony/process": "^8.0",
         "symfony/runtime": "^8.0",
         "symfony/stimulus-bundle": "^2.31",
         "symfony/twig-bundle": "^8.0",
         "symfony/ux-icons": "^2.31",
+        "symfony/ux-live-component": "^3.1",
         "symfony/yaml": "^8.0",
         "twig/extra-bundle": "^3.0",
         "twig/twig": "^3.0"
     },
     "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "^8.0",
+        "symfony/css-selector": "^8.0",
         "symfony/maker-bundle": "^1.64"
     },
     "replace": {

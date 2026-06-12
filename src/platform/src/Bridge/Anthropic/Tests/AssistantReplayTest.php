@@ -281,7 +281,7 @@ final class AssistantReplayTest extends TestCase
                     ['role' => 'assistant', 'content' => 'Aye!'],
                     ['role' => 'user', 'content' => 'Again!'],
                 ],
-                'system' => 'You are a pirate.',
+                'system' => [['type' => 'text', 'text' => 'You are a pirate.']],
                 'model' => 'claude-sonnet-4-0',
             ],
         ];

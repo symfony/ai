@@ -1,6 +1,18 @@
 UPGRADE FROM 0.9 to 0.10
 ========================
 
+Agent
+-----
+
+ * `SystemPromptInputProcessor` and `MemoryInputProcessor` now modify the message bag in place
+   instead of replacing it with a clone, so injected system messages and messages appended during
+   the agent run (e.g. tool calls) end up in the caller's bag. To keep your bag untouched:
+
+   ```diff
+   -$agent->call($messages);
+   +$agent->call(clone $messages);
+   ```
+
 Platform
 --------
 
@@ -45,6 +57,18 @@ Platform
    compose them into a `Platform` and rely on its default router (`CatalogBasedModelRouter`), which
    picks the first provider in array order whose catalog owns the model; order the providers to
    disambiguate model ids exposed by more than one of them.
+
+ * `PlatformInterface::invoke()` now accepts `string|Model` for its first argument, and
+   `ProviderInterface::invoke()` and `ProviderInterface::supports()` were widened the same way. Custom
+   implementations and decorators must widen their signatures accordingly:
+
+   ```diff
+   -public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
+   +public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
+
+   -public function supports(string $model): bool
+   +public function supports(string|Model $model): bool
+   ```
 
 Store
 -----

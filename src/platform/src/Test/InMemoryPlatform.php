@@ -41,14 +41,16 @@ class InMemoryPlatform implements PlatformInterface
         $this->modelCatalog = new FallbackModelCatalog();
     }
 
-    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
+    public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
-        $model = new class($model) extends Model {
-            public function __construct(string $name)
-            {
-                parent::__construct($name);
-            }
-        };
+        if (!$model instanceof Model) {
+            $model = new class($model) extends Model {
+                public function __construct(string $name)
+                {
+                    parent::__construct($name);
+                }
+            };
+        }
         $result = \is_string($this->mockResult) ? $this->mockResult : ($this->mockResult)($model, $input, $options);
 
         if ($result instanceof ResultInterface) {

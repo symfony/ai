@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\Bridge\Bedrock\RegionMapper;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -66,7 +67,7 @@ class NovaModelClient implements ModelClientInterface
     private function getModelId(Model $model): string
     {
         $configuredRegion = $this->bedrockRuntimeClient->getConfiguration()->get('region');
-        $regionPrefix = substr((string) $configuredRegion, 0, 2);
+        $regionPrefix = RegionMapper::map((string) $configuredRegion);
 
         return $regionPrefix.'.amazon.'.$model->getName().'-v1:0';
     }

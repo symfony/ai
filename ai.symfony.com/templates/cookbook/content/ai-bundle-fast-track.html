@@ -1,0 +1,731 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>The <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> is the Symfony integration for the Platform, Agent,
+Store, and Chat components. Instead of wiring services by hand, you describe platforms, agents,
+tools, and stores in <code translate="no" class="notranslate">config/packages/ai.yaml</code> and the bundle registers everything in the
+container for you. This guide is a fast track from an empty configuration to an agent that
+answers questions over your own documents. Each step links to a dedicated cookbook article when
+you want to go deeper.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>A Symfony application</li>
+<li>An API key for at least one AI platform (e.g. <code translate="no" class="notranslate">OPENAI_API_KEY</code>)</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-the-bundle">
+    Step 1: Install the Bundle
+    
+</h2>
+<div translate="no" class="highlight-terminal highlight-bash notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>composer require symfony/ai-bundle</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>With Symfony Flex the bundle is registered automatically and an empty
+<code translate="no" class="notranslate">config/packages/ai.yaml</code> is created.</p>
+</div>
+<div class="section">
+<h2 id="step-2-configure-one-or-more-platforms">
+    Step 2: Configure One or More Platforms
+    
+</h2>
+<p>A <em>platform</em> is the connection to an AI provider. Define each provider under the <code translate="no" class="notranslate">platform</code>
+key; every entry becomes a service named <code translate="no" class="notranslate">ai.platform.&lt;name&gt;</code>:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/packages/ai.yaml</span>
+<span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">platform:</span>
+        <span class="hljs-attr">openai:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(OPENAI_API_KEY)%'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>You can configure several providers side by side and pick one per agent later:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">platform:</span>
+        <span class="hljs-attr">openai:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(OPENAI_API_KEY)%'</span>
+        <span class="hljs-attr">anthropic:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(ANTHROPIC_API_KEY)%'</span>
+        <span class="hljs-attr">gemini:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(GEMINI_API_KEY)%'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>This registers <code translate="no" class="notranslate">ai.platform.openai</code>, <code translate="no" class="notranslate">ai.platform.anthropic</code>, and <code translate="no" class="notranslate">ai.platform.gemini</code>.
+See the <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle reference</a> for the full list of supported providers
+(Azure, Bedrock, VertexAI, Ollama, Perplexity, and more) and for the cached and generic platform
+decorators.</p>
+</div>
+<div class="section">
+<h2 id="step-3-configure-an-agent">
+    Step 3: Configure an Agent
+    
+</h2>
+<p>An <em>agent</em> combines a platform, a model, and optionally tools and a system prompt. The simplest
+agent only needs a model — it uses the first configured platform by default:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">platform:</span>
+        <span class="hljs-attr">openai:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(OPENAI_API_KEY)%'</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">default:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Each agent is registered as a service. With a single agent you can inject
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/AgentInterface.php" class="reference external" title="Symfony\AI\Agent\AgentInterface" rel="external noopener noreferrer" target="_blank">AgentInterface</a> directly:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">AgentInterface</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">Message</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
+
+<span class="hljs-keyword">final</span> <span class="hljs-keyword">readonly</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AssistantService</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+        <span class="hljs-keyword">private</span> AgentInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>,
+    )</span> </span>{
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ask</span><span class="hljs-params">(<span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>question</span>)</span>: <span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>question</span>));
+
+        <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;agent-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>)-&gt;<span class="hljs-title invoke__">getContent</span>();
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>When you define multiple agents, point each one at the platform it should use and inject a
+specific one with the <code translate="no" class="notranslate">ai.agent.&lt;name&gt;</code> service id:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">assistant:</span>
+            <span class="hljs-attr">platform:</span> <span class="hljs-string">'ai.platform.openai'</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+        <span class="hljs-attr">researcher:</span>
+            <span class="hljs-attr">platform:</span> <span class="hljs-string">'ai.platform.anthropic'</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'claude-3-7-sonnet-latest'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">AgentInterface</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">DependencyInjection</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">Autowire</span>;
+
+<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+    <span class="hljs-meta">#[Autowire(<span class="hljs-attr">service</span>: <span class="hljs-string">'ai.agent.researcher'</span>)]</span>
+    <span class="hljs-keyword">private</span> AgentInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>researcher</span>,
+)</span> </span>{
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>You can also chat with any configured agent straight from the console:</p>
+<div translate="no" class="highlight-terminal highlight-bash notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>php bin/console ai:agent:call assistant</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-add-a-system-prompt">
+    Step 4: Add a System Prompt
+    
+</h2>
+<p>The system prompt shapes how the agent behaves. For simple cases pass a string:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">assistant:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span> <span class="hljs-string">'You are a concise assistant for a Symfony application.'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Use the array form for more control — for example, to append the available tool definitions to
+the prompt, or to load a long prompt from a file:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">assistant:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span>
+                <span class="hljs-attr">text:</span> <span class="hljs-string">'You are a concise assistant for a Symfony application.'</span>
+                <span class="hljs-attr">include_tools:</span> <span class="hljs-literal">true</span>
+        <span class="hljs-attr">reviewer:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span>
+                <span class="hljs-attr">file:</span> <span class="hljs-string">'%kernel.project_dir%/prompts/reviewer.md'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The array form also supports translated prompts via <code translate="no" class="notranslate">enable_translation</code> and
+<code translate="no" class="notranslate">translation_domain</code>. See the <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle reference</a> for all prompt
+options.</p>
+</div>
+<div class="section">
+<h2 id="step-5-give-the-agent-tools">
+    Step 5: Give the Agent Tools
+    
+</h2>
+<p>Tools let an agent call your PHP code. Any service carrying the
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Attribute/AsTool.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Attribute\AsTool" rel="external noopener noreferrer" target="_blank">AsTool</a> attribute is auto-registered, and by
+default every known tool is injected into every agent:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AsTool</span>;
+
+<span class="hljs-meta">#[AsTool(<span class="hljs-string">'company_name'</span>, <span class="hljs-string">'Provides the name of your company'</span>)]</span>
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CompanyName</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__invoke</span><span class="hljs-params">()</span>: <span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'ACME Corp.'</span>;
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>To control which tools an agent receives, list them explicitly — or set <code translate="no" class="notranslate">tools: false</code> to
+disable tools entirely:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">assistant:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">tools:</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-string">'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Several built-in tools ship as standalone packages with Flex recipes, so installing them is
+enough to make them available:</p>
+<div translate="no" class="highlight-terminal highlight-bash notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>composer require symfony/ai-brave-tool
+<span class="hljs-prompt">$ </span>composer require symfony/ai-wikipedia-tool
+<span class="hljs-prompt">$ </span>composer require symfony/ai-open-meteo-tool</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>For writing and securing your own tools, see <a href="/cookbook/tool-calling-with-agents" class="reference internal">Tool Calling with Agents</a>,
+<a href="/cookbook/dynamic-tools" class="reference internal">Dynamic Toolbox for Flexible Tools</a>, and <a href="/cookbook/human-in-the-loop" class="reference internal">Human-in-the-Loop Tool Confirmation</a>.</p>
+</div>
+<div class="section">
+<h2 id="step-6-configure-a-store-vectorizer-and-indexer">
+    Step 6: Configure a Store, Vectorizer, and Indexer
+    
+</h2>
+<p>To let the agent answer over your own data, you need a vector <em>store</em>, a <em>vectorizer</em> that turns
+text into embeddings, and an <em>indexer</em> that fills the store. All three are configured in YAML:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">platform:</span>
+        <span class="hljs-attr">openai:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(OPENAI_API_KEY)%'</span>
+
+    <span class="hljs-attr">store:</span>
+        <span class="hljs-attr">chromadb:</span>
+            <span class="hljs-attr">knowledge_base:</span>
+                <span class="hljs-attr">collection:</span> <span class="hljs-string">'docs'</span>
+
+    <span class="hljs-attr">vectorizer:</span>
+        <span class="hljs-attr">embeddings:</span>
+            <span class="hljs-attr">platform:</span> <span class="hljs-string">'ai.platform.openai'</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'text-embedding-3-small'</span>
+
+    <span class="hljs-attr">indexer:</span>
+        <span class="hljs-attr">docs:</span>
+            <span class="hljs-attr">loader:</span> <span class="hljs-string">'Symfony\AI\Store\Document\Loader\TextFileLoader'</span>
+            <span class="hljs-attr">vectorizer:</span> <span class="hljs-string">'ai.vectorizer.embeddings'</span>
+            <span class="hljs-attr">store:</span> <span class="hljs-string">'ai.store.chromadb.knowledge_base'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>For local experiments you can swap ChromaDB for the in-memory store. Prepare the store
+infrastructure and run the indexer from the console:</p>
+<div translate="no" class="highlight-terminal highlight-bash notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>php bin/console ai:store:setup chromadb.knowledge_base
+<span class="hljs-prompt">$ </span>php bin/console ai:store:index docs --<span class="hljs-built_in">source</span>=/path/to/document.txt</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>An indexer without a <code translate="no" class="notranslate">loader</code> becomes a <code translate="no" class="notranslate">DocumentIndexer</code> that you feed documents directly in
+PHP by injecting <a href="https://github.com/symfony/ai/blob/main/src/store/src/IndexerInterface.php" class="reference external" title="Symfony\AI\Store\IndexerInterface" rel="external noopener noreferrer" target="_blank">IndexerInterface</a>. See <a href="/cookbook/rag-implementation" class="reference internal">Implementing Retrieval Augmented Generation (RAG)</a> for
+the full indexing pipeline, chunking, and metadata handling.</p>
+</div>
+<div class="section">
+<h2 id="step-7-search-the-store-with-the-agent">
+    Step 7: Search the Store with the Agent
+    
+</h2>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Bridge/SimilaritySearch/SimilaritySearch.php" class="reference external" title="Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch" rel="external noopener noreferrer" target="_blank">SimilaritySearch</a> tool runs a semantic
+search over a store and feeds the matching documents back to the model. It needs a <em>retriever</em>,
+which pairs a vectorizer with a store:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">retriever:</span>
+        <span class="hljs-attr">docs:</span>
+            <span class="hljs-attr">vectorizer:</span> <span class="hljs-string">'ai.vectorizer.embeddings'</span>
+            <span class="hljs-attr">store:</span> <span class="hljs-string">'ai.store.chromadb.knowledge_base'</span>
+
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">assistant:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span>
+                <span class="hljs-attr">text:</span> <span class="hljs-string">'Answer questions using only the SimilaritySearch tool. If you cannot find relevant information, say so.'</span>
+            <span class="hljs-attr">tools:</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-string">'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'</span>
+
+<span class="hljs-attr">services:</span>
+    <span class="hljs-string">Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:</span>
+        <span class="hljs-string">$retriever:</span> <span class="hljs-string">'@ai.retriever.docs'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Now calling the agent with a user question triggers a similarity search automatically, and the
+answer is grounded in your indexed documents. You can also use a retriever on its own by
+injecting <a href="https://github.com/symfony/ai/blob/main/src/store/src/RetrieverInterface.php" class="reference external" title="Symfony\AI\Store\RetrieverInterface" rel="external noopener noreferrer" target="_blank">RetrieverInterface</a> for plain semantic search without an
+agent.</p>
+</div>
+<div class="section">
+<h2 id="putting-it-together">
+    Putting It Together
+    
+</h2>
+<p>A complete fast-track configuration looks like this:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/packages/ai.yaml</span>
+<span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">platform:</span>
+        <span class="hljs-attr">openai:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(OPENAI_API_KEY)%'</span>
+
+    <span class="hljs-attr">store:</span>
+        <span class="hljs-attr">chromadb:</span>
+            <span class="hljs-attr">knowledge_base:</span>
+                <span class="hljs-attr">collection:</span> <span class="hljs-string">'docs'</span>
+
+    <span class="hljs-attr">vectorizer:</span>
+        <span class="hljs-attr">embeddings:</span>
+            <span class="hljs-attr">platform:</span> <span class="hljs-string">'ai.platform.openai'</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'text-embedding-3-small'</span>
+
+    <span class="hljs-attr">indexer:</span>
+        <span class="hljs-attr">docs:</span>
+            <span class="hljs-attr">loader:</span> <span class="hljs-string">'Symfony\AI\Store\Document\Loader\TextFileLoader'</span>
+            <span class="hljs-attr">vectorizer:</span> <span class="hljs-string">'ai.vectorizer.embeddings'</span>
+            <span class="hljs-attr">store:</span> <span class="hljs-string">'ai.store.chromadb.knowledge_base'</span>
+
+    <span class="hljs-attr">retriever:</span>
+        <span class="hljs-attr">docs:</span>
+            <span class="hljs-attr">vectorizer:</span> <span class="hljs-string">'ai.vectorizer.embeddings'</span>
+            <span class="hljs-attr">store:</span> <span class="hljs-string">'ai.store.chromadb.knowledge_base'</span>
+
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">assistant:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span>
+                <span class="hljs-attr">text:</span> <span class="hljs-string">'Answer questions using only the SimilaritySearch tool. If you cannot find relevant information, say so.'</span>
+            <span class="hljs-attr">tools:</span>
+                <span class="hljs-bullet">-</span> <span class="hljs-string">'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>From here you can grow in any direction: add more platforms and agents, route between them with
+multi-agent orchestration, persist conversations with message stores and chats, or expose your
+tools over MCP.</p>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> - Full AI Bundle configuration reference</li>
+<li><a href="/cookbook/tool-calling-with-agents" class="reference internal">Tool Calling with Agents</a> - Let agents call your PHP functions</li>
+<li><a href="/cookbook/rag-implementation" class="reference internal">Implementing Retrieval Augmented Generation (RAG)</a> - Build a complete RAG pipeline</li>
+<li><a href="/cookbook/multi-agent-orchestration" class="reference internal">Multi-Agent Orchestration</a> - Route requests to specialist agents</li>
+<li><a href="/cookbook/chatbot-with-memory" class="reference internal">Building a Chatbot with Memory</a> - Persist conversation history</li>
+<li><a href="/cookbook/build-an-mcp-server" class="reference internal">Build an MCP Server</a> - Expose your tools over MCP</li>
+</ul>
+</div>
+</div>

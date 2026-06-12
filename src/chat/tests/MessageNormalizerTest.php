@@ -100,6 +100,25 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame($message->getId()->toRfc4122(), $denormalized->getId()->toRfc4122());
     }
 
+    public function testItRoundTripsMessageMetadata()
+    {
+        $normalizer = new MessageNormalizer();
+
+        $message = Message::forSystem('You are a helpful assistant.');
+        $message->getMetadata()->add('memory_original_system_prompt', 'You are a helpful assistant.');
+
+        $payload = $normalizer->normalize($message);
+        $denormalized = $normalizer->denormalize($payload, MessageInterface::class);
+
+        // Input processors rely on metadata surviving store persistence,
+        // e.g. MemoryInputProcessor keeps the original system prompt there
+        // to stay idempotent across chat turns.
+        $this->assertSame(
+            'You are a helpful assistant.',
+            $denormalized->getMetadata()->get('memory_original_system_prompt'),
+        );
+    }
+
     public function testItCanNormalizeAssistantMessageWithToolCalls()
     {
         $serializer = new Serializer([

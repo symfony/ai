@@ -8,6 +8,29 @@ Mistral Documentation
 
  * [API reference](https://docs.mistral.ai/api/)
  * [Chat completions](https://docs.mistral.ai/api/endpoint/chat)
+ * [OCR](https://docs.mistral.ai/api/endpoint/ocr)
+
+OCR
+---
+
+The `mistral-ocr-latest` model extracts text (as markdown), layout images and
+per-page annotations from a document or image. Pass a ``DocumentUrl``,
+``Document`` (binary PDF) or ``ImageUrl`` to ``invoke()``:
+
+.. code-block:: php
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Bridge\Mistral\Ocr\Result\OcrResult;
+    use Symfony\AI\Platform\Message\Content\DocumentUrl;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    $result = $platform->invoke('mistral-ocr-latest', new DocumentUrl('https://example.com/document.pdf'));
+
+    $ocr = $result->asObject();
+    \assert($ocr instanceof OcrResult);
+
+    echo $ocr->getMarkdown();
 
 Test Fixtures
 -------------

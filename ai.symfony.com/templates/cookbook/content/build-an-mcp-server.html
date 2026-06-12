@@ -1,0 +1,372 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>The Model Context Protocol (MCP) lets AI assistants like Claude Desktop discover and call tools
+exposed by your application. In this guide you will install the MCP Bundle, create a tool, a
+prompt, and a resource, then test them with a client.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>A Symfony application</li>
+<li>Symfony AI MCP Bundle</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-the-mcp-bundle">
+    Step 1: Install the MCP Bundle
+    
+</h2>
+<p>The MCP Bundle integrates the official <code translate="no" class="notranslate">mcp/sdk</code> PHP package into your Symfony application:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/mcp-bundle</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-configure-routing">
+    Step 2: Configure Routing
+    
+</h2>
+<p>Add the MCP route to your routing configuration. This exposes the HTTP endpoint that MCP clients
+connect to:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/routes.yaml</span>
+<span class="hljs-attr">mcp:</span>
+    <span class="hljs-attr">resource:</span> <span class="hljs-string">.</span>
+    <span class="hljs-attr">type:</span> <span class="hljs-string">mcp</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-3-create-a-tool">
+    Step 3: Create a Tool
+    
+</h2>
+<p>Use the <code translate="no" class="notranslate">#[McpTool]</code> attribute on a method to expose it as a callable tool. MCP clients see the
+tool name and can invoke it with parameters:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Mcp</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Mcp</span>\<span class="hljs-title">Capability</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">McpTool</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CurrentTimeTool</span>
+</span>{
+    <span class="hljs-meta">#[McpTool(<span class="hljs-attr">name</span>: <span class="hljs-string">'current-time'</span>)]</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCurrentTime</span><span class="hljs-params">(<span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>format</span> = <span class="hljs-string">'Y-m-d H:i:s'</span>)</span>: <span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-keyword">return</span> (<span class="hljs-keyword">new</span> \<span class="hljs-title invoke__">DateTime</span>(<span class="hljs-string">'now'</span>, <span class="hljs-keyword">new</span> \<span class="hljs-title invoke__">DateTimeZone</span>(<span class="hljs-string">'UTC'</span>)))-&gt;<span class="hljs-title invoke__">format</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>format</span>);
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="admonition admonition-tip ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span>Tip</span>
+    </p><p>You can place multiple <code translate="no" class="notranslate">#[McpTool]</code> methods in the same class to group related tools
+together.</p>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-configure-transport">
+    Step 4: Configure Transport
+    
+</h2>
+<p>Enable STDIO and/or HTTP transport in the bundle configuration. The STDIO transport is used by
+command-line clients; HTTP is used by web-based clients and the MCP Inspector:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/packages/mcp.yaml</span>
+<span class="hljs-attr">mcp:</span>
+    <span class="hljs-attr">app:</span> <span class="hljs-string">'my-app'</span>
+    <span class="hljs-attr">version:</span> <span class="hljs-string">'1.0.0'</span>
+    <span class="hljs-attr">description:</span> <span class="hljs-string">'My Symfony MCP server'</span>
+
+    <span class="hljs-attr">client_transports:</span>
+        <span class="hljs-attr">stdio:</span> <span class="hljs-literal">true</span>
+        <span class="hljs-attr">http:</span> <span class="hljs-literal">true</span>
+
+    <span class="hljs-attr">http:</span>
+        <span class="hljs-attr">path:</span> <span class="hljs-string">/_mcp</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-5-create-a-prompt">
+    Step 5: Create a Prompt
+    
+</h2>
+<p>Prompts provide system instructions that AI clients can request. Use the <code translate="no" class="notranslate">#[McpPrompt]</code>
+attribute and return an array of messages:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Mcp</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Mcp</span>\<span class="hljs-title">Capability</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">McpPrompt</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TimePrompts</span>
+</span>{
+    <span class="hljs-meta">#[McpPrompt(<span class="hljs-attr">name</span>: <span class="hljs-string">'time-analysis'</span>)]</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getTimeAnalysisPrompt</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
+    </span>{
+        <span class="hljs-keyword">return</span> [
+            [<span class="hljs-string">'role'</span> =&gt; <span class="hljs-string">'user'</span>, <span class="hljs-string">'content'</span> =&gt; <span class="hljs-string">'You are a time management expert.'</span>],
+        ];
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-6-create-a-resource">
+    Step 6: Create a Resource
+    
+</h2>
+<p>Resources expose static data that AI clients can read. Use the <code translate="no" class="notranslate">#[McpResource]</code> attribute with
+a URI and a name:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Mcp</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Mcp</span>\<span class="hljs-title">Capability</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">McpResource</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TimeResource</span>
+</span>{
+    <span class="hljs-meta">#[McpResource(<span class="hljs-attr">uri</span>: <span class="hljs-string">'time://current'</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">'current-time'</span>)]</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCurrentTimeResource</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
+    </span>{
+        <span class="hljs-keyword">return</span> [
+            <span class="hljs-string">'uri'</span> =&gt; <span class="hljs-string">'time://current'</span>,
+            <span class="hljs-string">'mimeType'</span> =&gt; <span class="hljs-string">'text/plain'</span>,
+            <span class="hljs-string">'text'</span> =&gt; (<span class="hljs-keyword">new</span> \<span class="hljs-title invoke__">DateTime</span>(<span class="hljs-string">'now'</span>))-&gt;<span class="hljs-title invoke__">format</span>(<span class="hljs-string">'Y-m-d H:i:s'</span>),
+        ];
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-7-test-with-an-mcp-client">
+    Step 7: Test with an MCP Client
+    
+</h2>
+<p>To connect Claude Desktop (or any MCP-compatible client) to your server, add an entry to the
+client's configuration file pointing at your Symfony console command for STDIO transport:</p>
+<div translate="no" class="highlight-json notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs json">{
+    <span class="hljs-attr">"mcpServers"</span>: {
+        <span class="hljs-attr">"my-app"</span>: {
+            <span class="hljs-attr">"command"</span>: <span class="hljs-string">"php /path/to/project/bin/console mcp:server"</span>
+        }
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>For the HTTP transport, point the client at your application's MCP endpoint instead:</p>
+<div translate="no" class="highlight-json notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs json">{
+    <span class="hljs-attr">"mcpServers"</span>: {
+        <span class="hljs-attr">"my-app"</span>: {
+            <span class="hljs-attr">"url"</span>: <span class="hljs-string">"http://localhost:8000/_mcp"</span>
+        }
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="admonition admonition-tip ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span>Tip</span>
+    </p><p>Run <code translate="no" class="notranslate">symfony console mcp:server</code> to start the STDIO server manually. This is useful for
+debugging before connecting a client.</p>
+</div>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://symfony.com/doc/current/ai/bundles/mcp-bundle.html" class="reference internal">MCP Bundle</a> - Full configuration, session storage, and event system</li>
+<li><a href="https://modelcontextprotocol.io/" class="reference external" rel="external noopener noreferrer" target="_blank">Model Context Protocol Specification</a> - The official MCP standard</li>
+<li><a href="https://php.sdk.modelcontextprotocol.io/" class="reference external" rel="external noopener noreferrer" target="_blank">MCP PHP SDK</a> - Documentation for the official MCP SDK for PHP</li>
+</ul>
+</div>
+</div>

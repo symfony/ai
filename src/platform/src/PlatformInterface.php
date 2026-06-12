@@ -20,11 +20,11 @@ use Symfony\AI\Platform\Result\DeferredResult;
 interface PlatformInterface
 {
     /**
-     * @param non-empty-string           $model   The model name
+     * @param non-empty-string|Model     $model   The model name to resolve via the catalog, or a fully defined model
      * @param array<mixed>|string|object $input   The input data
      * @param array<string, mixed>       $options The options to customize the model invocation
      */
-    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult;
+    public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult;
 
     public function getModelCatalog(): ModelCatalogInterface;
 }

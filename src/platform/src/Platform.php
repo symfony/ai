@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Event\ModelRoutingEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -44,8 +45,12 @@ final class Platform implements PlatformInterface
         }
     }
 
-    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
+    public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
+        if ($model instanceof Model) {
+            return $this->resolveProviderForModel($model)->invoke($model, $input, $options);
+        }
+
         $event = new ModelRoutingEvent($model, $input, $options);
         $this->eventDispatcher?->dispatch($event);
 
@@ -63,5 +68,19 @@ final class Platform implements PlatformInterface
                 $this->providers,
             ),
         );
+    }
+
+    /**
+     * Routes a fully defined model to the first provider whose model clients accept it.
+     */
+    private function resolveProviderForModel(Model $model): ProviderInterface
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider->supports($model)) {
+                return $provider;
+            }
+        }
+
+        throw new ModelNotFoundException(\sprintf('No provider found for model "%s" (%s).', $model->getName(), $model::class));
     }
 }

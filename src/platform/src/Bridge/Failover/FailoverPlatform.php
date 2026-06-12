@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -48,7 +49,7 @@ final class FailoverPlatform implements PlatformInterface
         $this->failedPlatforms = new \WeakMap();
     }
 
-    public function invoke(string $model, object|array|string $input, array $options = []): DeferredResult
+    public function invoke(string|Model $model, object|array|string $input, array $options = []): DeferredResult
     {
         return $this->do(static fn (PlatformInterface $platform): DeferredResult => $platform->invoke($model, $input, $options));
     }

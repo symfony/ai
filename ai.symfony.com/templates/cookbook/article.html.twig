@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ page.article.title }} — Cookbook — Symfony AI{% endblock %}
+
+{% block body %}
+    {% set article = page.article %}
+    {{ include('_header.html.twig') }}
+
+    <main>
+        <nav class="container py-3" aria-label="breadcrumb">
+            <ol class="cookbook-breadcrumb">
+                <li><a href="{{ path('homepage') }}">Home</a></li>
+                <li><a href="{{ path('homepage') }}#cookbook">Cookbook</a></li>
+                <li aria-current="page">{{ article.title }}</li>
+            </ol>
+        </nav>
+
+        <section class="cookbook-article-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {% for component in article.components %}
+                                <span class="cookbook-badge">{{ component }}</span>
+                            {% endfor %}
+                        </div>
+                        <h1 class="ff-title fw-bold mb-3">{{ article.title }}</h1>
+                        <p class="text-muted fs-5 mb-0">{{ article.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-divider">
+
+        <section class="cookbook-article-body py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        {{ page.body|raw }}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cookbook-article-nav pb-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                {% if page.previous %}
+                                    <a href="{{ path('cookbook_article', {slug: page.previous.slug}) }}" class="cookbook-nav-card h-100 d-block text-decoration-none">
+                                        <span class="cookbook-nav-label">
+                                            {{ ux_icon('tabler:arrow-left', {width: 16, height: 16}) }}
+                                            Previous
+                                        </span>
+                                        <span class="cookbook-nav-title ff-title fw-bold">{{ page.previous.title }}</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="col-6">
+                                {% if page.next %}
+                                    <a href="{{ path('cookbook_article', {slug: page.next.slug}) }}" class="cookbook-nav-card cookbook-nav-card-next h-100 d-block text-decoration-none text-end">
+                                        <span class="cookbook-nav-label">
+                                            Next
+                                            {{ ux_icon('tabler:arrow-right', {width: 16, height: 16}) }}
+                                        </span>
+                                        <span class="cookbook-nav-title ff-title fw-bold">{{ page.next.title }}</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}

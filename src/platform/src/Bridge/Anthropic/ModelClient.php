@@ -60,6 +60,7 @@ final class ModelClient implements ModelClientInterface
         ];
 
         $payload = $this->injectCacheControl($payload);
+        $payload = $this->injectSystemCacheControl($payload);
 
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];
@@ -119,6 +120,29 @@ final class ModelClient implements ModelClientInterface
     }
 
     /**
+     * Injects a prompt-caching marker on the last system content block.
+     *
+     * The system prompt is typically the largest and most stable region of a
+     * request, making it the single most effective caching target. This creates
+     * a cache breakpoint after the system block so it can be cached independently
+     * of the tools and messages that follow.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function injectSystemCacheControl(array $payload): array
+    {
+        if ('none' === $this->cacheRetention || !isset($payload['system']) || !\is_array($payload['system']) || [] === $payload['system']) {
+            return $payload;
+        }
+
+        $payload['system'][\count($payload['system']) - 1]['cache_control'] = $this->getCacheControl();
+
+        return $payload;
+    }
+
+    /**
      * Injects prompt-caching markers into the normalised message payload.
      *
      * Anthropic prompt caching requires a {"cache_control": {"type": "ephemeral"}}
@@ -140,9 +164,7 @@ final class ModelClient implements ModelClientInterface
             return $payload;
         }
 
-        $cacheControl = 'long' === $this->cacheRetention
-            ? ['type' => 'ephemeral', 'ttl' => '1h']
-            : ['type' => 'ephemeral'];
+        $cacheControl = $this->getCacheControl();
 
         for ($i = \count($messages) - 1; $i >= 0; --$i) {
             if ('user' !== ($messages[$i]['role'] ?? '')) {
@@ -171,5 +193,19 @@ final class ModelClient implements ModelClientInterface
         $payload['messages'] = $messages;
 
         return $payload;
+    }
+
+    /**
+     * Builds the prompt-caching marker matching the configured retention.
+     *
+     * @return array{type: 'ephemeral', ttl?: '1h'}
+     */
+    private function getCacheControl(): array
+    {
+        if ('long' === $this->cacheRetention) {
+            return ['type' => 'ephemeral', 'ttl' => '1h'];
+        }
+
+        return ['type' => 'ephemeral'];
     }
 }

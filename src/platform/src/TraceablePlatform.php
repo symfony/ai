@@ -46,7 +46,7 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
         $this->resultCache = new \WeakMap();
     }
 
-    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
+    public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
         $deferredResult = $this->platform->invoke($model, $input, $options);
 

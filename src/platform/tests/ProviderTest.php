@@ -62,6 +62,56 @@ final class ProviderTest extends TestCase
         $this->assertFalse($provider->supports('unknown-model'));
     }
 
+    public function testSupportsWithModelObjectReturnsTrueWhenAModelClientSupportsIt()
+    {
+        $model = new Model('custom-model', [Capability::INPUT_MESSAGES]);
+
+        $modelClient = $this->createStub(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(true);
+
+        $provider = new Provider('openai', [$modelClient], [], $this->createStub(ModelCatalogInterface::class));
+
+        $this->assertTrue($provider->supports($model));
+    }
+
+    public function testSupportsWithModelObjectReturnsFalseWhenNoModelClientSupportsIt()
+    {
+        $model = new Model('custom-model', [Capability::INPUT_MESSAGES]);
+
+        $modelClient = $this->createStub(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(false);
+
+        $provider = new Provider('openai', [$modelClient], [], $this->createStub(ModelCatalogInterface::class));
+
+        $this->assertFalse($provider->supports($model));
+    }
+
+    public function testInvokeWithModelObjectSkipsCatalogResolution()
+    {
+        $model = new Model('custom-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]);
+        $rawResult = $this->createStub(RawResultInterface::class);
+
+        $catalog = $this->createMock(ModelCatalogInterface::class);
+        $catalog->expects($this->never())->method('getModel');
+
+        $modelClient = $this->createMock(ModelClientInterface::class);
+        $modelClient->method('supports')->with($model)->willReturn(true);
+        $modelClient->expects($this->once())
+            ->method('request')
+            ->with($model)
+            ->willReturn($rawResult);
+
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+        $resultConverter->method('supports')->willReturn(true);
+        $resultConverter->method('convert')->willReturn(new TextResult('Hello'));
+
+        $provider = new Provider('openai', [$modelClient], [$resultConverter], $catalog);
+
+        $result = $provider->invoke($model, 'Hello');
+
+        $this->assertInstanceOf(DeferredResult::class, $result);
+    }
+
     public function testInvokeResolvesModelAndDelegates()
     {
         $model = new Model('gpt-4o', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]);

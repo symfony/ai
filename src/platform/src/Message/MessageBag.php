@@ -50,6 +50,25 @@ class MessageBag implements \Countable, \IteratorAggregate
     }
 
     /**
+     * Mutable counterpart of {@see self::with()} that prepends the message in place.
+     */
+    public function prepend(MessageInterface $message): void
+    {
+        array_unshift($this->messages, $message);
+    }
+
+    /**
+     * Mutable counterpart of {@see self::withoutSystemMessage()} that removes the system message in place.
+     */
+    public function removeSystemMessage(): void
+    {
+        $this->messages = array_values(array_filter(
+            $this->messages,
+            static fn (MessageInterface $message): bool => !$message instanceof SystemMessage,
+        ));
+    }
+
+    /**
      * @return list<MessageInterface>
      */
     public function getMessages(): array

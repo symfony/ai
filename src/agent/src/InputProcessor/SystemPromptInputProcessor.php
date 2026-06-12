@@ -43,6 +43,11 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
         }
     }
 
+    public function getSystemPrompt(): \Stringable|TranslatableInterface|string|File
+    {
+        return $this->systemPrompt;
+    }
+
     public function processInput(Input $input): void
     {
         $messages = $input->getMessageBag();
@@ -85,6 +90,6 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
                 PROMPT;
         }
 
-        $input->setMessageBag($messages->withSystemMessage(Message::forSystem($message)));
+        $messages->prepend(Message::forSystem($message));
     }
 }

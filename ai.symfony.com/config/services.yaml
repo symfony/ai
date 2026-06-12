@@ -10,6 +10,10 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            $projectDir: '%kernel.project_dir%'
+            $manifestPath: '%kernel.project_dir%/config/cookbook.json'
+            $contentDir: '%kernel.project_dir%/templates/cookbook/content'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

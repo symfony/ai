@@ -94,6 +94,35 @@ the default catalog. The ``ModelCatalog`` automatically queries the model inform
         Message::ofUser(...)
     ));
 
+Passing a Model Instance
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of a model name string, you can hand a fully defined model instance to ``Platform::invoke()``. This
+skips the catalog lookup entirely and is useful when a provider ships a model that is not (yet) part of the
+shipped catalog, without registering it or replacing the catalog::
+
+    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+    use Symfony\AI\Platform\Capability;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $model = new Gpt('gpt-newest', [
+        Capability::INPUT_MESSAGES,
+        Capability::OUTPUT_TEXT,
+        Capability::TOOL_CALLING,
+    ], ['temperature' => 0.5]);
+
+    $result = $platform->invoke($model, new MessageBag(Message::ofUser(...)));
+
+.. note::
+
+    You must pass a **bridge-specific** model subclass (e.g. ``Gpt``, ``Claude``, ``Gemini``), not the base
+    :class:`Symfony\\AI\\Platform\\Model`. Model clients, result converters, and contract normalizers select
+    the right implementation via the concrete class, so a bare ``Model`` instance has no client to handle it.
+    The platform routes the instance to the first provider whose model clients accept it; in multi-provider
+    setups where the same class is shared (e.g. OpenAI and Azure both use ``Gpt``), the first matching provider
+    wins.
+
 Supported Models & Platforms
 ----------------------------
 
@@ -118,6 +147,7 @@ Supported Models & Platforms
 * **Other Models**
   * `OpenAI's Dall·E`_ with `OpenAI`_ as Platform
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
+  * `Mistral OCR`_ with `Mistral`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
@@ -158,6 +188,9 @@ see `LiteLLM example`_ for more details.
 Alternatively, use the :doc:`models.dev bridge <platform/models-dev>` to
 auto-discover model capabilities for many providers without manually curating
 model catalogs.
+
+See :doc:`platform/model-catalogs` for keeping catalogs current, adding custom
+models, or bypassing the catalog.
 
 Providers and Multi-Provider Platforms
 --------------------------------------
@@ -418,10 +451,45 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ChoiceDelta` -- a choice delta (e.g. multiple completions)
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` -- a chunk of binary data
 
-.. note::
+Streaming in a Symfony Controller
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    To be able to use streaming in your web application,
-    an additional layer like `Mercure`_ is needed.
+To stream AI responses directly to the browser, wrap the consumption loop in a
+``StreamedResponse``. This sends output to the client as soon as each chunk arrives, without
+buffering the entire response in memory::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\PlatformInterface;
+    use Symfony\Component\HttpFoundation\StreamedResponse;
+    use Symfony\Component\Routing\Attribute\Route;
+
+    final class ChatController
+    {
+        #[Route('/chat/stream', name: 'chat_stream')]
+        public function stream(PlatformInterface $platform): StreamedResponse
+        {
+            $messages = new MessageBag(
+                Message::ofUser('Tell me about Symfony.'),
+            );
+
+            $result = $platform->invoke('gpt-5-mini', $messages, [
+                'stream' => true,
+            ]);
+
+            return new StreamedResponse(function () use ($result) {
+                foreach ($result->asTextStream() as $text) {
+                    echo $text;
+                    flush();
+                }
+            });
+        }
+    }
+
+For JSON-based streaming (useful with JavaScript frontends), use ``StreamedJsonResponse`` instead,
+which formats each chunk as a JSON event that can be consumed by an ``EventSource`` or ``fetch``
+reader. For more robust real-time delivery — automatic reconnection or multiplexing across
+clients — an additional layer like `Mercure`_ can be used.
 
 Code Examples
 ~~~~~~~~~~~~~
@@ -569,8 +637,10 @@ Prompt Caching (Anthropic)
 
 Anthropic supports `prompt caching`_, which can significantly reduce costs and
 latency for repeated prompts. Symfony AI automatically enables prompt caching
-when using the Anthropic bridge by annotating the last user message with a
-``cache_control`` marker.
+when using the Anthropic bridge by annotating the most cacheable regions of the
+request with ``cache_control`` markers: the system prompt, the last tool
+definition, and the last user message. The system prompt is typically the
+largest and most stable region, making it the most effective caching target.
 
 The caching behavior is configured via the ``cacheRetention`` parameter on the
 :class:`Symfony\\AI\\Platform\\Bridge\\Anthropic\\ModelClient`::
@@ -628,6 +698,34 @@ Code Examples
 * `Binary Image Input with GPT`_
 * `Image URL Input with GPT`_
 
+Document Processing
+-------------------
+
+Models that support document understanding can receive PDF files through the
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Document` content type within a
+:class:`Symfony\\AI\\Platform\\Message\\UserMessage`. This is useful for extracting
+information, summarizing content, or answering questions about a document::
+
+    use Symfony\AI\Platform\Message\Content\Document;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    // Initialize Platform, LLM & agent
+
+    $messages = new MessageBag(
+        Message::ofUser(
+            'Summarize the key points of this document.',
+            Document::fromFile('/path/to/report.pdf'), // Path to a PDF file
+        ),
+    );
+    $result = $platform->invoke('gpt-5-mini', $messages);
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `PDF Input with GPT`_
+* `PDF Input with Claude`_
+
 Audio Processing
 ----------------
 
@@ -652,6 +750,63 @@ Code Examples
 ~~~~~~~~~~~~~
 
 * `Audio Input with GPT`_
+
+Text-to-Speech
+--------------
+
+Beyond consuming audio, some models can generate audio from text. Pass a plain
+string as input and configure the voice and instructions through options. The
+result exposes the generated audio as binary data, which can be written to a file::
+
+    use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech\Voice;
+
+    // Initialize Platform
+
+    $result = $platform->invoke('gpt-4o-mini-tts', 'Welcome to Symfony AI!', [
+        'voice' => Voice::CORAL,
+        'instructions' => 'Speak in a cheerful and positive tone.',
+    ]);
+
+    // Write the audio binary to a file
+    file_put_contents('output.mp3', $result->asBinary());
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `Audio Output with GPT`_
+
+Document OCR
+------------
+
+Mistral's ``mistral-ocr-latest`` model uses a dedicated ``/v1/ocr`` endpoint that extracts text
+(as markdown), layout images and per-page annotations from a document or image. Unlike chat
+completions, it is invoked with a single document content object - a
+:class:`Symfony\\AI\\Platform\\Message\\Content\\DocumentUrl`,
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Document` (binary PDF) or
+:class:`Symfony\\AI\\Platform\\Message\\Content\\ImageUrl` - and returns a typed
+:class:`Symfony\\AI\\Platform\\Bridge\\Mistral\\Ocr\\Result\\OcrResult`::
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Bridge\Mistral\Ocr\Result\OcrResult;
+    use Symfony\AI\Platform\Message\Content\DocumentUrl;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    $result = $platform->invoke('mistral-ocr-latest', new DocumentUrl('https://example.com/document.pdf'));
+
+    $ocr = $result->asObject();
+    \assert($ocr instanceof OcrResult);
+
+    echo $ocr->getMarkdown();
+
+The result exposes every ``Page`` with its markdown, dimensions, extracted layout images
+(with bounding boxes) and optional annotations.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `OCR with Mistral (URL)`_
+* `OCR with Mistral (binary)`_
 
 Embeddings
 ----------
@@ -739,6 +894,61 @@ top this example uses the feature through the agent to leverage tool calling::
     ]]);
 
     dump($result->getContent()); // returns an array
+
+Populating Existing Object Instances
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of a class name, ``response_format`` also accepts an existing object
+instance. The model populates the instance's missing fields while preserving the
+values already set, and the very same instance is returned. This is useful for
+enriching database records, completing incomplete records, or collecting data
+progressively across multiple invocations using the same object.
+
+Provide the object both as a ``template_vars`` entry (to give the model context
+about the already known values) and as the ``response_format`` (to populate it).
+This relies on the ``TemplateRendererListener`` being registered with a normalizer
+so the object's properties can be rendered into the prompt template::
+
+    use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Message\Template;
+    use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
+    use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
+    use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+    use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+
+    $registry = new TemplateRendererRegistry([new StringTemplateRenderer()]);
+    $dispatcher->addSubscriber(new TemplateRendererListener($registry, new ObjectNormalizer()));
+    $dispatcher->addSubscriber(new PlatformSubscriber());
+
+    $city = new City(name: 'Berlin');
+
+    $messages = new MessageBag(
+        Message::ofUser(Template::string('Research missing data for: {city.name}')),
+    );
+
+    $result = $platform->invoke($model, $messages, [
+        'template_vars' => ['city' => $city],
+        'response_format' => $city,
+    ]);
+
+    // The same instance is returned with its missing fields filled in
+    assert($city === $result->asObject());
+
+To limit which properties are exposed to the model (for example to avoid leaking
+internal fields), pass a normalizer context through ``template_options``, such as
+serialization groups::
+
+    $result = $platform->invoke($model, $messages, [
+        'template_vars' => ['product' => $product],
+        'template_options' => [
+            'normalizer_context' => [
+                'groups' => ['public'],
+            ],
+        ],
+        'response_format' => $product,
+    ]);
 
 Validating Structured Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1032,6 +1242,7 @@ Code Examples
 .. _`Mistral Embed`: https://www.mistral.ai/
 .. _`OpenAI's Dall·E`: https://platform.openai.com/docs/guides/image-generation
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
+.. _`Mistral OCR`: https://docs.mistral.ai/api/endpoint/ocr
 .. _`HuggingFace`: https://huggingface.co/
 .. _`Mercure`: https://mercure.rocks/
 .. _`Streaming Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/stream.php
@@ -1040,6 +1251,11 @@ Code Examples
 .. _`Binary Image Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-binary.php
 .. _`Image URL Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-url.php
 .. _`Audio Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-input.php
+.. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
+.. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
+.. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
+.. _`OCR with Mistral (URL)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-url.php
+.. _`OCR with Mistral (binary)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-binary.php
 .. _`Embeddings with OpenAI`: https://github.com/symfony/ai/blob/main/examples/openai/embeddings.php
 .. _`Embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/text-embeddings.php
 .. _`Multimodal embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/multimodal-embeddings.php

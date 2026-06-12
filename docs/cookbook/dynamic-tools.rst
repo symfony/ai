@@ -1,31 +1,37 @@
+.. card:
+    title: Dynamic Tools
+    description: Add, remove, and rename agent tools at runtime with a dynamic toolbox.
+    icon: adjustments
+    components: Agent
+
 Dynamic Toolbox for Flexible Tools
 ==================================
 
-This guide will lead you through the creation of a dynamic Toolbox for Symfony AI.
-A dynamic Toolbox allows you not only to add or remove tools at runtime, but also to
-customize tool names and descriptions.
+This guide leads you through creating a dynamic Toolbox for Symfony AI. A dynamic Toolbox lets
+you add or remove tools at runtime and customize tool names and descriptions. The examples assume
+you are working with the Symfony AI demo application, where an agent named ``blog`` is already
+defined with a set of tools.
 
 Prerequisites
+-------------
 
 * Symfony AI Platform component
 * Symfony AI Agent component
 * A language model supporting tools (e.g., gpt-5-mini)
 
-Example Use Cases
------------------
+Step 1: Install Packages
+------------------------
 
-The example use-cases assume that you are working with the Symfony AI demo application, where an agent named
-``blog`` is already defined with a set of tools.
+Install the Agent component, which provides the toolbox::
 
-Requirement: Set Up Dynamic Toolbox Class
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    composer require symfony/ai-agent
 
-First, create a class that implements the :class:`Symfony\\AI\\Agent\\Toolbox\\ToolboxInterface` and, in its constructor, accepts
-another :class:`Symfony\\AI\\Agent\\Toolbox\\ToolboxInterface` instance to delegate calls to the original toolbox. This implements the decorator
-pattern.
+Step 2: Create the Dynamic Toolbox
+----------------------------------
 
-
-::
+Create a class that implements :class:`Symfony\\AI\\Agent\\Toolbox\\ToolboxInterface` and accepts
+another ``ToolboxInterface`` instance in its constructor to delegate calls to the original toolbox.
+This implements the decorator pattern::
 
     namespace App;
 
@@ -56,23 +62,15 @@ pattern.
         }
     }
 
-By utilizing the ``AsDecorator`` attribute, this class will automatically decorate the existing toolbox
-for the ``blog`` agent, and the ``AutowireDecorated`` attribute will inject the original toolbox instance to
-ensure that existing functionality is preserved and does not need to be reimplemented.
+The ``AsDecorator`` attribute makes this class decorate the existing toolbox for the ``blog`` agent,
+and ``AutowireDecorated`` injects the original toolbox instance so existing functionality is
+preserved.
 
-Case 1: Customizing Tools at Runtime
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 3: Customize a Tool at Runtime
+-----------------------------------
 
-To change a tool description dynamically, override the ``getTools`` method in the
-``DynamicToolbox`` class. Here is an example of how to modify the description of a specific tool.
-
-
-Let's assume that the existing tool ``similarity_search`` should not have a general-purpose description,
-but instead a description that blocks general questions unless someone asks very politely, in which case it
-allows use of the tool.
-
-
-::
+To change a tool description dynamically, override the ``getTools()`` method. Assume the existing
+``similarity_search`` tool should enforce a more specific search term::
 
     use Symfony\AI\Platform\Tool\Tool;
 
@@ -96,24 +94,15 @@ allows use of the tool.
         return $tools;
     }
 
+Whenever the ``similarity_search`` tool is requested, it now carries the new description. This
+approach lets users experiment with descriptions to optimize for their use case or minimize the
+tokens used for complex tools.
 
-With this implementation, whenever the ``similarity_search`` tool is requested, it will have the new
-description that enforces the search term argument to include the word "please". For example,
-a question like "Find articles about Symfony" would become "articles symfony please".
+Step 4: Remove a Tool
+---------------------
 
-Generally, this approach to customizing tools can be utilized to let users experiment with descriptions
-to optimize for their use case or minimize the tokens used for complex tools.
-
-Case 2: Removing a Tool
-~~~~~~~~~~~~~~~~~~~~~~~
-
-
-To remove a tool dynamically, for example due to missing feature toggles, you can filter out the tool
-in the ``getTools`` method. In the following example, we simulate a feature toggle that is disabled, so
-the clock tool must not be available to the agent registered for the blog toolbox by default.
-
-
-::
+To remove a tool dynamically, for example because of a disabled feature toggle, filter it out in
+``getTools()``::
 
     public function getTools(): array
     {
@@ -130,22 +119,15 @@ the clock tool must not be available to the agent registered for the blog toolbo
         return $tools;
     }
 
+With this, the agent can no longer tell the date or time. Only when ``toggleClockFeature`` is
+``true`` will the agent answer with the current date and time again.
 
-With this, and utilizing the blog example in the Symfony AI demo application, the agent will not be able
-to tell the date or time. Only if the ``toggleClockFeature`` is set to ``true`` will the agent answer with the
-current date and time again.
+Step 5: Add a Tool
+------------------
 
-Case 3: Adding a Tool
-~~~~~~~~~~~~~~~~~~~~~
-
-
-To add a new tool dynamically, instantiate a new ``Tool`` object and append it to the list of tools
-returned by the ``getTools`` method. In the following example, we add a simple echo tool that returns whatever
-input it receives. Notably, this example will also intercept the requested tool execution and respond directly
-with an uppercased version of the input.
-
-
-::
+To add a new tool dynamically, instantiate a ``Tool`` object and append it to the list returned by
+``getTools()``. This example adds an ``echo`` tool and intercepts its execution to return an
+uppercased version of the input::
 
     use Symfony\AI\Platform\Tool\ExecutionReference;
     use Symfony\AI\Platform\Tool\Tool;
@@ -185,15 +167,17 @@ with an uppercased version of the input.
         return $this->innerToolbox->execute($toolCall);
     }
 
+The ``echo`` tool is now available to the agent alongside the existing tools. Test it with the blog
+example by asking the agent to use the ``echo`` tool:
 
-With this implementation, the ``echo`` tool will be available to the agent alongside the existing tools.
-You can test this by using the blog example again and explicitly asking the agent to utilize the ``echo`` tool.
-
-
-Example:
-
+.. code-block:: text
 
     User: "What does the echo say?"
 
-    Blog Agent: "The echo says: 'WHAT DOES THE ECHO SAY?' If you have any other questions
-    or need further assistance, feel free to ask!"
+    Blog Agent: "The echo says: 'WHAT DOES THE ECHO SAY?'"
+
+Learn More
+----------
+
+* :doc:`tool-calling-with-agents` - Build and register custom tools
+* :doc:`../components/agent` - Agent component documentation

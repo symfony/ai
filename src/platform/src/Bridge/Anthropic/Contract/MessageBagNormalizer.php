@@ -32,7 +32,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
      * @return array{
      *     messages: list<array<string, mixed>>,
      *     model?: string,
-     *     system?: string,
+     *     system?: list<array{type: 'text', text: string}>,
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
@@ -42,7 +42,9 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
         ];
 
         if (null !== $system = $data->getSystemMessage()) {
-            $array['system'] = $system->getContent();
+            $array['system'] = [
+                ['type' => 'text', 'text' => (string) $system->getContent()],
+            ];
         }
 
         if (isset($context[Contract::CONTEXT_MODEL]) && $context[Contract::CONTEXT_MODEL] instanceof Model) {

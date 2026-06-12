@@ -484,6 +484,19 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
         // Let the client know, that the tool $event->getMetadata()->getName() failed with the exception: $event->getException()
     });
 
+The :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` event is dispatched *before* a tool runs and
+lets you control whether it executes at all. Call ``$event->deny($reason)`` to block execution and return the
+reason to the LLM, or ``$event->setResult($result)`` with a :class:`Symfony\\AI\\Agent\\Toolbox\\ToolResult` to
+skip execution and return a custom result instead. Doing nothing lets the call proceed::
+
+    use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
+
+    $eventDispatcher->addListener(ToolCallRequested::class, function (ToolCallRequested $event): void {
+        if ('delete_account' === $event->getToolCall()->getName()) {
+            $event->deny('Account deletion requires manual approval.');
+        }
+    });
+
 See the :doc:`/cookbook/human-in-the-loop` cookbook article for a complete guide on building a human-in-the-loop
 confirmation system using the ``ToolCallRequested`` event.
 

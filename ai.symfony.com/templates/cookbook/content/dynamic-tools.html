@@ -1,0 +1,384 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>This guide leads you through creating a dynamic Toolbox for Symfony AI. A dynamic Toolbox lets
+you add or remove tools at runtime and customize tool names and descriptions. The examples assume
+you are working with the Symfony AI demo application, where an agent named <code translate="no" class="notranslate">blog</code> is already
+defined with a set of tools.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+<li>A language model supporting tools (e.g., gpt-5-mini)</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-packages">
+    Step 1: Install Packages
+    
+</h2>
+<p>Install the Agent component, which provides the toolbox:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-agent</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-create-the-dynamic-toolbox">
+    Step 2: Create the Dynamic Toolbox
+    
+</h2>
+<p>Create a class that implements <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/ToolboxInterface.php" class="reference external" title="Symfony\AI\Agent\Toolbox\ToolboxInterface" rel="external noopener noreferrer" target="_blank">ToolboxInterface</a> and accepts
+another <code translate="no" class="notranslate">ToolboxInterface</code> instance in its constructor to delegate calls to the original toolbox.
+This implements the decorator pattern:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">ToolboxInterface</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">ToolResult</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">ToolCall</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">DependencyInjection</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AsDecorator</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">DependencyInjection</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AutowireDecorated</span>;
+
+<span class="hljs-meta">#[AsDecorator(<span class="hljs-string">'ai.toolbox.blog'</span>)]</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DynamicToolbox</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">ToolboxInterface</span>
+</span>{
+    <span class="hljs-keyword">private</span> ToolboxInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>innerToolbox</span>;
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(<span class="hljs-meta">#[AutowireDecorated]</span> ToolboxInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>innerToolbox</span>)</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>innerToolbox</span>;
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getTools</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
+    </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox-&gt;<span class="hljs-title invoke__">getTools</span>();
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">execute</span><span class="hljs-params">(ToolCall <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>)</span>: <span class="hljs-title">ToolResult</span>
+    </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox-&gt;<span class="hljs-title invoke__">execute</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>);
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The <code translate="no" class="notranslate">AsDecorator</code> attribute makes this class decorate the existing toolbox for the <code translate="no" class="notranslate">blog</code> agent,
+and <code translate="no" class="notranslate">AutowireDecorated</code> injects the original toolbox instance so existing functionality is
+preserved.</p>
+</div>
+<div class="section">
+<h2 id="step-3-customize-a-tool-at-runtime">
+    Step 3: Customize a Tool at Runtime
+    
+</h2>
+<p>To change a tool description dynamically, override the <code translate="no" class="notranslate">getTools()</code> method. Assume the existing
+<code translate="no" class="notranslate">similarity_search</code> tool should enforce a more specific search term:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Tool</span>\<span class="hljs-title">Tool</span>;
+
+<span class="hljs-comment">// ...existing code...</span>
+<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getTools</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
+</span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox-&gt;<span class="hljs-title invoke__">getTools</span>();
+    <span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span> <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>index</span> =&gt; <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>) {
+        <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>-&gt;<span class="hljs-title invoke__">getName</span>() !== <span class="hljs-string">'similarity_search'</span>) {
+            <span class="hljs-keyword">continue</span>;
+        }
+
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>[<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>index</span>] = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Tool</span>(
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>-&gt;<span class="hljs-title invoke__">getReference</span>(),
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>-&gt;<span class="hljs-title invoke__">getName</span>(),
+            <span class="hljs-string">'Similarity search, but always add the word "please" to the searchTerm.'</span>,
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>-&gt;<span class="hljs-title invoke__">getParameters</span>()
+        );
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>;
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Whenever the <code translate="no" class="notranslate">similarity_search</code> tool is requested, it now carries the new description. This
+approach lets users experiment with descriptions to optimize for their use case or minimize the
+tokens used for complex tools.</p>
+</div>
+<div class="section">
+<h2 id="step-4-remove-a-tool">
+    Step 4: Remove a Tool
+    
+</h2>
+<p>To remove a tool dynamically, for example because of a disabled feature toggle, filter it out in
+<code translate="no" class="notranslate">getTools()</code>:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getTools</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
+</span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox-&gt;<span class="hljs-title invoke__">getTools</span>();
+
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toggleClockFeature</span> = <span class="hljs-keyword">false</span>; <span class="hljs-comment">// Simulate real feature toggle check</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toggleClockFeature</span> === <span class="hljs-keyword">false</span>) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span> = <span class="hljs-title invoke__">array_filter</span>(
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>,
+            static <span class="hljs-function"><span class="hljs-keyword">fn</span> <span class="hljs-params">(Tool <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>)</span> =&gt;</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tool</span>-&gt;<span class="hljs-title invoke__">getName</span>() !== <span class="hljs-string">'clock'</span>
+        );
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>;
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>With this, the agent can no longer tell the date or time. Only when <code translate="no" class="notranslate">toggleClockFeature</code> is
+<code translate="no" class="notranslate">true</code> will the agent answer with the current date and time again.</p>
+</div>
+<div class="section">
+<h2 id="step-5-add-a-tool">
+    Step 5: Add a Tool
+    
+</h2>
+<p>To add a new tool dynamically, instantiate a <code translate="no" class="notranslate">Tool</code> object and append it to the list returned by
+<code translate="no" class="notranslate">getTools()</code>. This example adds an <code translate="no" class="notranslate">echo</code> tool and intercepts its execution to return an
+uppercased version of the input:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Tool</span>\<span class="hljs-title">ExecutionReference</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Tool</span>\<span class="hljs-title">Tool</span>;
+
+<span class="hljs-comment">// ...existing code...</span>
+<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getTools</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
+</span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox-&gt;<span class="hljs-title invoke__">getTools</span>();
+
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>[] = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Tool</span>(
+        <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">ExecutionReference</span>(self::<span class="hljs-variable language_">class</span>), <span class="hljs-comment">// Required, not used</span>
+        <span class="hljs-string">'echo'</span>,
+        <span class="hljs-string">'Echoes the input provided to it.'</span>,
+        [
+            <span class="hljs-string">'type'</span> =&gt; <span class="hljs-string">'object'</span>,
+            <span class="hljs-string">'properties'</span> =&gt; [
+                <span class="hljs-string">'input'</span> =&gt; [
+                    <span class="hljs-string">'type'</span> =&gt; <span class="hljs-string">'string'</span>,
+                    <span class="hljs-string">'description'</span> =&gt; <span class="hljs-string">'string used for similarity search'</span>,
+                ],
+            ],
+            <span class="hljs-string">'required'</span> =&gt; [<span class="hljs-string">'input'</span>],
+            <span class="hljs-string">'additionalProperties'</span> =&gt; <span class="hljs-keyword">false</span>,
+        ],
+    );
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>;
+}
+
+<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">execute</span><span class="hljs-params">(ToolCall <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>)</span>: <span class="hljs-title">ToolResult</span>
+</span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getName</span>() === <span class="hljs-string">'echo'</span>) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>args</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getArguments</span>();
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">ToolResult</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>, \<span class="hljs-title invoke__">strtoupper</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>args</span>[<span class="hljs-string">'input'</span>]));
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;innerToolbox-&gt;<span class="hljs-title invoke__">execute</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>);
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The <code translate="no" class="notranslate">echo</code> tool is now available to the agent alongside the existing tools. Test it with the blog
+example by asking the agent to use the <code translate="no" class="notranslate">echo</code> tool:</p>
+<div translate="no" class="highlight-text notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs text">User: "What does the echo say?"
+
+Blog Agent: "The echo says: 'WHAT DOES THE ECHO SAY?'"</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="/cookbook/tool-calling-with-agents" class="reference internal">Tool Calling with Agents</a> - Build and register custom tools</li>
+<li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Agent component documentation</li>
+</ul>
+</div>
+</div>

@@ -92,6 +92,25 @@
         </div>
         <div class="row mt-4">
             <div class="col-md-3">
+                <div class="card document bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('document') }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Document OCR Bot</h5>
+                        <p class="card-text">Question answering started with a document URL whose text is extracted via Mistral OCR.</p>
+                        <a href="{{ path('document') }}" class="btn btn-outline-dark d-block">Try Document OCR Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('code') }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Document/Chat.php', line: 21 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="card speech bg-body shadow-sm">
                     <div class="card-img-top py-2">
                         {{ ux_icon('microphone') }}

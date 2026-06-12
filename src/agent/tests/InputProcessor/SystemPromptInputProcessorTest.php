@@ -31,6 +31,21 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class SystemPromptInputProcessorTest extends TestCase
 {
+    public function testGetSystemPromptReturnsTheConfiguredPrompt()
+    {
+        $processor = new SystemPromptInputProcessor('You are a helpful assistant.');
+        $this->assertSame('You are a helpful assistant.', $processor->getSystemPrompt());
+
+        $stringable = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'stringable prompt';
+            }
+        };
+        $processor = new SystemPromptInputProcessor($stringable);
+        $this->assertSame($stringable, $processor->getSystemPrompt());
+    }
+
     public function testProcessInputAddsSystemMessageWhenNoneExists()
     {
         $processor = new SystemPromptInputProcessor('This is a system prompt');
@@ -43,6 +58,22 @@ final class SystemPromptInputProcessorTest extends TestCase
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
         $this->assertSame('This is a system prompt', $messages[0]->getContent());
+    }
+
+    public function testProcessInputMutatesTheCallerMessageBagInPlace()
+    {
+        $processor = new SystemPromptInputProcessor('This is a system prompt');
+
+        $bag = new MessageBag(Message::ofUser('This is a user message'));
+        $input = new Input('gpt-4o', $bag);
+        $processor->processInput($input);
+
+        // Caller's bag must reflect the injected system message so downstream
+        // processors (e.g. tool-call output processors) can append messages
+        // visible to the caller's reference. See #1726.
+        $this->assertSame($bag, $input->getMessageBag());
+        $this->assertCount(2, $bag);
+        $this->assertInstanceOf(SystemMessage::class, $bag->getMessages()[0]);
     }
 
     public function testProcessInputDoesNotAddSystemMessageWhenOneExists()

@@ -1,0 +1,23 @@
+[
+    {
+        "slug": "first",
+        "title": "First",
+        "description": "The first article.",
+        "icon": "a",
+        "components": ["Platform", "Agent"]
+    },
+    {
+        "slug": "second",
+        "title": "Second",
+        "description": "The second article.",
+        "icon": "b",
+        "components": ["Platform"]
+    },
+    {
+        "slug": "third",
+        "title": "Third",
+        "description": "The third article.",
+        "icon": "c",
+        "components": ["Store"]
+    }
+]

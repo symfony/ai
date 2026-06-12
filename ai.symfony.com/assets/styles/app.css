@@ -126,19 +126,42 @@ section.section-secondary {
     pointer-events: none;
 }
 
+/*
+ * Brand-color shift. Every participating element runs the same 60s keyframes on
+ * its own timeline — reliable in all engines. (Animating one inherited custom
+ * property instead is a Chromium-only trick: Firefox/Safari never repaint the
+ * descendants that read it via var(), so the whole page freezes on one color.)
+ * Elements present at load start together; ones added or toggled active later are
+ * re-phased onto the shared wall-clock cycle by initColorShiftSync() in app.js,
+ * so nothing drifts. Keyframe colors are literal (mirroring --sf-ai-brand-1..4)
+ * and set both fill and background-color, so one animation drives the SVG logo,
+ * the architecture rects, and the div backgrounds alike.
+ */
 @keyframes colorShift {
-    0% { fill: var(--sf-ai-brand-1); background-color: var(--sf-ai-brand-1); }
-    25% { fill: var(--sf-ai-brand-2); background-color: var(--sf-ai-brand-2); }
-    50% { fill: var(--sf-ai-brand-3); background-color: var(--sf-ai-brand-3); }
-    75% { fill: var(--sf-ai-brand-4); background-color: var(--sf-ai-brand-4); }
-    100% { fill: var(--sf-ai-brand-1); background-color: var(--sf-ai-brand-1); }
+    0% { fill: #5a55a5; background-color: #5a55a5; }
+    25% { fill: #4c1d95; background-color: #4c1d95; }
+    50% { fill: #db2777; background-color: #db2777; }
+    75% { fill: #1d4ed8; background-color: #1d4ed8; }
+    100% { fill: #5a55a5; background-color: #5a55a5; }
 }
 
-.color-shift {
+.color-shift,
+.arch-shift-strong, .arch-shift-medium, .arch-shift-light, .arch-shift-muted,
+.sf-ai-card-shift::before,
+.feature-tab.active,
+.cookbook-card-icon,
+.cookbook-filter.is-active,
+.logo-icon, .logo-ai {
     animation: colorShift 60s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-    .color-shift, .arch-shift-strong, .arch-shift-medium, .arch-shift-light, .arch-shift-muted, .sf-ai-card-shift::before, .feature-tab.active {
+    .color-shift,
+    .arch-shift-strong, .arch-shift-medium, .arch-shift-light, .arch-shift-muted,
+    .sf-ai-card-shift::before,
+    .feature-tab.active,
+    .cookbook-card-icon,
+    .cookbook-filter.is-active,
+    .logo-icon, .logo-ai {
         animation: none;
     }
 }
@@ -154,7 +177,7 @@ section.section-secondary {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    animation: colorShift 60s ease-in-out infinite;
+    background-color: var(--sf-ai-brand-1);
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
@@ -162,7 +185,7 @@ section.section-secondary {
 .sf-ai-card-shift > * { position: relative; z-index: 1; }
 
 .arch-shift-strong, .arch-shift-medium, .arch-shift-light, .arch-shift-muted {
-    animation: colorShift 60s ease-in-out infinite;
+    fill: var(--sf-ai-brand-1);
 }
 .arch-shift-medium { opacity: 0.55; }
 .arch-shift-light { opacity: 0.3; }
@@ -376,6 +399,11 @@ header {
     color: var(--sf-ai-accent);
     text-decoration: none;
 }
+/* .sf-ai-card a above would override Bootstrap's white btn-dark text. */
+.sf-ai-card a.btn-dark,
+.sf-ai-card a.btn-dark:hover {
+    color: #fff;
+}
 
 .demo-blog .demo-icon { background: linear-gradient(180deg, #433F77, #C43BC2); }
 .demo-crop .demo-icon { background: linear-gradient(180deg, #85A72B, #97BC43); }
@@ -577,7 +605,7 @@ header {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .feature-tab.active {
-    animation: colorShift 60s ease-in-out infinite;
+    background-color: var(--sf-ai-brand-1);
     color: #fff;
     box-shadow: 0 4px 20px rgba(90, 85, 165, 0.4);
 }
@@ -646,5 +674,308 @@ header {
     border: none;
     margin: 0;
     opacity: 0.6;
+}
+
+/* Cookbook: Homepage cards */
+/* The demos section sits on a white background, so its card needs a light gray
+   fill to stand out instead of disappearing (white-on-white). */
+#demos .sf-ai-card {
+    background: var(--sf-ai-bg-secondary);
+}
+
+[data-bs-theme="dark"] #demos .sf-ai-card {
+    background: var(--sf-ai-card-bg);
+}
+
+.cookbook-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--sf-ai-brand-1);
+    color: #fff;
+}
+
+.cookbook-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.15em 0.55em;
+    border-radius: 0.375rem;
+    background: var(--sf-ai-bg-secondary);
+    color: var(--sf-ai-text-color);
+    border: 1px solid var(--sf-ai-card-border);
+    letter-spacing: 0.02em;
+}
+
+/* Cookbook: Component filter toggles */
+.cookbook-filter {
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1;
+    padding: 0.45rem 0.9rem;
+    border-radius: 2rem;
+    background: var(--sf-ai-card-bg);
+    color: var(--sf-ai-text-color);
+    border: 1px solid var(--sf-ai-card-border);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.cookbook-filter:hover {
+    border-color: var(--sf-ai-link-color);
+}
+
+.cookbook-filter.is-active {
+    background-color: var(--sf-ai-brand-1);
+    border-color: transparent;
+    color: #fff;
+}
+
+/* Cookbook: Breadcrumbs */
+.cookbook-breadcrumb {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    /* Align the breadcrumb with the visual start of the header logo, whose
+       content is inset ~9px within its SVG viewBox (x 14.58 of 284.46 @ 180px). */
+    padding: 0 0 0 9px;
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.cookbook-breadcrumb li:not(:last-child)::after {
+    content: '/';
+    margin-left: 0.4rem;
+    opacity: 0.4;
+}
+
+.cookbook-breadcrumb a {
+    color: var(--sf-ai-link-color);
+    text-decoration: none;
+}
+
+.cookbook-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.cookbook-breadcrumb li:last-child {
+    color: var(--sf-ai-text-color);
+    opacity: 0.6;
+}
+
+/* Cookbook: Article header */
+.cookbook-article-header {
+    padding: 2rem 0 2.5rem;
+}
+
+/* Cookbook: Article body */
+.cookbook-article-body h2 {
+    font-family: var(--font-family-title), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--sf-ai-card-border);
+}
+
+.cookbook-article-body h2:first-child {
+    margin-top: 0;
+}
+
+.cookbook-article-body p {
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+
+.cookbook-article-body .terminal {
+    margin: 1.5rem 0;
+}
+
+.cookbook-article-body ol,
+.cookbook-article-body ul {
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.cookbook-article-body li {
+    margin-bottom: 0.35rem;
+}
+
+/* Cookbook: Content links mirror the Symfony documentation prose-link styling
+   (symfony.com/doc): body-colored text with a thick blue underline, swapping to
+   a colored label and a rounded outline box on hover. */
+.cookbook-article-body p a,
+.cookbook-article-body li a {
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-color: #60a5fa;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+}
+
+.cookbook-article-body p a:hover,
+.cookbook-article-body li a:hover {
+    color: #0066cc;
+    text-decoration: none;
+    outline: 2px solid #60a5fa;
+    outline-offset: 1px;
+    border-radius: 0.375rem;
+}
+
+/* Cookbook: Callout boxes */
+.cookbook-callout {
+    border-left: 3px solid var(--sf-ai-accent);
+    background: var(--sf-ai-bg-secondary);
+    border-radius: 0 0.75rem 0.75rem 0;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+}
+
+.cookbook-callout p:last-child {
+    margin-bottom: 0;
+}
+
+.cookbook-callout strong {
+    color: var(--sf-ai-accent);
+}
+
+/* Cookbook: Prev/Next navigation */
+.cookbook-nav-card {
+    padding: 1.25rem;
+    border-radius: var(--sf-ai-card-radius);
+    background: var(--sf-ai-card-bg);
+    border: 1px solid var(--sf-ai-card-border);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cookbook-nav-card:hover {
+    border-color: var(--sf-ai-link-color);
+    box-shadow: 0 2px 12px rgba(127, 91, 255, 0.1);
+}
+
+.cookbook-nav-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sf-ai-text-color);
+    opacity: 0.5;
+    margin-bottom: 0.35rem;
+}
+
+.cookbook-nav-card-next .cookbook-nav-label {
+    justify-content: flex-end;
+}
+
+.cookbook-nav-title {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--sf-ai-text-color);
+}
+
+/* Cookbook: Inline code */
+.cookbook-article-body code:not(.terminal code) {
+    font-family: 'JetBrainsMono', monospace;
+    font-size: 0.85em;
+    padding: 0.15em 0.4em;
+    border-radius: 0.3rem;
+    background: var(--sf-ai-bg-secondary);
+    border: 1px solid var(--sf-ai-card-border);
+}
+
+/*
+ * Cookbook: bridge for the markup generated from RST by the docs-builder.
+ * The article fragments under templates/cookbook/content/ use the docs-builder
+ * (ReadTheDocs + highlight.php) markup; these rules map it onto the website theme.
+ */
+.cookbook-article-body h3 {
+    font-family: var(--font-family-title), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Code blocks: dark rounded container matching .terminal */
+.cookbook-article-body [class*="highlight-"] {
+    background: #151028;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin: 1.5rem 0;
+    box-shadow: 0 8px 32px rgba(127, 91, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.cookbook-article-body .highlighttable {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    table-layout: fixed;
+}
+
+.cookbook-article-body .highlighttable td {
+    border: 0;
+    padding: 0;
+    vertical-align: top;
+}
+
+/* Hide line numbers to match the website's code style */
+.cookbook-article-body .highlighttable .linenos {
+    display: none;
+}
+
+.cookbook-article-body .highlight pre {
+    margin: 0;
+    padding: 15px 20px;
+    overflow-x: auto;
+    background: transparent;
+    color: oklch(87% 0 0);
+    font-family: JetBrainsMono, ui-monospace, monospace;
+    font-variant-ligatures: none;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+/* highlight.php token colors (GitHub-like palette, matches .terminal) */
+.cookbook-article-body .hljs-variable,
+.cookbook-article-body .hljs-variable-other-marker,
+.cookbook-article-body .hljs-number { color: #79c0ff; }
+.cookbook-article-body .hljs-title,
+.cookbook-article-body .hljs-class,
+.cookbook-article-body .hljs-function,
+.cookbook-article-body .hljs-meta { color: #d2a8ff; }
+.cookbook-article-body .hljs-keyword { color: #ff7b72; }
+.cookbook-article-body .hljs-string { color: #9c9; }
+.cookbook-article-body .hljs-comment { color: #8b949e; }
+.cookbook-article-body .hljs-attr,
+.cookbook-article-body .hljs-params { color: #ffa657; }
+
+/* Admonitions (.. note::, .. tip::, .. warning::) styled like callouts */
+.cookbook-article-body .admonition {
+    border-left: 3px solid var(--sf-ai-accent);
+    background: var(--sf-ai-bg-secondary);
+    border-radius: 0 0.75rem 0.75rem 0;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+}
+
+.cookbook-article-body .admonition p:last-child {
+    margin-bottom: 0;
+}
+
+.cookbook-article-body .admonition-title {
+    font-weight: 700;
+    color: var(--sf-ai-accent);
+    margin-bottom: 0.25rem;
 }
 

@@ -1,0 +1,328 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>Sometimes a single AI agent is not enough. You may need specialists for different domains, with
+an orchestrator that routes questions to the right expert. In this guide you will build a
+multi-agent system where a central orchestrator delegates tasks to specialist agents based on
+the content of the user's question.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-packages">
+    Step 1: Install Packages
+    
+</h2>
+<p>Install the Platform and Agent components via Composer:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-create-specialist-agents">
+    Step 2: Create Specialist Agents
+    
+</h2>
+<p>Each specialist agent is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with a
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> that defines its area of
+expertise. Give each agent a descriptive <code translate="no" class="notranslate">name</code> so the orchestrator can identify it:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>\<span class="hljs-title">SystemPromptInputProcessor</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>technical</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-5-mini'</span>,
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
+        <span class="hljs-string">'You are a technical support specialist. Help users resolve bugs and errors.'</span>,
+    )],
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'technical'</span>,
+);
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>billing</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-5-mini'</span>,
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
+        <span class="hljs-string">'You are a billing specialist. Help users with invoices and payments.'</span>,
+    )],
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'billing'</span>,
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-3-create-an-orchestrator-agent">
+    Step 3: Create an Orchestrator Agent
+    
+</h2>
+<p>The orchestrator is another agent whose system prompt instructs it to analyze user questions and
+decide which specialist should handle them. It does not need a name since it acts as the entry
+point:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>orchestrator</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-5-mini'</span>,
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
+        <span class="hljs-string">'You are an agent orchestrator that routes user questions to specialized agents.'</span>,
+    )],
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-configure-handoffs">
+    Step 4: Configure Handoffs
+    
+</h2>
+<p>A <a href="https://github.com/symfony/ai/blob/main/src/agent/src/MultiAgent/Handoff.php" class="reference external" title="Symfony\AI\Agent\MultiAgent\Handoff" rel="external noopener noreferrer" target="_blank">Handoff</a> defines when a question should be routed to a
+specific agent. The <code translate="no" class="notranslate">when</code> parameter accepts an array of keywords that trigger the routing.
+When the orchestrator detects these keywords in the user's question, it delegates to the matching
+agent:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">MultiAgent</span>\<span class="hljs-title">Handoff</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>handoffs</span> = [
+    <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Handoff</span>(
+        <span class="hljs-attr">to</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>technical</span>,
+        <span class="hljs-attr">when</span>: [<span class="hljs-string">'bug'</span>, <span class="hljs-string">'error'</span>, <span class="hljs-string">'exception'</span>, <span class="hljs-string">'technical'</span>],
+    ),
+    <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Handoff</span>(
+        <span class="hljs-attr">to</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>billing</span>,
+        <span class="hljs-attr">when</span>: [<span class="hljs-string">'invoice'</span>, <span class="hljs-string">'payment'</span>, <span class="hljs-string">'billing'</span>, <span class="hljs-string">'subscription'</span>],
+    ),
+];</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-5-build-the-multiagent">
+    Step 5: Build the MultiAgent
+    
+</h2>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/MultiAgent/MultiAgent.php" class="reference external" title="Symfony\AI\Agent\MultiAgent\MultiAgent" rel="external noopener noreferrer" target="_blank">MultiAgent</a> ties everything together. It takes the
+orchestrator, an array of handoffs, and a fallback agent that handles questions that do not match
+any specialist:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">MultiAgent</span>\<span class="hljs-title">MultiAgent</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>fallback</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-5-mini'</span>,
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
+        <span class="hljs-string">'You are a general assistant. Help users with any non-specialized questions.'</span>,
+    )],
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'fallback'</span>,
+);
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>multiAgent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MultiAgent</span>(
+    <span class="hljs-attr">orchestrator</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>orchestrator</span>,
+    <span class="hljs-attr">handoffs</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>handoffs</span>,
+    <span class="hljs-attr">fallback</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>fallback</span>,
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-6-route-questions-automatically">
+    Step 6: Route Questions Automatically
+    
+</h2>
+<p>Call the multi-agent with a <code translate="no" class="notranslate">MessageBag</code> just like a regular agent. The orchestrator analyzes
+the question and routes it to the appropriate specialist automatically:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">Message</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
+
+<span class="hljs-comment">// Technical question - routed to the technical agent</span>
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
+    Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-string">'I get a "Call to undefined method" error in my controller.'</span>),
+);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>multiAgent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>);
+<span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span>-&gt;<span class="hljs-title invoke__">getContent</span>();
+
+<span class="hljs-comment">// General question - routed to the fallback agent</span>
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
+    Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-string">'Can you recommend a good pasta recipe?'</span>),
+);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>multiAgent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>);
+<span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span>-&gt;<span class="hljs-title invoke__">getContent</span>();</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="admonition admonition-tip ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span>Tip</span>
+    </p><p>You can add as many specialist agents as you need. Each handoff is evaluated independently,
+so the orchestrator can route to any number of domains. For debugging, pass a PSR-3 logger to
+the <code translate="no" class="notranslate">MultiAgent</code> constructor to see which agent handles each request.</p>
+</div>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Processors, memory, and advanced agent patterns</li>
+<li><a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> - Automatic wiring in Symfony applications</li>
+</ul>
+</div>
+</div>

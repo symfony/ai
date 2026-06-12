@@ -46,8 +46,8 @@ final class Factory
 
         return new Provider(
             $name,
-            [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey)],
-            [new Embeddings\ResultConverter(), new Llm\ResultConverter()],
+            [new Embeddings\ModelClient($httpClient, $apiKey), new Llm\ModelClient($httpClient, $apiKey), new Ocr\ModelClient($httpClient, $apiKey)],
+            [new Embeddings\ResultConverter(), new Llm\ResultConverter(), new Ocr\ResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create([
                 new ToolNormalizer(),

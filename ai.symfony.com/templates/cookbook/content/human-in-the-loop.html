@@ -1,0 +1,515 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>When AI agents execute tools, some actions — like deleting files, sending emails, or modifying
+data — should require human approval. This guide shows how to build a confirmation system using the
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Event/ToolCallRequested.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Event\ToolCallRequested" rel="external noopener noreferrer" target="_blank">ToolCallRequested</a> event.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+<li>Symfony EventDispatcher component</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-packages">
+    Step 1: Install Packages
+    
+</h2>
+<p>Install the Platform and Agent components together with the EventDispatcher:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent symfony/event-dispatcher</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-confirm-every-tool-call">
+    Step 2: Confirm Every Tool Call
+    
+</h2>
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Toolbox.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Toolbox" rel="external noopener noreferrer" target="_blank">Toolbox</a> dispatches a
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Event/ToolCallRequested.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Event\ToolCallRequested" rel="external noopener noreferrer" target="_blank">ToolCallRequested</a> event before each tool execution.
+An event listener can inspect the tool call and either:</p>
+<ul>
+    <li><strong>Allow it</strong> — do nothing, the tool executes normally</li>
+<li><strong>Deny it</strong> — call <code translate="no" class="notranslate">$event-&gt;deny($reason)</code> to block execution and return the reason to the LLM</li>
+<li><strong>Replace it</strong> — call <code translate="no" class="notranslate">$event-&gt;setResult($result)</code> to skip execution and return a custom result</li>
+</ul>
+<p>The simplest approach asks for confirmation on every tool call:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Event</span>\<span class="hljs-title">ToolCallRequested</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">EventDispatcher</span>\<span class="hljs-title">EventDispatcher</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">EventDispatcher</span>();
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>-&gt;<span class="hljs-title invoke__">addListener</span>(ToolCallRequested::<span class="hljs-variable language_">class</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(ToolCallRequested <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>)</span>: <span class="hljs-title">void</span> </span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">getToolCall</span>();
+
+    echo \<span class="hljs-title invoke__">sprintf</span>(
+        <span class="hljs-string">"Tool '%s' wants to execute with args: %s\nAllow? [y/N] "</span>,
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getName</span>(),
+        <span class="hljs-title invoke__">json_encode</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getArguments</span>())
+    );
+
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span> = <span class="hljs-title invoke__">strtolower</span>(<span class="hljs-title invoke__">trim</span>(<span class="hljs-title invoke__">fgets</span>(\<span class="hljs-keyword">STDIN</span>)));
+
+    if (<span class="hljs-string">'y'</span> !== <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">deny</span>(<span class="hljs-string">'User denied tool execution.'</span>);
+    }
+});</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Pass this dispatcher to the <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Toolbox.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Toolbox" rel="external noopener noreferrer" target="_blank">Toolbox</a>:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Toolbox</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Toolbox</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>tools</span>, <span class="hljs-attr">eventDispatcher</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-3-add-a-policy">
+    Step 3: Add a Policy
+    
+</h2>
+<p>In practice, you don't want to confirm every single call. A policy decides which tools need
+confirmation and which can run automatically:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-class"><span class="hljs-keyword">enum</span> <span class="hljs-title">PolicyDecision</span>
+</span>{
+    <span class="hljs-keyword">case</span> Allow;
+    <span class="hljs-keyword">case</span> Deny;
+    <span class="hljs-keyword">case</span> AskUser;
+}
+
+<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">PolicyInterface</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decide</span><span class="hljs-params">(ToolCall <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>)</span>: <span class="hljs-title">PolicyDecision</span></span>;
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>A simple policy could auto-allow read operations based on tool name patterns:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">ToolCall</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ReadAllowPolicy</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">PolicyInterface</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decide</span><span class="hljs-params">(ToolCall <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>)</span>: <span class="hljs-title">PolicyDecision</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>name</span> = <span class="hljs-title invoke__">strtolower</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getName</span>());
+
+        <span class="hljs-keyword">foreach</span> ([<span class="hljs-string">'read'</span>, <span class="hljs-string">'get'</span>, <span class="hljs-string">'list'</span>, <span class="hljs-string">'search'</span>, <span class="hljs-string">'find'</span>, <span class="hljs-string">'show'</span>] <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>pattern</span>) {
+            <span class="hljs-keyword">if</span> (<span class="hljs-title invoke__">str_contains</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>name</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>pattern</span>)) {
+                <span class="hljs-keyword">return</span> PolicyDecision::<span class="hljs-variable constant_">Allow</span>;
+            }
+        }
+
+        <span class="hljs-keyword">return</span> PolicyDecision::<span class="hljs-variable constant_">AskUser</span>;
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-build-a-confirmation-handler">
+    Step 4: Build a Confirmation Handler
+    
+</h2>
+<p>The confirmation handler prompts the user and returns a decision. Its implementation depends on
+your application context — CLI, web, async, etc.:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">ToolCall</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CliConfirmationHandler</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">confirm</span><span class="hljs-params">(ToolCall <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>)</span>: <span class="hljs-title">bool</span>
+    </span>{
+        <span class="hljs-keyword">echo</span> \<span class="hljs-title invoke__">sprintf</span>(
+            <span class="hljs-string">"Allow tool '%s' with args %s? [y/N] "</span>,
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getName</span>(),
+            <span class="hljs-title invoke__">json_encode</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolCall</span>-&gt;<span class="hljs-title invoke__">getArguments</span>())
+        );
+
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'y'</span> === <span class="hljs-title invoke__">strtolower</span>(<span class="hljs-title invoke__">trim</span>(<span class="hljs-title invoke__">fgets</span>(\<span class="hljs-keyword">STDIN</span>)));
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>For web applications, you might store pending confirmations in a database and wait for a user
+response through an HTTP endpoint or WebSocket.</p>
+<div class="admonition admonition-tip ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span>Tip</span>
+    </p><p>The event also exposes the tool's metadata via <code translate="no" class="notranslate">$event-&gt;getMetadata()</code>, which includes the
+tool's description and parameter schema. Use it to show the user more context before they
+decide.</p>
+</div>
+</div>
+<div class="section">
+<h2 id="step-5-wire-the-policy-and-handler-together">
+    Step 5: Wire the Policy and Handler Together
+    
+</h2>
+<p>Combine the policy and handler in an event listener:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Event</span>\<span class="hljs-title">ToolCallRequested</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>policy</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">ReadAllowPolicy</span>();
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>handler</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">CliConfirmationHandler</span>();
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>-&gt;<span class="hljs-title invoke__">addListener</span>(ToolCallRequested::<span class="hljs-variable language_">class</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(ToolCallRequested <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>)</span> <span class="hljs-keyword">use</span> <span class="hljs-params">(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>policy</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>handler</span>)</span>: <span class="hljs-title">void</span> </span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decision</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>policy</span>-&gt;<span class="hljs-title invoke__">decide</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">getToolCall</span>());
+
+    if (PolicyDecision::<span class="hljs-variable constant_">Allow</span> === <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decision</span>) {
+        <span class="hljs-keyword">return</span>; <span class="hljs-comment">// Auto-approved, proceed with execution</span>
+    }
+
+    <span class="hljs-keyword">if</span> (PolicyDecision::<span class="hljs-variable constant_">Deny</span> === <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decision</span>) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">deny</span>(<span class="hljs-string">'Tool blocked by policy.'</span>);
+
+        <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-comment">// PolicyDecision::AskUser</span>
+    <span class="hljs-keyword">if</span> (!<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>handler</span>-&gt;<span class="hljs-title invoke__">confirm</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">getToolCall</span>())) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">deny</span>(<span class="hljs-string">'User denied tool execution.'</span>);
+    }
+});</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-6-remember-user-decisions">
+    Step 6: Remember User Decisions
+    
+</h2>
+<p>To avoid asking the user repeatedly for the same tool, cache decisions:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Event</span>\<span class="hljs-title">ToolCallRequested</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decisions</span> = [];
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>-&gt;<span class="hljs-title invoke__">addListener</span>(ToolCallRequested::<span class="hljs-variable language_">class</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(ToolCallRequested <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>)</span> <span class="hljs-keyword">use</span> <span class="hljs-params">(&amp;<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decisions</span>)</span>: <span class="hljs-title">void</span> </span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolName</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">getToolCall</span>()-&gt;<span class="hljs-title invoke__">getName</span>();
+
+    if (isset(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decisions</span>[<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolName</span>])) {
+        <span class="hljs-keyword">if</span> (!<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decisions</span>[<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolName</span>]) {
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">deny</span>(<span class="hljs-string">'Tool previously denied by user.'</span>);
+        }
+
+        <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-keyword">echo</span> \<span class="hljs-title invoke__">sprintf</span>(
+        <span class="hljs-string">"Allow tool '%s'? [y/N/always/never] "</span>,
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolName</span>
+    );
+
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span> = <span class="hljs-title invoke__">strtolower</span>(<span class="hljs-title invoke__">trim</span>(<span class="hljs-title invoke__">fgets</span>(\<span class="hljs-keyword">STDIN</span>)));
+
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>allowed</span> = \<span class="hljs-title invoke__">in_array</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>, [<span class="hljs-string">'y'</span>, <span class="hljs-string">'always'</span>], <span class="hljs-keyword">true</span>);
+
+    <span class="hljs-keyword">if</span> (\<span class="hljs-title invoke__">in_array</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>, [<span class="hljs-string">'always'</span>, <span class="hljs-string">'never'</span>], <span class="hljs-keyword">true</span>)) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decisions</span>[<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolName</span>] = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>allowed</span>;
+    }
+
+    <span class="hljs-keyword">if</span> (!<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>allowed</span>) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>-&gt;<span class="hljs-title invoke__">deny</span>(<span class="hljs-string">'User denied tool execution.'</span>);
+    }
+});</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-7-register-the-listener-in-symfony">
+    Step 7: Register the Listener in Symfony
+    
+</h2>
+<p>In a Symfony application, the
+<a href="https://github.com/symfony/symfony/blob/4.4/src/Symfony/Component/EventDispatcher/Attribute/AsEventListener.php" class="reference external" title="Symfony\Component\EventDispatcher\Attribute\AsEventListener" rel="external noopener noreferrer" target="_blank">AsEventListener</a> attribute registers the
+listener automatically — no service configuration needed. The event is inferred from the
+<code translate="no" class="notranslate">__invoke()</code> argument:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">EventListener</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Toolbox</span>\<span class="hljs-title">Event</span>\<span class="hljs-title">ToolCallRequested</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">EventDispatcher</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AsEventListener</span>;
+
+<span class="hljs-meta">#[AsEventListener]</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ToolConfirmationListener</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__invoke</span><span class="hljs-params">(ToolCallRequested <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>event</span>)</span>: <span class="hljs-title">void</span>
+    </span>{
+        <span class="hljs-comment">// Your confirmation logic here</span>
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php" class="reference external" rel="external noopener noreferrer" target="_blank">Human-in-the-Loop Confirmation Example</a></li>
+<li><a href="/cookbook/tool-calling-with-agents" class="reference internal">Tool Calling with Agents</a> - Build and register custom tools</li>
+<li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Agent component documentation</li>
+</ul>
+</div>
+</div>

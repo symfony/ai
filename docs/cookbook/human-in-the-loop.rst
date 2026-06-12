@@ -1,9 +1,15 @@
+.. card:
+    title: Human in the Loop
+    description: Require human approval before an agent executes sensitive tool calls.
+    icon: user-check
+    components: Agent
+
 Human-in-the-Loop Tool Confirmation
 ===================================
 
 When AI agents execute tools, some actions — like deleting files, sending emails, or modifying
-data — should require human approval. This guide shows how to build a confirmation system using
-the :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` event.
+data — should require human approval. This guide shows how to build a confirmation system using the
+:class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` event.
 
 Prerequisites
 -------------
@@ -12,8 +18,15 @@ Prerequisites
 * Symfony AI Agent component
 * Symfony EventDispatcher component
 
-How It Works
-------------
+Step 1: Install Packages
+------------------------
+
+Install the Platform and Agent components together with the EventDispatcher::
+
+    composer require symfony/ai-platform symfony/ai-agent symfony/event-dispatcher
+
+Step 2: Confirm Every Tool Call
+-------------------------------
 
 The :class:`Symfony\\AI\\Agent\\Toolbox\\Toolbox` dispatches a
 :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` event before each tool execution.
@@ -22,9 +35,6 @@ An event listener can inspect the tool call and either:
 * **Allow it** — do nothing, the tool executes normally
 * **Deny it** — call ``$event->deny($reason)`` to block execution and return the reason to the LLM
 * **Replace it** — call ``$event->setResult($result)`` to skip execution and return a custom result
-
-Basic Example: Confirm Every Tool Call
---------------------------------------
 
 The simplest approach asks for confirmation on every tool call::
 
@@ -54,16 +64,11 @@ Pass this dispatcher to the :class:`Symfony\\AI\\Agent\\Toolbox\\Toolbox`::
 
     $toolbox = new Toolbox($tools, eventDispatcher: $dispatcher);
 
-Adding a Policy Layer
----------------------
+Step 3: Add a Policy
+--------------------
 
 In practice, you don't want to confirm every single call. A policy decides which tools need
-confirmation and which can run automatically. Here is an outline for a policy-based approach.
-
-Step 1: Define a Policy
-~~~~~~~~~~~~~~~~~~~~~~~
-
-A policy inspects the tool call and returns a decision::
+confirmation and which can run automatically::
 
     enum PolicyDecision
     {
@@ -97,11 +102,11 @@ A simple policy could auto-allow read operations based on tool name patterns::
         }
     }
 
-Step 2: Build a Confirmation Handler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 4: Build a Confirmation Handler
+------------------------------------
 
-The confirmation handler is responsible for prompting the user and returning a decision.
-Its implementation depends on your application context — CLI, web, async, etc.::
+The confirmation handler prompts the user and returns a decision. Its implementation depends on
+your application context — CLI, web, async, etc.::
 
     use Symfony\AI\Platform\Result\ToolCall;
 
@@ -119,11 +124,17 @@ Its implementation depends on your application context — CLI, web, async, etc.
         }
     }
 
-For web applications, you might store pending confirmations in a database and wait for
-a user response through an HTTP endpoint or WebSocket.
+For web applications, you might store pending confirmations in a database and wait for a user
+response through an HTTP endpoint or WebSocket.
 
-Step 3: Wire It Together
-~~~~~~~~~~~~~~~~~~~~~~~~
+.. tip::
+
+    The event also exposes the tool's metadata via ``$event->getMetadata()``, which includes the
+    tool's description and parameter schema. Use it to show the user more context before they
+    decide.
+
+Step 5: Wire the Policy and Handler Together
+--------------------------------------------
 
 Combine the policy and handler in an event listener::
 
@@ -151,10 +162,10 @@ Combine the policy and handler in an event listener::
         }
     });
 
-Remembering User Decisions
---------------------------
+Step 6: Remember User Decisions
+-------------------------------
 
-To avoid asking the user repeatedly for the same tool, you can cache decisions::
+To avoid asking the user repeatedly for the same tool, cache decisions::
 
     use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
 
@@ -189,43 +200,20 @@ To avoid asking the user repeatedly for the same tool, you can cache decisions::
         }
     });
 
-Using Tool Metadata
--------------------
+Step 7: Register the Listener in Symfony
+----------------------------------------
 
-The event also provides access to the tool's metadata via ``$event->getMetadata()``, which
-includes the tool's description and parameter schema. This can be useful for displaying
-more context to the user before they decide::
-
-    $dispatcher->addListener(ToolCallRequested::class, function (ToolCallRequested $event): void {
-        $metadata = $event->getMetadata();
-
-        echo \sprintf(
-            "Tool: %s\nDescription: %s\nArguments: %s\n",
-            $metadata->getName(),
-            $metadata->getDescription(),
-            json_encode($event->getToolCall()->getArguments())
-        );
-
-        // ... ask for confirmation
-    });
-
-Integration with Symfony Framework
-----------------------------------
-
-In a Symfony application, register the listener as a service::
-
-    # config/services.yaml
-    services:
-        App\EventListener\ToolConfirmationListener:
-            tags:
-                - { name: kernel.event_listener, event: Symfony\AI\Agent\Toolbox\Event\ToolCallRequested }
-
-And implement the listener::
+In a Symfony application, the
+:class:`Symfony\\Component\\EventDispatcher\\Attribute\\AsEventListener` attribute registers the
+listener automatically — no service configuration needed. The event is inferred from the
+``__invoke()`` argument::
 
     namespace App\EventListener;
 
     use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
+    use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
+    #[AsEventListener]
     class ToolConfirmationListener
     {
         public function __invoke(ToolCallRequested $event): void
@@ -234,7 +222,9 @@ And implement the listener::
         }
     }
 
-Code Examples
--------------
+Learn More
+----------
 
 * `Human-in-the-Loop Confirmation Example <https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php>`_
+* :doc:`tool-calling-with-agents` - Build and register custom tools
+* :doc:`../components/agent` - Agent component documentation

@@ -1,45 +1,35 @@
+.. card:
+    title: Chatbot with Memory
+    description: Give an agent memory of user facts for personalized conversations.
+    icon: messages
+    components: Agent
+
 Building a Chatbot with Memory
 ==============================
 
-This guide demonstrates how to build a chatbot that remembers context across conversations
-using Symfony AI's memory management features.
-
-Overview
---------
-
 Memory providers allow your agents to access conversation history and user-specific information,
-enabling more personalized and context-aware responses. In this example, we'll build a personal
-trainer chatbot that remembers facts about the user.
+enabling more personalized and context-aware responses. In this guide you will build a personal
+trainer chatbot that remembers facts about the user across conversations.
 
 Prerequisites
 -------------
 
-* Symfony AI Agent component installed
+* Symfony AI Platform component
+* Symfony AI Agent component
 * OpenAI API key (or any other supported platform)
-* Basic understanding of Symfony AI concepts
 
-Implementation
---------------
+Step 1: Install Packages
+------------------------
 
-The complete implementation consists of three main parts:
+Install the Platform and Agent components via Composer::
 
-1. Creating a memory provider with user facts
-2. Configuring the agent with memory support
-3. Processing user messages with context awareness
+    composer require symfony/ai-platform symfony/ai-agent
 
-Complete Example
-~~~~~~~~~~~~~~~~
+Step 2: Create a Memory Provider
+--------------------------------
 
-See the complete example: `static.php <https://github.com/symfony/ai/blob/main/examples/memory/static.php>`_
-
-Key Components
---------------
-
-Memory Provider
-~~~~~~~~~~~~~~~
-
-The :class:`Symfony\\AI\\Agent\\Memory\\StaticMemoryProvider` stores fixed information that should be consistently available
-to the agent::
+The :class:`Symfony\\AI\\Agent\\Memory\\StaticMemoryProvider` stores fixed information that should
+be consistently available to the agent::
 
     use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 
@@ -52,69 +42,56 @@ to the agent::
 This information is automatically injected into the system prompt, providing the agent with
 context about the user without cluttering the conversation messages.
 
-Memory Input Processor
-~~~~~~~~~~~~~~~~~~~~~~
+Step 3: Add the Memory Input Processor
+--------------------------------------
 
-The :class:`Symfony\\AI\\Agent\\Memory\\MemoryInputProcessor` handles the injection of memory content into the agent's context::
+The :class:`Symfony\\AI\\Agent\\Memory\\MemoryInputProcessor` handles the injection of memory
+content into the agent's context::
 
     use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 
     $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
 
-This processor works alongside other input processors like :class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor`
-to build a complete context for the agent.
+This processor works alongside other input processors like
+:class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor` to build a complete
+context for the agent.
 
-Agent Configuration
-~~~~~~~~~~~~~~~~~~~
+Step 4: Configure the Agent
+---------------------------
 
-The agent is configured with both system prompt and memory processors::
+The agent is configured with both the system prompt and memory processors. Processors are applied
+in order, allowing you to build up the context progressively::
 
     use Symfony\AI\Agent\Agent;
 
     $agent = new Agent(
         $platform,
         'gpt-4o-mini',
-        [$systemPromptProcessor, $memoryProcessor]
+        [$systemPromptProcessor, $memoryProcessor],
     );
 
-Processors are applied in order, allowing you to build up the context progressively.
+When a user message is submitted, the ``MemoryInputProcessor`` loads relevant facts from the
+memory provider and prepends them to the system prompt. The agent then generates a personalized
+response based on both the current message and the remembered context. Because the memory
+persists across calls, the conversation stays personalized over time.
 
-How It Works
-------------
+Step 5: Recall Facts Semantically (Optional)
+--------------------------------------------
 
-1. **Memory Loading**: When a user message is submitted, the ``MemoryInputProcessor`` loads
-   relevant facts from the memory provider.
-
-2. **Context Injection**: The memory content is prepended to the system prompt, giving the
-   agent access to user-specific information.
-
-3. **Response Generation**: The agent generates a personalized response based on both the
-   current message and the remembered context.
-
-4. **Conversation Flow**: The memory persists across multiple calls, enabling continuous
-   personalized interactions.
-
-Use Dynamic Memory with Embeddings
-----------------------------------
-
-For more sophisticated scenarios, use :class:`Symfony\\AI\\Agent\\Memory\\EmbeddingProvider` to retrieve relevant context
-based on semantic similarity::
+To recall facts from a large knowledge base instead of a fixed list, swap the static provider for
+:class:`Symfony\\AI\\Agent\\Memory\\EmbeddingProvider`, which retrieves relevant context by
+semantic similarity::
 
     use Symfony\AI\Agent\Memory\EmbeddingProvider;
 
-    $embeddingsMemory = new EmbeddingProvider(
-        $platform,
-        $model,  // Your Model instance for embeddings
-        $store   // Your vector store
-    );
+    $embeddingsMemory = new EmbeddingProvider($platform, $model, $store);
 
-This approach allows the agent to recall specific pieces of information from a large
-knowledge base based on the current conversation context.
+Pass it to the ``MemoryInputProcessor`` just like the static provider.
 
-Bundle Configuration
+Using the AI Bundle?
 --------------------
 
-When using the AI Bundle, you can configure memory directly in your configuration:
+If you use the AI Bundle, configure memory declaratively on the agent:
 
 .. code-block:: yaml
 
@@ -127,38 +104,17 @@ When using the AI Bundle, you can configure memory directly in your configuratio
                     text: 'Provide short, motivating claims'
                 memory: 'You are a professional trainer with personalized advice'
 
-For dynamic memory using a custom service:
-
-.. code-block:: yaml
-
-    ai:
-        agent:
-            trainer:
-                model: 'gpt-4o-mini'
-                prompt:
-                    text: 'Provide short, motivating claims'
-                memory:
-                    service: 'app.user_memory_provider'
+For a dynamic provider, point ``memory`` at a service instead. See :doc:`../bundles/ai-bundle`.
 
 Best Practices
 --------------
 
 * **Keep Static Memory Concise**: Only include essential facts to avoid overwhelming the agent
-* **Separate Concerns**: Use system prompt for behavior, memory for context
-* **Update Dynamically**: For user-specific applications, update memory as you learn more about the user
-* **Test Without Memory**: Verify your agent works correctly both with and without memory enabled
-* **Monitor Token Usage**: Memory content consumes input tokens, so balance comprehensiveness with cost
+* **Separate Concerns**: Use the system prompt for behavior, memory for context
+* **Mind Token Usage**: Memory content consumes input tokens, so balance comprehensiveness with cost
 
-Use Cases
----------
-
-* **Personal Assistants**: Remember user preferences, habits, and history
-* **Customer Support**: Recall previous interactions and customer details
-* **Educational Tools**: Track student progress and learning style
-* **Healthcare Applications**: Maintain patient history and treatment context
-
-Related Documentation
----------------------
+Learn More
+----------
 
 * :doc:`../components/agent` - Agent component documentation
 * :doc:`../bundles/ai-bundle` - AI Bundle configuration reference

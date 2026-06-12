@@ -1,0 +1,77 @@
+[
+    {
+        "slug": "ai-bundle-fast-track",
+        "title": "AI Bundle Fast Track",
+        "description": "Wire platforms, agents, tools, and a vector store in a Symfony app with YAML.",
+        "icon": "package",
+        "components": [
+            "Platform",
+            "Agent",
+            "Store"
+        ]
+    },
+    {
+        "slug": "tool-calling-with-agents",
+        "title": "Tool Calling with Agents",
+        "description": "Let AI agents call your PHP functions to fetch data or trigger actions.",
+        "icon": "tool",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
+        "slug": "dynamic-tools",
+        "title": "Dynamic Tools",
+        "description": "Add, remove, and rename agent tools at runtime with a dynamic toolbox.",
+        "icon": "adjustments",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
+        "slug": "human-in-the-loop",
+        "title": "Human in the Loop",
+        "description": "Require human approval before an agent executes sensitive tool calls.",
+        "icon": "user-check",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
+        "slug": "multi-agent-orchestration",
+        "title": "Multi-Agent Orchestration",
+        "description": "Route questions to specialist agents with a central orchestrator.",
+        "icon": "network",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
+        "slug": "chatbot-with-memory",
+        "title": "Chatbot with Memory",
+        "description": "Give an agent memory of user facts for personalized conversations.",
+        "icon": "messages",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
+        "slug": "rag-implementation",
+        "title": "Build a RAG Pipeline",
+        "description": "Index documents into a vector store and query them with an AI agent.",
+        "icon": "database-search",
+        "components": [
+            "Store",
+            "Agent"
+        ]
+    },
+    {
+        "slug": "build-an-mcp-server",
+        "title": "Build an MCP Server",
+        "description": "Expose tools, prompts, and resources to AI assistants over MCP.",
+        "icon": "server",
+        "components": [
+            "MCP Bundle"
+        ]
+    }
+]

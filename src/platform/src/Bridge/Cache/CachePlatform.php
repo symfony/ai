@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -58,11 +59,13 @@ final class CachePlatform implements PlatformInterface
     ) {
     }
 
-    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
+    public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
         if (null === $this->cache || !\array_key_exists('prompt_cache_key', $options) || '' === $options['prompt_cache_key']) {
             return $this->platform->invoke($model, $input, $options);
         }
+
+        $modelName = $model instanceof Model ? $model->getName() : $model;
 
         $normalizedInput = match (true) {
             \is_string($input) => md5($input),
@@ -73,7 +76,7 @@ final class CachePlatform implements PlatformInterface
 
         $cacheKey = (new UnicodeString())->join([
             $options['prompt_cache_key'] ?? $this->cacheKey,
-            (new UnicodeString($model))->camel(),
+            (new UnicodeString($modelName))->camel(),
             $normalizedInput,
         ]);
 
@@ -81,8 +84,8 @@ final class CachePlatform implements PlatformInterface
 
         unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
 
-        $cached = $this->cache->get($cacheKey, function (ItemInterface $item) use ($model, $input, $options, $cacheKey, $ttl): array {
-            $item->tag((new UnicodeString($model))->camel());
+        $cached = $this->cache->get($cacheKey, function (ItemInterface $item) use ($model, $modelName, $input, $options, $cacheKey, $ttl): array {
+            $item->tag((new UnicodeString($modelName))->camel());
 
             if (null !== $ttl) {
                 $item->expiresAfter($ttl);

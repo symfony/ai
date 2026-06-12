@@ -1,0 +1,53 @@
+name: Cookbook Artifacts
+
+on:
+    pull_request:
+        paths:
+            - 'docs/cookbook/**'
+            - 'ai.symfony.com/src/Cookbook/**'
+            - 'ai.symfony.com/config/cookbook.json'
+            - 'ai.symfony.com/templates/cookbook/content/**'
+            - '.github/workflows/cookbook-artifacts.yaml'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
+jobs:
+    cookbook-artifacts:
+        name: Generated artifacts are up to date
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.5
+
+            - name: Install docs-builder dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  working-directory: docs/_build
+
+            - name: Install website dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  working-directory: ai.symfony.com
+
+            - name: Rebuild cookbook artifacts from RST
+              working-directory: ai.symfony.com
+              run: php bin/console app:cookbook:build
+
+            - name: Fail if artifacts are out of date
+              run: |
+                  CHANGED=$(git status --porcelain ai.symfony.com/config/cookbook.json ai.symfony.com/templates/cookbook/content)
+                  if [ -n "$CHANGED" ]; then
+                      echo "::error::Cookbook website artifacts are out of date. Run 'cd ai.symfony.com && php bin/console app:cookbook:build' and commit the result."
+                      git --no-pager diff -- ai.symfony.com/config/cookbook.json ai.symfony.com/templates/cookbook/content
+                      echo "$CHANGED"
+                      exit 1
+                  fi
+                  echo "Cookbook artifacts are up to date."

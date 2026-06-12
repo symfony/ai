@@ -54,10 +54,20 @@ final class Provider implements ProviderInterface
         return $this->name;
     }
 
-    public function supports(string $modelName): bool
+    public function supports(string|Model $model): bool
     {
+        if ($model instanceof Model) {
+            foreach ($this->modelClients as $modelClient) {
+                if ($modelClient->supports($model)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         try {
-            $this->resolvedModel = $this->modelCatalog->getModel($modelName);
+            $this->resolvedModel = $this->modelCatalog->getModel($model);
 
             return true;
         } catch (ModelNotFoundException) {
@@ -67,9 +77,11 @@ final class Provider implements ProviderInterface
         }
     }
 
-    public function invoke(string $model, array|string|object $input, array $options = []): DeferredResult
+    public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
-        if (null !== $this->resolvedModel && $this->resolvedModel->getName() === $model) {
+        if ($model instanceof Model) {
+            $this->resolvedModel = null;
+        } elseif (null !== $this->resolvedModel && $this->resolvedModel->getName() === $model) {
             $model = $this->resolvedModel;
             $this->resolvedModel = null;
         } else {
