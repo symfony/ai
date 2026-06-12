@@ -22,7 +22,7 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
-final class OllamaApiCatalogTest extends TestCase
+final class ModelCatalogTest extends TestCase
 {
     public function testModelCatalogCanReturnModelFromApi()
     {
@@ -38,8 +38,11 @@ final class OllamaApiCatalogTest extends TestCase
 
         $this->assertSame('foo', $model->getName());
         $this->assertSame([
+            Capability::INPUT_TEXT,
             Capability::INPUT_MESSAGES,
+            Capability::OUTPUT_TEXT,
             Capability::OUTPUT_STRUCTURED,
+            Capability::OUTPUT_IMAGE,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -69,9 +72,11 @@ final class OllamaApiCatalogTest extends TestCase
 
         $model = $models['bge-m3'];
         $this->assertSame(Ollama::class, $model['class']);
-        $this->assertCount(1, $model['capabilities']);
+        $this->assertIsArray($model['capabilities']);
+        $this->assertCount(2, $model['capabilities']);
         $this->assertSame([
             Capability::EMBEDDINGS,
+            Capability::OUTPUT_EMBEDDINGS,
         ], $model['capabilities']);
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
@@ -101,10 +106,13 @@ final class OllamaApiCatalogTest extends TestCase
 
         $model = $models['gemma3'];
         $this->assertSame(Ollama::class, $model['class']);
-        $this->assertCount(2, $model['capabilities']);
+        $this->assertCount(5, $model['capabilities']);
         $this->assertSame([
+            Capability::INPUT_TEXT,
             Capability::INPUT_MESSAGES,
+            Capability::OUTPUT_TEXT,
             Capability::OUTPUT_STRUCTURED,
+            Capability::OUTPUT_IMAGE,
         ], $model['capabilities']);
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
@@ -123,9 +131,12 @@ final class OllamaApiCatalogTest extends TestCase
 
         $this->assertSame('gemma4', $model->getName());
         $this->assertSame([
+            Capability::INPUT_TEXT,
             Capability::INPUT_MESSAGES,
-            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
             Capability::OUTPUT_STRUCTURED,
+            Capability::OUTPUT_IMAGE,
+            Capability::INPUT_AUDIO,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
