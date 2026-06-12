@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Tests;
 use Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Mistral\Ocr;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -40,6 +41,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'voxtral-small-latest' => ['voxtral-small-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
         yield 'voxtral-mini-latest' => ['voxtral-mini-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
         yield 'mistral-embed' => ['mistral-embed', Embeddings::class, [Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS]];
+        yield 'mistral-ocr-latest' => ['mistral-ocr-latest', Ocr::class, [Capability::INPUT_PDF, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

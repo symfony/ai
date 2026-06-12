@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Mistral\Contract;
 
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Bridge\Mistral\Ocr;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Model;
@@ -41,6 +42,6 @@ class ImageUrlNormalizer extends ModelContractNormalizer
 
     protected function supportsModel(Model $model): bool
     {
-        return $model instanceof Mistral;
+        return $model instanceof Mistral || $model instanceof Ocr;
     }
 }

@@ -147,6 +147,7 @@ Supported Models & Platforms
 * **Other Models**
   * `OpenAI's Dall·E`_ with `OpenAI`_ as Platform
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
+  * `Mistral OCR`_ with `Mistral`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
@@ -774,6 +775,39 @@ Code Examples
 
 * `Audio Output with GPT`_
 
+Document OCR
+------------
+
+Mistral's ``mistral-ocr-latest`` model uses a dedicated ``/v1/ocr`` endpoint that extracts text
+(as markdown), layout images and per-page annotations from a document or image. Unlike chat
+completions, it is invoked with a single document content object - a
+:class:`Symfony\\AI\\Platform\\Message\\Content\\DocumentUrl`,
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Document` (binary PDF) or
+:class:`Symfony\\AI\\Platform\\Message\\Content\\ImageUrl` - and returns a typed
+:class:`Symfony\\AI\\Platform\\Bridge\\Mistral\\Ocr\\Result\\OcrResult`::
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Bridge\Mistral\Ocr\Result\OcrResult;
+    use Symfony\AI\Platform\Message\Content\DocumentUrl;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    $result = $platform->invoke('mistral-ocr-latest', new DocumentUrl('https://example.com/document.pdf'));
+
+    $ocr = $result->asObject();
+    \assert($ocr instanceof OcrResult);
+
+    echo $ocr->getMarkdown();
+
+The result exposes every ``Page`` with its markdown, dimensions, extracted layout images
+(with bounding boxes) and optional annotations.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `OCR with Mistral (URL)`_
+* `OCR with Mistral (binary)`_
+
 Embeddings
 ----------
 
@@ -1208,6 +1242,7 @@ Code Examples
 .. _`Mistral Embed`: https://www.mistral.ai/
 .. _`OpenAI's Dall·E`: https://platform.openai.com/docs/guides/image-generation
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
+.. _`Mistral OCR`: https://docs.mistral.ai/api/endpoint/ocr
 .. _`HuggingFace`: https://huggingface.co/
 .. _`Mercure`: https://mercure.rocks/
 .. _`Streaming Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/stream.php
@@ -1219,6 +1254,8 @@ Code Examples
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
+.. _`OCR with Mistral (URL)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-url.php
+.. _`OCR with Mistral (binary)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-binary.php
 .. _`Embeddings with OpenAI`: https://github.com/symfony/ai/blob/main/examples/openai/embeddings.php
 .. _`Embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/text-embeddings.php
 .. _`Multimodal embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/multimodal-embeddings.php

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Add OCR support through the `mistral-ocr-latest` model and the `/v1/ocr` endpoint, returning a typed `OcrResult` with pages, layout images and annotations
+
 0.8
 ---
 

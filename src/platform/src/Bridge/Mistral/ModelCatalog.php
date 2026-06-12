@@ -250,6 +250,22 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'mistral-ocr-2505' => [
+                'class' => Ocr::class,
+                'capabilities' => [
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                ],
+            ],
+            'mistral-ocr-latest' => [
+                'class' => Ocr::class,
+                'capabilities' => [
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                ],
+            ],
             'mistral-saba-latest' => [
                 'class' => Mistral::class,
                 'capabilities' => [
