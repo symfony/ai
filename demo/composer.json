@@ -18,6 +18,7 @@
         "symfony/ai-chat": "^0.9",
         "symfony/ai-clock-tool": "^0.9",
         "symfony/ai-hugging-face-platform": "^0.9",
+        "symfony/ai-mistral-platform": "^0.9",
         "symfony/ai-open-ai-platform": "^0.9",
         "symfony/ai-postgres-store": "^0.9",
         "symfony/ai-similarity-search-tool": "^0.9",

@@ -15,6 +15,7 @@ ux_icons:
         microphone: iconoir:microphone-solid
         video: tabler:video-filled
         turbo: mdi:car-turbocharger
+        document: mdi:file-document
         github: mdi:github
 
         # UI icons

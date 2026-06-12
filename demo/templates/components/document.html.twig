@@ -1,0 +1,44 @@
+{% import "_message.html.twig" as message %}
+
+<div class="card mx-auto shadow-lg" {{ attributes.defaults(stimulus_controller('document')) }}>
+    <div class="card-header p-2">
+        {{ ux_icon('document') }}
+        <strong class="ms-1 pt-1 d-inline-block">Document OCR Bot</strong>
+        <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('cancel') }} Reset Chat</button>
+    </div>
+    <div id="chat-body" class="card-body p-4 overflow-auto">
+        {% set messages = this.messages %}
+        {% for message in messages %}
+            {% include '_message.html.twig' with { message, latest: loop.last } %}
+        {% else %}
+            <div id="welcome" class="text-center mt-5 py-5 bg-white rounded-5 shadow-sm w-75 mx-auto">
+                {{ ux_icon('document', { color: '#1A73E8', height: '200px', width: '200px' }) }}
+                <h4 class="mt-5">Chat about a Document</h4>
+                <div class="w-75 mx-auto text-start">
+                    <label for="document-url" class="form-label">Enter the URL of a document or image (e.g. a PDF) to extract its text with Mistral OCR and start the chat:</label>
+                    <form class="input-group mb-3" {{ live_action('start:prevent') }}>
+                        <input autofocus type="url" id="document-url"
+                               data-model="norender|url"
+                               class="form-control" placeholder="https://example.com/document.pdf">
+                        <button class="btn btn-secondary" id="chat-start">Start</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+        <div id="loading-message" class="d-none">
+            {{ message.user([{text:''}]) }}
+            {{ message.bot('The Document OCR Bot is reading the document ...', true) }}
+        </div>
+    </div>
+    <div class="card-footer p-2">
+        <form class="input-group" {{ live_action('submit:prevent') }}>
+            <input id="chat-message" {{ messages|length == 0 ? 'disabled'}}
+                   data-model="norender|message"
+                   type="text" class="form-control border-0" placeholder="Write a message ...">
+            <button {{ messages|length == 0 ? 'disabled'}}
+                class="btn btn-outline-secondary border-0">
+                {{ ux_icon('send') }} Submit
+            </button>
+        </form>
+    </div>
+</div>
