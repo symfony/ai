@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Add `CacheableInputInterface` so non-chat inputs can advertise a stable cache key; `Message\Content\DocumentUrl`, `Message\Content\ImageUrl` and `Message\Content\File` (and its `Audio`/`Image`/`Video`/`Document` subclasses) implement it
+
 0.9
 ---
 

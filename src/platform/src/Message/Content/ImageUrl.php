@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Platform\Message\Content;
 
+use Symfony\AI\Platform\CacheableInputInterface;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ImageUrl implements ContentInterface
+final class ImageUrl implements ContentInterface, CacheableInputInterface
 {
     public function __construct(
         private readonly string $url,
@@ -24,5 +26,10 @@ final class ImageUrl implements ContentInterface
     public function getUrl(): string
     {
         return $this->url;
+    }
+
+    public function getCacheKey(): string
+    {
+        return hash('xxh128', $this->url);
     }
 }
