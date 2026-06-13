@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
@@ -35,6 +36,7 @@ final class Factory
         ?string $endpoint = null,
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
+        ?ModelCatalogInterface $modelCatalog = null,
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'ollama',
@@ -54,7 +56,7 @@ final class Factory
             $name,
             [new OllamaClient($httpClient)],
             [new OllamaResultConverter()],
-            new ModelCatalog($httpClient),
+            $modelCatalog ?? new ModelCatalog($httpClient),
             $contract ?? OllamaContract::create(),
             $eventDispatcher,
         );
@@ -67,13 +69,14 @@ final class Factory
         ?string $endpoint = null,
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
+        ?ModelCatalogInterface $modelCatalog = null,
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'ollama',
         ?ModelRouterInterface $modelRouter = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name)],
+            [self::createProvider($endpoint, $apiKey, $httpClient, $modelCatalog, $contract, $eventDispatcher, $name)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );

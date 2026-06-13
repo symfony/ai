@@ -401,9 +401,11 @@ platform at a catalog service with the ``model_catalog`` key:
             arguments:
                 $providerId: 'anthropic'
 
-The ``model_catalog`` key is available on every platform that ships a catalog. The ``ollama`` and
-``elevenlabs`` platforms are the exceptions: they build their catalog from the API at runtime, so
-there is nothing to override.
+The ``model_catalog`` key is available on every platform that ships a catalog. The ``elevenlabs``
+platform is the exception: it builds its catalog from the API at runtime, so there is nothing to
+override. The ``ollama`` platform also builds its catalog from the API by default, but accepts a
+``model_catalog`` override when you want to replace it (for example to wrap it in
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\CachedModelCatalog`).
 
 .. _`LM Studio`: https://lmstudio.ai/
 .. _`Ollama`: https://ollama.com/

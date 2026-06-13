@@ -962,6 +962,7 @@ final class AiBundle extends AbstractBundle
                     $platform['endpoint'] ?? null,
                     $platform['api_key'] ?? null,
                     new Reference($platform['http_client']),
+                    isset($platform['model_catalog']) && '' !== $platform['model_catalog'] ? new Reference($platform['model_catalog']) : null,
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
                 ])

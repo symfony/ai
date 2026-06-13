@@ -4215,15 +4215,16 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('http_client', (string) $definition->getArgument(2));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
@@ -4246,15 +4247,16 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://ollama.com', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('http_client', (string) $definition->getArgument(2));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
@@ -4276,18 +4278,39 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertNull($definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('foo', (string) $definition->getArgument(2));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(3));
+        $this->assertNull($definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
+        $this->assertSame('ai.platform.contract.ollama', (string) $definition->getArgument(4));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+    }
+
+    #[TestDox('Ollama platform uses custom model_catalog when configured')]
+    public function testOllamaPlatformUsesCustomModelCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                        'model_catalog' => 'app.my_custom_catalog',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.ollama');
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
+        $this->assertSame('app.my_custom_catalog', (string) $definition->getArgument(3));
     }
 
     /**

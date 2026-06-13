@@ -25,4 +25,8 @@ return (new ArrayNodeDefinition('ollama'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use. When "endpoint" is null, this client must be pre-configured (e.g. with a base_uri).')
         ->end()
+        ->stringNode('model_catalog')
+            ->defaultNull()
+            ->info('Service ID of a custom model catalog to use instead of the API-based one')
+        ->end()
     ->end();

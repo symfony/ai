@@ -89,6 +89,16 @@ Platform
    +public function supports(string|Model $model): bool
    ```
 
+ * `Ollama\Factory::createProvider()` and `createPlatform()` gained an optional `$modelCatalog`
+   parameter inserted right after `$httpClient` (matching the other bridge factories), shifting the
+   later parameters by one position. Code that passes `$contract`, `$eventDispatcher`, `$name`, or
+   `$modelRouter` positionally must switch to named arguments:
+
+   ```diff
+   -Factory::createPlatform($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher);
+   +Factory::createPlatform($endpoint, $apiKey, httpClient: $httpClient, contract: $contract, eventDispatcher: $eventDispatcher);
+   ```
+
  * The Anthropic, Generic, OpenAI, OpenResponses, Cerebras, DeepSeek, Mistral, Cohere, Gemini,
    Perplexity, Scaleway, and VertexAI bridges now throw `ExceedContextSizeException` when a 400
    response reports a context overflow (previously `BadRequestException`, or a generic
