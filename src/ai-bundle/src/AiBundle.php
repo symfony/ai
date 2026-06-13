@@ -19,6 +19,8 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Bridge\Mcp\McpToolAdapter;
+use Symfony\AI\Agent\Bridge\Mcp\McpToolFactory;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -35,9 +37,11 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
+use Symfony\AI\AiBundle\DependencyInjection\McpToolboxCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
 use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
@@ -53,6 +57,7 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
@@ -158,6 +163,7 @@ use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -182,6 +188,9 @@ final class AiBundle extends AbstractBundle
         $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
         $container->addCompilerPass(new SchemaProviderValidationPass());
+        // Runs in OPTIMIZE, where the child definitions of "ai.toolbox.abstract" are resolved
+        // and their tool argument can be read and extended.
+        $container->addCompilerPass(new McpToolboxCompilerPass(), PassConfig::TYPE_OPTIMIZE);
     }
 
     public function configure(DefinitionConfigurator $definition): void
@@ -1257,14 +1266,32 @@ final class AiBundle extends AbstractBundle
                 new Reference('ai.platform.json_schema_factory'),
             ]);
             $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
-            $chainFactoryDefinition = new Definition(ChainFactory::class, [
-                [new Reference('ai.toolbox.'.$name.'.memory_factory'), new Reference('ai.tool_factory')],
-            ]);
+
+            $chainFactoryArgs = [new Reference('ai.toolbox.'.$name.'.memory_factory')];
+
+            $mcpAdapterReferences = [];
+            if ([] !== $config['tools']['mcp_servers']) {
+                $mcpAdapterReferences = $this->registerMcpServers($name, $config['tools']['mcp_servers'], $container);
+
+                $mcpFactoryDefinition = new Definition(McpToolFactory::class);
+                $container->setDefinition('ai.toolbox.'.$name.'.mcp_factory', $mcpFactoryDefinition);
+                $chainFactoryArgs[] = new Reference('ai.toolbox.'.$name.'.mcp_factory');
+            }
+
+            $chainFactoryArgs[] = new Reference('ai.tool_factory');
+            $chainFactoryDefinition = new Definition(ChainFactory::class, [$chainFactoryArgs]);
             $container->setDefinition('ai.toolbox.'.$name.'.chain_factory', $chainFactoryDefinition);
 
             $toolboxDefinition = (new ChildDefinition('ai.toolbox.abstract'))
                 ->replaceArgument(1, new Reference('ai.toolbox.'.$name.'.chain_factory'))
                 ->addTag('ai.toolbox', ['name' => $name]);
+
+            if ([] !== $mcpAdapterReferences) {
+                $toolboxDefinition->addTag('ai.toolbox.mcp', [
+                    'adapters' => array_map(static fn (Reference $reference): string => (string) $reference, $mcpAdapterReferences),
+                ]);
+            }
+
             $container->setDefinition('ai.toolbox.'.$name, $toolboxDefinition);
 
             if ($config['fault_tolerant_toolbox']) {
@@ -1409,6 +1436,46 @@ final class AiBundle extends AbstractBundle
                 ])
                 ->setDecoratedService($agentId, priority: -1024);
         }
+    }
+
+    /**
+     * Registers one toolset and its tool adapter per configured MCP server of the given agent,
+     * on top of the connection the MCP bundle already owns, and returns the adapter references.
+     *
+     * @param list<array{client: string, server: string, prefix: string|null}> $servers
+     *
+     * @return list<Reference>
+     */
+    private function registerMcpServers(string $agentName, array $servers, ContainerBuilder $container): array
+    {
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-mcp-tool', McpToolAdapter::class, ['symfony/ai-bundle'])) {
+            throw new RuntimeException('The "mcp_servers" tool configuration requires "symfony/ai-mcp-tool" package. Try running "composer require symfony/ai-mcp-tool".');
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/mcp-bundle', ServerConnectionInterface::class, ['symfony/ai-bundle'])) {
+            throw new RuntimeException('The "mcp_servers" tool configuration requires "symfony/mcp-bundle" package. Try running "composer require symfony/mcp-bundle".');
+        }
+
+        $references = [];
+
+        foreach ($servers as $server) {
+            $suffix = $server['client'].'.'.$server['server'];
+
+            $toolsetId = 'ai.toolbox.'.$agentName.'.mcp_toolset.'.$suffix;
+            $container->setDefinition($toolsetId, new Definition(ConnectionToolset::class, [
+                new Reference(\sprintf('mcp.client.%s.server.%s', $server['client'], $server['server'])),
+            ]));
+
+            $adapterId = 'ai.toolbox.'.$agentName.'.mcp_tool_adapter.'.$suffix;
+            $container->setDefinition($adapterId, new Definition(McpToolAdapter::class, [
+                new Reference($toolsetId),
+                $server['prefix'] ?? '',
+            ]));
+
+            $references[] = new Reference($adapterId);
+        }
+
+        return $references;
     }
 
     /**

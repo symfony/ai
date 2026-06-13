@@ -102,7 +102,10 @@ Advanced Example with Multiple Agents
                 platform: 'ai.platform.anthropic'
                 model: 'claude-3-7-sonnet-latest'
                 tools: # Tools are opt-in: if undefined, the agent gets no tools; use "tools: true" to inject all tools.
-                    - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
+                    services:
+                        - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
+                    mcp_servers: # Tools of remote MCP servers, referencing connections configured under "mcp.clients"
+                        - 'research.filesystem' # <client>.<server>
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
                 max_tool_calls: 75 # Cap of tool-calling iterations per agent call (default 50); set to null to disable the limit
                 exclude_tool_messages: true # Drops tool call and tool result messages from the conversation history, default is false
@@ -950,6 +953,7 @@ The following tools can be installed as dedicated packages, no configuration is 
     $ composer require symfony/ai-clock-tool
     $ composer require symfony/ai-firecrawl-tool
     $ composer require symfony/ai-mapbox-tool
+    $ composer require symfony/ai-mcp-tool
     $ composer require symfony/ai-open-meteo-tool
     $ composer require symfony/ai-scraper-tool
     $ composer require symfony/ai-serp-api-tool
@@ -1033,6 +1037,58 @@ make sure you have `symfony/security-core` installed in your project.
 The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
+
+Tools of a Remote MCP Server
+----------------------------
+
+An agent can also use the tools a remote `Model Context Protocol`_ server advertises. The connection
+itself belongs to the MCP bundle: configure it once under ``mcp.clients``, then point the agent at
+it with ``tools.mcp_servers``, so both bundles share one connection instead of opening a second one
+to the same server.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-mcp-tool symfony/mcp-bundle
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        clients:
+            research:
+                servers:
+                    filesystem:
+                        transport: stdio
+                        command: ['npx', '-y', '@modelcontextprotocol/server-filesystem', '%kernel.project_dir%/var']
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        agent:
+            my_agent:
+                tools:
+                    mcp_servers:
+                        - 'research.filesystem'
+
+Each entry references one connection as ``<client>.<server>``. The server's tools are discovered at
+runtime and reach the model prefixed with the server name - a ``read_file`` tool of the ``filesystem``
+server becomes ``filesystem_read_file`` - so several servers can serve one agent without their tool
+names colliding. Use the expanded form to choose the prefix yourself:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                tools:
+                    services:
+                        - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
+                    mcp_servers:
+                        - { client: 'research', server: 'filesystem', prefix: 'fs__' }
+
+MCP tools and local tools compose: the ``services`` list above and the ``ai.tool``-tagged services of
+``tools: true`` end up in the same toolbox as the remote ones.
 
 Token Usage Tracking
 --------------------
@@ -1432,6 +1488,7 @@ When only STT is configured (no TTS), the agent returns the same result type as 
 
     Handling both speech-to-text and text-to-speech introduces latency as most of the process is synchronous.
 
+.. _`Model Context Protocol`: https://modelcontextprotocol.io
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform

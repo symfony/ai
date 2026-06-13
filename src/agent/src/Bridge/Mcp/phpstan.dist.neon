@@ -1,0 +1,35 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - ../../../../../.phpstan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - .
+        - Tests/
+    excludePaths:
+        - vendor/
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+        -
+            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: Tests/*
+            reportUnmatched: false
+        -
+            # The platform Tool::$parameters phpdoc describes the strict JsonSchema
+            # shape produced by the local reflection-based Factory. MCP servers
+            # return generic JSON Schema (still type 'object') with a wider set of
+            # property keys, which is structurally compatible at runtime.
+            identifier: argument.type
+            path: McpToolFactory.php
+
+services:
+    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
+        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension

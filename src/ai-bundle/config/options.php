@@ -273,12 +273,14 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->beforeNormalization()
                                 ->ifArray()
                                 ->then(static function (array $v): array {
+                                    $servers = $v['mcp_servers'] ?? [];
                                     $services = $v['services'] ?? $v;
-                                    unset($services['enabled']);
+                                    unset($services['enabled'], $services['mcp_servers']);
 
                                     return [
-                                        'enabled' => $v['enabled'] ?? [] !== $services,
+                                        'enabled' => $v['enabled'] ?? ([] !== $services || [] !== $servers),
                                         'services' => $services,
+                                        'mcp_servers' => $servers,
                                     ];
                                 })
                             ->end()
@@ -307,6 +309,40 @@ return static function (DefinitionConfigurator $configurator): void {
                                                 return !($hasAgent xor $hasService);
                                             })
                                             ->thenInvalid('Either "agent" or "service" must be configured, and never both.')
+                                        ->end()
+                                    ->end()
+                                ->end()
+                                ->arrayNode('mcp_servers')
+                                    ->info('Remote MCP servers whose tools are exposed to this agent, referencing connections configured under "mcp.clients".')
+                                    ->example(['filesystem.local', ['client' => 'web', 'server' => 'search', 'prefix' => 'web__']])
+                                    ->arrayPrototype()
+                                        ->beforeNormalization()
+                                            ->ifString()
+                                            ->then(static function (string $v): array {
+                                                if (!str_contains($v, '.')) {
+                                                    throw new InvalidArgumentException(\sprintf('Invalid MCP server reference "%s", expected the "<client>.<server>" format.', $v));
+                                                }
+
+                                                [$client, $server] = explode('.', $v, 2);
+
+                                                return ['client' => $client, 'server' => $server];
+                                            })
+                                        ->end()
+                                        ->children()
+                                            ->stringNode('client')
+                                                ->info('Name of the MCP client owning the connection, as configured under "mcp.clients".')
+                                                ->isRequired()
+                                                ->cannotBeEmpty()
+                                            ->end()
+                                            ->stringNode('server')
+                                                ->info('Name of the remote server, as configured under "mcp.clients.<client>.servers".')
+                                                ->isRequired()
+                                                ->cannotBeEmpty()
+                                            ->end()
+                                            ->stringNode('prefix')
+                                                ->info('Prefix put in front of every remote tool name. Defaults to "<server>_".')
+                                                ->defaultNull()
+                                            ->end()
                                         ->end()
                                     ->end()
                                 ->end()

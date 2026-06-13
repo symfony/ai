@@ -97,8 +97,13 @@ final class Toolbox implements ToolboxInterface
         try {
             $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
 
-            $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
-            $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
+            if ($tool instanceof ExecutableToolInterface) {
+                // The tool validates and maps the arguments itself, so it gets the raw call.
+                $arguments = $toolCall->getArguments();
+            } else {
+                $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
+                $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
+            }
 
             $sourceCollection = null;
             if ($tool instanceof HasSourcesInterface) {
@@ -107,7 +112,9 @@ final class Toolbox implements ToolboxInterface
 
             $result = new ToolResult(
                 $toolCall,
-                $tool->{$metadata->getReference()->getMethod()}(...$arguments),
+                $tool instanceof ExecutableToolInterface
+                    ? $tool->execute($metadata, $toolCall)
+                    : $tool->{$metadata->getReference()->getMethod()}(...$arguments),
                 $sourceCollection,
             );
 

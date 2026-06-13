@@ -24,6 +24,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Bridge\Mcp\McpToolAdapter;
+use Symfony\AI\Agent\Bridge\Mcp\McpToolFactory;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
@@ -33,7 +35,9 @@ use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
+use Symfony\AI\AiBundle\DependencyInjection\McpToolboxCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
@@ -112,7 +116,9 @@ use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\ResolveChildDefinitionsPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -513,6 +519,124 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testMcpServersWireToolsetsAndAdaptersIntoToolbox()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [
+                            'mcp_servers' => [
+                                'filesystem.local',
+                                ['client' => 'web', 'server' => 'search', 'prefix' => 'web__'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.toolbox.research.mcp_factory'));
+        $this->assertSame(McpToolFactory::class, $container->getDefinition('ai.toolbox.research.mcp_factory')->getClass());
+
+        $localToolset = $container->getDefinition('ai.toolbox.research.mcp_toolset.filesystem.local');
+        $this->assertSame(ConnectionToolset::class, $localToolset->getClass());
+        $this->assertSame('mcp.client.filesystem.server.local', (string) $localToolset->getArgument(0));
+
+        $localAdapter = $container->getDefinition('ai.toolbox.research.mcp_tool_adapter.filesystem.local');
+        $this->assertSame(McpToolAdapter::class, $localAdapter->getClass());
+        $this->assertSame('ai.toolbox.research.mcp_toolset.filesystem.local', (string) $localAdapter->getArgument(0));
+        $this->assertSame('', $localAdapter->getArgument(1));
+
+        $searchToolset = $container->getDefinition('ai.toolbox.research.mcp_toolset.web.search');
+        $this->assertSame('mcp.client.web.server.search', (string) $searchToolset->getArgument(0));
+        $this->assertSame('web__', $container->getDefinition('ai.toolbox.research.mcp_tool_adapter.web.search')->getArgument(1));
+
+        $chainFactoryArgs = $container->getDefinition('ai.toolbox.research.chain_factory')->getArgument(0);
+        $this->assertContains('ai.toolbox.research.mcp_factory', array_map(static fn ($reference) => (string) $reference, $chainFactoryArgs));
+
+        $toolboxDefinition = $container->getDefinition('ai.toolbox.research');
+        $this->assertSame(
+            ['ai.toolbox.research.mcp_tool_adapter.filesystem.local', 'ai.toolbox.research.mcp_tool_adapter.web.search'],
+            $toolboxDefinition->getTag('ai.toolbox.mcp')[0]['adapters'],
+        );
+    }
+
+    public function testMcpServerReferenceWithoutServerNameThrows()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid MCP server reference "filesystem", expected the "<client>.<server>" format.');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => ['mcp_servers' => ['filesystem']],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testMcpToolAdaptersAreAppendedToTheTaggedToolsOfTheToolbox()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [
+                            'mcp_servers' => ['filesystem.local'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $container->setDefinition('app.local_tool', (new Definition(\stdClass::class))->addTag('ai.tool'));
+
+        (new ResolveChildDefinitionsPass())->process($container);
+        (new McpToolboxCompilerPass())->process($container);
+
+        $toolboxDefinition = $container->getDefinition('ai.toolbox.research');
+        $this->assertFalse($toolboxDefinition->hasTag('ai.toolbox.mcp'));
+
+        $tools = $toolboxDefinition->getArgument(0);
+        $this->assertInstanceOf(IteratorArgument::class, $tools);
+        $this->assertSame(
+            ['app.local_tool', 'ai.toolbox.research.mcp_tool_adapter.filesystem.local'],
+            array_map(static fn ($reference) => (string) $reference, $tools->getValues()),
+        );
+    }
+
+    public function testMcpToolAdaptersAreAppendedToAnExplicitToolList()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [
+                            'services' => ['app.explicit_tool'],
+                            'mcp_servers' => ['filesystem.local'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        (new ResolveChildDefinitionsPass())->process($container);
+        (new McpToolboxCompilerPass())->process($container);
+
+        $tools = $container->getDefinition('ai.toolbox.research')->getArgument(0);
+        $this->assertInstanceOf(IteratorArgument::class, $tools);
+        $this->assertSame(
+            ['app.explicit_tool', 'ai.toolbox.research.mcp_tool_adapter.filesystem.local'],
+            array_map(static fn ($reference) => (string) $reference, $tools->getValues()),
+        );
     }
 
     public function testAzureStoreCanBeConfigured()
