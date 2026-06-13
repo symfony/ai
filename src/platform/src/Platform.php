@@ -81,6 +81,10 @@ final class Platform implements PlatformInterface
             }
         }
 
+        if (Model::class === $model::class) {
+            throw new ModelNotFoundException(\sprintf('No provider found for model "%s": a base "%s" instance has no model client. Pass a bridge-specific model subclass instead (e.g. "%s\\Bridge\\OpenAi\\Gpt", "%s\\Bridge\\Anthropic\\Claude", "%s\\Bridge\\Gemini\\Gemini").', $model->getName(), Model::class, __NAMESPACE__, __NAMESPACE__, __NAMESPACE__));
+        }
+
         throw new ModelNotFoundException(\sprintf('No provider found for model "%s" (%s).', $model->getName(), $model::class));
     }
 }

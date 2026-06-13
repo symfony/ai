@@ -208,6 +208,22 @@ final class PlatformTest extends TestCase
         $platform->invoke($model, 'Hello');
     }
 
+    public function testInvokeWithBaseModelInstanceHintsAtBridgeSubclass()
+    {
+        $model = new Model('custom-model', []);
+
+        $provider = $this->createMock(ProviderInterface::class);
+        $provider->method('supports')->with($model)->willReturn(false);
+        $provider->expects($this->never())->method('invoke');
+
+        $platform = new Platform([$provider]);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('a base "Symfony\AI\Platform\Model" instance has no model client. Pass a bridge-specific model subclass instead');
+
+        $platform->invoke($model, 'Hello');
+    }
+
     public function testInvokeWithModelObjectDoesNotDispatchModelRoutingEvent()
     {
         $model = new Model('custom-model', []);

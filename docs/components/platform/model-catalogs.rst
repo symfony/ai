@@ -188,6 +188,86 @@ directly::
 A model id resolves to the first provider (in array order) whose catalog knows it. When several
 providers expose the *same* id, order the array so the preferred one comes first.
 
+Combining Catalogs Explicitly
+-----------------------------
+
+A provider holds one catalog, but that catalog can be a composition.
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\CompositeModelCatalog` merges several catalogs and
+resolves against them in order — first match wins. It is the plain-PHP way to keep a bridge's
+bundled catalog *and* add your own models on top::
+
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiCatalog;
+    use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+
+    $platform = OpenAiFactory::createPlatform(
+        apiKey: $_ENV['OPENAI_API_KEY'],
+        modelCatalog: new CompositeModelCatalog([
+            new MyCustomCatalog(), // checked first, so it overrides/extends...
+            new OpenAiCatalog(),   // ...the bridge's curated catalog
+        ]),
+    );
+
+For a single extra model on one bridge, pass an ``additionalModels`` array to that bridge's
+``ModelCatalog`` constructor instead; reach for ``CompositeModelCatalog`` to combine whole catalogs.
+
+Writing a Custom Catalog
+------------------------
+
+A catalog implements :class:`Symfony\\AI\\Platform\\ModelCatalog\\ModelCatalogInterface`:
+``getModel(string $name): Model`` and ``getModels(): array``. Extend
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\AbstractModelCatalog` and fill its ``$models`` map for a
+static list (it parses ``model?temperature=0.5`` options and ``model:size`` variants for you), or
+implement the interface directly to source models from a database, feature flags, or a registry::
+
+    final class DatabaseModelCatalog implements ModelCatalogInterface
+    {
+        public function __construct(private readonly ModelRepository $repository)
+        {
+        }
+
+        public function getModel(string $modelName): Model
+        {
+            $row = $this->repository->find($modelName)
+                ?? throw new ModelNotFoundException(\sprintf('Model "%s" is not registered.', $modelName));
+
+            return new Gpt($row->name, $row->capabilities);
+        }
+
+        public function getModels(): array
+        {
+            // [name => ['class' => Gpt::class, 'capabilities' => [...]], ...]
+        }
+    }
+
+Throw :class:`Symfony\\AI\\Platform\\Exception\\ModelNotFoundException` for unknown names — that is
+the signal ``CompositeModelCatalog`` uses to fall through to the next catalog. For a provider that
+serves arbitrary models, return them with the full capability set instead; see
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\FallbackModelCatalog`.
+
+Caching an API-Based Catalog
+----------------------------
+
+Some catalogs resolve a model by calling the provider's API (e.g. the Ollama bridge queries
+``api/show`` per model). Wrap any catalog in
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\CachedModelCatalog` to resolve each model once and
+serve the rest from a PSR-6 pool, persisting across requests::
+
+    use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaCatalog;
+    use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
+    use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+
+    $catalog = new CachedModelCatalog(new OllamaCatalog($httpClient), new FilesystemAdapter(), ttl: 3600);
+
+Failed lookups (``ModelNotFoundException``) are not cached. Note that
+``$platform->getModelCatalog()->getModels()`` queries *every* provider's catalog, triggering a live
+request per API-based provider — cache those if you call it on a hot path.
+
+The capabilities you list (Approach 1 and 2) come from the
+:class:`Symfony\\AI\\Platform\\Capability` enum: input/output modalities, ``TOOL_CALLING``,
+``EMBEDDINGS``, ``RERANKING``, ``THINKING``, and the voice/image/video variants. List the ones the
+model actually has, since they drive routing and ``$model->supports(...)`` checks.
+
 Choosing an Approach
 --------------------
 
