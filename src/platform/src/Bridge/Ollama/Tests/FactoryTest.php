@@ -17,6 +17,8 @@ use Symfony\AI\Platform\Bridge\Decision\Evaluation;
 use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
 use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\Ollama\Factory;
+use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -67,5 +69,20 @@ final class FactoryTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(174, $tokenUsage->getPromptTokens());
         $this->assertSame(1, $tokenUsage->getCompletionTokens());
+    }
+
+    public function testCreatePlatformUsesGivenModelCatalog()
+    {
+        $model = new Ollama('llama3.2');
+
+        $catalog = $this->createMock(ModelCatalogInterface::class);
+        $catalog->expects($this->once())
+            ->method('getModel')
+            ->with('llama3.2')
+            ->willReturn($model);
+
+        $platform = Factory::createPlatform('http://127.0.0.1:11434', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+
+        $this->assertSame($model, $platform->getModelCatalog()->getModel('llama3.2'));
     }
 }

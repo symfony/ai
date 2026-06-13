@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
@@ -38,6 +39,7 @@ final class Factory
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'ollama',
+        ?ModelCatalogInterface $modelCatalog = null,
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
@@ -54,7 +56,7 @@ final class Factory
             $name,
             [new DecisionModelClient($httpClient), new OllamaClient($httpClient)],
             [new DecisionResultConverter(), new OllamaResultConverter()],
-            new ModelCatalog($httpClient),
+            $modelCatalog ?? new ModelCatalog($httpClient),
             $contract ?? OllamaContract::create(),
             $eventDispatcher,
         );
@@ -71,9 +73,10 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'ollama',
         ?ModelRouterInterface $modelRouter = null,
+        ?ModelCatalogInterface $modelCatalog = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name)],
+            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name, $modelCatalog)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
