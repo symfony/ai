@@ -26,4 +26,8 @@ return (new ArrayNodeDefinition('anthropic'))
             ->defaultValue('short')
             ->info('Prompt cache retention policy for Anthropic models')
         ->end()
+        ->stringNode('model_catalog')
+            ->defaultNull()
+            ->info('Service ID of a custom model catalog to use instead of the bundled one')
+        ->end()
     ->end();

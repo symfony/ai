@@ -377,6 +377,34 @@ an existing model.
 * ``capabilities`` (list): The :class:`Symfony\\AI\\Platform\\Capability` cases the model supports.
   At least one capability must be specified for each model.
 
+Replacing the Catalog Entirely
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``model`` key *adds to* the bundled catalog. To replace it wholesale — for example with the
+:doc:`models.dev catalog <../components/platform/models-dev>`, a
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\CompositeModelCatalog`, or your own
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\ModelCatalogInterface` implementation — point the
+platform at a catalog service with the ``model_catalog`` key:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            anthropic:
+                api_key: '%env(ANTHROPIC_API_KEY)%'
+                model_catalog: 'app.model_catalog.anthropic' # any ModelCatalogInterface service
+
+    services:
+        app.model_catalog.anthropic:
+            class: 'Symfony\AI\Platform\Bridge\ModelsDev\ModelCatalog'
+            arguments:
+                $providerId: 'anthropic'
+
+The ``model_catalog`` key is available on every platform that ships a catalog. The ``ollama`` and
+``elevenlabs`` platforms are the exceptions: they build their catalog from the API at runtime, so
+there is nothing to override.
+
 .. _`LM Studio`: https://lmstudio.ai/
 .. _`Ollama`: https://ollama.com/
 

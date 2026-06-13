@@ -21,4 +21,8 @@ return (new ArrayNodeDefinition('amazeeai'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
+        ->stringNode('model_catalog')
+            ->defaultNull()
+            ->info('Service ID of a custom model catalog to use instead of the bundled one')
+        ->end()
     ->end();

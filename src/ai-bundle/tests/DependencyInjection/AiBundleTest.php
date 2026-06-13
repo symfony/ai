@@ -4894,6 +4894,65 @@ class AiBundleTest extends TestCase
         $this->assertSame('event_dispatcher', (string) $arguments[4]);
     }
 
+    #[TestDox('OpenAI platform uses custom model_catalog when configured')]
+    public function testOpenAiPlatformUsesCustomModelCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => 'app.my_custom_catalog',
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.openai')->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('app.my_custom_catalog', (string) $arguments[2]);
+    }
+
+    #[TestDox('Anthropic platform uses custom model_catalog when configured')]
+    public function testAnthropicPlatformUsesCustomModelCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'sk-ant-test',
+                        'model_catalog' => 'app.my_custom_catalog',
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.anthropic')->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('app.my_custom_catalog', (string) $arguments[2]);
+    }
+
+    #[TestDox('Platform falls back to the bundled model_catalog when none is configured')]
+    public function testOpenAiPlatformFallsBackToBundledModelCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.openai')->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('ai.platform.model_catalog.openai', (string) $arguments[2]);
+    }
+
     #[TestDox('DeepSeek platform uses custom http_client when configured')]
     public function testDeepSeekPlatformUsesCustomHttpClient()
     {

@@ -15,4 +15,8 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 return (new ArrayNodeDefinition('transformersphp'))
     ->children()
+        ->stringNode('model_catalog')
+            ->defaultNull()
+            ->info('Service ID of a custom model catalog to use instead of the bundled one')
+        ->end()
     ->end();

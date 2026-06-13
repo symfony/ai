@@ -8,6 +8,7 @@ CHANGELOG
    an empty list), no toolbox is registered for the agent. Set `tools: true` to restore the previous
    behavior of injecting all services tagged with `ai.tool`
  * Throw an exception when `prompt.include_tools` is enabled for an agent without configured tools
+ * Add the `model_catalog` configuration key to every platform that ships a catalog (previously only `generic`, `openresponses`, and `bedrock`), so a custom `ModelCatalogInterface` service can replace the bundled catalog; `ollama` and `elevenlabs` build their catalog at runtime and remain the exceptions
 
 0.9
 ---
