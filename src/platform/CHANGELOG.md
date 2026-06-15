@@ -4,6 +4,7 @@ CHANGELOG
 0.10
 ----
 
+ * Add `RawSseStream` to parse Server-Sent Events from backends that omit the `text/event-stream` content type; `SseStream` now decodes only content-type-advertised SSE
  * Add `IncompleteStreamException`, thrown by bridge converters when a stream ends before its terminal event
  * Throw `ModelNotFoundException` on HTTP 404 responses in the shared `HttpStatusErrorHandlingTrait`
  * Add `JsonBodyEncodingTrait` so model clients can encode JSON request bodies without aborting on malformed UTF-8

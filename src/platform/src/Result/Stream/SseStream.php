@@ -16,7 +16,9 @@ use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * Handles SSE (Server-Sent Events) streaming responses.
+ * Handles Server-Sent Events streaming responses that advertise the
+ * "text/event-stream" content type, so the HTTP client assembles each event
+ * into a {@see ServerSentEvent} chunk before it reaches this decoder.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -25,31 +27,16 @@ final class SseStream implements HttpStreamInterface
     public function stream(ResponseInterface $response): iterable
     {
         foreach ((new EventSourceHttpClient())->stream($response) as $chunk) {
-            if ($chunk->isFirst() || $chunk->isLast() || ($chunk instanceof ServerSentEvent && '[DONE]' === $chunk->getData())) {
+            if (!$chunk instanceof ServerSentEvent) {
                 continue;
             }
 
-            $jsonDelta = $chunk instanceof ServerSentEvent ? $chunk->getData() : $chunk->getContent();
-
-            // Remove leading/trailing brackets
-            if (str_starts_with($jsonDelta, '[') || str_starts_with($jsonDelta, ',')) {
-                $jsonDelta = substr($jsonDelta, 1);
-            }
-            if (str_ends_with($jsonDelta, ']')) {
-                $jsonDelta = substr($jsonDelta, 0, -1);
+            $data = $chunk->getData();
+            if ('' === $data || '[DONE]' === $data) {
+                continue;
             }
 
-            // Split in case of multiple JSON objects
-            $deltas = explode(",\r\n", $jsonDelta);
-
-            foreach ($deltas as $delta) {
-                // lines starting with a colon identify as comment
-                if ('' === trim($delta) || str_starts_with($delta, ':')) {
-                    continue;
-                }
-
-                yield json_decode($delta, true, flags: \JSON_THROW_ON_ERROR);
-            }
+            yield json_decode($data, true, flags: \JSON_THROW_ON_ERROR);
         }
     }
 }

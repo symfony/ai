@@ -59,19 +59,6 @@ final class SseStreamTest extends TestCase
         $this->assertSame(['foo' => 'bar'], $results[0]);
     }
 
-    public function testStreamHandlesBracketsAndCommas()
-    {
-        $sse = "data: [{\"foo\": \"bar\"}]\n\ndata: ,{\"baz\": \"qux\"}\n\n";
-        $response = $this->createResponse($sse);
-
-        $stream = new SseStream();
-        $results = iterator_to_array($stream->stream($response));
-
-        $this->assertCount(2, $results);
-        $this->assertSame(['foo' => 'bar'], $results[0]);
-        $this->assertSame(['baz' => 'qux'], $results[1]);
-    }
-
     private function createResponse(string $body): ResponseInterface
     {
         $mockHttpClient = new MockHttpClient([new MockResponse($body, ['response_headers' => ['content-type' => 'text/event-stream']])]);
