@@ -3,8 +3,15 @@
     "description": "Symfony AI Demo Application",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/tacman/ai"
+        }
+    ],
     "require": {
         "php": ">=8.4",
+        "symfony/ai": "dev-tac",
         "ext-ctype": "*",
         "ext-gd": "*",
         "ext-iconv": "*",
