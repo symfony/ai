@@ -16,9 +16,12 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\Toolbox\AgentProcessor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
@@ -354,12 +357,8 @@ final class ChatTuiCommand extends Command
     {
         $out = [];
         foreach (array_keys($this->agents->getProvidedServices()) as $name) {
-            try {
-                $agent = $this->unwrapAgent($this->agents->get($name));
-                $out[$name] = method_exists($agent, 'getModel') ? (string) $agent->getModel() : '';
-            } catch (\Throwable) {
-                $out[$name] = '';
-            }
+            $agent = $this->unwrapAgent($this->agents->get($name));
+            $out[$name] = $agent instanceof Agent ? $agent->getModel() : '';
         }
 
         return $out;
@@ -372,35 +371,31 @@ final class ChatTuiCommand extends Command
      */
     private function agentDetailMarkdown(string $name): string
     {
-        try {
-            $agent = $this->unwrapAgent($this->agents->get($name));
+        $agent = $this->unwrapAgent($this->agents->get($name));
 
-            $model = method_exists($agent, 'getModel') ? (string) $agent->getModel() : '';
-            $capabilities = $this->modelCapabilities($agent, $model);
-            $prompt = $this->systemPromptText($agent);
+        $model = $agent instanceof Agent ? $agent->getModel() : '';
+        $capabilities = $this->modelCapabilities($agent, $model);
+        $prompt = $this->systemPromptText($agent);
 
-            $md = "## {$name}\n\n";
-            $md .= '' !== $model ? "**Model:** `{$model}`\n\n" : "_Multi-agent / no single model._\n\n";
-            if ('' !== $capabilities) {
-                $md .= "**Accepts:** {$capabilities}\n\n";
-            }
-
-            $tools = $this->agentTools($agent);
-            if ([] !== $tools) {
-                $md .= "**Tools:**\n\n";
-                foreach ($tools as $tool) {
-                    $md .= \sprintf("- `%s`%s\n", $tool['name'], '' !== $tool['description'] ? ' — '.$this->trim($tool['description'], 64) : '');
-                }
-                $md .= "\n";
-            }
-
-            $md .= "**System prompt:**\n\n";
-            $md .= '' !== $prompt ? $this->trim($prompt, 600) : '_none configured_';
-
-            return $md;
-        } catch (\Throwable) {
-            return "## {$name}\n\n_No details available._";
+        $md = "## {$name}\n\n";
+        $md .= '' !== $model ? "**Model:** `{$model}`\n\n" : "_Multi-agent / no single model._\n\n";
+        if ('' !== $capabilities) {
+            $md .= "**Accepts:** {$capabilities}\n\n";
         }
+
+        $tools = $this->agentTools($agent);
+        if ([] !== $tools) {
+            $md .= "**Tools:**\n\n";
+            foreach ($tools as $tool) {
+                $md .= \sprintf("- `%s`%s\n", $tool['name'], '' !== $tool['description'] ? ' — '.$this->trim($tool['description'], 64) : '');
+            }
+            $md .= "\n";
+        }
+
+        $md .= "**System prompt:**\n\n";
+        $md .= '' !== $prompt ? $this->trim($prompt, 600) : '_none configured_';
+
+        return $md;
     }
 
     /**
@@ -411,30 +406,27 @@ final class ChatTuiCommand extends Command
      */
     private function agentTools(object $agent): array
     {
-        try {
-            $processors = $this->readProperty($agent, 'inputProcessors');
-            if (!is_iterable($processors)) {
+        $processors = $this->readProperty($agent, 'inputProcessors');
+        if (!is_iterable($processors)) {
+            return [];
+        }
+
+        foreach ($processors as $processor) {
+            if (!$processor instanceof AgentProcessor) {
+                continue;
+            }
+
+            $toolbox = $this->readProperty($processor, 'toolbox');
+            if (!$toolbox instanceof ToolboxInterface) {
                 return [];
             }
 
-            foreach ($processors as $processor) {
-                if (!$processor instanceof AgentProcessor) {
-                    continue;
-                }
-
-                $toolbox = $this->readProperty($processor, 'toolbox');
-                if (!$toolbox instanceof ToolboxInterface) {
-                    return [];
-                }
-
-                $tools = [];
-                foreach ($toolbox->getTools() as $tool) {
-                    $tools[] = ['name' => $tool->getName(), 'description' => $tool->getDescription()];
-                }
-
-                return $tools;
+            $tools = [];
+            foreach ($toolbox->getTools() as $tool) {
+                $tools[] = ['name' => $tool->getName(), 'description' => $tool->getDescription()];
             }
-        } catch (\Throwable) {
+
+            return $tools;
         }
 
         return [];
@@ -457,10 +449,11 @@ final class ChatTuiCommand extends Command
             }
 
             $capabilities = $platform->getModelCatalog()->getModel($model)->getCapabilities();
-            $names = array_map(static fn (object $c): string => strtolower(str_replace('_', '-', $c->name)), $capabilities);
+            $names = array_map(static fn (Capability $c): string => strtolower(str_replace('_', '-', $c->name)), $capabilities);
 
             return implode(', ', $names);
-        } catch (\Throwable) {
+        } catch (ModelNotFoundException) {
+            // The agent's model isn't in its platform's catalog — show no capabilities.
             return '';
         }
     }
@@ -529,12 +522,8 @@ final class ChatTuiCommand extends Command
      * Format the token usage attached to a result's metadata (set by the
      * platform during/after the call), or null if none is available.
      */
-    private function tokenUsageLine(object $result): ?string
+    private function tokenUsageLine(ResultInterface $result): ?string
     {
-        if (!method_exists($result, 'getMetadata')) {
-            return null;
-        }
-
         $metadata = $result->getMetadata();
         $usage = $metadata->get('token_usage');
         if (!$usage instanceof TokenUsage) {
