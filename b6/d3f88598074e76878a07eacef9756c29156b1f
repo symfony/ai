@@ -1,0 +1,18 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-15T21:21:00Z
+
+can't really test that - at least i don't know how :D
+
+the only thing i'm wondering is if we pull this into a separate `HttpStreamInterface` implementation, does that make sense?
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-06-16T06:39:49Z
+
+> can't really test that - at least i don't know how :D
+>
+> the only thing i'm wondering is if we pull this into a separate `HttpStreamInterface` implementation, does that make sense?
+
+Refactored... and then saw #2186
+This one is now a blend of your proposal and what's needed to make it work IRL :)
