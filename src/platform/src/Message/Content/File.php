@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Message\Content;
 
+use Symfony\AI\Platform\CacheableInputInterface;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 
@@ -19,7 +20,7 @@ use function Symfony\Component\String\u;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class File implements ContentInterface
+class File implements ContentInterface, CacheableInputInterface
 {
     final public function __construct(
         private readonly string|\Closure $data,
@@ -105,5 +106,10 @@ class File implements ContentInterface
     public function getFilename(): ?string
     {
         return null === $this->path ? null : basename($this->path);
+    }
+
+    public function getCacheKey(): string
+    {
+        return hash('xxh128', $this->format.':'.$this->asBinary());
     }
 }

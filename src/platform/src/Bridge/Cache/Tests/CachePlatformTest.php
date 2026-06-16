@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Cache\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
+use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlainConverter;
@@ -152,6 +153,38 @@ final class CachePlatformTest extends TestCase
         $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
         $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
         $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
+    }
+
+    public function testPlatformCachesCacheableInput()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')->willReturn(new DeferredResult(
+            new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
+        ));
+
+        $document = new DocumentUrl('https://example.com/document.pdf');
+        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+
+        $deferredResult = $cachedPlatform->invoke('foo', $document, ['prompt_cache_key' => 'symfony']);
+        $this->assertSame('test content', $deferredResult->getResult()->getContent());
+        $this->assertTrue($deferredResult->getMetadata()->has('cached_at'));
+
+        $secondDeferredResult = $cachedPlatform->invoke('foo', $document, ['prompt_cache_key' => 'symfony']);
+        $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
+        $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
+    }
+
+    public function testPlatformDoesNotShareCacheBetweenDifferentCacheableInputs()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->exactly(2))->method('invoke')->willReturn(new DeferredResult(
+            new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
+        ));
+
+        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+
+        $cachedPlatform->invoke('foo', new DocumentUrl('https://example.com/first.pdf'), ['prompt_cache_key' => 'symfony']);
+        $cachedPlatform->invoke('foo', new DocumentUrl('https://example.com/second.pdf'), ['prompt_cache_key' => 'symfony']);
     }
 
     public function testPlatformCannotReturnCachedResultWhenCalledTwiceWhileUsingShortCustomTtl()
