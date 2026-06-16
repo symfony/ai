@@ -27,6 +27,8 @@ final class Chat
         #[Autowire(service: 'ai.agent.document')]
         private readonly AgentInterface $agent,
         private readonly OcrExtractor $ocrExtractor,
+        #[Autowire(param: 'app.document.prompts.summary')]
+        private readonly string $summaryPrompt,
     ) {
     }
 
@@ -37,6 +39,7 @@ final class Chat
 
     public function start(string $url): void
     {
+        // Step 1 — transcribe the document with Mistral OCR (cached per URL).
         $ocr = $this->ocrExtractor->extract($url);
         $markdown = $ocr->getMarkdown();
 
@@ -49,10 +52,19 @@ final class Chat
             {$markdown}
             PROMPT;
 
+        // Step 2 — have the chat agent read the extracted text and open with a
+        // meaningful summary. This is the orchestration on display: one capability
+        // (OCR transcription) feeds another (the reasoning agent).
+        $summary = $this->agent->call(new MessageBag(
+            Message::forSystem($system),
+            Message::ofUser($this->summaryPrompt),
+        ));
+        \assert($summary instanceof TextResult);
+
         $messages = new MessageBag(
             Message::forSystem($system),
             Message::ofUser($url),
-            Message::ofAssistant("I extracted the following text from the document via OCR:\n\n".$markdown."\n\nWhat would you like to know about it?"),
+            Message::ofAssistant($summary->getContent()),
         );
 
         $this->reset();

@@ -7,6 +7,12 @@
         <button {{ live_action('reset') }} class="btn btn-sm btn-outline-secondary float-end">{{ ux_icon('cancel') }} Reset Chat</button>
     </div>
     <div id="chat-body" class="card-body p-4 overflow-auto">
+        {% if this.activeTitle %}
+            <div class="alert alert-light border d-flex align-items-center mb-3">
+                <span>We're discussing: <strong>{{ this.activeTitle }}</strong></span>
+                <a href="{{ this.activeUrl }}" target="_blank" rel="noopener" class="ms-auto text-decoration-none" title="Open the document in a new window">Open the document ↗</a>
+            </div>
+        {% endif %}
         {% set messages = this.messages %}
         {% for message in messages %}
             {% include '_message.html.twig' with { message, latest: loop.last } %}
@@ -15,12 +21,34 @@
                 {{ ux_icon('document', { color: '#1A73E8', height: '200px', width: '200px' }) }}
                 <h4 class="mt-5">Chat about a Document</h4>
                 <div class="w-75 mx-auto text-start">
-                    <label for="document-url" class="form-label">Enter the URL of a document or image (e.g. a PDF) to extract its text with Mistral OCR and start the chat:</label>
-                    <form class="input-group mb-3" {{ live_action('start:prevent') }}>
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endif %}
+                    <label for="document-sample" class="form-label">Pick a document (or provide your own) to extract its text with Mistral OCR and start the chat:</label>
+                    <select id="document-sample" data-model="sample" class="form-select mb-2">
+                        <option value="">— Choose a document —</option>
+                        {% for s in this.samples %}
+                            <option value="{{ s.url }}">{{ s.title }}</option>
+                        {% endfor %}
+                        <option value="__own__">I'll provide my own URL…</option>
+                    </select>
+
+                    {% if sample == '__own__' %}
                         <input autofocus type="url" id="document-url"
                                data-model="norender|url"
-                               class="form-control" placeholder="https://example.com/document.pdf">
-                        <button class="btn btn-secondary" id="chat-start">Start</button>
+                               class="form-control mb-2" placeholder="https://example.com/document.pdf">
+                    {% elseif sample %}
+                        <p class="small text-muted mb-2">
+                            <a href="{{ sample }}" target="_blank" rel="noopener">Open this document in a new window ↗</a>
+                            to see what it is — then start the chat and ask away.
+                        </p>
+                    {% endif %}
+
+                    <form {{ live_action('start:prevent') }}>
+                        <button class="btn btn-secondary" id="chat-start" {{ not sample ? 'disabled' }} data-loading="action(start)|addAttribute(disabled)">
+                            <span data-loading="action(start)|hide">Start</span>
+                            <span data-loading="action(start)|show"><span class="spinner-border spinner-border-sm me-1"></span>Reading</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -34,10 +62,12 @@
         <form class="input-group" {{ live_action('submit:prevent') }}>
             <input id="chat-message" {{ messages|length == 0 ? 'disabled'}}
                    data-model="norender|message"
+                   data-loading="action(submit)|addAttribute(disabled)"
                    type="text" class="form-control border-0" placeholder="Write a message ...">
             <button {{ messages|length == 0 ? 'disabled'}}
-                class="btn btn-outline-secondary border-0">
-                {{ ux_icon('send') }} Submit
+                class="btn btn-outline-secondary border-0" data-loading="action(submit)|addAttribute(disabled)">
+                <span data-loading="action(submit)|hide">{{ ux_icon('send') }} Submit</span>
+                <span data-loading="action(submit)|show"><span class="spinner-border spinner-border-sm me-1"></span>Preparing</span>
             </button>
         </form>
     </div>

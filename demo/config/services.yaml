@@ -3,6 +3,16 @@
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    app.document.samples:
+        - { title: "Civil War widow's pension file — USCT (15-page PDF)", url: "https://omeka-iaamcfh.s3.amazonaws.com/original/466438fd3594c782fcbf172a1fd2cfc66034bbf0.pdf" }
+        - { title: "Family Bible record (genealogy, PDF)", url: "https://omeka-iaamcfh.s3.amazonaws.com/original/46394498cdb8cc609c466b578845c0ac83b804df.pdf" }
+        - { title: "Census — Schedule of Inhabitants (handwritten)", url: "https://fsn1.your-objectstorage.com/dev-scanstation/cheztac/scans/2026-03/browser-1772563875823-63e64d45-p014.jpg" }
+        - { title: "Small-town newspaper page (dense print)", url: "https://s3.amazonaws.com/pastperfectonline/images/museum_986/006/20100110001.jpg" }
+        - { title: "Handwritten letter, 1726 (NARA)", url: "https://upload.wikimedia.org/wikipedia/commons/0/04/William_Burnett_Letter_May_24%2C_1726_-_NARA_-_193049.jpg" }
+        - { title: "NARA rediscovery record (PDF)", url: "https://s3.amazonaws.com/NARAprodstorage/lz/rediscovery/11020.pdf" }
+    app.document.prompts.summary: "Summarise this document in a few sentences — what it is and its key points — then invite me to ask questions about it."
+
 
 services:
     # default configuration for services in *this* file
