@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
@@ -64,6 +65,14 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         $response = $result->getObject();
+
+        if (400 === $response->getStatusCode()) {
+            $message = json_decode($response->getContent(false), true)['error']['message'] ?? '';
+
+            if (str_contains($message, 'maximum number of tokens') || str_contains($message, 'input token count')) {
+                throw new ExceedContextSizeException($message);
+            }
+        }
 
         $this->throwOnHttpError($response);
 

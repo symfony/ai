@@ -2,8 +2,9 @@ CHANGELOG
 =========
 
 0.10
----
+----
 
+ * Throw `ExceedContextSizeException` instead of `BadRequestException` when a 400 response reports a context overflow
  * Request usage stats for streamed responses by default when no `stream_options` provided
 
 0.8

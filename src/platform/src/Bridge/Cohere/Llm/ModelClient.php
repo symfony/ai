@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Cohere\Llm;
 
 use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -24,6 +25,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         #[\SensitiveParameter] private readonly string $apiKey,
@@ -46,7 +49,7 @@ final class ModelClient implements ModelClientInterface
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
-            'json' => array_merge($options, $payload),
+            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
     }
 }

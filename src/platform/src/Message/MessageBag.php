@@ -156,6 +156,31 @@ class MessageBag implements \Countable, \IteratorAggregate
     }
 
     /**
+     * Clones the MessageBag without tool-call messages and tool-call-only assistant messages,
+     * leaving only the conversational messages (user input and assistant messages carrying text).
+     */
+    public function withoutToolMessages(): self
+    {
+        $messages = clone $this;
+        $messages->messages = array_values(array_filter(
+            $messages->messages,
+            static function (MessageInterface $message): bool {
+                if ($message instanceof ToolCallMessage) {
+                    return false;
+                }
+
+                if ($message instanceof AssistantMessage && null === $message->asText()) {
+                    return false;
+                }
+
+                return true;
+            },
+        ));
+
+        return $messages;
+    }
+
+    /**
      * Clones the MessageBag without previous system message and prepends the given one.
      */
     public function withSystemMessage(SystemMessage $message): self

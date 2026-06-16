@@ -35,7 +35,7 @@ final class TwigComponent
      */
     public function getMessages(): array
     {
-        return $this->wikipedia->loadMessages()->withoutSystemMessage()->getMessages();
+        return $this->wikipedia->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
     #[LiveAction]

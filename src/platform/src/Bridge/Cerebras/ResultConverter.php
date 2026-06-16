@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -39,7 +40,19 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         if ($result instanceof RawHttpResult) {
-            $this->throwOnHttpError($result->getObject());
+            $response = $result->getObject();
+
+            if (400 === $response->getStatusCode()) {
+                $body = json_decode($response->getContent(false), true) ?? [];
+                $code = $body['error']['code'] ?? $body['code'] ?? null;
+                $message = $body['error']['message'] ?? $body['message'] ?? '';
+
+                if ('context_length_exceeded' === $code || str_contains($message, 'context length')) {
+                    throw new ExceedContextSizeException('' !== $message ? $message : 'Context size exceeded');
+                }
+            }
+
+            $this->throwOnHttpError($response);
         }
 
         if ($options['stream'] ?? false) {

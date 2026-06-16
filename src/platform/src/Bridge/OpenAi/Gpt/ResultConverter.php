@@ -15,6 +15,8 @@ use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -64,7 +66,13 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (400 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+            $error = json_decode($response->getContent(false), true)['error'] ?? [];
+            $errorMessage = $error['message'] ?? 'Bad Request';
+
+            if ('context_length_exceeded' === ($error['code'] ?? null)) {
+                throw new ExceedContextSizeException($errorMessage);
+            }
+
             throw new BadRequestException($errorMessage);
         }
 
@@ -147,12 +155,31 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
         $currentThinking = null;
+        /** @var array<string, ToolCall> $toolCalls */
+        $toolCalls = [];
+        $sawResponseEvent = false;
+        $sawResponseCompleted = false;
 
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
+            $sawResponseEvent = true;
 
-            if ('error' === $type && isset($event['error'])) {
-                throw new RuntimeException($this->generateErrorMessage($event['error']));
+            if ('error' === $type) {
+                throw new RuntimeException($this->generateErrorMessage($this->extractStreamError($event)));
+            }
+
+            if ('response.failed' === $type) {
+                $response = \is_array($event['response'] ?? null) ? $event['response'] : [];
+                throw new RuntimeException($this->generateErrorMessage($this->extractStreamError($response)));
+            }
+
+            if ('response.incomplete' === $type) {
+                $reason = $event['response']['incomplete_details']['reason'] ?? 'unknown';
+                if (!\is_string($reason) || '' === $reason) {
+                    $reason = 'unknown';
+                }
+
+                throw new RuntimeException(\sprintf('OpenAI Responses stream ended incomplete (%s).', $reason));
             }
 
             if (isset($event['response']['usage'])) {
@@ -177,15 +204,28 @@ final class ResultConverter implements ResultConverterInterface
                 $currentThinking = null;
             }
 
-            if (!str_contains($type, 'completed')) {
+            if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'function_call' === ($event['item']['type'] ?? null)) {
+                /** @var FunctionCall $item */
+                $item = $event['item'];
+                $toolCalls[$item['id']] = $this->convertFunctionCall($item);
+            }
+
+            if ('response.completed' !== $type) {
                 continue;
             }
 
+            $sawResponseCompleted = true;
             [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
 
-            if ($toolCallResult && 'response.completed' === $type) {
+            if ($toolCallResult) {
                 yield new ToolCallComplete($toolCallResult->getContent());
+            } elseif ([] !== $toolCalls) {
+                yield new ToolCallComplete(array_values($toolCalls));
             }
+        }
+
+        if ($sawResponseEvent && !$sawResponseCompleted) {
+            throw new IncompleteStreamException('OpenAI Responses stream ended before response.completed.');
         }
     }
 
@@ -286,5 +326,24 @@ final class ResultConverter implements ResultConverterInterface
     private function generateErrorMessage(array $error): string
     {
         return \sprintf('Error "%s"-%s (%s): "%s".', $error['code'] ?? '-', $error['type'] ?? '-', $error['param'] ?? '-', $error['message'] ?? '-');
+    }
+
+    /**
+     * @param array<string, mixed> $event
+     *
+     * @return Error
+     */
+    private function extractStreamError(array $event): array
+    {
+        if (\is_array($event['error'] ?? null)) {
+            $event = $event['error'];
+        }
+
+        return [
+            'code' => \is_string($event['code'] ?? null) ? $event['code'] : null,
+            'type' => \is_string($event['type'] ?? null) && 'error' !== $event['type'] ? $event['type'] : null,
+            'param' => \is_string($event['param'] ?? null) ? $event['param'] : null,
+            'message' => \is_string($event['message'] ?? null) ? $event['message'] : null,
+        ];
     }
 }

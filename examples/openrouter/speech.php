@@ -16,11 +16,10 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client(), modelCatalog: new SpeechModelCatalog());
 
-$result = $platform->invoke('openai/gpt-4o-mini-tts-2025-12-15', 'Hello world from Symfony AI!', [
-    'voice' => 'echo',
-    'response_format' => 'mp3',
-    'speed' => 1.0,
+$result = $platform->invoke('google/gemini-3.1-flash-tts-preview', 'Hello world from Symfony AI!', [
+    'voice' => 'Zephyr',
+    'response_format' => 'pcm',
 ]);
 
-$result->asFile('/tmp/openrouter-speech.mp3');
-output()->writeln('Audio content saved to <comment>/tmp/openrouter-speech.mp3</comment>');
+$result->asFile('/tmp/openrouter-speech.pcm');
+output()->writeln('Audio content saved to <comment>/tmp/openrouter-speech.pcm</comment>');

@@ -30,7 +30,7 @@ $platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client(), eventD
 $clock = new Clock(new SymfonyClock());
 $toolbox = new Toolbox([$clock], logger: logger());
 $toolProcessor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gemini-3-pro-preview', [$toolProcessor], [$toolProcessor]);
+$agent = new Agent($platform, 'gemini-3.1-pro-preview', [$toolProcessor], [$toolProcessor]);
 
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
 $result = $agent->call($messages, ['response_format' => [

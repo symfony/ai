@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -26,6 +27,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -92,8 +95,9 @@ final class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => [
                 'x-goog-api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
             ],
-            'json' => array_merge($config, $payload),
+            'body' => $this->encodeJsonBody(array_merge($config, $payload)),
         ]));
     }
 }

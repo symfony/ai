@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Gemini;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
@@ -51,6 +52,25 @@ final class ResultConverterTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Error "500" - "INTERNAL": "Internal error encountered.".');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'code' => 400,
+                'status' => 'INVALID_ARGUMENT',
+                'message' => 'The input token count (1294145) exceeds the maximum number of tokens allowed (1048576).',
+            ],
+        ]));
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('exceeds the maximum number of tokens allowed');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

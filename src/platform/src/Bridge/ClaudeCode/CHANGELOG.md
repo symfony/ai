@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Throw `IncompleteStreamException` when a stream ends before `message_stop`
+
 0.9
 ---
 

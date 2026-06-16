@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -249,6 +250,39 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertInstanceOf(TokenUsageInterface::class, $chunks[1]);
         $this->assertSame(11, $chunks[1]->getPromptTokens());
         $this->assertSame(4, $chunks[1]->getCompletionTokens());
+    }
+
+    public function testConvertStreamingThrowsWhenDoneIsMissing()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+            yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => false];
+            yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => ' world'], 'done' => false];
+            // stream cut off: no object with done => true
+        })());
+
+        $result = $converter->convert($rawResult, options: ['stream' => true]);
+
+        $this->expectException(IncompleteStreamException::class);
+        $this->expectExceptionMessage('Ollama stream ended before a "done" message.');
+
+        iterator_to_array($result->getContent());
+    }
+
+    public function testConvertStreamingThrowsOnErrorObject()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+            yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => false];
+            yield ['error' => 'model runner crashed'];
+        })());
+
+        $result = $converter->convert($rawResult, options: ['stream' => true]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Ollama stream error: "model runner crashed".');
+
+        iterator_to_array($result->getContent());
     }
 
     /**

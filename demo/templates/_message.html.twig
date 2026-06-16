@@ -22,10 +22,8 @@
                 <div class="bot-message d-inline-block p-2 px-3 m-1 border border-light-subtle shadow-sm"{% if contentId %} id="{{ contentId }}"{% endif %}>
                     {% if latest and app.request.xmlHttpRequest %}
                         <span
-                                data-controller="symfony--ux-typed"
-                                data-symfony--ux-typed-show-cursor-value="false"
-                                data-symfony--ux-typed-type-speed-value="0"
-                                data-symfony--ux-typed-strings-value="{{ [content|markdown_to_html]|json_encode|e('html_attr') }}"
+                                data-controller="typed"
+                                data-typed-strings-value="{{ [content|markdown_to_html]|json_encode|e('html_attr') }}"
                         ></span>
                     {% else %}
                         {{ content|markdown_to_html }}

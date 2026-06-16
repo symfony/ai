@@ -48,7 +48,7 @@ final class SpeechModelCatalog extends AbstractModelCatalog
                 Capability::TEXT_TO_SPEECH,
             ],
         ],
-        'mistralai/voxtral-mini-tts-2603' => [
+        'microsoft/mai-voice-2' => [
             'class' => SpeechModel::class,
             'capabilities' => [
                 Capability::INPUT_TEXT,
@@ -56,7 +56,7 @@ final class SpeechModelCatalog extends AbstractModelCatalog
                 Capability::TEXT_TO_SPEECH,
             ],
         ],
-        'openai/gpt-4o-mini-tts-2025-12-15' => [
+        'mistralai/voxtral-mini-tts-2603' => [
             'class' => SpeechModel::class,
             'capabilities' => [
                 Capability::INPUT_TEXT,
@@ -81,6 +81,14 @@ final class SpeechModelCatalog extends AbstractModelCatalog
             ],
         ],
         'zyphra/zonos-v0.1-transformer' => [
+            'class' => SpeechModel::class,
+            'capabilities' => [
+                Capability::INPUT_TEXT,
+                Capability::OUTPUT_AUDIO,
+                Capability::TEXT_TO_SPEECH,
+            ],
+        ],
+        'x-ai/grok-voice-tts-1.0' => [
             'class' => SpeechModel::class,
             'capabilities' => [
                 Capability::INPUT_TEXT,

@@ -48,14 +48,14 @@ final class SpeechModelCatalogTest extends ModelCatalogTestCase
             $capabilities,
         ];
 
-        yield 'mistralai/voxtral-mini-tts-2603' => [
-            'mistralai/voxtral-mini-tts-2603',
+        yield 'microsoft/mai-voice-2' => [
+            'microsoft/mai-voice-2',
             SpeechModel::class,
             $capabilities,
         ];
 
-        yield 'openai/gpt-4o-mini-tts-2025-12-15' => [
-            'openai/gpt-4o-mini-tts-2025-12-15',
+        yield 'mistralai/voxtral-mini-tts-2603' => [
+            'mistralai/voxtral-mini-tts-2603',
             SpeechModel::class,
             $capabilities,
         ];
@@ -74,6 +74,12 @@ final class SpeechModelCatalogTest extends ModelCatalogTestCase
 
         yield 'zyphra/zonos-v0.1-transformer' => [
             'zyphra/zonos-v0.1-transformer',
+            SpeechModel::class,
+            $capabilities,
+        ];
+
+        yield 'x-ai/grok-voice-tts-1.0' => [
+            'x-ai/grok-voice-tts-1.0',
             SpeechModel::class,
             $capabilities,
         ];

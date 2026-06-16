@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -25,6 +26,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class OllamaClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private const CHAT_TOP_LEVEL_KEYS = [
         'stream',
         'format',
@@ -82,7 +85,7 @@ final class OllamaClient implements ModelClientInterface
 
         $response = $this->httpClient->request('POST', '/api/chat', [
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, $payload),
+            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]);
 
         return new RawHttpResult($response, new NdjsonStream());

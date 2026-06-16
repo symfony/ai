@@ -19,7 +19,7 @@ You can also start from the official extension template:
         "name": "vendor/my-extension",
         "type": "library",
         "require": {
-            "symfony/ai-mate": "^0.9"
+            "symfony/ai-mate": "^0.10"
         },
         "extra": {
             "ai-mate": {

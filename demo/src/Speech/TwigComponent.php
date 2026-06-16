@@ -35,7 +35,7 @@ final class TwigComponent
      */
     public function getMessages(): array
     {
-        return $this->chat->loadMessages()->withoutSystemMessage()->getMessages();
+        return $this->chat->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
     #[LiveAction]

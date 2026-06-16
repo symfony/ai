@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Bridge\Cohere\Tests\Llm;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Llm\ResultConverter;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -43,6 +45,22 @@ final class ResultConverterTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unexpected response code 500');
+
+        $converter->convert(new RawHttpResult($response));
+    }
+
+    public function testItThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(400);
+        $response->method('getContent')->willReturn(json_encode([
+            'message' => 'too many tokens: size limit exceeded by 213302 tokens. Try using shorter or fewer inputs. The limit for this model is 288000 tokens.',
+        ]));
+
+        $converter = new ResultConverter();
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('too many tokens');
 
         $converter->convert(new RawHttpResult($response));
     }
@@ -214,6 +232,80 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_1', $toolCalls[0]->getId());
         $this->assertSame('get_time', $toolCalls[0]->getName());
         $this->assertSame([], $toolCalls[0]->getArguments());
+    }
+
+    public function testItThrowsIncompleteStreamWhenMessageEndIsMissing()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $converter = new ResultConverter();
+        $result = $converter->convert(
+            new InMemoryRawResult([], [
+                ['type' => 'content-delta', 'delta' => ['message' => ['content' => ['text' => 'Hello']]]],
+                // stream cut off: no message-end event
+            ], $httpResponse),
+            ['stream' => true],
+        );
+
+        $this->expectException(IncompleteStreamException::class);
+        $this->expectExceptionMessage('Cohere stream ended before message-end.');
+
+        iterator_to_array($result->getContent());
+    }
+
+    public function testItThrowsOnMessageEndError()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $converter = new ResultConverter();
+        $result = $converter->convert(
+            new InMemoryRawResult([], [
+                ['type' => 'content-delta', 'delta' => ['message' => ['content' => ['text' => 'Hello']]]],
+                ['type' => 'message-end', 'delta' => ['finish_reason' => 'ERROR', 'error' => 'Something went wrong']],
+            ], $httpResponse),
+            ['stream' => true],
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cohere stream error: "Something went wrong".');
+
+        iterator_to_array($result->getContent());
+    }
+
+    public function testItThrowsOnStructuredMessageEndError()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $converter = new ResultConverter();
+        $result = $converter->convert(
+            new InMemoryRawResult([], [
+                ['type' => 'content-delta', 'delta' => ['message' => ['content' => ['text' => 'Hello']]]],
+                ['type' => 'message-end', 'delta' => ['finish_reason' => 'ERROR', 'error' => ['message' => 'Something went wrong']]],
+            ], $httpResponse),
+            ['stream' => true],
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cohere stream error: "Something went wrong".');
+
+        iterator_to_array($result->getContent());
+    }
+
+    public function testItDoesNotThrowOnEmptyStream()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $converter = new ResultConverter();
+        $result = $converter->convert(
+            new InMemoryRawResult([], [], $httpResponse),
+            ['stream' => true],
+        );
+
+        $this->assertSame([], iterator_to_array($result->getContent()));
     }
 
     public function testGetTokenUsageExtractor()

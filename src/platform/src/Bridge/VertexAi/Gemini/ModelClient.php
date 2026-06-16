@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -24,6 +25,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -126,7 +129,8 @@ final class ModelClient implements ModelClientInterface
                 'POST',
                 $url,
                 [
-                    'json' => array_merge($options, $payload),
+                    'headers' => ['Content-Type' => 'application/json'],
+                    'body' => $this->encodeJsonBody(array_merge($options, $payload)),
                     'query' => $query,
                 ]
             )

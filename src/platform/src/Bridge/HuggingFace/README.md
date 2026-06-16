@@ -26,10 +26,10 @@ vision, audio processing, and more.
 
 ## Installation
 
-The bridge is included in the `symfony/ai-platform` package. Ensure you have the required dependencies:
+Install the `symfony/ai-hugging-face-platform` package:
 
 ```bash
-composer require symfony/ai-platform
+composer require symfony/ai-hugging-face-platform
 ```
 
 ## Quick Start

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -23,6 +24,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -59,7 +62,7 @@ final class ModelClient implements ModelClientInterface
                         'Content-Type' => 'application/json',
                         'Authorization' => \sprintf('Bearer %s', $this->apiKey),
                     ],
-                    'json' => array_merge($payload, $options),
+                    'body' => $this->encodeJsonBody(array_merge($payload, $options)),
                 ]
             )
         );

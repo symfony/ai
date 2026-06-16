@@ -22,7 +22,7 @@ $messages = new MessageBag(
     Message::ofUser('What are the top three destinations in France?'),
 );
 
-$result = $platform->invoke('llama3.1-8b', $messages, [
+$result = $platform->invoke('gpt-oss-120b', $messages, [
     'stream' => true,
 ]);
 

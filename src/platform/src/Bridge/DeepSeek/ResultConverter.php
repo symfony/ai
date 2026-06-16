@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\DeepSeek;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\InvalidRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -41,7 +42,21 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         if ($result instanceof RawHttpResult) {
-            $this->throwOnHttpError($result->getObject());
+            $response = $result->getObject();
+
+            if (400 === $response->getStatusCode()) {
+                $body = json_decode($response->getContent(false), true) ?? [];
+                $code = $body['error']['code'] ?? $body['code'] ?? null;
+                $message = $body['error']['message'] ?? $body['message'] ?? '';
+
+                // DeepSeek tags context overflows as a generic "invalid_request_error" code, so detection
+                // relies on the message; the "context_length_exceeded" code is kept as an OpenAI-compatible fallback.
+                if ('context_length_exceeded' === $code || str_contains($message, 'context length')) {
+                    throw new ExceedContextSizeException('' !== $message ? $message : 'Context size exceeded');
+                }
+            }
+
+            $this->throwOnHttpError($response);
         }
 
         if ($options['stream'] ?? false) {

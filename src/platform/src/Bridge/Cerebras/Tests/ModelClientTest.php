@@ -86,4 +86,18 @@ class ModelClientTest extends TestCase
         $this->assertSame('https://api.cerebras.ai/v1/chat/completions', $info['url']);
         $this->assertSame($expectedResponse, $data);
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            $this->assertJson($options['body']);
+            $this->assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new JsonMockResponse(['choices' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'csk-1234567890abcdef');
+        $client->request(new Model('llama-3.3-70b'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
 }

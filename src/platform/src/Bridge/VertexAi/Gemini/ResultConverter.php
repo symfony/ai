@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
@@ -66,6 +67,16 @@ final class ResultConverter implements ResultConverterInterface
         if (429 === $response->getStatusCode()) {
             $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
             throw new RateLimitExceededException(null, $errorMessage);
+        }
+
+        if (400 === $response->getStatusCode()) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
+
+            if (null !== $errorMessage
+                && (str_contains($errorMessage, 'maximum number of tokens') || str_contains($errorMessage, 'input token count'))
+            ) {
+                throw new ExceedContextSizeException($errorMessage);
+            }
         }
 
         if ($options['stream'] ?? false) {

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -23,6 +24,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     /**
@@ -57,6 +60,7 @@ final class ModelClient implements ModelClientInterface
         $headers = [
             'x-api-key' => $this->apiKey,
             'anthropic-version' => '2023-06-01',
+            'content-type' => 'application/json',
         ];
 
         $payload = $this->injectCacheControl($payload);
@@ -88,7 +92,7 @@ final class ModelClient implements ModelClientInterface
 
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.anthropic.com/v1/messages', [
             'headers' => $headers,
-            'json' => array_merge($options, $payload),
+            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
     }
 

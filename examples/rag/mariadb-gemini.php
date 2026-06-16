@@ -52,7 +52,7 @@ $store->setup(['dimensions' => 768]);
 
 // create embeddings for documents
 $platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());
-$model = 'gemini-embedding-exp-03-07?dimensions=768&task_type=SEMANTIC_SIMILARITY';
+$model = 'gemini-embedding-001?dimensions=768&task_type=SEMANTIC_SIMILARITY';
 $vectorizer = new Vectorizer($platform, $model, logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);

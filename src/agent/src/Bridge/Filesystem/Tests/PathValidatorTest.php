@@ -137,4 +137,46 @@ class PathValidatorTest extends TestCase
 
         $this->assertSame($this->fixturesPath, $validator->getBasePath());
     }
+
+    public function testValidateThrowsOnSiblingDirectoryWithSharedPrefix()
+    {
+        $base = sys_get_temp_dir().'/'.uniqid('fsdemo_', true).'/data';
+        $sibling = \dirname($base).'/data-private';
+        mkdir($base, 0o777, true);
+        mkdir($sibling, 0o777, true);
+        file_put_contents($sibling.'/secrets.txt', 'SECRET: outside the sandbox');
+
+        try {
+            $validator = new PathValidator($base, [], [], []);
+
+            $this->expectException(PathSecurityException::class);
+            $this->expectExceptionMessage('outside the allowed base path');
+
+            $validator->validate($sibling.'/secrets.txt');
+        } finally {
+            @unlink($sibling.'/secrets.txt');
+            @rmdir($sibling);
+            @rmdir($base);
+            @rmdir(\dirname($base));
+        }
+    }
+
+    public function testValidateDirectoryThrowsOnNonExistentSiblingWithSharedPrefix()
+    {
+        $base = sys_get_temp_dir().'/'.uniqid('fsdemo_', true).'/data';
+        $sibling = \dirname($base).'/datax';
+        mkdir($base, 0o777, true);
+
+        try {
+            $validator = new PathValidator($base, [], [], []);
+
+            $this->expectException(PathSecurityException::class);
+            $this->expectExceptionMessage('outside the allowed base path');
+
+            $validator->validateDirectory($sibling, mustExist: false);
+        } finally {
+            @rmdir($base);
+            @rmdir(\dirname($base));
+        }
+    }
 }

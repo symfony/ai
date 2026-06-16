@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('What is the capital of Japan?'),
 );
-$result = $platform->invoke('llama3.1-8b', $messages);
+$result = $platform->invoke('gpt-oss-120b', $messages);
 
 echo $result->asText().\PHP_EOL;

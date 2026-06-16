@@ -78,6 +78,18 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'command-a-plus-05-2026' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
             'command-a-reasoning-08-2025' => [
                 'class' => Cohere::class,
                 'capabilities' => [
@@ -180,6 +192,17 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_MULTIPLE,
                     Capability::INPUT_MULTIMODAL,
                     Capability::EMBEDDINGS,
+                ],
+            ],
+            'north-mini-code-1-0' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
                 ],
             ],
             'rerank-english-v3.0' => [

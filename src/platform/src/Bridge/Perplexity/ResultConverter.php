@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -39,7 +40,18 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         if ($result instanceof RawHttpResult) {
-            $this->throwOnHttpError($result->getObject());
+            $response = $result->getObject();
+
+            if (400 === $response->getStatusCode()) {
+                $error = json_decode($response->getContent(false), true)['error'] ?? [];
+                $message = $error['message'] ?? '';
+
+                if ('too_many_prompt_tokens' === ($error['type'] ?? null) || str_contains(strtolower($message), 'too long')) {
+                    throw new ExceedContextSizeException('' !== $message ? $message : 'Context size exceeded');
+                }
+            }
+
+            $this->throwOnHttpError($response);
         }
 
         if ($options['stream'] ?? false) {

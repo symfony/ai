@@ -42,7 +42,7 @@ final class TwigComponent extends AbstractController
      */
     public function getMessages(): array
     {
-        return $this->chat->loadMessages()->withoutSystemMessage()->getMessages();
+        return $this->chat->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
     #[LiveAction]

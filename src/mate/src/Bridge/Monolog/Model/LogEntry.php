@@ -29,6 +29,8 @@ namespace Symfony\AI\Mate\Bridge\Monolog\Model;
  */
 final class LogEntry
 {
+    private const REGEX_BACKTRACK_LIMIT = 10000;
+
     /**
      * @param array<string, mixed> $context
      * @param array<string, mixed> $extra
@@ -119,7 +121,16 @@ final class LogEntry
     {
         $searchable = $this->message.' '.json_encode($this->context).' '.json_encode($this->extra);
 
-        return (bool) preg_match($pattern, $searchable);
+        // Lower the PCRE backtrack limit temporarily so a model-supplied
+        // catastrophic pattern cannot stall the worker (regex injection / ReDoS).
+        $previousLimit = ini_set('pcre.backtrack_limit', self::REGEX_BACKTRACK_LIMIT);
+        try {
+            return (bool) @preg_match($pattern, $searchable);
+        } finally {
+            if (false !== $previousLimit) {
+                ini_set('pcre.backtrack_limit', $previousLimit);
+            }
+        }
     }
 
     public function hasContextValue(string $key, string $value): bool

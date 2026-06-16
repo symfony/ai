@@ -47,10 +47,12 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 - [Vertex AI Server Tools](https://symfony.com/doc/current/ai/components/platform/vertexai-server-tools.html): Server-side tool calling with Vertex AI
 - [Gemini Server Tools](https://symfony.com/doc/current/ai/components/platform/gemini-server-tools.html): Server-side tool calling with Gemini
 - [Models.dev Platform](https://symfony.com/doc/current/ai/components/platform/models-dev.html): Using Models.dev as an AI platform
+- [Model Catalogs](https://symfony.com/doc/current/ai/components/platform/model-catalogs.html): How platforms resolve model names into Model objects with capabilities, and how to extend catalogs for new or local models
 - [Voyage AI](https://symfony.com/doc/current/ai/components/platform/voyage.html): Voyage AI embedding platform
 - [Agent Component](https://symfony.com/doc/current/ai/components/agent.html): Framework for building AI agents with tool calling, memory, and multi-step reasoning
 - [Store Component](https://symfony.com/doc/current/ai/components/store.html): Vector database abstraction for RAG with 20+ store backends
 - [Local Stores](https://symfony.com/doc/current/ai/components/store/local.html): InMemory and PSR-6 Cache store backends
+- [MongoDB Bridge](https://symfony.com/doc/current/ai/components/store/mongodb.html): MongoDB Atlas Vector Search bridge for vector storage and similarity search
 - [S3 Vectors](https://symfony.com/doc/current/ai/components/store/s3-vectors.html): AWS S3 Vectors bridge for vector storage
 - [SQLite Store](https://symfony.com/doc/current/ai/components/store/sqlite.html): SQLite-based vector store
 - [Supabase Bridge](https://symfony.com/doc/current/ai/components/store/supabase.html): Supabase vector store integration
@@ -64,11 +66,15 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 
 ## Cookbook
 
-- [Chatbot with Memory](https://symfony.com/doc/current/ai/cookbook/chatbot-with-memory.html): Building a chatbot with persistent conversation memory
-- [RAG Implementation](https://symfony.com/doc/current/ai/cookbook/rag-implementation.html): Retrieval Augmented Generation with vector stores
-- [Structured Output](https://symfony.com/doc/current/ai/cookbook/structured-output-object-instances.html): Deserializing AI responses into typed PHP objects
-- [Dynamic Tools](https://symfony.com/doc/current/ai/cookbook/dynamic-tools.html): Dynamically registering tools for AI agents
-- [Human in the Loop](https://symfony.com/doc/current/ai/cookbook/human-in-the-loop.html): Adding human approval steps in agent workflows
+- [AI Bundle Fast Track](https://symfony.com/doc/current/ai/cookbook/ai-bundle-fast-track.html): Wire platforms, agents, tools, and a vector store in a Symfony app with YAML
+- [Tool Calling with Agents](https://symfony.com/doc/current/ai/cookbook/tool-calling-with-agents.html): Let AI agents call your PHP functions to fetch data or trigger actions
+- [Dynamic Tools](https://symfony.com/doc/current/ai/cookbook/dynamic-tools.html): Build a dynamic Toolbox for flexible tool management at runtime
+- [Human in the Loop](https://symfony.com/doc/current/ai/cookbook/human-in-the-loop.html): Implement human-in-the-loop confirmation for tool execution
+- [Multi-Agent Orchestration](https://symfony.com/doc/current/ai/cookbook/multi-agent-orchestration.html): Route questions to specialist agents with a central orchestrator
+- [Chatbot with Memory](https://symfony.com/doc/current/ai/cookbook/chatbot-with-memory.html): Build a chatbot with persistent conversation memory
+- [Context Compression](https://symfony.com/doc/current/ai/cookbook/context-compression.html): Keep long conversations within context limits using a sliding window or summarization
+- [RAG Implementation](https://symfony.com/doc/current/ai/cookbook/rag-implementation.html): Retrieval Augmented Generation with vector stores and semantic search
+- [Build an MCP Server](https://symfony.com/doc/current/ai/cookbook/build-an-mcp-server.html): Expose tools, prompts, and resources to AI assistants over MCP
 
 ## Code
 

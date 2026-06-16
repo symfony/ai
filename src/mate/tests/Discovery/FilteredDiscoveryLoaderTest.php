@@ -19,7 +19,7 @@ use Mcp\Capability\Registry\ResourceTemplateReference;
 use Mcp\Capability\Registry\ToolReference;
 use Mcp\Capability\RegistryInterface;
 use Mcp\Schema\Prompt;
-use Mcp\Schema\Resource;
+use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Tool;
 use PHPUnit\Framework\TestCase;
@@ -33,8 +33,8 @@ final class FilteredDiscoveryLoaderTest extends TestCase
 {
     public function testLoadWithEnabledFeatures()
     {
-        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
-        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
+        $tool1 = $this->createToolReference('tool1');
+        $tool2 = $this->createToolReference('tool2');
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool1, 'tool2' => $tool2],
@@ -47,36 +47,19 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                return 2 === \count($state->getTools());
-            }));
+        $registeredTools = $this->captureRegisteredTools($registry);
 
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [])->load($registry);
 
-        $disabledFeatures = [];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
-        );
-
-        $loader->load($registry);
+        $this->assertSame(['tool1', 'tool2'], $registeredTools->names);
     }
 
     public function testLoadWithDisabledFeatures()
     {
-        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
-        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
+        $tool1 = $this->createToolReference('tool1');
+        $tool2 = $this->createToolReference('tool2');
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool1, 'tool2' => $tool2],
@@ -88,44 +71,22 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                $tools = $state->getTools();
+        $registeredTools = $this->captureRegisteredTools($registry);
 
-                // Only tool1 should be present (tool2 is disabled)
-                return 1 === \count($tools) && isset($tools['tool1']);
-            }));
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [
+            'vendor/package-a' => ['tool2' => ['enabled' => false]],
+        ])->load($registry);
 
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
-
-        $disabledFeatures = [
-            'vendor/package-a' => [
-                'tool2' => ['enabled' => false],
-            ],
-        ];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
-        );
-
-        $loader->load($registry);
+        $this->assertSame(['tool1'], $registeredTools->names);
     }
 
     public function testLoadWithMixedEnabledDisabledFeatures()
     {
-        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
-        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
-        $tool3 = new ToolReference(new Tool(name: 'tool3', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method3', false);
+        $tool1 = $this->createToolReference('tool1');
+        $tool2 = $this->createToolReference('tool2');
+        $tool3 = $this->createToolReference('tool3');
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool1, 'tool2' => $tool2, 'tool3' => $tool3],
@@ -137,45 +98,25 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                $tools = $state->getTools();
+        $registeredTools = $this->captureRegisteredTools($registry);
 
-                // tool1 and tool3 should be present (tool2 is disabled)
-                return 2 === \count($tools) && isset($tools['tool1']) && isset($tools['tool3']) && !isset($tools['tool2']);
-            }));
-
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
-
-        $disabledFeatures = [
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [
             'vendor/package-a' => [
                 'tool1' => ['enabled' => true],
                 'tool2' => ['enabled' => false],
                 'tool3' => ['enabled' => true],
             ],
-        ];
+        ])->load($registry);
 
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
-        );
-
-        $loader->load($registry);
+        $this->assertSame(['tool1', 'tool3'], $registeredTools->names);
     }
 
     public function testLoadFiltersResources()
     {
-        $resource1 = new ResourceReference(new Resource('config://resource1', 'resource1', 'Resource 1'), 'method1', false);
-        $resource2 = new ResourceReference(new Resource('config://resource2', 'resource2', 'Resource 2'), 'method2', false);
+        $resource1 = new ResourceReference(new ResourceDefinition('config://resource1', 'resource1', description: 'Resource 1'), 'method1');
+        $resource2 = new ResourceReference(new ResourceDefinition('config://resource2', 'resource2', description: 'Resource 2'), 'method2');
 
         $discoveryState = new DiscoveryState(
             resources: ['config://resource1' => $resource1, 'config://resource2' => $resource2],
@@ -187,42 +128,28 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                $resources = $state->getResources();
+        $registered = [];
+        $registry->method('registerResource')->willReturnCallback(
+            static function (ResourceDefinition $resource, $handler) use (&$registered) {
+                $registered[] = $resource->uri;
 
-                return 1 === \count($resources) && isset($resources['config://resource1']);
-            }));
-
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
-
-        $disabledFeatures = [
-            'vendor/package-a' => [
-                'config://resource2' => ['enabled' => false],
-            ],
-        ];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
+                return new ResourceReference($resource, $handler);
+            }
         );
 
-        $loader->load($registry);
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [
+            'vendor/package-a' => ['config://resource2' => ['enabled' => false]],
+        ])->load($registry);
+
+        $this->assertSame(['config://resource1'], $registered);
     }
 
     public function testLoadFiltersPrompts()
     {
-        $prompt1 = new PromptReference(new Prompt('prompt1', 'Prompt 1'), 'method1', false);
-        $prompt2 = new PromptReference(new Prompt('prompt2', 'Prompt 2'), 'method2', false);
+        $prompt1 = new PromptReference(new Prompt('prompt1', 'Prompt 1'), 'method1');
+        $prompt2 = new PromptReference(new Prompt('prompt2', 'Prompt 2'), 'method2');
 
         $discoveryState = new DiscoveryState(
             prompts: ['prompt1' => $prompt1, 'prompt2' => $prompt2],
@@ -234,42 +161,28 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                $prompts = $state->getPrompts();
+        $registered = [];
+        $registry->method('registerPrompt')->willReturnCallback(
+            static function (Prompt $prompt, $handler, array $completionProviders = []) use (&$registered) {
+                $registered[] = $prompt->name;
 
-                return 1 === \count($prompts) && isset($prompts['prompt1']);
-            }));
-
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
-
-        $disabledFeatures = [
-            'vendor/package-a' => [
-                'prompt2' => ['enabled' => false],
-            ],
-        ];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
+                return new PromptReference($prompt, $handler, $completionProviders);
+            }
         );
 
-        $loader->load($registry);
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [
+            'vendor/package-a' => ['prompt2' => ['enabled' => false]],
+        ])->load($registry);
+
+        $this->assertSame(['prompt1'], $registered);
     }
 
     public function testLoadFiltersResourceTemplates()
     {
-        $template1 = new ResourceTemplateReference(new ResourceTemplate('config://{key}', 'template1', 'Template 1'), 'method1', false);
-        $template2 = new ResourceTemplateReference(new ResourceTemplate('config://{id}', 'template2', 'Template 2'), 'method2', false);
+        $template1 = new ResourceTemplateReference(new ResourceTemplate('config://{key}', 'template1', 'Template 1'), 'method1');
+        $template2 = new ResourceTemplateReference(new ResourceTemplate('config://{id}', 'template2', 'Template 2'), 'method2');
 
         $discoveryState = new DiscoveryState(
             resourceTemplates: ['template1' => $template1, 'template2' => $template2],
@@ -281,41 +194,27 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                $templates = $state->getResourceTemplates();
+        $registered = [];
+        $registry->method('registerResourceTemplate')->willReturnCallback(
+            static function (ResourceTemplate $template, $handler, array $completionProviders = []) use (&$registered) {
+                $registered[] = $template->name;
 
-                return 1 === \count($templates) && isset($templates['template1']);
-            }));
-
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
-
-        $disabledFeatures = [
-            'vendor/package-a' => [
-                'template2' => ['enabled' => false],
-            ],
-        ];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
+                return new ResourceTemplateReference($template, $handler, $completionProviders);
+            }
         );
 
-        $loader->load($registry);
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [
+            'vendor/package-a' => ['template2' => ['enabled' => false]],
+        ])->load($registry);
+
+        $this->assertSame(['template1'], $registered);
     }
 
     public function testLoadWithEmptyFiltersConfiguration()
     {
-        $tool = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
+        $tool = $this->createToolReference('tool1');
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool],
@@ -327,36 +226,19 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                return 1 === \count($state->getTools());
-            }));
+        $registeredTools = $this->captureRegisteredTools($registry);
 
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [])->load($registry);
 
-        $disabledFeatures = [];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
-        );
-
-        $loader->load($registry);
+        $this->assertSame(['tool1'], $registeredTools->names);
     }
 
     public function testLoadWithMultiplePackages()
     {
-        $tool1 = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
-        $tool2 = new ToolReference(new Tool(name: 'tool2', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method2', false);
+        $tool1 = $this->createToolReference('tool1');
+        $tool2 = $this->createToolReference('tool2');
 
         $discoveryStateA = new DiscoveryState(tools: ['tool1' => $tool1]);
         $discoveryStateB = new DiscoveryState(tools: ['tool2' => $tool2]);
@@ -367,39 +249,19 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturnOnConsecutiveCalls($discoveryStateA, $discoveryStateB);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                return 2 === \count($state->getTools());
-            }));
+        $registeredTools = $this->captureRegisteredTools($registry);
 
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-            'vendor/package-b' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+            'vendor/package-b' => ['dirs' => ['src'], 'includes' => []],
+        ], [])->load($registry);
 
-        $disabledFeatures = [];
-
-        $loader = new FilteredDiscoveryLoader(
-            '/base/path',
-            $bridges,
-            $disabledFeatures,
-            $discoverer,
-            new NullLogger()
-        );
-
-        $loader->load($registry);
+        $this->assertSame(['tool1', 'tool2'], $registeredTools->names);
     }
 
     public function testLoadFiltersNonExistentFeatures()
     {
-        $tool = new ToolReference(new Tool(name: 'tool1', title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null), 'method1', false);
+        $tool = $this->createToolReference('tool1');
 
         $discoveryState = new DiscoveryState(
             tools: ['tool1' => $tool],
@@ -411,34 +273,58 @@ final class FilteredDiscoveryLoaderTest extends TestCase
             ->willReturn($discoveryState);
 
         $registry = $this->createMock(RegistryInterface::class);
-        $registry->expects($this->once())
-            ->method('setDiscoveryState')
-            ->with($this->callback(static function (DiscoveryState $state) {
-                // tool1 should still be present even though nonexistent_tool is configured
-                return 1 === \count($state->getTools()) && isset($state->getTools()['tool1']);
-            }));
+        $registeredTools = $this->captureRegisteredTools($registry);
 
-        $bridges = [
-            'vendor/package-a' => [
-                'dirs' => ['src'],
-                'includes' => [],
-            ],
-        ];
+        $this->createLoader($discoverer, [
+            'vendor/package-a' => ['dirs' => ['src'], 'includes' => []],
+        ], [
+            'vendor/package-a' => ['nonexistent_tool' => ['enabled' => false]],
+        ])->load($registry);
 
-        $disabledFeatures = [
-            'vendor/package-a' => [
-                'nonexistent_tool' => ['enabled' => false],
-            ],
-        ];
+        $this->assertSame(['tool1'], $registeredTools->names);
+    }
 
-        $loader = new FilteredDiscoveryLoader(
+    private function createToolReference(string $name): ToolReference
+    {
+        return new ToolReference(
+            new Tool(name: $name, title: null, inputSchema: ['type' => 'object', 'properties' => [], 'required' => []], description: 'description', annotations: null),
+            'method_'.$name,
+        );
+    }
+
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
+     */
+    private function createLoader(DiscovererInterface $discoverer, array $extensions, array $disabledFeatures): FilteredDiscoveryLoader
+    {
+        return new FilteredDiscoveryLoader(
             '/base/path',
-            $bridges,
+            $extensions,
             $disabledFeatures,
             $discoverer,
-            new NullLogger()
+            new NullLogger(),
+        );
+    }
+
+    /**
+     * Records the names of the tools registered on the given registry mock.
+     */
+    private function captureRegisteredTools(RegistryInterface&\PHPUnit\Framework\MockObject\MockObject $registry): object
+    {
+        $capture = new class {
+            /** @var string[] */
+            public array $names = [];
+        };
+
+        $registry->method('registerTool')->willReturnCallback(
+            static function (Tool $tool, $handler) use ($capture) {
+                $capture->names[] = $tool->name;
+
+                return new ToolReference($tool, $handler);
+            }
         );
 
-        $loader->load($registry);
+        return $capture;
     }
 }

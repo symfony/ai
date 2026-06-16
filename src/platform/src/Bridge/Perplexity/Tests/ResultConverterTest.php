@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Perplexity\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Perplexity\ResultConverter;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -44,6 +45,25 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello world', $result->getContent());
+    }
+
+    public function testConvertThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'The total length of all messages is too long.',
+                'type' => 'too_many_prompt_tokens',
+                'code' => 400,
+            ],
+        ]));
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('The total length of all messages is too long.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
     }
 
     public function testConvertMultipleChoices()

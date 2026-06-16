@@ -5,6 +5,9 @@ CHANGELOG
 ----
 
  * Add OCR support through the `mistral-ocr-latest` model and the `/v1/ocr` endpoint, returning a typed `OcrResult` with pages, layout images and annotations
+ * Throw `ExceedContextSizeException` instead of `BadRequestException` when a 400 response reports a context overflow
+ * Throw `IncompleteStreamException` when a stream ends before a finish reason
+ * Throw `ModelNotFoundException` when a 404 response reports a missing model
 
 0.8
 ---

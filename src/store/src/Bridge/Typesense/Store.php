@@ -89,6 +89,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
+        foreach ($ids as $id) {
+            if (1 !== preg_match('/^[\w.-]+$/', (string) $id)) {
+                throw new InvalidArgumentException(\sprintf('The document id "%s" contains unsupported characters; only letters, digits, "-", "_" and "." are allowed.', $id));
+            }
+        }
+
         $this->request('DELETE', \sprintf(
             'collections/%s/documents?filter_by=id:[%s]',
             $this->collection,

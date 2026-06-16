@@ -373,8 +373,8 @@ options.</p>
     
 </h2>
 <p>Tools let an agent call your PHP code. Any service carrying the
-<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Attribute/AsTool.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Attribute\AsTool" rel="external noopener noreferrer" target="_blank">AsTool</a> attribute is auto-registered, and by
-default every known tool is injected into every agent:</p>
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/Attribute/AsTool.php" class="reference external" title="Symfony\AI\Agent\Toolbox\Attribute\AsTool" rel="external noopener noreferrer" target="_blank">AsTool</a> attribute is auto-registered in the
+tool registry, but each agent has to opt in to the tools it should use:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
         <tbody>
@@ -411,8 +411,8 @@ default every known tool is injected into every agent:</p>
         </tbody>
     </table>
 </div>
-<p>To control which tools an agent receives, list them explicitly — or set <code translate="no" class="notranslate">tools: false</code> to
-disable tools entirely:</p>
+<p>To define which tools an agent receives, list them explicitly — or set <code translate="no" class="notranslate">tools: true</code> to
+inject all registered tools. Without the <code translate="no" class="notranslate">tools</code> option, the agent gets no tools at all:</p>
 <div translate="no" class="highlight-yaml notranslate">
     <table class="highlighttable">
         <tbody>

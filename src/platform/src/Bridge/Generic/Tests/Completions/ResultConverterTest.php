@@ -11,11 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\Generic\Tests\Completions;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -277,6 +280,33 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    /**
+     * @param array{message: string, code?: string|int} $error
+     */
+    #[DataProvider('provideContextOverflowErrors')]
+    public function testThrowsExceedContextSizeExceptionOnContextOverflow(array $error)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode(['error' => $error]));
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage($error['message']);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{array{message: string, code?: string|int}}>
+     */
+    public static function provideContextOverflowErrors(): iterable
+    {
+        yield 'error code' => [['message' => "This model's maximum context length is 128000 tokens.", 'code' => 'context_length_exceeded']];
+        yield 'snake_case code in message' => [['message' => 'Error: context_length_exceeded', 'code' => 400]];
+        yield 'spaced code variant in message' => [['message' => 'Context length exceeded for this request.']];
+    }
+
     public function testThrowsBadRequestExceptionOnBadRequestResponse()
     {
         $converter = new ResultConverter();
@@ -357,14 +387,7 @@ class ResultConverterTest extends TestCase
             ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
         ];
 
-        $httpLike = new class {
-            public function getStatusCode(): int
-            {
-                return 200;
-            }
-        };
-
-        $raw = new InMemoryRawResult([], $events, $httpLike);
+        $raw = new InMemoryRawResult([], $events, $this->httpResponseStub());
         $streamResult = $converter->convert($raw, ['stream' => true]);
 
         $this->assertInstanceOf(StreamResult::class, $streamResult);
@@ -405,5 +428,94 @@ class ResultConverterTest extends TestCase
         $this->assertSame('call_1', $completed[0]->getId());
         $this->assertSame('get_weather', $completed[0]->getName());
         $this->assertSame(['city' => 'Beijing'], $completed[0]->getArguments());
+    }
+
+    public function testStreamingThrowsWhenFinishReasonIsMissing()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hello, ']]]],
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'world!']]]],
+            // stream cut off: no terminal chunk carrying a non-null finish_reason
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $this->expectException(IncompleteStreamException::class);
+        $this->expectExceptionMessage('Completions stream ended before a finish reason was received.');
+
+        iterator_to_array($streamResult->getContent());
+    }
+
+    public function testStreamingDoesNotThrowWhenFinishReasonIsPresent()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hello, ']]]],
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'world!']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = iterator_to_array($streamResult->getContent());
+
+        $this->assertCount(2, $chunks);
+        $this->assertContainsOnlyInstancesOf(TextDelta::class, $chunks);
+    }
+
+    public function testStreamingDoesNotThrowWithUsageOnlyFinalChunk()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hi']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+            ['choices' => [], 'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1, 'total_tokens' => 2]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $textDeltas = array_values(array_filter(iterator_to_array($streamResult->getContent()), static fn ($c) => $c instanceof TextDelta));
+        $this->assertCount(1, $textDeltas);
+        $this->assertSame('Hi', $textDeltas[0]->getText());
+    }
+
+    public function testStreamingDoesNotThrowOnEmptyStream()
+    {
+        $converter = new ResultConverter();
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], [], $this->httpResponseStub()), ['stream' => true]);
+
+        $this->assertSame([], iterator_to_array($streamResult->getContent()));
+    }
+
+    public function testStreamingThrowsOnTopLevelErrorEvent()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'partial']]]],
+            ['error' => ['message' => 'Provider exploded mid-stream', 'code' => 'server_error']],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Stream error: "Provider exploded mid-stream".');
+
+        iterator_to_array($streamResult->getContent());
+    }
+
+    private function httpResponseStub(): object
+    {
+        return new class {
+            public function getStatusCode(): int
+            {
+                return 200;
+            }
+        };
     }
 }

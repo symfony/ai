@@ -57,9 +57,16 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             SystemMessage::class => new SystemMessage($content),
             AssistantMessage::class => new AssistantMessage(...self::denormalizeAssistantParts($data)),
             UserMessage::class => new UserMessage(...array_map(
-                static fn (array $contentAsBase64): ContentInterface => \in_array($contentAsBase64['type'], [File::class, Image::class, Audio::class], true)
-                    ? $contentAsBase64['type']::fromDataUrl($contentAsBase64['content'])
-                    : new $contentAsBase64['type']($contentAsBase64['content']),
+                static fn (array $part): ContentInterface => match ($part['type']) {
+                    File::class,
+                    Document::class,
+                    Image::class,
+                    Audio::class => $part['type']::fromDataUrl($part['content']),
+                    Text::class => new Text($part['content']),
+                    ImageUrl::class => new ImageUrl($part['content']),
+                    DocumentUrl::class => new DocumentUrl($part['content']),
+                    default => throw new LogicException(\sprintf('Unknown content type "%s".', $part['type'])),
+                },
                 $contentAsBase64,
             )),
             ToolCallMessage::class => new ToolCallMessage(

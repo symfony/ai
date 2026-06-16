@@ -131,6 +131,33 @@ final class MessageBagTest extends TestCase
         $this->assertSame('Hello, world!', $userMessage->getContent()[0]->getText());
     }
 
+    public function testWithoutToolMessages()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('What is the weather?'),
+            Message::ofAssistant(new ToolCall('id1', 'get_weather', ['city' => 'Paris'])),
+            Message::ofToolCall(new ToolCall('id1', 'get_weather', ['city' => 'Paris']), 'It is sunny.'),
+            Message::ofAssistant('The weather in Paris is sunny.'),
+            Message::ofAssistant('Let me check again.', new ToolCall('id2', 'get_weather', ['city' => 'Paris'])),
+        );
+
+        $newMessageBag = $messageBag->withoutToolMessages();
+
+        $this->assertCount(5, $messageBag);
+        $this->assertCount(3, $newMessageBag);
+
+        $userMessage = $newMessageBag->getMessages()[0];
+        $this->assertInstanceOf(UserMessage::class, $userMessage);
+
+        $assistantMessage = $newMessageBag->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertSame('The weather in Paris is sunny.', $assistantMessage->asText());
+
+        $assistantWithToolCall = $newMessageBag->getMessages()[2];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantWithToolCall);
+        $this->assertSame('Let me check again.', $assistantWithToolCall->asText());
+    }
+
     public function testWithSystemMessage()
     {
         $messageBag = new MessageBag(

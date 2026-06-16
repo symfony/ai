@@ -240,6 +240,7 @@ return static function (ContainerConfigurator $container): void {
                 service('event_dispatcher')->nullOnInvalid(),
                 false,
                 false,
+                abstract_arg('Maximum tool calls'),
             ])
         ->set('ai.tool.validate_tool_call_arguments_listener', ValidateToolCallArgumentsListener::class)
             ->args([

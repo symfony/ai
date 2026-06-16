@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Throw `IncompleteStreamException` when a stream ends before a `done` message
+
 0.8
 ---
 

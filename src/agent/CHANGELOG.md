@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add `SystemPromptInputProcessor::getSystemPrompt()` to read the configured system prompt without reflection
+ * [BC BREAK] Change the default value of the `maxToolCalls` parameter of `AgentProcessor` from `null` (unbounded) to `50`. Pass `null` explicitly to restore the previous unbounded behaviour.
 
 0.8
 ---

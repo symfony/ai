@@ -25,7 +25,7 @@ $messages = new MessageBag(
 // gpt-oss-120b uses the Open Responses bridge to talk to Scaleway's Responses API.
 $result = $platform->invoke('gpt-oss-120b', $messages, [
     'reasoning' => ['effort' => 'medium'],
-    'max_output_tokens' => 200,
+    'max_output_tokens' => 2000,
 ]);
 
 echo $result->asText().\PHP_EOL;

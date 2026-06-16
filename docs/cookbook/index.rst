@@ -16,6 +16,7 @@ Getting Started Guides
     human-in-the-loop
     multi-agent-orchestration
     chatbot-with-memory
+    context-compression
     rag-implementation
     build-an-mcp-server
 
@@ -36,6 +37,7 @@ Memory & Context Management
 ---------------------------
 
 * :doc:`chatbot-with-memory` - Build chatbots that remember user preferences and conversation history
+* :doc:`context-compression` - Manage long conversations with automatic context compression
 
 Platform Features
 -----------------

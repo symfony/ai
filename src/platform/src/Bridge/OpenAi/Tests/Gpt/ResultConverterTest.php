@@ -11,11 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Gpt;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -281,6 +284,26 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    public function testThrowsExceedContextSizeExceptionOnContextLengthExceeded()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => "This model's maximum context length is 128000 tokens. However, your messages resulted in 145575 tokens.",
+                'type' => 'invalid_request_error',
+                'param' => 'messages',
+                'code' => 'context_length_exceeded',
+            ],
+        ]));
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('maximum context length is 128000 tokens');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testThrowsBadRequestExceptionOnBadRequestResponse()
     {
         $converter = new ResultConverter();
@@ -421,6 +444,123 @@ class ResultConverterTest extends TestCase
         $this->assertSame('call_123', $chunks[0]->getToolCalls()[0]->getId());
         $this->assertSame('get_weather', $chunks[0]->getToolCalls()[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $chunks[0]->getToolCalls()[0]->getArguments());
+    }
+
+    public function testStreamYieldsToolCallCompleteFromOutputItemDone()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            [
+                'type' => 'response.output_item.done',
+                'item' => [
+                    'type' => 'function_call',
+                    'id' => 'call_123',
+                    'name' => 'get_weather',
+                    'arguments' => '{"city":"Berlin"}',
+                ],
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+        $chunks = iterator_to_array($streamResult->getContent());
+
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertSame('call_123', $chunks[0]->getToolCalls()[0]->getId());
+        $this->assertSame('get_weather', $chunks[0]->getToolCalls()[0]->getName());
+        $this->assertSame(['city' => 'Berlin'], $chunks[0]->getToolCalls()[0]->getArguments());
+    }
+
+    public function testStreamThrowsWhenResponseCompletedIsMissing()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $raw = new InMemoryRawResult([], [
+            [
+                'type' => 'response.output_text.delta',
+                'delta' => 'Hello',
+            ],
+        ], $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->expectException(IncompleteStreamException::class);
+        $this->expectExceptionMessage('OpenAI Responses stream ended before response.completed.');
+
+        iterator_to_array($streamResult->getContent());
+    }
+
+    /**
+     * @param list<array<string, mixed>> $events
+     */
+    #[DataProvider('provideStreamTerminalErrorEvents')]
+    public function testStreamThrowsExceptionOnTerminalErrorEvents(array $events, string $expectedMessage)
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        iterator_to_array($streamResult->getContent());
+    }
+
+    /**
+     * @return iterable<string, array{0: list<array<string, mixed>>, 1: string}>
+     */
+    public static function provideStreamTerminalErrorEvents(): iterable
+    {
+        yield 'top-level error' => [[
+            [
+                'type' => 'error',
+                'code' => 'insufficient_quota',
+                'message' => 'You exceeded your current quota',
+                'param' => null,
+                'sequence_number' => 2,
+            ],
+        ], 'Error "insufficient_quota"-- (-): "You exceeded your current quota".'];
+
+        yield 'response failed' => [[
+            [
+                'type' => 'response.failed',
+                'response' => [
+                    'error' => [
+                        'code' => 'server_error',
+                        'message' => 'The model failed to generate a response',
+                    ],
+                ],
+            ],
+        ], 'Error "server_error"-- (-): "The model failed to generate a response".'];
+
+        yield 'response incomplete' => [[
+            [
+                'type' => 'response.incomplete',
+                'response' => [
+                    'incomplete_details' => [
+                        'reason' => 'max_output_tokens',
+                    ],
+                ],
+            ],
+        ], 'OpenAI Responses stream ended incomplete (max_output_tokens).'];
     }
 
     public function testStreamThrowsExceptionOnErrorEvent()

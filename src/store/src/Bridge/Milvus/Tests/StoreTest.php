@@ -240,6 +240,38 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCanRemove()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = json_decode($options['body'] ?? '{}', true);
+
+            return new JsonMockResponse(['code' => 0], ['http_code' => 200]);
+        }, 'http://127.0.0.1:19530');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:19530', 'test', 'test', 'test_collection');
+        $store->remove('abc');
+
+        $this->assertSame('id in ["abc"]', $body['filter']);
+    }
+
+    public function testStoreRemoveNeutralizesInjectedId()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = json_decode($options['body'] ?? '{}', true);
+
+            return new JsonMockResponse(['code' => 0], ['http_code' => 200]);
+        }, 'http://127.0.0.1:19530');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:19530', 'test', 'test', 'test_collection');
+
+        // A trailing backslash must not escape the closing quote of the string literal.
+        $store->remove(['a\\', ' or id != "x']);
+
+        $this->assertSame('id in ["a\\\\"," or id != \"x"]', $body['filter']);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'http://localhost:19530', 'test-api-key', 'default', 'test_collection');

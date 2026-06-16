@@ -77,7 +77,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $recordIds = array_map(fn (string $id) => \sprintf('%s:`%s`', $this->table, $id), $ids);
+        $recordIds = array_map(fn (string $id) => \sprintf('type::thing(%s, %s)', $this->escapeString($this->table), $this->escapeString($id)), $ids);
         $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
@@ -110,6 +110,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->authenticate();
 
         $this->request('DELETE', \sprintf('key/%s', $this->table), []);
+    }
+
+    /**
+     * Escapes a value as a single-quoted SurrealQL string literal so it cannot
+     * break out of its context, even when sourced from untrusted input.
+     */
+    private function escapeString(string $value): string
+    {
+        return "'".str_replace(['\\', "'"], ['\\\\', "\\'"], $value)."'";
     }
 
     /**

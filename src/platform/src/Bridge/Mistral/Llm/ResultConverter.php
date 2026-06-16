@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -45,6 +46,16 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         $httpResponse = $result->getObject();
+
+        if (400 === $httpResponse->getStatusCode()) {
+            $body = json_decode($httpResponse->getContent(false), true) ?? [];
+            $code = $body['error']['code'] ?? $body['code'] ?? null;
+            $message = $body['error']['message'] ?? $body['message'] ?? '';
+
+            if ('context_length_exceeded' === $code || str_contains($message, 'maximum context length')) {
+                throw new ExceedContextSizeException('' !== $message ? $message : 'Context size exceeded');
+            }
+        }
 
         $this->throwOnHttpError($httpResponse);
 

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\HuggingFace;
 
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -22,6 +23,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -82,7 +85,7 @@ final class ModelClient implements ModelClientInterface
             }
 
             return [
-                'json' => ['inputs' => $inputs],
+                'body' => $this->encodeJsonBody(['inputs' => $inputs]),
                 'headers' => ['Content-Type' => 'application/json'],
             ];
         }
@@ -104,6 +107,12 @@ final class ModelClient implements ModelClientInterface
         // Third-party providers need the model name in the JSON body
         if (Task::CHAT_COMPLETION === $task && Provider::HF_INFERENCE !== $provider && isset($payload['json'])) {
             $payload['json']['model'] = $model->getName();
+        }
+
+        // Encode the JSON payload ourselves to tolerate malformed UTF-8 (e.g. raw tool output)
+        if (isset($payload['json'])) {
+            $payload['body'] = $this->encodeJsonBody($payload['json']);
+            unset($payload['json']);
         }
 
         $payload['headers'] ??= ['Content-Type' => 'application/json'];

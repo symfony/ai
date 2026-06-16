@@ -52,7 +52,21 @@ final class FilteredDiscoveryLoader implements LoaderInterface
             );
         }
 
-        $registry->setDiscoveryState($filteredState);
+        foreach ($filteredState->getTools() as $reference) {
+            $registry->registerTool($reference->tool, $reference->handler);
+        }
+
+        foreach ($filteredState->getResources() as $reference) {
+            $registry->registerResource($reference->resource, $reference->handler);
+        }
+
+        foreach ($filteredState->getResourceTemplates() as $reference) {
+            $registry->registerResourceTemplate($reference->resourceTemplate, $reference->handler, $reference->completionProviders);
+        }
+
+        foreach ($filteredState->getPrompts() as $reference) {
+            $registry->registerPrompt($reference->prompt, $reference->handler, $reference->completionProviders);
+        }
 
         $this->logger->info('Loaded filtered capabilities', [
             'tools' => \count($filteredState->getTools()),

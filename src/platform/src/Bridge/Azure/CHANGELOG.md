@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Throw a clear exception when a non-streaming Responses response is incomplete or yields no content, instead of building an empty `MultiPartResult`
+
 0.8
 ---
 

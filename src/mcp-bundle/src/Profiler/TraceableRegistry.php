@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\McpBundle\Profiler;
 
-use Mcp\Capability\Discovery\DiscoveryState;
 use Mcp\Capability\Registry\PromptReference;
 use Mcp\Capability\Registry\ResourceReference;
 use Mcp\Capability\Registry\ResourceTemplateReference;
@@ -19,7 +18,7 @@ use Mcp\Capability\Registry\ToolReference;
 use Mcp\Capability\RegistryInterface;
 use Mcp\Schema\Page;
 use Mcp\Schema\Prompt;
-use Mcp\Schema\Resource;
+use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Tool;
 
@@ -35,47 +34,70 @@ final class TraceableRegistry implements RegistryInterface
     ) {
     }
 
-    public function registerTool(Tool $tool, callable|array|string $handler, bool $isManual = false): void
+    public function registerTool(Tool $tool, callable|array|string $handler): ToolReference
     {
-        $this->registry->registerTool($tool, $handler, $isManual);
+        return $this->registry->registerTool($tool, $handler);
     }
 
-    public function registerResource(Resource $resource, callable|array|string $handler, bool $isManual = false): void
+    public function registerResource(ResourceDefinition $resource, callable|array|string $handler): ResourceReference
     {
-        $this->registry->registerResource($resource, $handler, $isManual);
+        return $this->registry->registerResource($resource, $handler);
     }
 
     public function registerResourceTemplate(
         ResourceTemplate $template,
         callable|array|string $handler,
         array $completionProviders = [],
-        bool $isManual = false,
-    ): void {
-        $this->registry->registerResourceTemplate($template, $handler, $completionProviders, $isManual);
+    ): ResourceTemplateReference {
+        return $this->registry->registerResourceTemplate($template, $handler, $completionProviders);
     }
 
     public function registerPrompt(
         Prompt $prompt,
         callable|array|string $handler,
         array $completionProviders = [],
-        bool $isManual = false,
-    ): void {
-        $this->registry->registerPrompt($prompt, $handler, $completionProviders, $isManual);
+    ): PromptReference {
+        return $this->registry->registerPrompt($prompt, $handler, $completionProviders);
     }
 
-    public function clear(): void
+    public function unregisterTool(string $name): void
     {
-        $this->registry->clear();
+        $this->registry->unregisterTool($name);
     }
 
-    public function getDiscoveryState(): DiscoveryState
+    public function unregisterResource(string $uri): void
     {
-        return $this->registry->getDiscoveryState();
+        $this->registry->unregisterResource($uri);
     }
 
-    public function setDiscoveryState(DiscoveryState $state): void
+    public function unregisterResourceTemplate(string $uriTemplate): void
     {
-        $this->registry->setDiscoveryState($state);
+        $this->registry->unregisterResourceTemplate($uriTemplate);
+    }
+
+    public function unregisterPrompt(string $name): void
+    {
+        $this->registry->unregisterPrompt($name);
+    }
+
+    public function hasTool(string $name): bool
+    {
+        return $this->registry->hasTool($name);
+    }
+
+    public function hasResource(string $uri): bool
+    {
+        return $this->registry->hasResource($uri);
+    }
+
+    public function hasResourceTemplate(string $uriTemplate): bool
+    {
+        return $this->registry->hasResourceTemplate($uriTemplate);
+    }
+
+    public function hasPrompt(string $name): bool
+    {
+        return $this->registry->hasPrompt($name);
     }
 
     public function hasTools(): bool

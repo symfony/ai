@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -46,12 +47,18 @@ class ResultConverter implements ResultConverterInterface
         $response = $result->getObject();
 
         if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Authentication failed.';
             throw new AuthenticationException($errorMessage);
         }
 
         if (400 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+            $error = json_decode($response->getContent(false), true)['error'] ?? [];
+            $errorMessage = $error['message'] ?? 'Bad Request';
+
+            if ('context_length_exceeded' === ($error['code'] ?? null) || preg_match('/context[_ ]length[_ ]exceeded/i', $errorMessage)) {
+                throw new ExceedContextSizeException($errorMessage);
+            }
+
             throw new BadRequestException($errorMessage);
         }
 

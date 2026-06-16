@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -38,8 +39,23 @@ trait CompletionsConversionTrait
     {
         $toolCalls = [];
         $reasoning = '';
+        $sawChunk = false;
+        $sawFinishReason = false;
 
         foreach ($result->getDataStream() as $data) {
+            if (isset($data['error'])) {
+                $message = \is_array($data['error']) ? ($data['error']['message'] ?? 'Unknown error') : (string) $data['error'];
+                throw new RuntimeException(\sprintf('Stream error: "%s".', $message));
+            }
+
+            $sawChunk = true;
+
+            // A non-null finish_reason on the leading choice marks the terminal content chunk.
+            // It is null on every non-final chunk, and a trailing usage-only chunk has choices: [].
+            if (null !== ($data['choices'][0]['finish_reason'] ?? null)) {
+                $sawFinishReason = true;
+            }
+
             if (isset($data['usage'])) {
                 yield $this->convertStreamUsage($data['usage']);
             }
@@ -74,6 +90,10 @@ trait CompletionsConversionTrait
 
         if ('' !== $reasoning) {
             yield new ThinkingComplete($reasoning);
+        }
+
+        if ($sawChunk && !$sawFinishReason) {
+            throw new IncompleteStreamException('Completions stream ended before a finish reason was received.');
         }
     }
 

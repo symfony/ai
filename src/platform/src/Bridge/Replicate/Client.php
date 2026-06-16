@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Replicate;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -21,6 +22,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class Client
 {
+    use JsonBodyEncodingTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly ClockInterface $clock,
@@ -39,7 +42,7 @@ final class Client
         $response = $this->httpClient->request('POST', $url, [
             'headers' => ['Content-Type' => 'application/json'],
             'auth_bearer' => $this->apiKey,
-            'json' => ['input' => $body],
+            'body' => $this->encodeJsonBody(['input' => $body]),
         ]);
         $data = $response->toArray(false);
 

@@ -63,7 +63,7 @@ final class TwigComponent
      */
     public function getMessages(): array
     {
-        return $this->youTube->loadMessages()->withoutSystemMessage()->getMessages();
+        return $this->youTube->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
     #[LiveAction]

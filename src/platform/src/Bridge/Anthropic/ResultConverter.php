@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\Bridge\Anthropic;
 
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -58,6 +60,11 @@ class ResultConverter implements ResultConverterInterface
 
         if (400 === $response->getStatusCode()) {
             $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+
+            if (str_contains($errorMessage, 'prompt is too long')) {
+                throw new ExceedContextSizeException($errorMessage);
+            }
+
             throw new BadRequestException($errorMessage);
         }
 
@@ -135,17 +142,37 @@ class ResultConverter implements ResultConverterInterface
         $currentToolCallJson = '';
         $currentThinking = null;
         $currentThinkingSignature = null;
+        $inMessage = false;
 
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
 
-            // Handle usage from message_start and message_delta
+            if ('error' === $type) {
+                throw new RuntimeException($data['error']['message'] ?? 'Unknown Anthropic stream error.');
+            }
+
+            if ('message_start' === $type) {
+                $inMessage = true;
+            }
+
+            // Anthropic reports usage in both message_start and message_delta:
+            // message_start carries the prompt and cache token counts plus a
+            // provisional output_tokens, and message_delta repeats the same
+            // cumulative prompt/cache counts with the final output_tokens. As
+            // the stream aggregation sums every yielded usage, emitting the full
+            // payload from both events would double-count input and cache tokens.
+            // Yield the prompt/cache counts once (message_start, without the
+            // provisional output) and the final output once (message_delta).
             if ('message_start' === $type && isset($data['message']['usage'])) {
-                yield $this->getTokenUsageExtractor()->extractFromArray($data['message']['usage']);
+                $usage = $data['message']['usage'];
+                unset($usage['output_tokens']);
+                yield $this->getTokenUsageExtractor()->extractFromArray($usage);
             }
 
             if ('message_delta' === $type && isset($data['usage'])) {
-                yield $this->getTokenUsageExtractor()->extractFromArray($data['usage']);
+                yield $this->getTokenUsageExtractor()->extractFromArray([
+                    'output_tokens' => $data['usage']['output_tokens'] ?? 0,
+                ]);
             }
 
             // Handle text content deltas
@@ -239,9 +266,17 @@ class ResultConverter implements ResultConverterInterface
             }
 
             // Handle message stop - yield tool calls if any were collected
-            if ('message_stop' === $type && [] !== $toolCalls) {
-                yield new ToolCallComplete($toolCalls);
+            if ('message_stop' === $type) {
+                $inMessage = false;
+
+                if ([] !== $toolCalls) {
+                    yield new ToolCallComplete($toolCalls);
+                }
             }
+        }
+
+        if ($inMessage) {
+            throw new IncompleteStreamException('Anthropic stream ended before message_stop.');
         }
     }
 }

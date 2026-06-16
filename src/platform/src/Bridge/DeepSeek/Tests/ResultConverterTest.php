@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\DeepSeek\DeepSeek;
 use Symfony\AI\Platform\Bridge\DeepSeek\ResultConverter;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\InvalidRequestException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -121,6 +122,27 @@ final class ResultConverterTest extends TestCase
                 'message' => 'Content filtered',
             ],
         ]));
+
+        $httpResponse = $httpClient->request('POST', 'https://api.deepseek.com/chat/completions');
+        $converter = new ResultConverter();
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('maximum context length');
+
+        // DeepSeek reports context overflows with the generic "invalid_request_error" code,
+        // so detection has to key off the message rather than a dedicated code.
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'error' => [
+                'message' => "This model's maximum context length is 65536 tokens. However, you requested 600018 tokens.",
+                'type' => 'invalid_request_error',
+                'code' => 'invalid_request_error',
+            ],
+        ], ['http_code' => 400]));
 
         $httpResponse = $httpClient->request('POST', 'https://api.deepseek.com/chat/completions');
         $converter = new ResultConverter();

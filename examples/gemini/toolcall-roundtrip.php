@@ -24,7 +24,7 @@ $platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());
 
 $toolbox = new Toolbox([new Clock(), new EuropeanCapitalsTool()], logger: logger());
 $processor = new AgentProcessor($toolbox);
-$agent = new Agent($platform, 'gemini-3-pro-preview', [$processor], [$processor]);
+$agent = new Agent($platform, 'gemini-3.1-pro-preview', [$processor], [$processor]);
 
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),

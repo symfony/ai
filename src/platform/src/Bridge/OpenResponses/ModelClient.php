@@ -12,9 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\OpenResponses;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\RawSseStream;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -24,6 +26,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -56,13 +60,16 @@ class ModelClient implements ModelClientInterface
         }
 
         $requestOptions = [
-            'json' => array_merge($options, ['model' => $model->getName()], $payload),
+            'headers' => ['Content-Type' => 'application/json'],
+            'body' => $this->encodeJsonBody(array_merge($options, ['model' => $model->getName()], $payload)),
         ];
 
         if (null !== $this->apiKey) {
             $requestOptions['auth_bearer'] = $this->apiKey;
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, $requestOptions));
+        // The ChatGPT Codex backend streams SSE without a text/event-stream
+        // content type, so use a stream parser that handles that framing too.
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, $requestOptions), new RawSseStream());
     }
 }

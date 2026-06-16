@@ -13,6 +13,63 @@ Agent
    +$agent->call(clone $messages);
    ```
 
+   Alternatively, if you do want to keep the appended messages in your bag (e.g. for conversation
+   history) but need to render or re-send only the conversational messages, strip the tool-call
+   messages and tool-call-only assistant messages with the new `MessageBag::withoutToolMessages()`:
+
+   ```diff
+   -$messages->withoutSystemMessage()->getMessages();
+   +$messages->withoutSystemMessage()->withoutToolMessages()->getMessages();
+   ```
+
+ * The `maxToolCalls` parameter of `AgentProcessor` now defaults to `50` instead of `null`. The tool-calling
+   loop is therefore bounded out of the box and throws a `MaxIterationsExceededException` once the limit is
+   reached. If you relied on the previous unbounded behaviour, pass `null` explicitly:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox);
+   +$processor = new AgentProcessor($toolbox, maxToolCalls: null);
+   ```
+
+   To raise or lower the cap instead, pass the desired value:
+
+   ```diff
+   -$processor = new AgentProcessor($toolbox);
+   +$processor = new AgentProcessor($toolbox, maxToolCalls: 75);
+   ```
+
+AI Bundle
+---------
+
+ * Agent tools are now opt-in. Previously, when an agent did not configure the `tools` option, all
+   services tagged with `ai.tool` (e.g. classes using the `#[AsTool]` attribute) were injected into
+   the agent's toolbox. Now an agent without the `tools` option (or with `tools` set to `null` or an
+   empty list) gets no toolbox at all. To keep the previous behavior, enable tools explicitly:
+
+   ```diff
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+   +            tools: true
+   ```
+
+   Configuring an explicit list of tools, or `tools: false`, keeps working unchanged. Additionally,
+   enabling `prompt.include_tools` for an agent without configured tools now throws an exception.
+
+ * Tool-calling agents are now bounded by default. Following the `AgentProcessor` change above, an
+   agent's tool-calling loop is capped at `50` iterations and throws a `MaxIterationsExceededException`
+   once exceeded. Configure the cap per agent via the new `max_tool_calls` option, or set it to `null`
+   to restore the previous unbounded behaviour:
+
+   ```diff
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+   +            max_tool_calls: null # or any integer to adjust the cap
+   ```
+
 Platform
 --------
 
@@ -68,6 +125,24 @@ Platform
 
    -public function supports(string $model): bool
    +public function supports(string|Model $model): bool
+   ```
+
+ * The Anthropic, Generic, OpenAI, OpenResponses, Cerebras, DeepSeek, Mistral, Cohere, Gemini,
+   Perplexity, Scaleway, and VertexAI bridges now throw `ExceedContextSizeException` when a 400
+   response reports a context overflow (previously `BadRequestException`, or a generic
+   `RuntimeException` for the Scaleway and VertexAI bridges). As `ExceedContextSizeException` does
+   not extend `BadRequestException`, catch it explicitly:
+
+   ```diff
+   +use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+
+    try {
+        $result = $platform->invoke($model, $messages)->getResult();
+   +} catch (ExceedContextSizeException $e) {
+   +    // shrink the conversation and retry
+    } catch (BadRequestException $e) {
+        // ...
+    }
    ```
 
 Store

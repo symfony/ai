@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Tests\Gemini;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -53,6 +54,26 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello, world!', $result->getContent());
+    }
+
+    public function testItThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(400);
+        $response->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'code' => 400,
+                'status' => 'INVALID_ARGUMENT',
+                'message' => 'The input token count (1294145) exceeds the maximum number of tokens allowed (1048576).',
+            ],
+        ]));
+
+        $resultConverter = new ResultConverter();
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('exceeds the maximum number of tokens allowed');
+
+        $resultConverter->convert(new RawHttpResult($response));
     }
 
     public function testItReturnsAggregatedTextOnSuccess()

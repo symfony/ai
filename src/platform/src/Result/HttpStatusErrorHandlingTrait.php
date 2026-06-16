@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -22,7 +23,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  *
  * Translates the common 4xx/429 responses returned by AI providers into
  * dedicated platform exceptions so consumers can react to auth failures,
- * bad requests and rate limits without parsing error bodies themselves.
+ * bad requests, missing models and rate limits without parsing error bodies
+ * themselves.
  *
  * Error bodies are parsed leniently: both the nested `error.message` shape
  * (OpenAI, Gemini, Perplexity) and the flat top-level `message` shape
@@ -47,6 +49,10 @@ trait HttpStatusErrorHandlingTrait
 
         if (400 === $status) {
             throw new BadRequestException($this->extractErrorMessage($response) ?? 'Bad Request');
+        }
+
+        if (404 === $status) {
+            throw new ModelNotFoundException($this->extractErrorMessage($response) ?? 'Not Found');
         }
 
         if (429 === $status) {

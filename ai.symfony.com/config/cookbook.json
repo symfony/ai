@@ -56,6 +56,15 @@
         ]
     },
     {
+        "slug": "context-compression",
+        "title": "Context Compression",
+        "description": "Keep long conversations within context limits using a sliding window or summarization.",
+        "icon": "arrows-minimize",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
         "slug": "rag-implementation",
         "title": "Build a RAG Pipeline",
         "description": "Index documents into a vector store and query them with an AI agent.",

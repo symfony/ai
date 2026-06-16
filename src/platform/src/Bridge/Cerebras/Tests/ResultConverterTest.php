@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Bridge\Cerebras\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cerebras\Model;
 use Symfony\AI\Platform\Bridge\Cerebras\ResultConverter;
+use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -148,6 +150,43 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_def456', $result->getContent()[1]->getId());
         $this->assertSame('get_weather', $result->getContent()[1]->getName());
         $this->assertSame(['location' => 'London'], $result->getContent()[1]->getArguments());
+    }
+
+    public function testConvertThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('Please reduce the length of the messages');
+
+        // Cerebras returns a flat error body whose message carries no "context length" hint,
+        // so detection has to rely on the "context_length_exceeded" code.
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'message' => 'Please reduce the length of the messages or completion. Current length is 300088 while limit is 131000',
+            'type' => 'invalid_request_error',
+            'param' => 'messages',
+            'code' => 'context_length_exceeded',
+        ], ['http_code' => 400]));
+
+        $httpResponse = $httpClient->request('POST', 'https://api.cerebras.ai/v1/chat/completions');
+        $converter = new ResultConverter();
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertThrowsBadRequestExceptionOnOtherBadRequestErrors()
+    {
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('Invalid model specified');
+
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'error' => [
+                'message' => 'Invalid model specified',
+            ],
+        ], ['http_code' => 400]));
+
+        $httpResponse = $httpClient->request('POST', 'https://api.cerebras.ai/v1/chat/completions');
+        $converter = new ResultConverter();
+
+        $converter->convert(new RawHttpResult($httpResponse));
     }
 
     public function testConvertThrowsOnApiError()

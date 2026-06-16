@@ -85,4 +85,18 @@ final class ModelClientTest extends TestCase
         );
         $this->assertTrue($requestMade);
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) {
+            self::assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            self::assertJson($options['body']);
+            self::assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new JsonMockResponse(['choices' => [['message' => ['content' => 'Hello'], 'finish_reason' => 'stop']]]);
+        });
+
+        $modelClient = new ModelClient($httpClient, 'test-api-key');
+        $modelClient->request(new DeepSeek('deepseek-chat'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
 }

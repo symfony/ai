@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -27,8 +28,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 final class HttpStatusErrorHandlingTraitTest extends TestCase
 {
     /**
-     * Any status outside the 400/401/429 trio - success, redirect, server-error -
-     * is passed through untouched for the calling converter to handle.
+     * Any status outside the handled 400/401/404/429 set - success, redirect,
+     * server-error - is passed through untouched for the calling converter to handle.
      */
     #[DataProvider('unhandledStatusCodes')]
     public function testDoesNotThrowForUnhandledStatusCodes(int $status)
@@ -136,6 +137,45 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
 
         $this->expectException(BadRequestException::class);
         $this->expectExceptionMessage('Bad Request');
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
+    public function testThrowsModelNotFoundExceptionOn404WithNestedErrorMessage()
+    {
+        $response = $this->response(json_encode([
+            'error' => [
+                'message' => 'The model `foo` does not exist',
+            ],
+        ]), 404);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('The model `foo` does not exist');
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
+    /**
+     * Flat top-level `message` is emitted by Mistral, Cerebras and Cohere.
+     */
+    public function testThrowsModelNotFoundExceptionOn404WithFlatMessage()
+    {
+        $response = $this->response(json_encode([
+            'message' => 'Model llama3.1-8b does not exist or you do not have access to it.',
+        ]), 404);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('Model llama3.1-8b does not exist or you do not have access to it.');
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
+    public function testThrowsModelNotFoundExceptionOn404WithEmptyBody()
+    {
+        $response = $this->response('', 404);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('Not Found');
 
         $this->subject()->throwOnHttpError($response);
     }

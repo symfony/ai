@@ -169,8 +169,8 @@ Step 5: Give the Agent Tools
 ----------------------------
 
 Tools let an agent call your PHP code. Any service carrying the
-:class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute is auto-registered, and by
-default every known tool is injected into every agent::
+:class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute is auto-registered in the
+tool registry, but each agent has to opt in to the tools it should use::
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
@@ -183,8 +183,8 @@ default every known tool is injected into every agent::
         }
     }
 
-To control which tools an agent receives, list them explicitly — or set ``tools: false`` to
-disable tools entirely:
+To define which tools an agent receives, list them explicitly — or set ``tools: true`` to
+inject all registered tools. Without the ``tools`` option, the agent gets no tools at all:
 
 .. code-block:: yaml
 

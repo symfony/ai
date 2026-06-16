@@ -92,4 +92,18 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'global', 'test');
         $client->request(new Model('gemini-2.0-flash'), $payload, ['server_tools' => ['google_search' => true]]);
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            $this->assertJson($options['body']);
+            $this->assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'global', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => [['parts' => [['text' => "tool output \xB1 here"]]]]]);
+    }
 }

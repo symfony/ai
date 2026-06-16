@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * [BC BREAK] Agent tools are now opt-in: when the `tools` option is not configured (or set to `null` or
+   an empty list), no toolbox is registered for the agent. Set `tools: true` to restore the previous
+   behavior of injecting all services tagged with `ai.tool`
+ * Throw an exception when `prompt.include_tools` is enabled for an agent without configured tools
+ * [BC BREAK] Cap an agent's tool-calling loop at `50` iterations by default (following the `AgentProcessor` change). Configure the limit per agent via the new `max_tool_calls` option, or set it to `null` to restore the previous unbounded behaviour
+
 0.9
 ---
 

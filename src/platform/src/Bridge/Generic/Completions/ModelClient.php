@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -27,6 +28,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -65,7 +68,7 @@ class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, $payload),
+            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
     }
 }

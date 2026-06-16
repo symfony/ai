@@ -92,4 +92,19 @@ class ModelClientTest extends TestCase
 
         $this->assertSame($eventSourceHttpClient, $reflection->getValue($client));
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            self::assertJson($options['body']);
+            self::assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'http://localhost:1234');
+        $client->request(new Completions('test-model'), ['model' => 'test-model', 'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
 }

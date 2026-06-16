@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Azure\Meta;
 
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -23,6 +24,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class LlamaModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $baseUrl,
@@ -48,7 +51,7 @@ final class LlamaModelClient implements ModelClientInterface
                 'Content-Type' => 'application/json',
                 'Authorization' => $this->apiKey,
             ],
-            'json' => array_merge($options, $payload),
+            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
     }
 }

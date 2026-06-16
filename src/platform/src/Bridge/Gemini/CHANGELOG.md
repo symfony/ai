@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Throw `ExceedContextSizeException` instead of `BadRequestException` when a 400 response reports a context overflow
+ * Throw `ModelNotFoundException` when a 404 response reports a missing model
+
 0.9
 ---
 

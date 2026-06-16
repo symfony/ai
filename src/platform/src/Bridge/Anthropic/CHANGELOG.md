@@ -4,6 +4,9 @@ CHANGELOG
 0.10
 ----
 
+ * Throw `ExceedContextSizeException` instead of `BadRequestException` when a 400 response reports a context overflow
+ * Throw `IncompleteStreamException` when a stream ends before `message_stop`
+ * Replace malformed UTF-8 sequences in request bodies instead of aborting the request
  * Allow overriding `tool_choice` via caller options instead of always forcing `['type' => 'auto']`
 
 0.9

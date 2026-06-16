@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Scaleway\Llm;
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
 use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -47,6 +48,15 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (isset($data['error'])) {
+            $errorMessage = $data['error']['message'] ?? '';
+
+            if ('context_length_exceeded' === ($data['error']['code'] ?? null)
+                || str_contains($errorMessage, 'context length')
+                || str_contains($errorMessage, 'max_model_len')
+            ) {
+                throw new ExceedContextSizeException('' !== $errorMessage ? $errorMessage : 'Context size exceeded');
+            }
+
             throw new RuntimeException(\sprintf('Error "%s": "%s".', $data['error']['type'] ?? $data['error']['code'] ?? 'unknown', $data['error']['message'] ?? 'Unknown error'));
         }
 

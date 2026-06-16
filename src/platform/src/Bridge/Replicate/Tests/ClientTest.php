@@ -120,4 +120,18 @@ final class ClientTest extends TestCase
 
         $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            self::assertJson($options['body']);
+            self::assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new MockResponse('{"status": "succeeded", "output": ["ok"]}');
+        });
+
+        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => "tool output \xB1 here"]);
+    }
 }

@@ -70,10 +70,10 @@ Pass your tool instances into a :class:`Symfony\\AI\\Agent\\Toolbox\\Toolbox`, w
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\Toolbox\AgentProcessor;
     use Symfony\AI\Agent\Toolbox\Toolbox;
-    use Symfony\AI\Platform\Bridge\OpenAi\PlatformFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
     use Symfony\Component\HttpClient\HttpClient;
 
-    $platform = PlatformFactory::create($apiKey, HttpClient::create());
+    $platform = Factory::createPlatform($apiKey, HttpClient::create());
 
     $toolbox = new Toolbox([new WeatherTool()]);
     $processor = new AgentProcessor($toolbox);

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama;
 
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -102,7 +103,21 @@ final class OllamaResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
+        $sawChunk = false;
+        $sawDone = false;
         foreach ($result->getDataStream() as $data) {
+            // Ollama emits {"error": "..."} on HTTP 200 in practice; not part of the
+            // documented schema, so this guard is defensive.
+            if (isset($data['error'])) {
+                throw new RuntimeException(\sprintf('Ollama stream error: "%s".', \is_string($data['error']) ? $data['error'] : 'Unknown error'));
+            }
+
+            $sawChunk = true;
+
+            if (isset($data['done']) && true === $data['done']) {
+                $sawDone = true;
+            }
+
             if ($this->streamIsToolCall($data)) {
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
@@ -125,6 +140,10 @@ final class OllamaResultConverter implements ResultConverterInterface
                     completionTokens: $data['eval_count'],
                 );
             }
+        }
+
+        if ($sawChunk && !$sawDone) {
+            throw new IncompleteStreamException('Ollama stream ended before a "done" message.');
         }
     }
 

@@ -295,6 +295,35 @@ final class ModelClientTest extends TestCase
         $this->assertContains('Content-Type: image/jpeg', $requestOptions['headers']);
     }
 
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $response = new MockResponse('{"result": "test"}');
+        $httpClient = new MockHttpClient($response);
+
+        $model = new Model('test-model');
+        $modelClient = new ModelClient($httpClient, Provider::HF_INFERENCE, 'test-api-key');
+
+        $contract = Contract::create([
+            new FileNormalizer(),
+            new MessageBagNormalizer(),
+        ]);
+
+        $messageBag = new MessageBag();
+        $messageBag->add(new UserMessage(new Text("tool output \xB1 here")));
+
+        $payload = $contract->createRequestPayload($model, $messageBag);
+
+        $modelClient->request($model, $payload, [
+            'task' => Task::CHAT_COMPLETION,
+        ]);
+
+        $requestOptions = $response->getRequestOptions();
+
+        $this->assertContains('Content-Type: application/json', $requestOptions['headers']);
+        $this->assertJson($requestOptions['body']);
+        $this->assertStringContainsString('tool output \ufffd here', $requestOptions['body']);
+    }
+
     public static function payloadTestCases(): \Iterator
     {
         yield 'string input' => [

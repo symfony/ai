@@ -53,7 +53,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly bool $excludeToolMessages = false,
         private readonly bool $includeSources = false,
-        private readonly ?int $maxToolCalls = null,
+        private readonly ?int $maxToolCalls = 50,
     ) {
         $this->sources = new SourceCollection();
     }

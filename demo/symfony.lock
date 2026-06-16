@@ -372,9 +372,6 @@
             "config/packages/twig_component.yaml"
         ]
     },
-    "symfony/ux-typed": {
-        "version": "v2.22.0"
-    },
     "symfony/web-profiler-bundle": {
         "version": "7.0",
         "recipe": {

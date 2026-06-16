@@ -12,9 +12,12 @@
 namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\DocumentUrl;
+use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
@@ -83,6 +86,49 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame($uuid, $message->getId()->toRfc4122());
         $this->assertSame(Role::User, $message->getRole());
         $this->assertArrayHasKey('addedAt', $message->getMetadata()->all());
+    }
+
+    public function testItCanDenormalizeUserMessageWithUrlContents()
+    {
+        $normalizer = new MessageNormalizer();
+        $message = Message::ofUser(
+            new ImageUrl('https://example.com/cat.png'),
+            new DocumentUrl('https://example.com/doc.pdf'),
+        );
+
+        $payload = $normalizer->normalize($message);
+        /** @var UserMessage $denormalized */
+        $denormalized = $normalizer->denormalize($payload, MessageInterface::class);
+
+        $contents = $denormalized->getContent();
+        $this->assertCount(2, $contents);
+        $this->assertInstanceOf(ImageUrl::class, $contents[0]);
+        $this->assertSame('https://example.com/cat.png', $contents[0]->getUrl());
+        $this->assertInstanceOf(DocumentUrl::class, $contents[1]);
+        $this->assertSame('https://example.com/doc.pdf', $contents[1]->getUrl());
+    }
+
+    public function testItRejectsUnknownUserMessageContentType()
+    {
+        $normalizer = new MessageNormalizer();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage(\sprintf('Unknown content type "%s".', \stdClass::class));
+
+        $normalizer->denormalize([
+            'id' => Uuid::v7()->toRfc4122(),
+            'type' => UserMessage::class,
+            'content' => '',
+            'contentAsBase64' => [
+                [
+                    'type' => \stdClass::class,
+                    'content' => 'arbitrary-constructor-argument',
+                ],
+            ],
+            'toolsCalls' => [],
+            'metadata' => [],
+            'addedAt' => (new \DateTimeImmutable())->getTimestamp(),
+        ], MessageInterface::class);
     }
 
     public function testItCanDenormalizeWithCustomIdentifier()

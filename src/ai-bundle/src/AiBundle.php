@@ -1212,7 +1212,8 @@ final class AiBundle extends AbstractBundle
             $toolProcessorDefinition = (new ChildDefinition('ai.tool.agent_processor.abstract'))
                 ->replaceArgument(0, new Reference('ai.toolbox.'.$name))
                 ->replaceArgument(3, $config['keep_tool_messages'])
-                ->replaceArgument(4, $config['include_sources']);
+                ->replaceArgument(4, $config['include_sources'])
+                ->replaceArgument(5, $config['max_tool_calls']);
 
             $container->setDefinition('ai.tool.agent_processor.'.$name, $toolProcessorDefinition)
                 ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -10])
@@ -1246,6 +1247,10 @@ final class AiBundle extends AbstractBundle
         // SYSTEM PROMPT
         if (isset($config['prompt'])) {
             $includeTools = isset($config['prompt']['include_tools']) && $config['prompt']['include_tools'];
+
+            if ($includeTools && !$config['tools']['enabled']) {
+                throw new InvalidArgumentException(\sprintf('Agent "%s" has "prompt.include_tools" enabled, but no tools are configured. Enable tools with "tools: true" or configure an explicit list of tools.', $name));
+            }
 
             // Create prompt from file if configured, otherwise use text
             if (isset($config['prompt']['file'])) {

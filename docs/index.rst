@@ -22,11 +22,12 @@ AI capabilities to your application:
 Quick Start
 -----------
 
-Install the AI Bundle to get started with Symfony AI:
+Install the AI Bundle to get started with Symfony AI, together with the Agent
+component used in the example below:
 
 .. code-block:: terminal
 
-    $ composer require symfony/ai-bundle
+    $ composer require symfony/ai-bundle symfony/ai-agent
 
 Configure your AI platform:
 

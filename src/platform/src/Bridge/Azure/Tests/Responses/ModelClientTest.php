@@ -130,4 +130,19 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key', 'gpt-4o');
         $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => 'Hello']]], $options);
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            self::assertJson($options['body']);
+            self::assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'test.openai.azure.com', 'test-api-key');
+        $client->request(new ResponsesModel('gpt-4o'), ['input' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
 }

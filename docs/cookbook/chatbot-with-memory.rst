@@ -33,11 +33,11 @@ be consistently available to the agent::
 
     use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 
-    $personalFacts = new StaticMemoryProvider(
+    $personalFacts = new StaticMemoryProvider([
         'My name is Wilhelm Tell',
         'I wish to be a swiss national hero',
         'I am struggling with hitting apples but want to be professional with the bow and arrow',
-    );
+    ]);
 
 This information is automatically injected into the system prompt, providing the agent with
 context about the user without cluttering the conversation messages.

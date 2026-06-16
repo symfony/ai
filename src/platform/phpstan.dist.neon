@@ -28,6 +28,9 @@ parameters:
             identifier: 'symfonyAi.forbidNativeException'
             path: tests/*
             reportUnmatched: false
+        -
+            identifier: 'trait.unused'
+            path: src/JsonBodyEncodingTrait.php # only used by bridges, which are excluded from analysis
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Bridge\OpenResponses;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -39,8 +41,9 @@ use Symfony\AI\Platform\ResultConverterInterface;
  * @phpstan-type OutputMessage array{content: array<Refusal|OutputText>, id: string, role: string, type: 'message'}
  * @phpstan-type OutputText array{type: 'output_text', text: string}
  * @phpstan-type Refusal array{type: 'refusal', refusal: string}
- * @phpstan-type FunctionCall array{id: string, arguments: string, call_id: string, name: string, type: 'function_call'}
+ * @phpstan-type FunctionCall array{id?: string|null, arguments: string, call_id?: string|null, name: string, type: 'function_call'}
  * @phpstan-type Thinking array{summary: list<array{type: string, text?: string}>, id: string}
+ * @phpstan-type Error array{code?: string|null, type?: string|null, param?: string|null, message?: string|null}
  */
 final class ResultConverter implements ResultConverterInterface
 {
@@ -61,7 +64,16 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (400 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
+            $error = json_decode($response->getContent(false), true)['error'] ?? [];
+            $errorMessage = $error['message'] ?? 'Bad Request';
+
+            if ('context_length_exceeded' === ($error['code'] ?? null)
+                || str_contains($errorMessage, 'exceeds the context window')
+                || str_contains($errorMessage, 'max_model_len')
+            ) {
+                throw new ExceedContextSizeException($errorMessage);
+            }
+
             throw new BadRequestException($errorMessage);
         }
 
@@ -81,7 +93,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         if (isset($data['error'])) {
-            throw new RuntimeException(\sprintf('Error "%s"-%s (%s): "%s".', $data['error']['code'] ?? '-', $data['error']['type'] ?? '-', $data['error']['param'] ?? '-', $data['error']['message'] ?? '-'));
+            throw new RuntimeException($this->generateErrorMessage($this->extractStreamError($data)));
         }
 
         if (!isset($data[self::KEY_OUTPUT])) {
@@ -89,6 +101,19 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         $results = $this->convertOutputArray($data[self::KEY_OUTPUT]);
+
+        if ([] === $results) {
+            if ('incomplete' === ($data['status'] ?? null)) {
+                $reason = $data['incomplete_details']['reason'] ?? 'unknown';
+                if (!\is_string($reason) || '' === $reason) {
+                    $reason = 'unknown';
+                }
+
+                throw new RuntimeException(\sprintf('Responses API response is incomplete (%s) and contains no content.', $reason));
+            }
+
+            throw new RuntimeException('Response does not contain any content.');
+        }
 
         return 1 === \count($results) ? array_pop($results) : new MultiPartResult(array_values($results));
     }
@@ -139,9 +164,32 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
         $currentThinking = null;
+        /** @var array<string, ToolCall> $toolCalls */
+        $toolCalls = [];
+        $sawResponseEvent = false;
+        $sawResponseCompleted = false;
 
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
+            $sawResponseEvent = true;
+
+            if ('error' === $type) {
+                throw new RuntimeException($this->generateErrorMessage($this->extractStreamError($event)));
+            }
+
+            if ('response.failed' === $type) {
+                $response = \is_array($event['response'] ?? null) ? $event['response'] : [];
+                throw new RuntimeException($this->generateErrorMessage($this->extractStreamError($response)));
+            }
+
+            if ('response.incomplete' === $type) {
+                $reason = $event['response']['incomplete_details']['reason'] ?? 'unknown';
+                if (!\is_string($reason) || '' === $reason) {
+                    $reason = 'unknown';
+                }
+
+                throw new RuntimeException(\sprintf('Responses API stream ended incomplete (%s).', $reason));
+            }
 
             if (isset($event['response']['usage'])) {
                 yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
@@ -165,15 +213,29 @@ final class ResultConverter implements ResultConverterInterface
                 $currentThinking = null;
             }
 
-            if (!str_contains($type, 'completed')) {
+            if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'function_call' === ($event['item']['type'] ?? null)) {
+                /** @var FunctionCall $item */
+                $item = $event['item'];
+                $toolCall = $this->convertFunctionCall($item);
+                $toolCalls[$toolCall->getId()] = $toolCall;
+            }
+
+            if ('response.completed' !== $type) {
                 continue;
             }
 
+            $sawResponseCompleted = true;
             [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
 
-            if ($toolCallResult && 'response.completed' === $type) {
+            if ($toolCallResult) {
                 yield new ToolCallComplete($toolCallResult->getContent());
+            } elseif ([] !== $toolCalls) {
+                yield new ToolCallComplete(array_values($toolCalls));
             }
+        }
+
+        if ($sawResponseEvent && !$sawResponseCompleted) {
+            throw new IncompleteStreamException('Responses API stream ended before response.completed.');
         }
     }
 
@@ -230,7 +292,14 @@ final class ResultConverter implements ResultConverterInterface
     {
         $arguments = json_decode($toolCall['arguments'], true, flags: \JSON_THROW_ON_ERROR);
 
-        return new ToolCall($toolCall['id'], $toolCall['name'], $arguments);
+        // The Responses API addresses tool results by "call_id"; some providers (e.g. Scaleway)
+        // only send "call_id" and leave "id" empty, so prefer it and fall back to "id".
+        $id = $toolCall['call_id'] ?? $toolCall['id'] ?? null;
+        if (null === $id) {
+            throw new RuntimeException('Function call is missing both "call_id" and "id".');
+        }
+
+        return new ToolCall($id, $toolCall['name'], $arguments);
     }
 
     /**
@@ -245,5 +314,32 @@ final class ResultConverter implements ResultConverterInterface
                 yield new ThinkingResult($entry['text']);
             }
         }
+    }
+
+    /**
+     * @param Error $error
+     */
+    private function generateErrorMessage(array $error): string
+    {
+        return \sprintf('Error "%s"-%s (%s): "%s".', $error['code'] ?? '-', $error['type'] ?? '-', $error['param'] ?? '-', $error['message'] ?? '-');
+    }
+
+    /**
+     * @param array<string, mixed> $event
+     *
+     * @return Error
+     */
+    private function extractStreamError(array $event): array
+    {
+        if (\is_array($event['error'] ?? null)) {
+            $event = $event['error'];
+        }
+
+        return [
+            'code' => \is_string($event['code'] ?? null) ? $event['code'] : null,
+            'type' => \is_string($event['type'] ?? null) && 'error' !== $event['type'] ? $event['type'] : null,
+            'param' => \is_string($event['param'] ?? null) ? $event['param'] : null,
+            'message' => \is_string($event['message'] ?? null) ? $event['message'] : null,
+        ];
     }
 }

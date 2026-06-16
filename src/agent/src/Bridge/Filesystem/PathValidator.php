@@ -113,7 +113,21 @@ final class PathValidator
             throw new PathSecurityException(\sprintf('Base path "%s" does not exist.', $this->basePath));
         }
 
-        if (!str_starts_with($resolvedPath, $realBasePath)) {
+        $base = $realBasePath;
+        $candidate = $resolvedPath;
+
+        // On Windows, realpath() yields backslashes while non-existing paths are
+        // assembled with "/", and the filesystem is case-insensitive. Normalize both
+        // so the directory boundary is detected reliably. On Unix the backslash is a
+        // valid filename character, so it must be left untouched there.
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $base = strtolower(str_replace('\\', '/', $base));
+            $candidate = strtolower(str_replace('\\', '/', $candidate));
+        }
+
+        $base = rtrim($base, '/');
+
+        if ($candidate !== $base && !str_starts_with($candidate, $base.'/')) {
             throw new PathSecurityException(\sprintf('Path "%s" is outside the allowed base path.', $resolvedPath));
         }
     }

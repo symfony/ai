@@ -99,9 +99,10 @@ Advanced Example with Multiple Agents
             research:
                 platform: 'ai.platform.anthropic'
                 model: 'claude-3-7-sonnet-latest'
-                tools: # If undefined, all tools are injected into the agent, use "tools: false" to disable tools.
+                tools: # Tools are opt-in: if undefined, the agent gets no tools; use "tools: true" to inject all tools.
                     - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
+                max_tool_calls: 75 # Cap of tool-calling iterations per agent call (default 50); set to null to disable the limit
             search_agent:
                 platform: 'ai.platform.perplexity'
                 model: 'sonar'
@@ -984,16 +985,16 @@ Custom tools can be registered by using the :class:`Symfony\\AI\\Agent\\Toolbox\
         }
     }
 
-The agent configuration by default will inject all known tools into the agent.
-
-To disable this behavior, set the ``tools`` option to ``false``:
+Tools are not registered with an agent automatically - they are opt-in. To inject all known
+tools, meaning every service tagged with ``ai.tool``, e.g. via the ``#[AsTool]`` attribute,
+opt in explicitly by setting the ``tools`` option to ``true``:
 
 .. code-block:: yaml
 
     ai:
         agent:
             my_agent:
-                tools: false
+                tools: true
 
 To inject only specific tools, list them in the configuration:
 
@@ -1004,6 +1005,9 @@ To inject only specific tools, list them in the configuration:
             my_agent:
                 tools:
                     - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
+
+Omitting the ``tools`` option, or setting it to ``false``, ``null`` or an empty list, leaves the
+agent without any tools.
 
 To restrict the access to a tool, you can use the :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` attribute, which
 works similar to :class:`Symfony\\Component\\Security\\Http\\Attribute\\IsGranted` attribute in `symfony/security-http`. For this to work,

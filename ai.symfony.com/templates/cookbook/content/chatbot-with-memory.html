@@ -66,11 +66,11 @@ be consistently available to the agent:</p>
                     <div class="highlight">
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Memory</span>\<span class="hljs-title">StaticMemoryProvider</span>;
 
-<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>personalFacts</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">StaticMemoryProvider</span>(
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>personalFacts</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">StaticMemoryProvider</span>([
     <span class="hljs-string">'My name is Wilhelm Tell'</span>,
     <span class="hljs-string">'I wish to be a swiss national hero'</span>,
     <span class="hljs-string">'I am struggling with hitting apples but want to be professional with the bow and arrow'</span>,
-);</pre>
+]);</pre>
                     </div>
                 </td>
             </tr>

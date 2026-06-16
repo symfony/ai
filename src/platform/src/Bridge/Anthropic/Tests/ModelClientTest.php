@@ -428,6 +428,25 @@ class ModelClientTest extends TestCase
         yield 'long' => ['long', ['type' => 'ephemeral', 'ttl' => '1h']];
     }
 
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $headers = $this->parseHeaders($options['headers']);
+
+            $this->assertSame('application/json', $headers['content-type']);
+            $this->assertJson($options['body']);
+            $this->assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $this->modelClient->request($this->model, [
+            'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]],
+        ]);
+    }
+
     /**
      * @param list<string> $headers
      *

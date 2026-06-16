@@ -408,6 +408,38 @@ final class StoreTest extends TestCase
         $this->assertCount(2, $results);
     }
 
+    public function testStoreCanRemove()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            return new JsonMockResponse([], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
+        $store->remove('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertSame("DELETE type::thing('vectors', '123e4567-e89b-12d3-a456-426614174000');", $body);
+    }
+
+    public function testStoreRemoveNeutralizesInjectedId()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            return new JsonMockResponse([], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', 'vectors');
+        $store->remove("a'); DELETE vectors; --");
+
+        // The crafted id stays inside a single-quoted string literal (the quote is escaped),
+        // so the appended statements cannot break out and execute.
+        $this->assertSame("DELETE type::thing('vectors', 'a\\'); DELETE vectors; --');", $body);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'http://localhost:8000', 'test', 'test', 'test_namespace', 'test_database', 'test_table');

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Scaleway\Llm\ResultConverter;
 use Symfony\AI\Platform\Bridge\Scaleway\Scaleway;
 use Symfony\AI\Platform\Bridge\Scaleway\ScalewayResponses;
 use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -248,6 +249,24 @@ final class ResultConverterTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Error "invalid_request_error": "Invalid model specified"');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsExceedContextSizeExceptionOnContextOverflow()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'error' => [
+                'type' => 'invalid_request_error',
+                'code' => 'context_length_exceeded',
+                'message' => "This model's maximum context length is 128000 tokens.",
+            ],
+        ]);
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('maximum context length');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.10
+----
+
+ * Throw `ExceedContextSizeException` when a 400 response reports a context overflow
+
 0.9
 ---
 

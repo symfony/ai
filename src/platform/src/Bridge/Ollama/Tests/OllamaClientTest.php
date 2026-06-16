@@ -336,6 +336,24 @@ final class OllamaClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            $this->assertJson($options['body']);
+            $this->assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new JsonMockResponse([
+                'model' => 'llama3.2',
+                'message' => ['role' => 'assistant', 'content' => 'ok'],
+                'done' => true,
+            ]);
+        }, 'http://127.0.0.1:1234');
+
+        $client = new OllamaClient($httpClient);
+        $client->request(new Ollama('llama3.2', [Capability::INPUT_MESSAGES]), ['model' => 'llama3.2', 'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
+
     /**
      * @param array<string, mixed> $options
      *

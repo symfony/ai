@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Typesense\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -216,6 +217,31 @@ final class StoreTest extends TestCase
 
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanRemove()
+    {
+        $url = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $u, array $options) use (&$url): JsonMockResponse {
+            $url = $u;
+
+            return new JsonMockResponse([], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8108', 'test', 'test_collection');
+        $id = Uuid::v4()->toRfc4122();
+        $store->remove($id);
+
+        $this->assertStringContainsString(\sprintf('filter_by=id:[%s]', $id), urldecode((string) $url));
+    }
+
+    public function testStoreRemoveRejectsInjectedId()
+    {
+        $store = new Store(new MockHttpClient(), 'http://127.0.0.1:8108', 'test', 'test_collection');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $store->remove('1] || num_docs:>=0 || id:[2');
     }
 
     public function testStoreSupportsVectorQuery()

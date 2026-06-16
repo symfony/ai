@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Azure\Responses;
 
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -25,6 +26,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
     private readonly string $endpoint;
 
@@ -67,8 +70,9 @@ final class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->endpoint, [
             'headers' => [
                 'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
             ],
-            'json' => array_merge($options, ['model' => $this->deployment ?? $model->getName()], $payload),
+            'body' => $this->encodeJsonBody(array_merge($options, ['model' => $this->deployment ?? $model->getName()], $payload)),
         ]));
     }
 }

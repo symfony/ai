@@ -63,4 +63,23 @@ final class ModelClientTest extends TestCase
 
         $client->request(new Cohere('command-a-03-2025'), 'string payload');
     }
+
+    public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $this->assertSame('Content-Type: application/json', $options['normalized_headers']['content-type'][0]);
+            $this->assertJson($options['body']);
+            $this->assertStringContainsString('tool output \ufffd here', $options['body']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Cohere('command-a-03-2025'), ['model' => 'command-a-03-2025', 'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
 }

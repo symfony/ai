@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -24,6 +25,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly EventSourceHttpClient $httpClient;
 
     public function __construct(
@@ -54,7 +57,8 @@ final class ModelClient implements ModelClientInterface
 
         return new RawHttpResult($this->httpClient->request('POST', 'https://api.perplexity.ai/chat/completions', [
             'auth_bearer' => $this->apiKey,
-            'json' => array_merge($options, $payload),
+            'headers' => ['Content-Type' => 'application/json'],
+            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
     }
 }
