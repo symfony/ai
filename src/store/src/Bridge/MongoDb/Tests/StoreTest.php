@@ -587,6 +587,30 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('countDocuments')
+            ->willReturn(42);
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $this->assertSame(42, $store->count());
+    }
+
     public function testRemoveSingleDocument()
     {
         $collection = $this->createMock(Collection::class);

@@ -83,6 +83,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
+    public function count(): int
+    {
+        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function add(VectorDocument|array $documents): void
     {
         if ($documents instanceof VectorDocument) {

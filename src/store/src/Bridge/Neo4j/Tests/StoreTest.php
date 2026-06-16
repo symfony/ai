@@ -314,4 +314,31 @@ final class StoreTest extends TestCase
         $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [
+                    'fields' => ['count'],
+                    'values' => [[42]],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:7474',
+            'neo4j',
+            'password',
+            'neo4j',
+            'test_index',
+            'TestNode',
+        );
+
+        $this->assertSame(42, $store->count());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

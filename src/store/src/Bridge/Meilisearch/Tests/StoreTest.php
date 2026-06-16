@@ -529,4 +529,26 @@ final class StoreTest extends TestCase
 
         $this->assertSame(0.8, $body['hybrid']['semanticRatio']);
     }
+
+    public function testCountReturnsDocumentCount()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'numberOfDocuments' => 42,
+                'isIndexing' => false,
+                'fieldDistribution' => [],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store(
+            $httpClient,
+            'http://127.0.0.1:7700',
+            'test-key',
+            'test-index',
+        );
+
+        $this->assertSame(42, $store->count());
+    }
 }

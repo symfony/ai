@@ -18,7 +18,7 @@ use Symfony\AI\Store\Query\QueryInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-interface StoreInterface
+interface StoreInterface extends \Countable
 {
     /**
      * @param VectorDocument|VectorDocument[] $documents

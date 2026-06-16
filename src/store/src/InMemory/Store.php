@@ -107,6 +107,11 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
         $this->drop();
     }
 
+    public function count(): int
+    {
+        return \count($this->documents);
+    }
+
     /**
      * @param array{maxItems?: positive-int, filter?: callable(VectorDocument): bool} $options
      *

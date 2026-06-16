@@ -112,6 +112,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', \sprintf('key/%s', $this->table), []);
     }
 
+    public function count(): int
+    {
+        $this->authenticate();
+
+        $result = $this->request('POST', 'sql', \sprintf('SELECT count() FROM %s GROUP ALL;', $this->table));
+
+        return $result[0]['result'][0]['count'] ?? 0;
+    }
+
     /**
      * Escapes a value as a single-quoted SurrealQL string literal so it cannot
      * break out of its context, even when sourced from untrusted input.

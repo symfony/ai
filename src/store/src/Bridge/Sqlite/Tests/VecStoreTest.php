@@ -57,6 +57,31 @@ final class VecStoreTest extends TestCase
         $this->assertFalse($store->supports($unknownQuery::class));
     }
 
+    public function testCountReturnsDocumentCount()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $this->assertSame(0, $store->count());
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument('doc-2', new Vector([0.4, 0.5, 0.6])),
+        ]);
+
+        $this->assertSame(2, $store->count());
+
+        $store->remove('doc-1');
+
+        $this->assertSame(1, $store->count());
+    }
+
     public function testRemoveWithEmptyArray()
     {
         $pdo = $this->createPdo();
