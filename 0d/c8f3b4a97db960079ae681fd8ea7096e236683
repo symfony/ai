@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by fabpot at 2026-06-15T20:32:15Z
+
+15 seems pretty low. I have many conversations where I have a loop with at least 40-50 tool calls.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-15T20:40:16Z
+
+never had 50 - well, in Claude Code, yes. but super unemotional here. i actually never had the issue of ever running loops, but agree that you'd rather explicitly want to opt-out instead of running for ages bc your model is bad :D
+
+default to 50? 100? 42? what would you consider a sane limit?
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-06-15T21:19:43Z
+
+> never had 50 - well, in Claude Code, yes. but super unemotional here. i actually never had the issue of ever running loops, but agree that you'd rather explicitly want to opt-out instead of running for ages bc your model is bad :D
+>
+> default to 50? 100? 42? what would you consider a sane limit?
+
+I would say anything between 50 and 100 is "reasonnable".
