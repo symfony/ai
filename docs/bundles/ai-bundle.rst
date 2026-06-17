@@ -244,6 +244,33 @@ this platform allows to reduce network calls / resource consumption:
                 platform: 'ai.platform.cache.openai'
                 model: 'gpt-4o-mini'
 
+Fireworks Platform
+------------------
+
+The ``fireworks`` platform exposes the ``Fireworks`` bridge, an OpenAI-compatible provider that
+serves chat completions, embeddings, reranking and image generation through Fireworks AI. The
+built-in model catalog is fetched dynamically from the Fireworks gateway, so the available models
+do not need to be enumerated manually:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            fireworks:
+                api_key: '%env(FIREWORKS_API_KEY)%'
+        agent:
+            my_agent:
+                platform: 'ai.platform.fireworks'
+                model: 'accounts/fireworks/models/kimi-k2p6'
+
+.. tip::
+
+    Because the ``Fireworks`` bridge is OpenAI-compatible, you can alternatively use the
+    generic platform (see above) if you do not want to depend on the dedicated
+    ``symfony/ai-fireworks-platform`` package. You then have to curate the model catalog
+    yourself.
+
 Store Dependency Injection
 --------------------------
 

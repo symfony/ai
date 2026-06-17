@@ -181,6 +181,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Failover\\.*
+    - name: FireworksPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Fireworks\\.*
     - name: GeminiPlatform
       collectors:
         - type: classLike
@@ -483,6 +487,9 @@ deptrac:
       - PlatformComponent
     FailoverPlatform:
       - PlatformComponent
+    FireworksPlatform:
+      - PlatformComponent
+      - GenericPlatform
     GeminiPlatform:
       - PlatformComponent
     GenericPlatform:

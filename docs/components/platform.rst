@@ -137,6 +137,7 @@ Supported Models & Platforms
   * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
   * `LiteLLM`_ as unified Platform
+  * Fireworks' hosted models (e.g. Kimi K2, DeepSeek V3.1) with `Fireworks`_ as Platform
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
   * `Vertex AI Text Embeddings`_ with `Vertex AI`_
@@ -144,6 +145,7 @@ Supported Models & Platforms
   * `Voyage's Embeddings`_ with `Voyage`_ as Platform
   * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Qwen`_ with `OpenRouter`_ as Platform
+  * Fireworks' embedding models with `Fireworks`_ as Platform
 * **Other Models**
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
@@ -151,6 +153,7 @@ Supported Models & Platforms
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
+  * Fireworks' reranking models with `Fireworks`_ as Platform
 * **Voice Models**
   * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
@@ -163,6 +166,7 @@ Supported Models & Platforms
 * **Image/Video Models**
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
+  * Fireworks text-to-image (e.g. Flux) with `Fireworks`_ as Platform
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
@@ -1582,6 +1586,12 @@ Code Examples
 * `Parallel Embeddings Calls`_
 * `Cerebras Chat`_
 * `Cerebras Streaming`_
+* `Fireworks Chat`_
+* `Fireworks Streaming`_
+* `Fireworks Tool Call`_
+* `Fireworks Embeddings`_
+* `Fireworks Rerank`_
+* `Fireworks Image`_
 
 .. note::
 
@@ -1606,6 +1616,7 @@ Code Examples
 .. _`ElevenLabs`: https://elevenlabs.io/
 .. _`ElevenLabs STT`: https://elevenlabs.io/speech-to-text
 .. _`ElevenLabs TTS`: https://elevenlabs.io/text-to-speech
+.. _`Fireworks`: https://fireworks.ai/
 .. _`LiteLLM example`: https://github.com/symfony/ai/blob/main/examples/litellm/chat.php
 .. _`Meta's Llama`: https://www.llama.com/
 .. _`Ollama`: https://ollama.com/
@@ -1660,3 +1671,9 @@ Code Examples
 .. _`LM Studio Catalog`: https://lmstudio.ai/models
 .. _`Cerebras Chat`: https://github.com/symfony/ai/blob/main/examples/cerebras/chat.php
 .. _`Cerebras Streaming`: https://github.com/symfony/ai/blob/main/examples/cerebras/stream.php
+.. _`Fireworks Chat`: https://github.com/symfony/ai/blob/main/examples/fireworks/chat.php
+.. _`Fireworks Streaming`: https://github.com/symfony/ai/blob/main/examples/fireworks/stream.php
+.. _`Fireworks Tool Call`: https://github.com/symfony/ai/blob/main/examples/fireworks/toolcall.php
+.. _`Fireworks Embeddings`: https://github.com/symfony/ai/blob/main/examples/fireworks/embeddings.php
+.. _`Fireworks Rerank`: https://github.com/symfony/ai/blob/main/examples/fireworks/rerank.php
+.. _`Fireworks Image`: https://github.com/symfony/ai/blob/main/examples/fireworks/image.php

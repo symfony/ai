@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `fireworks` platform configuration for OpenAI-compatible chat, embeddings, reranking and image generation
+
 0.11
 ----
 

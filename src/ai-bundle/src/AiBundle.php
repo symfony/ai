@@ -70,6 +70,7 @@ use Symfony\AI\Platform\Bridge\DockerModelRunner\Factory as DockerModelRunnerFac
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
+use Symfony\AI\Platform\Bridge\Fireworks\Factory as FireworksFactory;
 use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
 use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
@@ -1084,6 +1085,29 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'deepseek']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('fireworks' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-fireworks-platform', FireworksFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Fireworks platform configuration requires "symfony/ai-fireworks-platform" package. Try running "composer require symfony/ai-fireworks-platform".');
+            }
+
+            $platformId = 'ai.platform.fireworks';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(FireworksFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    null, // $contract, defaults to Contract::create() inside the factory
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'fireworks']);
 
             $container->setDefinition($platformId, $definition);
 
