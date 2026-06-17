@@ -68,6 +68,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
+use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
@@ -268,6 +269,8 @@ return static function (ContainerConfigurator $container): void {
 
         // serializer
         ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+            ->tag('serializer.normalizer')
+        ->set('ai.platform.tool_call.normalizer', ToolCallNormalizer::class)
             ->tag('serializer.normalizer')
 
         // commands

@@ -70,11 +70,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $contentAsBase64,
             )),
             ToolCallMessage::class => new ToolCallMessage(
-                new ToolCall(
-                    $data['toolsCalls']['id'],
-                    $data['toolsCalls']['function']['name'],
-                    json_decode($data['toolsCalls']['function']['arguments'], true)
-                ),
+                self::toolCallFromPayload($data['toolsCalls']),
                 $content
             ),
             default => throw new LogicException(\sprintf('Unknown message type "%s".', $type)),
@@ -198,11 +194,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $parts[] = match ($part['type']) {
                     Text::class => new Text($part['text']),
                     Thinking::class => new Thinking($part['content'] ?? '', $part['signature'] ?? null),
-                    ToolCall::class => new ToolCall(
-                        $part['toolCall']['id'],
-                        $part['toolCall']['function']['name'],
-                        json_decode($part['toolCall']['function']['arguments'], true),
-                    ),
+                    ToolCall::class => self::toolCallFromPayload($part['toolCall']),
                     default => throw new LogicException(\sprintf('Unknown assistant part type "%s".', $part['type'])),
                 };
             }
@@ -218,13 +210,37 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         }
 
         foreach ($data['toolsCalls'] ?? [] as $toolCall) {
-            $parts[] = new ToolCall(
-                $toolCall['id'],
-                $toolCall['function']['name'],
-                json_decode($toolCall['function']['arguments'], true),
-            );
+            $parts[] = self::toolCallFromPayload($toolCall);
         }
 
         return $parts;
+    }
+
+    /**
+     * Builds a ToolCall from either the OpenAI-style wrapped payload
+     * (`{id, function: {name, arguments: JSON string}}`, produced when the
+     * outer serializer chain includes {@see \Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer})
+     * or the flat payload (`{id, name, arguments: array}`) produced by the
+     * default ObjectNormalizer fallback. The latter shape allows restoring
+     * conversations stored before the ToolCallNormalizer was wired into the
+     * ai-bundle configuration.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private static function toolCallFromPayload(array $payload): ToolCall
+    {
+        if (isset($payload['function'])) {
+            return new ToolCall(
+                $payload['id'],
+                $payload['function']['name'],
+                json_decode($payload['function']['arguments'], true) ?? [],
+            );
+        }
+
+        return new ToolCall(
+            $payload['id'],
+            $payload['name'],
+            $payload['arguments'] ?? [],
+        );
     }
 }
