@@ -41,13 +41,14 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
     /**
      * @param AssistantMessage $data
      *
-     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>, reasoning_content?: string}
+     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>, reasoning_content?: string, content_parts?: array<array<string, mixed>>}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $text = '';
         $reasoning = '';
         $toolCalls = [];
+        $additional = [];
 
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
@@ -56,6 +57,8 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
                 $reasoning .= $part->getContent();
             } elseif ($part instanceof ToolCall) {
                 $toolCalls[] = $part;
+            } else {
+                $additional[] = $this->normalizer->normalize($part, $format, $context);
             }
         }
 
@@ -70,6 +73,10 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
 
         if ('' !== $reasoning) {
             $array['reasoning_content'] = $reasoning;
+        }
+
+        if ([] !== $additional) {
+            $array['content_parts'] = $additional;
         }
 
         return $array;

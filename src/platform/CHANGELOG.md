@@ -11,6 +11,10 @@ CHANGELOG
  * Add support for passing a fully defined `Model` instance to `Platform::invoke()` (and `Provider::invoke()`) instead of a model name string, bypassing the model catalog; widen `ProviderInterface::supports()` to `string|Model` to route a model instance to the first provider whose model clients accept it
  * Add in-place `MessageBag::prepend()` and `MessageBag::removeSystemMessage()`
  * Add `MessageBag::withoutToolMessages()` to strip tool-call messages and tool-call-only assistant messages
+ * Add base `Contract` normalizers for `DocumentUrl`, `File` (covering `Video` and `Document`), `Collection`, `Template`, `Thinking`, `ExecutableCode`, and `CodeExecution`, so every `ContentInterface` can be normalized through the base contract instead of throwing
+ * Add `Contract::normalize()` to normalize an input through the contract serializer without binding a model to the context
+ * Stop silently dropping non-text parts in `AssistantMessageNormalizer`: parts other than `Text`, `Thinking`, and `ToolCall` are now delegated to the serializer and emitted under a `content_parts` key
+ * Stringify `Template` content in `SystemMessageNormalizer` so a system prompt built from a template without variables serializes to its raw string instead of an empty object
 
 0.9
 ---

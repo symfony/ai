@@ -9,38 +9,40 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\Normalizer\Message;
+namespace Symfony\AI\Platform\Contract\Normalizer\Message\Content;
 
-use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class SystemMessageNormalizer implements NormalizerInterface
+final class CodeExecutionNormalizer implements NormalizerInterface
 {
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return $data instanceof SystemMessage;
+        return $data instanceof CodeExecution;
     }
 
     public function getSupportedTypes(?string $format): array
     {
         return [
-            SystemMessage::class => true,
+            CodeExecution::class => true,
         ];
     }
 
     /**
-     * @param SystemMessage $data
+     * @param CodeExecution $data
      *
-     * @return array{role: 'system', content: string}
+     * @return array{type: 'code_execution', succeeded: bool, output: string|null, id: string|null}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'role' => $data->getRole()->value,
-            'content' => (string) $data->getContent(),
+            'type' => 'code_execution',
+            'succeeded' => $data->isSucceeded(),
+            'output' => $data->getOutput(),
+            'id' => $data->getId(),
         ];
     }
 }

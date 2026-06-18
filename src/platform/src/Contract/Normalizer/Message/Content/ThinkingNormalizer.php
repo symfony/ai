@@ -9,38 +9,38 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\Normalizer\Message;
+namespace Symfony\AI\Platform\Contract\Normalizer\Message\Content;
 
-use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class SystemMessageNormalizer implements NormalizerInterface
+final class ThinkingNormalizer implements NormalizerInterface
 {
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return $data instanceof SystemMessage;
+        return $data instanceof Thinking;
     }
 
     public function getSupportedTypes(?string $format): array
     {
         return [
-            SystemMessage::class => true,
+            Thinking::class => true,
         ];
     }
 
     /**
-     * @param SystemMessage $data
+     * @param Thinking $data
      *
-     * @return array{role: 'system', content: string}
+     * @return array{type: 'thinking', content: string}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'role' => $data->getRole()->value,
-            'content' => (string) $data->getContent(),
+            'type' => 'thinking',
+            'content' => $data->getContent(),
         ];
     }
 }
