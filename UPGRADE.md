@@ -220,6 +220,22 @@ Platform
     }
    ```
 
+ * `Bridge\Cache\CachePlatform` now caches by default when its `$cacheKey` constructor argument is set.
+   The argument was previously never read: caching only engaged when the `prompt_cache_key` invocation
+   option was passed. Applications wiring a cache platform through the AI Bundle are affected, since its
+   `cache_key` option defaults to the platform name, so every call is cached instead of only the calls
+   opting in. Leave `$cacheKey` null and keep passing `prompt_cache_key` per call to preserve the previous
+   behaviour:
+
+   ```diff
+   -$platform = new CachePlatform($inner, cache: $cache, cacheKey: 'chat');
+   +$platform = new CachePlatform($inner, cache: $cache);
+
+    $platform->invoke($model, $messages, ['prompt_cache_key' => 'chat']);
+   ```
+
+   A single call can still opt out by passing an empty `prompt_cache_key`.
+
 UPGRADE FROM 0.11 to 0.12
 =========================
 

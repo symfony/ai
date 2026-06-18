@@ -11,6 +11,10 @@ CHANGELOG
  * Encode `Test\Recording\Cassette` with `JSON_THROW_ON_ERROR` and `JSON_PRESERVE_ZERO_FRACTION` and check the write, so a result holding a value JSON cannot represent (`NAN`, `INF`, invalid UTF-8) raises instead of truncating the cassette and destroying the interactions already recorded in it, and a recorded float with no fractional part no longer replays as an integer
  * Add `Test\Replay\AbstractBridgeReplayTestCase` for cassette-driven bridge replay tests, and make the `examples/` corpus a record/replay harness: `examples/runner --record` captures every HTTP interaction of an example into a committed cassette and refreshes the replay goldens, `ExamplesReplayTest` re-runs each recorded example offline through the full bridge pipeline in CI, without credentials, against those goldens
  * Add `Result\CustomToolCallResult` for `custom_tool_call` output items reported by provider-specific server-side tools (e.g. xAI's `x_search`), converted the same way as the other built-in tool call results instead of being surfaced as a `ToolCall` the application is expected to execute
+ * Add base `Contract` normalizers for `DocumentUrl`, `File` (covering `Video` and `Document`), `Collection`, `Template`, `Thinking`, `ExecutableCode` and `CodeExecution`, so these content types can be normalized through the base contract instead of making the serializer throw
+ * Add `Contract::normalize()` to normalize an input through the contract serializer without binding a model to the context, producing a provider agnostic representation instead of a provider request payload
+ * Stop dropping provider specific parts (web search, MCP call, code execution, ...) in `AssistantMessageNormalizer` when no model is bound to the context: they are delegated to the serializer and emitted under a `content_parts` key, while a provider request payload keeps ignoring them
+ * Fix `SystemMessageNormalizer` to stringify a `Template` content, so a system prompt built from a template without variables serializes to its raw string instead of an empty object
 
 0.12
 ----
