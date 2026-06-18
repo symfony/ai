@@ -4,6 +4,7 @@ CHANGELOG
 0.10
 ----
 
+ * Add support for server-side Anthropic tools (e.g. `web_search`) via the `server_tools` option, appended verbatim to the request tools
  * Add `RawSseStream` to parse Server-Sent Events from backends that omit the `text/event-stream` content type (used by the OpenResponses bridge for the ChatGPT Codex backend); `SseStream` now decodes only content-type-advertised SSE
  * Add `IncompleteStreamException`, thrown by bridge converters when a stream ends before its terminal event
  * Throw `ModelNotFoundException` on HTTP 404 responses in the shared `HttpStatusErrorHandlingTrait`
