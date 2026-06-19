@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-15T21:04:15Z
+
+Thanks @valtzu - messy topic - and I'd assume it's quite a gap across other bridges as well.
+
+having second thoughts here about silently dropping this - like the idea of trying to recover under the hood - couldn't find the solution at first glance tho in https://github.com/anthropics/anthropic-sdk-php
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-06-16T17:11:58Z
+
+> couldn't find the solution at first glance tho in https://github.com/anthropics/anthropic-sdk-php
+
+Here I think https://github.com/anthropics/anthropic-sdk-php/blob/main/src/Lib/Helpers/SchemaInference.php#L101-L222
+
+So they just put the unsupported properties `json_encode`d to `description`
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-06-16T18:30:59Z
+
+> So they just put the unsupported properties json_encoded to description
+
+Did the same here + added `examples/structured-output-constrained.php` to demonstrate it's working (and failing without the fix).
