@@ -5,6 +5,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.document.samples:
+        - { title: "Emancipation Proclamation, 1863 (handwritten, NARA)", url: "https://catalog.archives.gov/medialive/98/2999/299998/content/arcmedia/master/ARC299998.pdf" }
         - { title: "Civil War widow's pension file — USCT (15-page PDF)", url: "https://omeka-iaamcfh.s3.amazonaws.com/original/466438fd3594c782fcbf172a1fd2cfc66034bbf0.pdf" }
         - { title: "Family Bible record (genealogy, PDF)", url: "https://omeka-iaamcfh.s3.amazonaws.com/original/46394498cdb8cc609c466b578845c0ac83b804df.pdf" }
         - { title: "Census — Schedule of Inhabitants (handwritten)", url: "https://fsn1.your-objectstorage.com/dev-scanstation/cheztac/scans/2026-03/browser-1772563875823-63e64d45-p014.jpg" }
