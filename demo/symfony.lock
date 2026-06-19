@@ -75,6 +75,9 @@
             "tests/bootstrap.php"
         ]
     },
+    "survos/deployment-bundle": {
+        "version": "2.10.5"
+    },
     "symfony/ai": {
         "version": "dev-tac"
     },

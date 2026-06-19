@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+#
+# Deploy ai-demo to Dokku.
+#
+# This app is a subdirectory of the symfony/ai monorepo, but Dokku deploys via
+# `git push`. So we build a THROWAWAY git repo from this directory and push that
+# — the monorepo's own history is untouched. composer.lock is committed (the app
+# is reproducible); vendor/ is built on the server by the PHP buildpack, which
+# pulls symfony/ai dev-tac from the fork via the composer.json "repositories".
+#
+# Secrets (API keys) are read from .env.local and pushed with `dokku config:set`;
+# .env.local itself is gitignored and never pushed. Values are never printed.
+#
+# Usage:
+#   bin/deploy              # set config (from .env.local) + deploy
+#   bin/deploy --no-config  # deploy code only (skip config:set)
+#
+# Could later be a Castor task or a justfile recipe; kept as plain bash so it has
+# no extra dependencies.
+set -euo pipefail
+
+APP="${DOKKU_APP:-ai-demo}"
+DOKKU_HOST="${DOKKU_HOST:-ssh.survos.com}"
+REMOTE="dokku@${DOKKU_HOST}:${APP}"
+
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+ROOT="$(pwd)"
+
+DO_CONFIG=1
+[ "${1:-}" = "--no-config" ] && DO_CONFIG=0
+
+echo "==> Deploying ${APP} -> ${DOKKU_HOST}"
+
+if [ "$DO_CONFIG" = "1" ]; then
+  CFG=( APP_ENV=prod APP_DEBUG=0 )
+  if [ -f .env.local ]; then
+    while IFS= read -r line; do
+      case "$line" in
+        OPENAI_API_KEY=*|MISTRAL_API_KEY=*|CEREBRAS_API_KEY=*|HUGGINGFACE_API_KEY=*|ANTHROPIC_API_KEY=*)
+          key="${line%%=*}"; val="${line#*=}"
+          val="${val%\"}"; val="${val#\"}"   # strip surrounding double quotes
+          val="${val%\'}"; val="${val#\'}"   # strip surrounding single quotes
+          CFG+=( "${key}=${val}" )
+          ;;
+      esac
+    done < .env.local
+  fi
+  echo "==> Setting ${#CFG[@]} config vars on ${APP} (values hidden)"
+  ssh "dokku@${DOKKU_HOST}" config:set --no-restart "${APP}" "${CFG[@]}" >/dev/null
+fi
+
+echo "==> Building throwaway deploy repo + pushing (this triggers the build)"
+TMP_GIT="${ROOT}/.git-deploy"
+rm -rf "$TMP_GIT"
+trap 'rm -rf "$TMP_GIT"' EXIT
+G() { git --git-dir="$TMP_GIT" --work-tree="$ROOT" "$@"; }
+G init -q -b main
+G add -A
+G add -f composer.lock 2>/dev/null || true   # belt-and-suspenders (also un-ignored in .gitignore)
+G -c user.email=deploy@survos.com -c user.name=deploy commit -q -m "deploy ${APP} $(date -u +%FT%TZ)"
+G remote add dokku "$REMOTE"
+G push -f dokku main
+
+echo "==> Done.  logs: ssh dokku@${DOKKU_HOST} logs ${APP} -t"

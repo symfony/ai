@@ -65,6 +65,7 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^12.1",
+        "survos/deployment-bundle": "^2.10",
         "symfony/ai-mate": "^0.10",
         "symfony/ai-monolog-mate-extension": "^0.10",
         "symfony/ai-open-responses-platform": "^0.10",
