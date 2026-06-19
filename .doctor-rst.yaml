@@ -90,3 +90,9 @@ rules:
         min_version: '0.2'
     versionadded_directive_should_have_version: ~
     yaml_instead_of_yml_suffix: ~
+
+whitelist:
+    regex:
+        - '/MCP Apps/'         # proper noun: the "MCP Apps" extension (modelcontextprotocol/ext-apps)
+        - '/Interactive apps/' # section heading for that extension's interactive tools
+        - '/apps[.:]/'         # the `mcp.apps.*` configuration key

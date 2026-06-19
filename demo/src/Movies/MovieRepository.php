@@ -28,7 +28,7 @@ final class MovieRepository
     /**
      * @return list<Movie>
      */
-    public function all(): array
+    public function findAll(): array
     {
         $finder = (new Finder())
             ->files()
@@ -44,7 +44,7 @@ final class MovieRepository
         return $movies;
     }
 
-    public function find(string $slug): ?Movie
+    public function findOne(string $slug): ?Movie
     {
         if ('' === $slug || str_contains($slug, '/') || str_contains($slug, '..')) {
             return null;

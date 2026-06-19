@@ -1,0 +1,19 @@
+{#
+    Result grid for the movie MCP app. App\Movies\MovieApp::render() (the `movie_search` tool) returns
+    the context; the bundle renders this template into the tool result and drops it into the shell's
+    #root container. Each card declares `data-call="movie_details"` so the base template invokes that
+    tool (with the card's slug) and swaps in the detail view — no JS here.
+
+    Param: movies — list<App\Movies\Movie>
+#}
+{% if movies is empty %}
+    <p class="muted">No movies match your search.</p>
+{% else %}
+    <div class="grid">
+        {% for movie in movies %}
+            <button class="card" type="button" data-call="movie_details" data-arg-slug="{{ movie.slug }}" aria-label="Open {{ movie.title }}">
+                {% include 'mcp/_poster.html.twig' with { movie, showLabel: true } only %}
+            </button>
+        {% endfor %}
+    </div>
+{% endif %}

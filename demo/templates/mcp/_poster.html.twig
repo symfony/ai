@@ -1,0 +1,21 @@
+{#
+    Poster tile for the movie MCP app. The matching CSS (.poster / .initials / .label) lives in the
+    shell, mcp/movies.html.twig.
+
+    This is a deliberate standalone copy of components/_movie_poster.html.twig: the MCP app renders inside
+    a sandboxed iframe and cannot reuse the host app's Twig components or Bootstrap CSS, so it ships its
+    own self-contained markup + styling.
+
+    Params:
+      - movie:     the App\Movies\Movie to render
+      - showLabel: render the title/year overlay (grid cards); defaults to false (detail view)
+      - portrait:  use a 2/3 portrait ratio instead of the square grid tile; defaults to false
+#}
+{% set hue = movie.hue() %}
+{% set initials = movie.title|split(' ')|slice(0, 2)|map(word => word|first)|join|upper %}
+<div class="poster" style="background: linear-gradient(135deg, hsl({{ hue }}, 60%, 45%), hsl({{ (hue + 40) % 360 }}, 55%, 22%));{% if portrait|default(false) %} aspect-ratio: 2/3;{% endif %}">
+    <span class="initials">{{ initials }}</span>
+    {% if showLabel|default(false) %}
+        <span class="label">{{ movie.title }}{% if movie.year %}<span class="year">{{ movie.year }}</span>{% endif %}</span>
+    {% endif %}
+</div>

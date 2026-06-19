@@ -73,4 +73,20 @@ final class MovieTest extends TestCase
         $this->assertStringContainsString('## Plot', $movie->rawMarkdown);
         $this->assertStringContainsString('**Director:** The Wachowskis', $movie->rawMarkdown);
     }
+
+    public function testJsonSerializeReturnsCompactModelFacingProjection()
+    {
+        $movie = Movie::fromFile(self::FIXTURES_DIR.'/the-matrix.md');
+
+        $data = $movie->jsonSerialize();
+
+        // exactly the fields the agent needs — no full plot or raw markdown
+        $this->assertSame(['slug', 'title', 'year', 'director', 'cast', 'summary'], array_keys($data));
+        $this->assertSame('the-matrix', $data['slug']);
+        $this->assertSame('The Matrix', $data['title']);
+        $this->assertSame(1999, $data['year']);
+        $this->assertSame('The Wachowskis', $data['director']);
+        $this->assertSame('Keanu Reeves', $data['cast'][0]); // cast reduced to names only
+        $this->assertSame($movie->plot[0], $data['summary']); // summary is the first plot paragraph
+    }
 }

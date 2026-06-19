@@ -59,7 +59,7 @@ final class TwigComponent
 
         $suggestions = [];
         foreach ($message->getMetadata()->get('movies') as $suggestion) {
-            $movie = $this->movies->find($suggestion->slug);
+            $movie = $this->movies->findOne($suggestion->slug);
             if (null !== $movie) {
                 $suggestions[] = ['movie' => $movie, 'reason' => $suggestion->reason];
             }
@@ -74,7 +74,7 @@ final class TwigComponent
             return null;
         }
 
-        return $this->movies->find($this->detailSlug);
+        return $this->movies->findOne($this->detailSlug);
     }
 
     #[LiveAction]

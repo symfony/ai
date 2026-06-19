@@ -14,7 +14,7 @@ namespace App\Movies;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Movie
+final class Movie implements \JsonSerializable
 {
     /**
      * @param list<array{name: string, role: string}> $cast
@@ -80,5 +80,24 @@ final class Movie
     public function hue(): int
     {
         return crc32($this->slug) % 360;
+    }
+
+    /**
+     * The compact, model-facing projection used when a movie is returned by the `movie_search` tool:
+     * just enough for the agent to talk about it and to reference it by `slug` (no full plot or raw
+     * markdown). The UI reads the typed properties directly and is unaffected by this.
+     *
+     * @return array{slug: string, title: string, year: int|null, director: string|null, cast: list<string>, summary: string}
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'slug' => $this->slug,
+            'title' => $this->title,
+            'year' => $this->year,
+            'director' => $this->director,
+            'cast' => array_map(static fn (array $member): string => $member['name'], $this->cast),
+            'summary' => $this->plot[0] ?? '',
+        ];
     }
 }

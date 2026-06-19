@@ -95,7 +95,8 @@ symfony console ai:store:retrieve blog "Week of Symfony"
 
 ### MCP
 
-Demo MCP server added with a `current-time` tool to return the current time, with an optional format string.
+Demo MCP server exposing a `current-time` tool and a **Movies** MCP App — an interactive HTML UI (`#[AsMcpApp]`)
+that renders the movie collection as a searchable grid in hosts supporting [MCP Apps](https://github.com/modelcontextprotocol/ext-apps).
 
 To add the server, add the following configuration to your MCP Client's settings, e.g. your IDE:
 ```json

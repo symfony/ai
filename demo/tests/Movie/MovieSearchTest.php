@@ -11,6 +11,7 @@
 
 namespace App\Tests\Movie;
 
+use App\Movies\Movie;
 use App\Movies\MovieRepository;
 use App\Movies\MovieSearch;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,13 +24,10 @@ final class MovieSearchTest extends TestCase
 
     public function testEmptyQueryReturnsWholeCollection()
     {
-        $results = ($this->search())('');
+        $slugs = $this->slugsFor('');
 
-        $this->assertNotSame([], $results);
-        $this->assertArrayHasKey('slug', $results[0]);
-        $this->assertArrayHasKey('title', $results[0]);
-        $this->assertArrayHasKey('cast', $results[0]);
-        $this->assertArrayHasKey('summary', $results[0]);
+        $this->assertNotSame([], $slugs);
+        $this->assertContains('the-matrix', $slugs);
     }
 
     public function testSearchMatchesTitle()
@@ -64,7 +62,7 @@ final class MovieSearchTest extends TestCase
      */
     private function slugsFor(string $query): array
     {
-        return array_map(static fn (array $result): string => $result['slug'], ($this->search())($query));
+        return array_map(static fn (Movie $movie): string => $movie->slug, ($this->search())($query));
     }
 
     private function search(): MovieSearch
