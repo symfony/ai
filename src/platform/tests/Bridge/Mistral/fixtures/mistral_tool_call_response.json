@@ -1,0 +1,48 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/chat/completions",
+                "body": {
+                    "model": "mistral-large-latest",
+                    "messages": [
+                        {"role": "user", "content": "Weather in Paris?"}
+                    ]
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": ["application/json"]
+                },
+                "body": {
+                    "id": "cmpl-tool",
+                    "object": "chat.completion",
+                    "model": "mistral-large-latest",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": null,
+                                "tool_calls": [
+                                    {
+                                        "id": "call_1",
+                                        "type": "function",
+                                        "function": {
+                                            "name": "get_weather",
+                                            "arguments": "{\"location\": \"Paris\"}"
+                                        }
+                                    }
+                                ]
+                            },
+                            "finish_reason": "tool_calls"
+                        }
+                    ],
+                    "usage": {"prompt_tokens": 12, "completion_tokens": 8, "total_tokens": 20}
+                }
+            }
+        }
+    ]
+}
