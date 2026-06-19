@@ -2622,12 +2622,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tacman/ai.git",
-                "reference": "3bfb85596eeeca28fa4708d60f217921ee47cf7a"
+                "reference": "55b26186c838601e5267028b3034acec1dc5f6f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tacman/ai/zipball/3bfb85596eeeca28fa4708d60f217921ee47cf7a",
-                "reference": "3bfb85596eeeca28fa4708d60f217921ee47cf7a",
+                "url": "https://api.github.com/repos/tacman/ai/zipball/55b26186c838601e5267028b3034acec1dc5f6f1",
+                "reference": "55b26186c838601e5267028b3034acec1dc5f6f1",
                 "shasum": ""
             },
             "require": {
@@ -2795,7 +2795,7 @@
             "support": {
                 "source": "https://github.com/tacman/ai/tree/tac"
             },
-            "time": "2026-06-16T11:41:11+00:00"
+            "time": "2026-06-19T15:44:27+00:00"
         },
         {
             "name": "symfony/asset",
@@ -4948,16 +4948,16 @@
         },
         {
             "name": "symfony/models-dev",
-            "version": "v78.0",
+            "version": "v80.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/models-dev.git",
-                "reference": "5956e1a32657642853515222d5703a561ed037c6"
+                "reference": "fda99517fecd334128cc089fd1de0d213c2ab27f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/models-dev/zipball/5956e1a32657642853515222d5703a561ed037c6",
-                "reference": "5956e1a32657642853515222d5703a561ed037c6",
+                "url": "https://api.github.com/repos/symfony/models-dev/zipball/fda99517fecd334128cc089fd1de0d213c2ab27f",
+                "reference": "fda99517fecd334128cc089fd1de0d213c2ab27f",
                 "shasum": ""
             },
             "type": "library",
@@ -4974,7 +4974,7 @@
             "description": "Provides the models.dev data as a Composer package",
             "support": {
                 "issues": "https://github.com/symfony/models-dev/issues",
-                "source": "https://github.com/symfony/models-dev/tree/v78.0"
+                "source": "https://github.com/symfony/models-dev/tree/v80.0"
             },
             "funding": [
                 {
@@ -4994,7 +4994,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-06-15T08:15:08+00:00"
+            "time": "2026-06-19T08:03:30+00:00"
         },
         {
             "name": "symfony/monolog-bridge",
@@ -6421,16 +6421,16 @@
         },
         {
             "name": "symfony/stimulus-bundle",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/stimulus-bundle.git",
-                "reference": "9dc58d7cbb77356642c63434033e64d00b6c6946"
+                "reference": "3cf8cd35c400f287def6ccd4574c111c07661054"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/stimulus-bundle/zipball/9dc58d7cbb77356642c63434033e64d00b6c6946",
-                "reference": "9dc58d7cbb77356642c63434033e64d00b6c6946",
+                "url": "https://api.github.com/repos/symfony/stimulus-bundle/zipball/3cf8cd35c400f287def6ccd4574c111c07661054",
+                "reference": "3cf8cd35c400f287def6ccd4574c111c07661054",
                 "shasum": ""
             },
             "require": {
@@ -6473,7 +6473,7 @@
                 "symfony-ux"
             ],
             "support": {
-                "source": "https://github.com/symfony/stimulus-bundle/tree/v3.1.0"
+                "source": "https://github.com/symfony/stimulus-bundle/tree/v3.2.0"
             },
             "funding": [
                 {
@@ -6493,7 +6493,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-22T05:04:55+00:00"
+            "time": "2026-06-05T09:42:50+00:00"
         },
         {
             "name": "symfony/string",
@@ -7192,16 +7192,16 @@
         },
         {
             "name": "symfony/ux-dropzone",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ux-dropzone.git",
-                "reference": "49475de4db15e2065969ff4e8cf67299c0c3fae6"
+                "reference": "5a6e9521da0c7b46229d540098998fd3fe9998f3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ux-dropzone/zipball/49475de4db15e2065969ff4e8cf67299c0c3fae6",
-                "reference": "49475de4db15e2065969ff4e8cf67299c0c3fae6",
+                "url": "https://api.github.com/repos/symfony/ux-dropzone/zipball/5a6e9521da0c7b46229d540098998fd3fe9998f3",
+                "reference": "5a6e9521da0c7b46229d540098998fd3fe9998f3",
                 "shasum": ""
             },
             "require": {
@@ -7251,7 +7251,7 @@
                 "symfony-ux"
             ],
             "support": {
-                "source": "https://github.com/symfony/ux-dropzone/tree/v3.1.0"
+                "source": "https://github.com/symfony/ux-dropzone/tree/v3.2.0"
             },
             "funding": [
                 {
@@ -7271,20 +7271,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-22T05:04:55+00:00"
+            "time": "2026-06-05T10:28:27+00:00"
         },
         {
             "name": "symfony/ux-icons",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ux-icons.git",
-                "reference": "8a50a3d439a1612f5952c587af72933041b7308e"
+                "reference": "a6b81d5953d5f963fc8f27a3584213d242406ca1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ux-icons/zipball/8a50a3d439a1612f5952c587af72933041b7308e",
-                "reference": "8a50a3d439a1612f5952c587af72933041b7308e",
+                "url": "https://api.github.com/repos/symfony/ux-icons/zipball/a6b81d5953d5f963fc8f27a3584213d242406ca1",
+                "reference": "a6b81d5953d5f963fc8f27a3584213d242406ca1",
                 "shasum": ""
             },
             "require": {
@@ -7344,7 +7344,7 @@
                 "twig"
             ],
             "support": {
-                "source": "https://github.com/symfony/ux-icons/tree/v3.1.0"
+                "source": "https://github.com/symfony/ux-icons/tree/v3.2.0"
             },
             "funding": [
                 {
@@ -7364,20 +7364,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-22T05:04:55+00:00"
+            "time": "2026-06-19T06:54:48+00:00"
         },
         {
             "name": "symfony/ux-live-component",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ux-live-component.git",
-                "reference": "9ad6223e00922c17e26ce111c3ced31a9c2e7210"
+                "reference": "ec86432d7b86f687ded54faeaacb61fe61f04d34"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ux-live-component/zipball/9ad6223e00922c17e26ce111c3ced31a9c2e7210",
-                "reference": "9ad6223e00922c17e26ce111c3ced31a9c2e7210",
+                "url": "https://api.github.com/repos/symfony/ux-live-component/zipball/ec86432d7b86f687ded54faeaacb61fe61f04d34",
+                "reference": "ec86432d7b86f687ded54faeaacb61fe61f04d34",
                 "shasum": ""
             },
             "require": {
@@ -7445,7 +7445,7 @@
                 "twig"
             ],
             "support": {
-                "source": "https://github.com/symfony/ux-live-component/tree/v3.1.0"
+                "source": "https://github.com/symfony/ux-live-component/tree/v3.2.0"
             },
             "funding": [
                 {
@@ -7465,20 +7465,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-29T07:08:56+00:00"
+            "time": "2026-06-05T09:42:50+00:00"
         },
         {
             "name": "symfony/ux-turbo",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ux-turbo.git",
-                "reference": "50faf143c13154dd928cfedb96f951bbecad4c73"
+                "reference": "923c6479da86ebdcbd4f723a80c24d47d50567fa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ux-turbo/zipball/50faf143c13154dd928cfedb96f951bbecad4c73",
-                "reference": "50faf143c13154dd928cfedb96f951bbecad4c73",
+                "url": "https://api.github.com/repos/symfony/ux-turbo/zipball/923c6479da86ebdcbd4f723a80c24d47d50567fa",
+                "reference": "923c6479da86ebdcbd4f723a80c24d47d50567fa",
                 "shasum": ""
             },
             "require": {
@@ -7486,7 +7486,8 @@
                 "symfony/stimulus-bundle": "^2.9.1|^3.0"
             },
             "conflict": {
-                "symfony/flex": "<1.13"
+                "symfony/flex": "<1.13",
+                "symfony/mercure": ">=0.7.0 <0.7.2"
             },
             "require-dev": {
                 "doctrine/doctrine-bundle": "^2.14|^3.0|^4.0",
@@ -7545,7 +7546,7 @@
                 "turbo-stream"
             ],
             "support": {
-                "source": "https://github.com/symfony/ux-turbo/tree/v3.1.0"
+                "source": "https://github.com/symfony/ux-turbo/tree/v3.2.0"
             },
             "funding": [
                 {
@@ -7565,25 +7566,25 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-22T05:04:55+00:00"
+            "time": "2026-06-19T07:14:15+00:00"
         },
         {
             "name": "symfony/ux-twig-component",
-            "version": "v3.1.0",
+            "version": "v3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ux-twig-component.git",
-                "reference": "69763f39367d7185ebff3a8aec3e9d6ec7e10d55"
+                "reference": "a9b93b10fe2056a6f93ebc1f9e3509f7fafb5bf2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ux-twig-component/zipball/69763f39367d7185ebff3a8aec3e9d6ec7e10d55",
-                "reference": "69763f39367d7185ebff3a8aec3e9d6ec7e10d55",
+                "url": "https://api.github.com/repos/symfony/ux-twig-component/zipball/a9b93b10fe2056a6f93ebc1f9e3509f7fafb5bf2",
+                "reference": "a9b93b10fe2056a6f93ebc1f9e3509f7fafb5bf2",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.4",
-                "symfony/dependency-injection": "^7.4|^8.0",
+                "psr/container": "^1.1|^2.0",
                 "symfony/deprecation-contracts": "^2.2|^3.0",
                 "symfony/event-dispatcher": "^7.4|^8.0",
                 "symfony/property-access": "^7.4|^8.0",
@@ -7596,6 +7597,7 @@
                 "phpunit/phpunit": "^11.1|^12.0",
                 "symfony/console": "^7.4|^8.0",
                 "symfony/css-selector": "^7.4|^8.0",
+                "symfony/dependency-injection": "^7.4|^8.0",
                 "symfony/dom-crawler": "^7.4|^8.0",
                 "symfony/framework-bundle": "^7.4|^8.0",
                 "symfony/stimulus-bundle": "^2.9.1|^3.0",
@@ -7633,7 +7635,7 @@
                 "twig"
             ],
             "support": {
-                "source": "https://github.com/symfony/ux-twig-component/tree/v3.1.0"
+                "source": "https://github.com/symfony/ux-twig-component/tree/v3.2.0"
             },
             "funding": [
                 {
@@ -7653,7 +7655,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-29T07:08:56+00:00"
+            "time": "2026-06-11T20:32:06+00:00"
         },
         {
             "name": "symfony/ux-typed",
@@ -10078,7 +10080,7 @@
         },
         {
             "name": "survos/deployment-bundle",
-            "version": "2.10.5",
+            "version": "2.10.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/survos/deployment-bundle.git",
@@ -10126,7 +10128,7 @@
             ],
             "support": {
                 "issues": "https://github.com/survos/deployment-bundle/issues",
-                "source": "https://github.com/survos/deployment-bundle/tree/2.10.5"
+                "source": "https://github.com/survos/deployment-bundle/tree/2.10.6"
             },
             "funding": [
                 {

@@ -5,28 +5,20 @@
         "php",
         "symfony"
     ],
-    "repository": "https://github.com/symfony/ai-demo",
+    "repository": "https://github.com/tacman/ai",
     "scripts": {
         "dokku": {
-            "predeploy": "bin/console importmap:install && bin/console asset-map:compile && bin/console  secrets:decrypt-to-local --force && bin/console doctrine:migrations:migrate -n --allow-no-migration",
+            "predeploy": "bin/console asset-map:compile",
             "postdeploy": "bin/console about"
         }
     },
     "env": {
-        "SECRET_TOKEN": {
-            "description": "A secret key for verifying the integrity of signed cookies.",
-            "value": "secret"
-        },
         "WEB_CONCURRENCY": {
-            "description": "The number of processes to run.",
-            "generator": "echo 5"
+            "description": "The number of PHP-FPM/nginx workers to run.",
+            "value": "2"
         }
     },
     "image": "gliderlabs/herokuish",
-    "addons": [
-        "dokku-postgres",
-        "dokku-redis"
-    ],
     "buildpacks": [
         {
             "url": "https://github.com/heroku/heroku-buildpack-php.git"
