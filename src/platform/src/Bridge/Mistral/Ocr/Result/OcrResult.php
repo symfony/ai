@@ -26,6 +26,7 @@ final class OcrResult
         private readonly array $pages,
         private readonly string $model,
         private readonly ?array $usageInfo = null,
+        private readonly ?string $documentAnnotation = null,
     ) {
     }
 
@@ -48,6 +49,14 @@ final class OcrResult
     public function getUsageInfo(): ?array
     {
         return $this->usageInfo;
+    }
+
+    /**
+     * The document-wide annotation, present when document annotation was requested.
+     */
+    public function getDocumentAnnotation(): ?string
+    {
+        return $this->documentAnnotation;
     }
 
     /**

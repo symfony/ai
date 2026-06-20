@@ -27,7 +27,6 @@ final class Page
         private readonly string $markdown,
         private readonly array $images = [],
         private readonly ?array $dimensions = null,
-        private readonly ?string $documentAnnotation = null,
     ) {
     }
 
@@ -55,10 +54,5 @@ final class Page
     public function getDimensions(): ?array
     {
         return $this->dimensions;
-    }
-
-    public function getDocumentAnnotation(): ?string
-    {
-        return $this->documentAnnotation;
     }
 }

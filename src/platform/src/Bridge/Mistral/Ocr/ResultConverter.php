@@ -66,7 +66,6 @@ final class ResultConverter implements ResultConverterInterface
                 $page['markdown'] ?? '',
                 $images,
                 $page['dimensions'] ?? null,
-                $page['document_annotation'] ?? null,
             );
         }, $data['pages']);
 
@@ -74,6 +73,7 @@ final class ResultConverter implements ResultConverterInterface
             $pages,
             $data['model'] ?? '',
             $data['usage_info'] ?? null,
+            $data['document_annotation'] ?? null,
         ));
     }
 

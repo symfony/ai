@@ -57,6 +57,7 @@ final class ResultConverterTest extends TestCase
                     'markdown' => 'Second page.',
                 ],
             ],
+            'document_annotation' => '{"language":"en"}',
             'usage_info' => ['pages_processed' => 2, 'doc_size_bytes' => 12345],
         ]);
 
@@ -70,6 +71,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('mistral-ocr-latest', $ocr->getModel());
         $this->assertCount(2, $ocr->getPages());
         $this->assertSame("# Title\n\nFirst page.\n\nSecond page.", $ocr->getMarkdown());
+        $this->assertSame('{"language":"en"}', $ocr->getDocumentAnnotation());
         $this->assertSame(['pages_processed' => 2, 'doc_size_bytes' => 12345], $ocr->getUsageInfo());
 
         $firstPage = $ocr->getPages()[0];
