@@ -15,6 +15,8 @@ CHANGELOG
 0.9
 ---
 
+ * Add `Mock` test provider (`Factory`, `MockModelClient`, `MockResultConverter`, `ModelCatalog`) for routing-aware, any-result-type mocks in tests, complementing `Test\InMemoryPlatform`
+ * Add `Mock\Recording\RecordingProvider` (with `Cassette`/`ResultSerializer`) to record a real provider's result once (when the cassette file is missing) and replay it offline in tests
  * Add `ValidatorSubscriber` to validate structured output using Symfony Validator
  * Add support for multiple system messages in `MessageBag`
  * [BC BREAK] Rework `AssistantMessage` to hold `ContentInterface` parts (variadic constructor) instead of a single string content plus separate tool-call/thinking fields. Adds `Message\Content\Thinking`, `Message\Content\ExecutableCode`, and `Message\Content\CodeExecution` content classes, and makes `Result\ToolCall` implement `ContentInterface`. `Message::ofAssistant()` accepts strings, `ContentInterface`, and `ResultInterface` values, mapping `TextResult`/`ThinkingResult`/`ToolCallResult`/`ExecutableCodeResult`/`CodeExecutionResult`/`MultiPartResult` to their content equivalents; result types without a known mapping throw `InvalidArgumentException` so unhandled cases surface instead of being silently dropped.
