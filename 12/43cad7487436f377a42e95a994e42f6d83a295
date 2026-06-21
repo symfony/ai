@@ -1,0 +1,41 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-05-31T08:59:09Z
+
+Shall we name it to Mock? AFAIK this is more the Symfony naming
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-01T06:33:37Z
+
+> Shall we name it to Mock? AFAIK this is more the Symfony naming
+
+Good call 👍
+
+done — renamed Fake → Mock, have also done the same rename to the stacked PRs: #2128 and #2129
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-20T19:49:27Z
+
+@chr-hertel fixed :)
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-21T20:22:19Z
+
+The last thing i'm thinking about is merging the namespaces by basically moving this to the `Symfony\AI\Platform\Test` namespace - next to the `InMemoryPlatform` - WDYT?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-21T20:40:55Z
+
+> The last thing i'm thinking about is merging the namespaces by basically moving this to the `Symfony\AI\Platform\Test` namespace - next to the `InMemoryPlatform` - WDYT?
+
+doing it at the moment :)
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-21T20:52:34Z
+
+@chr-hertel done
