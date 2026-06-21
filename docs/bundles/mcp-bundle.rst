@@ -237,6 +237,90 @@ This wraps the configured Symfony session handler (e.g. Redis, database, filesys
 your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
 Expired sessions are cleaned up lazily on read.
 
+OAuth Authorization Server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The bundle can turn your MCP server into its own OAuth 2.1 authorization server. The
+heavy lifting — the ``/authorize`` and ``/token`` endpoints, PKCE, RS256 JWT issuance,
+refresh-token rotation, client/token persistence and the bearer firewall authenticator —
+is owned by `league/oauth2-server-bundle`_. On top of it the bundle adds the MCP-specific
+pieces league does not ship: dynamic client registration (RFC 7591), the discovery
+documents (RFC 8414 / RFC 9728) and the JWKS endpoint MCP clients (e.g. Claude.ai) need.
+
+Install the league bundle and register it in your kernel:
+
+.. code-block:: bash
+
+    composer require league/oauth2-server-bundle
+    openssl genrsa -aes128 -passout pass:_passphrase_ -out config/jwt/private.pem 2048
+    openssl rsa -in config/jwt/private.pem -passin pass:_passphrase_ -pubout -out config/jwt/public.pem
+
+.. code-block:: php
+
+    // config/bundles.php
+    return [
+        // ...
+        League\Bundle\OAuth2ServerBundle\LeagueOAuth2ServerBundle::class => ['all' => true],
+        Symfony\AI\McpBundle\McpBundle::class => ['all' => true],
+    ];
+
+Enable the ``oauth`` section. The bundle derives the whole ``league_oauth2_server``
+configuration from it (you do not configure league directly):
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        client_transports:
+            http: true
+        oauth:
+            enabled: true
+            issuer: '%env(MCP_BASE_URL)%'              # public base URL of this server
+            encryption_key: '%env(MCP_OAUTH_ENCRYPTION_KEY)%'
+            signing_key:
+                private_key: '%kernel.project_dir%/config/jwt/private.pem'
+                public_key: '%kernel.project_dir%/config/jwt/public.pem'
+                # passphrase: '%env(MCP_OAUTH_PASSPHRASE)%'
+            scopes: ['mcp:tools', 'mcp:resources']
+            persistence:
+                type: doctrine                        # or "in_memory" for tests/demos
+
+This registers the endpoints (defaults shown):
+
+============================================  =========================================
+Endpoint                                      Purpose
+============================================  =========================================
+``/.well-known/oauth-authorization-server``   RFC 8414 authorization server metadata
+``/.well-known/oauth-protected-resource``     RFC 9728 protected resource metadata
+``/.well-known/jwks.json``                    Public signing key (JWK Set)
+``/oauth/authorize``                          league authorization endpoint (PKCE, code grant)
+``/oauth/token``                              league token endpoint (code + refresh grants)
+``/oauth/register``                           Dynamic client registration (RFC 7591)
+============================================  =========================================
+
+When using ``persistence: doctrine``, create the league tables once with a migration
+(``bin/console make:migration`` then ``doctrine:migrations:migrate``).
+
+Protect the MCP endpoint with league's ``oauth2`` firewall authenticator, which validates
+the bearer token and loads the user from its subject claim:
+
+.. code-block:: yaml
+
+    # config/packages/security.yaml
+    security:
+        firewalls:
+            mcp:
+                pattern: ^/_mcp
+                stateless: true
+                oauth2: true
+
+The authenticated firewall user in front of ``/oauth/authorize`` becomes the OAuth subject
+and consent is auto-approved. Provide a service implementing
+``Symfony\AI\McpBundle\OAuth\ConsentInterface`` and reference it via ``oauth.consent`` to
+render a consent screen or apply custom approval rules.
+
+.. _`league/oauth2-server-bundle`: https://github.com/thephpleague/oauth2-server-bundle
+
 Act as Client
 ~~~~~~~~~~~~~
 
