@@ -294,6 +294,100 @@ final class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    public function testConvertSkipsWebSearchToolCallAndReturnsMessage()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                // When a built-in tool such as web_search runs, the Responses API
+                // emits its own tool-call item before the assistant message.
+                ['type' => 'web_search_call', 'id' => 'ws_1', 'status' => 'completed'],
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'Berlin is the capital of Germany.',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Berlin is the capital of Germany.', $result->getContent());
+    }
+
+    /**
+     * @param non-empty-string $type
+     */
+    #[DataProvider('provideBuiltInToolCallTypes')]
+    public function testConvertSkipsBuiltInToolCallOutputItems(string $type)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                ['type' => $type, 'id' => 'call_1', 'status' => 'completed'],
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'final answer',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('final answer', $result->getContent());
+    }
+
+    /**
+     * @return iterable<string, array{0: non-empty-string}>
+     */
+    public static function provideBuiltInToolCallTypes(): iterable
+    {
+        yield 'web_search_call' => ['web_search_call'];
+        yield 'file_search_call' => ['file_search_call'];
+        yield 'code_interpreter_call' => ['code_interpreter_call'];
+        yield 'image_generation_call' => ['image_generation_call'];
+        yield 'computer_call' => ['computer_call'];
+        yield 'local_shell_call' => ['local_shell_call'];
+        yield 'mcp_call' => ['mcp_call'];
+        yield 'mcp_list_tools' => ['mcp_list_tools'];
+        yield 'mcp_approval_request' => ['mcp_approval_request'];
+    }
+
+    public function testConvertStillThrowsOnUnknownOutputType()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                ['type' => 'totally_unknown_type', 'id' => 'x_1'],
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'unreachable',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unsupported output type "totally_unknown_type".');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testContentFilterException()
     {
         $converter = new ResultConverter();

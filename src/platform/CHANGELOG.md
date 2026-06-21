@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add `PartialJsonParser` for recovering partial JSON from streaming output
+ * Support OpenAI Responses built-in/server-side tool calls (e.g. `web_search`, `file_search`, `mcp_call`) in the OpenAI and OpenResponses result converters by skipping their `*_call` output items instead of throwing `Unsupported output type`
 
 0.10
 ----
