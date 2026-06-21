@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-19T21:40:25Z
+
+So, i thought about this before and if we want to have some black magic here - was always wondering tho if there's even a use-case for combining streaming and structured output, but never came across that - so looks like you're one step ahead here, what's your use-case here?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-20T04:12:01Z
+
+the idea is to load multiple more or less different stuff in the same request. in case of sulu.ai we are loading sources (json sttucture of different pages) and the answer in the same structure.
+
+this makes it mich faster (see the widget on sulu.io as the implementation example). in the follow ups you will see then more DX stuff to use that as easy as possible
