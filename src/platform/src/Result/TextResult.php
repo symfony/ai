@@ -35,4 +35,20 @@ final class TextResult extends BaseResult
     {
         return $this->signature;
     }
+
+    public function withContent(string $content): self
+    {
+        if ($content === $this->content) {
+            return $this;
+        }
+
+        $clone = new self($content, $this->signature);
+        $clone->getMetadata()->set($this->getMetadata()->all());
+
+        if (null !== $rawResult = $this->getRawResult()) {
+            $clone->setRawResult($rawResult);
+        }
+
+        return $clone;
+    }
 }

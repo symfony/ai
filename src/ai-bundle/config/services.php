@@ -72,6 +72,9 @@ use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
+use Symfony\AI\Platform\Result\Normalizer\JsonFenceStripNormalizer;
+use Symfony\AI\Platform\Result\Normalizer\PlatformSubscriber as NormalizerPlatformSubscriber;
+use Symfony\AI\Platform\Result\Normalizer\UnicodeNormalizer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -206,6 +209,17 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.structured_output.validator_subscriber', ValidatorSubscriber::class)
             ->args([
                 service('validator')->nullOnInvalid(),
+            ])
+            ->tag('kernel.event_subscriber')
+
+        // result normalizers
+        ->set('ai.platform.result_normalizer.json_fence_strip', JsonFenceStripNormalizer::class)
+            ->tag('ai.platform.result_normalizer')
+        ->set('ai.platform.result_normalizer.unicode', UnicodeNormalizer::class)
+            ->tag('ai.platform.result_normalizer')
+        ->set('ai.platform.result_normalizer_subscriber', NormalizerPlatformSubscriber::class)
+            ->args([
+                tagged_iterator('ai.platform.result_normalizer'),
             ])
             ->tag('kernel.event_subscriber')
 
