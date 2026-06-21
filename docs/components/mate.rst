@@ -419,6 +419,31 @@ The core package provides basic system information tools:
 
 * ``server-info`` - Get PHP runtime environment details: version, OS, OS family, and loaded extensions
 
+Skills
+------
+
+`Agent Skills <https://agentskills.io>`_ are ``SKILL.md`` files that give your coding agent
+structured, multi-step "how-to" knowledge for a task. Extensions can ship skills alongside their MCP tools, and Mate
+installs them onto the filesystem where coding agents read them — a polyfill until skills can be
+served over MCP directly.
+
+You usually do not run anything: ``mate discover`` (which also runs automatically after
+``composer require``) installs the skills of every enabled extension. To sync them manually, use
+``mate skills:install``.
+
+Each skill is installed under a ``mate-`` prefixed directory name (e.g. ``mate-demo-skill``) to
+avoid clashing with skills you maintain from other sources, in two locations:
+
+* ``.agents/skills/`` is the source of truth, read directly by Codex, OpenCode and GitHub Copilot.
+* ``.claude/skills/`` is symlinked to ``.agents/skills/`` for Claude Code, which only reads its own
+  directory.
+
+Skills are symlinked into ``.agents/skills/`` so they auto-update on ``composer update`` (the link
+points into the gitignored ``vendor/`` directory, so this requires symlink privileges on Windows).
+
+The core package itself ships a ``system-information`` skill describing how to inspect the PHP
+runtime and installed package versions via the ``server-info`` tool.
+
 Commands
 --------
 
@@ -432,6 +457,12 @@ Commands
     - Generate or update ``mate/extensions.php`` with discovered extensions
     - Preserve existing enabled/disabled states for known extensions
     - Default new extensions to enabled
+    - Install Agent Skills shipped by enabled extensions (see `Skills`_)
+
+``mate skills:install``
+    Install the Agent Skills shipped by your enabled extensions so your coding agent can use
+    them. This runs automatically as part of ``mate discover``; use it for an explicit re-sync.
+    See `Skills`_.
 
 ``mate serve``
     Start the MCP server with stdio transport.

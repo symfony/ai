@@ -47,10 +47,11 @@ final class AgentInstructionsMaterializerTest extends TestCase
         $materializer = new AgentInstructionsMaterializer($this->tempDir, $aggregator, $logger);
 
         $result = $materializer->materializeForExtensions([
-            '_custom' => ['dirs' => [], 'includes' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
             'vendor/package-a' => [
                 'dirs' => [],
                 'includes' => [],
+                'skills' => [],
                 'instructions' => 'INSTRUCTIONS.md',
             ],
         ]);

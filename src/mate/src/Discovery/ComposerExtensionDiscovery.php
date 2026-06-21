@@ -31,6 +31,7 @@ use Psr\Log\LoggerInterface;
  *     dirs: string[],
  *     includes: string[],
  *     instructions?: string,
+ *     skills: string[],
  * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -82,11 +83,13 @@ final class ComposerExtensionDiscovery
             $scanDirs = $this->extractScanDirs($package, $packageName);
             $includeFiles = $this->extractIncludeFiles($package, $packageName);
             $agentInstructions = $this->extractInstructions($package, $packageName);
+            $skillsDirs = $this->extractSkillsDirs($package, $packageName);
 
-            if ([] !== $scanDirs || [] !== $includeFiles || null !== $agentInstructions) {
+            if ([] !== $scanDirs || [] !== $includeFiles || null !== $agentInstructions || [] !== $skillsDirs) {
                 $extensionData = [
                     'dirs' => $scanDirs,
                     'includes' => $includeFiles,
+                    'skills' => $skillsDirs,
                 ];
 
                 if (null !== $agentInstructions) {
@@ -110,6 +113,7 @@ final class ComposerExtensionDiscovery
             return [
                 'dirs' => [],
                 'includes' => [],
+                'skills' => [],
             ];
         }
 
@@ -123,6 +127,7 @@ final class ComposerExtensionDiscovery
             return [
                 'dirs' => [],
                 'includes' => [],
+                'skills' => [],
             ];
         }
 
@@ -131,12 +136,26 @@ final class ComposerExtensionDiscovery
             return [
                 'dirs' => [],
                 'includes' => [],
+                'skills' => [],
             ];
+        }
+
+        $skillsDirs = [];
+        foreach ($this->extractAiMateConfig($rootComposer, 'skills') as $dir) {
+            if ('' === trim($dir) || PathGuard::hasTraversal($dir)) {
+                continue;
+            }
+
+            $relativePath = ltrim($dir, '/');
+            if (is_dir($this->rootDir.'/'.$relativePath)) {
+                $skillsDirs[] = $relativePath;
+            }
         }
 
         $result = [
             'dirs' => array_values($this->extractAiMateConfig($rootComposer, 'scan-dirs')),
             'includes' => array_values($this->extractAiMateConfig($rootComposer, 'includes')),
+            'skills' => $skillsDirs,
         ];
 
         $agentInstructions = $this->extractAiMateConfigString($rootComposer, 'instructions');
@@ -398,6 +417,63 @@ final class ComposerExtensionDiscovery
         }
 
         return $agentInstructions;
+    }
+
+    /**
+     * Extract skills directories from package extra config.
+     *
+     * Uses "skills" from extra.ai-mate config, e.g.:
+     * "extra": { "ai-mate": { "skills": ["skills"] } }
+     *
+     * Each directory holds one subdirectory per skill, each with a SKILL.md file.
+     * A single string is accepted and treated as a one-element list.
+     *
+     * @param array{
+     *     name: string,
+     *     extra: array<string, mixed>,
+     * } $package
+     *
+     * @return string[] list of project-relative paths (vendor/<package>/<skills>)
+     */
+    private function extractSkillsDirs(array $package, string $packageName): array
+    {
+        $aiMateConfig = $package['extra']['ai-mate'] ?? null;
+        if (null === $aiMateConfig || !\is_array($aiMateConfig)) {
+            return [];
+        }
+
+        $skillsDirs = $aiMateConfig['skills'] ?? [];
+
+        // Support single directory as string
+        if (\is_string($skillsDirs)) {
+            $skillsDirs = [$skillsDirs];
+        }
+
+        if (!\is_array($skillsDirs)) {
+            $this->logger->warning('Invalid skills in ai-mate config', ['package' => $packageName]);
+
+            return [];
+        }
+
+        $validDirs = [];
+        foreach ($skillsDirs as $dir) {
+            if (!\is_string($dir) || '' === trim($dir) || PathGuard::hasTraversal($dir)) {
+                continue;
+            }
+
+            $relativePath = 'vendor/'.$packageName.'/'.ltrim($dir, '/');
+            if (!is_dir($this->rootDir.'/'.$relativePath)) {
+                $this->logger->warning('Skills directory does not exist', [
+                    'package' => $packageName,
+                    'directory' => $relativePath,
+                ]);
+                continue;
+            }
+
+            $validDirs[] = $relativePath;
+        }
+
+        return $validDirs;
     }
 
     /**
