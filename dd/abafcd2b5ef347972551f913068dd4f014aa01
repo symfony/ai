@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by tacman at 2026-06-12T20:31:26Z
+
+Yes. I'll tweak the UI and make getting the OCR layout a #[AsTool] -- then the agent can fetch the layout and respond.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-21T22:27:15Z
+
+Cherry-picked f5e8a487832de8f9ad072621fdf12db9fe4cf447 from #2158 and made some UI patches in the demo.
