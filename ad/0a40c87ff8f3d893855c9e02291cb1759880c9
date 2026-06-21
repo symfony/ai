@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-05-18T18:31:03Z
+
+@chr-hertel when we accept to adopt this pattern i will create an additional PR for all the other components with the same pattern
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-03T21:30:59Z
+
+but do we really need this if there are no claude specifics?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-04T04:04:24Z
+
+> but do we really need this if there are no claude specifics?
+
+yes because claude.md is the entry point of claude code BUT others use agents.md
+
+so to make sure all xosing agents load the instructiona we have to keep both
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-19T18:28:18Z
+
+@chr-hertel friendly ping — could you take a look at this when you get a chance? Thanks!
