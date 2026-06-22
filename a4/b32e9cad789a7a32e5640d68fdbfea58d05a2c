@@ -1,0 +1,51 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-10T10:03:53Z
+
+<!-- changelog-version-bump:0.7 -->
+
+Hi! Version **0.7** has been released. This PR has changelog/upgrade entries under the `0.7` heading, which is now a released version.
+
+Please update the following files to place your entries under the next version **0.8**:
+
+- `src/platform/src/Bridge/Deepgram/CHANGELOG.md`
+
+**For `CHANGELOG.md` files**: change the version heading from `0.7` to `0.8`
+**For `UPGRADE.md`**: place entries under `UPGRADE FROM 0.7 to 0.8`
+
+Thank you!
+
+---
+<sub>🤖 This comment was generated automatically by an agent.</sub>
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-10T21:22:58Z
+
+I wonder what the benefit of that WS implementation is in our current setup.
+I was reading up on https://deepgram.com/learn/websocket-vs-rest-text-to-speech, but can't tell from the example - or any other how we would leverage the features of WebSockets here - is there a different to feature scope between when i use `use_websockets: true`?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-10T21:16:21Z
+
+> I wonder what the benefit of that WS implementation is in our current setup. I was reading up on https://deepgram.com/learn/websocket-vs-rest-text-to-speech, but can't tell from the example - or any other how we would leverage the features of WebSockets here - is there a different to feature scope between when i use `use_websockets: true`?
+
+any thoughts on the benefits here @Guikingone?
+otherwise please remove that part in favor of reducing size of PR and code to maintain
+
+Thanks already!
+
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-06-11T06:57:56Z
+
+I'm working on it today, my recommendation would be open a dedicated issue / PR to discuss the support for websockets (saw a message on the Slack channel about this feature) more broadly, I think that without it, we're locking Sf AI into "HTTP only" platforms and as the ecosystem grows, more websockets-only platforms appears.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-11T08:47:02Z
+
+Fair, the role of PHP server side in this Shift needs some thought - in the end it's great to enable, but IT needs a rather holistic solution - potentially involving symfony/ux
+
+So scoping out from this PR, right?
