@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-01-30T18:15:21Z
+
+Hi @chr-hertel @OskarStark 👋🏻
+
+Small question regarding the examples, I'm trying to add an example for `MiniMax` and I'm facing an issue when launching `composer install` (no `vendor` or `composer.lock` at the root of the directory):
+
+<img width="1642" height="417" alt="Capture d’écran 2026-01-30 à 19 13 34" src="https://github.com/user-attachments/assets/76cbb152-5cae-45e4-a91a-3748809f1a77" />
+
+Did I missed something merged recently? 🤔
+
+PS: My local branch is rebased against `main` and up-to-date.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-03-04T22:01:31Z
+
+@Guikingone should be fine again now - sometimes the examples need some adjustment with path repos in combination with `dev-main` or branch alias
