@@ -1,0 +1,70 @@
+---------------------------------------------------------------------------
+
+by valtzu at 2026-05-02T09:56:48Z
+
+Nice work @camilleislasse  :slightly_smiling_face:
+
+Some comments/ideas:
+
+1. Not having support for non-fqcn services feels unintuitive  _(even though documented)_ – you may have e.g. `EnumSchemaProvider` which takes some identifier in constructor and then have one instance of the service per enum.
+2. We should probably do a build-time check to ensure all the referenced schema provider services exist.
+3. _(nice-to-have)_ Now a `SchemaProvider` has no context, which limits the use case a bit. We could have e.g.  `#[SchemaSource(provider: EntityEnumSchemaProvider::class, context: ['entity' => PaintColor::class])]` and pass `context` to `getSchemaFragment()`
+
+---------------------------------------------------------------------------
+
+by camilleislasse at 2026-05-02T10:48:39Z
+
+> Nice work @camilleislasse 🙂
+>
+> Some comments/ideas:
+>
+> 1. Not having support for non-fqcn services feels unintuitive  _(even though documented)_ – you may have e.g. `EnumSchemaProvider` which takes some identifier in constructor and then have one instance of the service per enum.
+> 2. We should probably do a build-time check to ensure all the referenced schema provider services exist.
+> 3. _(nice-to-have)_ Now a `SchemaProvider` has no context, which limits the use case a bit. We could have e.g.  `#[SchemaSource(provider: EntityEnumSchemaProvider::class, context: ['entity' => PaintColor::class])]` and pass `context` to `getSchemaFragment()`
+
+ 1 and 2 make sense, for 2, a CompilerPass to validate references maybe?
+
+For 3, nice idea but feels a bit tricky to design (especially with IS_REPEATABLE: per-attribute context vs. shared, conflict resolution, etc.). Maybe we could start without it and tackle it in a separate PR?
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-05-02T18:38:41Z
+
+For 3 I would think the context is always be per attribute because it has no meaning outside a specific provider.
+
+But sure; it can be added later.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-11T18:03:50Z
+
+This is one of the pull requests that get my thinking ... and i don't have a final opinion yet, but will think out loud.
+
+First of all, this functionality is 100% needed - i need it myself, and it's quite a common question people have - so thanks for sure for working on this @camilleislasse! really appreciated!
+
+what i don't like about this solution is the extra attribute, but not sure i have a better/working idea ... let me what you think
+
+```
+#[AsTool('search_orders', 'Search orders by status')]
+final class SearchOrdersTool
+{
+    public function __invoke(
+        #[Schema(provider: StatusProvider::class)]
+        string $status,
+    ): array {
+        // ...
+    }
+}
+```
+
+the platform component doesn't know a thing about the DIC, but we could still use a class name as identifier, that is associated to an `SchemaProviderInterface` implementation injected into the `SchemaAttributeDescriber` - basically a tagged iteration indexed by service name maybe?
+
+that might save us from requiring the `ContainerInterface` as well :thinking:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-05-11T18:04:39Z
+
+> 3. _(nice-to-have)_ Now a `SchemaProvider` has no context, which limits the use case a bit. We could have e.g.  `#[SchemaSource(provider: EntityEnumSchemaProvider::class, context: ['entity' => PaintColor::class])]` and pass `context` to `getSchemaFragment()`
+
+nice idea :+1:
