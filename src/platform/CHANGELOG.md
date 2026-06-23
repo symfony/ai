@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Extract token usage from Amazon Bedrock Claude results: `Bridge\Bedrock\Anthropic\ClaudeResultConverter` now returns the Anthropic `TokenUsageExtractor`, so `token_usage` is populated in the result metadata as it already is for the Anthropic API bridge
  * Add `provider` and `context` arguments to `#[Schema]` plus `SchemaProviderInterface` to contribute JSON Schema fragments computed at runtime (env, database, services) for tool parameters and structured output properties; `provider` accepts any container service ID and `context` is passed to `getSchemaFragment()`
  * Add `PartialJsonParser` for recovering partial JSON from streaming output
  * Add `DeferredResult::asPartialJsonStream()` yielding the largest recoverable JSON value from each streamed delta

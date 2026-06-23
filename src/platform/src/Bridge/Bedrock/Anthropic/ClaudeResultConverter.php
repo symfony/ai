@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Bridge\Anthropic\TokenUsageExtractor;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -59,6 +60,8 @@ final class ClaudeResultConverter implements ResultConverterInterface
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
     {
-        return null;
+        // Bedrock returns Claude's usage in the same shape as the Anthropic API,
+        // so the Anthropic extractor reads it as-is.
+        return new TokenUsageExtractor();
     }
 }

@@ -16,6 +16,7 @@ use AsyncAws\Core\Test\ResultMockFactory;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Bridge\Anthropic\TokenUsageExtractor;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResultConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -229,5 +230,68 @@ final class ClaudeResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Valid text content', $result->getContent());
+    }
+
+    #[TestDox('Provides the Anthropic token usage extractor')]
+    public function testProvidesTokenUsageExtractor()
+    {
+        $converter = new ClaudeResultConverter();
+
+        $this->assertInstanceOf(TokenUsageExtractor::class, $converter->getTokenUsageExtractor());
+    }
+
+    #[TestDox('Extracts token usage from the Bedrock response')]
+    public function testExtractsTokenUsage()
+    {
+        $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
+            'body' => json_encode([
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => 'Hello, world!',
+                    ],
+                ],
+                'usage' => [
+                    'input_tokens' => 100,
+                    'output_tokens' => 20,
+                    'cache_creation_input_tokens' => 5,
+                    'cache_read_input_tokens' => 900,
+                ],
+            ]),
+        ]);
+        $rawResult = new RawBedrockResult($invokeResponse);
+
+        $converter = new ClaudeResultConverter();
+        $extractor = $converter->getTokenUsageExtractor();
+        $this->assertNotNull($extractor);
+
+        $tokenUsage = $extractor->extract($rawResult);
+        $this->assertNotNull($tokenUsage);
+        $this->assertSame(100, $tokenUsage->getPromptTokens());
+        $this->assertSame(20, $tokenUsage->getCompletionTokens());
+        $this->assertSame(5, $tokenUsage->getCacheCreationTokens());
+        $this->assertSame(900, $tokenUsage->getCacheReadTokens());
+    }
+
+    #[TestDox('Returns no token usage when the response omits usage')]
+    public function testExtractsNoTokenUsageWhenAbsent()
+    {
+        $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
+            'body' => json_encode([
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => 'Hello, world!',
+                    ],
+                ],
+            ]),
+        ]);
+        $rawResult = new RawBedrockResult($invokeResponse);
+
+        $converter = new ClaudeResultConverter();
+        $extractor = $converter->getTokenUsageExtractor();
+        $this->assertNotNull($extractor);
+
+        $this->assertNull($extractor->extract($rawResult));
     }
 }
