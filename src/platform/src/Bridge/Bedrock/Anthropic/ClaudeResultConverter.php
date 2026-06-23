@@ -21,7 +21,6 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
-use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * @author Björn Altmann
@@ -58,7 +57,7 @@ final class ClaudeResultConverter implements ResultConverterInterface
         return new TextResult($data['content'][0]['text']);
     }
 
-    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    public function getTokenUsageExtractor(): TokenUsageExtractor
     {
         // Bedrock returns Claude's usage in the same shape as the Anthropic API,
         // so the Anthropic extractor reads it as-is.
