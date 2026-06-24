@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -44,6 +45,11 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
                 $blocks[] = ['text' => $part->getText()];
+                continue;
+            }
+
+            if ($part instanceof Json) {
+                $blocks[] = ['text' => $part->toJson()];
                 continue;
             }
 

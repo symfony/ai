@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
@@ -69,6 +70,48 @@ final class MessageTest extends TestCase
 
         $this->assertCount(2, $message->getToolCalls());
         $this->assertTrue($message->hasToolCalls());
+    }
+
+    public function testCreateAssistantMessageWithArbitraryObjectWrapsIntoJson()
+    {
+        $payload = new \stdClass();
+        $payload->title = 'Pasta';
+
+        $message = Message::ofAssistant($payload);
+
+        $parts = $message->getContent();
+        $this->assertCount(1, $parts);
+        $this->assertInstanceOf(Json::class, $parts[0]);
+        $this->assertSame($payload, $parts[0]->getObject());
+    }
+
+    public function testCreateAssistantMessageWithJsonSerializableObjectWrapsIntoJson()
+    {
+        $payload = new class implements \JsonSerializable {
+            /**
+             * @return array{kind: string}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['kind' => 'recipe'];
+            }
+        };
+
+        $message = Message::ofAssistant($payload);
+
+        $parts = $message->getContent();
+        $this->assertCount(1, $parts);
+        $this->assertInstanceOf(Json::class, $parts[0]);
+        $this->assertSame($payload, $parts[0]->getObject());
+    }
+
+    public function testCreateAssistantMessagePassesJsonContentThrough()
+    {
+        $json = new Json(new \stdClass());
+
+        $message = Message::ofAssistant($json);
+
+        $this->assertSame([$json], $message->getContent());
     }
 
     public function testCreateUserMessageWithString()

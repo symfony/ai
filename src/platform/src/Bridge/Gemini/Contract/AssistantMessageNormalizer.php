@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Model;
@@ -45,6 +46,11 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
                     $textPart['thoughtSignature'] = $part->getSignature();
                 }
                 $normalized[] = $textPart;
+                continue;
+            }
+
+            if ($part instanceof Json) {
+                $normalized[] = ['text' => $part->toJson()];
                 continue;
             }
 

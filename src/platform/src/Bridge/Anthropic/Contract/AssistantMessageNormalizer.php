@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Model;
@@ -62,6 +63,13 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
             ];
         }
 
+        if (1 === \count($parts) && $parts[0] instanceof Json) {
+            return [
+                'role' => 'assistant',
+                'content' => $parts[0]->toJson(),
+            ];
+        }
+
         $blocks = [];
         $executedAsBash = [];
         foreach ($parts as $part) {
@@ -79,6 +87,11 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
 
             if ($part instanceof Text) {
                 $blocks[] = ['type' => 'text', 'text' => $part->getText()];
+                continue;
+            }
+
+            if ($part instanceof Json) {
+                $blocks[] = ['type' => 'text', 'text' => $part->toJson()];
                 continue;
             }
 

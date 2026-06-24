@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\AiMlApi\Contract;
 
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -52,6 +53,8 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
                 $text .= $part->getText();
+            } elseif ($part instanceof Json) {
+                $text .= $part->toJson();
             } elseif ($part instanceof Thinking) {
                 $reasoning .= $part->getContent();
             } elseif ($part instanceof ToolCall) {

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
@@ -45,6 +46,8 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
                 $text .= $part->getText();
+            } elseif ($part instanceof Json) {
+                $text .= $part->toJson();
             }
         }
 

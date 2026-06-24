@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Json;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -127,6 +128,43 @@ final class AssistantMessageNormalizerTest extends TestCase
 
         $this->assertArrayNotHasKey('reasoning_content', $result);
         $this->assertSame('Just a normal response', $result['content']);
+    }
+
+    public function testNormalizeWithJsonContentSerializesToString()
+    {
+        $payload = new class implements \JsonSerializable {
+            /**
+             * @return array{title: string}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['title' => 'Pasta'];
+            }
+        };
+
+        $message = new AssistantMessage(new Json($payload));
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => '{"title":"Pasta"}',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeWithJsonAndTextContentConcatenates()
+    {
+        $payload = new \stdClass();
+        $payload->id = 1;
+
+        $message = new AssistantMessage(new Text('Recipe: '), new Json($payload));
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => 'Recipe: {"id":1}',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
     }
 
     public function testNormalizeWithThinkingContentAndToolCalls()
