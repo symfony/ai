@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\ModelCatalog;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Endpoint;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
@@ -169,6 +170,42 @@ final class AbstractModelCatalogTest extends TestCase
         $this->assertSame(1e-5, $options['frequency_penalty']);
         $this->assertIsFloat($options['presence_penalty']);
         $this->assertSame(2.5E3, $options['presence_penalty']);
+    }
+
+    public function testGetModelHasNoEndpointsByDefault()
+    {
+        $catalog = $this->createTestCatalog();
+        $model = $catalog->getModel('test-model');
+
+        $this->assertSame([], $model->getEndpoints());
+        $this->assertFalse($model->hasEndpoints());
+    }
+
+    public function testEndpointsForModelHookPopulatesModelEndpoints()
+    {
+        $catalog = new class extends AbstractModelCatalog {
+            public function __construct()
+            {
+                $this->models = [
+                    'test-model' => [
+                        'class' => Model::class,
+                        'capabilities' => [Capability::INPUT_TEXT],
+                    ],
+                ];
+            }
+
+            protected function endpointsForModel(array $modelConfig): array
+            {
+                return [new Endpoint('test.contract', ['temperature' => 0.5])];
+            }
+        };
+
+        $model = $catalog->getModel('test-model');
+
+        $this->assertTrue($model->hasEndpoints());
+        $this->assertCount(1, $model->getEndpoints());
+        $this->assertSame('test.contract', $model->getDefaultEndpoint()->getContract());
+        $this->assertSame(['temperature' => 0.5], $model->getDefaultEndpoint()->getDefaults());
     }
 
     private function createTestCatalog(): AbstractModelCatalog
