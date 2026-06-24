@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
@@ -44,6 +43,9 @@ use Symfony\Contracts\Cache\ItemInterface;
  */
 final class CachePlatform implements PlatformInterface
 {
+    /**
+     * @param iterable<CacheKeyGenerator> $cacheKeyGenerators Tried in order to key non-scalar inputs (objects)
+     */
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly ClockInterface $clock = new MonotonicClock(),
@@ -56,6 +58,12 @@ final class CachePlatform implements PlatformInterface
         ], [new JsonEncoder()]),
         private readonly ?string $cacheKey = null,
         private readonly ?int $cacheTtl = null,
+        private iterable $cacheKeyGenerators = [
+            new MessageBagCacheKeyGenerator(),
+            new DocumentUrlCacheKeyGenerator(),
+            new ImageUrlCacheKeyGenerator(),
+            new FileCacheKeyGenerator(),
+        ],
     ) {
     }
 
@@ -70,8 +78,7 @@ final class CachePlatform implements PlatformInterface
         $normalizedInput = match (true) {
             \is_string($input) => md5($input),
             \is_array($input) => json_encode($input),
-            $input instanceof MessageBag => $input->getId()->toString(),
-            default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
+            default => $this->generateInputCacheKey($input),
         };
 
         $cacheKey = (new UnicodeString())->join([
@@ -127,5 +134,16 @@ final class CachePlatform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
+    }
+
+    private function generateInputCacheKey(object $input): string
+    {
+        foreach ($this->cacheKeyGenerators as $generator) {
+            if ($generator->supports($input)) {
+                return $generator->generate($input);
+            }
+        }
+
+        throw new InvalidArgumentException(\sprintf('Unsupported input type: "%s".', get_debug_type($input)));
     }
 }
