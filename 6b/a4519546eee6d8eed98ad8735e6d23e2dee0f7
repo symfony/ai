@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-06-22T12:10:08Z
+
+IMHO, on stores, that's not necessary as we tend to use `HttpClientInterface` without endpoint in the store class, the client being built in the factory, the store use the client without the endpoint.
+
+The "end goal" would be to do to the same thing for platforms to prevent this kind of "in-class" magic.
+
+IMHO, we should focus on bringing support for "scoped client" (like Ollama, ElevenLabs, etc) instead of standardizing endpoint usage 🤔
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-22T18:49:12Z
+
+@Guikingone true, wherever we use the `ScopingHttpClient` already we can drop that change already, yes :+1: will shrink it down, but for some use cases it will already help - know for a fact that some are running into this while adopting it :angel: :laughing:
+
+edit, wait no, tested with the TypeSense, which is already ScopingHttpClient, and the added tests wouldn't run without the `rtrim` addition
