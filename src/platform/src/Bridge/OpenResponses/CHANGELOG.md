@@ -8,6 +8,7 @@ CHANGELOG
  * Throw typed exceptions on rate limit and server error events mid-stream
  * Normalize the `baseUrl` and tolerate a trailing slash in the model client
  * Raise a `RuntimeException` on unhandled HTTP error statuses before streaming, instead of returning an empty stream
+ * Return a `WebSearchResult` for `web_search_call` output items
 
 0.10
 ----

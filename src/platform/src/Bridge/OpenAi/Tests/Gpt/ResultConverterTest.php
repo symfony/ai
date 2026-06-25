@@ -232,7 +232,7 @@ class ResultConverterTest extends TestCase
         $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'output' => [
-                ['type' => 'web_search_call', 'id' => 'ws_1', 'status' => 'completed'],
+                ['type' => 'file_search_call', 'id' => 'fs_1', 'status' => 'completed'],
                 [
                     'type' => 'message',
                     'id' => 'msg_1',

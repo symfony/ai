@@ -35,6 +35,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -259,7 +260,7 @@ final class ResultConverterTest extends TestCase
         $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'output' => [
-                ['type' => 'web_search_call', 'id' => 'ws_1', 'status' => 'completed'],
+                ['type' => 'file_search_call', 'id' => 'fs_1', 'status' => 'completed'],
                 [
                     'type' => 'message',
                     'id' => 'msg_1',
@@ -276,6 +277,48 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('The answer is 42.', $result->getContent());
+    }
+
+    public function testConvertIncludesWebSearchResultForWebSearchCallOutputItem()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'web_search_call',
+                    'id' => 'ws_1',
+                    'status' => 'completed',
+                    'action' => [
+                        'type' => 'search',
+                        'query' => 'Latest AI news',
+                        'queries' => ['OpenAI recent announcements', 'AI industry developments today'],
+                    ],
+                ],
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'The answer is 42.',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(WebSearchResult::class, $parts[0]);
+        $this->assertSame('ws_1', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+        $this->assertSame('Latest AI news', $parts[0]->getQuery());
+        $this->assertSame(['OpenAI recent announcements', 'AI industry developments today'], $parts[0]->getQueries());
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('The answer is 42.', $parts[1]->getContent());
     }
 
     public function testThrowsRuntimeExceptionWhenIncompleteResponseHasNoContent()

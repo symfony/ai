@@ -34,6 +34,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -45,6 +46,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * @phpstan-type Refusal array{type: 'refusal', refusal: string}
  * @phpstan-type FunctionCall array{id?: string|null, arguments: string, call_id?: string|null, name: string, type: 'function_call'}
  * @phpstan-type Thinking array{summary: list<array{type: string, text?: string}>, id: string}
+ * @phpstan-type WebSearchAction array{type: string, query?: string, queries?: list<string>}
+ * @phpstan-type WebSearchCall array{type: 'web_search_call', id: string, status: string, action: WebSearchAction}
  * @phpstan-type Error array{code?: string|null, type?: string|null, param?: string|null, message?: string|null}
  */
 class ResultConverter implements ResultConverterInterface
@@ -168,7 +171,7 @@ class ResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @param OutputMessage|Thinking $item
+     * @param OutputMessage|Thinking|WebSearchCall $item
      *
      * @return iterable<ResultInterface>
      */
@@ -179,16 +182,27 @@ class ResultConverter implements ResultConverterInterface
         return match ($type) {
             'message' => $this->convertOutputMessage($item),
             'reasoning' => $this->convertReasoning($item),
-            // Built-in server-side tool calls (web search, file search, code
-            // interpreter, image generation, computer use, MCP, …) are reported
-            // as their own output items but carry no assistant-facing result.
-            // Skip them so the actual message item is still converted instead of
-            // aborting the whole response.
-            'web_search_call', 'file_search_call', 'code_interpreter_call',
+            'web_search_call' => $this->convertWebSearch($item),
+            // Built-in server-side tool calls (file search, code interpreter,
+            // image generation, computer use, MCP, …) are reported as their own
+            // output items but carry no assistant-facing result. Skip them so the
+            // actual message item is still converted instead of aborting the whole
+            // response.
+            'file_search_call', 'code_interpreter_call',
             'image_generation_call', 'computer_call', 'local_shell_call',
             'mcp_call', 'mcp_list_tools', 'mcp_approval_request' => [],
             default => throw new RuntimeException(\sprintf('Unsupported output type "%s".', $type)),
         };
+    }
+
+    /**
+     * @param WebSearchCall $item
+     *
+     * @return \Generator<WebSearchResult>
+     */
+    private function convertWebSearch(array $item): \Generator
+    {
+        yield new WebSearchResult($item['id'], $item['status'], $item['action']['query'] ?? null, $item['action']['queries'] ?? []);
     }
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
