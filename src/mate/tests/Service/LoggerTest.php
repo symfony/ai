@@ -218,6 +218,33 @@ final class LoggerTest extends TestCase
         $this->assertStringContainsString('Stringable level message', $content);
     }
 
+    public function testLogFileIsCreatedWithSecurePermissions()
+    {
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $this->markTestSkipped('Permission-based tests are not reliable on Windows');
+        }
+
+        $logger = new Logger($this->logFile, fileLogEnabled: true);
+        $logger->info('Test message');
+
+        $this->assertFileExists($this->logFile);
+        $this->assertSame(0640, fileperms($this->logFile) & 0777);
+    }
+
+    public function testLogDirectoryIsCreatedWithSecurePermissions()
+    {
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $this->markTestSkipped('Permission-based tests are not reliable on Windows');
+        }
+
+        $logDir = $this->tempDir.'/nested/logs';
+        $logger = new Logger($logDir.'/app.log', fileLogEnabled: true);
+        $logger->info('Test message');
+
+        $this->assertDirectoryExists($logDir);
+        $this->assertSame(0750, fileperms($logDir) & 0777);
+    }
+
     private function removeDirectory(string $dir): void
     {
         if (!is_dir($dir)) {
