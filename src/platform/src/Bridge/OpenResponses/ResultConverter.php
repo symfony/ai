@@ -20,6 +20,15 @@ use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\ComputerCallResult;
+use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\FileSearchResult;
+use Symfony\AI\Platform\Result\LocalShellCallResult;
+use Symfony\AI\Platform\Result\McpApprovalRequestResult;
+use Symfony\AI\Platform\Result\McpCallResult;
+use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -34,6 +43,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -46,6 +56,16 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * @phpstan-type FunctionCall array{id?: string|null, arguments: string, call_id?: string|null, name: string, type: 'function_call'}
  * @phpstan-type Thinking array{summary: list<array{type: string, text?: string}>, id: string}
  * @phpstan-type Error array{code?: string|null, type?: string|null, param?: string|null, message?: string|null}
+ * @phpstan-type WebSearchCall array{type: 'web_search_call', id?: string, status?: string, action?: array{type?: string, query?: string, queries?: list<string>}}
+ * @phpstan-type FileSearchCall array{type: 'file_search_call', id?: string, status?: string, queries?: list<string>, results?: list<array<string, mixed>>|null}
+ * @phpstan-type CodeInterpreterCall array{type: 'code_interpreter_call', id?: string, status?: string, code?: string|null, outputs?: list<array{type?: string, logs?: string, url?: string}>|null}
+ * @phpstan-type ImageGenerationCall array{type: 'image_generation_call', id?: string, status?: string, result?: string|null}
+ * @phpstan-type McpCall array{type: 'mcp_call', id?: string, status?: string, server_label?: string, name?: string, arguments?: string, output?: string|null, error?: string|null}
+ * @phpstan-type McpListTools array{type: 'mcp_list_tools', id?: string, server_label?: string, tools?: list<array<string, mixed>>}
+ * @phpstan-type McpApprovalRequest array{type: 'mcp_approval_request', id?: string, server_label?: string, name?: string, arguments?: string}
+ * @phpstan-type ComputerCall array{type: 'computer_call', id?: string, status?: string, call_id?: string, action?: array<string, mixed>, pending_safety_checks?: list<array{id: string, code?: string|null, message?: string|null}>}
+ * @phpstan-type LocalShellCall array{type: 'local_shell_call', id?: string, status?: string, call_id?: string, action?: array{type?: string, command?: list<string>}}
+ * @phpstan-type OutputItem OutputMessage|FunctionCall|Thinking|WebSearchCall|FileSearchCall|CodeInterpreterCall|ImageGenerationCall|McpCall|McpListTools|McpApprovalRequest|ComputerCall|LocalShellCall
  */
 class ResultConverter implements ResultConverterInterface
 {
@@ -146,7 +166,7 @@ class ResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @param array<OutputMessage|FunctionCall|Thinking> $output
+     * @param array<OutputItem> $output
      *
      * @return ResultInterface[]
      */
