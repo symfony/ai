@@ -159,4 +159,69 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-valid-api-key');
         $modelClient->request(new CompletionsModel('gpt-4o'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testToolChoiceDefaultsToAutoWhenToolsAreProvided()
+    {
+        $capturedBody = $this->captureRequestBody(['tools' => $this->tools()]);
+
+        $this->assertSame('auto', $capturedBody['tool_choice']);
+    }
+
+    public function testToolChoiceIsNotOverriddenWhenExplicitlySet()
+    {
+        $capturedBody = $this->captureRequestBody(['tools' => $this->tools(), 'tool_choice' => 'required']);
+
+        $this->assertSame('required', $capturedBody['tool_choice']);
+    }
+
+    public function testToolChoiceIsNotSetWhenNoToolsAreProvided()
+    {
+        $capturedBody = $this->captureRequestBody([]);
+
+        $this->assertArrayNotHasKey('tool_choice', $capturedBody);
+    }
+
+    public function testToolChoiceIsNotSetWhenToolsAreEmpty()
+    {
+        $capturedBody = $this->captureRequestBody(['tools' => []]);
+
+        $this->assertArrayNotHasKey('tool_choice', $capturedBody);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private function captureRequestBody(array $options): array
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function ($method, $url, $httpOptions) use (&$capturedBody) {
+            $capturedBody = json_decode($httpOptions['body'], true);
+
+            return new MockResponse(json_encode([
+                'choices' => [['message' => ['role' => 'assistant', 'content' => 'Hello']]],
+            ]));
+        });
+
+        $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-valid-api-key');
+        $modelClient->request(new CompletionsModel('gpt-4o'), [
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ], $options);
+
+        $this->assertIsArray($capturedBody);
+
+        return $capturedBody;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function tools(): array
+    {
+        return [
+            ['type' => 'function', 'function' => ['name' => 'tool_a', 'description' => 'First tool']],
+        ];
+    }
 }
