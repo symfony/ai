@@ -37,7 +37,7 @@ class ServiceTool
     {
         $container = $this->readContainer();
         if (null === $container) {
-            return ResponseEncoder::encode([]);
+            return ResponseEncoder::encodeUntrusted([]);
         }
 
         $output = [];
@@ -66,7 +66,7 @@ class ServiceTool
             $output[$service->getId()] = $service->getClass();
         }
 
-        return ResponseEncoder::encode($output);
+        return ResponseEncoder::encodeUntrusted($output);
     }
 
     /**
@@ -113,7 +113,7 @@ class ServiceTool
             $output['factory'] = $constructor;
         }
 
-        return ResponseEncoder::encode($output);
+        return ResponseEncoder::encodeUntrusted($output);
     }
 
     private function readContainer(): ?Container
