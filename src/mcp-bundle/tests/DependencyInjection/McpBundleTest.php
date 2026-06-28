@@ -23,6 +23,7 @@ use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
@@ -460,6 +461,65 @@ class McpBundleTest extends TestCase
         $this->assertSame('session.handler', (string) $arguments[0]);
         $this->assertSame('mcp-', $arguments[1]);
         $this->assertSame(1800, $arguments[2]);
+    }
+
+    public function testHttpAllowedHostsDefault()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+        $this->assertSame([], $arguments[6]);
+    }
+
+    public function testHttpAllowedHostsCustom()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'allowed_hosts' => ['mcp.myapp.com', 'api.internal'],
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+        $this->assertSame(['mcp.myapp.com', 'api.internal'], $arguments[6]);
+    }
+
+    public function testHttpAllowedHostsRejectsHostWithPort()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageMatches('/must not contain a port number/');
+
+        $this->buildContainer([
+            'mcp' => [
+                'client_transports' => ['http' => true],
+                'http' => ['allowed_hosts' => ['myapp.com:443']],
+            ],
+        ]);
+    }
+
+    public function testHttpAllowedHostsAcceptsIpv6WithBrackets()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => ['http' => true],
+                'http' => ['allowed_hosts' => ['[::1]', '[2001:db8::1]']],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('mcp.server.controller')->getArguments();
+        $this->assertSame(['[::1]', '[2001:db8::1]'], $arguments[6]);
     }
 
     public function testDiscoveryDefaultConfiguration()

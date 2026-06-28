@@ -55,6 +55,22 @@ return static function (DefinitionConfigurator $configurator): void {
                 ->addDefaultsIfNotSet()
                 ->children()
                     ->scalarNode('path')->defaultValue('/_mcp')->end()
+                    ->arrayNode('allowed_hosts')
+                        ->scalarPrototype()
+                            ->validate()
+                                ->ifTrue(static function (string $host): bool {
+                                    // IPv6 addresses like [::1] are valid (colons are part of the format)
+                                    if (str_starts_with($host, '[')) {
+                                        return false;
+                                    }
+
+                                    return str_contains($host, ':');
+                                })
+                                ->thenInvalid('Host "%s" must not contain a port number. For IPv6 addresses, use the bracketed form (e.g. "[::1]"). For regular hostnames, use the hostname only (e.g. "myapp.com").')
+                            ->end()
+                        ->end()
+                        ->defaultValue([])
+                    ->end()
                     ->arrayNode('session')
                         ->addDefaultsIfNotSet()
                         ->children()

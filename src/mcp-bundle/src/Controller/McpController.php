@@ -12,6 +12,9 @@
 namespace Symfony\AI\McpBundle\Controller;
 
 use Mcp\Server;
+use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
+use Mcp\Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware;
+use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
 use Mcp\Server\Transport\StreamableHttpTransport;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -23,6 +26,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class McpController
 {
+    /**
+     * @param list<string> $allowedHosts
+     */
     public function __construct(
         private readonly Server $server,
         private readonly HttpMessageFactoryInterface $httpMessageFactory,
@@ -30,16 +36,27 @@ final class McpController
         private readonly ResponseFactoryInterface $responseFactory,
         private readonly StreamFactoryInterface $streamFactory,
         private readonly ?LoggerInterface $logger = null,
+        private readonly array $allowedHosts = [],
     ) {
     }
 
     public function handle(Request $request): Response
     {
+        $middleware = null;
+        if ([] !== $this->allowedHosts) {
+            $middleware = [
+                new CorsMiddleware(),
+                new DnsRebindingProtectionMiddleware($this->allowedHosts, $this->responseFactory, $this->streamFactory),
+                new ProtocolVersionMiddleware(null, $this->responseFactory, $this->streamFactory),
+            ];
+        }
+
         $transport = new StreamableHttpTransport(
             $this->httpMessageFactory->createRequest($request),
             $this->responseFactory,
             $this->streamFactory,
             logger: $this->logger,
+            middleware: $middleware,
         );
 
         $psrResponse = $this->server->run($transport);
