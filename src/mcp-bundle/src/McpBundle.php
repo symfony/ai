@@ -118,8 +118,8 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * @param array{stdio: bool, http: bool}                                                                                      $transports
-     * @param array{path: string, session: array{store: string, directory: string, cache_pool: string, prefix: string, ttl: int}} $httpConfig
+     * @param array{stdio: bool, http: bool}                                                                                                                              $transports
+     * @param array{path: string, allowed_hosts: list<string>|false|null, session: array{store: string, directory: string, cache_pool: string, prefix: string, ttl: int}} $httpConfig
      */
     private function configureClient(array $transports, array $httpConfig, ContainerBuilder $container): void
     {
@@ -162,6 +162,7 @@ final class McpBundle extends AbstractBundle
                     new Reference('mcp.psr17_factory'),
                     new Reference('mcp.psr17_factory'),
                     new Reference('logger'),
+                    $httpConfig['allowed_hosts'],
                 ])
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')

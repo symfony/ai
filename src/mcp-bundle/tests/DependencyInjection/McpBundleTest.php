@@ -345,6 +345,57 @@ class McpBundleTest extends TestCase
         $this->assertSame(7200, $sessionArguments[0]); // Custom TTL for memory store
     }
 
+    public function testDnsRebindingProtectionDefaults()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+        $this->assertNull($arguments[6]); // No allowed hosts configured: keep the SDK default (localhost only)
+    }
+
+    public function testDnsRebindingProtectionWithAllowedHosts()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'allowed_hosts' => ['example.com', 'mcp.example.com'],
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+        $this->assertSame(['example.com', 'mcp.example.com'], $arguments[6]);
+    }
+
+    public function testDnsRebindingProtectionDisabled()
+    {
+        $container = $this->buildContainer([
+            'mcp' => [
+                'client_transports' => [
+                    'http' => true,
+                ],
+                'http' => [
+                    'allowed_hosts' => false,
+                ],
+            ],
+        ]);
+
+        $controllerDefinition = $container->getDefinition('mcp.server.controller');
+        $arguments = $controllerDefinition->getArguments();
+        $this->assertFalse($arguments[6]);
+    }
+
     public function testSessionStoreFileConfiguration()
     {
         $container = $this->buildContainer([
