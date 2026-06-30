@@ -84,6 +84,22 @@ final class FaultTolerantToolboxTest extends TestCase
         $this->assertSame($toolCall, $actual->getToolCall());
     }
 
+    public function testAbsentTool()
+    {
+        $absentTool = new Tool(new ExecutionReference(\stdClass::class, 'someMethod'), 'absent_tool', 'A tool that is not in the toolbox');
+        $toolbox = new FaultTolerantToolbox(new Toolbox([new ToolRequiredParams()], new ReflectionToolFactory()));
+
+        $toolCall = new ToolCall('call_1234', 'absent_tool');
+        $result = $toolbox->execute($toolCall);
+
+        $this->assertSame(
+            'Tool "absent_tool" was not found, please use one of these: tool_required_params',
+            $result->getResult()
+        );
+
+        $this->assertSame($toolCall, $result->getToolCall());
+    }
+
     private function createFaultyToolbox(\Closure $exceptionFactory): ToolboxInterface
     {
         return new class($exceptionFactory) implements ToolboxInterface {
@@ -107,21 +123,5 @@ final class FaultTolerantToolboxTest extends TestCase
                 throw ($this->exceptionFactory)($toolCall);
             }
         };
-    }
-
-    public function testAbsentTool()
-    {
-        $absentTool = new Tool(new ExecutionReference(\stdClass::class, 'someMethod'), 'absent_tool', 'A tool that is not in the toolbox');
-        $toolbox = new FaultTolerantToolbox(new Toolbox([new ToolRequiredParams()], new ReflectionToolFactory()));
-
-        $toolCall = new ToolCall('call_1234', 'absent_tool');
-        $result = $toolbox->execute($toolCall);
-
-        $this->assertSame(
-            'Tool "absent_tool" was not found, please use one of these: tool_required_params', 
-            $result->getResult()
-        );
-
-        $this->assertSame($toolCall, $result->getToolCall());
     }
 }

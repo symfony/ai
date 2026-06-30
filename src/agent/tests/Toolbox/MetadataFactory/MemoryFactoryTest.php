@@ -104,10 +104,10 @@ final class MemoryFactoryTest extends TestCase
         try {
             $factory = new MemoryToolFactory();
             $factory->addTool(ToolDate::class, 'my_tool', 'Calculates date', 'calculateDate');
-            self::fail('Should have thrown before!');
+            $this->fail('Should have thrown before!');
         } catch (ToolConfigurationException $e) {
             $this->assertSame('Method "calculateDate" not found in tool "Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate".', $e->getMessage());
-            $this->assertInstanceOf(\ReflectionException::class, $e->getPrevious());            
+            $this->assertInstanceOf(\ReflectionException::class, $e->getPrevious());
         }
     }
 }

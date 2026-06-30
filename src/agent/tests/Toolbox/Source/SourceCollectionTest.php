@@ -117,14 +117,13 @@ final class SourceCollectionTest extends TestCase
         $source1->add(new Source('#1', 'ref1', 'content1'));
         $source1->add(new Source('#2', 'ref2', 'content2'));
 
-        $source2 = new class([
-            new Source('#3', 'ref3', 'content3'),
-            new Source('#4', 'ref4', 'content3'),
-        ]) implements MergeableMetadataInterface {
+        $source2 = new class([new Source('#3', 'ref3', 'content3'), new Source('#4', 'ref4', 'content3')]) implements MergeableMetadataInterface {
             /**
              * @param Source[] $sources
              */
-            public function __construct(public array $sources) {}
+            public function __construct(public array $sources)
+            {
+            }
 
             public function merge(MergeableMetadataInterface $other): self
             {
@@ -133,7 +132,7 @@ final class SourceCollectionTest extends TestCase
         };
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(sprintf('Cannot merge "%s" with "%s', $source1::class, $source2::class));
+        $this->expectExceptionMessage(\sprintf('Cannot merge "%s" with "%s', $source1::class, $source2::class));
         $source1->merge($source2);
     }
 }

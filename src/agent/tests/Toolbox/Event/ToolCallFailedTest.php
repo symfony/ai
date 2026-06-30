@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Agent\Tests\Toolbox\Event;
 
-use Exception;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -31,30 +30,30 @@ final class ToolCallFailedTest extends TestCase
 
     public function testGetTool()
     {
-        $event = new ToolCallFailed($this->toolCall, $this->metadata, [], new Exception('Unexpected error!'));
+        $event = new ToolCallFailed($this->toolCall, $this->metadata, [], new \Exception('Unexpected error!'));
 
         $this->assertSame($this->toolCall, $event->getTool());
     }
 
     public function testGetMetadata()
     {
-        $event = new ToolCallFailed($this->toolCall, $this->metadata, [], new Exception('Unexpected error!'));
+        $event = new ToolCallFailed($this->toolCall, $this->metadata, [], new \Exception('Unexpected error!'));
 
         $this->assertSame($this->metadata, $event->getMetadata());
     }
 
     public function testGetArguments()
     {
-        $event = new ToolCallFailed($this->toolCall, $this->metadata, ['arg1' => 'value1', 'arg2' => 2], new Exception('Unexpected error!'));
+        $event = new ToolCallFailed($this->toolCall, $this->metadata, ['arg1' => 'value1', 'arg2' => 2], new \Exception('Unexpected error!'));
 
         $this->assertEqualsCanonicalizing(['arg1' => 'value1', 'arg2' => 2], $event->getArguments());
     }
 
     public function testGetException()
     {
-        $event = new ToolCallFailed($this->toolCall, $this->metadata, [], new Exception('Unexpected error!'));
+        $event = new ToolCallFailed($this->toolCall, $this->metadata, [], new \Exception('Unexpected error!'));
 
-        $this->assertInstanceOf(Exception::class, $event->getException());
+        $this->assertInstanceOf(\Exception::class, $event->getException());
         $this->assertSame('Unexpected error!', $event->getException()->getMessage());
     }
 }
