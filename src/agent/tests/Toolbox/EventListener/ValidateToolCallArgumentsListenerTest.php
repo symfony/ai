@@ -82,11 +82,9 @@ class ValidateToolCallArgumentsListenerTest extends TestCase
             $this->assertSame('Invalid arguments provided for "get_recipe" tool.', $ex->getMessage());
             $toolCallResult = $ex->getToolCallResult();
             $this->assertInstanceOf(ConstraintViolationList::class, $toolCallResult);
-            assert($toolCallResult instanceof ConstraintViolationList);
             $this->assertSame(1, $toolCallResult->count());
             $violation = iterator_to_array($toolCallResult)[0];
             $this->assertInstanceOf(ConstraintViolation::class, $violation);
-            assert($violation instanceof ConstraintViolation);
             $this->assertSame('The value must be one of "flour", "sugar", "butter".', $violation->getMessage());
         }
     }

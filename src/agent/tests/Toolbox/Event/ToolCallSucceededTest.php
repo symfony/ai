@@ -45,9 +45,9 @@ final class ToolCallSucceededTest extends TestCase
 
     public function testGetArguments()
     {
-        $event = new ToolCallSucceeded($this->toolCall, $this->metadata, ['arg1', 'arg2'], new ToolResult($this->toolCall, 'Result here!'));
+        $event = new ToolCallSucceeded($this->toolCall, $this->metadata, ['arg1' => 'value1', 'arg2' => 22], new ToolResult($this->toolCall, 'Result here!'));
 
-        $this->assertEqualsCanonicalizing(['arg1', 'arg2'], $event->getArguments());
+        $this->assertEqualsCanonicalizing(['arg1' => 'value1', 'arg2' => 22], $event->getArguments());
     }
 
     public function testGetResult()

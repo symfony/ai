@@ -45,9 +45,9 @@ final class ToolCallFailedTest extends TestCase
 
     public function testGetArguments()
     {
-        $event = new ToolCallFailed($this->toolCall, $this->metadata, ['arg1', 'arg2'], new Exception('Unexpected error!'));
+        $event = new ToolCallFailed($this->toolCall, $this->metadata, ['arg1' => 'value1', 'arg2' => 2], new Exception('Unexpected error!'));
 
-        $this->assertEqualsCanonicalizing(['arg1', 'arg2'], $event->getArguments());
+        $this->assertEqualsCanonicalizing(['arg1' => 'value1', 'arg2' => 2], $event->getArguments());
     }
 
     public function testGetException()

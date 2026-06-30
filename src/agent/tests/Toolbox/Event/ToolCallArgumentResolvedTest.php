@@ -44,8 +44,8 @@ final class ToolCallArgumentResolvedTest extends TestCase
 
     public function testGetArguments()
     {
-        $event = new ToolCallArgumentsResolved($this->toolCall, $this->metadata, ['arg1', 'arg2']);
+        $event = new ToolCallArgumentsResolved($this->toolCall, $this->metadata, ['arg1' => 'value1', 'arg2' => 22]);
 
-        $this->assertEqualsCanonicalizing(['arg1', 'arg2'], $event->getArguments());
+        $this->assertEqualsCanonicalizing(['arg1' => 'value1', 'arg2' => 22], $event->getArguments());
     }
 }
