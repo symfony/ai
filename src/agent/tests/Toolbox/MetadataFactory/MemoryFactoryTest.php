@@ -12,8 +12,10 @@
 namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute1;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute2;
+use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Platform\Tool\Tool;
@@ -95,5 +97,17 @@ final class MemoryFactoryTest extends TestCase
             'additionalProperties' => false,
         ];
         $this->assertSame($expectedParams, $metadata[1]->getParameters());
+    }
+
+    public function testWrongToolMethodThrows(): void
+    {
+        try {
+            $factory = new MemoryToolFactory();
+            $factory->addTool(ToolDate::class, 'my_tool', 'Calculates date', 'calculateDate');
+            self::fail('Should have thrown before!');
+        } catch (ToolConfigurationException $e) {
+            $this->assertSame('Method "calculateDate" not found in tool "Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate".', $e->getMessage());
+            $this->assertInstanceOf(\ReflectionException::class, $e->getPrevious());            
+        }
     }
 }

@@ -18,7 +18,9 @@ use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
+use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -39,6 +41,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $actual = $faultTolerantToolbox->execute($toolCall);
 
         $this->assertSame($expected, $actual->getResult());
+        $this->assertSame($toolCall, $actual->getToolCall());
     }
 
     public function testFaultyToolCall()
@@ -54,6 +57,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $actual = $faultTolerantToolbox->execute($toolCall);
 
         $this->assertSame($expected, $actual->getResult());
+        $this->assertSame($toolCall, $actual->getToolCall());
     }
 
     public function testCustomToolExecutionException()
@@ -77,6 +81,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $actual = $faultTolerantToolbox->execute($toolCall);
 
         $this->assertSame($expected, $actual->getResult());
+        $this->assertSame($toolCall, $actual->getToolCall());
     }
 
     private function createFaultyToolbox(\Closure $exceptionFactory): ToolboxInterface
@@ -102,5 +107,21 @@ final class FaultTolerantToolboxTest extends TestCase
                 throw ($this->exceptionFactory)($toolCall);
             }
         };
+    }
+
+    public function testAbsentTool()
+    {
+        $absentTool = new Tool(new ExecutionReference(\stdClass::class, 'someMethod'), 'absent_tool', 'A tool that is not in the toolbox');
+        $toolbox = new FaultTolerantToolbox(new Toolbox([new ToolRequiredParams()], new ReflectionToolFactory()));
+
+        $toolCall = new ToolCall('call_1234', 'absent_tool');
+        $result = $toolbox->execute($toolCall);
+
+        $this->assertSame(
+            'Tool "absent_tool" was not found, please use one of these: tool_required_params', 
+            $result->getResult()
+        );
+
+        $this->assertSame($toolCall, $result->getToolCall());
     }
 }

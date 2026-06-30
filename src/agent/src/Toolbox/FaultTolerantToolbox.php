@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
+use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -37,13 +38,15 @@ final class FaultTolerantToolbox implements ToolboxInterface
     {
         try {
             return $this->innerToolbox->execute($toolCall);
+        } catch (ToolExecutionException $e) {
+            return new ToolResult($e->getToolCall(), $e->getToolCallResult());
         } catch (ToolExecutionExceptionInterface $e) {
             return new ToolResult($toolCall, $e->getToolCallResult());
-        } catch (ToolNotFoundException) {
+        } catch (ToolNotFoundException $e) {
             $names = array_map(static fn (Tool $metadata) => $metadata->getName(), $this->getTools());
 
             return new ToolResult(
-                $toolCall,
+                $e->getToolCall() ?? $toolCall,
                 \sprintf('Tool "%s" was not found, please use one of these: %s', $toolCall->getName(), implode(', ', $names))
             );
         }
