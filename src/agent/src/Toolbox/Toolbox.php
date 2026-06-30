@@ -121,7 +121,7 @@ final class Toolbox implements ToolboxInterface
         $this->initialize();
 
         if (!isset($this->map[$toolCall->getName()])) {
-            throw ToolNotFoundException::notFoundForToolCall($toolCall);
+            throw new ToolNotFoundException($toolCall);
         }
 
         $entry = $this->map[$toolCall->getName()];
