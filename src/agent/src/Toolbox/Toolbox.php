@@ -128,10 +128,10 @@ final class Toolbox implements ToolboxInterface
 
         return [$entry['meta_data'], $entry['tool']];
     }
-    
+
     private function initialize(): void
     {
-        if ($this->map === []) {
+        if ([] === $this->map) {
             $this->map = iterator_to_array($this->yieldMapEntries());
         }
     }
