@@ -99,7 +99,7 @@ final class MemoryFactoryTest extends TestCase
         $this->assertSame($expectedParams, $metadata[1]->getParameters());
     }
 
-    public function testWrongToolMethodThrows(): void
+    public function testWrongToolMethodThrows()
     {
         try {
             $factory = new MemoryToolFactory();
