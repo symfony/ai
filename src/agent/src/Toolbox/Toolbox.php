@@ -35,7 +35,7 @@ final class Toolbox implements ToolboxInterface
     /**
      * Map of tools.
      *
-     * @var array<string, array{meta_data: Tool, tool: object}>
+     * @var array<string, array{metadata: Tool, tool: object}>
      */
     private array $map = [];
 
@@ -60,7 +60,7 @@ final class Toolbox implements ToolboxInterface
 
         return array_values(
             array_map(
-                static fn (array $entry) => $entry['meta_data'],
+                static fn (array $entry) => $entry['metadata'],
                 $this->map
             )
         );
@@ -68,9 +68,9 @@ final class Toolbox implements ToolboxInterface
 
     public function execute(ToolCall $toolCall): ToolResult
     {
-        [$metaData, $tool] = $this->getMapEntry($toolCall);
+        [$metadata, $tool] = $this->getMapEntry($toolCall);
 
-        $event = new ToolCallRequested($toolCall, $metaData);
+        $event = new ToolCallRequested($toolCall, $metadata);
         $this->eventDispatcher?->dispatch($event);
 
         if ($event->isDenied()) {
@@ -86,8 +86,8 @@ final class Toolbox implements ToolboxInterface
         $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
 
         try {
-            $arguments = $this->argumentResolver->resolveArguments($metaData, $toolCall);
-            $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metaData, $arguments));
+            $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
+            $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
 
             $sourceCollection = null;
             if ($tool instanceof HasSourcesInterface) {
@@ -96,17 +96,17 @@ final class Toolbox implements ToolboxInterface
 
             $result = new ToolResult(
                 $toolCall,
-                $tool->{$metaData->getReference()->getMethod()}(...$arguments),
+                $tool->{$metadata->getReference()->getMethod()}(...$arguments),
                 $sourceCollection,
             );
 
-            $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metaData, $arguments, $result));
+            $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
         } catch (ToolExecutionExceptionInterface $e) {
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metaData, $arguments, $e));
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments, $e));
             throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->getName()), ['exception' => $e]);
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metaData, $arguments ?? [], $e));
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
             throw ToolExecutionException::executionFailed($toolCall, $e);
         }
 
@@ -126,7 +126,7 @@ final class Toolbox implements ToolboxInterface
 
         $entry = $this->map[$toolCall->getName()];
 
-        return [$entry['meta_data'], $entry['tool']];
+        return [$entry['metadata'], $entry['tool']];
     }
 
     private function initialize(): void
@@ -137,13 +137,13 @@ final class Toolbox implements ToolboxInterface
     }
 
     /**
-     * @return \Generator<string, array{meta_data: Tool, tool: object}>
+     * @return \Generator<string, array{metadata: Tool, tool: object}>
      */
     private function yieldMapEntries(): \Generator
     {
         foreach ($this->tools as $reference) {
             foreach ($this->toolFactory->getTool($reference) as $tool) {
-                yield $tool->getName() => ['meta_data' => $tool, 'tool' => $reference];
+                yield $tool->getName() => ['metadata' => $tool, 'tool' => $reference];
             }
         }
     }
