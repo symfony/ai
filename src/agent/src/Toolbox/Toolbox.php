@@ -33,21 +33,14 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class Toolbox implements ToolboxInterface
 {
     /**
-     * List of tool metadata objects.
+     * Map of tools.
      *
-     * @var Tool[]
+     * @var array<string, array{meta_data: Tool, tool: object}>
      */
-    private array $toolsMetadata;
+    private array $map = [];
 
     /**
-     * Maps tool name to the specific object instance that was registered for it.
-     *
-     * @var array<string, object>
-     */
-    private array $instanceMap = [];
-
-    /**
-     * @param iterable<object> $tools
+     * @param iterable<object> $tools - collection of references to executable tools
      */
     public function __construct(
         private readonly iterable $tools,
@@ -58,28 +51,26 @@ final class Toolbox implements ToolboxInterface
     ) {
     }
 
+    /**
+     * @return Tool[]
+     */
     public function getTools(): array
     {
-        if (isset($this->toolsMetadata)) {
-            return $this->toolsMetadata;
-        }
+        $this->initialize();
 
-        $toolsMetadata = [];
-        foreach ($this->tools as $tool) {
-            foreach ($this->toolFactory->getTool($tool) as $metadata) {
-                $this->instanceMap[$metadata->getName()] = $tool;
-                $toolsMetadata[] = $metadata;
-            }
-        }
-
-        return $this->toolsMetadata = $toolsMetadata;
+        return array_values(
+            array_map(
+                static fn (array $entry) => $entry['meta_data'],
+                $this->map
+            )
+        );
     }
 
     public function execute(ToolCall $toolCall): ToolResult
     {
-        $metadata = $this->getMetadata($toolCall);
+        [$metaData, $tool] = $this->getMapEntry($toolCall);
 
-        $event = new ToolCallRequested($toolCall, $metadata);
+        $event = new ToolCallRequested($toolCall, $metaData);
         $this->eventDispatcher?->dispatch($event);
 
         if ($event->isDenied()) {
@@ -92,13 +83,11 @@ final class Toolbox implements ToolboxInterface
             return $event->getResult();
         }
 
-        $tool = $this->getExecutable($metadata);
+        $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
 
         try {
-            $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
-
-            $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
-            $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
+            $arguments = $this->argumentResolver->resolveArguments($metaData, $toolCall);
+            $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metaData, $arguments));
 
             $sourceCollection = null;
             if ($tool instanceof HasSourcesInterface) {
@@ -107,47 +96,55 @@ final class Toolbox implements ToolboxInterface
 
             $result = new ToolResult(
                 $toolCall,
-                $tool->{$metadata->getReference()->getMethod()}(...$arguments),
+                $tool->{$metaData->getReference()->getMethod()}(...$arguments),
                 $sourceCollection,
             );
 
-            $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
+            $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metaData, $arguments, $result));
         } catch (ToolExecutionExceptionInterface $e) {
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metaData, $arguments, $e));
             throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->getName()), ['exception' => $e]);
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metaData, $arguments ?? [], $e));
             throw ToolExecutionException::executionFailed($toolCall, $e);
         }
 
         return $result;
     }
 
-    private function getMetadata(ToolCall $toolCall): Tool
+    /**
+     * @return array{0: Tool, 1: object}
+     */
+    private function getMapEntry(ToolCall $toolCall): array
     {
-        foreach ($this->getTools() as $metadata) {
-            if ($metadata->getName() === $toolCall->getName()) {
-                return $metadata;
-            }
+        $this->initialize();
+
+        if (!isset($this->map[$toolCall->getName()])) {
+            throw ToolNotFoundException::notFoundForToolCall($toolCall);
         }
 
-        throw ToolNotFoundException::notFoundForToolCall($toolCall);
+        $entry = $this->map[$toolCall->getName()];
+
+        return [$entry['meta_data'], $entry['tool']];
+    }
+    
+    private function initialize(): void
+    {
+        if ($this->map === []) {
+            $this->map = iterator_to_array($this->yieldMapEntries());
+        }
     }
 
-    private function getExecutable(Tool $metadata): object
+    /**
+     * @return \Generator<string, array{meta_data: Tool, tool: object}>
+     */
+    private function yieldMapEntries(): \Generator
     {
-        if (isset($this->instanceMap[$metadata->getName()])) {
-            return $this->instanceMap[$metadata->getName()];
-        }
-
-        $className = $metadata->getReference()->getClass();
-        foreach ($this->tools as $tool) {
-            if ($tool instanceof $className) {
-                return $tool;
+        foreach ($this->tools as $reference) {
+            foreach ($this->toolFactory->getTool($reference) as $tool) {
+                yield $tool->getName() => ['meta_data' => $tool, 'tool' => $reference];
             }
         }
-
-        throw ToolNotFoundException::notFoundForReference($metadata->getReference());
     }
 }
