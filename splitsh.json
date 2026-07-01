@@ -45,6 +45,7 @@
         "ai-amazeeai-platform": "src/platform/src/Bridge/AmazeeAi",
         "ai-anthropic-platform": "src/platform/src/Bridge/Anthropic",
         "ai-azure-platform": "src/platform/src/Bridge/Azure",
+        "ai-bedrock-mantle-platform": "src/platform/src/Bridge/BedrockMantle",
         "ai-bedrock-platform": "src/platform/src/Bridge/Bedrock",
         "ai-cache-platform": "src/platform/src/Bridge/Cache",
         "ai-cartesia-platform": "src/platform/src/Bridge/Cartesia",

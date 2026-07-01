@@ -11,6 +11,7 @@
         "symfony/ai-anthropic-platform": "^0.10",
         "symfony/ai-azure-platform": "^0.10",
         "symfony/ai-azure-search-store": "^0.10",
+        "symfony/ai-bedrock-mantle-platform": "^0.10",
         "symfony/ai-bedrock-platform": "^0.10",
         "symfony/ai-brave-tool": "^0.10",
         "symfony/ai-cache-message-store": "^0.10",
