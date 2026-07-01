@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add `bedrockmantle` platform configuration for the Bedrock Mantle bridge, with an `api` option selecting the Chat Completions or Responses route
+
 0.11
 ----
 
