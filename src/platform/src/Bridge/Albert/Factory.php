@@ -38,13 +38,8 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'albert',
     ): ProviderInterface {
-        $baseUrl = rtrim($baseUrl, '/');
-
         if (!str_starts_with($baseUrl, 'https://')) {
             throw new InvalidArgumentException('The Albert URL must start with "https://".');
-        }
-        if (!preg_match('/\/v\d+$/', $baseUrl)) {
-            throw new InvalidArgumentException('The Albert URL must include an API version (e.g., /v1, /v2).');
         }
         if ('' === $apiKey) {
             throw new InvalidArgumentException('The API key must not be empty.');
@@ -58,8 +53,6 @@ final class Factory
             httpClient: $httpClient,
             modelCatalog: $modelCatalog,
             eventDispatcher: $eventDispatcher,
-            completionsPath: '/chat/completions',
-            embeddingsPath: '/embeddings',
             name: $name,
         );
     }
