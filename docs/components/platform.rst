@@ -136,6 +136,7 @@ Supported Models & Platforms
   * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
   * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
+  * Open-weight models (`gpt-oss`_, `Qwen`_, `Gemma`_) with `Bedrock Mantle`_ as Platform
   * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
@@ -195,6 +196,48 @@ model catalogs.
 
 See :doc:`platform/model-catalogs` for keeping catalogs current, adding custom
 models, or bypassing the catalog.
+
+AWS Bedrock Mantle
+~~~~~~~~~~~~~~~~~~
+
+Next to the SigV4/SDK-based `AWS Bedrock`_ bridge for Nova, Claude and Llama, AWS exposes the
+open-weight models of Bedrock through the `Bedrock Mantle`_ endpoint, which speaks the
+OpenAI-compatible Chat Completions and Responses protocols. The dedicated bridge derives the base
+URL from the AWS region and authenticates with a Bedrock API key sent as a bearer token::
+
+    use Symfony\AI\Platform\Bridge\BedrockMantle\Factory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $platform = Factory::createPlatform(apiKey: 'ABSK...', region: 'us-west-2');
+
+    $messages = new MessageBag(
+        Message::forSystem('You are a pirate and you write funny.'),
+        Message::ofUser('What is the Symfony framework?'),
+    );
+    $result = $platform->invoke('openai.gpt-oss-120b', $messages);
+
+    echo $result->asText();
+
+When no API key is given, requests are signed with AWS SigV4 using the standard credential chain,
+so the usual ``AWS_ACCESS_KEY_ID``/``AWS_SECRET_ACCESS_KEY`` environment variables, instance roles
+or profiles apply. A custom ``AsyncAws\Core\Credentials\CredentialProvider`` can be passed as well::
+
+    $platform = Factory::createPlatform(region: 'us-west-2');
+
+Models served through the Responses API - which AWS recommends for new applications - are reached
+through the dedicated ``Responses\Factory`` instead, which reuses the wire protocol of the
+``symfony/ai-open-responses-platform`` bridge::
+
+    use Symfony\AI\Platform\Bridge\BedrockMantle\Responses\Factory;
+
+    $platform = Factory::createPlatform(apiKey: 'ABSK...', region: 'us-west-2');
+
+    $result = $platform->invoke('google.gemma-4-31b', $messages);
+
+Both routes ship a model catalog with the models verified against the endpoint. Additional models
+can be registered by passing them to the catalog constructor, see
+:doc:`platform/model-catalogs`.
 
 Providers and Multi-Provider Platforms
 --------------------------------------
@@ -1903,6 +1946,12 @@ Code Examples
 * `Parallel Embeddings Calls`_
 * `Cerebras Chat`_
 * `Cerebras Streaming`_
+* `Bedrock Mantle Chat`_
+* `Bedrock Mantle Chat with SigV4`_
+* `Bedrock Mantle Streaming`_
+* `Bedrock Mantle Tool Calling`_
+* `Bedrock Mantle Responses`_
+* `Bedrock Mantle Responses Streaming`_
 
 .. note::
 
@@ -1914,6 +1963,13 @@ Code Examples
 .. _`Anthropic's Claude`: https://www.anthropic.com/claude
 .. _`Anthropic`: https://www.anthropic.com/
 .. _`AWS Bedrock`: https://aws.amazon.com/bedrock/
+.. _`Bedrock Mantle`: https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-mantle.html
+.. _`Bedrock Mantle Chat`: https://github.com/symfony/ai/blob/main/examples/bedrock/chat-mantle.php
+.. _`Bedrock Mantle Chat with SigV4`: https://github.com/symfony/ai/blob/main/examples/bedrock/chat-mantle-sigv4.php
+.. _`Bedrock Mantle Responses`: https://github.com/symfony/ai/blob/main/examples/bedrock/responses-mantle.php
+.. _`Bedrock Mantle Responses Streaming`: https://github.com/symfony/ai/blob/main/examples/bedrock/responses-stream-mantle.php
+.. _`Bedrock Mantle Streaming`: https://github.com/symfony/ai/blob/main/examples/bedrock/stream-mantle.php
+.. _`Bedrock Mantle Tool Calling`: https://github.com/symfony/ai/blob/main/examples/bedrock/toolcall-mantle.php
 .. _`LiteLLM`: https://docs.litellm.ai/docs/
 .. _`Cartesia`: https://cartesia.ai/
 .. _`Cartesia STT`: https://cartesia.ai/ink
@@ -1939,6 +1995,8 @@ Code Examples
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/
 .. _`Qwen`: https://qwen.ai/
+.. _`Gemma`: https://deepmind.google/models/gemma/
+.. _`gpt-oss`: https://openai.com/open-models/
 .. _`Albert API`: https://github.com/etalab-ia/albert-api
 .. _`Albert`: https://alliance.numerique.gouv.fr/produit/produits-interminist%C3%A9rielles/albert-api/
 .. _`Mistral`: https://www.mistral.ai/
