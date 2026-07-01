@@ -152,6 +152,19 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $parts[] = ['type' => Thinking::class, 'content' => $part->getContent(), 'signature' => $part->getSignature()];
             } elseif ($part instanceof ToolCall) {
                 $parts[] = ['type' => ToolCall::class, 'toolCall' => $this->normalizer->normalize($part, $format, $context)];
+            } else {
+                $parts[] = [
+                    'type' => $part::class,
+                    'content' => match ($part::class) {
+                        File::class,
+                        Document::class,
+                        Image::class,
+                        Audio::class => $part->asDataUrl(),
+                        ImageUrl::class,
+                        DocumentUrl::class => $part->getUrl(),
+                        default => throw new LogicException(\sprintf('Unknown content type "%s".', $part::class)),
+                    },
+                ];
             }
         }
 
@@ -223,6 +236,12 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                         $part['toolCall']['function']['name'],
                         json_decode($part['toolCall']['function']['arguments'], true),
                     ),
+                    File::class,
+                    Document::class,
+                    Image::class,
+                    Audio::class => $part['type']::fromDataUrl($part['content']),
+                    ImageUrl::class => new ImageUrl($part['content']),
+                    DocumentUrl::class => new DocumentUrl($part['content']),
                     default => throw new LogicException(\sprintf('Unknown assistant part type "%s".', $part['type'])),
                 };
             }
