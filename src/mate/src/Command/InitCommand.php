@@ -100,8 +100,16 @@ class InitCommand extends Command
             }
         }
 
-        // Create symlink from .mcp.json to mcp.json for compatibility
+        // Only prompt when the freshly written mcp.json still carries the
+        // placeholders; a kept existing file has nothing left to configure.
         $mcpJsonPath = $this->rootDir.'/mcp.json';
+        if ($this->mcpJsonNeedsPhpBinary($mcpJsonPath)) {
+            $phpBinary = $this->resolvePhpBinary($io);
+            $this->applyPhpBinaryToMcpJson($mcpJsonPath, $phpBinary);
+            $actions[] = ['✓', 'Configured', \sprintf('mcp.json launch command ("%s")', $phpBinary)];
+        }
+
+        // Create symlink from .mcp.json to mcp.json for compatibility
         $mcpJsonSymlink = $this->rootDir.'/.mcp.json';
         if (file_exists($mcpJsonPath)) {
             if (is_link($mcpJsonSymlink)) {
@@ -186,6 +194,58 @@ class InitCommand extends Command
         if (\in_array($template, self::SENSITIVE_FILES, true)) {
             @chmod($destination, FilePermissions::FILE);
         }
+    }
+
+    /**
+     * PHP binary the agent uses to launch Mate, defaulted by environment
+     * detection (containers such as DDEV need a wrapper) and confirmed by the user.
+     */
+    private function resolvePhpBinary(SymfonyStyle $io): string
+    {
+        $default = is_dir($this->rootDir.'/.ddev') ? 'ddev exec php' : 'php';
+
+        return trim($io->ask('PHP binary to run Mate for your coding agent', $default) ?? $default);
+    }
+
+    /**
+     * Whether the mcp.json at the given path still holds the unresolved
+     * placeholders, i.e. it was just written from the template this run.
+     */
+    private function mcpJsonNeedsPhpBinary(string $mcpJsonPath): bool
+    {
+        $contents = @file_get_contents($mcpJsonPath);
+
+        return \is_string($contents) && str_contains($contents, '##PHP_BINARY##');
+    }
+
+    /**
+     * Replace the mcp.json placeholders with the PHP binary. A multi-word binary
+     * (e.g. "ddev exec php") is split into the command and its leading args.
+     */
+    private function applyPhpBinaryToMcpJson(string $mcpJsonPath, string $phpBinary): void
+    {
+        $parts = preg_split('/\s+/', trim($phpBinary), -1, \PREG_SPLIT_NO_EMPTY);
+        $contents = file_get_contents($mcpJsonPath);
+        if (false === $parts || [] === $parts || false === $contents) {
+            return;
+        }
+
+        $command = array_shift($parts);
+        $args = [...$parts, './vendor/bin/mate', 'serve', '--force-keep-alive'];
+        $encodedArgs = implode(', ', array_map(
+            static fn (string $arg): string => json_encode($arg, \JSON_UNESCAPED_SLASHES),
+            $args
+        ));
+
+        // The args placeholder is quoted in the template so it stays valid JSON;
+        // the encoded fragment brings its own quotes, so the quotes are replaced too.
+        $contents = str_replace(
+            ['##PHP_BINARY##', '"##MATE_ARGS##"'],
+            [$command, $encodedArgs],
+            $contents
+        );
+
+        file_put_contents($mcpJsonPath, $contents);
     }
 
     /**

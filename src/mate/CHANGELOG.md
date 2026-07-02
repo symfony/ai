@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.11
+----
+
+ * Add PHP binary prompt to `mate init` (detects `.ddev/` and defaults the generated `mcp.json` launch command to `ddev exec php`, otherwise `php`) so the MCP server can be started from the host for containerized setups
+
 0.9
 ---
 

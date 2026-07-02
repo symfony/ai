@@ -139,6 +139,92 @@ final class InitCommandTest extends TestCase
         $this->assertFileExists($this->tempDir.'/mate/config.php');
     }
 
+    public function testMcpJsonUsesPhpBinaryByDefault()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $mcpJson = $this->readMcpJson();
+        $this->assertSame('php', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
+        $this->assertSame(
+            ['./vendor/bin/mate', 'serve', '--force-keep-alive'],
+            $mcpJson['mcpServers']['symfony-ai-mate']['args']
+        );
+    }
+
+    public function testMcpJsonDefaultsToDdevWrapperWhenDdevDetected()
+    {
+        mkdir($this->tempDir.'/.ddev', 0755, true);
+
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        // Accept the detected default by submitting an empty answer.
+        $tester->setInputs(['']);
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $mcpJson = $this->readMcpJson();
+        $this->assertSame('ddev', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
+        $this->assertSame(
+            ['exec', 'php', './vendor/bin/mate', 'serve', '--force-keep-alive'],
+            $mcpJson['mcpServers']['symfony-ai-mate']['args']
+        );
+    }
+
+    public function testMcpJsonUsesProvidedPhpBinary()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['docker compose exec php php']);
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $mcpJson = $this->readMcpJson();
+        $this->assertSame('docker', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
+        $this->assertSame(
+            ['compose', 'exec', 'php', 'php', './vendor/bin/mate', 'serve', '--force-keep-alive'],
+            $mcpJson['mcpServers']['symfony-ai-mate']['args']
+        );
+    }
+
+    public function testKeepsExistingMcpJsonUntouchedWhenOverwriteDeclined()
+    {
+        $existing = <<<'JSON'
+            {
+                "mcpServers": {
+                    "symfony-ai-mate": {
+                        "command": "my-custom-php",
+                        "args": ["./vendor/bin/mate", "serve"]
+                    }
+                }
+            }
+            JSON;
+        file_put_contents($this->tempDir.'/mcp.json', $existing);
+
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        // Decline overwriting the existing mcp.json; no PHP binary prompt should follow.
+        $tester->setInputs(['no']);
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        // The user's file is left exactly as-is, with no placeholder resolution.
+        $this->assertSame($existing, file_get_contents($this->tempDir.'/mcp.json'));
+        // And the command neither prompts for a binary nor claims it configured one.
+        $display = $tester->getDisplay();
+        $this->assertStringNotContainsString('PHP binary to run Mate', $display);
+        $this->assertStringNotContainsString('Configured', $display);
+    }
+
     public function testSetsExtensionFalseByDefault()
     {
         // Create composer.json without ai-mate config
@@ -186,6 +272,20 @@ final class InitCommandTest extends TestCase
         $materializer = new AgentInstructionsMaterializer($this->tempDir, $aggregator, $logger);
 
         return new InitCommand($this->tempDir, $materializer);
+    }
+
+    /**
+     * @return array{mcpServers: array{symfony-ai-mate: array{command: string, args: list<string>}}}
+     */
+    private function readMcpJson(): array
+    {
+        $content = file_get_contents($this->tempDir.'/mcp.json');
+        $this->assertIsString($content);
+
+        $decoded = json_decode($content, true);
+        $this->assertIsArray($decoded);
+
+        return $decoded;
     }
 
     private function removeDirectory(string $dir): void
