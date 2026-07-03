@@ -60,10 +60,14 @@ final class Factory
                 new Image\ResultConverter(),
                 new TextToSpeech\ResultConverter(),
                 new Whisper\ResultConverter(),
+                new Batch\ResultConverter(),
             ],
             $modelCatalog,
             $contract ?? OpenAiContract::create(),
             $eventDispatcher,
+            [
+                new Batch\SubmitModelClient($httpClient, $apiKey, $region),
+            ],
         );
     }
 
