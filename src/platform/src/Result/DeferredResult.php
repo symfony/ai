@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Result;
 
+use Symfony\AI\Platform\Batch\BatchJob;
+use Symfony\AI\Platform\Batch\BatchJobResult;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
@@ -262,6 +264,17 @@ final class DeferredResult
     public function asVectors(): array
     {
         return $this->as(VectorResult::class)->getContent();
+    }
+
+    /**
+     * @throws ExceptionInterface
+     */
+    public function asBatchJob(): BatchJob
+    {
+        $result = $this->as(BatchJobResult::class);
+        \assert($result instanceof BatchJobResult);
+
+        return $result->getContent();
     }
 
     /**

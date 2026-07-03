@@ -12,12 +12,20 @@
 namespace Symfony\AI\Platform\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Batch\BatchInput;
+use Symfony\AI\Platform\Batch\BatchJob;
+use Symfony\AI\Platform\Batch\BatchJobResult;
+use Symfony\AI\Platform\Batch\BatchResultConverterInterface;
+use Symfony\AI\Platform\Batch\BatchStatus;
+use Symfony\AI\Platform\Batch\BatchSubmitClientInterface;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultErrorEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -300,5 +308,70 @@ final class ProviderTest extends TestCase
         $provider = new Provider('openai', [], [], $catalog);
 
         $this->assertSame($catalog, $provider->getModelCatalog());
+    }
+
+    public function testInvokeWithBatchOptionRoutesToBatchSubmitClient()
+    {
+        $model = new Model('gpt-4o', [Capability::INPUT_MESSAGES]);
+        $job = new BatchJob('batch-1', BatchStatus::PROCESSING);
+
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn($model);
+
+        $submitClient = $this->createMock(BatchSubmitClientInterface::class);
+        $submitClient->method('supports')->willReturn(true);
+        $submitClient->expects($this->once())
+            ->method('submitBatch')
+            ->willReturn($this->createStub(RawResultInterface::class));
+
+        $converter = $this->createStub(BatchResultConverterInterface::class);
+        $converter->method('supports')->willReturn(true);
+        $converter->method('convert')->willReturn(new BatchJobResult($job));
+
+        $provider = new Provider('openai', [], [$converter], $catalog, null, null, [$submitClient]);
+
+        $result = $provider->invoke('gpt-4o', [new BatchInput('req-1', new MessageBag(Message::ofUser('Hi')))], ['batch' => true]);
+
+        $this->assertSame($job, $result->asBatchJob());
+    }
+
+    public function testInvokeWithBatchOptionThrowsWhenNoBatchSubmitClient()
+    {
+        $model = new Model('gpt-4o', [Capability::INPUT_MESSAGES]);
+
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn($model);
+
+        $provider = new Provider('openai', [], [], $catalog);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('No batch submit client registered');
+
+        $provider->invoke('gpt-4o', [new BatchInput('req-1', new MessageBag(Message::ofUser('Hi')))], ['batch' => true]);
+    }
+
+    public function testBatchConverterIsSkippedInRegularInvocation()
+    {
+        $model = new Model('gpt-4o', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]);
+
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn($model);
+
+        $modelClient = $this->createStub(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(true);
+        $modelClient->method('request')->willReturn($this->createStub(RawResultInterface::class));
+
+        // A batch converter that would match by supports() must never be picked for a regular call.
+        $batchConverter = $this->createMock(BatchResultConverterInterface::class);
+        $batchConverter->method('supports')->willReturn(true);
+        $batchConverter->expects($this->never())->method('convert');
+
+        $normalConverter = $this->createStub(ResultConverterInterface::class);
+        $normalConverter->method('supports')->willReturn(true);
+        $normalConverter->method('convert')->willReturn(new TextResult('Hello'));
+
+        $provider = new Provider('openai', [$modelClient], [$batchConverter, $normalConverter], $catalog);
+
+        $this->assertSame('Hello', $provider->invoke('gpt-4o', 'Hello')->asText());
     }
 }
