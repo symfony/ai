@@ -47,10 +47,11 @@ final class Factory
         return new Provider(
             $name,
             [new ModelClient($httpClient, $apiKey, $cacheRetention, $baseUrl)],
-            [new ResultConverter()],
+            [new ResultConverter(), new Batch\ResultConverter()],
             $modelCatalog,
             $contract ?? AnthropicContract::create(),
             $eventDispatcher,
+            [new Batch\SubmitModelClient($httpClient, $apiKey)],
         );
     }
 
