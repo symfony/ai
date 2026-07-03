@@ -806,6 +806,54 @@ Code Examples
 
 * `Audio Output with GPT`_
 
+Speech-to-Text
+--------------
+
+Some models can transcribe audio into text. Pass an
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Audio` as input and read the transcript
+through ``asText()``::
+
+    use Symfony\AI\Platform\Bridge\ElevenLabs\Factory;
+    use Symfony\AI\Platform\Message\Content\Audio;
+
+    // Initialize Platform
+
+    $result = $platform->invoke(
+        model: 'scribe_v2',
+        input: Audio::fromFile('/path/audio.mp3'),
+    );
+
+    echo $result->asText(); // "Hello there"
+
+ElevenLabs Scribe accepts provider-specific options that are forwarded to the
+``/v1/speech-to-text`` request, such as ``language_code``, ``diarize``,
+``num_speakers``, ``timestamps_granularity`` and ``additional_formats``. When
+``additional_formats`` is requested, the result is exposed as a structured
+:class:`Symfony\\AI\\Platform\\Bridge\\ElevenLabs\\Result\\Transcript` object through
+``asObject()`` instead of a plain text result::
+
+    $result = $platform->invoke(
+        model: 'scribe_v2',
+        input: Audio::fromFile('/path/audio.mp3'),
+        options: [
+            'language_code' => 'en',
+            'diarize' => true,
+            'timestamps_granularity' => 'word',
+            'additional_formats' => [
+                ['format' => 'srt', 'include_timestamps' => true],
+            ],
+        ],
+    );
+
+    echo $result->asObject()->getText(); // the plain transcript
+    echo $result->asObject()->asSubRipText(); // the SRT subtitles
+    echo $result->asObject()->getAdditionalFormat('srt'); // the SRT subtitles
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `ElevenLabs Speech-to-Text with SRT`_
+
 Document OCR
 ------------
 
@@ -1442,6 +1490,7 @@ Code Examples
 .. _`Image URL Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-url.php
 .. _`Audio Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-input.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
+.. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
 .. _`OCR with Mistral (URL)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-url.php

@@ -115,6 +115,59 @@ final class ElevenLabsClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testClientCanPerformSpeechToTextRequestWithOptions()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/speech-to-text', $url);
+
+            $body = '';
+            $readChunk = $options['body'];
+            while ('' !== $chunk = $readChunk(8192)) {
+                $body .= $chunk;
+            }
+
+            $this->assertStringContainsString('Content-Disposition: form-data; name="model_id"', $body);
+            $this->assertStringContainsString('Content-Disposition: form-data; name="language_code"', $body);
+            $this->assertStringContainsString("language_code\"\r\n\r\npl\r\n", $body);
+            $this->assertStringContainsString('Content-Disposition: form-data; name="diarize"', $body);
+            $this->assertStringContainsString("diarize\"\r\n\r\ntrue\r\n", $body);
+            $this->assertStringContainsString('Content-Disposition: form-data; name="tag_audio_events"', $body);
+            $this->assertStringContainsString("tag_audio_events\"\r\n\r\nfalse\r\n", $body);
+            $this->assertStringContainsString('Content-Disposition: form-data; name="num_speakers"', $body);
+            $this->assertStringContainsString("num_speakers\"\r\n\r\n1\r\n", $body);
+            $this->assertStringContainsString('Content-Disposition: form-data; name="timestamps_granularity"', $body);
+            $this->assertStringContainsString("timestamps_granularity\"\r\n\r\nword\r\n", $body);
+            $this->assertStringContainsString('Content-Disposition: form-data; name="additional_formats"', $body);
+            $this->assertStringContainsString('{"format":"srt","include_timestamps":true}', $body);
+
+            return new JsonMockResponse([
+                'text' => 'foo',
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $client = new ElevenLabsClient($httpClient);
+
+        $payload = (new AudioNormalizer())->normalize(Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
+
+        $client->request(new ElevenLabs('scribe_v2', [
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+            Capability::SPEECH_TO_TEXT,
+        ]), $payload, [
+            'language_code' => 'pl',
+            'tag_audio_events' => false,
+            'num_speakers' => 1,
+            'diarize' => true,
+            'timestamps_granularity' => 'word',
+            'additional_formats' => [
+                ['format' => 'srt', 'include_timestamps' => true],
+            ],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testClientCannotPerformTextToSpeechRequestWithoutValidPayload()
     {
         $mockHttpClient = new MockHttpClient([
