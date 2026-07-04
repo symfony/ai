@@ -52,6 +52,8 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Batch\BatchManager;
+use Symfony\AI\Platform\Batch\BatchManagerInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
@@ -206,6 +208,11 @@ final class AiBundle extends AbstractBundle
         $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
         if (1 === \count($platforms)) {
             $builder->setAlias(PlatformInterface::class, reset($platforms));
+        }
+
+        $batchManagers = array_keys($builder->findTaggedServiceIds('ai.batch_manager'));
+        if (1 === \count($batchManagers)) {
+            $builder->setAlias(BatchManagerInterface::class, reset($batchManagers));
         }
 
         if ([] !== ($config['agent'] ?? [])) {
@@ -496,6 +503,15 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'anthropic']);
 
             $container->setDefinition($platformId, $definition);
+
+            $container->setDefinition('ai.batch_manager.anthropic', (new Definition(BatchManager::class))
+                ->setFactory(AnthropicFactory::class.'::createBatchManager')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.batch_manager', ['name' => 'anthropic']));
 
             return;
         }
@@ -841,6 +857,16 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'openai']);
 
             $container->setDefinition($platformId, $definition);
+
+            $container->setDefinition('ai.batch_manager.openai', (new Definition(BatchManager::class))
+                ->setFactory(OpenAiFactory::class.'::createBatchManager')
+                ->setLazy(true)
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['region'] ?? null,
+                ])
+                ->addTag('ai.batch_manager', ['name' => 'openai']));
 
             return;
         }

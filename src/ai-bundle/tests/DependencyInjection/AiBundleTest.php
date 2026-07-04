@@ -34,6 +34,7 @@ use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Batch\BatchManagerInterface;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
 use Symfony\AI\Platform\Bridge\Deepgram\Factory as DeepgramFactory;
@@ -5116,6 +5117,41 @@ class AiBundleTest extends TestCase
         $this->assertCount(6, $arguments);
         $this->assertSame('sk-test-key', $arguments[0]);
         $this->assertNull($arguments[4]); // region should be null by default
+    }
+
+    public function testOpenAiRegistersBatchManager()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.batch_manager.openai'));
+        $this->assertSame('sk-test-key', $container->getDefinition('ai.batch_manager.openai')->getArgument(0));
+
+        // Single batch-capable platform: aliased for autowiring, like the platform itself.
+        $this->assertTrue($container->hasAlias(BatchManagerInterface::class));
+    }
+
+    public function testAnthropicRegistersBatchManager()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'anthropic_key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.batch_manager.anthropic'));
+        $this->assertSame('anthropic_key', $container->getDefinition('ai.batch_manager.anthropic')->getArgument(0));
     }
 
     #[TestWith(['EU'])]
