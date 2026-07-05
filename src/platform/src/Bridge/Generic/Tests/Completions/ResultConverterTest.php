@@ -23,8 +23,10 @@ use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -537,8 +539,13 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(2, $chunks);
-        $this->assertContainsOnlyInstancesOf(TextDelta::class, $chunks);
+        $textDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof TextDelta));
+        $metadataDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof MetadataDelta));
+
+        $this->assertCount(2, $textDeltas);
+        $this->assertCount(1, $metadataDeltas);
+        $this->assertSame('finish_reason', $metadataDeltas[0]->getKey());
+        $this->assertSame('stop', $metadataDeltas[0]->getValue());
     }
 
     public function testStreamingDoesNotThrowWithUsageOnlyFinalChunk()
@@ -610,6 +617,82 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Rate limit exceeded. Stream error: "Too many requests".');
 
         iterator_to_array($streamResult->getContent());
+    }
+
+    public function testStreamingExposesFinishReasonLengthAsMetadataDelta()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hello']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'length']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = iterator_to_array($streamResult->getContent());
+        $metadataDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof MetadataDelta));
+
+        $this->assertCount(1, $metadataDeltas);
+        $this->assertSame('finish_reason', $metadataDeltas[0]->getKey());
+        $this->assertSame('length', $metadataDeltas[0]->getValue());
+    }
+
+    public function testStreamingExposesFinishReasonContentFilterAsMetadataDelta()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hi']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'content_filter']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $metadataDeltas = array_values(array_filter(iterator_to_array($streamResult->getContent()), static fn ($c) => $c instanceof MetadataDelta));
+
+        $this->assertCount(1, $metadataDeltas);
+        $this->assertSame('content_filter', $metadataDeltas[0]->getValue());
+    }
+
+    public function testStreamingPromotesFinishReasonToResultMetadata()
+    {
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hello']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'length']]],
+        ];
+
+        $deferredResult = new DeferredResult(
+            new ResultConverter(),
+            new InMemoryRawResult([], $events, $this->httpResponseStub()),
+            ['stream' => true],
+        );
+
+        $chunks = iterator_to_array($deferredResult->asStream());
+
+        $this->assertCount(1, $chunks);
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('Hello', $chunks[0]->getText());
+        $this->assertTrue($deferredResult->getMetadata()->has('finish_reason'));
+        $this->assertSame('length', $deferredResult->getMetadata()->get('finish_reason'));
+    }
+
+    public function testStreamingDoesNotEmitFinishReasonMetadataForUsageOnlyFinalChunk()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'Hi']]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+            ['choices' => [], 'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1, 'total_tokens' => 2]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+        $chunks = iterator_to_array($streamResult->getContent());
+
+        $metadataDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof MetadataDelta));
+        $this->assertCount(1, $metadataDeltas);
+        $this->assertSame('stop', $metadataDeltas[0]->getValue());
     }
 
     private function httpResponseStub(): object
