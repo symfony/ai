@@ -505,6 +505,79 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['city' => 'Beijing'], $completed[0]->getArguments());
     }
 
+    public function testStreamingParallelToolCallsWithProviderIndexOnSingleElementChunks()
+    {
+        // OpenAI-compatible streams often send one tool_calls[] entry per chunk; the real slot is
+        // tool_calls[].index, not the PHP array key (always 0). Without index-based correlation,
+        // parallel tool calls collapse into a single entry (symfony/ai#2193).
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'id' => 'call_a', 'type' => 'function', 'function' => ['name' => 'get_weather', 'arguments' => '']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '{"city":']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '"Paris"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 1, 'id' => 'call_b', 'type' => 'function', 'function' => ['name' => 'get_time', 'arguments' => '']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 1, 'function' => ['arguments' => '{"tz":']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 1, 'function' => ['arguments' => '"CET"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $toolCallStarts = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallStart));
+        $this->assertCount(2, $toolCallStarts);
+        $this->assertSame('call_a', $toolCallStarts[0]->getId());
+        $this->assertSame('get_weather', $toolCallStarts[0]->getName());
+        $this->assertSame('call_b', $toolCallStarts[1]->getId());
+        $this->assertSame('get_time', $toolCallStarts[1]->getName());
+
+        $toolInputDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolInputDelta));
+        $this->assertCount(4, $toolInputDeltas);
+        $this->assertSame('call_a', $toolInputDeltas[0]->getId());
+        $this->assertSame('{"city":', $toolInputDeltas[0]->getPartialJson());
+        $this->assertSame('call_a', $toolInputDeltas[1]->getId());
+        $this->assertSame('"Paris"}', $toolInputDeltas[1]->getPartialJson());
+        $this->assertSame('call_b', $toolInputDeltas[2]->getId());
+        $this->assertSame('{"tz":', $toolInputDeltas[2]->getPartialJson());
+        $this->assertSame('call_b', $toolInputDeltas[3]->getId());
+        $this->assertSame('"CET"}', $toolInputDeltas[3]->getPartialJson());
+
+        $toolCallCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallComplete));
+        $this->assertCount(1, $toolCallCompletes);
+        $completed = $toolCallCompletes[0]->getToolCalls();
+        $this->assertCount(2, $completed);
+
+        $byId = [];
+        foreach ($completed as $toolCall) {
+            $byId[$toolCall->getId()] = $toolCall;
+        }
+
+        $this->assertArrayHasKey('call_a', $byId);
+        $this->assertSame('get_weather', $byId['call_a']->getName());
+        $this->assertSame(['city' => 'Paris'], $byId['call_a']->getArguments());
+
+        $this->assertArrayHasKey('call_b', $byId);
+        $this->assertSame('get_time', $byId['call_b']->getName());
+        $this->assertSame(['tz' => 'CET'], $byId['call_b']->getArguments());
+    }
+
     public function testStreamingThrowsWhenFinishReasonIsMissing()
     {
         $converter = new ResultConverter();

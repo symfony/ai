@@ -132,13 +132,15 @@ trait CompletionsConversionTrait
         }
 
         foreach ($data['choices'][0]['delta']['tool_calls'] as $i => $toolCall) {
+            $index = $toolCall['index'] ?? $i;
+
             // A new tool call starts only on a NON-EMPTY id. OpenAI omits the id on continuation
             // deltas, but some compatible providers (Alibaba Cloud Qwen / DashScope) repeat it as an
             // empty string — isset() is true for "", so the empty-string case must be excluded or each
             // continuation is misread as a start (losing the name and clobbering accumulated arguments).
             if (isset($toolCall['id']) && '' !== $toolCall['id']) {
                 // initialize tool call
-                $toolCalls[$i] = [
+                $toolCalls[$index] = [
                     'id' => $toolCall['id'],
                     'function' => $toolCall['function'],
                 ];
@@ -147,11 +149,11 @@ trait CompletionsConversionTrait
 
             // add arguments delta to tool call
             if (isset($toolCall['function']['arguments'])) {
-                if (!isset($toolCalls[$i]['function']['arguments'])) {
-                    $toolCalls[$i]['function']['arguments'] = '';
+                if (!isset($toolCalls[$index]['function']['arguments'])) {
+                    $toolCalls[$index]['function']['arguments'] = '';
                 }
 
-                $toolCalls[$i]['function']['arguments'] .= $toolCall['function']['arguments'];
+                $toolCalls[$index]['function']['arguments'] .= $toolCall['function']['arguments'];
             }
         }
 
@@ -167,10 +169,12 @@ trait CompletionsConversionTrait
     protected function yieldToolCallDeltas(array $toolCalls, array $data): \Generator
     {
         foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
+            $index = $toolCall['index'] ?? $i;
+
             if (isset($toolCall['id']) && '' !== $toolCall['id']) {
                 yield new ToolCallStart($toolCall['id'], $toolCall['function']['name']);
             } elseif (isset($toolCall['function']['arguments'])) {
-                yield new ToolInputDelta($toolCalls[$i]['id'] ?? '', $toolCalls[$i]['function']['name'] ?? '', $toolCall['function']['arguments']);
+                yield new ToolInputDelta($toolCalls[$index]['id'] ?? '', $toolCalls[$index]['function']['name'] ?? '', $toolCall['function']['arguments']);
             }
         }
     }
