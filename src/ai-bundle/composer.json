@@ -63,6 +63,7 @@
         "symfony/ai-failover-platform": "^0.10",
         "symfony/ai-gemini-platform": "^0.10",
         "symfony/ai-generic-platform": "^0.10",
+        "symfony/ai-higgsfield-platform": "^0.10",
         "symfony/ai-hugging-face-platform": "^0.10",
         "symfony/ai-lm-studio-platform": "^0.10",
         "symfony/ai-manticore-search-store": "^0.10",
