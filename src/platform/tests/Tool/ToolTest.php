@@ -67,4 +67,20 @@ final class ToolTest extends TestCase
 
         $this->assertNull($tool->getParameters());
     }
+
+    public function testReturnsDescriptionWithResponseDescription()
+    {
+        $reference = new ExecutionReference('MyClass');
+        $tool = new Tool($reference, 'tool_name', 'tool description', null, 'Returns a list of items');
+
+        $this->assertSame("tool description\n\nResponse description: Returns a list of items", $tool->getDescription());
+    }
+
+    public function testReturnsDescriptionWithoutResponseDescription()
+    {
+        $reference = new ExecutionReference('MyClass');
+        $tool = new Tool($reference, 'tool_name', 'tool description');
+
+        $this->assertSame('tool description', $tool->getDescription());
+    }
 }

@@ -153,5 +153,22 @@ class ToolNormalizerTest extends TestCase
                 ],
             ],
         ];
+
+        yield 'with response description' => [
+            new Tool(
+                new ExecutionReference(ToolNoParams::class),
+                'tool_with_response',
+                'A tool that searches',
+                null,
+                'Returns a list of items',
+            ),
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'tool_with_response',
+                    'description' => "A tool that searches\n\nResponse description: Returns a list of items",
+                ],
+            ],
+        ];
     }
 }

@@ -25,5 +25,19 @@ final class AsToolTest extends TestCase
 
         $this->assertSame('name', $attribute->name);
         $this->assertSame('description', $attribute->description);
+        $this->assertNull($attribute->responseDescription);
+    }
+
+    public function testCanBeConstructedWithResponseDescription()
+    {
+        $attribute = new AsTool(
+            name: 'name',
+            description: 'description',
+            responseDescription: 'Returns a list of items',
+        );
+
+        $this->assertSame('name', $attribute->name);
+        $this->assertSame('description', $attribute->description);
+        $this->assertSame('Returns a list of items', $attribute->responseDescription);
     }
 }
