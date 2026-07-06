@@ -33,8 +33,6 @@ Higgsfield Documentation
 ------------------------
 
  * [Higgsfield Cloud](https://cloud.higgsfield.ai/)
- * [Node.js SDK](https://github.com/higgsfield-ai/higgsfield-js)
- * [Python SDK](https://github.com/higgsfield-ai/higgsfield-client)
 
 Resources
 ---------
