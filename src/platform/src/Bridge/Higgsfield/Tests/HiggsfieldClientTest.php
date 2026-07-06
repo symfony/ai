@@ -119,7 +119,7 @@ final class HiggsfieldClientTest extends TestCase
         $client = new HiggsfieldClient($httpClient, new MockClock(), 'my-key-id', 'my-key-secret');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Higgsfield request "req-123" failed: "generation crashed".');
+        $this->expectExceptionMessage('Higgsfield request "req-123" "failed": "generation crashed".');
 
         $client->request(new Higgsfield('flux-pro/kontext/max/text-to-image', [Capability::TEXT_TO_IMAGE]), 'A cat');
     }

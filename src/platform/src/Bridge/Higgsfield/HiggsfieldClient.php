@@ -82,7 +82,7 @@ final class HiggsfieldClient implements ModelClientInterface
         }
 
         if ('completed' !== $status) {
-            throw new RuntimeException(\sprintf('Higgsfield request "%s" %s: "%s".', $requestId, $status, $this->extractError($data)));
+            throw new RuntimeException(\sprintf('Higgsfield request "%s" "%s": "%s".', $requestId, $status, $this->extractError($data)));
         }
 
         return new RawHttpResult($this->httpClient->request('GET', $this->extractMediaUrl($data)));
