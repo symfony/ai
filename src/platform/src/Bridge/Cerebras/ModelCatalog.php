@@ -29,6 +29,18 @@ final class ModelCatalog extends AbstractModelCatalog
         // STATIC LIST START
         // This list is generated from external metadata. Run dev/update-model-catalogs.php to refresh it.
         $defaultModels = [
+            'gemma-4-31b' => [
+                'class' => Model::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
             'gpt-oss-120b' => [
                 'class' => Model::class,
                 'capabilities' => [
