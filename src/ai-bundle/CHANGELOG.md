@@ -10,6 +10,7 @@ CHANGELOG
  * Wire `Typesense\StoreFactory` from `AiBundle`
  * Add support for `ScopingHttpClient` usage in `Cloudflare` store via `http_client` option
  * Add support for `ScopingHttpClient` usage in `SurrealDB` store via `http_client` option
+ * Register `StringToMessageBagListener` in DI to enable string-to-MessageBag upcasting by default
 
 0.10
 ----
