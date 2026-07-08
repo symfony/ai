@@ -47,16 +47,10 @@ class StopCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        if (!\function_exists('posix_kill')) {
-            $io->error('The "stop" command require the posix php extension.');
+        if (!is_dir($this->cacheDir)) {
+            $io->note('No running servers found.');
 
-            return Command::FAILURE;
-        }
-
-        if (!\defined('SIGUSR1')) {
-            $io->error('The "stop" command require the pcntl php extension.');
-
-            return Command::FAILURE;
+            return Command::SUCCESS;
         }
 
         $finder = new Finder();
@@ -64,11 +58,53 @@ class StopCommand extends Command
             ->in($this->cacheDir)
             ->name('server_*.pid');
 
-        foreach ($finder as $file) {
+        $files = iterator_to_array($finder);
+        if ([] === $files) {
+            $io->note('No running servers found.');
+
+            return Command::SUCCESS;
+        }
+
+        if ('Windows' !== \PHP_OS_FAMILY) {
+            if (!\function_exists('posix_kill')) {
+                $io->error('The "stop" command require the posix php extension.');
+
+                return Command::FAILURE;
+            }
+
+            if (!\defined('SIGUSR1')) {
+                $io->error('The "stop" command require the pcntl php extension.');
+
+                return Command::FAILURE;
+            }
+        }
+
+        $killedCount = 0;
+        foreach ($files as $file) {
             $pid = (int) file_get_contents($file->getRealPath());
-            posix_kill($pid, \SIGUSR1);
+            if ($this->stopProcess($pid)) {
+                ++$killedCount;
+            }
+            @unlink($file->getRealPath());
+        }
+
+        if ($killedCount > 0) {
+            $io->success(\sprintf('Stopped %d running server(s).', $killedCount));
+        } else {
+            $io->note('No running servers found.');
         }
 
         return Command::SUCCESS;
+    }
+
+    private function stopProcess(int $pid): bool
+    {
+        if ('Windows' === \PHP_OS_FAMILY) {
+            exec(\sprintf('taskkill /F /PID %d 2>&1', $pid), $execOutput, $resultCode);
+
+            return 0 === $resultCode;
+        }
+
+        return @posix_kill($pid, \SIGUSR1);
     }
 }

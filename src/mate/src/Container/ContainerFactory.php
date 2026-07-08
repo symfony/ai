@@ -61,6 +61,11 @@ final class ContainerFactory
         $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
         $loader->load('default.config.php');
         $container->setParameter('mate.root_dir', $this->rootDir);
+
+        $userSuffix = (getenv('USER') ?: getenv('USERNAME')) ?: 'default';
+        $userSuffix = preg_replace('/[^a-zA-Z0-9]/', '', $userSuffix);
+        $projectHash = substr(md5($this->rootDir), 0, 8);
+        $container->setParameter('mate.cache_dir', sys_get_temp_dir().'/mate/'.$userSuffix.'_'.$projectHash);
     }
 
     private function loadExtensions(ContainerBuilder $container, ComposerExtensionDiscovery $extensionDiscovery, LoggerInterface $logger): void

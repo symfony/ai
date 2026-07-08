@@ -77,6 +77,13 @@ class ClearCacheCommand extends Command
             ++$count;
         }
 
+        // Clean up empty subdirectories
+        $dirFinder = new Finder();
+        $dirFinder->directories()->in($cacheDir);
+        foreach (array_reverse(iterator_to_array($dirFinder)) as $dir) {
+            @rmdir($dir->getRealPath());
+        }
+
         if ($count > 0) {
             $io->section('Cleared Files');
             $io->table(['File', 'Size'], $fileList);
