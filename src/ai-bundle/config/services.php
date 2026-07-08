@@ -71,6 +71,8 @@ use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
+use Symfony\AI\Platform\Event\InvocationEvent;
+use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
@@ -162,6 +164,8 @@ return static function (ContainerConfigurator $container): void {
                 service('ai.platform.template_renderer_registry'),
             ])
             ->tag('kernel.event_subscriber')
+        ->set('ai.platform.string_to_message_bag_listener', StringToMessageBagListener::class)
+            ->tag('kernel.event_listener', ['event' => InvocationEvent::class])
 
         // structured output
         ->set('ai.platform.response_format_factory', ResponseFormatFactory::class)

@@ -43,6 +43,8 @@ use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Event\InvocationEvent;
+use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
@@ -8413,6 +8415,16 @@ class AiBundleTest extends TestCase
         $listenerDefinition = $container->getDefinition('ai.platform.template_renderer_listener');
         $this->assertSame(TemplateRendererListener::class, $listenerDefinition->getClass());
         $this->assertTrue($listenerDefinition->hasTag('kernel.event_subscriber'));
+
+        // Verify string to message bag listener is registered for the invocation event
+        $this->assertTrue($container->hasDefinition('ai.platform.string_to_message_bag_listener'));
+        $stringToMessageBagDefinition = $container->getDefinition('ai.platform.string_to_message_bag_listener');
+        $this->assertSame(StringToMessageBagListener::class, $stringToMessageBagDefinition->getClass());
+        $this->assertTrue($stringToMessageBagDefinition->hasTag('kernel.event_listener'));
+        $this->assertSame(
+            [['event' => InvocationEvent::class]],
+            $stringToMessageBagDefinition->getTag('kernel.event_listener'),
+        );
     }
 
     public function testTraceablePlatformServiceNamingIncludesPlatformType()
