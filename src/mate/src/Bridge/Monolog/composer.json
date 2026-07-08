@@ -31,7 +31,7 @@
         "symfony/ai-mate": "^0.10"
     },
     "require-dev": {
-        "helgesverre/toon": "^3.1",
+        "helgesverre/toon": "^3.2.1",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
