@@ -151,6 +151,20 @@ Configure your location in your environment file:
     # Avoid: Global location has limited model availability
     # GOOGLE_CLOUD_LOCATION=global
 
+Regional and Data-Residency Endpoints
+-------------------------------------
+
+The API host is derived from the ``location`` passed to the factory:
+
+* ``null`` or ``global`` uses the global endpoint ``aiplatform.googleapis.com``.
+* A region such as ``europe-west1`` uses the matching regional endpoint
+  ``europe-west1-aiplatform.googleapis.com``.
+* The multi-region data-residency (jurisdictional) values ``eu`` and ``us`` use
+  ``aiplatform.eu.rep.googleapis.com`` and ``aiplatform.us.rep.googleapis.com``
+  respectively.
+
+See `Vertex AI locations`_ and `Vertex AI data residency`_ for the list of supported values.
+
 Token Usage Tracking
 --------------------
 
@@ -194,3 +208,5 @@ See the ``examples/vertexai/`` directory for complete working examples:
 .. _Setting up authentication for Vertex AI: https://cloud.google.com/vertex-ai/docs/authentication
 .. _Google Cloud Console for Vertex AI: https://console.cloud.google.com/vertex-ai
 .. _Vertex AI Studio (API keys): https://console.cloud.google.com/vertex-ai/studio/settings/api-keys
+.. _Vertex AI locations: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/locations
+.. _Vertex AI data residency: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/data-residency

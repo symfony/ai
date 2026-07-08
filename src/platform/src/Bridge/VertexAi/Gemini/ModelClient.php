@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 
+use Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -26,6 +27,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class ModelClient implements ModelClientInterface
 {
     use JsonBodyEncodingTrait;
+    use RegionAwareTrait;
 
     private readonly EventSourceHttpClient $httpClient;
 
@@ -51,9 +53,12 @@ final class ModelClient implements ModelClientInterface
         $isStream = $options['stream'] ?? false;
         $method = $isStream ? 'streamGenerateContent' : 'generateContent';
 
+        $host = $this->resolveHost($this->location);
+
         if (null !== $this->location && null !== $this->projectId) {
             $url = \sprintf(
-                'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
+                'https://%s/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
+                $host,
                 $this->projectId,
                 $this->location,
                 $model->getName(),
@@ -61,7 +66,8 @@ final class ModelClient implements ModelClientInterface
             );
         } else {
             $url = \sprintf(
-                'https://aiplatform.googleapis.com/v1/publishers/google/models/%s:%s',
+                'https://%s/v1/publishers/google/models/%s:%s',
+                $host,
                 $model->getName(),
                 $method,
             );

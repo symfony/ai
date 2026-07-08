@@ -49,6 +49,51 @@ final class ModelClientTest extends TestCase
         $this->assertSame($expectedResponse, $data);
     }
 
+    public function testItUsesTheRegionalEndpointForARegionalLocation()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://europe-west1-aiplatform.googleapis.com/v1/projects/test/locations/europe-west1/publishers/google/models/gemini-2.0-flash:generateContent',
+                $url,
+            );
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'europe-west1', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
+    public function testItUsesTheResidencyEndpointForAJurisdictionalLocation()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://aiplatform.eu.rep.googleapis.com/v1/projects/test/locations/eu/publishers/google/models/gemini-2.0-flash:generateContent',
+                $url,
+            );
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'eu', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
+    public function testItUsesTheGlobalHostWhenNoLocationIsProvided()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertStringStartsWith(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash:generateContent',
+                $url,
+            );
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, apiKey: 'test-key');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
     public function testRequestWithStreamAsksForSseFormat()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {

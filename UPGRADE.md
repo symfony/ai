@@ -76,6 +76,19 @@ Platform
  * The Albert factory no longer throws when the base URL ends with a trailing slash; the slash is
    stripped instead.
 
+ * The VertexAI bridge now derives the API host from the configured `location` instead of always
+   using `aiplatform.googleapis.com`. `null` and `global` keep the existing global host, but a
+   regional location (e.g. `europe-west1`) now targets `europe-west1-aiplatform.googleapis.com`,
+   and the data-residency values `eu`/`us` target `aiplatform.eu.rep.googleapis.com` /
+   `aiplatform.us.rep.googleapis.com`. Requests that previously reached the global endpoint while
+   configured with a regional location will now hit the regional endpoint. If you relied on the
+   global host for a regional location, pass `global` (or `null`) explicitly:
+
+   ```diff
+   -Factory::createPlatform('europe-west1', 'my-project'); // used aiplatform.googleapis.com
+   +Factory::createPlatform('global', 'my-project'); // keep the global host
+   ```
+
 Store
 -----
 
