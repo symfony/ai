@@ -40,8 +40,17 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'claude-sonnet-4-6' => ['claude-sonnet-4-6', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'claude-opus-4-6' => ['claude-opus-4-6', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'claude-opus-4-7' => ['claude-opus-4-7', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-opus-4-8' => ['claude-opus-4-8', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-sonnet-5' => ['claude-sonnet-5', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'claude-fable-5' => ['claude-fable-5', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::THINKING, Capability::TOOL_CALLING]];
+        yield 'claude-opus-4-1-20250805' => ['claude-opus-4-1-20250805', Claude::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::THINKING, Capability::TOOL_CALLING]];
+        yield 'llama-3.1-8b-instruct' => ['llama-3.1-8b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
+        yield 'llama-3.1-70b-instruct' => ['llama-3.1-70b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
         yield 'llama-3.2-1b-instruct' => ['llama-3.2-1b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
         yield 'llama-3.2-3b-instruct' => ['llama-3.2-3b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
+        yield 'llama-3.3-70b-instruct' => ['llama-3.3-70b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
+        yield 'llama4-maverick-17b-instruct' => ['llama4-maverick-17b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
+        yield 'llama4-scout-17b-instruct' => ['llama4-scout-17b-instruct', Llama::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface
