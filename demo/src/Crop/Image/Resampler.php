@@ -65,7 +65,9 @@ final readonly class Resampler
 
     private function encode(\GdImage $image, string $mimeType): string
     {
-        ob_start();
+        if (false === ob_start()) {
+            throw new \RuntimeException('Failed to start output buffering.');
+        }
 
         $ok = match ($mimeType) {
             'image/png' => imagepng($image),
@@ -78,7 +80,7 @@ final readonly class Resampler
 
         $bytes = ob_get_clean();
 
-        if (false === $ok || false === $bytes) {
+        if (false === $ok) {
             throw new \RuntimeException('Failed to encode the image.');
         }
 
