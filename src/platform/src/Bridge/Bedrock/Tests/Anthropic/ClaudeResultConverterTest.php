@@ -19,7 +19,9 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResultConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 
 /**
@@ -86,7 +88,7 @@ final class ClaudeResultConverterTest extends TestCase
         $this->assertSame(['location' => 'Paris'], $toolCalls[0]->getArguments());
     }
 
-    #[TestDox('Converts response with multiple tool calls to ToolCallResult')]
+    #[TestDox('Converts response with multiple tool calls to MultiPartResult with one ToolCallResult per call')]
     public function testConvertMultipleToolCalls()
     {
         $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
@@ -112,20 +114,26 @@ final class ClaudeResultConverterTest extends TestCase
         $converter = new ClaudeResultConverter();
         $result = $converter->convert($rawResult);
 
-        $this->assertInstanceOf(ToolCallResult::class, $result);
-        $toolCalls = $result->getContent();
-        $this->assertCount(2, $toolCalls);
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
 
+        $this->assertInstanceOf(ToolCallResult::class, $parts[0]);
+        $toolCalls = $parts[0]->getContent();
+        $this->assertCount(1, $toolCalls);
         $this->assertSame('toolu_01', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
         $this->assertSame(['location' => 'Paris'], $toolCalls[0]->getArguments());
 
-        $this->assertSame('toolu_02', $toolCalls[1]->getId());
-        $this->assertSame('get_time', $toolCalls[1]->getName());
-        $this->assertSame(['timezone' => 'UTC'], $toolCalls[1]->getArguments());
+        $this->assertInstanceOf(ToolCallResult::class, $parts[1]);
+        $toolCalls = $parts[1]->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('toolu_02', $toolCalls[0]->getId());
+        $this->assertSame('get_time', $toolCalls[0]->getName());
+        $this->assertSame(['timezone' => 'UTC'], $toolCalls[0]->getArguments());
     }
 
-    #[TestDox('Prioritizes tool calls over text in mixed content')]
+    #[TestDox('Converts mixed text and tool use content to MultiPartResult')]
     public function testConvertMixedContentWithToolUse()
     {
         $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
@@ -149,9 +157,15 @@ final class ClaudeResultConverterTest extends TestCase
         $converter = new ClaudeResultConverter();
         $result = $converter->convert($rawResult);
 
-        // When tool calls are present, should return ToolCallResult regardless of text
-        $this->assertInstanceOf(ToolCallResult::class, $result);
-        $toolCalls = $result->getContent();
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(TextResult::class, $parts[0]);
+        $this->assertSame('I will get the weather for you.', $parts[0]->getContent());
+
+        $this->assertInstanceOf(ToolCallResult::class, $parts[1]);
+        $toolCalls = $parts[1]->getContent();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('toolu_01', $toolCalls[0]->getId());
     }
@@ -203,10 +217,109 @@ final class ClaudeResultConverterTest extends TestCase
         $rawResult = new RawBedrockResult($invokeResponse);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Response content does not contain any text or type.');
+        $this->expectExceptionMessage('Response content does not contain any supported content.');
 
         $converter = new ClaudeResultConverter();
         $converter->convert($rawResult);
+    }
+
+    #[TestDox('Converts thinking-led response to MultiPartResult with thinking and text parts')]
+    public function testConvertThinkingLedResponse()
+    {
+        $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
+            'body' => json_encode([
+                'content' => [
+                    [
+                        'type' => 'thinking',
+                        'thinking' => '',
+                        'signature' => 'abc',
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => '{"result": 1}',
+                    ],
+                ],
+            ]),
+        ]);
+        $rawResult = new RawBedrockResult($invokeResponse);
+
+        $converter = new ClaudeResultConverter();
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(ThinkingResult::class, $parts[0]);
+        $this->assertSame('', $parts[0]->getContent());
+        $this->assertSame('abc', $parts[0]->getSignature());
+
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('{"result": 1}', $parts[1]->getContent());
+
+        // Only text parts are flattened; the empty thinking content must not leak into the text
+        $this->assertSame('{"result": 1}', $result->asText());
+    }
+
+    #[TestDox('Converts thinking-led tool use response to MultiPartResult with thinking and tool call parts')]
+    public function testConvertThinkingLedToolUseResponse()
+    {
+        $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
+            'body' => json_encode([
+                'content' => [
+                    [
+                        'type' => 'thinking',
+                        'thinking' => '',
+                        'signature' => 'abc',
+                    ],
+                    [
+                        'type' => 'tool_use',
+                        'id' => 'toolu_01',
+                        'name' => 'get_weather',
+                        'input' => ['location' => 'Paris'],
+                    ],
+                ],
+            ]),
+        ]);
+        $rawResult = new RawBedrockResult($invokeResponse);
+
+        $converter = new ClaudeResultConverter();
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(ThinkingResult::class, $parts[0]);
+
+        $this->assertInstanceOf(ToolCallResult::class, $parts[1]);
+        $toolCalls = $parts[1]->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('toolu_01', $toolCalls[0]->getId());
+    }
+
+    #[TestDox('Converts thinking-only response to ThinkingResult')]
+    public function testConvertThinkingOnlyResponse()
+    {
+        $invokeResponse = ResultMockFactory::create(InvokeModelResponse::class, [
+            'body' => json_encode([
+                'content' => [
+                    [
+                        'type' => 'thinking',
+                        'thinking' => '',
+                        'signature' => 'abc',
+                    ],
+                ],
+            ]),
+        ]);
+        $rawResult = new RawBedrockResult($invokeResponse);
+
+        $converter = new ClaudeResultConverter();
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(ThinkingResult::class, $result);
+        $this->assertSame('', $result->getContent());
+        $this->assertSame('abc', $result->getSignature());
     }
 
     #[TestDox('Converts text content successfully')]
