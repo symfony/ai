@@ -34,9 +34,9 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'INSERT INTO embeddings_table (id, metadata, embedding)
+        $expectedQuery = 'INSERT INTO "embeddings_table" (id, metadata, "embedding")
                 VALUES (:id, :metadata, :vector)
-                ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata, embedding = EXCLUDED.embedding';
+                ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata, "embedding" = EXCLUDED."embedding"';
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -121,8 +121,8 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
-             FROM embeddings_table
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> :embedding) AS score
+             FROM "embeddings_table"
 
              ORDER BY score ASC
              LIMIT 5';
@@ -173,8 +173,8 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding', Distance::Cosine);
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <=> :embedding) AS score
-             FROM embeddings_table
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <=> :embedding) AS score
+             FROM "embeddings_table"
 
              ORDER BY score ASC
              LIMIT 5';
@@ -225,9 +225,9 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
-             FROM embeddings_table
-             WHERE (embedding <-> :embedding) <= :maxScore
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> :embedding) AS score
+             FROM "embeddings_table"
+             WHERE ("embedding" <-> :embedding) <= :maxScore
              ORDER BY score ASC
              LIMIT 5';
 
@@ -275,9 +275,9 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding', Distance::Cosine);
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <=> :embedding) AS score
-             FROM embeddings_table
-             WHERE (embedding <=> :embedding) <= :maxScore
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <=> :embedding) AS score
+             FROM "embeddings_table"
+             WHERE ("embedding" <=> :embedding) <= :maxScore
              ORDER BY score ASC
              LIMIT 5';
 
@@ -325,8 +325,8 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
-             FROM embeddings_table
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> :embedding) AS score
+             FROM "embeddings_table"
 
              ORDER BY score ASC
              LIMIT 10';
@@ -364,8 +364,8 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'custom_vector');
 
-        $expectedQuery = 'SELECT id, custom_vector AS embedding, metadata, (custom_vector <-> :embedding) AS score
-             FROM embeddings_table
+        $expectedQuery = 'SELECT id, "custom_vector" AS embedding, metadata, ("custom_vector" <-> :embedding) AS score
+             FROM "embeddings_table"
 
              ORDER BY score ASC
              LIMIT 5';
@@ -407,10 +407,10 @@ final class StoreTest extends TestCase
                 if (1 === $callCount) {
                     $this->assertSame('CREATE EXTENSION IF NOT EXISTS vector', $sql);
                 } elseif (2 === $callCount) {
-                    $this->assertStringContainsString('CREATE TABLE IF NOT EXISTS embeddings_table', $sql);
-                    $this->assertStringContainsString('embedding vector(1536) NOT NULL', $sql);
+                    $this->assertStringContainsString('CREATE TABLE IF NOT EXISTS "embeddings_table"', $sql);
+                    $this->assertStringContainsString('"embedding" vector(1536) NOT NULL', $sql);
                 } else {
-                    $this->assertStringContainsString('CREATE INDEX IF NOT EXISTS embeddings_table_embedding_idx', $sql);
+                    $this->assertStringContainsString('CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx"', $sql);
                 }
 
                 return 0;
@@ -428,7 +428,7 @@ final class StoreTest extends TestCase
         $pdo->expects($this->once())
             ->method('exec')
             ->willReturnCallback(function (string $sql): int {
-                $this->assertSame('DROP TABLE IF EXISTS embeddings_table', $sql);
+                $this->assertSame('DROP TABLE IF EXISTS "embeddings_table"', $sql);
 
                 return 0;
             });
@@ -450,7 +450,7 @@ final class StoreTest extends TestCase
                 ++$callCount;
 
                 if (2 === $callCount) {
-                    $this->assertStringContainsString('embedding vector(768) NOT NULL', $sql);
+                    $this->assertStringContainsString('"embedding" vector(768) NOT NULL', $sql);
                 }
 
                 return 0;
@@ -523,8 +523,8 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
-             FROM embeddings_table
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> :embedding) AS score
+             FROM "embeddings_table"
              WHERE metadata->>\'category\' = \'products\'
              ORDER BY score ASC
              LIMIT 5';
@@ -562,9 +562,9 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
-             FROM embeddings_table
-             WHERE (embedding <-> :embedding) <= :maxScore AND (metadata->>\'active\' = \'true\')
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> :embedding) AS score
+             FROM "embeddings_table"
+             WHERE ("embedding" <-> :embedding) <= :maxScore AND (metadata->>\'active\' = \'true\')
              ORDER BY score ASC
              LIMIT 5';
 
@@ -615,8 +615,8 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'SELECT id, embedding AS embedding, metadata, (embedding <-> :embedding) AS score
-             FROM embeddings_table
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> :embedding) AS score
+             FROM "embeddings_table"
              WHERE metadata->>\'crawlId\' = :crawlId AND id != :currentId
              ORDER BY score ASC
              LIMIT 5';
@@ -685,7 +685,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'DELETE FROM embeddings_table WHERE id IN (?)';
+        $expectedQuery = 'DELETE FROM "embeddings_table" WHERE id IN (?)';
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -711,7 +711,7 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = 'DELETE FROM embeddings_table WHERE id IN (?,?,?)';
+        $expectedQuery = 'DELETE FROM "embeddings_table" WHERE id IN (?,?,?)';
 
         $pdo->expects($this->once())
             ->method('prepare')
@@ -771,9 +771,9 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = "SELECT id, embedding AS embedding, metadata,
+        $expectedQuery = "SELECT id, \"embedding\" AS embedding, metadata,
                    ts_rank(to_tsvector('english', metadata->>'_text'), plainto_tsquery('english', :search_text_0)) AS score
-            FROM embeddings_table
+            FROM \"embeddings_table\"
             WHERE to_tsvector('english', metadata->>'_text') @@ (plainto_tsquery('english', :search_text_0))
             ORDER BY score DESC
             LIMIT 5";
@@ -811,10 +811,10 @@ final class StoreTest extends TestCase
 
         $store = new Store($pdo, 'embeddings_table', 'embedding');
 
-        $expectedQuery = "SELECT id, embedding AS embedding, metadata,
-                   ((:semantic_ratio * (1 - (embedding <-> :embedding))) +
+        $expectedQuery = "SELECT id, \"embedding\" AS embedding, metadata,
+                   ((:semantic_ratio * (1 - (\"embedding\" <-> :embedding))) +
                     (:keyword_ratio * ts_rank(to_tsvector('english', metadata->>'_text'), (plainto_tsquery('english', :search_text_0))))) AS score
-            FROM embeddings_table
+            FROM \"embeddings_table\"
             WHERE to_tsvector('english', metadata->>'_text') @@ (plainto_tsquery('english', :search_text_0))
             ORDER BY score DESC
             LIMIT 5";
