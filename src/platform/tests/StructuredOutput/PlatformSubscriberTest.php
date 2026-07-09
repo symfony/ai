@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
@@ -377,6 +378,21 @@ final class PlatformSubscriberTest extends TestCase
         $processor->processInput($event);
 
         $this->assertSame(['response_format' => 'invalid-class-name'], $event->getOptions());
+    }
+
+    public function testProcessInputIgnoresNonObjectInvalidClass()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory());
+
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $event = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => 'App\\Dto\\NonExistentClass',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The response format class "App\\Dto\\NonExistentClass" does not exist.');
+
+        $processor->processInput($event);
     }
 
     public function testProcessInputIgnoresNonStructuredOutputResponseFormats()

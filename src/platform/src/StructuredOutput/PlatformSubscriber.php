@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\StructuredOutput;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -64,9 +65,15 @@ final class PlatformSubscriber implements EventSubscriberInterface
         if (\is_object($responseFormat)) {
             $this->objectToPopulate = $responseFormat;
             $className = $responseFormat::class;
-        } elseif (\is_string($responseFormat) && class_exists($responseFormat)) {
-            $this->objectToPopulate = null;
-            $className = $responseFormat;
+        } elseif (\is_string($responseFormat)) {
+            if (class_exists($responseFormat)) {
+                $this->objectToPopulate = null;
+                $className = $responseFormat;
+            } elseif (str_contains($responseFormat, '\\')) {
+                throw new InvalidArgumentException(\sprintf('The response format class "%s" does not exist.', $responseFormat));
+            } else {
+                return;
+            }
         } else {
             return;
         }
