@@ -36,6 +36,8 @@ vendor/bin/phpstan analyse
 # Code style fixes from monorepo root
 ```
 
+PHPStan runs at level 6 with custom extension rules for Symfony AI components. The bundle follows the parent monorepo's PHP CS Fixer configuration.
+
 ## Configuration Architecture
 
 ### Platform Configuration
