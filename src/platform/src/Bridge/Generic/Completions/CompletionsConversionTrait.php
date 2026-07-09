@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -68,6 +69,7 @@ trait CompletionsConversionTrait
             // It is null on every non-final chunk, and a trailing usage-only chunk has choices: [].
             if (null !== ($data['choices'][0]['finish_reason'] ?? null)) {
                 $sawFinishReason = true;
+                yield new MetadataDelta('finish_reason', $data['choices'][0]['finish_reason']);
             }
 
             if (isset($data['usage'])) {

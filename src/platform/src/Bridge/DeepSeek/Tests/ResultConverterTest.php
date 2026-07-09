@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -251,11 +252,14 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(2, $chunks);
+        $this->assertCount(3, $chunks);
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertSame('Hello, ', $chunks[0]->getText());
         $this->assertInstanceOf(TextDelta::class, $chunks[1]);
         $this->assertSame('world!', $chunks[1]->getText());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
+        $this->assertSame('finish_reason', $chunks[2]->getKey());
+        $this->assertSame('stop', $chunks[2]->getValue());
     }
 
     public function testThrowsServerExceptionOnServerErrorStatusBeforeStreaming()
