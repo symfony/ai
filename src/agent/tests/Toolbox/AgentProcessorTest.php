@@ -166,6 +166,42 @@ class AgentProcessorTest extends TestCase
         $this->assertSame('Final response', $output->getResult()->getContent());
     }
 
+    public function testProcessOutputWithMultiPartResultContainingSeveralToolCallParts()
+    {
+        $toolCall1 = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolCall2 = new ToolCall('id2', 'tool2', ['arg2' => 'value2']);
+
+        $executed = [];
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(static function (ToolCall $toolCall) use (&$executed) {
+                $executed[] = $toolCall->getName();
+
+                return new ToolResult($toolCall, 'Test response');
+            });
+
+        $messageBag = new MessageBag();
+        $result = new MultiPartResult([
+            new TextResult('Some text before tool calls'),
+            new ToolCallResult([$toolCall1]),
+            new ToolCallResult([$toolCall2]),
+        ]);
+
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('Final response'));
+
+        $processor = new AgentProcessor($toolbox);
+        $processor->setAgent($agent);
+
+        $output = new Output('gpt-4', $result, $messageBag);
+
+        $processor->processOutput($output);
+
+        $this->assertSame(['tool1', 'tool2'], $executed);
+    }
+
     public function testProcessOutputWithMultiPartResultNotContainingToolCall()
     {
         $toolbox = $this->createMock(ToolboxInterface::class);
