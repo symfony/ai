@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -162,6 +163,8 @@ class ResultConverter implements ResultConverterInterface
         $currentThinking = null;
         $currentThinkingSignature = null;
         $inMessage = false;
+        $stopReason = null;
+        $outputTokens = null;
 
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
@@ -198,10 +201,15 @@ class ResultConverter implements ResultConverterInterface
                 yield $this->getTokenUsageExtractor()->extractFromArray($usage);
             }
 
-            if ('message_delta' === $type && isset($data['usage'])) {
-                yield $this->getTokenUsageExtractor()->extractFromArray([
-                    'output_tokens' => $data['usage']['output_tokens'] ?? 0,
-                ]);
+            if ('message_delta' === $type) {
+                $stopReason = $data['delta']['stop_reason'] ?? $stopReason;
+
+                if (isset($data['usage'])) {
+                    $outputTokens = $data['usage']['output_tokens'] ?? $outputTokens;
+                    yield $this->getTokenUsageExtractor()->extractFromArray([
+                        'output_tokens' => $outputTokens ?? 0,
+                    ]);
+                }
             }
 
             // Handle text content deltas
@@ -297,6 +305,15 @@ class ResultConverter implements ResultConverterInterface
             // Handle message stop - yield tool calls if any were collected
             if ('message_stop' === $type) {
                 $inMessage = false;
+
+                if ('max_tokens' === $stopReason) {
+                    $message = 'Anthropic truncated the response after reaching the output token limit. Raise the output token budget (max_tokens) or reduce the request scope.';
+                    if (null !== $outputTokens) {
+                        $message = \sprintf('Anthropic truncated the response after reaching the maximum of %d output tokens. Raise the output token budget (max_tokens) or reduce the request scope.', $outputTokens);
+                    }
+
+                    throw new MaxOutputTokensException($message);
+                }
 
                 if ([] !== $toolCalls) {
                     yield new ToolCallComplete($toolCalls);

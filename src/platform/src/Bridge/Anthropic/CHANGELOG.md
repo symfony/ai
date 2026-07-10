@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Throw `MaxOutputTokensException` when a stream stops at the output token limit
  * Add a `baseUrl` argument to `ModelClient` and the factory to target Anthropic-compatible endpoints
  * Extract prompt-caching injection into a reusable `PromptCachingTrait` so alternative model clients can share it
  * Throw `ServerException` on server errors (HTTP 5xx) and on `overloaded_error` / `api_error` events, including mid-stream, instead of a generic `RuntimeException`

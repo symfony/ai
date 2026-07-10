@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
@@ -307,6 +308,87 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Anthropic stream ended before message_stop.');
 
         iterator_to_array($streamResult->getContent());
+    }
+
+    public function testStreamingThrowsWhenTruncatedAtMaxTokens()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $raw = new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'write_file']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"path":"foo.md","content":"partial']],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'max_tokens'], 'usage' => ['output_tokens' => 16000]],
+            ['type' => 'message_stop'],
+        ], $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('reaching the maximum of 16000 output tokens');
+
+        iterator_to_array($streamResult->getContent());
+    }
+
+    public function testStreamingThrowsBeforeYieldingToolCallWhenTruncatedAtMaxTokens()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $raw = new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'write_file']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"path":"foo.md"}']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'max_tokens'], 'usage' => ['output_tokens' => 16000]],
+            ['type' => 'message_stop'],
+        ], $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = [];
+        $thrown = false;
+
+        try {
+            foreach ($streamResult->getContent() as $chunk) {
+                $chunks[] = $chunk;
+            }
+        } catch (MaxOutputTokensException $e) {
+            $thrown = true;
+            $this->assertStringContainsString('reaching the maximum of 16000 output tokens', $e->getMessage());
+        }
+
+        $this->assertTrue($thrown, 'Expected a max output tokens exception.');
+        $this->assertSame([], array_values(array_filter($chunks, static fn ($chunk): bool => $chunk instanceof ToolCallComplete)));
+    }
+
+    public function testStreamingDoesNotThrowOnCleanStopReason()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $raw = new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'text', 'text' => '']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'Done.']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn'], 'usage' => ['output_tokens' => 5]],
+            ['type' => 'message_stop'],
+        ], $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $deltas = iterator_to_array($streamResult->getContent());
+
+        $textDeltas = array_filter($deltas, static fn ($d): bool => $d instanceof TextDelta);
+        $this->assertSame('Done.', array_values($textDeltas)[0]->getText());
     }
 
     public function testStreamingTextAndToolCallsYieldsBoth()
