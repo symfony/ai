@@ -60,6 +60,20 @@ Static analysis with PHPStan (component-specific):
 cd src/platform && vendor/bin/phpstan analyse
 ```
 
+### Documentation Validation
+After adding or changing any RST files in `docs/`, always run the `doctor-rst` validator from the repository root:
+```bash
+./doctor-rst
+```
+This uses Docker (`oskarstark/doctor-rst`) to validate RST documentation files and catch formatting issues.
+
+### Cookbook Website Artifacts
+The RST files in `docs/cookbook/` are the single source of truth for the cookbook on ai.symfony.com. After adding, removing, or changing any `docs/cookbook/*.rst` file — including the `.. card:` front matter or the `index.rst` toctree order — regenerate the committed website artifacts:
+```bash
+cd ai.symfony.com && php bin/console app:cookbook:build
+```
+This rebuilds `ai.symfony.com/config/cookbook.json` and the HTML fragments in `ai.symfony.com/templates/cookbook/content/` from the RST. Always commit the regenerated artifacts together with the RST changes: production (Upsun) ships only the `ai.symfony.com/` directory and cannot run the generator, so stale artifacts would ship outdated cookbook content.
+
 ### Development Linking
 Use the `./link` script to symlink local development versions:
 ```bash
@@ -124,17 +138,52 @@ Each component uses:
 - NEVER mention Claude as co-author in commits
 - Avoid using the `empty()` function; prefer explicit checks like `[] === $array`, `'' === $string`, or `null === $value`
 
+## Documentation vs Cookbook
+
+The content under `docs/` splits into distinct kinds, and confusing them is the most
+common authoring mistake. The guiding axis is **orientation**: reference follows the
+structure of the *software*; a cookbook recipe follows the structure of the *user's
+problem*.
+
+- **Reference / explanation (the component docs)** — describes *what something is*: its
+  options, its API, the why behind a design. Organized around the shape of the code.
+  The reader jumps in to look up a fact, not to read front-to-back. Truth and
+  completeness matter most.
+- **Cookbook (`docs/cookbook/`)** — answers *how do I achieve X*. Organized around a
+  goal the reader already has, read top-to-bottom toward a concrete working outcome.
+  Assumes competence: it solves a real problem, it does not teach the basics.
+- **Getting started** — onboarding / learning-oriented walkthroughs belong on the
+  **docs index page of the respective component**, not in the cookbook. The cookbook is
+  for readers who already know the basics.
+
+When deciding whether a piece belongs in the cookbook, apply these tests:
+
+1. Does it read as a journey to a concrete outcome, or is it something you'd jump into
+   the middle of? Journey → cookbook. Lookup → component docs.
+2. If you strip the narrative, what's left? If it collapses into "here are the options
+   for feature X", it is reference wearing a recipe costume — move it to the docs.
+3. Does it compose two or more components/features into a realistic feature
+   (e.g. "add memory to a chatbot", "orchestrate multiple agents")? Composition belongs
+   in the cookbook; a single-feature walkthrough is usually a doc.
+4. A strong recipe should ideally map to something runnable under `examples/`. If there
+   is no end artifact you could run to see it work, it is probably explanation/reference.
+
 ## Version Documentation
 
 ### UPGRADE.md
 - Document breaking changes in the root `UPGRADE.md` file
 - Format: Use version headers like `UPGRADE FROM 0.X to 0.Y` with sections per component
 - Include code examples showing before/after changes with diff syntax
+- Every `UPGRADE.md` entry must be paired with the `BC Break` PR label, and adding the `BC Break` label requires a matching `UPGRADE.md` entry in the upcoming (unreleased) section
 
 ### CHANGELOG.md
 - Each component has its own `CHANGELOG.md` in its root directory
 - Add entries for new features, and deprecations under the appropriate version heading
 - Format entries as bullet points starting with "Add", "Fix", "Deprecate", etc.
+- Bug-fix-only PRs (`Bug fix? = yes`, `New feature? = no`) must not modify any `CHANGELOG.md`/`UPGRADE.md` — unless the fix is itself a BC break, in which case add the `BC Break` label and document it in `UPGRADE.md`
+- Only add entries to the upcoming (unreleased) version section; sections already released (version `<=` the latest git tag) are frozen
+
+These conventions are enforced on every PR by `.github/workflows/changelog.yaml`.
 
 ### Pull Requests
 - Always use the PR template from `.github/PULL_REQUEST_TEMPLATE.md`
@@ -145,3 +194,4 @@ Each component uses:
   - Issues: Fix #... (prefix each issue number with "Fix #")
   - License: MIT
 - Provide a clear description of the changes below the table
+
