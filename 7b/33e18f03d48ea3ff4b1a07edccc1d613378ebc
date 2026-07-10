@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by karpilin at 2026-07-09T10:22:34Z
+
+> Good catch, thanks @karpilin - I think #2289 can help here already with the other glitch, right?
+>
+> (just one minor comment, we can merge after that)
+
+Thanks @chr-hertel! Yes, exactly - #2289 fixes the glitch that made me aggregate the parallel tool calls into a single ToolCallResult here. Since `MultiPartResult::asToolCallResult()` flattens both shapes, this PR is safe to merge in either order relative to #2289.
+
+Once #2289 is in, I'm happy to do a small follow-up (update this, or new PR) aligning this converter with Bridge\Anthropic (one ToolCallResult per tool_use block), so the two Claude converters stay in sync.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-10T08:30:28Z
+
+Thanks for the confirmation @karpilin - merged in #2289, please update here - thanks already :)
+
+---------------------------------------------------------------------------
+
+by karpilin at 2026-07-10T10:02:59Z
+
+> Thanks for the confirmation @karpilin - merged in #2289, please update here - thanks already :)
+
+@chr-hertel All done. Let me know if it needs further corrections.
