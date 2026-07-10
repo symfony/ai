@@ -15,8 +15,11 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -32,7 +35,7 @@ final class ClaudeResultConverter implements ResultConverterInterface
         return $model instanceof Claude;
     }
 
-    public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): ToolCallResult|TextResult
+    public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): ResultInterface
     {
         $data = $result->getData();
 
@@ -40,21 +43,28 @@ final class ClaudeResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
-        if (!isset($data['content'][0]['text']) && !isset($data['content'][0]['type'])) {
-            throw new RuntimeException('Response content does not contain any text or type.');
-        }
-
-        $toolCalls = [];
+        $results = [];
         foreach ($data['content'] as $content) {
-            if ('tool_use' === $content['type']) {
-                $toolCalls[] = new ToolCall($content['id'], $content['name'], $content['input']);
+            $type = $content['type'] ?? null;
+
+            if ('tool_use' === $type) {
+                $results[] = new ToolCallResult([new ToolCall($content['id'], $content['name'], $content['input'])]);
+            } elseif ('text' === $type) {
+                $results[] = new TextResult($content['text']);
+            } elseif ('thinking' === $type) {
+                $results[] = new ThinkingResult($content['thinking'], $content['signature'] ?? null);
             }
         }
-        if ([] !== $toolCalls) {
-            return new ToolCallResult($toolCalls);
+
+        if ([] === $results) {
+            throw new RuntimeException('Response content does not contain any supported content.');
         }
 
-        return new TextResult($data['content'][0]['text']);
+        if (1 === \count($results)) {
+            return $results[0];
+        }
+
+        return new MultiPartResult($results);
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
