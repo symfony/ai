@@ -9,22 +9,22 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\McpBundle\Tests\Controller;
+namespace Symfony\AI\McpBundle\Tests\Http;
 
 use Mcp\Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 
-class McpControllerTest extends TestCase
+class MiddlewareFactoryTest extends TestCase
 {
     public function testKeepsSecureDefaultsWhenAllowedHostsIsUnset()
     {
-        $this->assertNull($this->resolveMiddleware(null));
+        $this->assertNull((new MiddlewareFactory(null))->create());
     }
 
     public function testRestrictsDnsRebindingProtectionToConfiguredHosts()
     {
-        $middleware = $this->resolveMiddleware(['example.com', 'mcp.example.com']);
+        $middleware = (new MiddlewareFactory(['example.com', 'mcp.example.com']))->create();
 
         $this->assertIsArray($middleware);
 
@@ -44,7 +44,7 @@ class McpControllerTest extends TestCase
 
     public function testRemovesDnsRebindingProtectionWhenAllowedHostsIsFalse()
     {
-        $middleware = $this->resolveMiddleware(false);
+        $middleware = (new MiddlewareFactory(false))->create();
 
         $this->assertIsArray($middleware);
         $this->assertNotSame([], $middleware);
@@ -52,19 +52,5 @@ class McpControllerTest extends TestCase
         foreach ($middleware as $entry) {
             $this->assertNotInstanceOf(DnsRebindingProtectionMiddleware::class, $entry);
         }
-    }
-
-    /**
-     * @param list<string>|false|null $allowedHosts
-     *
-     * @return list<object>|null
-     */
-    private function resolveMiddleware(array|false|null $allowedHosts): ?array
-    {
-        $controller = (new \ReflectionClass(McpController::class))->newInstanceWithoutConstructor();
-
-        (new \ReflectionProperty(McpController::class, 'allowedHosts'))->setValue($controller, $allowedHosts);
-
-        return (new \ReflectionMethod(McpController::class, 'resolveMiddleware'))->invoke($controller);
     }
 }

@@ -355,9 +355,9 @@ class McpBundleTest extends TestCase
             ],
         ]);
 
-        $controllerDefinition = $container->getDefinition('mcp.server.controller');
-        $arguments = $controllerDefinition->getArguments();
-        $this->assertNull($arguments[6]); // No allowed hosts configured: keep the SDK default (localhost only)
+        $factoryDefinition = $container->getDefinition('mcp.middleware_factory');
+        $arguments = $factoryDefinition->getArguments();
+        $this->assertNull($arguments[0]); // No allowed hosts configured: keep the SDK default (localhost only)
     }
 
     public function testDnsRebindingProtectionWithAllowedHosts()
@@ -373,9 +373,9 @@ class McpBundleTest extends TestCase
             ],
         ]);
 
-        $controllerDefinition = $container->getDefinition('mcp.server.controller');
-        $arguments = $controllerDefinition->getArguments();
-        $this->assertSame(['example.com', 'mcp.example.com'], $arguments[6]);
+        $factoryDefinition = $container->getDefinition('mcp.middleware_factory');
+        $arguments = $factoryDefinition->getArguments();
+        $this->assertSame(['example.com', 'mcp.example.com'], $arguments[0]);
     }
 
     public function testDnsRebindingProtectionDisabled()
@@ -391,9 +391,9 @@ class McpBundleTest extends TestCase
             ],
         ]);
 
-        $controllerDefinition = $container->getDefinition('mcp.server.controller');
-        $arguments = $controllerDefinition->getArguments();
-        $this->assertFalse($arguments[6]);
+        $factoryDefinition = $container->getDefinition('mcp.middleware_factory');
+        $arguments = $factoryDefinition->getArguments();
+        $this->assertFalse($arguments[0]);
     }
 
     public function testSessionStoreFileConfiguration()
