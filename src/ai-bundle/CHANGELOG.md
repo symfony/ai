@@ -11,6 +11,7 @@ CHANGELOG
  * Add support for `ScopingHttpClient` usage in `Cloudflare` store via `http_client` option
  * Add support for `ScopingHttpClient` usage in `SurrealDB` store via `http_client` option
  * Register `StringToMessageBagListener` in DI to enable string-to-MessageBag upcasting by default
+ * Command `ai:platform:invoke` now adds choices when model is not provided as argument
 
 0.10
 ----

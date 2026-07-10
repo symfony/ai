@@ -84,7 +84,12 @@ final class PlatformInvokeCommand extends Command
         }
 
         if (null === $input->getArgument('model')) {
-            $input->setArgument('model', $io->ask('Which model do you want to use?'));
+            $models = array_keys($this->getPlatform($input)->getModelCatalog()->getModels());
+            if ($models) {
+                $input->setArgument('model', $io->choice('Which model do you want to use?', $models));
+            } else {
+                $input->setArgument('model', $io->ask('Which model do you want to use?'));
+            }
         }
 
         if (null === $input->getArgument('message')) {
@@ -95,13 +100,8 @@ final class PlatformInvokeCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $platformName = trim((string) $input->getArgument('platform'));
 
-        if (!$this->platforms->has($platformName)) {
-            throw new InvalidArgumentException(\sprintf('Platform "%s" not found. Available platforms: "%s"', $platformName, implode(', ', array_keys($this->platforms->getProvidedServices()))));
-        }
-
-        $platform = $this->platforms->get($platformName);
+        $platform = $this->getPlatform($input);
         $model = trim((string) $input->getArgument('model'));
         $message = trim((string) $input->getArgument('message'));
 
@@ -131,5 +131,16 @@ final class PlatformInvokeCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function getPlatform(InputInterface $input): PlatformInterface
+    {
+        $platformName = trim((string) $input->getArgument('platform'));
+
+        if (!$this->platforms->has($platformName)) {
+            throw new InvalidArgumentException(\sprintf('Platform "%s" not found. Available platforms: "%s"', $platformName, implode(', ', array_keys($this->platforms->getProvidedServices()))));
+        }
+
+        return $this->platforms->get($platformName);
     }
 }
