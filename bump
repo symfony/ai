@@ -175,12 +175,44 @@ use Symfony\Component\Finder\Finder;
                 }
             }
 
+            // Unreleased packages are wired up through local "path" repositories, since no
+            // constraint can resolve a package that has never been tagged. Releasing tags
+            // them, so the constraints above now resolve from Packagist and the repositories
+            // are obsolete. Only drop the ones pointing inside the monorepo.
+            $removedRepositories = 0;
+            foreach ($data['repositories'] ?? [] as $key => $repository) {
+                if ('path' !== ($repository['type'] ?? null) || !isset($repository['url'])) {
+                    continue;
+                }
+
+                $target = realpath($file->getPath().'/'.$repository['url']);
+                if (false === $target || !str_starts_with($target, __DIR__.'/')) {
+                    continue;
+                }
+
+                unset($data['repositories'][$key]);
+                $modified = true;
+                ++$removedRepositories;
+            }
+
+            if ($removedRepositories > 0) {
+                if ([] === $data['repositories']) {
+                    unset($data['repositories']);
+                } else {
+                    $data['repositories'] = array_values($data['repositories']);
+                }
+            }
+
             // Write back if modified
             if ($modified) {
                 $newContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
                 $filesystem->dumpFile($composerFile, $newContent);
                 $totalUpdates += $fileUpdates;
                 $io->writeln(\sprintf(' <info>✓</info> Saved "%s" with %d change(s)', str_replace(__DIR__.'/', '', $file->getRealPath()), $fileUpdates));
+
+                if ($removedRepositories > 0) {
+                    $io->writeln(\sprintf('   <info>✓</info> Removed %d local "path" %s', $removedRepositories, 1 === $removedRepositories ? 'repository' : 'repositories'));
+                }
             }
         }
 

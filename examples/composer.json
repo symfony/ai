@@ -28,7 +28,7 @@
         "symfony/ai-cohere-platform": "^0.10",
         "symfony/ai-decart-platform": "^0.10",
         "symfony/ai-deep-seek-platform": "^0.10",
-        "symfony/ai-deepgram-platform": "^0.10",
+        "symfony/ai-deepgram-platform": "dev-main",
         "symfony/ai-docker-model-runner-platform": "^0.10",
         "symfony/ai-doctrine-message-store": "^0.10",
         "symfony/ai-elasticsearch-store": "^0.10",
@@ -94,6 +94,12 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/platform/src/Bridge/Deepgram"
+        }
+    ],
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
