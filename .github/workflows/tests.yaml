@@ -24,35 +24,84 @@ jobs:
     # ===========================================
     # Unit Tests
     # ===========================================
-    packages:
-        name: Unit / ${{ matrix.package.type }} / ${{ matrix.package.name }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
-        needs: matrix
+    #
+    # Every package is tested against a single workspace install. Composer resolves the
+    # intersection of all package constraints, which for the highest and for a pinned Symfony
+    # version is the same result a per-package install would produce.
+    #
+    # This does NOT hold for --prefer-lowest: a merged install resolves to the highest of all
+    # per-package floors (e.g. Mate allows symfony/console ^5.4 while Platform requires ^7.3),
+    # so the lowest matrix below keeps installing each package on its own.
+    unit:
+        name: Unit / PHP ${{ matrix.php-version }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                package: ${{ fromJson(needs.matrix.outputs.packages) }}
-                php-version: ['8.2', '8.5']
-                dependency-version: ['']
-                symfony-version: ['']
-                include: ${{ fromJson(needs.matrix.outputs.packages-include) }}
-
-        env:
-            SYMFONY_REQUIRE: ${{ matrix.symfony-version || '>=7.4' }}
+                include:
+                    -   php-version: '8.2'
+                    -   php-version: '8.5'
+                    # LTS version of Symfony
+                    -   php-version: '8.2'
+                        symfony-version: '7.4.*'
+                    -   php-version: '8.5'
+                        symfony-version: '8.0.*'
 
         steps:
             - name: Checkout
               uses: actions/checkout@v7
 
             - name: Configure environment
+              run: echo COLUMNS=120 >> $GITHUB_ENV
+
+            - name: Install workspace
+              uses: ./.github/actions/workspace
+              with:
+                  php-version: ${{ matrix.php-version }}
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+                  symfony-version: ${{ matrix.symfony-version }}
+
+            # The Sqlite bridge tests only load the extension on PHP >= 8.4 and fall back to plain
+            # PDO otherwise, so installing it on 8.2 would have no effect.
+            - name: Install sqlite-vec extension
+              if: matrix.php-version == '8.5'
               run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
+                  # Without --fail curl exits 0 on an HTTP error and pipes the error page into sh, and
+                  # without pipefail only sh's status is checked. The extension would then be missing
+                  # while the step still passes, and the Sqlite tests would silently fall back to PDO.
+                  set -o pipefail
+                  curl -fsSL https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/install.sh | sh
+                  test -f "$(pwd)/vec0.so"
+                  echo "SQLITE_VEC_PATH=$(pwd)/vec0.so" >> $GITHUB_ENV
+
+            - name: Run PHPUnit
+              run: |
+                  find src -name phpunit.xml.dist -not -path '*/vendor/*' | sort \
+                      | .github/run-in-packages.sh vendor/bin/phpunit -c '{}' --exclude-group integration
+
+    # Mate is the only package supporting Symfony 5.4 and 6.4, so it cannot share the workspace.
+    unit-mate-legacy-symfony:
+        name: Unit / Component / Mate / PHP 8.2 / Symfony ${{ matrix.symfony-version }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                symfony-version: ['5.4.*', '6.4.*']
+
+        env:
+            SYMFONY_REQUIRE: ${{ matrix.symfony-version }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Configure environment
+              run: echo COLUMNS=120 >> $GITHUB_ENV
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: ${{ matrix.php-version }}
+                  php-version: '8.2'
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
@@ -73,34 +122,54 @@ jobs:
             - name: Install dependencies
               uses: ramsey/composer-install@v4
               with:
-                  working-directory: src/${{ matrix.package.path }}
-                  dependency-versions: ${{ matrix.dependency-version || 'highest' }}
+                  working-directory: src/mate
 
             - name: Run PHPUnit
-              run: cd src/${{ matrix.package.path }} && vendor/bin/phpunit
+              run: cd src/mate && vendor/bin/phpunit
 
-    store-bridges:
-        name: Unit / Store / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}
-        needs: matrix
+    # ===========================================
+    # Unit Tests / lowest dependencies
+    # ===========================================
+    #
+    # --prefer-lowest cannot share a workspace install: composer would resolve the intersection of
+    # all constraints and pick the highest of every package's floor, never exercising the lowest
+    # bound a single package declares. So each package is installed on its own -- but grouped a few
+    # per job and run in parallel by .github/run-lowest.sh, instead of one job per package.
+    lowest:
+        name: Unit / Lowest / ${{ matrix.shard.name }}
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                include: ${{ fromJson(needs.matrix.outputs.store-bridges-include) }}
+                shard:
+                    -   name: Components
+                        find: "find src -name phpunit.xml.dist -not -path '*/Bridge/*' -not -path '*/vendor/*'"
+                    -   name: Platform Bridges
+                        find: "find src/platform/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
+                    -   name: Store Bridges
+                        find: "find src/store/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
+                    -   name: Tool Bridges
+                        find: "find src/agent/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
+                    -   name: Message Store Bridges
+                        find: "find src/chat/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
+                    -   name: Mate Bridges
+                        find: "find src/mate/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
+
+        env:
+            SYMFONY_REQUIRE: '>=7.4'
+            SYMFONY_DEPRECATIONS_HELPER: weak
 
         steps:
             - name: Checkout
               uses: actions/checkout@v7
 
             - name: Configure environment
-              run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
+              run: echo COLUMNS=120 >> $GITHUB_ENV
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: ${{ matrix.php-version }}
+                  php-version: '8.2'
                   tools: flex
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
@@ -110,28 +179,12 @@ jobs:
             - name: Build packages
               run: php .github/build-packages.php
 
-            - name: Isolate Bridge
-              uses: ./.github/actions/isolate-bridge
-              with:
-                  component: ${{ matrix.bridge.component }}
-                  bridge: ${{ matrix.bridge.bridge }}
-                  target: tmp
+            - name: Run lowest install + tests
+              run: ${{ matrix.shard.find }} -printf '%h\n' | sort | .github/run-lowest.sh
 
-            - name: Install sqlite-vec extension
-              if: matrix.bridge.bridge == 'Sqlite'
-              run: |
-                  curl -L https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/install.sh | sh
-                  echo "SQLITE_VEC_PATH=$(pwd)/vec0.so" >> $GITHUB_ENV
-
-            - name: Install dependencies
-              uses: ramsey/composer-install@v4
-              with:
-                  working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
-                  dependency-versions: ${{ matrix.dependency-version }}
-
-            - name: Run PHPUnit
-              run: cd tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit --exclude-group integration
-
+    # ===========================================
+    # Integration Tests
+    # ===========================================
     store-bridges-integration:
         name: Integration / Store / ${{ matrix.bridge }}
         needs: matrix
@@ -165,12 +218,6 @@ jobs:
                   bridge: ${{ matrix.bridge }}
                   target: tmp
 
-            - name: Install sqlite-vec extension
-              if: matrix.bridge == 'Sqlite'
-              run: |
-                  curl -L https://github.com/asg017/sqlite-vec/releases/download/v0.1.9/install.sh | sh
-                  echo "SQLITE_VEC_PATH=$(pwd)/vec0.so" >> $GITHUB_ENV
-
             - name: Install dependencies
               uses: ramsey/composer-install@v4
               with:
@@ -189,194 +236,6 @@ jobs:
             - name: Stop Docker services
               working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
               run: docker compose down || true
-
-    message-store-bridges:
-        name: Unit / Message Store / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}
-        needs: matrix
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                include: ${{ fromJson(needs.matrix.outputs.message-store-bridges-include) }}
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Configure environment
-              run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  tools: flex
-                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
-
-            - name: Install root dependencies
-              uses: ramsey/composer-install@v4
-
-            - name: Build packages
-              run: php .github/build-packages.php
-
-            - name: Isolate Bridge
-              uses: ./.github/actions/isolate-bridge
-              with:
-                  component: ${{ matrix.bridge.component }}
-                  bridge: ${{ matrix.bridge.bridge }}
-                  target: tmp
-
-            - name: Install dependencies
-              uses: ramsey/composer-install@v4
-              with:
-                  working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
-                  dependency-versions: ${{ matrix.dependency-version }}
-
-            - name: Run PHPUnit
-              run: cd tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit
-
-    tool-bridges:
-        name: Unit / Tool / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}
-        needs: matrix
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                include: ${{ fromJson(needs.matrix.outputs.tool-bridges-include) }}
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Configure environment
-              run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  tools: flex
-                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
-
-            - name: Install root dependencies
-              uses: ramsey/composer-install@v4
-
-            - name: Build packages
-              run: php .github/build-packages.php
-
-            - name: Isolate Bridge
-              uses: ./.github/actions/isolate-bridge
-              with:
-                  component: ${{ matrix.bridge.component }}
-                  bridge: ${{ matrix.bridge.bridge }}
-                  target: tmp
-
-            - name: Install dependencies
-              uses: ramsey/composer-install@v4
-              with:
-                  working-directory: tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }}
-                  dependency-versions: ${{ matrix.dependency-version }}
-
-            - name: Run PHPUnit
-              run: cd tmp/${{ matrix.bridge.component }}/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit
-
-    platform-bridges:
-        name: Unit / Platform / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}
-        needs: matrix
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                include: ${{ fromJson(needs.matrix.outputs.platform-bridges-include) }}
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Configure environment
-              run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  tools: flex
-                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
-
-            - name: Install root dependencies
-              uses: ramsey/composer-install@v4
-
-            - name: Build packages
-              run: php .github/build-packages.php
-
-            - name: Isolate Bridge
-              uses: ./.github/actions/isolate-bridge
-              with:
-                  component: platform
-                  bridge: ${{ matrix.bridge.bridge }}
-                  target: tmp
-
-            - name: Install dependencies
-              uses: ramsey/composer-install@v4
-              with:
-                  working-directory: tmp/platform/src/Bridge/${{ matrix.bridge.bridge }}
-                  dependency-versions: ${{ matrix.dependency-version }}
-
-            - name: Run PHPUnit
-              run: cd tmp/platform/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit
-
-    mate-bridges:
-        name: Unit / Mate / ${{ matrix.bridge.bridge }} / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}
-        needs: matrix
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                include: ${{ fromJson(needs.matrix.outputs.mate-bridges-include) }}
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Configure environment
-              run: |
-                  echo COLUMNS=120 >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
-
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php-version }}
-                  tools: flex
-                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
-
-            - name: Install root dependencies
-              uses: ramsey/composer-install@v4
-
-            - name: Build packages
-              run: php .github/build-packages.php
-
-            - name: Isolate Bridge
-              uses: ./.github/actions/isolate-bridge
-              with:
-                  component: mate
-                  bridge: ${{ matrix.bridge.bridge }}
-                  target: tmp
-
-            - name: Install dependencies
-              uses: ramsey/composer-install@v4
-              with:
-                  working-directory: tmp/mate/src/Bridge/${{ matrix.bridge.bridge }}
-                  dependency-versions: ${{ matrix.dependency-version }}
-
-            - name: Run PHPUnit
-              run: cd tmp/mate/src/Bridge/${{ matrix.bridge.bridge }} && vendor/bin/phpunit
 
     demo:
         name: Integration / Demo
@@ -491,13 +350,7 @@ jobs:
             - name: Configure environment
               run: |
                   echo COLUMNS=120 >> $GITHUB_ENV
-                  echo COMPOSER_UP='composer update ${{ matrix.dependency-version == 'lowest' && '--prefer-lowest --prefer-stable' || '' }} --no-progress --no-interaction --ansi' >> $GITHUB_ENV
-                  echo PHPUNIT='vendor/bin/phpunit' >> $GITHUB_ENV
-                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && export SYMFONY_DEPRECATIONS_HELPER=weak
-
-                  PACKAGES=$(find src/ -mindepth 2 -type f -name composer.json -not -path "*/vendor/*" -printf '%h\n' | sed 's/^src\///' | grep -Ev "examples" | sort |  tr '\n' ' ')
-                  echo "Packages: $PACKAGES"
-                  echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+                  [ 'lowest' = '${{ matrix.dependency-version }}' ] && echo SYMFONY_DEPRECATIONS_HELPER=weak >> $GITHUB_ENV || true
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -505,11 +358,6 @@ jobs:
                   php-version: ${{ matrix.php-version }}
                   tools: flex
                   extensions: "${{ env.REQUIRED_PHP_EXTENSIONS }}"
-
-            # deptrac does not support Symfony 5.4, 6.4, and 8 yet
-            - name: Remove deptrac for unsupported Symfony versions
-              if: startsWith(matrix.symfony-version, '5.4')
-              run: composer remove --dev deptrac/deptrac --no-update
 
             - name: Install root dependencies
               uses: ramsey/composer-install@v4
