@@ -101,6 +101,9 @@ Store
    | Supabase        | `$url`         | `$endpoint`  |
    | SurrealDb       | `$endpointUrl` | `$endpoint`  |
 
+ * Postgres Store now uses quoted identifiers for table and column names, so they are case-sensitive. If you relied on
+   implicit lowercasing of unquoted identifiers, adopt them so they match the case of your table and column names.
+
 UPGRADE FROM 0.9 to 0.10
 ========================
 

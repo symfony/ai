@@ -54,10 +54,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->connection->exec(
             \sprintf(
-                'CREATE TABLE IF NOT EXISTS %s (
+                'CREATE TABLE IF NOT EXISTS "%s" (
                     id UUID PRIMARY KEY,
                     metadata JSONB,
-                    %s %s(%d) NOT NULL
+                    "%s" %s(%d) NOT NULL
                 )',
                 $this->tableName,
                 $this->vectorFieldName,
@@ -67,7 +67,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
         $this->connection->exec(
             \sprintf(
-                'CREATE INDEX IF NOT EXISTS %s_%s_idx ON %s USING %s (%s %s)',
+                'CREATE INDEX IF NOT EXISTS "%s_%s_idx" ON "%s" USING %s ("%s" %s)',
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->tableName,
@@ -80,7 +80,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
+        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS "%s"', $this->tableName));
     }
 
     public function add(VectorDocument|array $documents): void
@@ -91,9 +91,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $statement = $this->connection->prepare(
             \sprintf(
-                'INSERT INTO %1$s (id, metadata, %2$s)
+                'INSERT INTO "%1$s" (id, metadata, "%2$s")
                 VALUES (:id, :metadata, :vector)
-                ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata, %2$s = EXCLUDED.%2$s',
+                ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata, "%2$s" = EXCLUDED."%2$s"',
                 $this->tableName,
                 $this->vectorFieldName,
             ),
@@ -119,7 +119,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $placeholders = implode(',', array_fill(0, \count($ids), '?'));
-        $sql = \sprintf('DELETE FROM %s WHERE id IN (%s)', $this->tableName, $placeholders);
+        $sql = \sprintf('DELETE FROM "%s" WHERE id IN (%s)', $this->tableName, $placeholders);
 
         $statement = $this->connection->prepare($sql);
 
@@ -163,7 +163,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $params = ['embedding' => $this->toPgvector($query->getVector())];
 
         if (isset($options['maxScore'])) {
-            $whereClauses[] = \sprintf('(%s %s :embedding) <= :maxScore', $this->vectorFieldName, $this->distance->getComparisonSign());
+            $whereClauses[] = \sprintf('("%s" %s :embedding) <= :maxScore', $this->vectorFieldName, $this->distance->getComparisonSign());
             $params['maxScore'] = $options['maxScore'];
         }
 
@@ -179,8 +179,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $where = [] !== $whereClauses ? 'WHERE '.implode(' AND ', $whereClauses) : '';
 
         $sql = \sprintf(<<<SQL
-            SELECT id, %s AS embedding, metadata, (%s %s :embedding) AS score
-            FROM %s
+            SELECT id, "%s" AS embedding, metadata, ("%s" %s :embedding) AS score
+            FROM "%s"
             %s
             ORDER BY score ASC
             LIMIT %d
@@ -233,9 +233,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $tsvectorExpression = \sprintf("to_tsvector('%s', metadata->>'_text')", $this->lang);
 
         $sql = \sprintf(<<<SQL
-            SELECT id, %s AS embedding, metadata,
+            SELECT id, "%s" AS embedding, metadata,
                    ts_rank(%s, %s) AS score
-            FROM %s
+            FROM "%s"
             WHERE %s @@ (%s)
             ORDER BY score DESC
             LIMIT %d
@@ -294,7 +294,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $where = \sprintf('WHERE %s @@ %s', $tsvectorExpression, $tsqueryExpression);
 
         if (isset($options['maxScore'])) {
-            $where .= \sprintf(' AND ((:semantic_ratio * (1 - (%s %s :embedding))) + (:keyword_ratio * ts_rank(%s, %s))) >= :maxScore',
+            $where .= \sprintf(' AND ((:semantic_ratio * (1 - ("%s" %s :embedding))) + (:keyword_ratio * ts_rank(%s, %s))) >= :maxScore',
                 $this->vectorFieldName,
                 $this->distance->getComparisonSign(),
                 $tsvectorExpression,
@@ -304,10 +304,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $sql = \sprintf(<<<SQL
-            SELECT id, %s AS embedding, metadata,
-                   ((:semantic_ratio * (1 - (%s %s :embedding))) +
+            SELECT id, "%s" AS embedding, metadata,
+                   ((:semantic_ratio * (1 - ("%s" %s :embedding))) +
                     (:keyword_ratio * ts_rank(%s, %s))) AS score
-            FROM %s
+            FROM "%s"
             %s
             ORDER BY score DESC
             LIMIT %d
