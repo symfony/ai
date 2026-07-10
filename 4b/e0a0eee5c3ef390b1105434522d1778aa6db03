@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-07-10T12:46:39Z
+
+Thanks a lot for the review @chr-hertel — both remarks were spot on, and the second one was a genuine bug in my patch rather than a nitpick. Amended and force-pushed:
+
+- test moved into the bridge package, merged into the existing `Bridge/Generic/Tests/Completions/ModelClientTest.php`;
+- guard changed to `[] !== ($options['tools'] ?? [])`, plus a new `testToolChoiceIsNotSetWhenToolsAreEmpty` that fails against the previous `isset()` version.
+
+`vendor/bin/phpunit src/Bridge/Generic` is green (75 tests, 247 assertions), no PHP 8.5 deprecation.
+
+Thanks for maintaining this — and for teaching me the bridge test layout the gentle way. 😄
