@@ -65,6 +65,12 @@ class ModelClient implements ModelClientInterface
             }
         }
 
+        // Some OpenAI-compatible providers do not default "tool_choice" to "auto" server-side,
+        // which makes the model answer with a text response instead of a proper tool call.
+        if ([] !== ($options['tools'] ?? [])) {
+            $options['tool_choice'] ??= 'auto';
+        }
+
         // cacheRetention is an internal Symfony AI option consumed by PromptCacheNormalizer
         // (Anthropic-only).  Strip it here so it is never forwarded to OpenAI-compatible
         // endpoints, which reject unknown request body fields with a 400 error.
