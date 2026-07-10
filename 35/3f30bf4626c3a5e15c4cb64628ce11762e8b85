@@ -1,0 +1,26 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-10T19:59:03Z
+
+> it could help a lot developpers to spot a missing class import
+
+i would assume if an import is missing, there's also no `\` - but if it's there, it's most likely a FQCN and the `class_exists` would return true
+
+but if you actually ran into it, fair enough
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-07-10T20:50:06Z
+
+```
+>…ome/gregoire/dev/github.com/lyrixx/symfony(messenger-disable-rejected) cat test.php
+<?php
+
+namespace Foo\Bar;
+
+echo DoNotExit::class . "\n";
+>…ome/gregoire/dev/github.com/lyrixx/symfony(messenger-disable-rejected) php test.php
+Foo\Bar\DoNotExit
+```
+
+But in my case, I moved a class, and forgot to update the use statement. Anyway, It covers both situation
