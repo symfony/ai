@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by freema at 2026-07-07T13:51:34Z
+
+We hit this exact problem in production, and this PR is the right fix.
+
+Setup: a self-hosted MCP server exposed over HTTPS behind a reverse proxy (Cloudflare), with OAuth 2.1 Bearer auth. The `DnsRebindingProtectionMiddleware` default allowlist (`localhost` / `127.0.0.1` / `[::1]`) rejects the public host, so every authenticated `POST /_mcp` returns `403 "Forbidden: Invalid Host header."`.
+
+What made this hard to diagnose: the host check runs **after** authentication, so clients that connect without a token first (MCP Inspector, CLI probes) fail earlier with `401` and never reach it — only fully-authenticated web connectors (e.g. the Claude/ChatGPT server-side proxies, which send `Host: <public-domain>`) trip the 403. That makes it look like an auth/CORS problem rather than a host-allowlist one.
+
+We had to work around it by overriding the `mcp.server.controller` service to rebuild the transport without the middleware. A first-class `http.dns_rebinding_protection.allowed_hosts` / `enabled` option (exactly what this PR adds, keeping the other secure defaults) is the proper solution. Would be great to get this reviewed and merged. Thanks @Amoifr!
+
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-07-07T14:20:04Z
+
+Thanks a lot for the detailed report, @freema — this is gold. 🙏
+
+You nailed the trickiest part: the host check running *after* auth is exactly why this shows up as a phantom "auth/CORS" issue. Only fully-authenticated web connectors (the Claude/ChatGPT server-side proxies sending `Host: <public-domain>`) ever reach the 403, while unauthenticated probes bail out at `401` first — so the one signal that would point you at the host allowlist never fires. That mismatch cost me a fair bit of head-scratching too. 😅
+
+Glad the PR matches the workaround you had to hand-roll. It keeps the secure defaults and just lets you opt into the hosts you actually trust. Fingers crossed for a review! 🤞
+
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-07-09T05:43:05Z
+
+Great call, much cleaner! 🙏 Applied exactly your proposal: dropped the nested `dns_rebinding_protection` node for a single `http.allowed_hosts` — unset keeps the SDK default (localhost), an array restricts to those hosts, and `false` disables the protection. Config, controller, docs and tests updated accordingly. Thanks for steering it toward something decoupled from the middleware internals!
