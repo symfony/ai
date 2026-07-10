@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-09T00:16:03Z
+
+Disregard pipeline failure for "Code Quality / PHPStan / Demo" (fixed after rebase), but the other ones look real
+
+---------------------------------------------------------------------------
+
+by fabpot at 2026-07-10T16:30:17Z
+
+All fixed now.
