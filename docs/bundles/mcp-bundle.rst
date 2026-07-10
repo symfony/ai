@@ -164,6 +164,28 @@ The HTTP transport uses the MCP SDK's ``StreamableHttpTransport`` which supports
 - CORS headers for cross-origin requests
 - Proper MCP initialization handshake
 
+DNS Rebinding Protection
+........................
+
+By default, the MCP SDK protects the HTTP transport against DNS rebinding attacks by only
+accepting requests whose ``Origin``/``Host`` header points to ``localhost``. To expose a
+public MCP server, configure the allowed hosts:
+
+.. code-block:: yaml
+
+    mcp:
+        http:
+            allowed_hosts: ['example.com', 'mcp.example.com'] # Replaces the default localhost allowlist
+
+Alternatively, disable the protection entirely (for example when the server sits behind a
+reverse proxy that already validates the ``Host`` header) by setting it to ``false``:
+
+.. code-block:: yaml
+
+    mcp:
+        http:
+            allowed_hosts: false
+
 Session Storage
 ...............
 
