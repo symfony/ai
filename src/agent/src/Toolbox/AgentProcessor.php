@@ -88,7 +88,7 @@ final class AgentProcessor implements InputProcessorInterface, OutputProcessorIn
         }
 
         if ($result instanceof MultiPartResult) {
-            $result = array_find($result->getContent(), static fn (ResultInterface $part) => $part instanceof ToolCallResult);
+            $result = $result->asToolCallResult();
         }
 
         if (!$result instanceof ToolCallResult) {
