@@ -13,9 +13,11 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
@@ -34,6 +36,8 @@ use Symfony\AI\Platform\Vector\Vector;
  */
 final class OllamaResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Ollama;
@@ -77,10 +81,10 @@ final class OllamaResultConverter implements ResultConverterInterface
         }
 
         if ([] !== $toolCalls) {
-            return new ToolCallResult($toolCalls);
+            return $this->withFinishReason(new ToolCallResult($toolCalls), FinishReasonMapper::map($data['done_reason'] ?? null));
         }
 
-        return new TextResult($data['message']['content']);
+        return $this->withFinishReason(new TextResult($data['message']['content']), FinishReasonMapper::map($data['done_reason'] ?? null));
     }
 
     /**
@@ -105,6 +109,7 @@ final class OllamaResultConverter implements ResultConverterInterface
         $toolCalls = [];
         $sawChunk = false;
         $sawDone = false;
+        $finishReason = null;
         foreach ($result->getDataStream() as $data) {
             // Ollama emits {"error": "..."} on HTTP 200 in practice; not part of the
             // documented schema, so this guard is defensive.
@@ -116,6 +121,10 @@ final class OllamaResultConverter implements ResultConverterInterface
 
             if (isset($data['done']) && true === $data['done']) {
                 $sawDone = true;
+
+                if (null !== ($data['done_reason'] ?? null)) {
+                    $finishReason = FinishReasonMapper::map($data['done_reason']);
+                }
             }
 
             if ($this->streamIsToolCall($data)) {
@@ -144,6 +153,10 @@ final class OllamaResultConverter implements ResultConverterInterface
 
         if ($sawChunk && !$sawDone) {
             throw new IncompleteStreamException('Ollama stream ended before a "done" message.');
+        }
+
+        if (null !== $finishReason) {
+            yield new MetadataDelta('finish_reason', $finishReason);
         }
     }
 

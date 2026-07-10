@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\AmazeeAi;
 
+use Symfony\AI\Platform\Bridge\Generic\Completions\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\TextResult;
@@ -43,18 +44,18 @@ class CompletionsResultConverter extends ResultConverter
     {
         if ('tool_calls' === $choice['finish_reason']) {
             if (isset($choice['message']['tool_calls'])) {
-                return new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+                return $this->withFinishReason(new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls'])), FinishReasonMapper::map($choice['finish_reason']));
             }
 
             // LiteLLM structured output: finish_reason is "tool_calls" but
             // content is in message.content instead of message.tool_calls
             if (isset($choice['message']['content'])) {
-                return new TextResult($choice['message']['content']);
+                return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
             }
         }
 
         if (\in_array($choice['finish_reason'], ['stop', 'length'], true)) {
-            return new TextResult($choice['message']['content']);
+            return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));

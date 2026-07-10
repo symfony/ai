@@ -12,8 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Bridge\Anthropic\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -30,6 +32,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 final class ClaudeResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Claude;
@@ -60,11 +64,10 @@ final class ClaudeResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response content does not contain any supported content.');
         }
 
-        if (1 === \count($results)) {
-            return $results[0];
-        }
-
-        return new MultiPartResult($results);
+        return $this->withFinishReason(
+            1 === \count($results) ? $results[0] : new MultiPartResult($results),
+            FinishReasonMapper::map($data['stop_reason'] ?? null),
+        );
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface

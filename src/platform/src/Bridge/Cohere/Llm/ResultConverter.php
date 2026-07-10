@@ -15,11 +15,13 @@ use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -33,6 +35,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     use HttpStatusErrorHandlingTrait;
 
     public function supports(Model $model): bool
@@ -77,11 +81,11 @@ final class ResultConverter implements ResultConverterInterface
         if ('COMPLETE' === $finishReason) {
             $text = $data['message']['content'][0]['text'] ?? '';
 
-            return new TextResult($text);
+            return $this->withFinishReason(new TextResult($text), FinishReasonMapper::map($finishReason));
         }
 
         if ('TOOL_CALL' === $finishReason) {
-            return new ToolCallResult(array_map($this->convertToolCall(...), $data['message']['tool_calls'] ?? []));
+            return $this->withFinishReason(new ToolCallResult(array_map($this->convertToolCall(...), $data['message']['tool_calls'] ?? [])), FinishReasonMapper::map($finishReason));
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $finishReason));
@@ -94,6 +98,7 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface $result): \Generator
     {
+        $streamFinishReason = null;
         $toolCalls = [];
         $sawChunk = false;
         $sawMessageEnd = false;
@@ -142,11 +147,19 @@ final class ResultConverter implements ResultConverterInterface
                 if ([] !== $toolCalls) {
                     yield new ToolCallComplete(array_map($this->convertToolCall(...), $toolCalls));
                 }
+
+                if (null !== $finishReason) {
+                    $streamFinishReason = FinishReasonMapper::map($finishReason);
+                }
             }
         }
 
         if ($sawChunk && !$sawMessageEnd) {
             throw new IncompleteStreamException('Cohere stream ended before message-end.');
+        }
+
+        if (null !== $streamFinishReason) {
+            yield new MetadataDelta('finish_reason', $streamFinishReason);
         }
     }
 

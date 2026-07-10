@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\MiniMax;
 
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -20,6 +21,7 @@ use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -34,6 +36,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class MiniMaxResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     use HttpStatusErrorHandlingTrait;
 
     /**
@@ -78,7 +82,10 @@ final class MiniMaxResultConverter implements ResultConverterInterface
         $url = (string) $response->getInfo('url');
 
         return match (true) {
-            str_contains($url, '/chat/completions') => new TextResult($result->getData()['choices'][0]['message']['content']),
+            str_contains($url, '/chat/completions') => $this->withFinishReason(
+                new TextResult($result->getData()['choices'][0]['message']['content']),
+                FinishReasonMapper::map($result->getData()['choices'][0]['finish_reason'] ?? null),
+            ),
             str_contains($url, '/t2a_async_v2') => $this->handleAsyncTask($result->getData(), 'query/t2a_async_query_v2', 'audio/mpeg', self::MAX_AUDIO_POLLS),
             str_contains($url, '/t2a_v2') => new BinaryResult($this->decodeHexAudio($result->getData()), 'audio/mpeg'),
             str_contains($url, '/image_generation') => $this->convertImage($result->getData()),
@@ -94,12 +101,12 @@ final class MiniMaxResultConverter implements ResultConverterInterface
     }
 
     /**
-     * @return \Generator<int, TextDelta>
+     * @return \Generator<int, TextDelta|MetadataDelta>
      */
     private function convertStream(RawResultInterface $result): \Generator
     {
         $sawChunk = false;
-        $sawFinishReason = false;
+        $finishReason = null;
 
         foreach ($result->getDataStream() as $chunk) {
             if (!\is_array($chunk)) {
@@ -109,7 +116,7 @@ final class MiniMaxResultConverter implements ResultConverterInterface
             $sawChunk = true;
 
             if (null !== ($chunk['choices'][0]['finish_reason'] ?? null)) {
-                $sawFinishReason = true;
+                $finishReason ??= FinishReasonMapper::map($chunk['choices'][0]['finish_reason']);
             }
 
             $content = $chunk['choices'][0]['delta']['content'] ?? '';
@@ -121,8 +128,12 @@ final class MiniMaxResultConverter implements ResultConverterInterface
             yield new TextDelta($content);
         }
 
-        if ($sawChunk && !$sawFinishReason) {
+        if ($sawChunk && null === $finishReason) {
             throw new IncompleteStreamException('The MiniMax stream ended before a finish reason.');
+        }
+
+        if (null !== $finishReason) {
+            yield new MetadataDelta('finish_reason', $finishReason);
         }
     }
 

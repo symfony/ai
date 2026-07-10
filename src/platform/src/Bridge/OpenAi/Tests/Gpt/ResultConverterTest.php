@@ -22,12 +22,14 @@ use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -530,8 +532,10 @@ class ResultConverterTest extends TestCase
         $streamResult = $converter->convert($raw, ['stream' => true]);
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[1]);
+        $this->assertTrue($chunks[1]->getValue()->is(FinishReasonCase::TOOL_CALL));
         $this->assertSame('call_123', $chunks[0]->getToolCalls()[0]->getId());
         $this->assertSame('get_weather', $chunks[0]->getToolCalls()[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $chunks[0]->getToolCalls()[0]->getArguments());
@@ -567,8 +571,10 @@ class ResultConverterTest extends TestCase
         $streamResult = $converter->convert($raw, ['stream' => true]);
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[1]);
+        $this->assertTrue($chunks[1]->getValue()->is(FinishReasonCase::TOOL_CALL));
         $this->assertSame('call_123', $chunks[0]->getToolCalls()[0]->getId());
         $this->assertSame('get_weather', $chunks[0]->getToolCalls()[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $chunks[0]->getToolCalls()[0]->getArguments());
@@ -767,7 +773,7 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(5, $chunks);
+        $this->assertCount(6, $chunks);
         $this->assertInstanceOf(ThinkingStart::class, $chunks[0]);
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
         $this->assertSame('Let me think', $chunks[1]->getThinking());

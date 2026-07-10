@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
+use Symfony\AI\Platform\Bridge\Generic\Completions\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -106,11 +107,11 @@ final class ResultConverter implements ResultConverterInterface
     protected function convertChoice(array $choice): ToolCallResult|TextResult
     {
         if ('tool_calls' === $choice['finish_reason']) {
-            return new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+            return $this->withFinishReason(new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls'])), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         if ('stop' === $choice['finish_reason']) {
-            return new TextResult($choice['message']['content']);
+            return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));

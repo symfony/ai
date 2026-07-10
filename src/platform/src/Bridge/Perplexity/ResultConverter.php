@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Perplexity;
 
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
@@ -30,6 +31,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     use HttpStatusErrorHandlingTrait;
 
     public function supports(Model $model): bool
@@ -92,10 +95,20 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface $result): \Generator
     {
+        $finishReason = null;
+
         foreach ($result->getDataStream() as $data) {
+            if (null !== ($data['choices'][0]['finish_reason'] ?? null)) {
+                $finishReason ??= FinishReasonMapper::map($data['choices'][0]['finish_reason']);
+            }
+
             if (isset($data['choices'][0]['delta']['content'])) {
                 yield new TextDelta($data['choices'][0]['delta']['content']);
             }
+        }
+
+        if (null !== $finishReason) {
+            yield new MetadataDelta('finish_reason', $finishReason);
         }
 
         if (isset($data['search_results'])) {
@@ -127,6 +140,6 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));
         }
 
-        return new TextResult($choice['message']['content']);
+        return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
     }
 }

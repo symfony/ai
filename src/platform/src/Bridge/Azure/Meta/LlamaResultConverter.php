@@ -11,8 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\Azure\Meta;
 
+use Symfony\AI\Platform\Bridge\Generic\Completions\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -24,6 +26,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 final class LlamaResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Llama;
@@ -37,7 +41,7 @@ final class LlamaResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain output.');
         }
 
-        return new TextResult($data['choices'][0]['message']['content']);
+        return $this->withFinishReason(new TextResult($data['choices'][0]['message']['content']), FinishReasonMapper::map($data['choices'][0]['finish_reason'] ?? null));
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface

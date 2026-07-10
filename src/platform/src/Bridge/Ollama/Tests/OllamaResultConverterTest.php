@@ -16,10 +16,12 @@ use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
@@ -179,7 +181,7 @@ final class OllamaResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($result->getContent());
 
-        $this->assertCount(3, $chunks);
+        $this->assertCount(4, $chunks);
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertSame('Hello', $chunks[0]->getText());
         $this->assertInstanceOf(TextDelta::class, $chunks[1]);
@@ -187,6 +189,9 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertInstanceOf(TokenUsageInterface::class, $chunks[2]);
         $this->assertSame(42, $chunks[2]->getPromptTokens());
         $this->assertSame(17, $chunks[2]->getCompletionTokens());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[3]);
+        $this->assertSame('finish_reason', $chunks[3]->getKey());
+        $this->assertTrue($chunks[3]->getValue()->is(FinishReasonCase::STOP));
     }
 
     public function testConvertThinkingStreamingResponse()
@@ -200,7 +205,7 @@ final class OllamaResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($result->getContent());
 
-        $this->assertCount(5, $chunks);
+        $this->assertCount(6, $chunks);
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[0]);
         $this->assertSame('Thinking', $chunks[0]->getThinking());
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
@@ -212,6 +217,8 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertInstanceOf(TokenUsageInterface::class, $chunks[4]);
         $this->assertSame(42, $chunks[4]->getPromptTokens());
         $this->assertSame(17, $chunks[4]->getCompletionTokens());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[5]);
+        $this->assertTrue($chunks[5]->getValue()->is(FinishReasonCase::STOP));
     }
 
     public function testItPromotesTokenUsageMetadataFromStreamingResponse()
@@ -241,7 +248,7 @@ final class OllamaResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($result->getContent());
 
-        $this->assertCount(2, $chunks);
+        $this->assertCount(3, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
         $toolCalls = $chunks[0]->getToolCalls();
         $this->assertCount(1, $toolCalls);
@@ -250,6 +257,8 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertInstanceOf(TokenUsageInterface::class, $chunks[1]);
         $this->assertSame(11, $chunks[1]->getPromptTokens());
         $this->assertSame(4, $chunks[1]->getCompletionTokens());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
+        $this->assertTrue($chunks[2]->getValue()->is(FinishReasonCase::STOP));
     }
 
     public function testConvertStreamingThrowsWhenDoneIsMissing()
