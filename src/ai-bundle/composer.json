@@ -55,7 +55,7 @@
         "symfony/ai-cohere-platform": "^0.10",
         "symfony/ai-decart-platform": "^0.10",
         "symfony/ai-deep-seek-platform": "^0.10",
-        "symfony/ai-deepgram-platform": "^0.10",
+        "symfony/ai-deepgram-platform": "dev-main",
         "symfony/ai-docker-model-runner-platform": "^0.10",
         "symfony/ai-doctrine-message-store": "^0.10",
         "symfony/ai-elasticsearch-store": "^0.10",
@@ -71,7 +71,7 @@
         "symfony/ai-meilisearch-store": "^0.10",
         "symfony/ai-meta-platform": "^0.10",
         "symfony/ai-milvus-store": "^0.10",
-        "symfony/ai-mini-max-platform": "^0.10",
+        "symfony/ai-mini-max-platform": "dev-main",
         "symfony/ai-mistral-platform": "^0.10",
         "symfony/ai-mongo-db-message-store": "^0.10",
         "symfony/ai-mongo-db-store": "^0.10",
@@ -109,6 +109,16 @@
         "symfony/translation": "^7.3|^8.0",
         "symfony/validator": "^7.3|^8.0"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Deepgram"
+        },
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/MiniMax"
+        }
+    ],
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
