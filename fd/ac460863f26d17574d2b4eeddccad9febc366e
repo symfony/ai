@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-07-09T17:49:12Z
+
+@chr-hertel You're right, dropped it. mkdir($dir, 0750, true) already sets the mode at creation, and umask can only remove bits — so the dir is never more permissive than 0750 and the chmod was redundant (under a strict umask it'd even loosen 0700 back to 0750). Removed it from both InitCommand and Logger. The chmod on the files stays — copy()/file_put_contents() ignore the mode and create 0644, so that's the bit that actually matters.
