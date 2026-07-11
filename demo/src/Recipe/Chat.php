@@ -16,7 +16,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Result\Stream\Delta\PartialObjectDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -66,13 +66,7 @@ final class Chat
      */
     public function isAwaitingRecipe(): bool
     {
-        $messages = $this->loadMessages()->getMessages();
-
-        if (0 === \count($messages)) {
-            return false;
-        }
-
-        return $messages[\count($messages) - 1] instanceof UserMessage;
+        return $this->loadMessages()->isLastMessageFrom(Role::User);
     }
 
     /**
@@ -83,6 +77,14 @@ final class Chat
      */
     public function getRecipeStream(MessageBag $messages): \Generator
     {
+        // Only generate a recipe when the latest message is still awaiting one. This guards
+        // against reconnecting, duplicate or stale SSE connections (e.g. after a stream error
+        // or a reset) that would otherwise call the model with no pending user message and
+        // trigger a provider "input required" error.
+        if (!$messages->isLastMessageFrom(Role::User)) {
+            return new Recipe();
+        }
+
         $stream = $this->agent->call($messages, [
             'stream' => true,
             'response_format' => Recipe::class,

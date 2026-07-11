@@ -16,6 +16,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -58,6 +59,14 @@ final class Chat
      */
     public function getAssistantResponse(MessageBag $messages): \Generator
     {
+        // Only answer when the latest message is still awaiting a reply. This guards against
+        // reconnecting, duplicate or stale SSE connections (e.g. after a stream error or a
+        // reset) that would otherwise call the model with no pending user message and trigger
+        // a provider "input required" error.
+        if (!$messages->isLastMessageFrom(Role::User)) {
+            return Message::ofAssistant('');
+        }
+
         $stream = $this->agent->call($messages, ['stream' => true])->getContent();
         \assert(is_iterable($stream));
 
