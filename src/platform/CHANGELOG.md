@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Add `MessageBag::isLastMessageFrom()` to check whether the last message has a given role
  * Add `MaxOutputTokensException` for completed responses truncated by output token limits
  * Convert OpenAI Responses built-in tool output items (`web_search_call`, `file_search_call`, `code_interpreter_call`, `image_generation_call`, `mcp_call`, `mcp_list_tools`, `mcp_approval_request`, `computer_call`, `local_shell_call`) into typed results instead of skipping them. Adds `Result\WebSearchResult`, `Result\FileSearchResult`, `Result\McpCallResult`, `Result\McpListToolsResult`, `Result\McpApprovalRequestResult`, `Result\ComputerCallResult`, and `Result\LocalShellCallResult` (code interpreter reuses `ExecutableCodeResult`/`CodeExecutionResult`, image generation reuses `BinaryResult`), plus the matching `Message\Content` classes so the results round-trip through `Message::ofAssistant()`. Benefits the OpenAI, Azure OpenAI, and Scaleway bridges.
  * [BC BREAK] Remove `Capability::INPUT_MULTIPLE` from all embedding models since every embedding bridge already accepts multiple inputs in a single API call

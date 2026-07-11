@@ -207,6 +207,15 @@ class MessageBag implements \Countable, \IteratorAggregate
         return $message;
     }
 
+    public function isLastMessageFrom(Role $role): bool
+    {
+        if ([] === $this->messages) {
+            return false;
+        }
+
+        return $this->messages[\count($this->messages) - 1]->getRole() === $role;
+    }
+
     public function containsAudio(): bool
     {
         foreach ($this->messages as $message) {

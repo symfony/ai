@@ -409,4 +409,26 @@ final class MessageBagTest extends TestCase
 
         $this->assertSame($latestMessageAsUser, $messageBag->latestAs(Role::User));
     }
+
+    public function testIsLastMessageFromReturnsFalseForEmptyBag()
+    {
+        $this->assertFalse((new MessageBag())->isLastMessageFrom(Role::User));
+    }
+
+    public function testIsLastMessageFromMatchesTheLastMessageRole()
+    {
+        $messageBag = new MessageBag(
+            Message::forSystem('System prompt.'),
+            Message::ofUser('Hello, world!'),
+        );
+
+        $this->assertTrue($messageBag->isLastMessageFrom(Role::User));
+        $this->assertFalse($messageBag->isLastMessageFrom(Role::Assistant));
+        $this->assertFalse($messageBag->isLastMessageFrom(Role::System));
+
+        $messageBag->add(Message::ofAssistant('Hi there!'));
+
+        $this->assertFalse($messageBag->isLastMessageFrom(Role::User));
+        $this->assertTrue($messageBag->isLastMessageFrom(Role::Assistant));
+    }
 }
