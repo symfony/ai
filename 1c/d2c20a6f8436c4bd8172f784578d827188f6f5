@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-07-09T17:47:45Z
+
+@chr-hertel Good call — pulled the OS-specific bit into a tiny stopProcess() and now execute() reads as one straight line, with the messages in one place each. Bonus: POSIX now counts real kills instead of trusting the file count.
+
+Re the taskkill shivers 😄 — safe as-is: $pid is cast to (int), so worst case is taskkill /F /PID 0. Could swap to the Process component, but that'd pull symfony/process into mate just for this one call, so I'd rather not unless you feel strongly.
