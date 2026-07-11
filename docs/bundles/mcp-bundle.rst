@@ -149,6 +149,194 @@ The MCP SDK, and therefore the MCP Bundle, supports two patterns for placing att
         public function toolTwo(): string { }
     }
 
+MCP Apps
+........
+
+`MCP Apps`_ let a tool return an interactive HTML screen (an "app") that the host renders in a
+sandboxed iframe instead of plain text — for example a dashboard, a form, or a record viewer. The
+bundle registers the underlying UI resource for you and enables the MCP Apps server extension, so you
+only write the markup.
+
+A single class is the whole app (similar to a Symfony UX LiveComponent): the ``#[AsMcpApp]`` attribute
+carries the linked tool's identity (``name``/``description``) and the HTML shell (``template``), the
+constructor carries service dependencies, and a handler method (``render`` by default) produces the
+tool result::
+
+    // src/Mcp/WeatherApp.php
+    use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+
+    #[AsMcpApp(
+        uri: 'ui://weather',
+        name: 'get_weather',                 // the linked tool's name (model-facing)
+        title: 'Weather',
+        description: 'Show the weather for a city as an interactive dashboard.',
+        template: 'mcp/weather.html.twig',
+    )]
+    class WeatherApp
+    {
+        public function __construct(private WeatherClient $weather)
+        {
+        }
+
+        // The returned value is the tool result, delivered to the iframe's JS render(model).
+        // The input schema is derived from the method signature.
+        public function render(string $city): array
+        {
+            return ['summary' => $this->weather->summaryFor($city)];
+        }
+    }
+
+The template extends the bundle's base template, which implements the MCP Apps ``postMessage``
+handshake, iframe size reporting and a ``render(model)`` hook:
+
+.. code-block:: html+twig
+
+    {# templates/mcp/weather.html.twig #}
+    {% extends '@Mcp/app/base.html.twig' %}
+
+    {% block style %}.card { font: 1rem system-ui; }{% endblock %}
+    {% block body %}<div id="root" class="card"></div>{% endblock %}
+
+    {% block app_script %}
+        // Called with the linked tool's result. The iframe shell is static HTML; the per-request
+        // data arrives at runtime via the tool-result message, not through Twig.
+        function render(model) {
+            document.getElementById('root').textContent = model.summary;
+        }
+    {% endblock %}
+
+The bundle registers the UI resource (with the required ``_meta.ui`` descriptor marker), registers the
+tool with its ``ui`` link auto-set to this app (``resourceUri`` plus visibility ``[model, app]``), and
+enables the MCP Apps extension. ``uri`` defaults to ``ui://<kebab-class-name>``; the tool ``name``
+defaults to that URI slug with dashes replaced by underscores, and the handler method defaults to
+``render`` (set the ``method`` argument to use another). The tool is registered only when the handler
+method exists — an app without it is a static, tool-less screen.
+
+The base template exposes the blocks ``title``, ``head``, ``style``, ``body`` and ``app_script``
+(override ``render(model)`` / ``onToolInput(params)`` there), plus ``sendRpc``, ``callTool`` and
+``openLink`` JavaScript helpers. The default ``render(model)`` implements the HTML-over-the-wire path
+described below, and interactions are wired declaratively via ``data-call`` / ``data-open`` attributes
+(see *Interactive apps* below) — so most apps write no JavaScript at all; override ``app_script`` only
+for a fully JS-driven UI.
+
+The template form requires ``symfony/twig-bundle``. For a dynamic shell, omit ``template`` and give the
+class an ``__invoke(): TextResourceContents`` method instead (inject
+``Symfony\AI\McpBundle\App\McpAppRenderer`` to render Twig with your own context); that method then owns
+the returned content and its ``_meta.ui``.
+
+You can declare CSP and permission requirements for the iframe directly on the attribute::
+
+    #[AsMcpApp(
+        uri: 'ui://weather',
+        name: 'get_weather',
+        template: 'mcp/weather.html.twig',
+        prefersBorder: true,
+        cspConnect: ['https://api.weather.example.com'],
+        geolocation: true,
+    )]
+
+The MCP Apps extension is enabled automatically as soon as one ``#[AsMcpApp]`` class exists. Use the
+``apps.enabled`` option to force it on or off:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        apps:
+            enabled: true # null (default) = auto-enable when an app is registered; true/false forces it
+
+Rendering with Twig (HTML-over-the-wire)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The recommended way to fill the screen is to render the markup with **Twig on the server** and ship it
+in the tool result, rather than building the DOM in JavaScript. The iframe shell stays static (the
+protocol reads the UI resource only once), but the per-request tool result can carry an ``html``
+string: the base template's default ``render(model)`` injects ``model.html`` into the ``#root`` element
+(which the default ``body`` block already provides), so you write **no** client-side rendering code.
+
+Name the fragment template on the attribute via ``toolTemplate`` and return a **context array** from the
+handler — the bundle renders that template into the ``html`` field for you, so the handler stays free of
+Twig::
+
+    #[AsMcpApp(
+        uri: 'ui://weather',
+        name: 'get_weather',
+        template: 'mcp/weather.html.twig',       // the static iframe shell
+        toolTemplate: 'mcp/_weather.html.twig',   // rendered into the tool result's `html`
+    )]
+    class WeatherApp
+    {
+        public function __construct(private WeatherService $weather)
+        {
+        }
+
+        // @return array{forecast: Forecast} — the Twig context, not HTML
+        public function render(string $city): array
+        {
+            return ['forecast' => $this->weather->forecastFor($city)];
+        }
+    }
+
+The shell only needs styling — the rendered fragment lands in ``#root`` automatically:
+
+.. code-block:: html+twig
+
+    {# templates/mcp/weather.html.twig #}
+    {% extends '@Mcp/app/base.html.twig' %}
+    {% block style %}.card { font: 1rem system-ui; }{% endblock %}
+    {# body defaults to <div id="root"></div>; the rendered `html` is injected there #}
+
+Because the markup is Twig, the fragment can ``{% include %}`` partials and use filters such as
+``markdown_to_html`` — the same building blocks as the rest of your application. Reach for the JS
+``render(model)`` override (shown above) only when you need rich client-side interactivity over a
+structured model; for that case inject ``McpAppRenderer`` and return
+``['html' => $renderer->renderFragment(...)]`` yourself, or build the DOM from the structured result.
+
+Interactive apps
+^^^^^^^^^^^^^^^^
+
+Beyond the initial screen, an app can drive further work itself. Declare follow-up tools with
+``#[AsMcpAppTool]`` on a method of the app class. Like the primary tool, set ``template`` to have the
+bundle render the returned context into ``html``; set ``appOnly: true`` to keep the tool callable from
+the app but hidden from the model's ``tools/list`` (the default exposes it to both the model and the
+app)::
+
+    use Symfony\AI\McpBundle\Attribute\AsMcpAppTool;
+
+    // ... on the same #[AsMcpApp] class, alongside render() ...
+
+    #[AsMcpAppTool(name: 'set_unit', template: 'mcp/_weather.html.twig', appOnly: true)]
+    public function setUnit(string $city, string $unit): array
+    {
+        return ['forecast' => $this->weather->forecastFor($city, $unit)];
+    }
+
+The tool name defaults to the method name in ``snake_case``, its input schema is derived from the method
+signature, and the ``ui`` link to the enclosing app is set automatically.
+
+Invoking such a tool from the iframe needs **no JavaScript**: the base template wires DOM attributes to
+tool calls. Put ``data-call="<tool>"`` on any control — a ``<button>``, a link, or a
+``<form data-call="<tool>">`` (submitted on enter or by a submit button, including one elsewhere bound
+via ``form="<id>"``) — and the returned HTML replaces ``#root`` automatically. Arguments come from
+``data-arg-*`` attributes (``data-arg-city`` → ``{ city }``) or, for a form, from its named fields.
+``data-open="https://…"`` opens an external link.
+
+.. code-block:: html+twig
+
+    <button data-call="set_unit" data-arg-city="{{ city }}" data-arg-unit="celsius">°C</button>
+
+    {# the result HTML lands in #root; the search form below re-runs its tool on submit #}
+    <form data-call="get_weather"><input name="city"><button>Go</button></form>
+
+The default ``render(model)`` also keeps the shell's forms in sync: after each result it writes any
+scalar context value into a form control of the same ``name``. So having the handler return the value it
+was called with (``['city' => $city, 'forecast' => ...]``) refills ``<input name="city">`` on every
+result — including the first render — with no extra wiring; a control the user is actively editing is
+left untouched.
+
+For full client-side control you can still call ``callTool(name, args)`` from your own ``app_script`` and
+render the result yourself, but the declarative attributes cover the common case.
+
 Transport Types
 ...............
 
@@ -301,6 +489,10 @@ Configuration
         discovery:
             scan_dirs: ['src/Mcp'] # limit discovery scanning to a directory where you can group all your tools, resources, prompts, etc ...
 
+        # MCP Apps (interactive HTML UI resources, registered with #[AsMcpApp])
+        apps:
+            enabled: ~ # null = auto-enable when at least one app exists; true/false forces it
+
         client_transports:
             stdio: true # Enable STDIO via command
             http: true # Enable HTTP transport via controller
@@ -416,6 +608,7 @@ You can create event listeners to respond to capability changes::
 The events are simple marker events that notify when lists have changed, but don't contain specific details about what was added or modified.
 
 .. _`Model Context Protocol`: https://modelcontextprotocol.io/
+.. _`MCP Apps`: https://github.com/modelcontextprotocol/ext-apps
 .. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download
 .. _`MCP Server List`: https://modelcontextprotocol.io/examples

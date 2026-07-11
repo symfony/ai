@@ -5,6 +5,9 @@ CHANGELOG
 ----
 
  * Add `http.allowed_hosts` configuration to allow custom hosts or disable the DNS rebinding protection when exposing a public MCP server
+ * Add MCP Apps support via the `#[AsMcpApp]`/`#[AsMcpAppTool]` attributes: interactive HTML UI resources
+   whose tools return a context array the bundle renders server-side with Twig (HTML-over-the-wire);
+   configurable via `mcp.apps.enabled`
 
 0.8
 ---

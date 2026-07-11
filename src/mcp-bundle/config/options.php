@@ -51,6 +51,15 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->end()
                 ->end()
             ->end()
+            ->arrayNode('apps')
+                ->addDefaultsIfNotSet()
+                ->info('MCP Apps support (interactive HTML UI resources). Apps are registered with the #[AsMcpApp] attribute.')
+                ->children()
+                    // null = auto: enable the MCP Apps server extension when at least one #[AsMcpApp]
+                    // exists. true/false forces the extension on/off.
+                    ->booleanNode('enabled')->defaultNull()->end()
+                ->end()
+            ->end()
             ->arrayNode('http')
                 ->addDefaultsIfNotSet()
                 ->children()

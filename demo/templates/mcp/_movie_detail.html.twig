@@ -1,0 +1,39 @@
+{#
+    Movie detail view for the movie MCP app. App\Movies\MovieApp::showMovie() (the `movie_details` tool)
+    returns the context; the bundle renders this template into the tool result and drops it into the
+    shell's #root container.
+
+    "Back" re-submits the shell's search form (`movie_search`); the IMDb link uses `data-open` so the
+    host opens it — no JS here.
+
+    Param: movie — App\Movies\Movie or null when the slug did not resolve
+#}
+<button class="back" type="submit" form="movie-search">&larr; Back</button>
+{% if movie is null %}
+    <p class="muted">Movie not found.</p>
+{% else %}
+    <div class="detail">
+        {% include 'mcp/_poster.html.twig' with { movie, portrait: true } only %}
+        <div>
+            <h1>{{ movie.title }}{% if movie.year %} <span>({{ movie.year }})</span>{% endif %}</h1>
+            <div class="meta">
+                {%- if movie.director %}Directed by {{ movie.director }}{% endif -%}
+                {%- if movie.imdb %} &middot; <span class="link" data-open="{{ movie.imdb }}">IMDb</span>{% endif -%}
+            </div>
+            {% if movie.cast is not empty %}
+                <h2>Cast</h2>
+                <ul>
+                    {% for member in movie.cast %}
+                        <li><b>{{ member.name }}</b> as {{ member.role }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if movie.plot is not empty %}
+                <h2>Plot</h2>
+                {% for paragraph in movie.plot %}
+                    {{ paragraph|markdown_to_html }}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

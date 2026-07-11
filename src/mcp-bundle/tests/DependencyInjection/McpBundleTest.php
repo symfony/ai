@@ -23,6 +23,8 @@ use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\McpBundle\App\McpAppRenderer;
+use Symfony\AI\McpBundle\Attribute\AsMcpApp;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
@@ -589,6 +591,37 @@ class McpBundleTest extends TestCase
         $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfigured);
         $definition = $autoconfigured[NotificationHandlerInterface::class];
         $this->assertTrue($definition->hasTag('mcp.notification_handler'));
+    }
+
+    public function testAppsDefaultConfiguration()
+    {
+        $container = $this->buildContainer([]);
+
+        $this->assertNull($container->getParameter('mcp.apps.enabled'));
+    }
+
+    public function testAppsEnabledFlag()
+    {
+        $container = $this->buildContainer(['mcp' => ['apps' => ['enabled' => true]]]);
+
+        $this->assertTrue($container->getParameter('mcp.apps.enabled'));
+    }
+
+    public function testAsMcpAppAttributeAutoconfiguration()
+    {
+        $container = $this->buildContainer([]);
+
+        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
+        $this->assertArrayHasKey(AsMcpApp::class, $attributeAutoconfigurators);
+    }
+
+    public function testAppRendererRegisteredWhenTwigAvailable()
+    {
+        $container = $this->buildContainer([]);
+
+        // Twig is a dev dependency of the bundle, so the renderer must be registered.
+        $this->assertTrue(class_exists(\Twig\Environment::class));
+        $this->assertTrue($container->hasDefinition(McpAppRenderer::SERVICE_ID));
     }
 
     /**

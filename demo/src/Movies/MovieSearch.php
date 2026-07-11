@@ -35,26 +35,19 @@ final class MovieSearch
     /**
      * @param string $query Search term matched against title, director and cast; pass an empty string to list all movies
      *
-     * @return list<array{slug: string, title: string, year: int|null, director: string|null, cast: list<string>, summary: string}>
+     * @return list<Movie> the matching movies (serialized to the model via {@see Movie::jsonSerialize()})
      */
     public function __invoke(string $query = ''): array
     {
         $needle = mb_strtolower(trim($query));
 
         $results = [];
-        foreach ($this->movies->all() as $movie) {
+        foreach ($this->movies->findAll() as $movie) {
             if ('' !== $needle && !$this->matches($movie, $needle)) {
                 continue;
             }
 
-            $results[] = [
-                'slug' => $movie->slug,
-                'title' => $movie->title,
-                'year' => $movie->year,
-                'director' => $movie->director,
-                'cast' => array_map(static fn (array $member): string => $member['name'], $movie->cast),
-                'summary' => $movie->plot[0] ?? '',
-            ];
+            $results[] = $movie;
         }
 
         return $results;

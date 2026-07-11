@@ -22,8 +22,11 @@ use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
+use Symfony\AI\McpBundle\App\McpAppRenderer;
+use Symfony\AI\McpBundle\Attribute\AsMcpApp;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\DependencyInjection\McpAppPass;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
@@ -40,6 +43,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Twig\Environment;
 
 final class McpBundle extends AbstractBundle
 {
@@ -64,8 +68,10 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.instructions', $config['instructions']);
         $builder->setParameter('mcp.discovery.scan_dirs', $config['discovery']['scan_dirs']);
         $builder->setParameter('mcp.discovery.exclude_dirs', $config['discovery']['exclude_dirs']);
+        $builder->setParameter('mcp.apps.enabled', $config['apps']['enabled']);
 
         $this->registerMcpAttributes($builder);
+        $this->configureApps($builder);
 
         $builder->registerForAutoconfiguration(LoaderInterface::class)
             ->addTag('mcp.loader');
@@ -96,7 +102,28 @@ final class McpBundle extends AbstractBundle
 
     public function build(ContainerBuilder $container): void
     {
+        // McpAppPass runs before McpPass so the bound app-renderer handler services it creates are
+        // included in the handler service locator McpPass builds.
+        $container->addCompilerPass(new McpAppPass(), priority: 10);
         $container->addCompilerPass(new McpPass());
+    }
+
+    private function configureApps(ContainerBuilder $builder): void
+    {
+        $builder->registerAttributeForAutoconfiguration(
+            AsMcpApp::class,
+            static function (ChildDefinition $definition, AsMcpApp $attribute, \Reflector $reflector): void {
+                $definition->addTag('mcp.app');
+            }
+        );
+
+        // The Twig-backed renderer (used for template-based apps) is only available when Twig is.
+        // Aliased to its class so custom #[AsMcpApp] handlers can autowire it.
+        if (class_exists(Environment::class)) {
+            $builder->register(McpAppRenderer::SERVICE_ID, McpAppRenderer::class)
+                ->setArguments([new Reference('twig')]);
+            $builder->setAlias(McpAppRenderer::class, McpAppRenderer::SERVICE_ID);
+        }
     }
 
     private function registerMcpAttributes(ContainerBuilder $builder): void

@@ -1,0 +1,206 @@
+{#
+    Base template for an MCP App (a "text/html;profile=mcp-app" UI resource rendered by the host in a
+    sandboxed iframe).
+
+    The iframe HTML is a STATIC shell. Per-request data is NOT rendered into it with Twig: the host
+    delivers the tool result at runtime via the `ui/notifications/tool-result` message, which calls
+    `render(model)`. There are two ways to turn that result into markup:
+
+    1. HTML-over-the-wire (default, recommended): your tool method returns a plain context array and
+       names its template on the attribute — `toolTemplate` on `#[AsMcpApp]` for the primary tool, or
+       `template` on `#[AsMcpAppTool]` for extra tools. The bundle renders that template with the array
+       and injects the result as the tool result's `html` field; the default `render()` below drops it
+       into `#root` and mirrors any scalar context values into matching form inputs (e.g. a `query`
+       field fills `<input name="query">`). You write no Twig call and no JS:
+
+           {% extends '@Mcp/app/base.html.twig' %}
+           {% block title %}My App{% endblock %}
+           {% block style %}.card { ... }{% endblock %}
+           (the body defaults to a <div id="root"></div>, where the tool result HTML lands)
+
+    2. JS-driven: override `app_script` with your own `render(model)` (it shadows the default) and build
+       the DOM from a structured model. Use this for rich client-side interactivity:
+
+           {% block body %}<div id="root"></div>{% endblock %}
+           {% block app_script %}
+               function render(model) { /* build the DOM from the structured tool result */ }
+           {% endblock %}
+
+    Either way, the Twig context here is only for static shell composition (branding, styles, app name).
+
+    Interactions need no JS either: the bridge wires DOM attributes to tool calls. An element with
+    `data-call="tool_name"` invokes that tool on activation (args from its `data-arg-*` attributes, e.g.
+    `data-arg-slug` -> `{ slug }`), a `<form data-call="tool_name">` sends its named fields as the args,
+    and the returned HTML is rendered automatically. `data-open="https://…"` opens an external link.
+
+           <button data-call="show_item" data-arg-id="42">Open</button>
+           <form data-call="search"><input name="q"><button>Go</button></form>
+
+    The `bridge` block below implements the MCP Apps postMessage protocol so you don't have to:
+    the ui/initialize -> ui/notifications/initialized -> size-changed handshake, request/response
+    plumbing (`sendRpc`/`sendNotification`), an `openLink(url)` helper (sandboxed iframes cannot open
+    links directly), the declarative `data-call`/`data-open` wiring above, and dispatch of
+    tool-result/tool-input to your `render`/`onToolInput` hooks.
+    Spec: https://github.com/modelcontextprotocol/ext-apps
+#}
+<!DOCTYPE html>
+<html lang="{% block lang %}en{% endblock %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MCP App{% endblock %}</title>
+    {% block head %}{% endblock %}
+    <style>{% block style %}{% endblock %}</style>
+</head>
+<body{% block body_attributes %}{% endblock %}>
+    {% block body %}<div id="root"></div>{% endblock %}
+    <script>
+        {% block bridge %}
+        // --- MCP Apps protocol bridge (iframe <-> host via postMessage) -------------------------
+        let requestId = 0;
+        const pending = new Map();
+
+        // Target origin is '*' because the iframe cannot know its parent's origin upfront; the host
+        // validates event.origin on its side.
+        function post(msg) { window.parent.postMessage(msg, '*'); }
+
+        function sendRpc(method, params) {
+            return new Promise((resolve, reject) => {
+                const id = ++requestId;
+                pending.set(id, { resolve, reject });
+                post({ jsonrpc: '2.0', id, method, params });
+            });
+        }
+
+        function sendNotification(method, params) {
+            post({ jsonrpc: '2.0', method, params });
+        }
+
+        // Ask the host to open an external link (raw <a target="_blank"> is blocked in the sandbox).
+        function openLink(url) {
+            sendRpc('ui/open-link', { url }).catch(() => window.open(url, '_blank'));
+        }
+
+        // Invoke a server tool from the app (e.g. a refresh button).
+        function callTool(name, args) {
+            return sendRpc('tools/call', { name: name, arguments: args || {} });
+        }
+
+        window.addEventListener('message', (event) => {
+            let msg = event.data;
+            if (typeof msg === 'string') {
+                try { msg = JSON.parse(msg); } catch { return; }
+            }
+            if (!msg || typeof msg !== 'object') return;
+
+            if (msg.id !== undefined && pending.has(msg.id)) {
+                const { resolve, reject } = pending.get(msg.id);
+                pending.delete(msg.id);
+                msg.error ? reject(msg.error) : resolve(msg.result);
+                return;
+            }
+            if (msg.method === 'ui/notifications/tool-result') {
+                try { render(extractModel(msg.params)); } catch (e) { /* ignore */ }
+            } else if (msg.method === 'ui/notifications/tool-input') {
+                try { onToolInput(msg.params); } catch (e) { /* ignore */ }
+            }
+        });
+
+        // Pull the structured model out of a tool-result payload.
+        function extractModel(params) {
+            if (!params) return null;
+            if (params.structuredContent && typeof params.structuredContent === 'object') {
+                return params.structuredContent;
+            }
+            const text = params.content && params.content[0] && params.content[0].text;
+            if (text) { try { return JSON.parse(text); } catch { return text; } }
+            return null;
+        }
+
+        // Spec-mandated handshake — hosts only forward tool-input / tool-result afterwards.
+        (async () => {
+            try {
+                await sendRpc('ui/initialize', {
+                    protocolVersion: '2026-01-26',
+                    capabilities: {},
+                    clientInfo: { name: '{{ app_name|default('mcp-app') }}', version: '1.0.0' },
+                });
+            } catch { /* degrade gracefully on non-conforming hosts */ }
+            sendNotification('ui/notifications/initialized', {});
+            reportSize();
+        })();
+
+        // Tell the host how tall the iframe should be.
+        let lastW = 0, lastH = 0;
+        function reportSize() {
+            const w = Math.ceil(document.documentElement.scrollWidth);
+            const h = Math.ceil(document.documentElement.scrollHeight);
+            if (w === lastW && h === lastH) return;
+            lastW = w; lastH = h;
+            sendNotification('ui/notifications/size-changed', { width: w, height: h });
+        }
+        new ResizeObserver(reportSize).observe(document.body);
+
+        // Default hooks. The default render() implements the HTML-over-the-wire path: when the tool
+        // result is (or carries) an HTML string, it is injected into #root and Twig owns all markup —
+        // no client-side DOM building. Override these in the app_script block for a JS-driven UI; an
+        // override's `function render` declaration shadows this one.
+        function render(model) {
+            const html = (model && typeof model.html === 'string') ? model.html
+                : (typeof model === 'string' ? model : null);
+            if (null !== html) {
+                const root = document.getElementById('root');
+                if (root) root.innerHTML = html;
+            }
+            // Mirror scalar model fields back into matching form controls (e.g. the `query` that produced
+            // this result fills <input name="query">), so the shell stays in sync on the first render too —
+            // without clobbering a field that is currently being edited.
+            if (model && typeof model === 'object') {
+                for (const field of document.querySelectorAll('input[name], textarea[name], select[name]')) {
+                    const value = model[field.getAttribute('name')];
+                    if ((typeof value === 'string' || typeof value === 'number') && field !== document.activeElement) {
+                        field.value = value;
+                    }
+                }
+            }
+        }
+        function onToolInput(params) {}
+
+        // --- Declarative actions (so apps need no JS) ---------------------------------------------
+        // Activating an element with [data-call="tool_name"] invokes that tool and renders the result
+        // through render() above; arguments come from its [data-arg-*] attributes (data-arg-slug ->
+        // { slug }). A <form data-call="tool_name"> sends its named fields as the arguments instead.
+        // [data-open="https://…"] asks the host to open an external link (sandbox-safe).
+        function callAndRender(name, args) {
+            return callTool(name, args).then((result) => render(extractModel(result)));
+        }
+        function dataArgs(el) {
+            const args = {};
+            for (const name of el.getAttributeNames()) {
+                if (name.startsWith('data-arg-')) {
+                    args[name.slice(9).replace(/-/g, '_')] = el.getAttribute(name);
+                }
+            }
+            return args;
+        }
+        document.addEventListener('click', (event) => {
+            const opener = event.target.closest('[data-open]');
+            if (opener) { event.preventDefault(); openLink(opener.getAttribute('data-open')); return; }
+            const trigger = event.target.closest('[data-call]');
+            if (trigger && 'FORM' !== trigger.tagName) {
+                event.preventDefault();
+                callAndRender(trigger.getAttribute('data-call'), dataArgs(trigger));
+            }
+        });
+        document.addEventListener('submit', (event) => {
+            const form = event.target.closest('form[data-call]');
+            if (!form) { return; }
+            event.preventDefault();
+            callAndRender(form.getAttribute('data-call'), Object.fromEntries(new FormData(form)));
+        });
+        {% endblock %}
+
+        {% block app_script %}{% endblock %}
+    </script>
+</body>
+</html>

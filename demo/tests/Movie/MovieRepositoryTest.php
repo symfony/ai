@@ -43,7 +43,7 @@ final class MovieRepositoryTest extends TestCase
     {
         $repository = new MovieRepository($this->directory);
 
-        $movies = $repository->all();
+        $movies = $repository->findAll();
 
         $this->assertCount(2, $movies);
         /* @phpstan-ignore-next-line method.alreadyNarrowedTypy */
@@ -55,7 +55,7 @@ final class MovieRepositoryTest extends TestCase
     {
         $repository = new MovieRepository($this->directory);
 
-        $movie = $repository->find('alpha');
+        $movie = $repository->findOne('alpha');
 
         $this->assertNotNull($movie);
         $this->assertSame('Alpha', $movie->title);
@@ -66,15 +66,15 @@ final class MovieRepositoryTest extends TestCase
     {
         $repository = new MovieRepository($this->directory);
 
-        $this->assertNull($repository->find('gamma'));
+        $this->assertNull($repository->findOne('gamma'));
     }
 
     public function testFindRejectsEmptyAndTraversalSlugs()
     {
         $repository = new MovieRepository($this->directory);
 
-        $this->assertNull($repository->find(''));
-        $this->assertNull($repository->find('../secret'));
-        $this->assertNull($repository->find('nested/path'));
+        $this->assertNull($repository->findOne(''));
+        $this->assertNull($repository->findOne('../secret'));
+        $this->assertNull($repository->findOne('nested/path'));
     }
 }
