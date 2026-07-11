@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message\ToolCallMessageNor
 use Symfony\AI\Platform\Bridge\OpenResponses\Contract\ToolCallNormalizer;
 use Symfony\AI\Platform\Bridge\OpenResponses\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -35,19 +36,51 @@ class MessageBagNormalizerTest extends TestCase
     #[DataProvider('normalizeProvider')]
     public function testNormalize(MessageBag $messageBag, array $expected)
     {
-        $normalizer = new MessageBagNormalizer();
-        $normalizer->setNormalizer(new Serializer([
-            new Contract\Normalizer\Message\UserMessageNormalizer(),
-            new AssistantMessageNormalizer(),
-            new ToolCallMessageNormalizer(),
-            new ToolNormalizer(),
-            new ToolCallNormalizer(),
-            new Contract\Normalizer\Message\SystemMessageNormalizer(),
-        ]));
-
-        $actual = $normalizer->normalize($messageBag, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+        $actual = self::createNormalizer()->normalize($messageBag, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
 
         $this->assertEquals($expected, $actual);
+    }
+
+    public function testNormalizeThrowsWhenInputIsEmptyAndNoAlternativeInputProvided()
+    {
+        $normalizer = self::createNormalizer();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The message bag must contain at least one non-system message, or one of the "previous_response_id", "prompt" or "conversation_id" options must be provided.');
+
+        $normalizer->normalize(
+            new MessageBag(Message::forSystem('You are a helpful assistant.')),
+            null,
+            [Contract::CONTEXT_MODEL => new Gpt('o3')],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    #[DataProvider('alternativeInputProvider')]
+    public function testNormalizeAllowsEmptyInputWithAlternativeInput(array $options)
+    {
+        $normalizer = self::createNormalizer();
+
+        $actual = $normalizer->normalize(
+            new MessageBag(Message::forSystem('You are a helpful assistant.')),
+            null,
+            [Contract::CONTEXT_MODEL => new Gpt('o3'), Contract::CONTEXT_OPTIONS => $options],
+        );
+
+        $this->assertSame([], $actual['input']);
+        $this->assertSame('You are a helpful assistant.', $actual['instructions']);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function alternativeInputProvider(): iterable
+    {
+        yield 'previous_response_id' => [['previous_response_id' => 'resp_123']];
+        yield 'prompt' => [['prompt' => ['id' => 'pmpt_123']]];
+        yield 'conversation_id' => [['conversation_id' => 'conv_123']];
     }
 
     public static function normalizeProvider(): \Generator
@@ -108,5 +141,20 @@ class MessageBagNormalizerTest extends TestCase
         yield 'supported' => [$messageBad, $gpt, true];
         yield 'unsupported model' => [$messageBad, new Model('foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
+    }
+
+    private static function createNormalizer(): MessageBagNormalizer
+    {
+        $normalizer = new MessageBagNormalizer();
+        $normalizer->setNormalizer(new Serializer([
+            new Contract\Normalizer\Message\UserMessageNormalizer(),
+            new AssistantMessageNormalizer(),
+            new ToolCallMessageNormalizer(),
+            new ToolNormalizer(),
+            new ToolCallNormalizer(),
+            new Contract\Normalizer\Message\SystemMessageNormalizer(),
+        ]));
+
+        return $normalizer;
     }
 }

@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Throw `InvalidArgumentException` when the request would be sent with an empty `input` and no `previous_response_id`, `prompt` or `conversation_id` option, instead of an opaque provider 400
  * Throw `ServerException` on server errors (HTTP 5xx) instead of a generic `RuntimeException`
  * Throw typed exceptions on rate limit and server error events mid-stream
  * Normalize the `baseUrl` and tolerate a trailing slash in the model client
