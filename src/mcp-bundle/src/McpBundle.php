@@ -25,6 +25,7 @@ use Mcp\Server\Session\Psr16SessionStore;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
+use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
@@ -154,6 +155,9 @@ final class McpBundle extends AbstractBundle
         }
 
         if ($transports['http']) {
+            $container->register('mcp.middleware_factory', MiddlewareFactory::class)
+                ->setArguments([$httpConfig['allowed_hosts']]);
+
             $container->register('mcp.server.controller', McpController::class)
                 ->setArguments([
                     new Reference('mcp.server'),
@@ -161,8 +165,8 @@ final class McpBundle extends AbstractBundle
                     new Reference('mcp.http_foundation_factory'),
                     new Reference('mcp.psr17_factory'),
                     new Reference('mcp.psr17_factory'),
+                    new Reference('mcp.middleware_factory'),
                     new Reference('logger'),
-                    $httpConfig['allowed_hosts'],
                 ])
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')
