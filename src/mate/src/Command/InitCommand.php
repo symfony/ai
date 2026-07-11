@@ -96,12 +96,18 @@ class InitCommand extends Command
                 unlink($mcpJsonSymlink);
             }
             if (!file_exists($mcpJsonSymlink)) {
-                symlink('mcp.json', $mcpJsonSymlink);
-                $actions[] = ['✓', 'Created', '.mcp.json (symlink to mcp.json)'];
+                if (@symlink('mcp.json', $mcpJsonSymlink)) {
+                    $actions[] = ['✓', 'Created', '.mcp.json (symlink to mcp.json)'];
+                } else {
+                    $actions[] = ['⚠', 'Warning', 'Could not create .mcp.json symlink (symlink failed). You may need to manually copy mcp.json to .mcp.json'];
+                }
             } elseif ($io->confirm(\sprintf('<question>%s already exists. Replace with symlink?</question>', $mcpJsonSymlink), false)) {
                 unlink($mcpJsonSymlink);
-                symlink('mcp.json', $mcpJsonSymlink);
-                $actions[] = ['✓', 'Updated', '.mcp.json (symlink to mcp.json)'];
+                if (@symlink('mcp.json', $mcpJsonSymlink)) {
+                    $actions[] = ['✓', 'Updated', '.mcp.json (symlink to mcp.json)'];
+                } else {
+                    $actions[] = ['⚠', 'Warning', 'Could not create .mcp.json symlink (symlink failed). You may need to manually copy mcp.json to .mcp.json'];
+                }
             } else {
                 $actions[] = ['○', 'Skipped', '.mcp.json (already exists)'];
             }
