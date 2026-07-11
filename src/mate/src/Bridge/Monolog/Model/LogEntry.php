@@ -32,6 +32,45 @@ final class LogEntry
     private const REGEX_BACKTRACK_LIMIT = 10000;
 
     /**
+     * Key-name substrings (case-insensitive) used to redact values in the log
+     * context/extra exposed to the AI. Application code routinely logs tokens,
+     * credentials, session identifiers and auth details there. Bare `KEY` and
+     * `AUTH` are excluded to avoid redacting common non-sensitive keys (`key`,
+     * `author`); the narrower `AUTHORIZATION`/`AUTHENTICATION`/`OAUTH` cover the
+     * real cases.
+     *
+     * @var array<string>
+     */
+    private const SENSITIVE_KEY_PATTERNS = [
+        'PASSWORD',
+        'PASSWD',
+        'PASSPHRASE',
+        'PWD',
+        'SECRET',
+        'TOKEN',
+        'JWT',
+        'API_KEY',
+        'APIKEY',
+        'ACCESS_KEY',
+        'SIGNING_KEY',
+        'ENCRYPTION_KEY',
+        'OAUTH',
+        'AUTHORIZATION',
+        'AUTHENTICATION',
+        'CREDENTIAL',
+        'PRIVATE',
+        'BEARER',
+        'CSRF',
+        'XSRF',
+        'SESSION',
+        'SESSID',
+        'SIGNATURE',
+        'SALT',
+        'COOKIE',
+        'OTP',
+    ];
+
+    /**
      * @param array<string, mixed> $context
      * @param array<string, mixed> $extra
      */
@@ -103,8 +142,8 @@ final class LogEntry
             'channel' => $this->channel,
             'level' => $this->level,
             'message' => $this->message,
-            'context' => $this->context,
-            'extra' => $this->extra,
+            'context' => $this->redactSensitive($this->context),
+            'extra' => $this->redactSensitive($this->extra),
             'source_file' => $this->sourceFile,
             'line_number' => $this->lineNumber,
         ];
@@ -149,5 +188,42 @@ final class LogEntry
         }
 
         return str_contains(strtolower(json_encode($contextValue) ?: ''), strtolower($value));
+    }
+
+    /**
+     * Recursively redact values whose key matches a sensitive pattern. Applied
+     * only to the AI-facing output; the raw context/extra remain searchable.
+     *
+     * @param array<array-key, mixed> $data
+     *
+     * @return array<array-key, mixed>
+     */
+    private function redactSensitive(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (\is_string($key) && $this->isSensitiveKey($key)) {
+                $data[$key] = '***REDACTED***';
+                continue;
+            }
+
+            if (\is_array($value)) {
+                $data[$key] = $this->redactSensitive($value);
+            }
+        }
+
+        return $data;
+    }
+
+    private function isSensitiveKey(string $key): bool
+    {
+        // Normalise hyphens to underscores so `api-key` matches the patterns too.
+        $upperKey = str_replace('-', '_', strtoupper($key));
+        foreach (self::SENSITIVE_KEY_PATTERNS as $pattern) {
+            if (str_contains($upperKey, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
