@@ -16,6 +16,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\EventStreamResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ServerEvent;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
@@ -71,14 +73,20 @@ final class TwigComponent extends AbstractController
 
     public function streamContent(Request $request): EventStreamResponse
     {
-        // The chat is kept in a session-scoped cache, so make sure the session id is
-        // available; the streamed body itself never touches the session, which lets the
-        // framework close (and unlock) it before the response is sent.
-        $request->getSession()->start();
-
+        // The chat is kept in a session-scoped cache, so load the messages while the real
+        // session is still available.
         $messages = $this->chat->loadMessages();
 
-        return new EventStreamResponse(function () use ($messages) {
+        $actualSession = $request->getSession();
+
+        // Overriding the session prevents the framework from calling save() on the actual
+        // session, which fixes the "Failed to start the session because headers have already
+        // been sent" error once the streamed body has started sending output.
+        $request->setSession(new Session(new MockArraySessionStorage()));
+
+        return new EventStreamResponse(function () use ($request, $actualSession, $messages) {
+            $request->setSession($actualSession);
+
             foreach ($this->chat->getRecipeStream($messages) as $recipe) {
                 yield new ServerEvent(explode("\n", $this->renderBlockView('components/_recipe_stream.html.twig', 'update', ['recipe' => $recipe])));
             }
