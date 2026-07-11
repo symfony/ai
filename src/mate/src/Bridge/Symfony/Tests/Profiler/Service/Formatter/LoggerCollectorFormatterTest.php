@@ -107,6 +107,62 @@ final class LoggerCollectorFormatterTest extends TestCase
         $this->assertFalse($result['logs_truncated']);
     }
 
+    public function testFormatRedactsSensitiveContextValues()
+    {
+        $context = $this->createMock(Data::class);
+        $context->method('getValue')->with(true)->willReturn([
+            'user_id' => 42,
+            'author' => 'jane',
+            'password' => 'hunter2',
+            'access_token' => 'tok-secret',
+            'jwt' => 'jwt-secret',
+            'session_id' => 'sess-secret',
+            'cookie' => 'cookie-secret',
+            'nested' => ['api_key' => 'k-secret', 'note' => 'visible'],
+        ]);
+
+        $collector = $this->createMock(LoggerDataCollector::class);
+        $collector->method('countErrors')->willReturn(0);
+        $collector->method('countWarnings')->willReturn(0);
+        $collector->method('countDeprecations')->willReturn(0);
+        $collector->method('countScreams')->willReturn(0);
+        $collector->method('getProcessedLogs')->willReturn([
+            [
+                'type' => 'info',
+                'timestamp' => 1234567890.0,
+                'priority' => 200,
+                'priorityName' => 'INFO',
+                'channel' => 'security',
+                'message' => 'Authentication attempt',
+                'context' => $context,
+                'errorCount' => 0,
+            ],
+        ]);
+
+        $result = $this->formatter->format($collector);
+
+        $logContext = $result['logs'][0]['context'];
+        // Non-sensitive keys stay visible, including the easily-over-matched `author`.
+        $this->assertSame(42, $logContext['user_id']);
+        $this->assertSame('jane', $logContext['author']);
+        $this->assertSame('visible', $logContext['nested']['note']);
+        // Sensitive keys (incl. jwt/session/cookie) are redacted, recursively.
+        $this->assertSame('***REDACTED***', $logContext['password']);
+        $this->assertSame('***REDACTED***', $logContext['access_token']);
+        $this->assertSame('***REDACTED***', $logContext['jwt']);
+        $this->assertSame('***REDACTED***', $logContext['session_id']);
+        $this->assertSame('***REDACTED***', $logContext['cookie']);
+        $this->assertSame('***REDACTED***', $logContext['nested']['api_key']);
+
+        $serialized = json_encode($result);
+        $this->assertStringNotContainsString('hunter2', $serialized);
+        $this->assertStringNotContainsString('tok-secret', $serialized);
+        $this->assertStringNotContainsString('jwt-secret', $serialized);
+        $this->assertStringNotContainsString('sess-secret', $serialized);
+        $this->assertStringNotContainsString('cookie-secret', $serialized);
+        $this->assertStringNotContainsString('k-secret', $serialized);
+    }
+
     public function testFormatTruncatesAt100Logs()
     {
         $logs = [];

@@ -31,6 +31,44 @@ final class LoggerCollectorFormatter implements CollectorFormatterInterface
 {
     private const MAX_LOGS = 100;
 
+    /**
+     * Key-name substrings (case-insensitive) used to redact values in the log
+     * context, where application code routinely puts tokens, credentials, session
+     * identifiers and auth details. Bare `KEY` and `AUTH` are intentionally
+     * excluded to avoid redacting common non-sensitive keys (`key`, `author`);
+     * the narrower `AUTHORIZATION`/`AUTHENTICATION`/`OAUTH` cover the real cases.
+     *
+     * @var array<string>
+     */
+    private const SENSITIVE_CONTEXT_KEY_PATTERNS = [
+        'PASSWORD',
+        'PASSWD',
+        'PASSPHRASE',
+        'PWD',
+        'SECRET',
+        'TOKEN',
+        'JWT',
+        'API_KEY',
+        'APIKEY',
+        'ACCESS_KEY',
+        'SIGNING_KEY',
+        'ENCRYPTION_KEY',
+        'OAUTH',
+        'AUTHORIZATION',
+        'AUTHENTICATION',
+        'CREDENTIAL',
+        'PRIVATE',
+        'BEARER',
+        'CSRF',
+        'XSRF',
+        'SESSION',
+        'SESSID',
+        'SIGNATURE',
+        'SALT',
+        'COOKIE',
+        'OTP',
+    ];
+
     public function getName(): string
     {
         return 'logger';
@@ -85,6 +123,10 @@ final class LoggerCollectorFormatter implements CollectorFormatterInterface
                 $context = $context->getValue(true);
             }
 
+            if (\is_array($context)) {
+                $context = $this->redactContext($context);
+            }
+
             $formatted[] = [
                 'type' => $log['type'] ?? null,
                 'timestamp' => $log['timestamp'] ?? null,
@@ -98,5 +140,41 @@ final class LoggerCollectorFormatter implements CollectorFormatterInterface
         }
 
         return $formatted;
+    }
+
+    /**
+     * Recursively redact values whose key matches a sensitive pattern.
+     *
+     * @param array<array-key, mixed> $context
+     *
+     * @return array<array-key, mixed>
+     */
+    private function redactContext(array $context): array
+    {
+        foreach ($context as $key => $value) {
+            if (\is_string($key) && $this->isSensitiveContextKey($key)) {
+                $context[$key] = '***REDACTED***';
+                continue;
+            }
+
+            if (\is_array($value)) {
+                $context[$key] = $this->redactContext($value);
+            }
+        }
+
+        return $context;
+    }
+
+    private function isSensitiveContextKey(string $key): bool
+    {
+        // Normalise hyphens to underscores so `api-key` matches the patterns too.
+        $upperKey = str_replace('-', '_', strtoupper($key));
+        foreach (self::SENSITIVE_CONTEXT_KEY_PATTERNS as $pattern) {
+            if (str_contains($upperKey, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
