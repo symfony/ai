@@ -162,6 +162,23 @@ final class InitCommandTest extends TestCase
         $this->assertFalse($composerJson['extra']['ai-mate']['extension']);
     }
 
+    public function testScaffoldsSensitiveFilesWithSecurePermissions()
+    {
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $this->markTestSkipped('Permission-based tests are not reliable on Windows');
+        }
+
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertSame(0750, fileperms($this->tempDir.'/mate') & 0777);
+        $this->assertSame(0640, fileperms($this->tempDir.'/mate/.env') & 0777);
+        $this->assertSame(0640, fileperms($this->tempDir.'/mate/config.php') & 0777);
+    }
+
     private function createCommand(): InitCommand
     {
         $logger = new NullLogger();

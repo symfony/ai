@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Command;
 
 use HelgeSverre\Toon\Toon;
 use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
+use Symfony\AI\Mate\Service\FilePermissions;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,6 +30,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand('init', 'Initialize Mate configuration and directory structure')]
 class InitCommand extends Command
 {
+    /**
+     * Scaffolded files that may contain secrets or local configuration and must not be
+     * world-readable.
+     *
+     * @var list<string>
+     */
+    private const SENSITIVE_FILES = [
+        'mate/.env',
+        'mate/config.php',
+    ];
+
     public function __construct(
         private string $rootDir,
         private AgentInstructionsMaterializer $instructionsMaterializer,
@@ -58,7 +70,7 @@ class InitCommand extends Command
 
         $mateDir = $this->rootDir.'/mate';
         if (!is_dir($mateDir)) {
-            mkdir($mateDir, 0755, true);
+            mkdir($mateDir, FilePermissions::DIRECTORY, true);
             $actions[] = ['✓', 'Created', 'mate/ directory'];
         }
 
@@ -115,7 +127,7 @@ class InitCommand extends Command
 
         $mateSrcDir = $this->rootDir.'/mate/src';
         if (!is_dir($mateSrcDir)) {
-            mkdir($mateSrcDir, 0755, true);
+            mkdir($mateSrcDir, FilePermissions::DIRECTORY, true);
             file_put_contents($mateSrcDir.'/.gitignore', '');
             $actions[] = ['✓', 'Created', 'mate/src/ directory (for custom MCP tools)'];
         } else {
@@ -155,7 +167,7 @@ class InitCommand extends Command
     {
         $directory = \dirname($destination);
         if (!is_dir($directory)) {
-            mkdir($directory, 0755, true);
+            mkdir($directory, FilePermissions::DIRECTORY, true);
         }
 
         copy(__DIR__.'/../../resources/'.$template, $destination);
@@ -163,11 +175,17 @@ class InitCommand extends Command
 
     private function postCopyTemplateAction(string $template, string $destination): void
     {
-        if ('bin/codex' !== $template) {
+        if ('bin/codex' === $template) {
+            chmod($destination, FilePermissions::EXECUTABLE);
+
             return;
         }
 
-        chmod($destination, 0755);
+        // Restrict files that may contain secrets or local configuration so they are not
+        // readable by other users on shared hosts.
+        if (\in_array($template, self::SENSITIVE_FILES, true)) {
+            @chmod($destination, FilePermissions::FILE);
+        }
     }
 
     /**
