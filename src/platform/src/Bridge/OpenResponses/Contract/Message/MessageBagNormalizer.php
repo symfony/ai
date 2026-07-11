@@ -12,7 +12,9 @@
 namespace Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message;
 
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
+use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
@@ -54,6 +56,18 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
 
         if ($data->getSystemMessage()) {
             $messages['instructions'] = $data->getSystemMessage()->getContent();
+        }
+
+        // The Responses API requires one of "input", "previous_response_id", "prompt" or
+        // "conversation_id". A message bag with only a system message (mapped to "instructions")
+        // yields an empty "input" and would otherwise fail with an opaque provider 400. Fail fast
+        // with a clear error unless the caller supplies an alternative input via options.
+        if ([] === $messages['input']) {
+            $options = $context[Contract::CONTEXT_OPTIONS] ?? [];
+
+            if (!isset($options['previous_response_id']) && !isset($options['prompt']) && !isset($options['conversation_id'])) {
+                throw new InvalidArgumentException('The message bag must contain at least one non-system message, or one of the "previous_response_id", "prompt" or "conversation_id" options must be provided.');
+            }
         }
 
         return $messages;

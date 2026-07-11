@@ -58,6 +58,17 @@ final class Chat
      */
     public function getAssistantResponse(MessageBag $messages): \Generator
     {
+        $messageList = $messages->getMessages();
+        $lastMessage = [] === $messageList ? null : $messageList[array_key_last($messageList)];
+
+        // Only answer when the latest message is still awaiting a reply. This guards against
+        // reconnecting, duplicate or stale SSE connections (e.g. after a stream error or a
+        // reset) that would otherwise call the model with no pending user message and trigger
+        // a provider "input required" error.
+        if (!$lastMessage instanceof UserMessage) {
+            return Message::ofAssistant('');
+        }
+
         $stream = $this->agent->call($messages, ['stream' => true])->getContent();
         \assert(is_iterable($stream));
 
