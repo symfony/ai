@@ -86,6 +86,46 @@ symfony console ai:store:retrieve blog "Week of Symfony"
 
 **Don't forget to set up the project in your favorite IDE or editor.**
 
+## Testing
+
+```shell
+vendor/bin/phpunit                  # unit and integration tests
+vendor/bin/phpunit --testsuite e2e  # end-to-end tests in a real browser
+```
+
+### End-to-End Tests
+
+The `e2e` suite uses [Symfony Panther](https://github.com/symfony/panther) to click through all ten
+use cases and assert the Symfony AI panel of the profiler for the very request the click triggered.
+Every test calls an AI platform for real, which costs money and takes time - the suite is therefore
+excluded from the default one, and meant to be run locally.
+
+Next to the setup above, it needs:
+
+* **Chrome or Chromium** with a matching `chromedriver`, which `vendor/bin/bdi detect drivers`
+  downloads into `drivers/`. If only a Snap or Flatpak Chromium is installed, point Panther at it
+  with `PANTHER_CHROME_BINARY` in `.env.test.local`.
+* **API keys** in `.env.local`, or exported in your environment - a test is skipped when the key of
+  its use case is missing: `OPENAI_API_KEY` for eight of them, `HUGGINGFACE_API_KEY` for the image
+  cropping, `MISTRAL_API_KEY` for the document OCR.
+* **ffmpeg** (optional) to convert the audio fixture for the fake microphone of the speech use case.
+
+The blog store does not need to be indexed beforehand: `StoreTest` drives the indexing pipeline
+through the console commands, and `BlogTest` sets the store up and indexes it when it is empty. Both
+skip themselves when the database is not running.
+
+Panther boots the application in the **dev** environment, because the profiler - and with it the
+Symfony AI panel - only collects data with `kernel.debug` enabled. The web server therefore reads
+the real API keys from `.env.local` itself. Chrome fakes camera and microphone, so the video and
+speech use cases run without a human in front of the screen.
+
+```shell
+vendor/bin/phpunit --testsuite e2e --filter BlogTest      # a single use case
+PANTHER_NO_HEADLESS=1 vendor/bin/phpunit --testsuite e2e  # watch the browser
+```
+
+Screenshots of failing tests are written to `var/error-screenshots/`.
+
 ## Functionality
 
 * The chatbot application is a simple and small Symfony 8.0 application.

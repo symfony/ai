@@ -26,9 +26,14 @@ symfony serve -d                              # https://localhost:8000/
 ```bash
 vendor/bin/phpunit                            # All tests (config in phpunit.xml)
 vendor/bin/phpunit tests/SmokeTest.php        # Single test file
+vendor/bin/phpunit --testsuite e2e            # Panther browser tests, local only (see README.md)
 vendor/bin/phpstan analyse                    # Static analysis (phpstan.dist.neon)
 # There is no enforced formatter in this package — php-cs-fixer is configured at the monorepo root.
 ```
+
+The `e2e` suite drives all ten use cases in a real browser and asserts the Symfony AI panel of the
+profiler (platform calls, tools, tool calls, token usage). It runs the app in the `dev` environment,
+calls the AI platforms for real, and is excluded from the default suite — never add it to CI.
 
 ### MCP Servers
 Two MCP servers coexist in this repo:

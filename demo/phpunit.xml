@@ -6,6 +6,7 @@
          cacheDirectory=".phpunit.cache"
          colors="true"
          beStrictAboutOutputDuringTests="true"
+         defaultTestSuite="default"
          failOnRisky="true"
          failOnWarning="true">
     <php>
@@ -17,8 +18,18 @@
     <testsuites>
         <testsuite name="default">
             <directory>tests</directory>
+            <exclude>tests/E2E</exclude>
+        </testsuite>
+        <!-- End-to-end tests driving a real browser against the real AI platforms. They are not part
+             of the default suite and are meant to be run locally, see README.md. -->
+        <testsuite name="e2e">
+            <directory>tests/E2E</directory>
         </testsuite>
     </testsuites>
+
+    <extensions>
+        <bootstrap class="Symfony\Component\Panther\ServerExtension" />
+    </extensions>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
         <include>

@@ -21,4 +21,8 @@ phpstan.neon
 .phpunit.cache
 ###< phpunit/phpunit ###
 
+###> symfony/panther ###
+/drivers/
+###< symfony/panther ###
+
 pgdata
