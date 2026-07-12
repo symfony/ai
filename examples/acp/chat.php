@@ -31,3 +31,9 @@ $messages = new MessageBag(
 $result = $platform->invoke('acp-v1', $messages);
 
 echo $result->asText().\PHP_EOL;
+
+$tokenUsage = $result->getMetadata()->get('token_usage');
+if (null !== $tokenUsage) {
+    print_token_usage($tokenUsage);
+    echo \PHP_EOL;
+}

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Acp\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Acp\Acp;
 use Symfony\AI\Platform\Bridge\Acp\ResultConverter;
+use Symfony\AI\Platform\Bridge\Acp\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -289,10 +290,10 @@ final class ResultConverterTest extends TestCase
         $converter->convert($rawResult);
     }
 
-    public function testGetTokenUsageExtractorReturnsNull(): void
+    public function testGetTokenUsageExtractorReturnsExtractor(): void
     {
         $converter = new ResultConverter();
 
-        $this->assertNull($converter->getTokenUsageExtractor());
+        $this->assertInstanceOf(TokenUsageExtractor::class, $converter->getTokenUsageExtractor());
     }
 }
