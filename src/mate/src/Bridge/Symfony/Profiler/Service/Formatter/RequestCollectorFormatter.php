@@ -22,7 +22,9 @@ use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
  * - Session cookies and tokens
  * - API keys and secrets in environment variables
  * - Authorization headers
- * - Password and authentication data
+ * - Password and authentication data submitted as request/query parameters
+ * - The raw request body (which may carry credentials, e.g. a JSON login payload)
+ * - The reconstructed curl command (re-embeds body, URL query string and headers)
  *
  * @author Johannes Wachter <johannes@sulu.io>
  *
@@ -44,17 +46,71 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
         'AUTH',
         'CREDENTIAL',
         'PRIVATE',
+        'COOKIE',
     ];
 
     /**
+     * Server-bag keys whose values embed sensitive request data (the raw query
+     * string, in particular) under a non-sensitive key name, so key-based
+     * matching would otherwise miss them.
+     *
      * @var array<string>
      */
-    private const SENSITIVE_HEADERS = [
+    private const SENSITIVE_SERVER_KEYS = [
+        'REQUEST_URI',
+        'QUERY_STRING',
+    ];
+
+    /**
+     * Substrings that mark a header as sensitive (case-insensitive). Matching by
+     * substring rather than an exact name list so variants and vendor-specific
+     * headers (e.g. `proxy-authorization`, `www-authenticate`, `x-csrf-token`,
+     * `x-amz-security-token`) are covered without enumerating every spelling.
+     *
+     * @var array<string>
+     */
+    private const SENSITIVE_HEADER_PATTERNS = [
         'authorization',
         'cookie',
-        'set-cookie',
-        'x-api-key',
-        'x-auth-token',
+        'auth',
+        'token',
+        'secret',
+        'credential',
+        'csrf',
+        'xsrf',
+        'api-key',
+        'apikey',
+        'session',
+        'x-amz-security',
+    ];
+
+    /**
+     * Parameter names whose values are redacted wherever they appear in request,
+     * query, or attribute data (case-insensitive substring match). Symfony's own
+     * collector only masks `_password`; any other field name (e.g. `password`,
+     * `api_key`) and the whole query string otherwise reach us in clear text.
+     *
+     * @var array<string>
+     */
+    private const SENSITIVE_PARAM_PATTERNS = [
+        'PASSWORD',
+        'PASSWD',
+        'PASSPHRASE',
+        'PWD',
+        'SECRET',
+        'TOKEN',
+        'API_KEY',
+        'APIKEY',
+        'ACCESS_KEY',
+        'SIGNING_KEY',
+        'ENCRYPTION_KEY',
+        'OAUTH',
+        'CREDENTIAL',
+        'PRIVATE',
+        'BEARER',
+        'CSRF',
+        'XSRF',
+        'OTP',
     ];
 
     public function getName(): string
@@ -116,7 +172,7 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
 
         // Sanitize server variables (environment)
         if (isset($data['request_server']) && \is_array($data['request_server'])) {
-            $data['request_server'] = $this->sanitizeEnvironment($data['request_server']);
+            $data['request_server'] = $this->sanitizeServer($data['request_server']);
         }
 
         // Sanitize dotenv vars
@@ -127,6 +183,30 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
         // Sanitize session data
         if (isset($data['session_attributes']) && \is_array($data['session_attributes'])) {
             $data['session_attributes'] = $this->redactArray($data['session_attributes']);
+        }
+
+        // Redact sensitive values submitted as request/query parameters or stored
+        // as request attributes (e.g. passwords, API keys, CSRF tokens). Symfony
+        // only masks `_password`; other field names and the query string would
+        // otherwise be exposed verbatim.
+        foreach (['request_request', 'request_query', 'request_attributes'] as $key) {
+            if (isset($data[$key]) && \is_array($data[$key])) {
+                $data[$key] = $this->redactSensitiveParams($data[$key]);
+            }
+        }
+
+        // The raw request body can carry credentials (e.g. a JSON login payload)
+        // that cannot be reliably field-redacted; omit it. Parsed, sanitized
+        // parameters remain available under request_request / request_query.
+        if (isset($data['content']) && \is_string($data['content']) && '' !== $data['content']) {
+            $data['content'] = '***REDACTED*** (raw request body omitted; see request_request / request_query)';
+        }
+
+        // The reconstructed curl command re-embeds the raw body (--data-raw), the
+        // full URL including the query string, and request headers (Authorization
+        // included), so it would re-expose everything the redactions above remove.
+        if (isset($data['curlCommand']) && \is_string($data['curlCommand'])) {
+            $data['curlCommand'] = '***REDACTED*** (curl command omitted; reconstructs the raw body, URL query string and request headers)';
         }
 
         return $data;
@@ -140,13 +220,24 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
     private function sanitizeHeaders(array $headers): array
     {
         foreach ($headers as $key => $value) {
-            $lowerKey = strtolower($key);
-            if (\in_array($lowerKey, self::SENSITIVE_HEADERS, true)) {
+            if ($this->isSensitiveHeader($key)) {
                 $headers[$key] = '***REDACTED***';
             }
         }
 
         return $headers;
+    }
+
+    private function isSensitiveHeader(string $name): bool
+    {
+        $lowerName = strtolower($name);
+        foreach (self::SENSITIVE_HEADER_PATTERNS as $pattern) {
+            if (str_contains($lowerName, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -170,6 +261,24 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
     }
 
     /**
+     * @param array<string, mixed> $server
+     *
+     * @return array<string, mixed>
+     */
+    private function sanitizeServer(array $server): array
+    {
+        $server = $this->sanitizeEnvironment($server);
+
+        foreach (self::SENSITIVE_SERVER_KEYS as $key) {
+            if (isset($server[$key]) && '' !== $server[$key]) {
+                $server[$key] = '***REDACTED***';
+            }
+        }
+
+        return $server;
+    }
+
+    /**
      * @param array<string, mixed> $data
      *
      * @return array<string, mixed>
@@ -181,5 +290,42 @@ final class RequestCollectorFormatter implements CollectorFormatterInterface
         }
 
         return $data;
+    }
+
+    /**
+     * Recursively redact values whose key matches a sensitive parameter pattern,
+     * leaving non-sensitive keys (and the overall structure) intact so the AI can
+     * still see which parameters were submitted.
+     *
+     * @param array<array-key, mixed> $data
+     *
+     * @return array<array-key, mixed>
+     */
+    private function redactSensitiveParams(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (\is_string($key) && $this->isSensitiveParam($key)) {
+                $data[$key] = '***REDACTED***';
+                continue;
+            }
+
+            if (\is_array($value)) {
+                $data[$key] = $this->redactSensitiveParams($value);
+            }
+        }
+
+        return $data;
+    }
+
+    private function isSensitiveParam(string $key): bool
+    {
+        $upperKey = strtoupper($key);
+        foreach (self::SENSITIVE_PARAM_PATTERNS as $pattern) {
+            if (str_contains($upperKey, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
