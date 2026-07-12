@@ -18,8 +18,8 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(
     workingDirectory: dirname(__DIR__, 2),
     transport: 'socket',
-    host: $_SERVER['ACP_HOST'] ?? $_ENV['ACP_HOST'] ?? '127.0.0.1',
-    port: (int) ($_SERVER['ACP_PORT'] ?? $_ENV['ACP_PORT'] ?? 3000),
+    host: env('ACP_HOST'),
+    port: (int) env('ACP_PORT'),
     logger: logger(),
 );
 
