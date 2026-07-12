@@ -51,7 +51,7 @@ class Factory
         $transportInstance = 'socket' === $transport
             ? new SocketTransport(\sprintf('tcp://%s:%d', $host, $port), $logger)
             : new ProcessTransport(
-                trim(($command ?? ($_ENV['ACP_BINARY'] ?? 'opencode acp')).' '.($_ENV['ACP_ARGS'] ?? '')),
+                trim(($command ?? ($_ENV['ACP_BINARY'] ?? '')).' '.($_ENV['ACP_ARGS'] ?? '')),
                 $workingDirectory,
                 $environment,
                 $logger,

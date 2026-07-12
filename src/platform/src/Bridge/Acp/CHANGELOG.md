@@ -1,7 +1,7 @@
-# Changelog
+CHANGELOG
+=========
 
-All notable changes to this project will be documented in this file.
+Unreleased
+----------
 
-## [Unreleased]
-
-- Initial implementation of ACP bridge for Symfony AI Platform
+* Add the bridge
