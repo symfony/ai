@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    failOnWarning is disabled, unlike in the other bridges: the LocalS3 emulator used for the integration tests
+    omits the "distanceMetric" field in QueryVectors responses, even though AWS declares it as required, which
+    makes async-aws emit a PHP warning while parsing the response. Can be enabled once LocalS3 returns it.
+-->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          backupGlobals="false"
@@ -6,7 +12,7 @@
          bootstrap="vendor/autoload.php"
          failOnDeprecation="true"
          failOnRisky="true"
-         failOnWarning="true"
+         failOnWarning="false"
          executionOrder="random"
 >
     <php>

@@ -1,0 +1,5 @@
+services:
+    local-s3:
+        image: luofuxiang/local-s3:2.4
+        ports:
+            - '8099:80'
