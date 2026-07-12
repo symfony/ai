@@ -37,4 +37,49 @@ final class ModelClientTest extends TestCase
 
         $this->assertSame($expectedResponse, $result->getData());
     }
+
+    public function testItUsesTheRegionalEndpointForARegionalLocation()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://europe-west1-aiplatform.googleapis.com/v1/projects/test/locations/europe-west1/publishers/google/models/gemini-embedding-001:predict',
+                $url,
+            );
+
+            return new JsonMockResponse(['predictions' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'europe-west1', 'test');
+        $client->request(new Model('gemini-embedding-001'), 'test payload');
+    }
+
+    public function testItUsesTheResidencyEndpointForAJurisdictionalLocation()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://aiplatform.us.rep.googleapis.com/v1/projects/test/locations/us/publishers/google/models/gemini-embedding-001:predict',
+                $url,
+            );
+
+            return new JsonMockResponse(['predictions' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'us', 'test');
+        $client->request(new Model('gemini-embedding-001'), 'test payload');
+    }
+
+    public function testItUsesTheGlobalHostWhenNoLocationIsProvided()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertStringStartsWith(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-embedding-001:predict',
+                $url,
+            );
+
+            return new JsonMockResponse(['predictions' => []]);
+        });
+
+        $client = new ModelClient($httpClient, apiKey: 'test-key');
+        $client->request(new Model('gemini-embedding-001'), 'test payload');
+    }
 }

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Embeddings;
 
+use Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -22,6 +23,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    use RegionAwareTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly ?string $location = null,
@@ -40,9 +43,12 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $host = $this->resolveHost($this->location);
+
         if (null !== $this->location && null !== $this->projectId) {
             $url = \sprintf(
-                'https://aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
+                'https://%s/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
+                $host,
                 $this->projectId,
                 $this->location,
                 $model->getName(),
@@ -50,7 +56,8 @@ final class ModelClient implements ModelClientInterface
             );
         } else {
             $url = \sprintf(
-                'https://aiplatform.googleapis.com/v1/publishers/google/models/%s:%s',
+                'https://%s/v1/publishers/google/models/%s:%s',
+                $host,
                 $model->getName(),
                 'predict',
             );
