@@ -18,7 +18,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 final class TokenUsageExtractorTest extends TestCase
 {
-    public function testItReturnsNullWhenUsageIsMissing(): void
+    public function testItReturnsNullWhenUsageIsMissing()
     {
         $extractor = new TokenUsageExtractor();
         $rawResult = new FakeRawResult([]);
@@ -26,7 +26,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertNull($extractor->extract($rawResult));
     }
 
-    public function testItReturnsNullForStreamOption(): void
+    public function testItReturnsNullForStreamOption()
     {
         $extractor = new TokenUsageExtractor();
         $rawResult = new FakeRawResult([
@@ -41,7 +41,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertNull($extractor->extract($rawResult, ['stream' => true]));
     }
 
-    public function testItExtractsTokenUsage(): void
+    public function testItExtractsTokenUsage()
     {
         $extractor = new TokenUsageExtractor();
         $rawResult = new FakeRawResult([

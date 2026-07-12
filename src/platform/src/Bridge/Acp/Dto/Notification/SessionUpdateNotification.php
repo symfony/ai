@@ -41,7 +41,7 @@ final class SessionUpdateNotification extends AbstractJsonRpcNotification
 
     public function getUpdateType(): string
     {
-        return $this->update['sessionUpdate'] ?? '';
+        return $this->update ? ($this->update['sessionUpdate'] ?? '') : '';
     }
 
     public function getToolCallId(): ?string
@@ -114,10 +114,7 @@ final class SessionUpdateNotification extends AbstractJsonRpcNotification
                 if (\is_array($rawOutput['output'])) {
                     $arguments = $rawOutput['output'];
                 } else {
-                    $json = json_encode($rawOutput['output'], \JSON_THROW_ON_ERROR);
-                    if (json_validate($json)) {
-                        $arguments = json_decode($json, true, 512, \JSON_THROW_ON_ERROR) ?: [];
-                    }
+                    $arguments = ['output' => $rawOutput['output']];
                 }
             }
 

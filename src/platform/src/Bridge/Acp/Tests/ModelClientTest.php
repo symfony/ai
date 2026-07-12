@@ -28,21 +28,21 @@ use Symfony\AI\Platform\Model;
  */
 final class ModelClientTest extends TestCase
 {
-    public function testSupportsAcpModel(): void
+    public function testSupportsAcpModel()
     {
         $client = new ModelClient('dummy', null, [], null, new NullLogger(), new FakeTransport());
 
         $this->assertTrue($client->supports(new Acp('acp-v1')));
     }
 
-    public function testDoesNotSupportOtherModels(): void
+    public function testDoesNotSupportOtherModels()
     {
         $client = new ModelClient('dummy', null, [], null, new NullLogger(), new FakeTransport());
 
         $this->assertFalse($client->supports(new Model('other')));
     }
 
-    public function testThrowsExceptionWhenCliNotFound(): void
+    public function testThrowsExceptionWhenCliNotFound()
     {
         $this->expectException(CliNotFoundException::class);
         $this->expectExceptionMessage('ACP binary "" was not found.');
@@ -51,7 +51,7 @@ final class ModelClientTest extends TestCase
         $client->request(new Acp('acp-v1'), 'Hello');
     }
 
-    public function testRequestReturnsRawProcessResult(): void
+    public function testRequestReturnsRawProcessResult()
     {
         $transport = new FakeTransport([
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
@@ -64,7 +64,7 @@ final class ModelClientTest extends TestCase
         $this->assertInstanceOf(RawProcessResult::class, $result);
     }
 
-    public function testRequestSendsNormalizedStringPrompt(): void
+    public function testRequestSendsNormalizedStringPrompt()
     {
         $transport = new FakeTransport([
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
@@ -80,7 +80,7 @@ final class ModelClientTest extends TestCase
         $this->assertSame([['type' => 'text', 'text' => 'Hello']], $messages[2]['params']['prompt']);
     }
 
-    public function testRequestSendsPromptArrayFromPayload(): void
+    public function testRequestSendsPromptArrayFromPayload()
     {
         $transport = new FakeTransport([
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
@@ -94,7 +94,7 @@ final class ModelClientTest extends TestCase
         $this->assertSame([['type' => 'text', 'text' => 'What is PHP?']], $messages[2]['params']['prompt']);
     }
 
-    public function testRequestNormalizesMessageBagPayload(): void
+    public function testRequestNormalizesMessageBagPayload()
     {
         $transport = new FakeTransport([
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
@@ -115,7 +115,7 @@ final class ModelClientTest extends TestCase
         ], $messages[2]['params']['prompt']);
     }
 
-    public function testCloseClosesTransport(): void
+    public function testCloseClosesTransport()
     {
         $transport = new FakeTransport();
         $transport->start();

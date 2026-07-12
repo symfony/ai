@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Acp\Acp;
 use Symfony\AI\Platform\Bridge\Acp\ResultConverter;
 use Symfony\AI\Platform\Bridge\Acp\TokenUsageExtractor;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -32,21 +31,21 @@ use Symfony\AI\Platform\Result\ToolCallResult;
  */
 final class ResultConverterTest extends TestCase
 {
-    public function testSupportsAcpModel(): void
+    public function testSupportsAcpModel()
     {
         $converter = new ResultConverter();
 
         $this->assertTrue($converter->supports(new Acp('acp-v1')));
     }
 
-    public function testDoesNotSupportOtherModels(): void
+    public function testDoesNotSupportOtherModels()
     {
         $converter = new ResultConverter();
 
         $this->assertFalse($converter->supports(new \Symfony\AI\Platform\Model('other')));
     }
 
-    public function testConvertStreamingTextDelta(): void
+    public function testConvertStreamingTextDelta()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -73,7 +72,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(', World!', $chunks[1]->getText());
     }
 
-    public function testConvertStreamingThinkingDelta(): void
+    public function testConvertStreamingThinkingDelta()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -95,7 +94,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Let me think...', $chunks[0]->getThinking());
     }
 
-    public function testConvertStreamingToolCallStart(): void
+    public function testConvertStreamingToolCallStart()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -118,7 +117,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('read_file', $chunks[0]->getName());
     }
 
-    public function testConvertStreamingToolInputDelta(): void
+    public function testConvertStreamingToolInputDelta()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -142,7 +141,7 @@ final class ResultConverterTest extends TestCase
         $this->assertJson($chunks[0]->getPartialJson());
     }
 
-    public function testConvertStreamingToolCallComplete(): void
+    public function testConvertStreamingToolCallComplete()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -168,7 +167,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['content' => 'file content'], $toolCalls[0]->getArguments());
     }
 
-    public function testConvertStreamingToolCallCompleteWithScalarOutput(): void
+    public function testConvertStreamingToolCallCompleteWithScalarOutput()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -192,7 +191,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['output' => 'file content'], $toolCalls[0]->getArguments());
     }
 
-    public function testConvertStreamingAgentMessageChunk(): void
+    public function testConvertStreamingAgentMessageChunk()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -217,7 +216,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('thinking', $chunks[1]->getThinking());
     }
 
-    public function testConvertNonStreamingTextResult(): void
+    public function testConvertNonStreamingTextResult()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -233,7 +232,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Hello, World!', $result->getContent());
     }
 
-    public function testConvertNonStreamingWithToolCalls(): void
+    public function testConvertNonStreamingWithToolCalls()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(
@@ -263,18 +262,18 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Done', $parts[1]->getContent());
     }
 
-    public function testConvertThrowsOnEmptyData(): void
+    public function testConvertThrowsOnEmptyData()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult([]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\Symfony\AI\Platform\Bridge\Acp\Exception\ProtocolException::class);
         $this->expectExceptionMessage('ACP did not return any result.');
 
         $converter->convert($rawResult);
     }
 
-    public function testConvertThrowsOnNoSupportedContent(): void
+    public function testConvertThrowsOnNoSupportedContent()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult(

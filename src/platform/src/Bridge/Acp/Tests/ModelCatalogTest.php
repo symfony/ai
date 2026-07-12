@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Capability;
  */
 final class ModelCatalogTest extends TestCase
 {
-    public function testGetModelReturnsAcpModelWithCorrectCapabilities(): void
+    public function testGetModelReturnsAcpModelWithCorrectCapabilities()
     {
         $catalog = new ModelCatalog();
 
@@ -37,7 +37,7 @@ final class ModelCatalogTest extends TestCase
         $this->assertSame(1, $model->protocolVersion);
     }
 
-    public function testGetModelAcpV2SetsProtocolVersion(): void
+    public function testGetModelAcpV2SetsProtocolVersion()
     {
         $catalog = new ModelCatalog();
 
@@ -47,7 +47,7 @@ final class ModelCatalogTest extends TestCase
         $this->assertSame(2, $model->protocolVersion);
     }
 
-    public function testGetModelSetsClientCapabilitiesFromCatalog(): void
+    public function testGetModelSetsClientCapabilitiesFromCatalog()
     {
         $catalog = new ModelCatalog();
 
