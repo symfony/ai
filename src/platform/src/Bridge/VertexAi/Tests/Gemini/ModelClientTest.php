@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Tests\Gemini;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ModelClient;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -91,6 +92,46 @@ final class ModelClientTest extends TestCase
         });
 
         $client = new ModelClient($httpClient, apiKey: 'test-key');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
+    public function testItUsesTheGlobalEndpointWhenTheProjectIdIsMissing()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash:generateContent',
+                $url,
+            );
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'europe-west1');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
+    public function testItLowercasesTheLocation()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://aiplatform.eu.rep.googleapis.com/v1/projects/test/locations/eu/publishers/google/models/gemini-2.0-flash:generateContent',
+                $url,
+            );
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'EU', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
+    public function testItThrowsOnAnInvalidLocation()
+    {
+        $client = new ModelClient(new MockHttpClient(), 'evil.com/europe-west1', 'test');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid location "evil.com/europe-west1". Valid options are "global", "eu", "us", or a region like "europe-west1".');
+
         $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
     }
 

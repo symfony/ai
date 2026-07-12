@@ -89,6 +89,20 @@ Platform
    +Factory::createPlatform('global', 'my-project'); // keep the global host
    ```
 
+   The same applies to the AI Bundle, which passes its configured `location` to the factory:
+
+   ```diff
+   ai:
+       platform:
+           vertexai:
+   -            location: 'europe-west1' # used aiplatform.googleapis.com
+   +            location: 'global' # keep the global host
+               project_id: 'my-project'
+   ```
+
+   A `location` that is neither `global`, `eu`/`us`, nor a region (e.g. `europe-west1`) is now
+   rejected with an `InvalidArgumentException` instead of being sent to a non-existing host.
+
 Store
 -----
 

@@ -165,6 +165,14 @@ The API host is derived from the ``location`` passed to the factory:
 
 See `Vertex AI locations`_ and `Vertex AI data residency`_ for the list of supported values.
 
+The location is case-insensitive, and a value that is neither ``global``, ``eu``/``us``, nor a
+region is rejected with an ``InvalidArgumentException``.
+
+.. note::
+
+    The location is only part of the project-scoped URL, so it only takes effect together with a
+    project ID. The API-key-only setup always uses the global endpoint.
+
 Token Usage Tracking
 --------------------
 
