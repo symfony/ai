@@ -20,7 +20,8 @@
         "php": ">=8.2",
         "symfony/ai-platform": "^0.10",
         "revolt/event-loop": "^1.0",
-        "amphp/process": "^2.0"
+        "amphp/process": "^2.0",
+        "amphp/socket": "^2.3"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

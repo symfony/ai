@@ -439,6 +439,10 @@ final class AiBundle extends AbstractBundle
                     new Definition('Symfony\\AI\\Platform\\Bridge\\Acp\\ModelCatalog'),
                     null,
                     new Reference('event_dispatcher'),
+                    null,
+                    $platform['transport'],
+                    $platform['host'] ?? null,
+                    $platform['port'] ?? null,
                 ])
                 ->addTag('ai.platform', ['name' => 'acp']);
 
