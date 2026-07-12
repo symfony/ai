@@ -27,7 +27,7 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 final class DoctrineCollectorFormatter implements CollectorFormatterInterface
 {
     private const MAX_QUERIES = 50;
-    private const MAX_PARAM_LENGTH = 100;
+    private const REDACTED = '***REDACTED***';
 
     public function getName(): string
     {
@@ -82,7 +82,7 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
                     $grouped[$sql] = [
                         'count' => 0,
                         'total_time_ms' => 0.0,
-                        'sample_params' => $this->truncateParams($query['params'] ?? null),
+                        'sample_params' => $this->redactParams($query['params'] ?? null),
                     ];
                 }
 
@@ -108,16 +108,22 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
         return $result;
     }
 
-    private function truncateParams(mixed $params): mixed
+    /**
+     * Bound query parameters routinely carry user data (emails, password hashes,
+     * reset tokens, ...) and there is no key name to decide which are sensitive,
+     * so every leaf value is redacted. The array shape and parameter count are
+     * preserved so the AI can still see that the query was parameterized.
+     */
+    private function redactParams(mixed $params): mixed
     {
-        if (\is_string($params) && \strlen($params) > self::MAX_PARAM_LENGTH) {
-            return substr($params, 0, self::MAX_PARAM_LENGTH).'...';
-        }
-
         if (\is_array($params)) {
-            return array_map(fn (mixed $param): mixed => $this->truncateParams($param), $params);
+            return array_map(fn (mixed $param): mixed => $this->redactParams($param), $params);
         }
 
-        return $params;
+        if (null === $params) {
+            return null;
+        }
+
+        return self::REDACTED;
     }
 }
