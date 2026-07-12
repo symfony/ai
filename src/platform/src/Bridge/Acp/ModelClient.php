@@ -224,11 +224,30 @@ final class ModelClient implements ModelClientInterface
     {
         while (true) {
             $message = $this->readNextMessage();
-            if (($message['id'] ?? null) !== $requestId) {
+            $messageId = $message['id'] ?? null;
+
+            if (null === $messageId) {
+                if (isset($message['method'])) {
+                    $this->handleNotification($message);
+                }
                 continue;
             }
 
+            if ($messageId !== $requestId) {
+                throw new ProtocolException(\sprintf('Unexpected response ID "%s", expected "%s".', $messageId, $requestId));
+            }
+
             return $message;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $message
+     */
+    private function handleNotification(array $message): void
+    {
+        if (null !== $this->onStatus && 'status' === ($message['method'] ?? null)) {
+            ($this->onStatus)($message['params']['status'] ?? 'unknown');
         }
     }
 

@@ -153,7 +153,7 @@ final class RawProcessResult implements RawResultInterface
                     break;
                 }
 
-                continue;
+                throw new ProtocolException(\sprintf('Unexpected response ID "%s", expected "%s".', $message['id'], $this->requestId));
             }
 
             $this->lines[] = $message;
