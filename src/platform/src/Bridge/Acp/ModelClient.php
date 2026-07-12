@@ -176,7 +176,7 @@ final class ModelClient implements ModelClientInterface
 
         $missingCapabilities = array_diff($model->requiredAgentCapabilities, array_keys(array_filter($this->agentCapabilities)));
         if ([] !== $missingCapabilities) {
-            throw new ProtocolException(\sprintf('ACP agent is missing required capabilities: %s.', implode(', ', $missingCapabilities)));
+            throw new ProtocolException(\sprintf('ACP agent is missing required capabilities: "%s".', implode(', ', $missingCapabilities)));
         }
 
         $sessionRequestId = $this->nextId++;

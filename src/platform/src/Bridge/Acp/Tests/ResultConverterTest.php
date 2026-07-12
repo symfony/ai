@@ -289,7 +289,7 @@ final class ResultConverterTest extends TestCase
         $converter->convert($rawResult);
     }
 
-    public function testGetTokenUsageExtractorReturnsExtractor(): void
+    public function testGetTokenUsageExtractorReturnsExtractor()
     {
         $converter = new ResultConverter();
 
