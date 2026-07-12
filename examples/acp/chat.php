@@ -19,9 +19,6 @@ $platform = Factory::createPlatform(
     workingDirectory: dirname(__DIR__, 2),
     command: env('ACP_BINARY'),
     logger: logger(),
-    onStatus: static function (string $status): void {
-        output()->writeln(sprintf('<info>[acp] %s</info>', $status));
-    },
 );
 
 $messages = new MessageBag(
@@ -34,6 +31,7 @@ echo $result->asText().\PHP_EOL;
 
 $tokenUsage = $result->getMetadata()->get('token_usage');
 if (null !== $tokenUsage) {
+    echo \PHP_EOL;
     print_token_usage($tokenUsage);
     echo \PHP_EOL;
 }

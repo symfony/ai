@@ -30,14 +30,14 @@ final class ModelClientTest extends TestCase
 {
     public function testSupportsAcpModel()
     {
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), new FakeTransport());
+        $client = new ModelClient('dummy', null, [], new NullLogger(), new FakeTransport());
 
         $this->assertTrue($client->supports(new Acp('acp-v1')));
     }
 
     public function testDoesNotSupportOtherModels()
     {
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), new FakeTransport());
+        $client = new ModelClient('dummy', null, [], new NullLogger(), new FakeTransport());
 
         $this->assertFalse($client->supports(new Model('other')));
     }
@@ -47,7 +47,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(CliNotFoundException::class);
         $this->expectExceptionMessage('ACP binary "" was not found.');
 
-        $client = new ModelClient('');
+        $client = new ModelClient('', null, [], new NullLogger());
         $client->request(new Acp('acp-v1'), 'Hello');
     }
 
@@ -57,7 +57,7 @@ final class ModelClientTest extends TestCase
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
             ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['sessionId' => 'session-1']],
         ]);
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), $transport);
+        $client = new ModelClient('dummy', null, [], new NullLogger(), $transport);
 
         $result = $client->request(new Acp('acp-v1'), 'Hello');
 
@@ -70,7 +70,7 @@ final class ModelClientTest extends TestCase
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
             ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['sessionId' => 'session-1']],
         ]);
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), $transport);
+        $client = new ModelClient('dummy', null, [], new NullLogger(), $transport);
 
         $client->request(new Acp('acp-v1'), 'Hello');
 
@@ -86,7 +86,7 @@ final class ModelClientTest extends TestCase
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
             ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['sessionId' => 'session-1']],
         ]);
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), $transport);
+        $client = new ModelClient('dummy', null, [], new NullLogger(), $transport);
 
         $client->request(new Acp('acp-v1'), ['prompt' => ['What is PHP?']]);
 
@@ -100,7 +100,7 @@ final class ModelClientTest extends TestCase
             ['jsonrpc' => '2.0', 'id' => 0, 'result' => ['protocolVersion' => 1, 'agentCapabilities' => [], 'agentInfo' => []]],
             ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['sessionId' => 'session-1']],
         ]);
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), $transport);
+        $client = new ModelClient('dummy', null, [], new NullLogger(), $transport);
         $payload = Contract::create()->createRequestPayload(new Acp('acp-v1'), new MessageBag(
             Message::forSystem('You are helpful.'),
             Message::ofUser('What is Symfony?'),
@@ -119,7 +119,7 @@ final class ModelClientTest extends TestCase
     {
         $transport = new FakeTransport();
         $transport->start();
-        $client = new ModelClient('dummy', null, [], null, new NullLogger(), $transport);
+        $client = new ModelClient('dummy', null, [], new NullLogger(), $transport);
 
         $client->close();
 

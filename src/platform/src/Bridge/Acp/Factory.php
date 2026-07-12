@@ -39,7 +39,6 @@ class Factory
         ?string $command = null,
         ?string $workingDirectory = null,
         array $environment = [],
-        ?callable $onStatus = null,
         ?LoggerInterface $logger = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
@@ -67,7 +66,6 @@ class Factory
             command: $command ?? '',
             workingDirectory: $workingDirectory,
             environment: $environment,
-            onStatus: $onStatus,
             logger: $logger,
             transport: $transportInstance,
         );
@@ -91,7 +89,6 @@ class Factory
         ?string $command = null,
         ?string $workingDirectory = null,
         array $environment = [],
-        ?callable $onStatus = null,
         ?LoggerInterface $logger = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
@@ -102,7 +99,7 @@ class Factory
         ?int $port = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($name, $command, $workingDirectory, $environment, $onStatus, $logger, $modelCatalog, $contract, $eventDispatcher, $transport, $host, $port)],
+            [self::createProvider($name, $command, $workingDirectory, $environment, $logger, $modelCatalog, $contract, $eventDispatcher, $transport, $host, $port)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );

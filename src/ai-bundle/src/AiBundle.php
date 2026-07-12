@@ -434,7 +434,6 @@ final class AiBundle extends AbstractBundle
                     $platform['command'] ?? null,
                     $platform['working_directory'] ?? null,
                     $platform['environment'],
-                    null,
                     new Reference(LoggerInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Definition('Symfony\\AI\\Platform\\Bridge\\Acp\\ModelCatalog'),
                     null,
