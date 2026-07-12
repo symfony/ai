@@ -53,25 +53,7 @@ final class ModelClient implements ModelClientInterface
         $isStream = $options['stream'] ?? false;
         $method = $isStream ? 'streamGenerateContent' : 'generateContent';
 
-        $host = $this->resolveHost($this->location);
-
-        if (null !== $this->location && null !== $this->projectId) {
-            $url = \sprintf(
-                'https://%s/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
-                $host,
-                $this->projectId,
-                $this->location,
-                $model->getName(),
-                $method,
-            );
-        } else {
-            $url = \sprintf(
-                'https://%s/v1/publishers/google/models/%s:%s',
-                $host,
-                $model->getName(),
-                $method,
-            );
-        }
+        $url = self::getEndpoint($this->location, $this->projectId, $model->getName(), $method);
 
         $query = [];
         if (null !== $this->apiKey) {

@@ -43,25 +43,7 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $host = $this->resolveHost($this->location);
-
-        if (null !== $this->location && null !== $this->projectId) {
-            $url = \sprintf(
-                'https://%s/v1/projects/%s/locations/%s/publishers/google/models/%s:%s',
-                $host,
-                $this->projectId,
-                $this->location,
-                $model->getName(),
-                'predict',
-            );
-        } else {
-            $url = \sprintf(
-                'https://%s/v1/publishers/google/models/%s:%s',
-                $host,
-                $model->getName(),
-                'predict',
-            );
-        }
+        $url = self::getEndpoint($this->location, $this->projectId, $model->getName(), 'predict');
 
         $query = [];
         if (null !== $this->apiKey) {

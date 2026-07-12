@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\TaskType;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -36,6 +37,10 @@ final class ModelClientTest extends TestCase
         $result = $client->request($model, 'test payload');
 
         $this->assertSame($expectedResponse, $result->getData());
+        $this->assertSame(
+            'https://aiplatform.googleapis.com/v1/projects/test/locations/global/publishers/google/models/gemini-embedding-001:predict',
+            $result->getObject()->getInfo()['url'],
+        );
     }
 
     public function testItUsesTheRegionalEndpointForARegionalLocation()
@@ -80,6 +85,31 @@ final class ModelClientTest extends TestCase
         });
 
         $client = new ModelClient($httpClient, apiKey: 'test-key');
+        $client->request(new Model('gemini-embedding-001'), 'test payload');
+    }
+
+    public function testItUsesTheGlobalEndpointWhenTheProjectIdIsMissing()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url) {
+            $this->assertSame(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-embedding-001:predict',
+                $url,
+            );
+
+            return new JsonMockResponse(['predictions' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'europe-west1');
+        $client->request(new Model('gemini-embedding-001'), 'test payload');
+    }
+
+    public function testItThrowsOnAnInvalidLocation()
+    {
+        $client = new ModelClient(new MockHttpClient(), 'evil.com/europe-west1', 'test');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid location "evil.com/europe-west1". Valid options are "global", "eu", "us", or a region like "europe-west1".');
+
         $client->request(new Model('gemini-embedding-001'), 'test payload');
     }
 }
