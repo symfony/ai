@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Add `AiAssertionsTrait` for functional tests based on Profiler data
  * Add `minimax` platform configuration for the MiniMax bridge
  * Autoconfigure `SchemaProviderInterface` implementations so they can be referenced from `#[Schema(provider: ...)]`, and validate those references on tools at container build time
  * Add support for `ScopingHttpClient` usage in `Typesense` store via `http_client` option

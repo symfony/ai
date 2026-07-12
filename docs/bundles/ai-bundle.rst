@@ -1245,6 +1245,77 @@ The profiler panel provides insights into the agent's execution:
 .. image:: images/profiler-ai.png
    :alt: Profiler Panel
 
+Testing agents
+~~~~~~~~~~~~~~
+
+Answers of a model are not deterministic, which makes them a poor thing to assert on. What an agent
+*did* is deterministic enough: that it called the model, that it reached for a tool, that it did not
+call the platform twice when once is expected.
+
+The profiler collects exactly that, and ``AiAssertionsTrait`` turns it into assertions for
+functional tests. Enable the profiler on the client before the request, and assert afterwards::
+
+    use Symfony\AI\AiBundle\Test\AiAssertionsTrait;
+    use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+    final class AgentTest extends WebTestCase
+    {
+        use AiAssertionsTrait;
+
+        public function testTheAgentSearchesTheBlog()
+        {
+            $client = static::createClient();
+            $client->enableProfiler();
+
+            $client->request('POST', '/chat', ['message' => 'What happened last week?']);
+
+            // Once to decide on the tool, once with its result.
+            self::assertPlatformCallCount(2);
+            self::assertModelCalled('gpt-4.1');
+            self::assertToolCalled('similarity_search');
+        }
+    }
+
+The trait provides:
+
+``assertPlatformCallCount(int $expectedCount)``
+    The number of calls made to a platform while handling the request, across all agents.
+
+``assertModelCalled(string $model)``
+    That the given model was called at least once.
+
+``assertToolCalled(string $tool)`` and ``assertToolCallCount(int $expectedCount)``
+    The tools the model actually invoked.
+
+``assertToolRegistered(string $tool)``
+    That a tool is configured and therefore available to be called. Careful: the tools are collected
+    from *every* toolbox of the application, not only from the agent that handled the request - so
+    this says that a tool exists, not that this request used it. ``assertToolCalled()`` is what
+    answers the latter.
+
+Reading the collected data
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For anything the assertions do not cover, ``getAiDataCollector()`` hands back the collector itself.
+Its data is collected as objects, so the ``input`` of a platform call is the ``MessageBag`` that was
+sent, and the ``metadata`` is a ``Metadata`` instance carrying the token usage the platform
+reported - there is nothing to parse::
+
+    $call = self::getAiDataCollector()->getPlatformCalls()[0];
+
+    $this->assertNotNull($call['input']->getSystemMessage());
+    $this->assertGreaterThan(0, $call['metadata']->get('token_usage')->getPromptTokens());
+
+Next to ``getPlatformCalls()``, ``getToolCalls()`` and ``getTools()``, the collector exposes the
+agents, chats, message stores and stores that took part in the request.
+
+.. note::
+
+    The data collector only exists when the profiler is enabled, so the profiler needs to be
+    available in the ``test`` environment. Browser-based tests that drive the application in a
+    separate web server - Panther, for instance - cannot reach the collector through the container,
+    and are not covered by the trait.
+
 Message stores
 --------------
 
