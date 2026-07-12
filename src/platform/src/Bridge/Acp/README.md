@@ -20,6 +20,14 @@ $platform = Factory::createPlatform(
     onStatus: fn(string $status) => echo "[acp] $status\n",
 );
 
+$socketPlatform = Factory::createPlatform(
+    name: 'copilot-acp',
+    transport: 'socket',
+    host: '127.0.0.1',
+    port: 3000,
+    onStatus: fn(string $status) => echo "[acp] $status\n",
+);
+
 $result = $platform->invoke('acp-default', Message::ofUser('List files'), ['stream' => true]);
 
 foreach ($result->asStream() as $delta) {
@@ -29,9 +37,11 @@ foreach ($result->asStream() as $delta) {
 
 ## Configuration
 
+- **`transport`**: ACP transport (`process` or `socket`, default: `process`)
 - **`ACP_BINARY`** (env var): Path to the ACP CLI binary (default: `opencode acp`)
 - **`ACP_ARGS`** (env var): Additional arguments for the ACP CLI
-- **`workingDirectory`**: Working directory for the ACP process
+- **`host` / `port`**: TCP socket endpoint for ACP servers such as Copilot
+- **`workingDirectory`**: Working directory for the ACP process and default session cwd
 - **`environment`**: Environment variables for the ACP process
 - **`protocolVersion`**: ACP protocol version (default: 1)
 

@@ -13,6 +13,8 @@ namespace Symfony\AI\Platform\Bridge\Acp;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Platform\Bridge\Acp\Transport\ProcessTransport;
+use Symfony\AI\Platform\Bridge\Acp\Transport\SocketTransport;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -41,17 +43,27 @@ class Factory
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
+        string $transport = 'process',
+        ?string $host = null,
+        ?int $port = null,
     ): ProviderInterface {
-        $command = $command ?? ($_ENV['ACP_BINARY'] ?? 'opencode acp');
-        $args = $_ENV['ACP_ARGS'] ?? '';
-        $fullCommand = trim("$command $args");
+        $logger ??= new NullLogger();
+        $transportInstance = 'socket' === $transport
+            ? new SocketTransport(\sprintf('tcp://%s:%d', $host, $port), $logger)
+            : new ProcessTransport(
+                trim(($command ?? ($_ENV['ACP_BINARY'] ?? 'opencode acp')).' '.($_ENV['ACP_ARGS'] ?? '')),
+                $workingDirectory,
+                $environment,
+                $logger,
+            );
 
         $modelClient = new ModelClient(
-            command: $fullCommand,
+            command: $command ?? '',
             workingDirectory: $workingDirectory,
             environment: $environment,
             onStatus: $onStatus,
-            logger: $logger ?? new NullLogger(),
+            logger: $logger,
+            transport: $transportInstance,
         );
 
         return new Provider(
@@ -79,9 +91,12 @@ class Factory
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         ?ModelRouterInterface $modelRouter = null,
+        string $transport = 'process',
+        ?string $host = null,
+        ?int $port = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($name, $command, $workingDirectory, $environment, $onStatus, $logger, $modelCatalog, $contract, $eventDispatcher)],
+            [self::createProvider($name, $command, $workingDirectory, $environment, $onStatus, $logger, $modelCatalog, $contract, $eventDispatcher, $transport, $host, $port)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
