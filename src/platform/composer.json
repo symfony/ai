@@ -64,12 +64,10 @@
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
-        "amphp/process": "2.x-dev",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "revolt/event-loop": "^1.0@dev",
         "symfony/cache": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dotenv": "^7.3|^8.0",

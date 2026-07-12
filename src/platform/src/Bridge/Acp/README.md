@@ -1,60 +1,17 @@
-# ACP Platform Bridge
+ACP Platform
+============
 
-This bridge integrates the [Agent Client Protocol (ACP)](https://agentclientprotocol.com) into the Symfony AI Platform.
+Agent Client Protocol (ACP) platform bridge for Symfony AI.
 
-## Installation
+ACP Documentation
+-----------------
 
-```bash
-composer require symfony/ai-acp-platform
-```
+* [Agent Client Protocol](https://agentclientprotocol.com)
 
-## Usage
+Resources
+---------
 
-```php
-use Symfony\AI\Platform\Bridge\Acp\Factory;
-use Symfony\AI\Platform\Message\Message;
-
-$platform = Factory::createPlatform(
-    name: 'my-acp-agent',
-    command: $_ENV['ACP_BINARY'] ?? 'opencode acp',
-    onStatus: fn(string $status) => echo "[acp] $status\n",
-);
-
-$socketPlatform = Factory::createPlatform(
-    name: 'copilot-acp',
-    transport: 'socket',
-    host: '127.0.0.1',
-    port: 3000,
-    onStatus: fn(string $status) => echo "[acp] $status\n",
-);
-
-$result = $platform->invoke('acp-default', Message::ofUser('List files'), ['stream' => true]);
-
-foreach ($result->asStream() as $delta) {
-    // Handle TextDelta, ThinkingDelta, ToolCallStart, ToolInputDelta, ToolCallComplete
-}
-```
-
-## Configuration
-
-- **`transport`**: ACP transport (`process` or `socket`, default: `process`)
-- **`ACP_BINARY`** (env var): Path to the ACP CLI binary (default: `opencode acp`)
-- **`ACP_ARGS`** (env var): Additional arguments for the ACP CLI
-- **`host` / `port`**: TCP socket endpoint for ACP servers such as Copilot
-- **`workingDirectory`**: Working directory for the ACP process and default session cwd
-- **`environment`**: Environment variables for the ACP process
-- **`protocolVersion`**: ACP protocol version (default: 1)
-
-## Features
-
-- ✅ Text and thinking streaming
-- ✅ Tool call support (start, input, complete)
-- ✅ Multi-version protocol support (v1, v2 ready)
-- ✅ Configurable binary path
-- ✅ Session management
-
-## Notes
-
-- ACP v2 is still in draft. This bridge supports v1 and prepares for v2, but v2-specific features are not yet implemented.
-- Token usage extraction is not supported in v1 (waiting for stable spec).
-- Advanced content types (image, audio, diffs, terminal) are preserved in raw results but not converted to deltas yet.
+* [Contributing](https://symfony.com/doc/current/contributing/index.html)
+* [Report issues](https://github.com/symfony/ai/issues) and
+  [send Pull Requests](https://github.com/symfony/ai/pulls)
+  in the [main Symfony AI repository](https://github.com/symfony/ai)

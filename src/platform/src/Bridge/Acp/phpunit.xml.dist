@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="../../../../../vendor/autoload.php"
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         backupGlobals="false"
          colors="true"
-         beStrictAboutTestsThatDoNotTestAnything="true"
-         cacheDirectory=".phpunit.cache"
-         executionOrder="default"
+         bootstrap="vendor/autoload.php"
+         failOnDeprecation="true"
          failOnRisky="true"
          failOnWarning="true"
-         requireCoverageMetadata="false"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+         executionOrder="random"
 >
+    <php>
+        <ini name="error_reporting" value="-1" />
+    </php>
+
     <testsuites>
-        <testsuite name="ACP Bridge Test Suite">
-            <directory>Tests</directory>
+        <testsuite name="Symfony AI ACP Platform Test Suite">
+            <directory>./Tests/</directory>
         </testsuite>
     </testsuites>
+
+    <source ignoreSuppressionOfDeprecations="true">
+        <include>
+            <directory>./</directory>
+        </include>
+        <exclude>
+            <directory>./Resources</directory>
+            <directory>./Tests</directory>
+            <directory>./vendor</directory>
+        </exclude>
+    </source>
 </phpunit>
