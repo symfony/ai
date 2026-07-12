@@ -17,7 +17,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(
     workingDirectory: dirname(__DIR__, 2),
-    command: $_SERVER['ACP_BINARY'] ?? $_ENV['ACP_BINARY'] ?? 'opencode acp',
+    command: env('ACP_BINARY'),
     logger: logger(),
 );
 
