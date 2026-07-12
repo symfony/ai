@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Acp;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Platform\Bridge\Acp\Exception\TransportException;
 use Symfony\AI\Platform\Bridge\Acp\Transport\ProcessTransport;
 use Symfony\AI\Platform\Bridge\Acp\Transport\SocketTransport;
 use Symfony\AI\Platform\Contract;
@@ -48,14 +49,19 @@ class Factory
         ?int $port = null,
     ): ProviderInterface {
         $logger ??= new NullLogger();
-        $transportInstance = 'socket' === $transport
-            ? new SocketTransport(\sprintf('tcp://%s:%d', $host, $port), $logger)
-            : new ProcessTransport(
-                trim(($command ?? ($_ENV['ACP_BINARY'] ?? '')).' '.($_ENV['ACP_ARGS'] ?? '')),
+        if ('socket' === $transport) {
+            if (null === $host || null === $port) {
+                throw new TransportException('ACP socket transport requires both "host" and "port".');
+            }
+            $transportInstance = new SocketTransport(\sprintf('tcp://%s:%d', $host, $port), $logger);
+        } else {
+            $transportInstance = new ProcessTransport(
+                trim($command ?? ''),
                 $workingDirectory,
                 $environment,
                 $logger,
             );
+        }
 
         $modelClient = new ModelClient(
             command: $command ?? '',

@@ -38,8 +38,8 @@ final class MessageStreamNotification extends AbstractJsonRpcNotification
 
     public function toDelta(): ?DeltaInterface
     {
-        $type = $this->content['type'] ?? 'text';
-        $text = $this->content['text'] ?? '';
+        $type = $this->content ? ($this->content['type'] ?? 'text') : 'text';
+        $text = $this->content ? ($this->content['text'] ?? '') : '';
 
         return match ($type) {
             'text' => new TextDelta($text),
