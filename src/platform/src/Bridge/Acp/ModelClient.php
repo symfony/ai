@@ -42,15 +42,12 @@ final class ModelClient implements ModelClientInterface
     private array $agentInfo = [];
 
     /**
-     * @param array<string, string>       $environment
-     * @param callable(string): void|null $onStatus
+     * @param array<string, string> $environment
      */
     public function __construct(
         private readonly string $command,
         private readonly ?string $workingDirectory = null,
         private readonly array $environment = [],
-        /** @var callable(string): void|null */
-        private $onStatus = null,
         private readonly LoggerInterface $logger = new NullLogger(),
         ?TransportInterface $transport = null,
     ) {
@@ -148,9 +145,7 @@ final class ModelClient implements ModelClientInterface
      */
     private function performHandshake(Acp $model, array $options): void
     {
-        if (null !== $this->onStatus) {
-            ($this->onStatus)('initializing');
-        }
+        $this->logger->info('ACP handshake initializing');
 
         $requestId = $this->nextId++;
         $this->transport->send([
@@ -212,9 +207,7 @@ final class ModelClient implements ModelClientInterface
         $this->sessionId = $sessionId;
         $this->handshakeDone = true;
 
-        if (null !== $this->onStatus) {
-            ($this->onStatus)('handshake_complete');
-        }
+        $this->logger->info('ACP handshake complete', ['sessionId' => $sessionId]);
     }
 
     /**
@@ -246,8 +239,8 @@ final class ModelClient implements ModelClientInterface
      */
     private function handleNotification(array $message): void
     {
-        if (null !== $this->onStatus && 'status' === ($message['method'] ?? null)) {
-            ($this->onStatus)($message['params']['status'] ?? 'unknown');
+        if ('status' === ($message['method'] ?? null)) {
+            $this->logger->info('ACP agent status', ['status' => $message['params']['status'] ?? 'unknown']);
         }
     }
 

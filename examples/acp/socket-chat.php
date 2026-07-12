@@ -21,9 +21,6 @@ $platform = Factory::createPlatform(
     host: env('ACP_HOST'),
     port: (int) env('ACP_PORT'),
     logger: logger(),
-    onStatus: static function (string $status): void {
-        output()->writeln(sprintf('<info>[acp] %s</info>', $status));
-    },
 );
 
 $messages = new MessageBag(
