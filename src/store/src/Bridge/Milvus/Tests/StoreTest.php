@@ -294,6 +294,25 @@ final class StoreTest extends TestCase
         $this->assertSame('id in ["a\\\\"," or id != \"x"]', $body['filter']);
     }
 
+    public function testStoreCanClear()
+    {
+        $requestedUrl = null;
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$body): JsonMockResponse {
+            $requestedUrl = $url;
+            $body = json_decode($options['body'] ?? '{}', true);
+
+            return new JsonMockResponse(['code' => 0], ['http_code' => 200]);
+        }, 'http://127.0.0.1:19530');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:19530', 'test', 'test', 'test_collection');
+        $store->clear();
+
+        $this->assertSame('http://127.0.0.1:19530/v2/vectordb/entities/delete', $requestedUrl);
+        $this->assertSame('test_collection', $body['collectionName']);
+        $this->assertSame("id != ''", $body['filter']);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'http://localhost:19530', 'test-api-key', 'default', 'test_collection');

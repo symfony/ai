@@ -17,6 +17,7 @@ use Codewithkyrian\ChromaDB\Responses\QueryItemsResponse;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -30,6 +31,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const BATCH_SIZE = 1000;
+
     public function __construct(
         private readonly Client $client,
         private readonly string $collectionName,
@@ -93,6 +96,27 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $collection->delete(ids: $ids);
     }
 
+    /**
+     * @param array{batch_size?: int} $options
+     */
+    public function clear(array $options = []): void
+    {
+        $batchSize = $this->getBatchSize($options);
+        $collection = $this->client->getOrCreateCollection($this->collectionName);
+
+        // ChromaDb rejects a delete request that carries neither ids nor a filter, so the ids are fetched
+        // and deleted page by page - fetching them all at once would load the whole collection into memory
+        do {
+            $items = $collection->get(limit: $batchSize, include: []);
+
+            if ([] === $items->ids) {
+                return;
+            }
+
+            $collection->delete(ids: $items->ids);
+        } while ($batchSize === \count($items->ids));
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [
@@ -115,6 +139,24 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $query instanceof TextQuery => $this->queryText($query, $options),
             default => throw new UnsupportedQueryTypeException($query::class, $this),
         };
+    }
+
+    /**
+     * @param array{batch_size?: int} $options
+     */
+    private function getBatchSize(array $options): int
+    {
+        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
+            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        }
+
+        $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
+
+        if ($batchSize < 1) {
+            throw new InvalidArgumentException('The "batch_size" option must be a positive integer.');
+        }
+
+        return $batchSize;
     }
 
     /**

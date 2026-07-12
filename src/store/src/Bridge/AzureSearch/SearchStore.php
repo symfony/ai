@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -27,6 +28,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class SearchStore implements StoreInterface
 {
+    private const BATCH_SIZE = 1000;
+    private const MAX_UNCHANGED_BATCHES = 10;
+    private const INDEX_CATCH_UP_DELAY = 200000;
+
     /**
      * @param string $vectorFieldName The name of the field int the index that contains the vector
      */
@@ -71,6 +76,47 @@ final class SearchStore implements StoreInterface
         ]);
     }
 
+    /**
+     * @param array{batch_size?: int} $options
+     */
+    public function clear(array $options = []): void
+    {
+        // Azure AI Search has no delete-all operation, so the documents are searched and deleted batch by
+        // batch until the index reports no documents left. Deletions are not visible immediately, so an
+        // already deleted document can show up in the search result again - it is simply deleted a second
+        // time. Only a batch that does not change at all is treated as the index not catching up, and the
+        // store waits for it instead of spinning on the same ids forever.
+        $batchSize = $this->getBatchSize($options);
+        $previousIds = null;
+        $unchangedBatches = 0;
+
+        while (true) {
+            $result = $this->request('search', [
+                'search' => '*',
+                'select' => 'id',
+                'top' => $batchSize,
+            ]);
+
+            $ids = array_column($result['value'], 'id');
+
+            if ([] === $ids) {
+                return;
+            }
+
+            $this->remove($ids);
+
+            if ($ids !== $previousIds) {
+                $unchangedBatches = 0;
+            } elseif (++$unchangedBatches >= self::MAX_UNCHANGED_BATCHES) {
+                throw new RuntimeException(\sprintf('The "%s" index still returns the same %d document(s) after deleting them repeatedly.', $this->indexName, \count($ids)));
+            } else {
+                usleep(self::INDEX_CATCH_UP_DELAY);
+            }
+
+            $previousIds = $ids;
+        }
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -102,6 +148,24 @@ final class SearchStore implements StoreInterface
     }
 
     /**
+     * @param array{batch_size?: int} $options
+     */
+    private function getBatchSize(array $options): int
+    {
+        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
+            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        }
+
+        $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
+
+        if ($batchSize < 1) {
+            throw new InvalidArgumentException('The "batch_size" option must be a positive integer.');
+        }
+
+        return $batchSize;
+    }
+
+    /**
      * @param array<string, mixed> $payload
      *
      * @return array<string, mixed>
@@ -116,7 +180,22 @@ final class SearchStore implements StoreInterface
             throw new RuntimeException(\sprintf('Azure Search request failed: "%s"', $response->getContent(false)));
         }
 
-        return $response->toArray();
+        $result = $response->toArray();
+
+        // indexing actions are answered with 207 and a per-document status, so a failed delete or upload
+        // does not show up in the status code but only in the body
+        $failures = [];
+        foreach ($result['value'] ?? [] as $item) {
+            if (\is_array($item) && false === ($item['status'] ?? null)) {
+                $failures[] = \sprintf('%s: %s', $item['key'] ?? 'unknown', $item['errorMessage'] ?? 'unknown error');
+            }
+        }
+
+        if ([] !== $failures) {
+            throw new RuntimeException(\sprintf('Azure Search request failed for %d document(s): "%s".', \count($failures), implode('", "', $failures)));
+        }
+
+        return $result;
     }
 
     /**

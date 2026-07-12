@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add `AiAssertionsTrait` for functional tests based on Profiler data
+ * Register the `ai:store:clear` command to remove all documents from a store
  * Add `minimax` platform configuration for the MiniMax bridge
  * Autoconfigure `SchemaProviderInterface` implementations so they can be referenced from `#[Schema(provider: ...)]`, and validate those references on tools at container build time
  * Add support for `ScopingHttpClient` usage in `Typesense` store via `http_client` option

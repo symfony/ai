@@ -666,6 +666,40 @@ final class VecStoreTest extends TestCase
         $this->assertSame('doc-2', $results[0]->getId());
     }
 
+    public function testClear()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'test']);
+        $metadata->setText('Some text');
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata),
+            new VectorDocument('doc-2', new Vector([0.4, 0.5, 0.6]), new Metadata(['name' => 'second'])),
+        ]);
+
+        $store->clear();
+
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));
+        $this->assertCount(0, $results);
+
+        $result = $pdo->query('SELECT COUNT(*) FROM test_vectors_fts');
+        $this->assertSame(0, (int) $result->fetchColumn());
+
+        $result = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='test_vectors'");
+        $this->assertSame('test_vectors', $result->fetchColumn());
+
+        $result = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='test_vectors_fts'");
+        $this->assertSame('test_vectors_fts', $result->fetchColumn());
+    }
+
     public function testUnsupportedQueryTypeThrows()
     {
         $pdo = $this->createPdo();

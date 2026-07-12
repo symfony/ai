@@ -305,6 +305,57 @@ final class StoreTest extends TestCase
         }
     }
 
+    public function testStoreCanClear()
+    {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options): JsonMockResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('http://127.0.0.1:6333/collections/test/points/delete?wait=true', $url);
+            self::assertSame('{"filter":{"must":[]}}', $options['body']);
+
+            return new JsonMockResponse([
+                'time' => 0.002,
+                'status' => 'ok',
+                'result' => [
+                    'status' => 'completed',
+                    'operation_id' => 1000000,
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test');
+
+        $store->clear();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanClearAsynchronously()
+    {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options): JsonMockResponse {
+            self::assertArrayHasKey('wait', $options['query']);
+            self::assertSame('false', $options['query']['wait']);
+
+            return new JsonMockResponse([
+                'time' => 0.002,
+                'status' => 'ok',
+                'result' => [
+                    'status' => 'acknowledged',
+                    'operation_id' => 1000000,
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test', async: true);
+
+        $store->clear();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());

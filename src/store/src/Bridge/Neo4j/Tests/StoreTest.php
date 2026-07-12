@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Neo4j\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -115,6 +116,61 @@ final class StoreTest extends TestCase
         $store->drop();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanClear()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            return new JsonMockResponse([], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:7474');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+
+        $store->clear();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame('MATCH (n:`document`) CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 10000 ROWS', json_decode($body, true)['statement']);
+    }
+
+    public function testStoreCanClearWithCustomBatchSize()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            return new JsonMockResponse([], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:7474');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+
+        $store->clear(['batch_size' => 500]);
+
+        $this->assertSame('MATCH (n:`document`) CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 500 ROWS', json_decode($body, true)['statement']);
+    }
+
+    public function testStoreCannotClearWithInvalidBatchSize()
+    {
+        $store = new Store(new MockHttpClient(), 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "batch_size" option must be a positive integer.');
+        $store->clear(['batch_size' => 0]);
+    }
+
+    public function testStoreCannotClearWithUnsupportedOption()
+    {
+        $store = new Store(new MockHttpClient(), 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+        $store->clear(['foo' => 'bar']);
     }
 
     public function testStoreCanAdd()

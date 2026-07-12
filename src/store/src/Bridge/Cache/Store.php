@@ -108,6 +108,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->save($cacheItem);
     }
 
+    public function clear(array $options = []): void
+    {
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
+        $cacheItem = $this->cache->getItem($this->cacheKey);
+        $cacheItem->set([]);
+
+        $this->cache->save($cacheItem);
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [

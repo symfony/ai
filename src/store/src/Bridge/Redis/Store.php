@@ -131,6 +131,29 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->redis->clearLastError();
+
+        // Only the documents are deleted, the index definition created by setup() is kept intact.
+        // SCAN may return an empty batch while the cursor is not exhausted yet, so the loop runs
+        // until the cursor is back to 0 instead of stopping on the first empty batch.
+        $iterator = null;
+
+        do {
+            $keys = $this->redis->scan($iterator, $this->keyPrefix.'*', 1000);
+
+            if (\is_array($keys) && [] !== $keys) {
+                $this->redis->unlink($keys);
+            }
+        } while ($iterator > 0);
+
+        if ($error = $this->redis->getLastError()) {
+            $e = new \RedisException($error);
+            throw new RuntimeException(\sprintf('Failed to clear documents from Redis: "%s".', $e->getMessage()), 0, $e);
+        }
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

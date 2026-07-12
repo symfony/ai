@@ -199,6 +199,34 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCanClear()
+    {
+        $requestedMethod = null;
+        $requestedUrl = null;
+        $requestedBody = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedMethod, &$requestedUrl, &$requestedBody): JsonMockResponse {
+            $requestedMethod = $method;
+            $requestedUrl = $url;
+            $requestedBody = $options['body'];
+
+            return new JsonMockResponse([
+                'took' => 10,
+                'timed_out' => false,
+                'deleted' => 2,
+            ], [
+                'http_code' => 200,
+            ]);
+        });
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store->clear();
+
+        $this->assertSame('POST', $requestedMethod);
+        $this->assertSame('http://127.0.0.1:9200/foo/_delete_by_query?refresh=true&conflicts=proceed&scroll_size=1000', $requestedUrl);
+        $this->assertSame('{"query":{"match_all":{}}}', $requestedBody);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStoreNormalizesTrailingSlashOnEndpoint()
     {
         $requestedUrl = null;

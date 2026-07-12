@@ -33,6 +33,9 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const BATCH_SIZE = 500;
+    private const DELETE_MAX_KEYS = 500;
+
     /**
      * @param array<string, mixed> $filter
      */
@@ -176,6 +179,35 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
+     * @param array{batch_size?: int} $options
+     */
+    public function clear(array $options = []): void
+    {
+        // S3 Vectors has no delete-all operation, so the vectors are listed and deleted page by page. The
+        // pagination token must not be carried across those deletes: it encodes a position in the index, and
+        // deleting a page moves every later vector towards the start, so resuming at the token skips as many
+        // vectors as were just deleted. Listing the first page over and over deletes the index empty instead.
+        $batchSize = $this->getBatchSize($options);
+
+        do {
+            $result = $this->client->listVectors([
+                'vectorBucketName' => $this->vectorBucketName,
+                'indexName' => $this->indexName,
+                'maxResults' => $batchSize,
+            ]);
+
+            $keys = [];
+            foreach ($result->getVectors(true) as $vector) {
+                $keys[] = $vector->getKey();
+            }
+
+            if ([] !== $keys) {
+                $this->deleteKeys($keys);
+            }
+        } while ([] !== $keys);
+    }
+
+    /**
      * @param array{
      *     filter?: array<string, mixed>,
      *     topK?: int,
@@ -227,5 +259,38 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->client->deleteVectorBucket([
             'vectorBucketName' => $this->vectorBucketName,
         ]);
+    }
+
+    /**
+     * @param string[] $keys
+     */
+    private function deleteKeys(array $keys): void
+    {
+        // DeleteVectors accepts at most 500 keys per call, independently of how many were listed
+        foreach (array_chunk($keys, self::DELETE_MAX_KEYS) as $chunk) {
+            $this->client->deleteVectors([
+                'vectorBucketName' => $this->vectorBucketName,
+                'indexName' => $this->indexName,
+                'keys' => $chunk,
+            ]);
+        }
+    }
+
+    /**
+     * @param array{batch_size?: int} $options
+     */
+    private function getBatchSize(array $options): int
+    {
+        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
+            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        }
+
+        $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
+
+        if ($batchSize < 1) {
+            throw new InvalidArgumentException('The "batch_size" option must be a positive integer.');
+        }
+
+        return $batchSize;
     }
 }

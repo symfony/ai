@@ -71,6 +71,15 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
         }));
     }
 
+    public function clear(array $options = []): void
+    {
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
+        $this->documents = [];
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [

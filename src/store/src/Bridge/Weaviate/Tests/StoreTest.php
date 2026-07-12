@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Weaviate\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -247,6 +248,82 @@ final class StoreTest extends TestCase
 
         $this->assertCount(2, $results);
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCanClear()
+    {
+        $requestedMethod = null;
+        $requestedUrl = null;
+        $requestedBody = null;
+        $httpClient = new MockHttpClient([
+            static function (string $method, string $url, array $options) use (&$requestedMethod, &$requestedUrl, &$requestedBody): JsonMockResponse {
+                $requestedMethod = $method;
+                $requestedUrl = $url;
+                $requestedBody = $options['body'];
+
+                return new JsonMockResponse([
+                    'results' => ['matches' => 2, 'successful' => 2, 'failed' => 0],
+                ], ['http_code' => 200]);
+            },
+            new JsonMockResponse([
+                'results' => ['matches' => 0, 'successful' => 0, 'failed' => 0],
+            ], ['http_code' => 200]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $store->clear();
+
+        $this->assertSame('DELETE', $requestedMethod);
+        $this->assertSame('http://127.0.0.1:8080/v1/batch/objects', $requestedUrl);
+        $this->assertSame([
+            'match' => [
+                'class' => 'test',
+                'where' => [
+                    'path' => ['id'],
+                    'operator' => 'Like',
+                    'valueText' => '*',
+                ],
+            ],
+        ], json_decode((string) $requestedBody, true));
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreClearsBeyondTheBatchDeleteLimit()
+    {
+        // Weaviate only deletes up to QUERY_MAXIMUM_RESULTS objects per call, so clear() has to repeat
+        // the batch delete until nothing matches anymore - otherwise documents would silently remain.
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'results' => ['matches' => 11000, 'successful' => 10000, 'failed' => 0],
+            ], ['http_code' => 200]),
+            new JsonMockResponse([
+                'results' => ['matches' => 1000, 'successful' => 1000, 'failed' => 0],
+            ], ['http_code' => 200]),
+            new JsonMockResponse([
+                'results' => ['matches' => 0, 'successful' => 0, 'failed' => 0],
+            ], ['http_code' => 200]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $store->clear();
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotClearWithFailedDeletes()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'results' => ['matches' => 2, 'successful' => 1, 'failed' => 1],
+        ], ['http_code' => 200]), 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to delete 1 object(s) while clearing the "test" collection.');
+
+        $store->clear();
     }
 
     public function testStoreSupportsVectorQuery()

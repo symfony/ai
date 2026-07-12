@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -28,6 +29,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const BATCH_SIZE = 10000;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $endpointUrl,
@@ -89,6 +92,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    /**
+     * @param array{batch_size?: int} $options
+     */
+    public function clear(array $options = []): void
+    {
+        // Deleting every node in one transaction runs out of heap on larger stores, so the deletion is
+        // committed in batches. This requires an implicit transaction, which "db/{name}/query/v2" is.
+        $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
+            'statement' => \sprintf(
+                'MATCH (n:`%s`) CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF %d ROWS',
+                $this->nodeName,
+                $this->getBatchSize($options),
+            ),
+        ]);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -121,6 +140,24 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
+     * @param array{batch_size?: int} $options
+     */
+    private function getBatchSize(array $options): int
+    {
+        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
+            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        }
+
+        $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
+
+        if ($batchSize < 1) {
+            throw new InvalidArgumentException('The "batch_size" option must be a positive integer.');
+        }
+
+        return $batchSize;
+    }
+
+    /**
      * @param array<string, mixed> $payload
      *
      * @return array<string, mixed>
@@ -134,7 +171,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'json' => $payload,
         ]);
 
-        return $response->toArray();
+        $result = $response->toArray();
+
+        // the Query API answers with 202 whether the statement succeeded or not, the failure is in the body
+        if (\is_array($result['errors'] ?? null) && [] !== $result['errors']) {
+            $messages = array_map(
+                static fn (mixed $error): string => \is_array($error) && \is_string($error['message'] ?? null) ? $error['message'] : 'Unknown error',
+                $result['errors'],
+            );
+
+            throw new RuntimeException(\sprintf('Neo4j request failed: "%s".', implode('", "', $messages)));
+        }
+
+        return $result;
     }
 
     /**

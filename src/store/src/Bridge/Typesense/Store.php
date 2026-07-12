@@ -101,6 +101,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ), []);
     }
 
+    public function clear(array $options = []): void
+    {
+        // "truncate" removes all documents while keeping the collection and its schema in place,
+        // in contrast to "filter_by" it does not walk the filter index.
+        $this->request('DELETE', \sprintf('collections/%s/documents?truncate=true', $this->collection), []);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

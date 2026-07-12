@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\ChromaDb\Tests;
 
 use Codewithkyrian\ChromaDB\Client;
 use Codewithkyrian\ChromaDB\Models\Collection;
+use Codewithkyrian\ChromaDB\Responses\GetItemsResponse;
 use Codewithkyrian\ChromaDB\Responses\QueryItemsResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -688,6 +690,128 @@ final class StoreTest extends TestCase
 
         $store = StoreFactory::create($client, 'test-collection');
         $store->remove([]);
+    }
+
+    public function testClearDeletesAllDocumentsOfCollection()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('get')
+            ->willReturn(new GetItemsResponse(
+                ids: ['01234567-89ab-cdef-0123-456789abcdef', 'abcdef01-2345-6789-abcd-ef0123456789'],
+                metadatas: null,
+                embeddings: null,
+                documents: null,
+            ));
+
+        $collection->expects($this->once())
+            ->method('delete')
+            ->with(['01234567-89ab-cdef-0123-456789abcdef', 'abcdef01-2345-6789-abcd-ef0123456789']);
+
+        $store = StoreFactory::create($client, 'test-collection');
+        $store->clear();
+    }
+
+    public function testClearPaginatesThroughLargeCollections()
+    {
+        // a full batch means there can be more documents, so the collection is fetched and deleted
+        // page by page instead of loading every id of the collection into memory at once
+        $firstBatch = array_map(static fn (int $i): string => \sprintf('id-%d', $i), range(1, 1000));
+        $secondBatch = ['id-1001'];
+
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->exactly(2))
+            ->method('get')
+            ->willReturnOnConsecutiveCalls(
+                new GetItemsResponse(ids: $firstBatch, metadatas: null, embeddings: null, documents: null),
+                new GetItemsResponse(ids: $secondBatch, metadatas: null, embeddings: null, documents: null),
+            );
+
+        $deleted = [];
+        $collection->expects($this->exactly(2))
+            ->method('delete')
+            ->willReturnCallback(static function (array $ids) use (&$deleted): array {
+                $deleted[] = $ids;
+
+                return $ids;
+            });
+
+        $store = StoreFactory::create($client, 'test-collection');
+        $store->clear();
+
+        $this->assertSame([$firstBatch, $secondBatch], $deleted);
+    }
+
+    public function testClearWithCustomBatchSize()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('get')
+            ->with(null, null, null, 250, null, [])
+            ->willReturn(new GetItemsResponse(ids: [], metadatas: null, embeddings: null, documents: null));
+
+        $store = StoreFactory::create($client, 'test-collection');
+        $store->clear(['batch_size' => 250]);
+    }
+
+    public function testClearWithInvalidBatchSize()
+    {
+        $store = StoreFactory::create($this->createMock(Client::class), 'test-collection');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "batch_size" option must be a positive integer.');
+        $store->clear(['batch_size' => 0]);
+    }
+
+    public function testClearWithUnsupportedOption()
+    {
+        $store = StoreFactory::create($this->createMock(Client::class), 'test-collection');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+        $store->clear(['foo' => 'bar']);
+    }
+
+    public function testClearWithEmptyCollection()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('get')
+            ->willReturn(new GetItemsResponse(ids: [], metadatas: null, embeddings: null, documents: null));
+
+        $collection->expects($this->never())
+            ->method('delete');
+
+        $store = StoreFactory::create($client, 'test-collection');
+        $store->clear();
     }
 
     public function testQueryWithTextQuery()

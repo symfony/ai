@@ -52,8 +52,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
+        // uuid needs to be a string attribute, not a text field, since documents are removed by
+        // an "equals" filter on it, which Manticore Search does not support on stored text fields
         $this->request('cli', \sprintf(
-            "CREATE TABLE %s (uuid TEXT, metadata JSON, %s FLOAT_VECTOR KNN_TYPE='%s' KNN_DIMS='%s' HNSW_SIMILARITY='%s' QUANTIZATION='%s')",
+            "CREATE TABLE %s (uuid STRING, metadata JSON, %s FLOAT_VECTOR KNN_TYPE='%s' KNN_DIMS='%s' HNSW_SIMILARITY='%s' QUANTIZATION='%s')",
             $this->table, $this->field, $this->type, $this->dimensions, $this->similarity, $this->quantization,
         ));
     }
@@ -125,6 +127,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 }
             });
         }
+    }
+
+    public function clear(array $options = []): void
+    {
+        $this->request('cli', \sprintf('TRUNCATE TABLE %s', $this->table));
     }
 
     public function supports(string $queryClass): bool

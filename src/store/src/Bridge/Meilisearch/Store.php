@@ -95,6 +95,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('POST', \sprintf('indexes/%s/documents/delete-batch', $this->indexName), $ids);
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->request('DELETE', \sprintf('indexes/%s/documents', $this->indexName), []);
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [

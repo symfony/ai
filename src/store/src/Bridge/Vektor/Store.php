@@ -101,6 +101,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
+        // Vektor has no delete-all operation, but its index is the storage directory itself,
+        // which is recreated from the configured dimensions right away
+        $this->filesystem->remove($this->storagePath.'/vektor');
+
+        $this->setup();
+    }
+
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {

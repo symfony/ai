@@ -204,6 +204,25 @@ final class StoreTest extends TestCase
         $store->remove('1] || num_docs:>=0 || id:[2');
     }
 
+    public function testStoreCanClear()
+    {
+        $requestedMethod = null;
+        $url = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $u, array $options) use (&$requestedMethod, &$url): JsonMockResponse {
+            $requestedMethod = $method;
+            $url = $u;
+
+            return new JsonMockResponse(['num_deleted' => 2], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+        $store->clear();
+
+        $this->assertSame('DELETE', $requestedMethod);
+        $this->assertSame('http://127.0.0.1:8108/collections/test/documents?truncate=true', urldecode((string) $url));
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test_collection');

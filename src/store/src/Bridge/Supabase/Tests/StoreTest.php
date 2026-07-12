@@ -310,6 +310,35 @@ class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testClearRemovesAllDocuments()
+    {
+        $requestedMethod = null;
+        $requestedUrl = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedMethod, &$requestedUrl): MockResponse {
+            $requestedMethod = $method;
+            $requestedUrl = $url;
+
+            return new MockResponse('', ['http_code' => 204]);
+        });
+        $store = $this->createStore($httpClient);
+
+        $store->clear();
+
+        $this->assertSame('DELETE', $requestedMethod);
+        $this->assertSame('https://test.supabase.co/rest/v1/documents?id=not.is.null', $requestedUrl);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClearThrowsExceptionOnHttpError()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('Clear failed', ['http_code' => 400]));
+        $store = $this->createStore($httpClient);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Supabase clear failed: Clear failed');
+        $store->clear();
+    }
+
     public function testStoreNormalizesTrailingSlashOnEndpoint()
     {
         $requestedUrl = null;

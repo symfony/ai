@@ -22,6 +22,14 @@ use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
 #[Group('integration')]
 final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
+    protected static function getHighVolumeDocumentCount(): int
+    {
+        // Weaviate truncates a batch delete at QUERY_MAXIMUM_RESULTS (10.000 by default) and reports the
+        // truncation nowhere, so clear() has to keep deleting until the server runs out of objects.
+        // Exceed that limit, otherwise the loop terminates before it ever hits the truncation.
+        return 11_000;
+    }
+
     protected static function createStore(): StoreInterface
     {
         return StoreFactory::create('TestCollection', 'http://127.0.0.1:8080', 'symfony');

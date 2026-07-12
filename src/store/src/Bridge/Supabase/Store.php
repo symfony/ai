@@ -133,6 +133,26 @@ final class Store implements StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        // PostgREST refuses a DELETE without filter. Only the "is" operator treats "null" as SQL NULL,
+        // every other one binds it as the string "null" - which fails to cast on a uuid or bigint id.
+        $response = $this->httpClient->request(
+            'DELETE',
+            \sprintf('%s/rest/v1/%s', $this->endpoint, $this->table),
+            [
+                'headers' => $this->getHeaders(),
+                'query' => [
+                    'id' => 'not.is.null',
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() >= 400) {
+            throw new RuntimeException('Supabase clear failed: '.$response->getContent(false));
+        }
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

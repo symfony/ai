@@ -72,6 +72,40 @@ final class StoreTest extends TestCase
         $store->drop();
     }
 
+    public function testStoreCannotClearWithOptions()
+    {
+        $store = new Store(sys_get_temp_dir());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+        $this->expectExceptionCode(0);
+        $store->clear([
+            'foo' => 'bar',
+        ]);
+    }
+
+    public function testStoreCanClearAndStaysUsable()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])),
+        ]);
+
+        $store->clear();
+
+        $this->assertCount(0, iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))));
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.4, 0.5, 0.6])),
+        ]);
+
+        $this->assertCount(1, iterator_to_array($store->query(new VectorQuery(new Vector([0.4, 0.5, 0.6])))));
+
+        $store->drop();
+    }
+
     public function testStoreCanAddThenSearch()
     {
         $store = new Store(sys_get_temp_dir(), 3);

@@ -519,6 +519,76 @@ final class StoreTest extends TestCase
         $this->assertCount(0, $results); // Should skip documents without required fields
     }
 
+    public function testClearDeletesAllKeysAndKeepsIndex()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        // the injected connection is shared, so clear() must not change any of its options
+        $redis->expects($this->never())
+            ->method('setOption');
+
+        $scanCalls = 0;
+        $redis->expects($this->exactly(2))
+            ->method('scan')
+            ->willReturnCallback(function (&$iterator, string $pattern, int $count) use (&$scanCalls): array {
+                ++$scanCalls;
+
+                $this->assertSame('vector:*', $pattern);
+                $this->assertSame(1000, $count);
+
+                if (1 === $scanCalls) {
+                    $iterator = 12;
+
+                    return ['vector:id-1', 'vector:id-2'];
+                }
+
+                $iterator = 0;
+
+                return ['vector:id-3'];
+            });
+
+        $deletedKeys = [];
+        $redis->expects($this->exactly(2))
+            ->method('unlink')
+            ->willReturnCallback(static function (array $keys) use (&$deletedKeys): int {
+                $deletedKeys[] = $keys;
+
+                return \count($keys);
+            });
+
+        // The index definition must survive, so no FT.DROPINDEX is issued
+        $redis->expects($this->never())
+            ->method('rawCommand');
+
+        $store->clear();
+
+        $this->assertSame([['vector:id-1', 'vector:id-2'], ['vector:id-3']], $deletedKeys);
+    }
+
+    public function testClearFailureThrowsRuntimeException()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $redis->expects($this->once())
+            ->method('scan')
+            ->willReturnCallback(static function (&$iterator): array {
+                $iterator = 0;
+
+                return ['vector:id-1'];
+            });
+
+        $redis->expects($this->once())
+            ->method('getLastError')
+            ->willReturn('Connection lost');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to clear documents from Redis: "Connection lost".');
+
+        $store->clear();
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $redis = $this->createMock(\Redis::class);

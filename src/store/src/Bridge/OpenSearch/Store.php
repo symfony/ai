@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -124,6 +125,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 ]).\PHP_EOL;
             }
         });
+    }
+
+    public function clear(array $options = []): void
+    {
+        // "conflicts=proceed" keeps a concurrent write from aborting the deletion halfway through, and
+        // the scroll size is raised since OpenSearch defaults to 100, which means a lot of round trips
+        $result = $this->request('POST', \sprintf('%s/_delete_by_query?refresh=true&conflicts=proceed&scroll_size=1000', $this->indexName), [
+            'query' => [
+                'match_all' => new \stdClass(),
+            ],
+        ]);
+
+        // a delete-by-query is answered with 200 even when deleting individual documents failed
+        if (\is_array($result['failures'] ?? null) && [] !== $result['failures']) {
+            throw new RuntimeException(\sprintf('Failed to delete %d document(s) while clearing the "%s" index.', \count($result['failures']), $this->indexName));
+        }
     }
 
     public function supports(string $queryClass): bool

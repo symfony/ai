@@ -53,6 +53,15 @@ final class CombinedStore implements StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->vectorStore->clear($options);
+
+        if ($this->textStore !== $this->vectorStore) {
+            $this->textStore->clear($options);
+        }
+    }
+
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if ($query instanceof HybridQuery) {

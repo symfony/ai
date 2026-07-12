@@ -82,6 +82,7 @@ use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 use Symfony\AI\Platform\StructuredOutput\Serializer as StructuredOutputSerializer;
 use Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber;
+use Symfony\AI\Store\Command\ClearStoreCommand;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
@@ -298,6 +299,11 @@ return static function (ContainerConfigurator $container): void {
             ])
             ->tag('console.command')
         ->set('ai.command.drop_store', DropStoreCommand::class)
+            ->args([
+                tagged_locator('ai.store', 'name'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.clear_store', ClearStoreCommand::class)
             ->args([
                 tagged_locator('ai.store', 'name'),
             ])

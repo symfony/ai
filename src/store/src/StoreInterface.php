@@ -21,17 +21,30 @@ use Symfony\AI\Store\Query\QueryInterface;
 interface StoreInterface
 {
     /**
+     * Adds documents to the store, so they can be queried afterwards.
+     *
      * @param VectorDocument|VectorDocument[] $documents
      */
     public function add(VectorDocument|array $documents): void;
 
     /**
+     * Removes the documents with the given ids from the store.
+     *
      * @param string|array<string> $ids
      * @param array<string, mixed> $options
      */
     public function remove(string|array $ids, array $options = []): void;
 
     /**
+     * Removes all documents from the store, but keeps the store usable.
+     *
+     * @param array<string, mixed> $options
+     */
+    public function clear(array $options = []): void;
+
+    /**
+     * Returns the documents of the store matching the given query.
+     *
      * @param array<string, mixed> $options
      *
      * @return iterable<VectorDocument>
@@ -41,6 +54,8 @@ interface StoreInterface
     public function query(QueryInterface $query, array $options = []): iterable;
 
     /**
+     * Tells whether the store supports the given query type.
+     *
      * @param class-string<QueryInterface> $queryClass The query class to check
      */
     public function supports(string $queryClass): bool;
