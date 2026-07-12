@@ -49,6 +49,12 @@ This creates:
 * ``mcp.json`` for MCP clients that support it (e.g. Claude Desktop)
 * ``bin/codex`` and ``bin/codex.bat`` wrappers for Codex runtime MCP injection
 
+While generating ``mcp.json``, ``mate init`` asks which PHP binary the coding agent should use to
+launch the server. The default is detected from the environment: for a containerized setup where
+a ``.ddev/`` directory is present, it defaults to ``ddev exec php`` so the host-side agent starts
+Mate inside the container; otherwise it defaults to ``php``. Accept the default or provide your own
+launch command (for example ``docker compose exec php php`` for a plain Docker Compose setup).
+
 It also updates your ``composer.json`` with the following configuration:
 
 .. code-block:: json
