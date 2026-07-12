@@ -50,6 +50,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(5, $tokenUsage->getCachedTokens());
+        $this->assertNull($tokenUsage->getCacheReadTokens());
         $this->assertSame(30, $tokenUsage->getTotalTokens());
     }
 
@@ -85,6 +86,88 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(5, $tokenUsage->getCachedTokens());
+        $this->assertNull($tokenUsage->getCacheReadTokens());
         $this->assertSame(30, $tokenUsage->getTotalTokens());
+    }
+
+    public function testItExtractsPromptTokensDetailsCachedTokens()
+    {
+        $extractor = new TokenUsageExtractor();
+
+        $tokenUsage = $extractor->extractFromArray([
+            'prompt_tokens' => 100,
+            'completion_tokens' => 50,
+            'prompt_tokens_details' => [
+                'cached_tokens' => 78,
+            ],
+            'total_tokens' => 150,
+        ]);
+
+        $this->assertSame(78, $tokenUsage->getCachedTokens());
+        $this->assertSame(78, $tokenUsage->getCacheReadTokens());
+        $this->assertNull($tokenUsage->getCacheCreationTokens());
+    }
+
+    public function testItExtractsDeepSeekPromptCacheHitTokens()
+    {
+        $extractor = new TokenUsageExtractor();
+
+        $tokenUsage = $extractor->extractFromArray([
+            'prompt_tokens' => 100,
+            'completion_tokens' => 50,
+            'prompt_cache_hit_tokens' => 60,
+            'total_tokens' => 150,
+        ]);
+
+        $this->assertSame(60, $tokenUsage->getCacheReadTokens());
+        $this->assertSame(60, $tokenUsage->getCachedTokens());
+    }
+
+    public function testItExtractsReasoningTokensFromCompletionTokensDetails()
+    {
+        $extractor = new TokenUsageExtractor();
+
+        $tokenUsage = $extractor->extractFromArray([
+            'prompt_tokens' => 100,
+            'completion_tokens' => 50,
+            'completion_tokens_details' => [
+                'reasoning_tokens' => 20,
+            ],
+            'total_tokens' => 150,
+        ]);
+
+        $this->assertSame(20, $tokenUsage->getThinkingTokens());
+    }
+
+    public function testItExtractsLlamaCppStylePromptTokensDetailsCachedTokens()
+    {
+        $extractor = new TokenUsageExtractor();
+
+        $tokenUsage = $extractor->extractFromArray([
+            'prompt_tokens' => 28,
+            'completion_tokens' => 1,
+            'total_tokens' => 29,
+            'prompt_tokens_details' => [
+                'cached_tokens' => 24,
+            ],
+        ]);
+
+        $this->assertSame(24, $tokenUsage->getCacheReadTokens());
+        $this->assertSame(24, $tokenUsage->getCachedTokens());
+    }
+
+    public function testItExtractsCachedTokensFieldAsAggregate()
+    {
+        $extractor = new TokenUsageExtractor();
+
+        $tokenUsage = $extractor->extractFromArray([
+            'prompt_tokens' => 50,
+            'completion_tokens' => 25,
+            'cached_tokens' => 30,
+            'total_tokens' => 75,
+        ]);
+
+        $this->assertSame(30, $tokenUsage->getCachedTokens());
+        $this->assertNull($tokenUsage->getCacheReadTokens());
     }
 }
