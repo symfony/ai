@@ -1,0 +1,31 @@
+---------------------------------------------------------------------------
+
+by carsonbot at 2026-07-02T20:43:53Z
+
+Hey!
+
+To help keep things organized, we don't allow "Draft" pull requests. Could you please click the "ready for review" button or close this PR and open a new one when you are done?
+
+Note that a pull request does not have to be "perfect" or "ready for merge" when you first open it. We just want it to be ready for a first review.
+
+Cheers!
+
+Carsonbot
+
+---------------------------------------------------------------------------
+
+by fatonh at 2026-07-02T21:00:22Z
+
+@wachterjohannes Heads up: the PHPStan / Demo check fails on a pre-existing error in demo/src/Crop/Image/Resampler.php, which this PR doesn't touch — looks unrelated to the Mate change.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-07-02T21:02:27Z
+
+@fatonh already fixed in https://github.com/symfony/ai/pull/2270 😂
+
+---------------------------------------------------------------------------
+
+by fatonh at 2026-07-04T20:23:34Z
+
+@wachterjohannes thanks! Addressed both issues :)
