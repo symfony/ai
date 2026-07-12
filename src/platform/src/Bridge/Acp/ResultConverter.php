@@ -81,7 +81,7 @@ final class ResultConverter implements ResultConverterInterface
         return new MultiPartResult($results);
     }
 
-    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
     }
