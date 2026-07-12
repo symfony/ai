@@ -228,17 +228,83 @@ connection per region)::
     OpenAiFactory::createProvider(apiKey: env('OPENAI_EU_KEY'), name: 'openai-eu');
     OpenAiFactory::createProvider(apiKey: env('OPENAI_US_KEY'), name: 'openai-us');
 
+Custom Routing Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Custom routing strategies (load balancing, model-pattern matching, input-based
-selection) are implemented as additional
-:class:`Symfony\\AI\\Platform\\ModelRouterInterface` implementations passed as the
-second ``Platform`` constructor argument.
+selection) are implemented as :class:`Symfony\\AI\\Platform\\ModelRouterInterface`
+implementations passed as the second ``Platform`` constructor argument.
+
+A router receives the requested model, the available providers, and the invocation
+input and options. It answers with a
+:class:`Symfony\\AI\\Platform\\ModelRouter\\RoutingDecision`, which names the provider
+serving the request and — optionally — a model and options replacing the requested
+ones. Leaving the model or options at ``null`` keeps the requested values, so a router
+that only dispatches between providers never has to think about either::
+
+    use Symfony\AI\Platform\ModelRouter\RoutingDecision;
+    use Symfony\AI\Platform\ModelRouterInterface;
+
+    final class VisionModelRouter implements ModelRouterInterface
+    {
+        public function __construct(
+            private readonly ModelRouterInterface $fallback = new CatalogBasedModelRouter(),
+        ) {
+        }
+
+        public function resolve(string|Model $model, iterable $providers, array|string|object $input, array $options = []): RoutingDecision
+        {
+            if (!$input instanceof MessageBag || !$input->containsImage()) {
+                return $this->fallback->resolve($model, $providers, $input, $options);
+            }
+
+            $decision = $this->fallback->resolve('claude-sonnet-4-5', $providers, $input, $options);
+
+            return new RoutingDecision($decision->getProvider(), 'claude-sonnet-4-5', reason: 'image detected');
+        }
+    }
+
+Because :class:`Symfony\\AI\\Platform\\ModelRouter\\CatalogBasedModelRouter` never
+replaces the model, it works as the terminal resolver that model-selecting routers
+delegate to: they decide *which* model, and hand the "who serves it" question back to
+the default router instead of reimplementing catalog lookup.
+
+The selected model may be a name or a fully defined
+:class:`Symfony\\AI\\Platform\\Model`. A name is resolved through the chosen provider's
+model catalog; a ``Model`` instance bypasses the catalog and carries its own options,
+which lets a router tune options per routing decision::
+
+    return new RoutingDecision(
+        $decision->getProvider(),
+        new Model('gpt-4o', options: ['temperature' => 0.2]),
+        reason: 'deterministic answer requested',
+    );
+
+Because providers and models differ in the options they understand, a decision that
+redirects a request may also have to rewrite the invocation options — renaming an
+option for the selected provider, or dropping one the selected model does not
+support::
+
+    unset($options['seed']); // not supported by the selected provider
+
+    return new RoutingDecision($decision->getProvider(), 'claude-sonnet-4-5', $options, 'image detected');
+
+Routing runs for every invocation, including those made with a ``Model`` instance, so a
+custom router sees all traffic through the platform.
+
+.. note::
+
+    A router that names a provider unable to serve the selected model causes a
+    :class:`Symfony\\AI\\Platform\\Exception\\ModelNotFoundException` at invocation time.
+    Delegating to the default router (as above) resolves the provider from the model and
+    avoids constructing such a decision by hand.
 
 Routing Events
 ~~~~~~~~~~~~~~
 
 Before resolving a model to a provider, ``Platform`` dispatches a
 :class:`Symfony\\AI\\Platform\\Event\\ModelRoutingEvent`. Listeners can modify the
-model name, input, or options, or short-circuit routing entirely by setting a
+model, input, or options, or short-circuit routing entirely by setting a
 provider directly::
 
     use Symfony\AI\Platform\Event\ModelRoutingEvent;
@@ -248,6 +314,20 @@ provider directly::
             $event->setProvider($customProvider);  // skip router, use this provider
         }
     });
+
+``getModel()`` returns the requested model name, or a :class:`Symfony\\AI\\Platform\\Model`
+instance when the caller passed one to ``invoke()``. Listeners that match on the model
+name should account for both.
+
+Listeners and routers overlap in power — both can change the model, the options,
+or the provider — so use them for different jobs: a listener observes or adjusts
+an invocation *before* routing (pinning a provider behind a feature flag,
+rewriting input, overriding in tests), while the router *is* the routing strategy
+that answers which provider and model serve every request. As a rule of thumb:
+logic that decides between providers or models belongs in a
+:class:`Symfony\\AI\\Platform\\ModelRouterInterface` implementation; logic that
+tweaks a request on its way there belongs in a listener. If a listener starts
+iterating providers, it wants to be a router.
 
 Provider-level events (:class:`Symfony\\AI\\Platform\\Event\\InvocationEvent` and
 :class:`Symfony\\AI\\Platform\\Event\\ResultEvent`) still fire inside the selected

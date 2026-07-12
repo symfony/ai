@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultErrorEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -56,7 +57,7 @@ final class ProviderTest extends TestCase
     {
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $catalog->method('getModel')->willThrowException(
-            new \Symfony\AI\Platform\Exception\ModelNotFoundException('Model not found'),
+            new ModelNotFoundException('Model not found'),
         );
 
         $provider = new Provider('openai', [], [], $catalog);
@@ -150,7 +151,7 @@ final class ProviderTest extends TestCase
 
         $provider = new Provider('openai', [$modelClient], [], $catalog);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ModelNotFoundException::class);
         $this->expectExceptionMessageMatches('/No ModelClient registered/');
 
         $provider->invoke('gpt-4o', 'Hello');
