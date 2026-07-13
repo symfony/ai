@@ -14,8 +14,6 @@ namespace Symfony\AI\Agent\Toolbox\Tool;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
-use Symfony\AI\Platform\Message\Message;
-use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
 
 /**
@@ -31,11 +29,11 @@ final class Subagent implements HasSourcesInterface
     }
 
     /**
-     * @param string $message the message to pass to the chain
+     * @param string $message the message to pass to the subagent
      */
     public function __invoke(string $message): string
     {
-        $result = $this->agent->call(new MessageBag(Message::ofUser($message)));
+        $result = $this->agent->call($message);
 
         \assert($result instanceof TextResult);
 

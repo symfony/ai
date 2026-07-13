@@ -34,8 +34,10 @@ final class SpeechAgent implements AgentInterface
     ) {
     }
 
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
     {
+        $messages = InputNormalizer::toMessageBag($input);
+
         if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
             $messages = $this->transcribe($messages, $options);
         }

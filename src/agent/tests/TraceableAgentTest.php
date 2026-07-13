@@ -37,7 +37,7 @@ final class TraceableAgentTest extends TestCase
         $this->assertCount(1, $traceableAgent->getCalls());
         $this->assertEquals([
             [
-                'messages' => $messageBag,
+                'input' => $messageBag,
                 'options' => [],
                 'called_at' => $clock->now(),
             ],

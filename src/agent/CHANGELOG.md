@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * [BC BREAK] Change `AgentInterface::call()` to accept `string|MessageBag|UserMessage` and rename its first parameter from `$messages` to `$input`
+ * [BC BREAK] Change the `input` key of `TraceableAgent::getCalls()` entries, which was previously named `messages`, to carry the untouched input
+ * Add `Agent::call()` support for plain strings and single `UserMessage` objects, e.g. `$agent->call('Hello world')`
+
 0.11
 ----
 

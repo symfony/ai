@@ -47,6 +47,11 @@ array of options::
 
 The structure of the input message bag is flexible, see `Platform Component`_ for more details on how to use it.
 
+For a one-off question without any conversation history, a plain string or a single
+:class:`Symfony\\AI\\Platform\\Message\\UserMessage` is accepted as well and normalized into a message bag::
+
+    $result = $agent->call('Hello, how are you?');
+
 Options
 ~~~~~~~
 
