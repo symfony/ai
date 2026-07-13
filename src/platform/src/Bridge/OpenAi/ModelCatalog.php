@@ -484,6 +484,58 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'gpt-5.6' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                ],
+            ],
+            'gpt-5.6-luna' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                ],
+            ],
+            'gpt-5.6-sol' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                ],
+            ],
+            'gpt-5.6-terra' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                ],
+            ],
             'gpt-image-1' => [
                 'class' => Image::class,
                 'capabilities' => [
@@ -510,6 +562,19 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_IMAGE,
+                ],
+            ],
+            'gpt-realtime-2.1' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_AUDIO,
                 ],
             ],
             'o1' => [
