@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
@@ -56,26 +55,36 @@ final class CachePlatform implements PlatformInterface
         ], [new JsonEncoder()]),
         private readonly ?string $cacheKey = null,
         private readonly ?int $cacheTtl = null,
+        private readonly InputHasher $inputHasher = new InputHasher(),
     ) {
     }
 
     public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
-        if (null === $this->cache || !\array_key_exists('prompt_cache_key', $options) || '' === $options['prompt_cache_key']) {
+        $namespace = $options['prompt_cache_key'] ?? $this->cacheKey;
+
+        if (null === $this->cache || null === $namespace || '' === $namespace) {
+            return $this->platform->invoke($model, $input, $options);
+        }
+
+        // Streams cannot be cached without being consumed.
+        if ($options['stream'] ?? false) {
             return $this->platform->invoke($model, $input, $options);
         }
 
         $modelName = $model instanceof Model ? $model->getName() : $model;
 
-        $normalizedInput = match (true) {
-            \is_string($input) => md5($input),
-            \is_array($input) => json_encode($input),
-            $input instanceof MessageBag => $input->getId()->toString(),
-            default => throw new InvalidArgumentException(\sprintf('Unsupported input type: %s', get_debug_type($input))),
-        };
+        try {
+            $normalizedInput = $this->inputHasher->hash($input);
+        } catch (InvalidArgumentException) {
+            // Fail open: bypass the cache when the input cannot be keyed.
+            return $this->platform->invoke($model, $input, $options);
+        }
 
-        $cacheKey = (new UnicodeString())->join([
-            $options['prompt_cache_key'] ?? $this->cacheKey,
+        // "." separates the segments: ":" and "/" are reserved by PSR-6, and a delimiter avoids
+        // boundary collisions (key "sy" + model "m" == key "s" + model "ym").
+        $cacheKey = (new UnicodeString('.'))->join([
+            $namespace,
             (new UnicodeString($modelName))->camel(),
             $normalizedInput,
         ]);
@@ -84,27 +93,54 @@ final class CachePlatform implements PlatformInterface
 
         unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
 
-        $cached = $this->cache->get($cacheKey, function (ItemInterface $item) use ($model, $modelName, $input, $options, $cacheKey, $ttl): array {
-            $item->tag((new UnicodeString($modelName))->camel());
+        try {
+            $cached = $this->cache->get($cacheKey, function (ItemInterface $item) use ($model, $modelName, $input, $options, $cacheKey, $namespace, $ttl): array {
+                $item->tag([
+                    (new UnicodeString($modelName))->camel(),
+                    'namespace.'.$namespace,
+                ]);
 
-            if (null !== $ttl) {
-                $item->expiresAfter($ttl);
+                if (null !== $ttl) {
+                    $item->expiresAfter($ttl);
+                }
+
+                $deferredResult = $this->platform->invoke($model, $input, $options);
+
+                $result = $deferredResult->getResult();
+
+                try {
+                    $normalizedResult = $this->serializer->normalize($result);
+                } catch (InvalidArgumentException $e) {
+                    // Fail open: carry the live result out when it cannot be normalized.
+                    throw new UncacheableResultException($deferredResult, $e);
+                }
+
+                return [
+                    'result' => $normalizedResult,
+                    'raw_data' => $deferredResult->getRawResult()->getData(),
+                    'metadata' => $result->getMetadata()->all(),
+                    'cached_at' => $this->clock->now()->getTimestamp(),
+                    'cache_key' => $cacheKey,
+                ];
+            });
+        } catch (\Throwable $e) {
+            // The cache contract does not declare the callback's exceptions: rethrow everything
+            // but the carried live result.
+            if ($e instanceof UncacheableResultException) {
+                return $e->getDeferredResult();
             }
 
-            $deferredResult = $this->platform->invoke($model, $input, $options);
+            throw $e;
+        }
 
-            $result = $deferredResult->getResult();
+        try {
+            $restoredResult = $this->serializer->denormalize($cached['result'], ResultInterface::class);
+        } catch (\Throwable) {
+            // Fail open on a stale or corrupted entry: drop it and re-invoke.
+            $this->cache->delete((string) $cacheKey);
 
-            return [
-                'result' => $this->serializer->normalize($result),
-                'raw_data' => $deferredResult->getRawResult()->getData(),
-                'metadata' => $result->getMetadata()->all(),
-                'cached_at' => $this->clock->now()->getTimestamp(),
-                'cache_key' => $cacheKey,
-            ];
-        });
-
-        $restoredResult = $this->serializer->denormalize($cached['result'], ResultInterface::class);
+            return $this->platform->invoke($model, $input, $options);
+        }
 
         $restoredResult->getMetadata()->set([
             ...$cached['metadata'],
@@ -127,5 +163,23 @@ final class CachePlatform implements PlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
+    }
+
+    /**
+     * Drops every cached entry tagged with one of the given tags.
+     *
+     * Entries are tagged with the camelized model name and `namespace.<cache key>` (the per-call
+     * key, or the constructor-level {@see $cacheKey} when none is provided), so a model or a whole
+     * namespace can be invalidated.
+     *
+     * @param list<string> $tags
+     */
+    public function invalidateTags(array $tags): bool
+    {
+        if (null === $this->cache) {
+            return false;
+        }
+
+        return $this->cache->invalidateTags($tags);
     }
 }

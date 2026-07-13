@@ -13,9 +13,16 @@ namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Contract\Normalizer\Message\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\AudioNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\CodeExecutionNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\CollectionNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\DocumentUrlNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ExecutableCodeNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\FileNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ImageUrlNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\TemplateNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\Content\TextNormalizer;
+use Symfony\AI\Platform\Contract\Normalizer\Message\Content\ThinkingNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\MessageBagNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
@@ -58,6 +65,13 @@ class Contract
         $normalizers[] = new ImageNormalizer();
         $normalizers[] = new ImageUrlNormalizer();
         $normalizers[] = new TextNormalizer();
+        $normalizers[] = new DocumentUrlNormalizer();
+        $normalizers[] = new FileNormalizer();
+        $normalizers[] = new CollectionNormalizer();
+        $normalizers[] = new TemplateNormalizer();
+        $normalizers[] = new ThinkingNormalizer();
+        $normalizers[] = new ExecutableCodeNormalizer();
+        $normalizers[] = new CodeExecutionNormalizer();
 
         // Options
         $normalizers[] = new ToolNormalizer();
@@ -85,6 +99,21 @@ class Contract
             self::CONTEXT_MODEL => $model,
             self::CONTEXT_OPTIONS => $options,
         ]);
+    }
+
+    /**
+     * Normalizes the given input through the contract serializer without binding a model to the
+     * context, so the provider-specific (model-gated) normalizers stay inactive and the base
+     * normalizers produce a stable, provider-agnostic representation.
+     *
+     * @param object|array<string|int, mixed>|string $input
+     * @param array<string, mixed>                   $context
+     *
+     * @return array<string, mixed>|string
+     */
+    public function normalize(object|array|string $input, array $context = []): array|string
+    {
+        return $this->normalizer->normalize($input, context: $context);
     }
 
     /**

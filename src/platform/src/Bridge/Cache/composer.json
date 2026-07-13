@@ -9,6 +9,9 @@
         "bridge",
         "platform"
     ],
+    "repositories": [
+        {"type": "path", "url": "../" }
+    ],
     "authors": [
         {
             "name": "Christopher Hertel",
