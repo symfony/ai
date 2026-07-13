@@ -12,8 +12,8 @@
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
 use Symfony\AI\Agent\Memory\EmbeddingProvider;
-use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -63,7 +63,7 @@ $indexer->index($documents);
 // Execute a chat call that is utilizing the memory
 $embeddingsModel = $platform->getModelCatalog()->getModel($embeddings);
 $embeddingsMemory = new EmbeddingProvider($platform, $embeddingsModel, $store);
-$memoryProcessor = new MemoryInputProcessor([$embeddingsMemory]);
+$memoryProcessor = new MemoryProcessor([$embeddingsMemory]);
 
 $agent = new Agent($platform, 'gpt-5-mini', [$memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));

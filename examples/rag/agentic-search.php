@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Fixtures\AgenticSearch\AgenticSearchTools;
@@ -158,7 +157,7 @@ PROMPT;
 $agent = new Agent(
     $platform,
     'gpt-4.1',
-    [new SystemPromptInputProcessor($systemPrompt)],
+    instruction: $systemPrompt,
     toolbox: $toolbox,
     eventDispatcher: $dispatcher,
 );

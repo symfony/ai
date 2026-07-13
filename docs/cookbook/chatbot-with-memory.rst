@@ -42,24 +42,22 @@ be consistently available to the agent::
 This information is automatically injected into the system prompt, providing the agent with
 context about the user without cluttering the conversation messages.
 
-Step 3: Add the Memory Input Processor
---------------------------------------
+Step 3: Add the Memory Processor
+--------------------------------
 
-The :class:`Symfony\\AI\\Agent\\Memory\\MemoryInputProcessor` handles the injection of memory
+The :class:`Symfony\\AI\\Agent\\Context\\Processor\\MemoryProcessor` handles the injection of memory
 content into the agent's context::
 
-    use Symfony\AI\Agent\Memory\MemoryInputProcessor;
+    use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
 
-    $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
+    $memoryProcessor = new MemoryProcessor([$personalFacts]);
 
-This processor works alongside other input processors like
-:class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor` to build a complete
-context for the agent.
+This processor works alongside the agent's ``instruction`` to build a complete context for the agent.
 
 Step 4: Configure the Agent
 ---------------------------
 
-The agent is configured with both the system prompt and memory processors. Processors are applied
+The agent is configured with the instruction and the memory processor. Context processors are applied
 in order, allowing you to build up the context progressively::
 
     use Symfony\AI\Agent\Agent;
@@ -67,10 +65,11 @@ in order, allowing you to build up the context progressively::
     $agent = new Agent(
         $platform,
         'gpt-4o-mini',
-        [$systemPromptProcessor, $memoryProcessor],
+        [$memoryProcessor],
+        instruction: 'You are a personal assistant.',
     );
 
-When a user message is submitted, the ``MemoryInputProcessor`` loads relevant facts from the
+When a user message is submitted, the ``MemoryProcessor`` loads relevant facts from the
 memory provider and prepends them to the system prompt. The agent then generates a personalized
 response based on both the current message and the remembered context. Because the memory
 persists across calls, the conversation stays personalized over time.
@@ -87,7 +86,7 @@ semantic similarity::
     $model = $platform->getModelCatalog()->getModel('text-embedding-3-small');
     $embeddingsMemory = new EmbeddingProvider($platform, $model, $store);
 
-Pass it to the ``MemoryInputProcessor`` just like the static provider.
+Pass it to the ``MemoryProcessor`` just like the static provider.
 
 Using the AI Bundle?
 --------------------

@@ -24,7 +24,7 @@ $messages = new MessageBag(
     Message::ofUser('What is the closest hotel to me?'),
 );
 
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'server_tools' => ['google_maps' => true],
     'tool_config' => [
         'retrieval_config' => [

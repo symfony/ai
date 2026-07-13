@@ -38,7 +38,7 @@ $agent = new Agent($platform, 'gpt-4o-mini', toolbox: $toolbox, eventDispatcher:
 
 $messages = new MessageBag(Message::ofUser('First, list the files in this folder. Then delete the file confirmation.php'));
 
-$result = $agent->call($messages, ['stream' => true]);
+$result = $agent->call($messages, options: ['stream' => true]);
 
 foreach ($result->getContent() as $delta) {
     if ($delta instanceof TextDelta) {

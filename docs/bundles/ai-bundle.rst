@@ -936,29 +936,27 @@ Use the :class:`Symfony\\AI\\Agent\\Agent` service to leverage models and tools:
 Register Processors
 ~~~~~~~~~~~~~~~~~~~
 
-By default, all services implementing the :class:`Symfony\\AI\\Agent\\InputProcessorInterface` or the
-:class:`Symfony\\AI\\Agent\\OutputProcessorInterface` interfaces are automatically applied to every :class:`Symfony\\AI\\Agent\\Agent`.
+By default, all services implementing the :class:`Symfony\\AI\\Agent\\Context\\ContextProcessorInterface`
+interface are automatically applied to every :class:`Symfony\\AI\\Agent\\Agent`.
 
-This behavior can be overridden/configured with the :class:`Symfony\\AI\\Agent\\Attribute\\AsInputProcessor` and
-the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
+This behavior can be overridden/configured with the :class:`Symfony\\AI\\Agent\\Attribute\\AsContextProcessor`
+attribute::
 
-    use Symfony\AI\Agent\Attribute\AsInputProcessor;
-    use Symfony\AI\Agent\Attribute\AsOutputProcessor;
-    use Symfony\AI\Agent\Input;
-    use Symfony\AI\Agent\InputProcessorInterface;
-    use Symfony\AI\Agent\Output;
-    use Symfony\AI\Agent\OutputProcessorInterface;
+    use Symfony\AI\Agent\Attribute\AsContextProcessor;
+    use Symfony\AI\Agent\Context\AgentContext;
+    use Symfony\AI\Agent\Context\AgentRequest;
+    use Symfony\AI\Agent\Context\ContextProcessorInterface;
 
-    #[AsInputProcessor(priority: 99)] // This applies to every agent
-    #[AsOutputProcessor(agent: 'ai.agent.my_agent_name')] // The output processor will only be registered for 'ai.agent.my_agent_name'
-    final readonly class MyService implements InputProcessorInterface, OutputProcessorInterface
+    #[AsContextProcessor(priority: 99)] // This applies to every agent
+    #[AsContextProcessor(agent: 'ai.agent.my_agent_name')] // Only registered for 'ai.agent.my_agent_name'
+    final readonly class MyService implements ContextProcessorInterface
     {
-        public function processInput(Input $input): void
+        public static function supportedTypes(): array
         {
-            // ...
+            return [];
         }
 
-        public function processOutput(Output $output): void
+        public function process(AgentRequest $request, AgentContext $context): void
         {
             // ...
         }

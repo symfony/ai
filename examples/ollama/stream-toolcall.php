@@ -26,7 +26,7 @@ $agent = new Agent($platform, 'llama3.2', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('What time is it?'));
 
-$result = $agent->call($messages, ['stream' => true]);
+$result = $agent->call($messages, options: ['stream' => true]);
 
 foreach ($result->getContent() as $delta) {
     if ($delta instanceof TextDelta) {

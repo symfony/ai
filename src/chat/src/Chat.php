@@ -57,7 +57,7 @@ final class Chat implements ChatInterface
         $messages = $this->store->load();
         $messages->add($message);
 
-        $execution = $this->agent->call($messages, ['stream' => true]);
+        $execution = $this->agent->call($messages, options: ['stream' => true]);
 
         yield from $execution->asStream();
 

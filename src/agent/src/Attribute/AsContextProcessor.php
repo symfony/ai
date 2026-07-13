@@ -13,9 +13,10 @@ namespace Symfony\AI\Agent\Attribute;
 
 /**
  * @author Vincent Langlet <vincentlanglet@github.com>
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
-final class AsOutputProcessor
+final class AsContextProcessor
 {
     /**
      * @param string|null $agent the service id of the agent which will use this processor,

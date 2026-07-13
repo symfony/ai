@@ -8,6 +8,16 @@ CHANGELOG
  * Add `setup_options` configuration for Redis store to set the `vector_size` used by `ai:store:setup`
  * Register a `#[Target]` alias for every configured platform, including the failover instance name
  * Add `dimensions` and `similarity` configuration for MongoDB store, used by `ai:store:setup` to create the vector index
+ * [BC BREAK] Replace the `ai.agent.input_processor` and `ai.agent.output_processor` tags with a single
+   `ai.agent.context_processor` tag, collected into the agent's context processor argument. Services implementing
+   `Context\ContextProcessorInterface` are autoconfigured with it, and the `AsInputProcessor`/`AsOutputProcessor`
+   attributes are replaced by `AsContextProcessor`
+ * [BC BREAK] The agent's system prompt is passed to the `Agent` as its `instruction` instead of being registered as
+   the `ai.agent.*.system_prompt_processor` service, and memory is wired as `ai.agent.*.memory_processor`
+ * [BC BREAK] Remove the `ai.tool.agent_processor.*` services; the toolbox and its settings (`max_tool_calls`,
+   `exclude_tool_messages`, `include_sources`) are passed to the `Agent` directly
+ * Fix the `memory` agent option: a string was passed to `StaticMemoryProvider`, whose constructor takes a list of
+   facts, so a configured string memory failed to instantiate
 
 0.14
 ----

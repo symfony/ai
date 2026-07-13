@@ -28,28 +28,22 @@ Install the Platform and Agent components via Composer::
 Step 2: Create Specialist Agents
 --------------------------------
 
-Each specialist agent is a regular :class:`Symfony\\AI\\Agent\\Agent` with a
-:class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor` that defines its area of
-expertise. Give each agent a descriptive ``name`` so the orchestrator can identify it::
+Each specialist agent is a regular :class:`Symfony\\AI\\Agent\\Agent` with an ``instruction`` that defines its
+area of expertise. Give each agent a descriptive ``name`` so the orchestrator can identify it::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 
     $technical = new Agent(
         $platform,
         'gpt-5-mini',
-        [new SystemPromptInputProcessor(
-            'You are a technical support specialist. Help users resolve bugs and errors.',
-        )],
+        instruction: 'You are a technical support specialist. Help users resolve bugs and errors.',
         name: 'technical',
     );
 
     $billing = new Agent(
         $platform,
         'gpt-5-mini',
-        [new SystemPromptInputProcessor(
-            'You are a billing specialist. Help users with invoices and payments.',
-        )],
+        instruction: 'You are a billing specialist. Help users with invoices and payments.',
         name: 'billing',
     );
 
@@ -63,9 +57,7 @@ point::
     $orchestrator = new Agent(
         $platform,
         'gpt-5-mini',
-        [new SystemPromptInputProcessor(
-            'You are an agent orchestrator that routes user questions to specialized agents.',
-        )],
+        instruction: 'You are an agent orchestrator that routes user questions to specialized agents.',
     );
 
 Step 4: Configure Handoffs
@@ -101,9 +93,7 @@ any specialist::
     $fallback = new Agent(
         $platform,
         'gpt-5-mini',
-        [new SystemPromptInputProcessor(
-            'You are a general assistant. Help users with any non-specialized questions.',
-        )],
+        instruction: 'You are a general assistant. Help users with any non-specialized questions.',
         name: 'fallback',
     );
 

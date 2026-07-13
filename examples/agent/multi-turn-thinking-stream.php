@@ -37,7 +37,7 @@ $messages = new MessageBag(
 );
 
 $messages->add(Message::ofUser('What time is it right now?'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($messages, options: $options);
 
 output()->write('<info>Turn 1:</info> ');
 foreach ($execution->asStream() as $delta) {
@@ -50,7 +50,7 @@ output()->writeln('');
 $messages->add(Message::ofAssistant($execution->getResult()));
 
 $messages->add(Message::ofUser('What did I just ask you?'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($messages, options: $options);
 
 output()->write('<info>Turn 2:</info> ');
 foreach ($execution->asStream() as $delta) {

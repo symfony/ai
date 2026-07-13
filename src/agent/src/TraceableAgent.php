@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -25,6 +26,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *
  * @phpstan-type AgentData array{
  *     input: string|MessageBag|UserMessage,
+ *     context: Context,
  *     options: array<string, mixed>,
  *     called_at: \DateTimeImmutable,
  * }
@@ -43,15 +45,16 @@ final class TraceableAgent implements AgentInterface, ResetInterface
     ) {
     }
 
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, Context $context = new Context(), array $options = []): Execution
     {
         $this->calls[] = [
             'input' => $input,
+            'context' => $context,
             'options' => $options,
             'called_at' => $this->clock->now(),
         ];
 
-        $execution = $this->agent->call($input, $options);
+        $execution = $this->agent->call($input, $context, $options);
 
         if (null === $this->stopwatch) {
             return $execution;

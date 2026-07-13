@@ -9,16 +9,22 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Memory;
+namespace Symfony\AI\Agent\Context\Processor;
 
-use Symfony\AI\Agent\Input;
-use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\Context\AgentContext;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\ContextProcessorInterface;
+use Symfony\AI\Agent\Memory\Memory;
+use Symfony\AI\Agent\Memory\MemoryProviderInterface;
 use Symfony\AI\Platform\Message\Message;
 
 /**
+ * Injects memories retrieved from configured providers into the system message.
+ *
  * @author Denis Zunke <denis.zunke@gmail.com>
+ * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class MemoryInputProcessor implements InputProcessorInterface
+final class MemoryProcessor implements ContextProcessorInterface
 {
     /**
      * Metadata key on the combined system message that preserves the original
@@ -43,12 +49,17 @@ final class MemoryInputProcessor implements InputProcessorInterface
     ) {
     }
 
-    public function processInput(Input $input): void
+    public static function supportedTypes(): array
     {
-        $options = $input->getOptions();
+        return [];
+    }
+
+    public function process(AgentRequest $request, AgentContext $context): void
+    {
+        $options = $request->getOptions();
         $useMemory = $options['use_memory'] ?? true;
         unset($options['use_memory']);
-        $input->setOptions($options);
+        $request->setOptions($options);
 
         if (false === $useMemory || 0 === \count($this->memoryProviders)) {
             return;
@@ -56,7 +67,7 @@ final class MemoryInputProcessor implements InputProcessorInterface
 
         $memory = '';
         foreach ($this->memoryProviders as $provider) {
-            $memoryMessages = $provider->load($input);
+            $memoryMessages = $provider->load($request);
 
             if (0 === \count($memoryMessages)) {
                 continue;
@@ -73,7 +84,7 @@ final class MemoryInputProcessor implements InputProcessorInterface
             return;
         }
 
-        $systemMessage = $input->getMessageBag()->getSystemMessage();
+        $systemMessage = $request->getMessageBag()->getSystemMessage();
         $originalSystemPrompt = $systemMessage?->getMetadata()->get(self::ORIGINAL_SYSTEM_PROMPT_KEY);
         if (!\is_string($originalSystemPrompt)) {
             $originalSystemPrompt = $systemMessage?->getContent() ?? '';
@@ -87,7 +98,8 @@ final class MemoryInputProcessor implements InputProcessorInterface
         $combinedSystemMessage = Message::forSystem($combinedMessage);
         $combinedSystemMessage->getMetadata()->add(self::ORIGINAL_SYSTEM_PROMPT_KEY, $originalSystemPrompt);
 
-        $messages = $input->getMessageBag();
+        // mutate the caller's bag in place, so the combined system message ends up in it
+        $messages = $request->getMessageBag();
         $messages->removeSystemMessage();
         $messages->prepend($combinedSystemMessage);
     }

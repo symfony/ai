@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Memory;
 
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\MessageInterface;
@@ -33,9 +33,9 @@ final class EmbeddingProvider implements MemoryProviderInterface
     ) {
     }
 
-    public function load(Input $input): array
+    public function load(AgentRequest $request): array
     {
-        $messages = $input->getMessageBag()->getMessages();
+        $messages = $request->getMessageBag()->getMessages();
         /** @var MessageInterface|null $userMessage */
         $userMessage = array_last($messages) ?? null;
 

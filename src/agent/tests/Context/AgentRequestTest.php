@@ -9,21 +9,22 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests;
+namespace Symfony\AI\Agent\Tests\Context;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
-final class InputTest extends TestCase
+final class AgentRequestTest extends TestCase
 {
     public function testConstructorSetsProperties()
     {
         $messageBag = new MessageBag();
         $options = ['temperature' => 0.7, 'max_tokens' => 100];
 
-        $input = new Input('gpt-4', $messageBag, $options);
+        $input = new AgentRequest('gpt-4', $messageBag, $options, new Context());
 
         $this->assertSame('gpt-4', $input->getModel());
         $this->assertSame($messageBag, $input->getMessageBag());
@@ -34,7 +35,7 @@ final class InputTest extends TestCase
     {
         $messageBag = new MessageBag();
 
-        $input = new Input('claude-3', $messageBag);
+        $input = new AgentRequest('claude-3', $messageBag, [], new Context());
 
         $this->assertSame('claude-3', $input->getModel());
         $this->assertSame($messageBag, $input->getMessageBag());
@@ -44,7 +45,7 @@ final class InputTest extends TestCase
     public function testGetModel()
     {
         $messageBag = new MessageBag();
-        $input = new Input('test-model', $messageBag);
+        $input = new AgentRequest('test-model', $messageBag, [], new Context());
 
         $this->assertSame('test-model', $input->getModel());
     }
@@ -52,7 +53,7 @@ final class InputTest extends TestCase
     public function testSetModel()
     {
         $messageBag = new MessageBag();
-        $input = new Input('original-model', $messageBag);
+        $input = new AgentRequest('original-model', $messageBag, [], new Context());
 
         $input->setModel('new-model');
 
@@ -64,7 +65,7 @@ final class InputTest extends TestCase
         $messageBag = new MessageBag();
         $messageBag->add(Message::ofUser('Hello'));
 
-        $input = new Input('model', $messageBag);
+        $input = new AgentRequest('model', $messageBag, [], new Context());
 
         $result = $input->getMessageBag();
 
@@ -75,7 +76,7 @@ final class InputTest extends TestCase
     public function testSetMessageBag()
     {
         $originalMessageBag = new MessageBag();
-        $input = new Input('model', $originalMessageBag);
+        $input = new AgentRequest('model', $originalMessageBag, [], new Context());
 
         $newMessageBag = new MessageBag();
         $newMessageBag->add(Message::ofUser('New message'));
@@ -92,7 +93,7 @@ final class InputTest extends TestCase
         $messageBag = new MessageBag();
         $options = ['foo' => 'bar', 'baz' => 42];
 
-        $input = new Input('model', $messageBag, $options);
+        $input = new AgentRequest('model', $messageBag, $options, new Context());
 
         $this->assertSame($options, $input->getOptions());
     }
@@ -100,7 +101,7 @@ final class InputTest extends TestCase
     public function testSetOptions()
     {
         $messageBag = new MessageBag();
-        $input = new Input('model', $messageBag, ['old' => 'option']);
+        $input = new AgentRequest('model', $messageBag, ['old' => 'option'], new Context());
 
         $newOptions = ['new' => 'options', 'count' => 3];
         $input->setOptions($newOptions);
@@ -111,7 +112,7 @@ final class InputTest extends TestCase
     public function testSetOptionsReplacesAllOptions()
     {
         $messageBag = new MessageBag();
-        $input = new Input('model', $messageBag, ['a' => 1, 'b' => 2]);
+        $input = new AgentRequest('model', $messageBag, ['a' => 1, 'b' => 2], new Context());
 
         $input->setOptions(['c' => 3]);
 

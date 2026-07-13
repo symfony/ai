@@ -29,7 +29,7 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What date and time is it? Answer in one sentence.'));
 
 // call() returns a lazy execution: every step the agent takes is yielded as an update
-$execution = $agent->call($messages, ['stream' => true]);
+$execution = $agent->call($messages, options: ['stream' => true]);
 
 foreach ($execution as $update) {
     if ($update instanceof Progress) {

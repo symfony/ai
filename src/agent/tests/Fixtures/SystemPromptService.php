@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\InputProcessor;
+namespace Symfony\AI\Agent\Tests\Fixtures;
 
 final class SystemPromptService implements \Stringable
 {

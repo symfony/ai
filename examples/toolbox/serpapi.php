@@ -34,7 +34,7 @@ $prompt = <<<PROMPT
     given in the context - don't make up information.
     PROMPT;
 
-$result = $agent->call(new MessageBag(Message::ofUser($prompt)), ['stream' => true]);
+$result = $agent->call(new MessageBag(Message::ofUser($prompt)), options: ['stream' => true]);
 
 foreach ($result->getContent() as $delta) {
     if ($delta instanceof TextDelta) {

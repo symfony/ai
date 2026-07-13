@@ -10,8 +10,7 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
-use Symfony\AI\Agent\Memory\MemoryInputProcessor;
+use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
@@ -21,16 +20,14 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
-$systemPromptProcessor = new SystemPromptInputProcessor('You are a professional trainer with short, personalized advice and a motivating claim.');
-
 $personalFacts = new StaticMemoryProvider([
     'My name is Wilhelm Tell',
     'I wish to be a swiss national hero',
     'I am struggling with hitting apples but want to be professional with the bow and arrow',
 ]);
-$memoryProcessor = new MemoryInputProcessor([$personalFacts]);
+$memoryProcessor = new MemoryProcessor([$personalFacts]);
 
-$agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor, $memoryProcessor]);
+$agent = new Agent($platform, 'gpt-5-mini', [$memoryProcessor], instruction: 'You are a professional trainer with short, personalized advice and a motivating claim.');
 $messages = new MessageBag(Message::ofUser('What do we do today?'));
 $result = $agent->call($messages);
 

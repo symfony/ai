@@ -88,13 +88,11 @@ The generator returns a ``FindingList``; the reviewer returns one ``Verdict`` pe
 Step 3: Create the Generator and Reviewer Agents
 ------------------------------------------------
 
-Each role is a regular :class:`Symfony\\AI\\Agent\\Agent` with a
-:class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor` that defines its job.
+Each role is a regular :class:`Symfony\\AI\\Agent\\Agent` with an ``instruction`` that defines its job.
 Structured output is resolved by the :class:`Symfony\\AI\\Platform\\StructuredOutput\\PlatformSubscriber`,
 so register it on the platform's event dispatcher::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
     use Symfony\AI\Platform\Bridge\OpenAi\Factory;
     use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
     use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -107,22 +105,18 @@ so register it on the platform's event dispatcher::
     $generator = new Agent(
         $platform,
         'gpt-4o-mini',
-        [new SystemPromptInputProcessor(
-            'You are a security auditor for Symfony applications. Report concrete, '
+        instruction: 'You are a security auditor for Symfony applications. Report concrete, '
             .'exploitable vulnerabilities. For each finding set a confidence between '
             .'0 and 1 reflecting how sure you are it is real.',
-        )],
         name: 'generator',
     );
 
     $reviewer = new Agent(
         $platform,
         'gpt-4o-mini',
-        [new SystemPromptInputProcessor(
-            'You are a skeptical security reviewer. Decide whether a reported finding '
+        instruction: 'You are a skeptical security reviewer. Decide whether a reported finding '
             .'is a true positive. Reject anything speculative, already mitigated, or not '
             .'actually reachable by an attacker, and explain your reasoning briefly.',
-        )],
         name: 'reviewer',
     );
 
@@ -210,7 +204,7 @@ clear of similar false positives::
 
             /** @var FindingList $list */
             $list = $this->generator
-                ->call($prompt, ['response_format' => FindingList::class])
+                ->call($prompt, options: ['response_format' => FindingList::class])
                 ->asObject();
 
             return $list->findings;
@@ -226,7 +220,7 @@ clear of similar false positives::
 
             /** @var Verdict $verdict */
             $verdict = $this->reviewer
-                ->call($prompt, ['response_format' => Verdict::class])
+                ->call($prompt, options: ['response_format' => Verdict::class])
                 ->asObject();
 
             return $verdict;

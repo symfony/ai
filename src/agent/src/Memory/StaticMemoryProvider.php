@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Memory;
 
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
@@ -26,7 +26,7 @@ final class StaticMemoryProvider implements MemoryProviderInterface
     ) {
     }
 
-    public function load(Input $input): array
+    public function load(AgentRequest $request): array
     {
         if (0 === \count($this->memory)) {
             return [];

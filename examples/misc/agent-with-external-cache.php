@@ -29,7 +29,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 );
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'prompt_cache_key' => 'chat',
 ]);
 
@@ -39,7 +39,7 @@ echo $result->asText().\PHP_EOL;
 
 // Thanks to the cache adapter and the "prompt_cache_key" key, this call will not trigger any network call
 
-$secondResult = $agent->call($messages, [
+$secondResult = $agent->call($messages, options: [
     'prompt_cache_key' => 'chat',
 ]);
 

@@ -9,26 +9,30 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Agent\Tests\Memory;
+namespace Symfony\AI\Agent\Tests\Context\Processor;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentContext;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\Context;
+use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
 use Symfony\AI\Agent\Memory\Memory;
-use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\MemoryProviderInterface;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
-final class MemoryInputProcessorTest extends TestCase
+final class MemoryProcessorTest extends TestCase
 {
     public function testItIsDoingNothingOnInactiveMemory()
     {
         $memoryProvider = $this->createMock(MemoryProviderInterface::class);
         $memoryProvider->expects($this->never())->method($this->anything());
 
-        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
-        $memoryInputProcessor->processInput(
-            $input = new Input('gpt-4', new MessageBag(), ['use_memory' => false]),
+        $memoryProcessor = new MemoryProcessor([$memoryProvider]);
+        $memoryProcessor->process(
+            $input = new AgentRequest('gpt-4', new MessageBag(), ['use_memory' => false], new Context()),
+            new AgentContext(new MockAgent()),
         );
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
@@ -36,9 +40,10 @@ final class MemoryInputProcessorTest extends TestCase
 
     public function testItIsDoingNothingWhenThereAreNoProviders()
     {
-        $memoryInputProcessor = new MemoryInputProcessor([]);
-        $memoryInputProcessor->processInput(
-            $input = new Input('gpt-4', new MessageBag(), ['use_memory' => true]),
+        $memoryProcessor = new MemoryProcessor([]);
+        $memoryProcessor->process(
+            $input = new AgentRequest('gpt-4', new MessageBag(), ['use_memory' => true], new Context()),
+            new AgentContext(new MockAgent()),
         );
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
@@ -56,16 +61,15 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([
+        $memoryProcessor = new MemoryProcessor([
             $firstMemoryProvider,
             $secondMemoryProvider,
         ]);
 
-        $memoryInputProcessor->processInput($input = new Input(
-            'gpt-4',
-            new MessageBag(Message::forSystem('You are a helpful and kind assistant.')),
-            [],
-        ));
+        $memoryProcessor->process(
+            $input = new AgentRequest('gpt-4', new MessageBag(Message::forSystem('You are a helpful and kind assistant.')), [], new Context()),
+            new AgentContext(new MockAgent()),
+        );
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
@@ -93,9 +97,9 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('First memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$firstMemoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$firstMemoryProvider]);
 
-        $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
+        $memoryProcessor->process($input = new AgentRequest('gpt-4', new MessageBag(), [], new Context()), new AgentContext(new MockAgent()));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
@@ -119,9 +123,9 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('First memory content'), new Memory('Second memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$firstMemoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$firstMemoryProvider]);
 
-        $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
+        $memoryProcessor->process($input = new AgentRequest('gpt-4', new MessageBag(), [], new Context()), new AgentContext(new MockAgent()));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertSame(
@@ -146,9 +150,9 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$firstMemoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$firstMemoryProvider]);
 
-        $memoryInputProcessor->processInput($input = new Input('gpt-4', new MessageBag(), []));
+        $memoryProcessor->process($input = new AgentRequest('gpt-4', new MessageBag(), [], new Context()), new AgentContext(new MockAgent()));
 
         $this->assertArrayNotHasKey('use_memory', $input->getOptions());
         $this->assertNull($input->getMessageBag()->getSystemMessage()?->getContent());
@@ -161,10 +165,10 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('Some memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$memoryProvider]);
 
         $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
-        $memoryInputProcessor->processInput($input = new Input('gpt-4', $bag, []));
+        $memoryProcessor->process($input = new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
 
         // Caller's bag must reflect the combined system message so downstream
         // processors can append messages visible to the caller's reference.
@@ -181,7 +185,7 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('User likes PHP')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$memoryProvider]);
 
         // Since the processor mutates the caller's bag in place, the combined
         // system message survives the agent call. Chat::submit() persists that
@@ -189,10 +193,10 @@ final class MemoryInputProcessorTest extends TestCase
         // its own output and must not wrap the memory prompt a second time.
         $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
         $firstTurnSystemMessage = $bag->getSystemMessage()->getContent();
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
         $secondTurnSystemMessage = $bag->getSystemMessage()->getContent();
 
         $this->assertSame(1, substr_count($secondTurnSystemMessage, '# Conversation Memory'));
@@ -206,10 +210,10 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('Some memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$memoryProvider]);
 
         $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
 
         // The original prompt must travel as metadata on the combined message:
         // Chat message stores persist metadata, so idempotence survives a
@@ -227,14 +231,14 @@ final class MemoryInputProcessorTest extends TestCase
             ->method('load')
             ->willReturn([new Memory('Some memory content')]);
 
-        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$memoryProvider]);
 
         $bag = new MessageBag(Message::ofUser('Hi'));
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
         $firstTurnSystemMessage = $bag->getSystemMessage()->getContent();
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
         $secondTurnSystemMessage = $bag->getSystemMessage()->getContent();
 
         $this->assertStringNotContainsString('# System Prompt', $secondTurnSystemMessage);
@@ -251,12 +255,12 @@ final class MemoryInputProcessorTest extends TestCase
                 [new Memory('Second turn memory')],
             );
 
-        $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
+        $memoryProcessor = new MemoryProcessor([$memoryProvider]);
 
         $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
+        $memoryProcessor->process(new AgentRequest('gpt-4', $bag, [], new Context()), new AgentContext(new MockAgent()));
 
         $systemMessage = $bag->getSystemMessage()->getContent();
 

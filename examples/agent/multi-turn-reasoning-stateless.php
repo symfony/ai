@@ -36,14 +36,14 @@ $messages = new MessageBag(
 );
 
 $messages->add(Message::ofUser('What time is it right now?'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($messages, options: $options);
 
 $assistant = Message::ofAssistant($execution->getResult());
 output()->writeln('<info>Turn 1:</info> '.$assistant->asText());
 $messages->add($assistant);
 
 $messages->add(Message::ofUser('What did I just ask you?'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($messages, options: $options);
 
 $assistant = Message::ofAssistant($execution->getResult());
 output()->writeln('<info>Turn 2:</info> '.$assistant->asText());

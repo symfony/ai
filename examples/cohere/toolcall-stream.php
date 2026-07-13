@@ -25,7 +25,7 @@ $toolbox = new Toolbox([new Clock(clock())], logger: logger());
 $agent = new Agent($platform, 'command-a-03-2025', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('What time is it? Please tell me the current time.'));
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'stream' => true,
 ]);
 

@@ -29,17 +29,18 @@ Install the Platform and Agent components via Composer::
 Step 2: Create a Sliding Window Processor
 -----------------------------------------
 
-An input processor implements :class:`Symfony\\AI\\Agent\\InputProcessorInterface` and can modify
+A context processor implements :class:`Symfony\\AI\\Agent\\Context\\ContextProcessorInterface` and can modify
 the message bag before it is sent to the model. The simplest compression strategy discards older
 messages and keeps only the most recent ones::
 
-    namespace App\Agent\InputProcessor;
+    namespace App\Agent\ContextProcessor;
 
-    use Symfony\AI\Agent\Input;
-    use Symfony\AI\Agent\InputProcessorInterface;
+    use Symfony\AI\Agent\Context\AgentContext;
+    use Symfony\AI\Agent\Context\AgentRequest;
+    use Symfony\AI\Agent\Context\ContextProcessorInterface;
     use Symfony\AI\Platform\Message\MessageBag;
 
-    final class SlidingWindowInputProcessor implements InputProcessorInterface
+    final class SlidingWindowContextProcessor implements ContextProcessorInterface
     {
         public function __construct(
             private int $maxMessages = 10,
@@ -47,9 +48,14 @@ messages and keeps only the most recent ones::
         ) {
         }
 
-        public function processInput(Input $input): void
+        public static function supportedTypes(): array
         {
-            $messages = $input->getMessageBag();
+            return [];
+        }
+
+        public function process(AgentRequest $request, AgentContext $context): void
+        {
+            $messages = $request->getMessageBag();
             $nonSystemMessages = $messages->withoutSystemMessage()->getMessages();
 
             if (\count($nonSystemMessages) <= $this->threshold) {
@@ -59,7 +65,7 @@ messages and keeps only the most recent ones::
             $systemMessage = $messages->getSystemMessage();
             $recentMessages = \array_slice($nonSystemMessages, -$this->maxMessages);
 
-            $input->setMessageBag(null !== $systemMessage
+            $request->setMessageBag(null !== $systemMessage
                 ? new MessageBag($systemMessage, ...$recentMessages)
                 : new MessageBag(...$recentMessages),
             );
@@ -72,14 +78,14 @@ message is always preserved so the agent keeps its instructions.
 Step 3: Configure the Agent
 ---------------------------
 
-Pass the processor to the agent. Processors are applied in order on every call::
+Pass the processor to the agent. Context processors are applied in order on every call::
 
     use Symfony\AI\Agent\Agent;
 
     $agent = new Agent(
         $platform,
         'gpt-4o-mini',
-        [new SlidingWindowInputProcessor()],
+        [new SlidingWindowContextProcessor()],
     );
 
 Whenever the conversation exceeds 20 messages, only the 10 most recent ones are sent to the
@@ -91,17 +97,18 @@ Step 4: Summarize Instead of Discarding
 A sliding window loses context. When older messages matter, use an LLM to summarize them and
 inject the summary into the system message::
 
-    namespace App\Agent\InputProcessor;
+    namespace App\Agent\ContextProcessor;
 
-    use Symfony\AI\Agent\Input;
-    use Symfony\AI\Agent\InputProcessorInterface;
+    use Symfony\AI\Agent\Context\AgentContext;
+    use Symfony\AI\Agent\Context\AgentRequest;
+    use Symfony\AI\Agent\Context\ContextProcessorInterface;
     use Symfony\AI\Platform\Message\AssistantMessage;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
     use Symfony\AI\Platform\Message\UserMessage;
     use Symfony\AI\Platform\PlatformInterface;
 
-    final class SummarizationInputProcessor implements InputProcessorInterface
+    final class SummarizationContextProcessor implements ContextProcessorInterface
     {
         public function __construct(
             private PlatformInterface $platform,
@@ -111,9 +118,14 @@ inject the summary into the system message::
         ) {
         }
 
-        public function processInput(Input $input): void
+        public static function supportedTypes(): array
         {
-            $messages = $input->getMessageBag();
+            return [];
+        }
+
+        public function process(AgentRequest $request, AgentContext $context): void
+        {
+            $messages = $request->getMessageBag();
             $nonSystemMessages = $messages->withoutSystemMessage()->getMessages();
 
             if (\count($nonSystemMessages) <= $this->threshold) {
@@ -138,7 +150,7 @@ inject the summary into the system message::
             }
             $systemContent .= '# Previous Conversation Summary'.\PHP_EOL.\PHP_EOL.$summary;
 
-            $input->setMessageBag(new MessageBag(
+            $request->setMessageBag(new MessageBag(
                 Message::forSystem($systemContent),
                 ...$toKeep,
             ));
@@ -167,14 +179,14 @@ messages stay untouched so the agent has full detail for the immediate context.
 Using the AI Bundle?
 --------------------
 
-If you use the AI Bundle, the :class:`Symfony\\AI\\Agent\\Attribute\\AsInputProcessor` attribute
+If you use the AI Bundle, the :class:`Symfony\\AI\\Agent\\Attribute\\AsContextProcessor` attribute
 registers the processor for a specific agent — or for all agents when the ``agent`` parameter is
 omitted::
 
-    use Symfony\AI\Agent\Attribute\AsInputProcessor;
+    use Symfony\AI\Agent\Attribute\AsContextProcessor;
 
-    #[AsInputProcessor(agent: 'my_agent')]
-    final class SummarizationInputProcessor implements InputProcessorInterface
+    #[AsContextProcessor(agent: 'my_agent')]
+    final class SummarizationContextProcessor implements ContextProcessorInterface
     {
         // ...
     }
@@ -185,7 +197,7 @@ Wire the platform dependency for the summarization processor:
 
     # config/services.yaml
     services:
-        App\Agent\InputProcessor\SummarizationInputProcessor:
+        App\Agent\ContextProcessor\SummarizationContextProcessor:
             $platform: '@ai.platform.openai'
             $model: 'gpt-4o-mini'
 

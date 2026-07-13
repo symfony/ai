@@ -28,7 +28,7 @@ $agent = new Agent($platform, 'gpt-5-mini');
 
 $messages = new MessageBag(Message::ofUser('Tell me a story about a lighthouse keeper in about 150 words.'));
 
-$execution = $agent->call($messages, ['stream' => true]);
+$execution = $agent->call($messages, options: ['stream' => true]);
 
 // Enable async signal handling and register a signal handler for SIGINT (Ctrl+C)
 pcntl_async_signals(true);

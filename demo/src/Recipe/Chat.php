@@ -84,7 +84,7 @@ final class Chat
             return new Recipe();
         }
 
-        $execution = $this->agent->call($messages, [
+        $execution = $this->agent->call($messages, options: [
             'stream' => true,
             'response_format' => Recipe::class,
         ]);

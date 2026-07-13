@@ -25,7 +25,7 @@ $messages = new MessageBag(
     Message::ofUser('What is the current 12 month Euribor rate?'),
 );
 
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'server_tools' => [
         'web_search' => ['max_uses' => 3],
     ],

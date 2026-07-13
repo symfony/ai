@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\OutOfBoundsException;
 use Symfony\AI\Agent\Exception\RuntimeException;
@@ -61,7 +62,7 @@ final class MockAgent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, Context $context = new Context(), array $options = []): Execution
     {
         $messages = InputNormalizer::toMessageBag($input);
         $content = $this->extractText($messages);

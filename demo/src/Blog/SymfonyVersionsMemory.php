@@ -11,7 +11,7 @@
 
 namespace App\Blog;
 
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
 use Symfony\AI\Agent\Memory\Memory;
 use Symfony\AI\Agent\Memory\MemoryProviderInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -29,7 +29,7 @@ final class SymfonyVersionsMemory implements MemoryProviderInterface
     ) {
     }
 
-    public function load(Input $input): array
+    public function load(AgentRequest $request): array
     {
         return $this->cache->get('symfony_version_memory', function (ItemInterface $item) {
             $item->expiresAfter(3600);

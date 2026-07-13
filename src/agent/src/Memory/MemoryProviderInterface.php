@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Memory;
 
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
@@ -21,5 +21,5 @@ interface MemoryProviderInterface
     /**
      * @return list<Memory>
      */
-    public function load(Input $input): array;
+    public function load(AgentRequest $request): array;
 }

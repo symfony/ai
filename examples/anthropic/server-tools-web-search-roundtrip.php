@@ -28,7 +28,7 @@ $messages = new MessageBag(
     Message::ofUser('Which PHP version is the latest stable release? Search the web.'),
 );
 
-$execution = $agent->call($messages, ['server_tools' => $serverTools]);
+$execution = $agent->call($messages, options: ['server_tools' => $serverTools]);
 $messages->add($assistant = Message::ofAssistant($execution->getResult()));
 
 output()->writeln('<info>====== Turn 1 ======</info>');
@@ -52,5 +52,5 @@ echo \PHP_EOL;
 // source because the assistant turn replayed both.
 output()->writeln('<info>====== Turn 2 ======</info>');
 $messages->add(Message::ofUser('Which website did you take that from? Answer with the domain only.'));
-$execution = $agent->call($messages, ['server_tools' => $serverTools]);
+$execution = $agent->call($messages, options: ['server_tools' => $serverTools]);
 output()->writeln('<comment>Assistant:</comment> '.$execution->asText());

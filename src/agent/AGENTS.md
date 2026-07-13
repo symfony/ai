@@ -11,11 +11,12 @@ Framework for building AI agents with user interaction and task execution. Built
 ### Core Classes
 - **Agent** (`src/Agent.php`): Main orchestration class
 - **AgentInterface**: Contract for implementations
-- **Input/Output** (`src/Input.php`, `src/Output.php`): Pipeline data containers
+- **Context** (`src/Context/`): Data objects handed to the agent, plus the `AgentRequest`/`AgentResult` envelopes
+- **Execution** (`src/Execution/`): Lazy, iterable stream of `Progress` and `Result` updates returned by `run()`
 
 ### Processing Pipeline
-- **InputProcessorInterface**: Input transformation contract
-- **OutputProcessorInterface**: Output transformation contract
+- **ContextProcessorInterface**: Request transformation contract, selected per context item type
+- **ResultAwareContextProcessorInterface**: Additionally inspects or replaces the result
 - Middleware-like processing chain
 
 ### Key Features
@@ -42,14 +43,15 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/agent/
 ## Processing Architecture
 
 ### Pipeline Flow
-1. Input processors modify requests
-2. Platform processes request
-3. Output processors modify responses
+1. Context processors modify the request
+2. Platform processes the request, the runner drives the tool-calling loop
+3. Result-aware context processors modify the result
 
 ### Built-in Processors
-- **SystemPromptInputProcessor**: Adds system prompts
-- **ModelOverrideInputProcessor**: Runtime model switching
-- **MemoryInputProcessor**: Conversation context from memory
+- **InstructionProcessor**: Adds the instruction (system prompt)
+- **AttachmentProcessor**: Attaches context content to the user message
+- **ToolProcessor**: Exposes the toolbox to the model
+- **MemoryProcessor**: Conversation context from memory
 
 ### Memory Providers
 - **StaticMemoryProvider**: In-memory storage

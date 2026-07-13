@@ -26,7 +26,7 @@ $toolbox = new Toolbox([$wikipedia], logger: logger());
 $agent = new Agent($platform, 'mistral-large-latest', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'stream' => true,
 ]);
 

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
@@ -40,11 +41,11 @@ final class SpeechAgent implements AgentInterface
     ) {
     }
 
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, Context $context = new Context(), array $options = []): Execution
     {
         $cancellation = new Cancellation();
 
-        return new Execution(function () use ($input, $options, $cancellation): \Generator {
+        return new Execution(function () use ($input, $context, $options, $cancellation): \Generator {
             $messages = InputNormalizer::toMessageBag($input);
 
             if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
@@ -52,7 +53,7 @@ final class SpeechAgent implements AgentInterface
             }
 
             $result = null;
-            foreach ($cancellation->forward($this->agent->call($messages, $options)) as $update) {
+            foreach ($cancellation->forward($this->agent->call($messages, $context, $options)) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
 

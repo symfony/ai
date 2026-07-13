@@ -135,7 +135,7 @@ final class StreamingAgentToolCallTest extends TestCase
             Message::ofUser('Who is the mayor of Berlin?'),
         );
 
-        $result = $agent->call($messages, ['stream' => true]);
+        $result = $agent->call($messages, options: ['stream' => true]);
 
         // Consume the stream to trigger all tool calls
         $content = '';

@@ -135,7 +135,7 @@ deltas instead of the assembled answer::
 
     use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
-    $result = $agent->call('Tell me a story.', ['stream' => true]);
+    $result = $agent->call('Tell me a story.', options: ['stream' => true]);
 
     foreach ($result->getContent() as $delta) {
         echo $delta->getText();
@@ -144,7 +144,7 @@ deltas instead of the assembled answer::
 The typed stream accessors save you the filtering: ``asStream()`` yields every delta, ``asTextStream()`` only the
 text deltas and ``asStreamedObject()`` the progressively populated object of a streamed structured output::
 
-    foreach ($agent->call('Tell me a story.', ['stream' => true])->asTextStream() as $delta) {
+    foreach ($agent->call('Tell me a story.', options: ['stream' => true])->asTextStream() as $delta) {
         echo $delta->getText();
     }
 
@@ -152,7 +152,7 @@ A running execution can be canceled, for example from a signal handler when the 
 when a chat user hits "stop". Canceling aborts the active HTTP response, so the model stops generating, and ends
 the stream without producing a final result::
 
-    $execution = $agent->call('Tell me a story.', ['stream' => true]);
+    $execution = $agent->call('Tell me a story.', options: ['stream' => true]);
 
     pcntl_async_signals(true);
     pcntl_signal(\SIGINT, static fn () => $execution->cancel());
@@ -174,7 +174,7 @@ well.
 Iterating the execution instead reports each delta as a ``Progress`` update of the ``delta`` stage, next to the
 model-request and tool-call updates::
 
-    foreach ($agent->call('Tell me a story.', ['stream' => true]) as $update) {
+    foreach ($agent->call('Tell me a story.', options: ['stream' => true]) as $update) {
         if ($update instanceof Progress && Progress::STAGE_DELTA === $update->getStage() && $update->getPayload() instanceof TextDelta) {
             echo $update->getPayload()->getText();
         }
@@ -778,7 +778,7 @@ Tool Filtering
 To limit the tools provided to the LLM in a specific agent call to a subset of the configured tools, you can use the
 tools option with a list of tool names::
 
-    $this->agent->call($messages, ['tools' => ['tavily_search']]);
+    $this->agent->call($messages, options: ['tools' => ['tavily_search']]);
 
 Tool Result Interception
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1047,55 +1047,81 @@ Code Examples
 Input & Output Processing
 -------------------------
 
-The behavior of the agent is extendable with services that implement InputProcessor and/or OutputProcessor interface.
-They are provided while instantiating the agent instance::
+The behavior of the agent is extendable with a :class:`Symfony\\AI\\Agent\\Context\\Context`: a collection of
+data objects handed to the agent, each processed by a matching
+:class:`Symfony\\AI\\Agent\\Context\\ContextProcessorInterface`. A context can be configured on the agent, and
+extended per call::
 
     use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Context\Context;
+    use Symfony\AI\Agent\Context\Instruction;
 
-    // Initialize Platform, LLM and processors
+    // Initialize Platform, LLM and context processors
 
-    $agent = new Agent($platform, $model, $inputProcessors, $outputProcessors);
+    $agent = new Agent($platform, $model, $contextProcessors, instruction: 'You are a helpful assistant.');
 
-InputProcessor
-~~~~~~~~~~~~~~
+    // an instruction can also be passed for a single call
+    $result = $agent->call('Hello!', new Context(new Instruction('Answer in French.')));
 
-:class:`Symfony\\AI\\Agent\\InputProcessorInterface` instances are called in the agent before handing over the :class:`Symfony\\AI\\Platform\\Message\\MessageBag` and the $options array to the LLM
-and are able to mutate both on top of the :class:`Symfony\\AI\\Agent\\Input` instance provided::
+The built-in :class:`Symfony\\AI\\Agent\\Context\\Instruction` is what used to be the system prompt, and
+platform content objects (``Image``, ``Audio``, ``Document``, ...) passed as context items get attached to the user
+message.
 
-    use Symfony\AI\Agent\Input;
-    use Symfony\AI\Agent\InputProcessorInterface;
+Context Processors
+~~~~~~~~~~~~~~~~~~
+
+A :class:`Symfony\\AI\\Agent\\Context\\ContextProcessorInterface` is called before the platform is invoked and
+can mutate the model, the :class:`Symfony\\AI\\Platform\\Message\\MessageBag` and the options through the
+:class:`Symfony\\AI\\Agent\\Context\\AgentRequest`::
+
+    use Symfony\AI\Agent\Context\AgentContext;
+    use Symfony\AI\Agent\Context\AgentRequest;
+    use Symfony\AI\Agent\Context\ContextProcessorInterface;
     use Symfony\AI\Platform\Message\Message;
 
-    final class MyProcessor implements InputProcessorInterface
+    final class MyProcessor implements ContextProcessorInterface
     {
-        public function processInput(Input $input): void
+        public static function supportedTypes(): array
+        {
+            return []; // always runs; return context item classes to only run when they are present
+        }
+
+        public function process(AgentRequest $request, AgentContext $context): void
         {
             // mutate options
-            $options = $input->getOptions();
+            $options = $request->getOptions();
             $options['foo'] = 'bar';
-            $input->setOptions($options);
+            $request->setOptions($options);
 
-            // mutate MessageBag
-            $input->getMessageBag()->add(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
+            // mutate the MessageBag
+            $request->getMessageBag()->add(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
+
+            // report progress to the consumer of the execution
+            $context->reportProgress('my_processor', 'Doing my thing.');
         }
     }
 
-OutputProcessor
-~~~~~~~~~~~~~~~
+``supportedTypes()`` declares which context items a processor consumes: it only runs when the context carries at least
+one item of those types. Returning an empty list marks the processor as global, so it always runs.
 
-:class:`Symfony\\AI\\Agent\\OutputProcessorInterface` instances are called after the model provided a result and can - on top of options and messages - mutate
-or replace the given result::
+Result-aware Context Processors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    use Symfony\AI\Agent\Output;
-    use Symfony\AI\Agent\OutputProcessorInterface;
+To inspect or replace the result after the model answered, implement
+:class:`Symfony\\AI\\Agent\\Context\\ResultAwareContextProcessorInterface`::
 
-    final class MyProcessor implements OutputProcessorInterface
+    use Symfony\AI\Agent\Context\AgentContext;
+    use Symfony\AI\Agent\Context\AgentResult;
+    use Symfony\AI\Agent\Context\ResultAwareContextProcessorInterface;
+
+    final class MyProcessor implements ResultAwareContextProcessorInterface
     {
-        public function processOutput(Output $output): void
+        // process() and supportedTypes() as above
+
+        public function processResult(AgentResult $result, AgentContext $context): void
         {
-            // mutate result
-            if (str_contains($output->getResult()->getContent(), self::STOP_WORD)) {
-                $output->setResult(new TextResult('Sorry, we were unable to find relevant information.'));
+            if (str_contains($result->getResult()->getContent(), self::STOP_WORD)) {
+                $result->setResult(new TextResult('Sorry, we were unable to find relevant information.'));
             }
         }
     }
@@ -1103,24 +1129,12 @@ or replace the given result::
 Agent Awareness
 ~~~~~~~~~~~~~~~
 
-Both, :class:`Symfony\\AI\\Agent\\Input` and :class:`Symfony\\AI\\Agent\\Output` instances, provide access to the LLM used by the agent, but the agent itself is only provided,
-in case the processor implemented the :class:`Symfony\\AI\\Agent\\AgentAwareInterface` interface, which can be combined with using the
-:class:`Symfony\\AI\\Agent\\AgentAwareTrait`::
+The :class:`Symfony\\AI\\Agent\\Context\\AgentContext` handed to every processor exposes the running agent, so a
+processor can call back into it::
 
-    use Symfony\AI\Agent\AgentAwareInterface;
-    use Symfony\AI\Agent\AgentAwareTrait;
-    use Symfony\AI\Agent\Output;
-    use Symfony\AI\Agent\OutputProcessorInterface;
-
-    final class MyProcessor implements OutputProcessorInterface, AgentAwareInterface
+    public function process(AgentRequest $request, AgentContext $context): void
     {
-        use AgentAwareTrait;
-
-        public function processOutput(Output $out): void
-        {
-            // additional agent interaction
-            $result = $this->agent->call(...);
-        }
+        $result = $context->getAgent()->call(...);
     }
 
 Agent Memory Management
@@ -1133,10 +1147,10 @@ model with context without changing your application logic.
 Using Memory
 ^^^^^^^^^^^^
 
-Memory integration is handled through the :class:`Symfony\\AI\\Agent\\Memory\\MemoryInputProcessor` and one or more :class:`Symfony\\AI\\Agent\\Memory\\MemoryProviderInterface` implementations::
+Memory integration is handled through the :class:`Symfony\\AI\\Agent\\Context\\Processor\\MemoryProcessor` and one or more :class:`Symfony\\AI\\Agent\\Memory\\MemoryProviderInterface` implementations::
 
     use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\Memory\MemoryInputProcessor;
+    use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
     use Symfony\AI\Agent\Memory\StaticMemoryProvider;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
@@ -1148,7 +1162,7 @@ Memory integration is handled through the :class:`Symfony\\AI\\Agent\\Memory\\Me
         'I wish to be a swiss national hero',
         'I am struggling with hitting apples but want to be professional with the bow and arrow',
     ]);
-    $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
+    $memoryProcessor = new MemoryProcessor([$personalFacts]);
 
     $agent = new Agent($platform, $model, [$memoryProcessor]);
     $messages = new MessageBag(Message::ofUser('What do we do today?'));
@@ -1192,7 +1206,7 @@ Dynamic Memory Control
 Memory is globally configured for the agent, but you can selectively disable it for specific calls when needed. This is
 useful when certain interactions shouldn't be influenced by the memory context::
 
-    $result = $agent->call($messages, [
+    $result = $agent->call($messages, options: [
         'use_memory' => false, // Disable memory for this specific call
     ]);
 

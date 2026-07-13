@@ -11,6 +11,13 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Context\AgentContext;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\AgentResult;
+use Symfony\AI\Agent\Context\Context;
+use Symfony\AI\Agent\Context\ContextProcessorInterface;
+use Symfony\AI\Agent\Context\ResultAwareContextProcessorInterface;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
@@ -54,10 +61,14 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class Runner
 {
+    /**
+     * @param list<ContextProcessorInterface> $contextProcessors
+     */
     public function __construct(
         private readonly PlatformInterface $platform,
-        private readonly ?ToolboxInterface $toolbox = null,
+        private readonly array $contextProcessors = [],
         private readonly ?ToolExecutorInterface $toolExecutor = null,
+        private readonly ?ToolboxInterface $toolbox = null,
         private readonly ?int $maxToolCalls = 50,
         private readonly bool $excludeToolMessages = false,
         private readonly bool $includeSources = false,
@@ -67,14 +78,27 @@ final class Runner
     }
 
     /**
+     * @param non-empty-string     $model
      * @param array<string, mixed> $options
      *
      * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null): \Generator
+    public function run(AgentInterface $agent, string $model, MessageBag $messages, Context $context, array $options, ?Cancellation $cancellation = null): \Generator
     {
-        [$options, $allowedTools] = $this->exposeTools($options);
+        $allowedTools = $this->allowedTools($options);
         $messages = $this->excludeToolMessages ? clone $messages : $messages;
+
+        $request = new AgentRequest($model, $messages, $options, $context);
+        $agentContext = new AgentContext($agent);
+
+        foreach ($this->applicableProcessors($context) as $processor) {
+            $processor->process($request, $agentContext);
+            yield from $agentContext->flushUpdates();
+        }
+
+        $model = $request->getModel();
+        $messages = $request->getMessageBag();
+        $options = $request->getOptions();
 
         $sources = new SourceCollection();
         $metadata = new Metadata();
@@ -153,7 +177,7 @@ final class Runner
             $result->getMetadata()->add('sources', $sources);
         }
 
-        yield new ResultUpdate($result);
+        yield from $this->complete($result, $request, $agentContext);
     }
 
     /**
@@ -250,43 +274,75 @@ final class Runner
     }
 
     /**
-     * Exposes the registered tools, narrowed down by the tool names given in the tools option.
+     * Runs the result-aware processors and yields the final result.
      *
-     * @param array<string, mixed> $options
-     *
-     * @return array{array<string, mixed>, list<string>|null} the options and the names of the tools allowed to be executed, null if unrestricted
+     * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    private function exposeTools(array $options): array
+    private function complete(ResultInterface $result, AgentRequest $request, AgentContext $agentContext): \Generator
     {
-        $allowedTools = null;
-        $serverTools = [];
+        $agentResult = new AgentResult($request->getModel(), $result, $request->getMessageBag(), $request->getOptions(), $request->getContext());
 
-        if (isset($options['tools']) && \is_array($options['tools'])) {
-            $names = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_string($tool)));
-            $serverTools = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_array($tool)));
+        foreach ($this->applicableProcessors($request->getContext()) as $processor) {
+            if (!$processor instanceof ResultAwareContextProcessorInterface) {
+                continue;
+            }
 
-            // only restrict tools if tool names are provided as option, an empty option allows no tool at all
-            if ([] !== $names || [] === $options['tools']) {
-                $allowedTools = $names;
+            $processor->processResult($agentResult, $agentContext);
+            yield from $agentContext->flushUpdates();
+        }
+
+        yield new ResultUpdate($agentResult->getResult());
+    }
+
+    /**
+     * A processor without supported types is global and always runs, otherwise it only runs when the context
+     * carries at least one item of a type it supports.
+     *
+     * @return list<ContextProcessorInterface>
+     */
+    private function applicableProcessors(Context $context): array
+    {
+        $applicable = [];
+
+        foreach ($this->contextProcessors as $processor) {
+            $types = $processor::supportedTypes();
+            if ([] === $types) {
+                $applicable[] = $processor;
+
+                continue;
+            }
+
+            foreach ($types as $type) {
+                if ($context->has($type)) {
+                    $applicable[] = $processor;
+
+                    continue 2;
+                }
             }
         }
 
-        if (!$this->toolbox instanceof ToolboxInterface) {
-            return [$options, $allowedTools];
+        return $applicable;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return list<string>|null the names of the tools allowed to be executed, null if unrestricted
+     */
+    private function allowedTools(array $options): ?array
+    {
+        if (!isset($options['tools']) || !\is_array($options['tools'])) {
+            return null;
         }
 
-        $toolMap = $this->toolbox->getTools();
-        if ([] === $toolMap) {
-            return [$options, $allowedTools];
+        $names = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_string($tool)));
+
+        // only restrict tools if tool names are provided as option, an empty option allows no tool at all
+        if ([] !== $names || [] === $options['tools']) {
+            return $names;
         }
 
-        if (null !== $allowedTools) {
-            $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool): bool => \in_array($tool->getName(), $allowedTools, true)));
-        }
-
-        $options['tools'] = [...$toolMap, ...$serverTools];
-
-        return [$options, $allowedTools];
+        return null;
     }
 
     /**

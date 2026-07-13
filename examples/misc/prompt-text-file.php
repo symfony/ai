@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Message;
@@ -22,9 +21,8 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 // Load system prompt from a plain text file (.txt)
 $promptFile = File::fromFile(dirname(__DIR__, 2).'/fixtures/prompts/helpful-assistant.txt');
-$systemPromptProcessor = new SystemPromptInputProcessor($promptFile);
 
-$agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor]);
+$agent = new Agent($platform, 'gpt-5-mini', instruction: $promptFile);
 $messages = new MessageBag(Message::ofUser('Can you explain what dependency injection is?'));
 $result = $agent->call($messages);
 

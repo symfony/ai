@@ -24,7 +24,7 @@ $messages = new MessageBag(
     Message::forSystem('You are an expert assistant in animal study.'),
     Message::ofUser('What does a cat usually eat?'),
 );
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'stream' => true,
 ]);
 

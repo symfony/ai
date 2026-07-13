@@ -28,7 +28,7 @@ $messages = new MessageBag(
     ),
 );
 
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'server_tools' => ['url_context' => true],
     'temperature' => 1.0,
 ]);

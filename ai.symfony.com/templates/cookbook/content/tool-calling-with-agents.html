@@ -297,7 +297,7 @@ emit <code translate="no" class="notranslate">ThinkingDelta</code> deltas when y
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">Stream</span>\<span class="hljs-title">Delta</span>\<span class="hljs-title">TextDelta</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Result</span>\<span class="hljs-title">Stream</span>\<span class="hljs-title">Delta</span>\<span class="hljs-title">ThinkingDelta</span>;
 
-<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>, [
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>, <span class="hljs-attr">options</span>: [
     <span class="hljs-string">'stream'</span> =&gt; <span class="hljs-keyword">true</span>,
     <span class="hljs-string">'reasoning'</span> =&gt; [<span class="hljs-string">'summary'</span> =&gt; <span class="hljs-string">'auto'</span>],
 ]);

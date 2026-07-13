@@ -12,7 +12,8 @@
 namespace Symfony\AI\Agent\Tests\Memory;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Memory\Memory;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -23,7 +24,7 @@ final class StaticMemoryProviderTest extends TestCase
     {
         $provider = new StaticMemoryProvider();
 
-        $memory = $provider->load(new Input('gpt-4', new MessageBag(), []));
+        $memory = $provider->load(new AgentRequest('gpt-4', new MessageBag(), [], new Context()));
 
         $this->assertCount(0, $memory);
     }
@@ -35,7 +36,7 @@ final class StaticMemoryProviderTest extends TestCase
             $fact2 = 'Water is wet',
         ]);
 
-        $memory = $provider->load(new Input('gpt-4', new MessageBag(), []));
+        $memory = $provider->load(new AgentRequest('gpt-4', new MessageBag(), [], new Context()));
 
         $this->assertCount(1, $memory);
         $this->assertInstanceOf(Memory::class, $memory[0]);

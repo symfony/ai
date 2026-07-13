@@ -45,9 +45,8 @@ the content of the user's question.</p>
     Step 2: Create Specialist Agents
     
 </h2>
-<p>Each specialist agent is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with a
-<a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> that defines its area of
-expertise. Give each agent a descriptive <code translate="no" class="notranslate">name</code> so the orchestrator can identify it:</p>
+<p>Each specialist agent is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with an <code translate="no" class="notranslate">instruction</code> that defines its
+area of expertise. Give each agent a descriptive <code translate="no" class="notranslate">name</code> so the orchestrator can identify it:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
         <tbody>
@@ -68,34 +67,24 @@ expertise. Give each agent a descriptive <code translate="no" class="notranslate
 12
 13
 14
-15
-16
-17
-18
-19
-20</pre>
+15</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
-<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>\<span class="hljs-title">SystemPromptInputProcessor</span>;
 
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>technical</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-5-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
-        <span class="hljs-string">'You are a technical support specialist. Help users resolve bugs and errors.'</span>,
-    )],
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are a technical support specialist. Help users resolve bugs and errors.'</span>,
     <span class="hljs-attr">name</span>: <span class="hljs-string">'technical'</span>,
 );
 
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>billing</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-5-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
-        <span class="hljs-string">'You are a billing specialist. Help users with invoices and payments.'</span>,
-    )],
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are a billing specialist. Help users with invoices and payments.'</span>,
     <span class="hljs-attr">name</span>: <span class="hljs-string">'billing'</span>,
 );</pre>
                     </div>
@@ -123,9 +112,7 @@ point:</p>
 2
 3
 4
-5
-6
-7</pre>
+5</pre>
                     </div>
                 </td>
                 <td class="code">
@@ -133,9 +120,7 @@ point:</p>
                         <pre class="hljs php"><span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>orchestrator</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-5-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
-        <span class="hljs-string">'You are an agent orchestrator that routes user questions to specialized agents.'</span>,
-    )],
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are an agent orchestrator that routes user questions to specialized agents.'</span>,
 );</pre>
                     </div>
                 </td>
@@ -221,9 +206,7 @@ any specialist:</p>
 11
 12
 13
-14
-15
-16</pre>
+14</pre>
                     </div>
                 </td>
                 <td class="code">
@@ -233,9 +216,7 @@ any specialist:</p>
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>fallback</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-5-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
-        <span class="hljs-string">'You are a general assistant. Help users with any non-specialized questions.'</span>,
-    )],
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are a general assistant. Help users with any non-specialized questions.'</span>,
     <span class="hljs-attr">name</span>: <span class="hljs-string">'fallback'</span>,
 );
 

@@ -46,7 +46,7 @@ LLM-based summarization.</p>
     Step 2: Create a Sliding Window Processor
     
 </h2>
-<p>An input processor implements <a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessorInterface.php" class="reference external" title="Symfony\AI\Agent\InputProcessorInterface" rel="external noopener noreferrer" target="_blank">InputProcessorInterface</a> and can modify
+<p>A context processor implements <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Context/ContextProcessorInterface.php" class="reference external" title="Symfony\AI\Agent\Context\ContextProcessorInterface" rel="external noopener noreferrer" target="_blank">ContextProcessorInterface</a> and can modify
 the message bag before it is sent to the model. The simplest compression strategy discards older
 messages and keeps only the most recent ones:</p>
 <div translate="no" class="highlight-php notranslate">
@@ -86,18 +86,25 @@ messages and keeps only the most recent ones:</p>
 29
 30
 31
-32</pre>
+32
+33
+34
+35
+36
+37
+38</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>;
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">ContextProcessor</span>;
 
-<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Input</span>;
-<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessorInterface</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">AgentContext</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">AgentRequest</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">ContextProcessorInterface</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
 
-<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SlidingWindowInputProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">InputProcessorInterface</span>
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SlidingWindowContextProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">ContextProcessorInterface</span>
 </span>{
     <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
         <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>maxMessages</span> = <span class="hljs-number">10</span>,
@@ -105,9 +112,14 @@ messages and keeps only the most recent ones:</p>
     )</span> </span>{
     }
 
-    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">processInput</span><span class="hljs-params">(Input <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>)</span>: <span class="hljs-title">void</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">supportedTypes</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
     </span>{
-        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>-&gt;<span class="hljs-title invoke__">getMessageBag</span>();
+        <span class="hljs-keyword">return</span> [];
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">process</span><span class="hljs-params">(AgentRequest <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>request</span>, AgentContext <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>context</span>)</span>: <span class="hljs-title">void</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>request</span>-&gt;<span class="hljs-title invoke__">getMessageBag</span>();
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>-&gt;<span class="hljs-title invoke__">withoutSystemMessage</span>()-&gt;<span class="hljs-title invoke__">getMessages</span>();
 
         <span class="hljs-keyword">if</span> (\<span class="hljs-title invoke__">count</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span>) &lt;= <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;threshold) {
@@ -117,7 +129,7 @@ messages and keeps only the most recent ones:</p>
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemMessage</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>-&gt;<span class="hljs-title invoke__">getSystemMessage</span>();
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>recentMessages</span> = \<span class="hljs-title invoke__">array_slice</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span>, -<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;maxMessages);
 
-        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>-&gt;<span class="hljs-title invoke__">setMessageBag</span>(<span class="hljs-keyword">null</span> !== <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemMessage</span>
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>request</span>-&gt;<span class="hljs-title invoke__">setMessageBag</span>(<span class="hljs-keyword">null</span> !== <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemMessage</span>
             ? <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemMessage</span>, ...<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>recentMessages</span>)
             : <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(...<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>recentMessages</span>),
         );
@@ -137,7 +149,7 @@ message is always preserved so the agent keeps its instructions.</p>
     Step 3: Configure the Agent
     
 </h2>
-<p>Pass the processor to the agent. Processors are applied in order on every call:</p>
+<p>Pass the processor to the agent. Context processors are applied in order on every call:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
         <tbody>
@@ -160,7 +172,7 @@ message is always preserved so the agent keeps its instructions.</p>
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-4o-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SlidingWindowInputProcessor</span>()],
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SlidingWindowContextProcessor</span>()],
 );</pre>
                     </div>
                 </td>
@@ -252,22 +264,29 @@ inject the summary into the system message:</p>
 66
 67
 68
-69</pre>
+69
+70
+71
+72
+73
+74
+75</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>;
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">ContextProcessor</span>;
 
-<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Input</span>;
-<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessorInterface</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">AgentContext</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">AgentRequest</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">ContextProcessorInterface</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">AssistantMessage</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">Message</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">UserMessage</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">PlatformInterface</span>;
 
-<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SummarizationInputProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">InputProcessorInterface</span>
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SummarizationContextProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">ContextProcessorInterface</span>
 </span>{
     <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
         <span class="hljs-keyword">private</span> PlatformInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
@@ -277,9 +296,14 @@ inject the summary into the system message:</p>
     )</span> </span>{
     }
 
-    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">processInput</span><span class="hljs-params">(Input <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>)</span>: <span class="hljs-title">void</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">supportedTypes</span><span class="hljs-params">()</span>: <span class="hljs-title">array</span>
     </span>{
-        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>-&gt;<span class="hljs-title invoke__">getMessageBag</span>();
+        <span class="hljs-keyword">return</span> [];
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">process</span><span class="hljs-params">(AgentRequest <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>request</span>, AgentContext <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>context</span>)</span>: <span class="hljs-title">void</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>request</span>-&gt;<span class="hljs-title invoke__">getMessageBag</span>();
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>-&gt;<span class="hljs-title invoke__">withoutSystemMessage</span>()-&gt;<span class="hljs-title invoke__">getMessages</span>();
 
         <span class="hljs-keyword">if</span> (\<span class="hljs-title invoke__">count</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span>) &lt;= <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;threshold) {
@@ -304,7 +328,7 @@ inject the summary into the system message:</p>
         }
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemContent</span> .= <span class="hljs-string">'# Previous Conversation Summary'</span>.\<span class="hljs-keyword">PHP_EOL</span>.\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>summary</span>;
 
-        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>-&gt;<span class="hljs-title invoke__">setMessageBag</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>request</span>-&gt;<span class="hljs-title invoke__">setMessageBag</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
             Message::<span class="hljs-title invoke__">forSystem</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemContent</span>),
             ...<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toKeep</span>,
         ));
@@ -340,7 +364,7 @@ messages stay untouched so the agent has full detail for the immediate context.<
     Using the AI Bundle?
     
 </h2>
-<p>If you use the AI Bundle, the <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Attribute/AsInputProcessor.php" class="reference external" title="Symfony\AI\Agent\Attribute\AsInputProcessor" rel="external noopener noreferrer" target="_blank">AsInputProcessor</a> attribute
+<p>If you use the AI Bundle, the <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Attribute/AsContextProcessor.php" class="reference external" title="Symfony\AI\Agent\Attribute\AsContextProcessor" rel="external noopener noreferrer" target="_blank">AsContextProcessor</a> attribute
 registers the processor for a specific agent — or for all agents when the <code translate="no" class="notranslate">agent</code> parameter is
 omitted:</p>
 <div translate="no" class="highlight-php notranslate">
@@ -360,10 +384,10 @@ omitted:</p>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AsInputProcessor</span>;
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Attribute</span>\<span class="hljs-title">AsContextProcessor</span>;
 
-<span class="hljs-meta">#[AsInputProcessor(<span class="hljs-attr">agent</span>: <span class="hljs-string">'my_agent'</span>)]</span>
-<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SummarizationInputProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">InputProcessorInterface</span>
+<span class="hljs-meta">#[AsContextProcessor(<span class="hljs-attr">agent</span>: <span class="hljs-string">'my_agent'</span>)]</span>
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SummarizationContextProcessor</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">ContextProcessorInterface</span>
 </span>{
     <span class="hljs-comment">// ...</span>
 }</pre>
@@ -391,7 +415,7 @@ omitted:</p>
                     <div class="highlight">
                         <pre class="hljs yaml"><span class="hljs-comment"># config/services.yaml</span>
 <span class="hljs-attr">services:</span>
-    <span class="hljs-string">App\Agent\InputProcessor\SummarizationInputProcessor:</span>
+    <span class="hljs-string">App\Agent\ContextProcessor\SummarizationContextProcessor:</span>
         <span class="hljs-string">$platform:</span> <span class="hljs-string">'@ai.platform.openai'</span>
         <span class="hljs-string">$model:</span> <span class="hljs-string">'gpt-4o-mini'</span></pre>
                     </div>

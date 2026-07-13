@@ -25,7 +25,7 @@ $messages = new MessageBag(
     Message::ofUser('What is the best French cuisine?'),
 );
 
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'temperature' => 0.3,
     'max_tokens' => 500,
 ]);

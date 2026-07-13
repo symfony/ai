@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
@@ -29,14 +28,14 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client(), eventD
 $orchestrator = new Agent(
     $platform,
     'gpt-5-mini',
-    [new SystemPromptInputProcessor('You are an intelligent agent orchestrator that routes user questions to specialized agents.')],
+    instruction: 'You are an intelligent agent orchestrator that routes user questions to specialized agents.',
 );
 
 // Create technical agent for handling technical issues
 $technical = new Agent(
     $platform,
     'gpt-4o-mini?max_output_tokens=150', // set max_output_tokens here to be faster and cheaper
-    [new SystemPromptInputProcessor('You are a technical support specialist. Help users resolve bugs, problems, and technical errors.')],
+    instruction: 'You are a technical support specialist. Help users resolve bugs, problems, and technical errors.',
     name: 'technical',
 );
 
@@ -44,7 +43,7 @@ $technical = new Agent(
 $fallback = new Agent(
     $platform,
     'gpt-5-mini',
-    [new SystemPromptInputProcessor('You are a helpful general assistant. Assist users with any questions or tasks they may have. You should never ever answer technical question.')],
+    instruction: 'You are a helpful general assistant. Assist users with any questions or tasks they may have. You should never ever answer technical question.',
     name: 'fallback',
 );
 

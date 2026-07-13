@@ -11,19 +11,25 @@
 
 namespace Symfony\AI\Agent\Tests\Fixtures;
 
-use Symfony\AI\Agent\Input;
-use Symfony\AI\Agent\InputProcessorInterface;
+use Symfony\AI\Agent\Context\AgentContext;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\ContextProcessorInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class MessageBagCapturingProcessor implements InputProcessorInterface
+final class MessageBagCapturingProcessor implements ContextProcessorInterface
 {
     public ?MessageBag $messageBag = null;
 
-    public function processInput(Input $input): void
+    public static function supportedTypes(): array
     {
-        $this->messageBag = $input->getMessageBag();
+        return [];
+    }
+
+    public function process(AgentRequest $request, AgentContext $context): void
+    {
+        $this->messageBag = $request->getMessageBag();
     }
 }

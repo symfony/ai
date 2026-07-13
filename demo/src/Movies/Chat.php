@@ -47,7 +47,7 @@ final class Chat
         $messages = $this->loadMessages();
         $messages->add(Message::ofUser($message));
 
-        $result = $this->agent->call($messages, ['response_format' => MovieAnswer::class])->asObject();
+        $result = $this->agent->call($messages, options: ['response_format' => MovieAnswer::class])->asObject();
         \assert($result instanceof MovieAnswer);
 
         $assistantMessage = Message::ofAssistant($result->answer);

@@ -1584,7 +1584,7 @@ top this example uses the feature through the agent to leverage tool calling::
     // Initialize Platform, LLM and agent with processors and Clock tool
 
     $messages = new MessageBag(Message::ofUser('What date and time is it?'));
-    $result = $agent->call($messages, ['response_format' => [
+    $result = $agent->call($messages, options: ['response_format' => [
         'type' => 'json_schema',
         'json_schema' => [
             'name' => 'clock',

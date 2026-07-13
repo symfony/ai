@@ -100,7 +100,7 @@ final class MockAgentTest extends TestCase
         $messages = new MessageBag(Message::ofUser('test'));
         $options = ['temperature' => 0.7, 'max_tokens' => 100];
 
-        $result = $agent->call($messages, $options)->getResult();
+        $result = $agent->call($messages, options: $options)->getResult();
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('configured response', $result->getContent());
@@ -158,7 +158,7 @@ final class MockAgentTest extends TestCase
         $messages2 = new MessageBag(Message::ofUser('bye'));
         $options = ['temperature' => 0.5];
 
-        $agent->call($messages1, $options);
+        $agent->call($messages1, options: $options);
         $agent->call($messages2);
 
         $calls = $agent->getCalls();
@@ -180,7 +180,7 @@ final class MockAgentTest extends TestCase
         $agent = new MockAgent(['test' => 'test response']);
         $messages = new MessageBag(Message::ofUser('test'));
 
-        $agent->call($messages, ['param' => 'value']);
+        $agent->call($messages, options: ['param' => 'value']);
 
         $call = $agent->getCall(0);
         $this->assertSame($messages, $call['messages']);
@@ -373,7 +373,7 @@ final class MockAgentTest extends TestCase
             Message::ofUser('test')
         );
         $options = ['temperature' => 0.7, 'model' => 'test-model'];
-        $result = $agent->call($messages, $options);
+        $result = $agent->call($messages, options: $options);
 
         $this->assertSame('Input: test, Messages: 2, Options: temperature,model', $result->getContent());
     }

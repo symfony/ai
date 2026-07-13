@@ -40,7 +40,7 @@ final readonly class StreamCommand
         $messages = new MessageBag(Message::ofUser($question));
 
         $io->section('Agent Response:');
-        $execution = $this->blog->call($messages, ['stream' => true]);
+        $execution = $this->blog->call($messages, options: ['stream' => true]);
 
         foreach ($execution->asTextStream() as $delta) {
             $io->write($delta);

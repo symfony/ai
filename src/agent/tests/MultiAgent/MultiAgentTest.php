@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
@@ -256,6 +257,7 @@ class MultiAgentTest extends TestCase
             ->method('call')
             ->with(
                 $this->isInstanceOf(MessageBag::class),
+                $this->isInstanceOf(Context::class),
                 $this->callback(static fn ($opts) => isset($opts['temperature']) && 0.7 === $opts['temperature']
                     && isset($opts['max_tokens']) && 100 === $opts['max_tokens']
                     && isset($opts['response_format']) && Decision::class === $opts['response_format']
@@ -269,6 +271,7 @@ class MultiAgentTest extends TestCase
             ->method('call')
             ->with(
                 $this->isInstanceOf(MessageBag::class),
+                $this->isInstanceOf(Context::class),
                 $options
             )
             ->willReturn($this->execution(new TextResult('Response')));
@@ -280,7 +283,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Technical question'));
 
-        $multiAgent->call($messages, $options)->getResult();
+        $multiAgent->call($messages, options: $options)->getResult();
     }
 
     public function testCallWithLogging()
@@ -499,7 +502,7 @@ class MultiAgentTest extends TestCase
         $multiAgent = new MultiAgent($orchestrator, [$handoff], $fallback);
 
         $answer = '';
-        foreach ($multiAgent->call(new MessageBag(Message::ofUser('Help with code')), ['stream' => true]) as $update) {
+        foreach ($multiAgent->call(new MessageBag(Message::ofUser('Help with code')), options: ['stream' => true]) as $update) {
             if ($update instanceof Progress && 'delta' === $update->getStage() && $update->getPayload() instanceof TextDelta) {
                 $answer .= $update->getPayload()->getText();
             }

@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
@@ -26,14 +25,14 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $mathAgent = new Agent(
     $platform,
     'gpt-4o-mini',
-    [new SystemPromptInputProcessor('You are a mathematical calculator. When given a math problem, solve it and return only the numerical result with a brief explanation.')],
+    instruction: 'You are a mathematical calculator. When given a math problem, solve it and return only the numerical result with a brief explanation.',
 );
 
 // Create a specialized agent for unit conversions
 $conversionAgent = new Agent(
     $platform,
     'gpt-4o-mini',
-    [new SystemPromptInputProcessor('You are a unit conversion specialist. Convert values between different units of measurement and return the result with a brief explanation.')],
+    instruction: 'You are a unit conversion specialist. Convert values between different units of measurement and return the result with a brief explanation.',
 );
 
 $mathTool = new Subagent($mathAgent);

@@ -13,6 +13,7 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
@@ -438,6 +439,7 @@ class DataCollectorTest extends TestCase
         $this->assertCount(1, $traceableAgent->getCalls());
         $this->assertEquals([
             'input' => $messageBag,
+            'context' => new Context(),
             'options' => [],
             'called_at' => $clock->now(),
         ], $dataCollector->getAgents()[0]);

@@ -11,57 +11,93 @@
 
 namespace Symfony\AI\Agent;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\AI\Agent\Context\Context;
+use Symfony\AI\Agent\Context\ContextProcessorInterface;
+use Symfony\AI\Agent\Context\Instruction;
+use Symfony\AI\Agent\Context\Processor\AttachmentProcessor;
+use Symfony\AI\Agent\Context\Processor\InstructionProcessor;
+use Symfony\AI\Agent\Context\Processor\ToolProcessor;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Runner;
-use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
+use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Translation\TranslatableInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class Agent implements AgentInterface
 {
+    private readonly Context $context;
+
     private readonly Runner $runner;
 
     /**
-     * @param InputProcessorInterface[]  $inputProcessors
-     * @param OutputProcessorInterface[] $outputProcessors
-     * @param non-empty-string           $model
-     * @param bool                       $excludeToolMessages keeps the messages appended during tool calling out of the caller's message bag
-     * @param bool                       $includeSources      exposes the sources collected during tool calling as `sources` result metadata
+     * @param non-empty-string                    $model
+     * @param iterable<ContextProcessorInterface> $contextProcessors
+     * @param non-empty-string                    $name
+     * @param bool                                $includeToolsInInstruction appends the tool definitions to the instruction
+     * @param bool                                $excludeToolMessages       keeps the messages appended during tool calling out of the caller's message bag
+     * @param bool                                $includeSources            exposes the sources collected during tool calling as `sources` result metadata
      */
     public function __construct(
         PlatformInterface $platform,
         private readonly string $model,
-        private readonly iterable $inputProcessors = [],
-        private readonly iterable $outputProcessors = [],
+        iterable $contextProcessors = [],
         private readonly string $name = 'agent',
+        string|\Stringable|TranslatableInterface|File|null $instruction = null,
+        Context $context = new Context(),
         ?ToolboxInterface $toolbox = null,
         ?ToolExecutorInterface $toolExecutor = null,
         ?int $maxToolCalls = 50,
         bool $excludeToolMessages = false,
         bool $includeSources = false,
+        bool $includeToolsInInstruction = false,
+        ?TranslatorInterface $translator = null,
         ?EventDispatcherInterface $eventDispatcher = null,
+        ?LoggerInterface $logger = null,
     ) {
+        $this->context = null !== $instruction ? $context->with(new Instruction($instruction)) : $context;
+
         if (null === $toolExecutor && $toolbox instanceof ToolboxInterface) {
             $toolExecutor = new SequentialToolExecutor($toolbox);
         }
 
+        $processors = [
+            new InstructionProcessor($translator, $includeToolsInInstruction ? $toolbox : null, $logger ?? new NullLogger()),
+            new AttachmentProcessor(),
+        ];
+
+        if ($toolbox instanceof ToolboxInterface) {
+            $processors[] = new ToolProcessor($toolbox);
+        }
+
+        foreach ($contextProcessors as $processor) {
+            if (!$processor instanceof ContextProcessorInterface) {
+                throw new InvalidArgumentException(\sprintf('Context processor "%s" must implement "%s".', get_debug_type($processor), ContextProcessorInterface::class));
+            }
+
+            $processors[] = $processor;
+        }
+
         $this->runner = new Runner(
             $platform,
-            $toolbox,
+            $processors,
             $toolExecutor,
+            $toolbox,
             $maxToolCalls,
             $excludeToolMessages,
             $includeSources,
@@ -92,60 +128,36 @@ final class Agent implements AgentInterface
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, Context $context = new Context(), array $options = []): Execution
     {
+        $messages = InputNormalizer::toMessageBag($input);
+        $mergedContext = $this->context->merge($context);
+        $model = $this->resolveModel($options);
+
         $cancellation = new Cancellation();
-        $factory = function () use ($input, $options, $cancellation): \Generator {
-            $request = new Input($this->getModel(), InputNormalizer::toMessageBag($input), $options);
-            foreach ($this->inputProcessors as $inputProcessor) {
-                if (!$inputProcessor instanceof InputProcessorInterface) {
-                    throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
-                }
 
-                if ($inputProcessor instanceof AgentAwareInterface) {
-                    $inputProcessor->setAgent($this);
-                }
-
-                $inputProcessor->processInput($request);
-            }
-
-            $model = $request->getModel();
-            $messages = $request->getMessageBag();
-            $processedOptions = $request->getOptions();
-
-            $result = null;
-            foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation) as $update) {
-                if ($update instanceof ResultUpdate) {
-                    $result = $update->getResult();
-
-                    continue;
-                }
-
-                yield $update;
-            }
-
-            if ($cancellation->isRequested()) {
-                return;
-            }
-
-            \assert($result instanceof ResultInterface);
-
-            $output = new Output($model, $result, $messages, $processedOptions);
-            foreach ($this->outputProcessors as $outputProcessor) {
-                if (!$outputProcessor instanceof OutputProcessorInterface) {
-                    throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));
-                }
-
-                if ($outputProcessor instanceof AgentAwareInterface) {
-                    $outputProcessor->setAgent($this);
-                }
-
-                $outputProcessor->processOutput($output);
-            }
-
-            yield new ResultUpdate($output->getResult());
-        };
+        $factory = fn (): \Generator => yield from $this->runner->run($this, $model, $messages, $mergedContext, $options, $cancellation);
 
         return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);
+    }
+
+    /**
+     * The model configured on the agent, overridable per call through the "model" option.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return non-empty-string
+     */
+    private function resolveModel(array $options): string
+    {
+        if (!\array_key_exists('model', $options)) {
+            return $this->model;
+        }
+
+        if (!\is_string($options['model']) || '' === $options['model']) {
+            throw new InvalidArgumentException('Option "model" must be a non-empty string.');
+        }
+
+        return $options['model'];
     }
 }

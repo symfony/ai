@@ -161,8 +161,7 @@ in plain PHP. Structured output populates these classes directly from the model 
     Step 3: Create the Generator and Reviewer Agents
     
 </h2>
-<p>Each role is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with a
-<a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> that defines its job.
+<p>Each role is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with an <code translate="no" class="notranslate">instruction</code> that defines its job.
 Structured output is resolved by the <a href="https://github.com/symfony/ai/blob/main/src/platform/src/StructuredOutput/PlatformSubscriber.php" class="reference external" title="Symfony\AI\Platform\StructuredOutput\PlatformSubscriber" rel="external noopener noreferrer" target="_blank">PlatformSubscriber</a>,
 so register it on the platform's event dispatcher:</p>
 <div translate="no" class="highlight-php notranslate">
@@ -197,18 +196,12 @@ so register it on the platform's event dispatcher:</p>
 24
 25
 26
-27
-28
-29
-30
-31
-32</pre>
+27</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
-<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>\<span class="hljs-title">SystemPromptInputProcessor</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">OpenAi</span>\<span class="hljs-title">Factory</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">StructuredOutput</span>\<span class="hljs-title">PlatformSubscriber</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">EventDispatcher</span>\<span class="hljs-title">EventDispatcher</span>;
@@ -221,22 +214,18 @@ so register it on the platform's event dispatcher:</p>
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>generator</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-4o-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
-        <span class="hljs-string">'You are a security auditor for Symfony applications. Report concrete, '</span>
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are a security auditor for Symfony applications. Report concrete, '</span>
         .<span class="hljs-string">'exploitable vulnerabilities. For each finding set a confidence between '</span>
         .<span class="hljs-string">'0 and 1 reflecting how sure you are it is real.'</span>,
-    )],
     <span class="hljs-attr">name</span>: <span class="hljs-string">'generator'</span>,
 );
 
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>reviewer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-4o-mini'</span>,
-    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
-        <span class="hljs-string">'You are a skeptical security reviewer. Decide whether a reported finding '</span>
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are a skeptical security reviewer. Decide whether a reported finding '</span>
         .<span class="hljs-string">'is a true positive. Reject anything speculative, already mitigated, or not '</span>
         .<span class="hljs-string">'actually reachable by an attacker, and explain your reasoning briefly.'</span>,
-    )],
     <span class="hljs-attr">name</span>: <span class="hljs-string">'reviewer'</span>,
 );</pre>
                     </div>
@@ -465,7 +454,7 @@ clear of similar false positives:</p>
 
         <span class="hljs-comment">/** <span class="hljs-doctag">@var</span> FindingList $list */</span>
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>list</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;generator
-            -&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span>, [<span class="hljs-string">'response_format'</span> =&gt; FindingList::<span class="hljs-variable language_">class</span>])
+            -&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span>, <span class="hljs-attr">options</span>: [<span class="hljs-string">'response_format'</span> =&gt; FindingList::<span class="hljs-variable language_">class</span>])
             -&gt;<span class="hljs-title invoke__">asObject</span>();
 
         <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>list</span>-&gt;findings;
@@ -481,7 +470,7 @@ clear of similar false positives:</p>
 
         <span class="hljs-comment">/** <span class="hljs-doctag">@var</span> Verdict $verdict */</span>
         <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;reviewer
-            -&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span>, [<span class="hljs-string">'response_format'</span> =&gt; Verdict::<span class="hljs-variable language_">class</span>])
+            -&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span>, <span class="hljs-attr">options</span>: [<span class="hljs-string">'response_format'</span> =&gt; Verdict::<span class="hljs-variable language_">class</span>])
             -&gt;<span class="hljs-title invoke__">asObject</span>();
 
         <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span>;

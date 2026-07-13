@@ -81,11 +81,11 @@ be consistently available to the agent:</p>
 context about the user without cluttering the conversation messages.</p>
 </div>
 <div class="section">
-<h2 id="step-3-add-the-memory-input-processor">
-    Step 3: Add the Memory Input Processor
+<h2 id="step-3-add-the-memory-processor">
+    Step 3: Add the Memory Processor
     
 </h2>
-<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Memory/MemoryInputProcessor.php" class="reference external" title="Symfony\AI\Agent\Memory\MemoryInputProcessor" rel="external noopener noreferrer" target="_blank">MemoryInputProcessor</a> handles the injection of memory
+<p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Context/Processor/MemoryProcessor.php" class="reference external" title="Symfony\AI\Agent\Context\Processor\MemoryProcessor" rel="external noopener noreferrer" target="_blank">MemoryProcessor</a> handles the injection of memory
 content into the agent's context:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
@@ -100,25 +100,23 @@ content into the agent's context:</p>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Memory</span>\<span class="hljs-title">MemoryInputProcessor</span>;
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Context</span>\<span class="hljs-title">Processor</span>\<span class="hljs-title">MemoryProcessor</span>;
 
-<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>memoryProcessor</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MemoryInputProcessor</span>([<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>personalFacts</span>]);</pre>
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>memoryProcessor</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MemoryProcessor</span>([<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>personalFacts</span>]);</pre>
                     </div>
                 </td>
             </tr>
         </tbody>
     </table>
 </div>
-<p>This processor works alongside other input processors like
-<a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> to build a complete
-context for the agent.</p>
+<p>This processor works alongside the agent's <code translate="no" class="notranslate">instruction</code> to build a complete context for the agent.</p>
 </div>
 <div class="section">
 <h2 id="step-4-configure-the-agent">
     Step 4: Configure the Agent
     
 </h2>
-<p>The agent is configured with both the system prompt and memory processors. Processors are applied
+<p>The agent is configured with the instruction and the memory processor. Context processors are applied
 in order, allowing you to build up the context progressively:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
@@ -132,7 +130,8 @@ in order, allowing you to build up the context progressively:</p>
 4
 5
 6
-7</pre>
+7
+8</pre>
                     </div>
                 </td>
                 <td class="code">
@@ -142,7 +141,8 @@ in order, allowing you to build up the context progressively:</p>
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
     <span class="hljs-string">'gpt-4o-mini'</span>,
-    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>systemPromptProcessor</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>memoryProcessor</span>],
+    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>memoryProcessor</span>],
+    <span class="hljs-attr">instruction</span>: <span class="hljs-string">'You are a personal assistant.'</span>,
 );</pre>
                     </div>
                 </td>
@@ -150,7 +150,7 @@ in order, allowing you to build up the context progressively:</p>
         </tbody>
     </table>
 </div>
-<p>When a user message is submitted, the <code translate="no" class="notranslate">MemoryInputProcessor</code> loads relevant facts from the
+<p>When a user message is submitted, the <code translate="no" class="notranslate">MemoryProcessor</code> loads relevant facts from the
 memory provider and prepends them to the system prompt. The agent then generates a personalized
 response based on both the current message and the remembered context. Because the memory
 persists across calls, the conversation stays personalized over time.</p>
@@ -187,7 +187,7 @@ semantic similarity:</p>
         </tbody>
     </table>
 </div>
-<p>Pass it to the <code translate="no" class="notranslate">MemoryInputProcessor</code> just like the static provider.</p>
+<p>Pass it to the <code translate="no" class="notranslate">MemoryProcessor</code> just like the static provider.</p>
 </div>
 <div class="section">
 <h2 id="using-the-ai-bundle">

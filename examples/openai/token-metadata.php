@@ -23,7 +23,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'max_output_tokens' => 2000, // specific options just for this call; reasoning models spend part of this budget on reasoning tokens
 ]);
 

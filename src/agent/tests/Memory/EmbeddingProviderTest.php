@@ -12,7 +12,8 @@
 namespace Symfony\AI\Agent\Tests\Memory;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Memory\EmbeddingProvider;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -43,7 +44,7 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('embedding-001'), $store);
 
-        $embeddingProvider->load(new Input('embedding-001', new MessageBag(), []));
+        $embeddingProvider->load(new AgentRequest('embedding-001', new MessageBag(), [], new Context()));
     }
 
     public function testItIsDoingNothingWithoutUserMessageInBag()
@@ -56,10 +57,11 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('embedding-001'), $store);
 
-        $embeddingProvider->load(new Input(
+        $embeddingProvider->load(new AgentRequest(
             'embedding-001',
             new MessageBag(Message::forSystem('This is a system message')),
             [],
+            new Context(),
         ));
     }
 
@@ -73,10 +75,11 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('embedding-001'), $store);
 
-        $embeddingProvider->load(new Input(
+        $embeddingProvider->load(new AgentRequest(
             'embedding-001',
             new MessageBag(Message::ofUser(new ImageUrl('foo.jpg'))),
             [],
+            new Context(),
         ));
     }
 
@@ -102,10 +105,11 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
 
-        $memory = $embeddingProvider->load(new Input(
+        $memory = $embeddingProvider->load(new AgentRequest(
             'text-embedding-3-small',
             new MessageBag(Message::ofUser(new Text('Have we talked about the weather?'))),
             [],
+            new Context(),
         ));
 
         $this->assertCount(0, $memory);
@@ -137,10 +141,11 @@ final class EmbeddingProviderTest extends TestCase
 
         $embeddingProvider = new EmbeddingProvider($platform, new Model('text-embedding-3-small'), $store);
 
-        $memory = $embeddingProvider->load(new Input(
+        $memory = $embeddingProvider->load(new AgentRequest(
             'text-embedding-3-small',
             new MessageBag(Message::ofUser(new Text('Have we talked about the weather?'))),
             [],
+            new Context(),
         ));
 
         $this->assertCount(1, $memory);

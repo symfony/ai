@@ -66,7 +66,7 @@ final class Chat
             return Message::ofAssistant('');
         }
 
-        $execution = $this->agent->call($messages, ['stream' => true]);
+        $execution = $this->agent->call($messages, options: ['stream' => true]);
 
         $response = '';
         foreach ($execution->asTextStream() as $delta) {

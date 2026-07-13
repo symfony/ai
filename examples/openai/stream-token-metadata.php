@@ -24,7 +24,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework? Answer in a few sentences.'),
 );
-$result = $agent->call($messages, [
+$result = $agent->call($messages, options: [
     'stream' => true,
 ]);
 

@@ -26,7 +26,7 @@ $toolbox = new Toolbox([$wikipedia], logger: logger());
 $agent = new Agent($platform, 'gpt-oss-120b', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
-$result = $agent->call($messages, ['stream' => true]);
+$result = $agent->call($messages, options: ['stream' => true]);
 
 foreach ($result->getContent() as $delta) {
     if ($delta instanceof TextDelta) {

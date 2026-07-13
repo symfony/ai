@@ -17,16 +17,13 @@ use Google\Auth\FetchAuthTokenInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Attribute\AsInputProcessor;
-use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Attribute\AsContextProcessor;
 use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
-use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
-use Symfony\AI\Agent\InputProcessorInterface;
-use Symfony\AI\Agent\Memory\MemoryInputProcessor;
+use Symfony\AI\Agent\Context\ContextProcessorInterface;
+use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
-use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
@@ -373,24 +370,15 @@ final class AiBundle extends AbstractBundle
                 ]);
             });
 
-            $builder->registerAttributeForAutoconfiguration(AsInputProcessor::class, static function (ChildDefinition $definition, AsInputProcessor $attribute): void {
-                $definition->addTag('ai.agent.input_processor', [
+            $builder->registerAttributeForAutoconfiguration(AsContextProcessor::class, static function (ChildDefinition $definition, AsContextProcessor $attribute): void {
+                $definition->addTag('ai.agent.context_processor', [
                     'agent' => $attribute->agent,
                     'priority' => $attribute->priority,
                 ]);
             });
 
-            $builder->registerAttributeForAutoconfiguration(AsOutputProcessor::class, static function (ChildDefinition $definition, AsOutputProcessor $attribute): void {
-                $definition->addTag('ai.agent.output_processor', [
-                    'agent' => $attribute->agent,
-                    'priority' => $attribute->priority,
-                ]);
-            });
-
-            $builder->registerForAutoconfiguration(InputProcessorInterface::class)
-                ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
-            $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
-                ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(ContextProcessorInterface::class)
+                ->addTag('ai.agent.context_processor', ['tagged_by' => 'interface']);
         }
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
@@ -1556,8 +1544,7 @@ final class AiBundle extends AbstractBundle
                 ->setArgument('$toolbox', new Reference('ai.toolbox.'.$name))
                 ->setArgument('$maxToolCalls', $config['max_tool_calls'])
                 ->setArgument('$excludeToolMessages', $config['exclude_tool_messages'])
-                ->setArgument('$includeSources', $config['include_sources'])
-                ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE));
+                ->setArgument('$includeSources', $config['include_sources']);
 
             // Define specific list of tools if are explicitly defined
             if ([] !== $services) {
@@ -1639,16 +1626,9 @@ final class AiBundle extends AbstractBundle
                 $prompt = '';
             }
 
-            $systemPromptInputProcessorDefinition = (new Definition(SystemPromptInputProcessor::class))
-                ->setArguments([
-                    $prompt,
-                    $includeTools ? new Reference('ai.toolbox.'.$name) : null,
-                    new Reference('translator', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
-                ])
-                ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -30]);
-
-            $container->setDefinition('ai.agent.'.$name.'.system_prompt_processor', $systemPromptInputProcessorDefinition);
+            $agentDefinition
+                ->setArgument('$instruction', $prompt)
+                ->setArgument('$includeToolsInInstruction', $includeTools);
         }
 
         // MEMORY PROVIDER
@@ -1668,17 +1648,21 @@ final class AiBundle extends AbstractBundle
                 $memoryProviderReference = new Reference($staticMemoryServiceId);
             }
 
-            $memoryInputProcessorDefinition = (new Definition(MemoryInputProcessor::class))
+            $memoryProcessorDefinition = (new Definition(MemoryProcessor::class))
                 ->setArguments([[$memoryProviderReference]])
-                ->addTag('ai.agent.input_processor', ['agent' => $agentId, 'priority' => -40]);
+                ->addTag('ai.agent.context_processor', ['agent' => $agentId, 'priority' => -40]);
 
-            $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
+            $container->setDefinition('ai.agent.'.$name.'.memory_processor', $memoryProcessorDefinition);
         }
 
+        // Named arguments on purpose: the Agent constructor grows over time, and positional indices would silently
+        // shift onto the wrong parameter.
         $agentDefinition
-            ->setArgument('$inputProcessors', []) // placeholder until ProcessorCompilerPass process.
-            ->setArgument('$outputProcessors', []) // placeholder until ProcessorCompilerPass process.
+            ->setArgument('$contextProcessors', []) // placeholder until ProcessorCompilerPass process.
             ->setArgument('$name', $name)
+            ->setArgument('$translator', new Reference('translator', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$logger', new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
         $container->setDefinition($agentId, $agentDefinition);

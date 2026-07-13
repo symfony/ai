@@ -33,7 +33,7 @@ $messages = new MessageBag(
     Message::forSystem('Respond in JSON as instructed in the response format.'),
     Message::ofUser('What date and time is it?')
 );
-$result = $agent->call($messages, ['response_format' => [
+$result = $agent->call($messages, options: ['response_format' => [
     'type' => 'json_object',
     'json_object' => [
         'name' => 'clock',

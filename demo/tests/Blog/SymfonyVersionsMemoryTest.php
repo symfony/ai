@@ -13,7 +13,8 @@ namespace App\Tests\Blog;
 
 use App\Blog\SymfonyVersionsMemory;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\Context\AgentRequest;
+use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Memory\Memory;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Cache\Adapter\NullAdapter;
@@ -26,9 +27,9 @@ final class SymfonyVersionsMemoryTest extends TestCase
     {
         $httpClient = new MockHttpClient(JsonMockResponse::fromFile(__DIR__.'/versions.json'));
         $versionMemory = new SymfonyVersionsMemory($httpClient, new NullAdapter());
-        $input = new Input('gpt-6', new MessageBag());
+        $request = new AgentRequest('gpt-6', new MessageBag(), [], new Context());
 
-        $memories = $versionMemory->load($input);
+        $memories = $versionMemory->load($request);
 
         $this->assertCount(1, $memories);
         $this->assertInstanceOf(Memory::class, $memories[0]);

@@ -125,7 +125,7 @@ emit ``ThinkingDelta`` deltas when you pass the ``reasoning`` option::
     use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
     use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 
-    $result = $agent->call($messages, [
+    $result = $agent->call($messages, options: [
         'stream' => true,
         'reasoning' => ['summary' => 'auto'],
     ]);
