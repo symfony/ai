@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\Ocr;
+use Symfony\AI\Platform\Bridge\Mistral\SpeechToText;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -39,7 +40,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'pixtral-large-latest' => ['pixtral-large-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE, Capability::TOOL_CALLING]];
         yield 'pixtral-12b-latest' => ['pixtral-12b-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE, Capability::TOOL_CALLING]];
         yield 'voxtral-small-latest' => ['voxtral-small-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
-        yield 'voxtral-mini-latest' => ['voxtral-mini-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
+        yield 'voxtral-mini-latest' => ['voxtral-mini-latest', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::SPEECH_TO_TEXT]];
         yield 'mistral-embed' => ['mistral-embed', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'mistral-ocr-latest' => ['mistral-ocr-latest', Ocr::class, [Capability::INPUT_PDF, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT]];
     }
