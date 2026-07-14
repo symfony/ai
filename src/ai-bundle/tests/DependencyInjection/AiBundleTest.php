@@ -167,6 +167,22 @@ class AiBundleTest extends TestCase
         $this->assertSame([['id' => 'ai']], $definition->getTag('data_collector'));
     }
 
+    public function testTemplateRendererListenerReceivesNormalizer()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+        $definition = $container->getDefinition('ai.platform.template_renderer_listener');
+
+        $this->assertTrue($definition->hasTag('kernel.event_subscriber'));
+
+        $arguments = $definition->getArguments();
+        $this->assertCount(2, $arguments);
+        $this->assertSame('ai.platform.template_renderer_registry', (string) $arguments[0]);
+
+        // Without a normalizer the listener rejects object template vars, which makes
+        // `template_options.normalizer_context` unusable.
+        $this->assertSame('serializer', (string) $arguments[1]);
+    }
+
     public function testStoreCommandsArentDefinedWithoutStore()
     {
         $container = $this->buildContainer([

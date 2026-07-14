@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Pass the `serializer` to `TemplateRendererListener` so objects can be used as `template_vars`
  * Add `AiAssertionsTrait` for functional tests based on Profiler data
  * Add `minimax` platform configuration for the MiniMax bridge
  * Autoconfigure `SchemaProviderInterface` implementations so they can be referenced from `#[Schema(provider: ...)]`, and validate those references on tools at container build time

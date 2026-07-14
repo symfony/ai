@@ -392,6 +392,45 @@ Multiple messages can use the same variable set::
         ],
     ]);
 
+Object Variables
+................
+
+Template variables are not restricted to scalar values - objects can be passed as
+well. They are normalized into an array first, and since the string renderer
+flattens nested arrays into dot-paths, the object's properties are addressable
+with dotted placeholders::
+
+    $messages = new MessageBag(
+        Message::forSystem('You are a product copywriter.'),
+        Message::ofUser(Template::string('Write a teaser for {product.name}, priced at {product.price} EUR.'))
+    );
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'template_vars' => ['product' => $product],
+    ]);
+
+By default, every property the normalizer can read ends up in the prompt. To
+control which ones are exposed - for example to keep internal fields out of the
+prompt - pass a normalizer context via the ``template_options`` option, such as
+serialization groups::
+
+    $result = $platform->invoke('gpt-4o-mini', $messages, [
+        'template_vars' => ['product' => $product],
+        'template_options' => [
+            'normalizer_context' => [
+                'groups' => ['prompt'],
+            ],
+        ],
+    ]);
+
+With that context, only properties within the ``prompt`` serialization group are
+normalized, and therefore only those can be referenced in the template.
+
+.. note::
+
+    Object variables require a normalizer, see `Setup`_ below. Objects implementing
+    ``\Stringable`` are an exception: they are used as-is and not normalized.
+
 Expression Templates
 ....................
 
@@ -422,9 +461,17 @@ To use templates, register the ``TemplateRendererListener`` with your platform's
 
     $platform = Factory::createPlatform($apiKey, eventDispatcher: $eventDispatcher);
 
+To use objects as template variables, the listener needs a normalizer as second
+argument - without it, object variables are rejected with an exception::
+
+    use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+
+    $templateListener = new TemplateRendererListener($rendererRegistry, new ObjectNormalizer());
+
 .. note::
 
-    When using the AI Bundle, template rendering is automatically configured and available without manual setup.
+    When using the AI Bundle, template rendering is automatically configured and available without manual setup,
+    including the ``serializer`` service as normalizer, so object variables work out of the box.
 
 Result Streaming
 ----------------
