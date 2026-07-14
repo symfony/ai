@@ -119,7 +119,7 @@ $tools = new AgenticSearchTools($corpus);
 
 $dispatcher = new EventDispatcher();
 $dispatcher->addListener(ToolCallSucceeded::class, static function (ToolCallSucceeded $event): void {
-    $name = $event->getMetadata()->getName();
+    $name = $event->getDefinition()->getName();
     $args = $event->getArguments();
     $resultPreview = $event->getResult()->getResult();
 

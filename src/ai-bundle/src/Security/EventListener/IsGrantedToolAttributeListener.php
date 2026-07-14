@@ -37,7 +37,7 @@ class IsGrantedToolAttributeListener
     {
         $tool = $event->getTool();
         $class = new \ReflectionClass($tool);
-        $method = $class->getMethod($event->getMetadata()->getReference()->getMethod());
+        $method = $class->getMethod($event->getDefinition()->getReference()->getMethod());
         $classAttributes = $class->getAttributes(IsGrantedTool::class);
         $methodAttributes = $method->getAttributes(IsGrantedTool::class);
 

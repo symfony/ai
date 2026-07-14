@@ -134,6 +134,58 @@ You can configure the method to be called by the LLM with the :class:`Symfony\\A
         }
     }
 
+Tool Metadata
+~~~~~~~~~~~~~
+
+Tools can carry arbitrary, application-defined data via the ``metadata`` argument. It is not
+interpreted by Symfony AI itself - it is yours to act on::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+
+    #[AsTool('search_products', 'Search the product catalog', metadata: ['needs_confirmation' => false])]
+    #[AsTool('delete_product', 'Delete a product', method: 'delete', metadata: ['needs_confirmation' => true])]
+    final class ProductTool
+    {
+        // ...
+    }
+
+The metadata is carried to the :class:`Symfony\\AI\\Platform\\Tool\\Tool` definition, so you can read it
+with ``getMetadata()`` or ``getMetadataValue()``.
+
+This enables two things a deny-listing listener cannot. First, you can shape the toolset *before* it is
+offered to the model, so a tool the model must not use is never advertised in the first place::
+
+    $readOnlyTools = array_filter(
+        iterator_to_array($toolbox->getTools()),
+        static fn (Tool $tool): bool => false === $tool->getMetadataValue('needs_confirmation', true),
+    );
+
+Second, you can act on it just before a tool is invoked, by listening to
+:class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` and denying the call::
+
+    use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
+
+    final class HumanInTheLoopListener
+    {
+        public function __invoke(ToolCallRequested $event): void
+        {
+            // default to requiring confirmation, so a tool added without metadata is not silently exempt
+            if (false === $event->getDefinition()->getMetadataValue('needs_confirmation', true)) {
+                return;
+            }
+
+            if (!$this->approvals->isApproved($event->getToolCall())) {
+                $event->deny('Awaiting human confirmation.');
+            }
+        }
+    }
+
+.. note::
+
+    Metadata only describes a tool, it does not enforce anything. Marking a tool as ``needs_confirmation``
+    does not prevent it from being called - a listener like the one above has to do that. Prefer failing
+    closed, as shown, so tools added later without metadata are not silently exempt.
+
 Tool Parameters
 ~~~~~~~~~~~~~~~
 

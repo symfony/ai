@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.11
+----
+
+ * Add `metadata` support for tools to allow attaching custom data
+ * [BC BREAK] Rename `getMetadata()` to `getDefinition()` on the tool call events (`ToolCallRequested`, `ToolCallArgumentsResolved`, `ToolCallSucceeded`, `ToolCallFailed`), since it returns the tool definition and the "metadata" name is now used for the tool's classification
+
 0.10
 ----
 
