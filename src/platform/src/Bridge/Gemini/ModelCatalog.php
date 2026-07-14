@@ -306,6 +306,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_AUDIO,
                 ],
             ],
+            'gemini-omni-flash-preview' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
             'gemma-4-26b-a4b-it' => [
                 'class' => Gemini::class,
                 'capabilities' => [
