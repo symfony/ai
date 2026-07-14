@@ -16,20 +16,6 @@ Agent
 Platform
 --------
 
- * The Mistral `voxtral-mini-latest` model is now served through the dedicated speech-to-text bridge
-   (`Bridge\Mistral\SpeechToText`, `/v1/audio/transcriptions`) instead of the chat `Mistral` model.
-   Passing an `Audio` file transcribes it and returns a `TextResult`:
-
-   ```diff
-   -$result = $platform->invoke('voxtral-mini-latest', $messageBag); // was routed to /v1/chat/completions
-   +$result = $platform->invoke('voxtral-mini-latest', Audio::fromFile('note.mp3'), ['language' => 'en']);
-   +$text = $result->asText();
-   ```
-
-   The catalog capabilities changed accordingly from the chat set to `INPUT_AUDIO` + `SPEECH_TO_TEXT`.
-   To keep using audio understanding in a chat conversation (transcribe + reason in one call), use
-   `voxtral-small-latest`, which remains a chat `Mistral` model.
-
  * The OpenAI `DallE` bridge has been renamed to `Image`, since OpenAI retired the DALL-E models in
    favor of the `gpt-image-*` family (which the renamed bridge serves). Update namespace imports:
 

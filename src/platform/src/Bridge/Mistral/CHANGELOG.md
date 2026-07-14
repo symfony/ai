@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add Voxtral speech-to-text support through the dedicated `/v1/audio/transcriptions` endpoint, exposing a `SpeechToText` model, model client, result converter and audio normalizer (opt-in via `new SpeechToText('voxtral-mini-latest')`)
+
 0.11
 ----
 
@@ -8,8 +13,6 @@ CHANGELOG
  * Add a `baseUrl` argument to the model clients and the factory to target Mistral-compatible endpoints
  * Raise a `RuntimeException` on unhandled HTTP error statuses before streaming, instead of returning an empty stream
  * Add OCR support by `mistral-ocr-latest` model and `/v1/ocr` endpoint, returning a typed `OcrResult` with pages, layout images and annotations
- * Add Voxtral speech-to-text support through the dedicated `/v1/audio/transcriptions` endpoint, exposing a `SpeechToText` model client, result converter and audio normalizer
- * [BC BREAK] The `voxtral-mini-latest` catalog entry is now registered as a `SpeechToText` model (dedicated transcription endpoint) instead of a chat `Mistral` model
 
 0.10
 ----
