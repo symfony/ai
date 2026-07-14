@@ -20,6 +20,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SchemaAttributeValuesDto;
@@ -455,5 +456,48 @@ final class FactoryTest extends TestCase
         ];
 
         $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesWithoutSerializerGroupsIncludesAllProperties()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'name' => ['type' => 'string'],
+                'age' => ['type' => ['integer', 'null']],
+                'slug' => ['type' => 'string'],
+                'internal' => ['type' => 'string'],
+            ],
+            'required' => ['name', 'age', 'slug', 'internal'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(GroupedDto::class);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesScopedToSerializerGroups()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'name' => ['type' => 'string'],
+                'age' => ['type' => ['integer', 'null']],
+            ],
+            'required' => ['name', 'age'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(GroupedDto::class, ['serializer_groups' => ['write']]);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesScopedToMultipleSerializerGroups()
+    {
+        $actual = $this->factory->buildProperties(GroupedDto::class, ['serializer_groups' => ['read', 'write']]);
+
+        $this->assertSame(['name', 'age', 'slug'], array_keys($actual['properties']));
     }
 }
