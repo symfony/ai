@@ -162,6 +162,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.template_renderer_listener', TemplateRendererListener::class)
             ->args([
                 service('ai.platform.template_renderer_registry'),
+                service('serializer')->nullOnInvalid(),
             ])
             ->tag('kernel.event_subscriber')
         ->set('ai.platform.string_to_message_bag_listener', StringToMessageBagListener::class)
