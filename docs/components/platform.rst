@@ -981,6 +981,50 @@ serialization groups::
         'response_format' => $product,
     ]);
 
+Scoping the Schema to Serializer Groups
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Structured output and tools are often built on top of existing domain objects, where only a subset of the properties
+should be exposed to the model. The :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Factory` accepts an optional
+context on both ``buildProperties()`` and ``buildParameters()``. Its ``serializer_groups`` key scopes the generated
+schema to the given Symfony Serializer groups::
+
+    use Symfony\Component\Serializer\Attribute\Groups;
+
+    final class Product
+    {
+        #[Groups(['read', 'write'])]
+        public string $name = '';
+
+        #[Groups(['write'])]
+        public ?int $price = null;
+
+        #[Groups(['read'])]
+        public string $slug = '';
+
+        public string $internalNote = '';
+    }
+
+Without a context, all properties are described, which is the default behavior::
+
+    use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+
+    $factory = new Factory();
+
+    $factory->buildProperties(Product::class);
+    // properties: name, price, slug, internalNote
+
+Passing ``serializer_groups`` limits the schema to the properties tagged with one of the given groups::
+
+    $factory->buildProperties(Product::class, ['serializer_groups' => ['write']]);
+    // properties: name, price
+
+    $factory->buildProperties(Product::class, ['serializer_groups' => ['read', 'write']]);
+    // properties: name, price, slug
+
+The same context is accepted by ``buildParameters()`` for tool method arguments, and it is propagated into nested
+schemas, so discriminated sub-schemas (``anyOf``) are scoped the same way.
+
 Validating Structured Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

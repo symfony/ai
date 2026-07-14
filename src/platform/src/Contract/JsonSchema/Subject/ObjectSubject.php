@@ -16,14 +16,26 @@ final class ObjectSubject
     /**
      * @param class-string|string                                  $name
      * @param \ReflectionClass<covariant object>|\ReflectionMethod $reflector
+     * @param array<string, mixed>                                 $context   Describer context, e.g. `serializer_groups`
      */
-    public function __construct(private string $name, private \ReflectionClass|\ReflectionMethod $reflector)
-    {
+    public function __construct(
+        private string $name,
+        private \ReflectionClass|\ReflectionMethod $reflector,
+        private array $context = [],
+    ) {
     }
 
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getContext(): array
+    {
+        return $this->context;
     }
 
     /**

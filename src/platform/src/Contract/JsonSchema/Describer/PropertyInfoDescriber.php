@@ -59,7 +59,12 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
         }
 
         $class = $subject->getReflector()->name;
-        foreach ($this->propertyListExtractor->getProperties($class, ['serializer_groups' => $this->serializerGroups]) ?? [] as $propertyName) {
+
+        // A per-call `serializer_groups` context narrows the schema to the given groups,
+        // falling back to the groups this describer was configured with.
+        $serializerGroups = $subject->getContext()['serializer_groups'] ?? $this->serializerGroups;
+
+        foreach ($this->propertyListExtractor->getProperties($class, ['serializer_groups' => $serializerGroups]) ?? [] as $propertyName) {
             if (!$this->propertyInfo->isWritable($class, $propertyName) && !$this->propertyInfo->isInitializable($class, $propertyName)) {
                 continue;
             }

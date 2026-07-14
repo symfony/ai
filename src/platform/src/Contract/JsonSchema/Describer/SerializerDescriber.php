@@ -61,7 +61,8 @@ final class SerializerDescriber implements ObjectDescriberInterface, ObjectDescr
             $typeProperty = $discriminatorMapping->getTypeProperty();
             foreach ($discriminatorMapping->getTypesMapping() as $discriminatorValue => $discriminatorClass) {
                 $subSchema = &$schema['anyOf'][];
-                $this->describer->describeObject(new ObjectSubject($discriminatorClass, new \ReflectionClass($discriminatorClass)), $subSchema);
+                // Keep nested schemas scoped to the same context, e.g. `serializer_groups`.
+                $this->describer->describeObject(new ObjectSubject($discriminatorClass, new \ReflectionClass($discriminatorClass), $subject->getContext()), $subSchema);
                 $subSchema['properties'][$typeProperty]['enum'] = [$discriminatorValue];
             }
         }
