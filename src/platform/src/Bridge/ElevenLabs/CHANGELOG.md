@@ -5,6 +5,8 @@ CHANGELOG
 ----
 
  * Tolerate an `endpoint` configured with or without a trailing slash
+ * Forward speech-to-text options (`language_code`, `tag_audio_events`, `num_speakers`, `diarize`, `timestamps_granularity`, `additional_formats`, ...) to the ElevenLabs `/v1/speech-to-text` request body
+ * Expose the additional transcript formats returned by ElevenLabs (e.g. SRT subtitles) through a typed `Transcript` object: when the `additional_formats` option is requested, the converter returns an `ObjectResult` wrapping a `Transcript` (readable via `ResultInterface::asObject()`), otherwise it returns a plain `TextResult` (readable via `asText()`); each format is a typed `AdditionalFormat` value object (with `requested_format`, `file_extension`, `content_type`, `is_base64_encoded` and `content`), accessible through `Transcript::getAdditionalFormats()`
 
 0.8
 ---

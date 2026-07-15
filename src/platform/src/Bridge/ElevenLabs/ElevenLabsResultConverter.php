@@ -11,9 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
+use Symfony\AI\Platform\Bridge\ElevenLabs\Result\AdditionalFormat;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Result\Transcript;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -55,7 +58,7 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
         return match (true) {
             str_contains($response->getInfo('url'), 'text-to-speech') && \array_key_exists('stream', $options) && $options['stream'] => new StreamResult($this->convertToGenerator($response)),
             str_contains($response->getInfo('url'), 'text-to-speech') => new BinaryResult($response->getContent(), 'audio/mpeg'),
-            str_contains($response->getInfo('url'), 'speech-to-text') => new TextResult($result->getData()['text']),
+            str_contains($response->getInfo('url'), 'speech-to-text') => $this->convertSpeechToTextResult($result, $options),
             default => throw new RuntimeException('Unsupported ElevenLabs response.'),
         };
     }
@@ -63,6 +66,35 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): null
     {
         return null;
+    }
+
+    /**
+     * The speech-to-text response always carries the plain transcript text and, when
+     * the user requested it through the `additional_formats` option, the additional
+     * export formats (e.g. SRT subtitles) alongside it.
+     *
+     * To keep the result unambiguous, the converter mirrors the Whisper bridge: when
+     * no `additional_formats` option was requested it returns a plain `TextResult`
+     * (readable through `ResultInterface::asText()`), and when additional formats were
+     * requested it returns an `ObjectResult` wrapping a `Transcript` that carries both
+     * the transcript text and the decoded export formats (readable through `asObject()`).
+     *
+     * @param array<string, mixed> $options
+     */
+    private function convertSpeechToTextResult(RawResultInterface $result, array $options): ResultInterface
+    {
+        $data = $result->getData();
+        $text = $data['text'] ?? '';
+
+        if ([] === ($options['additional_formats'] ?? [])) {
+            return new TextResult($text);
+        }
+
+        $additionalFormats = \is_array($data['additional_formats'] ?? null)
+            ? array_values(array_map(AdditionalFormat::fromArray(...), $data['additional_formats']))
+            : [];
+
+        return new ObjectResult(new Transcript($text, $additionalFormats));
     }
 
     private function convertToGenerator(ResponseInterface $response): \Generator
