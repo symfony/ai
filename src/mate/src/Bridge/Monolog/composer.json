@@ -28,7 +28,7 @@
     "require": {
         "php": ">=8.2",
         "monolog/monolog": "^2.0|^3.0",
-        "symfony/ai-mate": "^0.10"
+        "symfony/ai-mate": "^0.11"
     },
     "require-dev": {
         "helgesverre/toon": "^3.2.1",
