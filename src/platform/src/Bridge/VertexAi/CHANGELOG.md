@@ -7,6 +7,7 @@ CHANGELOG
  * Derive the API host from the configured `location` to support regional and data-residency endpoints
  * Throw `ServerException` on server errors (HTTP 5xx) instead of a generic `RuntimeException`
  * Raise a `RuntimeException` on unhandled HTTP error statuses before streaming, instead of returning an empty stream
+ * Stream thinking as `ThinkingStart`/`ThinkingDelta`/`ThinkingComplete` deltas for `thought` parts and expand multi-part streamed candidates
 
 0.10
 ----

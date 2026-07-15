@@ -7,6 +7,7 @@ CHANGELOG
  * Throw `ServerException` on server errors (HTTP 5xx) instead of a generic `RuntimeException`
  * Add a `baseUrl` argument to the model clients and the factory to target Gemini-compatible endpoints
  * Raise a `RuntimeException` on unhandled HTTP error statuses before streaming, instead of returning an empty stream
+ * Stream thinking as `ThinkingStart`/`ThinkingDelta`/`ThinkingComplete` deltas for `thought` parts and expand multi-part streamed candidates
 
 0.10
 ----
