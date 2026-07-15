@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\AudioNormalizer;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabs;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ElevenLabsClient;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Factory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Audio;
@@ -164,6 +165,81 @@ final class ElevenLabsClientTest extends TestCase
                 ['format' => 'srt', 'include_timestamps' => true],
             ],
         ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testInvokeOptionOverridesModelDefaultOptionForSpeechToText()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://api.elevenlabs.io/v1/speech-to-text', $url);
+
+            $body = '';
+            $readChunk = $options['body'];
+            while ('' !== $chunk = $readChunk(8192)) {
+                $body .= $chunk;
+            }
+
+            // Framework convention: Provider::invoke() merges options as
+            // array_merge($model->getOptions(), $options), so an option passed at
+            // invoke time must win over the same key configured as a model default.
+            // Here "pl" is the invoke-time value and "de" the model default.
+            $this->assertStringContainsString("language_code\"\r\n\r\npl\r\n", $body);
+            $this->assertStringNotContainsString("language_code\"\r\n\r\nde\r\n", $body);
+
+            return new JsonMockResponse([
+                'text' => 'foo',
+            ]);
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $platform = Factory::createPlatform(apiKey: 'sk-test', httpClient: $httpClient);
+
+        $model = new ElevenLabs('scribe_v2', [
+            Capability::INPUT_AUDIO,
+            Capability::OUTPUT_TEXT,
+            Capability::SPEECH_TO_TEXT,
+        ], [
+            'language_code' => 'de',
+        ]);
+
+        $result = $platform->invoke($model, Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'), [
+            'language_code' => 'pl',
+        ]);
+        $result->asText();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testInvokeOptionOverridesModelDefaultOptionForTextToSpeech()
+    {
+        $audioFixture = Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3');
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($audioFixture): MockResponse {
+            $this->assertSame('POST', $method);
+            $body = json_decode($options['body'], true);
+
+            // Framework convention: Provider::invoke() merges options as
+            // array_merge($model->getOptions(), $options), so an option passed at
+            // invoke time must win over the same key configured as a model default.
+            $this->assertSame([
+                'stability' => 0.9,
+            ], $body['voice_settings']);
+
+            return new MockResponse($audioFixture->asBinary());
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $platform = Factory::createPlatform(apiKey: 'sk-test', httpClient: $httpClient);
+
+        $model = new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            'voice_settings' => ['stability' => 0.1],
+        ]);
+
+        $result = $platform->invoke($model, 'foo', [
+            'voice_settings' => ['stability' => 0.9],
+        ]);
+        $result->asBinary();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
