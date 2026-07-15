@@ -1,0 +1,37 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-10T13:15:16Z
+
+this approach is 42% slower (according to a single run), but maybe parallelization within the jobs/steps might help
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-10T13:22:12Z
+
+parallelization basically cuts it to 50% :muscle:
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-10T22:42:19Z
+
+@OskarStark we're losing here granularity on first level, but still have it on step level in case a job fails:
+
+<img width="563" height="387" alt="image" src="https://github.com/user-attachments/assets/c0b568b8-66e2-41c3-b8f7-5c6327fbf3ee" />
+
+hard feelings about this rework? not sure tho if all combinations of change scenarios will work.
+
+---
+
+claude ran some tests for change scenarios on my fork:
+
+  - A — coordinated Platform→OpenAI (expect GREEN): bridge uses a new Capability::REASONING added to Platform in the same PR.
+  https://github.com/chr-hertel/ai/pull/22
+  - B — new bridge + example (expect GREEN): brand-new symfony/ai-demo-platform bridge (not on Packagist) plus an example depending on it; proves auto-discovery.
+  https://github.com/chr-hertel/ai/pull/25
+  (additional failure here is only Claude not being able to build a new bridge in one shot)
+  - C — negative control (expect RED): OpenAI bridge references Capability::REASONING that is not added to Platform; proves the pipeline catches cross-package breakage.
+  https://github.com/chr-hertel/ai/pull/23
+  - D — coordinated Platform→Agent (expect GREEN): Agent test uses a new Capability::isOutput() method added to Platform.
+  https://github.com/chr-hertel/ai/pull/24
+
+(_and nvm the fabbot failures_)
