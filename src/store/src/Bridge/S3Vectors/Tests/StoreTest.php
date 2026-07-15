@@ -14,8 +14,11 @@ namespace Symfony\AI\Store\Bridge\S3Vectors\Tests;
 use AsyncAws\Core\Test\ResultMockFactory;
 use AsyncAws\S3Vectors\Enum\DataType;
 use AsyncAws\S3Vectors\Enum\DistanceMetric;
+use AsyncAws\S3Vectors\Result\DeleteVectorsOutput;
+use AsyncAws\S3Vectors\Result\ListVectorsOutput;
 use AsyncAws\S3Vectors\Result\QueryVectorsOutput;
 use AsyncAws\S3Vectors\S3VectorsClient;
+use AsyncAws\S3Vectors\ValueObject\ListOutputVector;
 use AsyncAws\S3Vectors\ValueObject\QueryOutputVector;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
@@ -140,6 +143,167 @@ final class StoreTest extends TestCase
             }));
 
         self::createStore($client)->remove(['id-1'], ['filter' => $filter]);
+    }
+
+    public function testClearListsAndDeletesAllVectors()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $pages = [
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => [
+                    new ListOutputVector(['key' => 'vector-id-1']),
+                    new ListOutputVector(['key' => 'vector-id-2']),
+                ],
+                'nextToken' => null,
+            ]),
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => [],
+                'nextToken' => null,
+            ]),
+        ];
+
+        $client->expects($this->exactly(2))
+            ->method('listVectors')
+            ->with($this->callback(static function ($input) {
+                return 'test-bucket' === $input['vectorBucketName']
+                    && 'test-index' === $input['indexName'];
+            }))
+            ->willReturnCallback(static function () use (&$pages) {
+                return array_shift($pages);
+            });
+
+        $client->expects($this->once())
+            ->method('deleteVectors')
+            ->with($this->callback(static function ($input) {
+                return 'test-bucket' === $input['vectorBucketName']
+                    && 'test-index' === $input['indexName']
+                    && ['vector-id-1', 'vector-id-2'] === $input['keys'];
+            }));
+
+        self::createStore($client)->clear();
+    }
+
+    public function testClearChunksDeletesToTheMaximumKeysPerCall()
+    {
+        // DeleteVectors accepts at most 500 keys, so a larger batch size must not end up in a single call
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $vectors = [];
+        for ($i = 0; $i < 600; ++$i) {
+            $vectors[] = new ListOutputVector(['key' => \sprintf('vector-id-%d', $i)]);
+        }
+
+        $pages = [
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => $vectors,
+                'nextToken' => null,
+            ]),
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => [],
+                'nextToken' => null,
+            ]),
+        ];
+
+        $client->expects($this->exactly(2))
+            ->method('listVectors')
+            ->with($this->callback(static fn ($input): bool => 1000 === $input['maxResults']))
+            ->willReturnCallback(static function () use (&$pages) {
+                return array_shift($pages);
+            });
+
+        $deletedCounts = [];
+        $client->expects($this->exactly(2))
+            ->method('deleteVectors')
+            ->willReturnCallback(static function ($input) use (&$deletedCounts) {
+                $deletedCounts[] = \count($input['keys']);
+
+                return ResultMockFactory::create(DeleteVectorsOutput::class);
+            });
+
+        self::createStore($client)->clear(['batch_size' => 1000]);
+
+        $this->assertSame([500, 100], $deletedCounts);
+    }
+
+    public function testClearWithInvalidBatchSize()
+    {
+        $store = self::createStore($this->createMock(S3VectorsClient::class));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "batch_size" option must be a positive integer.');
+        $store->clear(['batch_size' => 0]);
+    }
+
+    public function testClearWithUnsupportedOption()
+    {
+        $store = self::createStore($this->createMock(S3VectorsClient::class));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+        $store->clear(['foo' => 'bar']);
+    }
+
+    public function testClearIgnoresThePaginationTokenAndListsTheIndexEmpty()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        // resuming at the token would skip whatever the previous round deleted, so clear() has to list the
+        // index from the start again after every delete, until nothing is left to delete
+        $pages = [
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => [new ListOutputVector(['key' => 'vector-id-1'])],
+                'nextToken' => 'token-2',
+            ]),
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => [new ListOutputVector(['key' => 'vector-id-2'])],
+                'nextToken' => 'token-3',
+            ]),
+            ResultMockFactory::create(ListVectorsOutput::class, [
+                'vectors' => [],
+                'nextToken' => null,
+            ]),
+        ];
+
+        $listInputs = [];
+        $client->expects($this->exactly(3))
+            ->method('listVectors')
+            ->willReturnCallback(static function ($input) use (&$listInputs, &$pages) {
+                $listInputs[] = $input;
+
+                return array_shift($pages);
+            });
+
+        $deleted = [];
+        $client->expects($this->exactly(2))
+            ->method('deleteVectors')
+            ->willReturnCallback(static function ($input) use (&$deleted) {
+                $deleted[] = $input['keys'];
+
+                return ResultMockFactory::create(DeleteVectorsOutput::class);
+            });
+
+        self::createStore($client)->clear();
+
+        $this->assertSame([['vector-id-1'], ['vector-id-2']], $deleted);
+
+        foreach ($listInputs as $listInput) {
+            $this->assertArrayNotHasKey('nextToken', $listInput);
+        }
+    }
+
+    public function testClearWithEmptyIndex()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $client->expects($this->once())
+            ->method('listVectors')
+            ->willReturn(ResultMockFactory::create(ListVectorsOutput::class, ['vectors' => [], 'nextToken' => null]));
+
+        $client->expects($this->never())
+            ->method('deleteVectors');
+
+        self::createStore($client)->clear();
     }
 
     public function testQueryReturnsDocuments()

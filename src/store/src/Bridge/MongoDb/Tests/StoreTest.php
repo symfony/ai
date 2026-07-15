@@ -702,4 +702,31 @@ final class StoreTest extends TestCase
 
         $store->remove([]);
     }
+
+    public function testClear()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with([]);
+
+        $collection->expects($this->never())
+            ->method('drop');
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $store->clear();
+    }
 }

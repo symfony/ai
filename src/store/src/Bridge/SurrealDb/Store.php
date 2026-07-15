@@ -80,6 +80,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->authenticate();
+
+        $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table));
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -168,7 +175,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ]);
 
-        return $response->toArray();
+        $result = $response->toArray();
+
+        // a failing statement is answered with 200 and reported per statement in the body
+        foreach ($result as $statement) {
+            if (\is_array($statement) && isset($statement['status']) && 'OK' !== $statement['status']) {
+                $message = $statement['result'] ?? 'Unknown error';
+
+                throw new RuntimeException(\sprintf('SurrealDB statement failed: "%s".', \is_string($message) ? $message : 'Unknown error'));
+            }
+        }
+
+        return $result;
     }
 
     /**

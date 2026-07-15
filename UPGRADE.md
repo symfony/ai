@@ -118,6 +118,21 @@ Platform
 Store
 -----
 
+ * The `StoreInterface::clear()` method was added to the interface. It removes all documents from the store,
+   while keeping the underlying table, index or collection intact - in contrast to `ManagedStoreInterface::drop()`,
+   which removes the infrastructure itself. Custom stores need to implement the new method:
+
+   ```php
+   public function clear(array $options = []): void;
+
+   // Usage
+   $store->clear();
+   ```
+
+ * The Manticore Search `Store` now creates its `uuid` column as a `STRING` attribute instead of a `TEXT` field,
+   because removing documents by id is not supported on stored text fields and failed with a server error.
+   Existing tables need to be recreated (`drop()` + `setup()`) for `remove()` to work.
+
  * The `endpointUrl` and `apiKey` parameter for Typesense `Store` has been removed, use `StoreFactory` instead
  * The `accountId`, `apiKey`, and `endpointUrl` parameter for Cloudflare `Store` has been removed, use `StoreFactory` instead
  * The `endpoint` parameter for SurrealDB `Store` has been removed, use `StoreFactory` instead

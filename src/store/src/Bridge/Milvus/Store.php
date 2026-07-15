@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -128,6 +129,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->request('POST', 'v2/vectordb/entities/delete', [
+            'collectionName' => $this->collection,
+            'filter' => "id != ''",
+        ]);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -180,7 +189,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'json' => $payload,
         ]);
 
-        return $result->toArray();
+        $response = $result->toArray();
+
+        // Milvus answers with 200 even when the operation failed, the error is carried in the body
+        $code = $response['code'] ?? 0;
+        if (\is_int($code) && 0 !== $code) {
+            $message = $response['message'] ?? 'Unknown error';
+
+            throw new RuntimeException(\sprintf('Milvus request failed with code %d: "%s".', $code, \is_string($message) ? $message : 'Unknown error'));
+        }
+
+        return $response;
     }
 
     /**

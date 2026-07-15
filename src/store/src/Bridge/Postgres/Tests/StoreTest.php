@@ -754,6 +754,23 @@ final class StoreTest extends TestCase
         $store->remove([]);
     }
 
+    public function testClear()
+    {
+        $pdo = $this->createMock(\PDO::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $pdo->expects($this->once())
+            ->method('exec')
+            ->willReturnCallback(function (string $sql): int {
+                $this->assertSame('TRUNCATE TABLE "embeddings_table"', $sql);
+
+                return 0;
+            });
+
+        $store->clear();
+    }
+
     public function testStoreSupportsMultipleQueryTypes()
     {
         $pdo = $this->createMock(\PDO::class);

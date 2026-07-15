@@ -93,6 +93,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->request(
+            'POST',
+            \sprintf('collections/%s/points/delete', $this->collectionName),
+            [
+                'filter' => [
+                    'must' => [],
+                ],
+            ],
+            ['wait' => $this->async ? 'false' : 'true'],
+        );
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

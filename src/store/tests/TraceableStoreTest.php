@@ -84,6 +84,27 @@ final class TraceableStoreTest extends TestCase
         ], $traceableStore->getCalls());
     }
 
+    public function testStoreCanRetrieveDataOnClear()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+
+        $store = new Store();
+        $store->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
+
+        $traceableStore = new TraceableStore($store, $clock);
+
+        $traceableStore->clear();
+
+        $this->assertEquals([
+            [
+                'method' => 'clear',
+                'options' => [],
+                'called_at' => $clock->now(),
+            ],
+        ], $traceableStore->getCalls());
+        $this->assertSame([], iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))));
+    }
+
     public function testSetupDelegatesToManagedStore()
     {
         $innerStore = new class implements StoreInterface, ManagedStoreInterface {
@@ -111,6 +132,10 @@ final class TraceableStoreTest extends TestCase
             }
 
             public function remove(array|string $ids, array $options = []): void
+            {
+            }
+
+            public function clear(array $options = []): void
             {
             }
 
@@ -166,6 +191,10 @@ final class TraceableStoreTest extends TestCase
             }
 
             public function remove(array|string $ids, array $options = []): void
+            {
+            }
+
+            public function clear(array $options = []): void
             {
             }
 

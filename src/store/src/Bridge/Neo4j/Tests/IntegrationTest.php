@@ -23,6 +23,15 @@ use Symfony\Component\HttpClient\HttpClient;
 #[Group('integration')]
 final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function getClearOptions(): array
+    {
+        // forces clear() to delete the volume test's nodes in several transactions
+        return ['batch_size' => 100];
+    }
+
     protected static function createStore(): StoreInterface
     {
         return new Store(

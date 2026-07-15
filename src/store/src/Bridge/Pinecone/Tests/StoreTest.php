@@ -218,6 +218,30 @@ final class StoreTest extends TestCase
         self::createStore($client)->remove([]);
     }
 
+    public function testClear()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $vectorResource->expects($this->once())
+            ->method('delete')
+            ->with([],
+                'test-namespace',
+                true,
+            );
+
+        self::createStore($client, namespace: 'test-namespace')->clear();
+    }
+
     public function testQueryReturnsDocuments()
     {
         $vectorResource = $this->createMock(VectorResource::class);

@@ -456,6 +456,34 @@ final class StoreTest extends TestCase
         $this->assertSame(0, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCanClear()
+    {
+        $requestedMethod = null;
+        $requestedUrl = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedMethod, &$requestedUrl): JsonMockResponse {
+            $requestedMethod = $method;
+            $requestedUrl = $url;
+
+            return new JsonMockResponse([
+                'taskUid' => 5,
+                'indexUid' => 'test',
+                'status' => 'enqueued',
+                'type' => 'documentDeletion',
+                'enqueuedAt' => '2025-01-01T04:00:00Z',
+            ], [
+                'http_code' => 202,
+            ]);
+        }, 'http://127.0.0.1:7700');
+
+        $store = new Store($httpClient, 'test');
+
+        $store->clear();
+
+        $this->assertSame('DELETE', $requestedMethod);
+        $this->assertSame('http://127.0.0.1:7700/indexes/test/documents', $requestedUrl);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test-index');

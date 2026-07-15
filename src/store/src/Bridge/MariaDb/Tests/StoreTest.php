@@ -447,6 +447,20 @@ final class StoreTest extends TestCase
         $store->remove([]);
     }
 
+    public function testItCanClear()
+    {
+        $pdo = $this->createMock(\PDO::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        $pdo->expects($this->once())
+            ->method('exec')
+            ->with('TRUNCATE TABLE embeddings_table')
+            ->willReturn(1);
+
+        $store->clear();
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $connection = $this->createMock(\PDO::class);

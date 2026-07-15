@@ -176,6 +176,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->connection->beginTransaction();
+
+        try {
+            $this->connection->exec(\sprintf('DELETE FROM %s_fts', $this->tableName));
+            $this->connection->exec(\sprintf('DELETE FROM %s', $this->tableName));
+
+            $this->connection->commit();
+        } catch (\Throwable $e) {
+            $this->connection->rollBack();
+
+            throw $e;
+        }
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [

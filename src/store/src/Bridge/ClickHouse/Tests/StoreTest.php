@@ -287,6 +287,23 @@ final class StoreTest extends TestCase
         $store->remove([]);
     }
 
+    public function testClear()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('POST', $method);
+            $this->assertSame('TRUNCATE TABLE test_table', $options['query']['query']);
+            $this->assertSame('test_db', $options['query']['database']);
+
+            return new MockResponse('', ['http_code' => 200]);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $store->clear();
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'default', 'test_table');

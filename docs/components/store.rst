@@ -208,7 +208,8 @@ Commands
 --------
 
 While using the ``Store`` component in your Symfony application along with the ``AiBundle``,
-you can use the ``bin/console ai:store:setup`` command to initialize the store and ``bin/console ai:store:drop`` to clean up the store:
+you can use the ``bin/console ai:store:setup`` command to initialize the store and ``bin/console ai:store:drop`` to clean up the store.
+To remove all documents from a store without dropping it, use ``bin/console ai:store:clear``:
 
 .. code-block:: yaml
 
@@ -224,7 +225,8 @@ you can use the ``bin/console ai:store:setup`` command to initialize the store a
 .. code-block:: terminal
 
     $ php bin/console ai:store:setup symfonycon
-    $ php bin/console ai:store:drop symfonycon
+    $ php bin/console ai:store:clear symfonycon --force
+    $ php bin/console ai:store:drop symfonycon --force
 
 
 Implementing a Bridge
@@ -249,6 +251,11 @@ This leads to a store implementing the following methods::
         public function remove(string|array $ids, array $options = []): void
         {
             // Implementation to remove documents from the store
+        }
+
+        public function clear(array $options = []): void
+        {
+            // Implementation to remove all documents from the store
         }
 
         public function query(QueryInterface $query, array $options = []): iterable
@@ -289,6 +296,35 @@ This leads to a store implementing two methods::
             // Implementation to drop the store (and related vectors)
         }
     }
+
+Clearing a store
+----------------
+
+To get rid of all documents in a store without dropping it, use
+:method:`Symfony\\AI\\Store\\StoreInterface::clear`::
+
+    $store->clear();
+
+In contrast to ``ManagedStoreInterface::drop()``, the store stays usable: documents can be added
+again right away, without calling ``setup()`` first, which makes ``clear()`` the method of choice
+for re-indexing::
+
+    $store->clear();
+    $indexer->index($documents);
+
+Every store supports this operation, and almost all of them use the native mechanism of their backend
+to keep the table, index or collection in place - for example ``TRUNCATE TABLE`` for the SQL-based
+stores, ``_delete_by_query`` for Elasticsearch and OpenSearch, or ``deleteMany()`` for MongoDB.
+
+The stores whose backend has no delete-all operation list the documents and remove them in batches
+instead, which is the case for Azure AI Search, Cloudflare, ChromaDB and S3 Vectors, as does Neo4j,
+which deletes its nodes in batched transactions. All of them use a sensible default batch size, which
+can be changed with the ``batch_size`` option::
+
+    $store->clear(['batch_size' => 250]);
+
+The only exception is Vektor, which supports neither removing documents in bulk nor listing them.
+Its index is the storage directory itself, which is simply recreated.
 
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php

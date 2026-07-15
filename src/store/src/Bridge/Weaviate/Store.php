@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -88,6 +89,33 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 ],
             ],
         ]);
+    }
+
+    public function clear(array $options = []): void
+    {
+        // Weaviate's batch delete requires a "where" filter, so a wildcard on the id matches every object of the
+        // collection. A single call only deletes up to QUERY_MAXIMUM_RESULTS objects (10.000 by default, but
+        // configurable), so it is repeated until the collection reports no objects left to delete.
+        do {
+            $response = $this->request('DELETE', 'v1/batch/objects', [
+                'match' => [
+                    'class' => $this->collection,
+                    'where' => [
+                        'path' => ['id'],
+                        'operator' => 'Like',
+                        'valueText' => '*',
+                    ],
+                ],
+            ]);
+
+            $results = \is_array($response['results'] ?? null) ? $response['results'] : [];
+            $failed = \is_int($results['failed'] ?? null) ? $results['failed'] : 0;
+            $successful = \is_int($results['successful'] ?? null) ? $results['successful'] : 0;
+
+            if (0 !== $failed) {
+                throw new RuntimeException(\sprintf('Failed to delete %d object(s) while clearing the "%s" collection.', $failed, $this->collection));
+            }
+        } while (0 !== $successful);
     }
 
     public function supports(string $queryClass): bool

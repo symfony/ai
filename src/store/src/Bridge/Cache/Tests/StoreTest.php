@@ -384,6 +384,40 @@ final class StoreTest extends TestCase
         $store->remove($id1->toRfc4122(), ['unsupported' => true]);
     }
 
+    public function testStoreCanClear()
+    {
+        $cache = new ArrayAdapter();
+        $store = new Store($cache);
+        $store->setup();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])),
+        ]);
+
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6]))));
+        $this->assertCount(2, $result);
+
+        $store->clear();
+
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6]))));
+        $this->assertCount(0, $result);
+
+        $this->assertTrue($cache->hasItem('_vectors'));
+        $this->assertSame([], $cache->getItem('_vectors')->get());
+    }
+
+    public function testClearWithOptions()
+    {
+        $store = new Store(new ArrayAdapter());
+        $store->setup();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+
+        $store->clear(['unsupported' => true]);
+    }
+
     public function testStoreCanSearchUsingTextQuery()
     {
         $store = new Store(new ArrayAdapter());

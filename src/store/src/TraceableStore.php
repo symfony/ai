@@ -89,6 +89,17 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         $this->store->remove($ids, $options);
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->calls[] = [
+            'method' => 'clear',
+            'options' => $options,
+            'called_at' => $this->clock->now(),
+        ];
+
+        $this->store->clear($options);
+    }
+
     public function supports(string $queryClass): bool
     {
         return $this->store->supports($queryClass);

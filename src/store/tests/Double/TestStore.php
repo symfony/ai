@@ -42,6 +42,11 @@ final class TestStore implements StoreInterface
         throw new UnsupportedFeatureException('Method not implemented yet.');
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->documents = [];
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

@@ -161,6 +161,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $statement->execute();
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->connection->exec(\sprintf('TRUNCATE TABLE %s', $this->tableName));
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

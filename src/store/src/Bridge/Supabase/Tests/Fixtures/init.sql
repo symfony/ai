@@ -7,7 +7,7 @@ GRANT anon TO authenticator;
 GRANT USAGE ON SCHEMA public TO anon;
 
 CREATE TABLE documents (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY,
     embedding vector(3),
     metadata JSONB DEFAULT '{}'::JSONB
 );
@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION match_documents(
     match_threshold FLOAT DEFAULT 0.0
 )
 RETURNS TABLE (
-    id TEXT,
+    id UUID,
     embedding vector(3),
     metadata JSONB,
     score FLOAT

@@ -173,6 +173,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->getCollection()->deleteMany([]);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

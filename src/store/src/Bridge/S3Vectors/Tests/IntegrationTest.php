@@ -53,4 +53,15 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'dimension' => 3,
         ];
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function getClearOptions(): array
+    {
+        // clear() lists the vectors page by page, and DeleteVectors only accepts 500 keys per call, so a
+        // page is deleted in several calls once it grows beyond that. A page of 1.000 keys covers that
+        // chunking in the high volume run, while the smaller page makes the regular run walk several pages.
+        return ['batch_size' => self::isHighVolumeRun() ? 1_000 : 100];
+    }
 }

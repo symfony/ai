@@ -1,0 +1,77 @@
+name: Tests (High Volume)
+
+# The store integration tests write a few hundred documents per bridge, which is enough to cross the
+# result limits engines apply by default, but not the hard server-side limits their clear() has to work
+# around - Weaviate truncating a batch delete at 10.000 objects, for example. Writing that many documents
+# is too slow for every pull request, so it runs on a schedule instead.
+
+on:
+    schedule:
+        -   cron: '0 4 * * *'
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    REQUIRED_PHP_EXTENSIONS: 'mongodb, redis'
+    STORE_HIGH_VOLUME_TESTS: '1'
+
+jobs:
+    matrix:
+        name: Matrix
+        uses: ./.github/workflows/build-matrix.yaml
+
+    store-bridges-integration:
+        name: High Volume / Store / ${{ matrix.bridge }}
+        needs: matrix
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        strategy:
+            fail-fast: false
+            matrix:
+                bridge: ${{ fromJson(needs.matrix.outputs.store-bridges-integration) }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  tools: flex
+                  extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v4
+
+            - name: Build packages
+              run: php .github/build-packages.php
+
+            - name: Isolate Bridge
+              uses: ./.github/actions/isolate-bridge
+              with:
+                  component: store
+                  bridge: ${{ matrix.bridge }}
+                  target: tmp
+
+            - name: Install dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
+
+            - name: Start Docker services
+              working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
+              run: docker compose up -d --wait || true
+
+            - name: Wait for services to be ready
+              run: sleep 15
+
+            - name: Run integration tests
+              run: cd tmp/store/src/Bridge/${{ matrix.bridge }} && vendor/bin/phpunit --group integration
+
+            - name: Stop Docker services
+              working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
+              run: docker compose down || true

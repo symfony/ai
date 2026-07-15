@@ -116,6 +116,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function clear(array $options = []): void
+    {
+        $this->pinecone
+            ->data()
+            ->vectors()
+            ->delete(
+                [],
+                $this->namespace,
+                true,
+            );
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;

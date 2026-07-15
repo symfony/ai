@@ -464,6 +464,36 @@ final class StoreTest extends TestCase
         $this->assertSame("DELETE type::thing('vectors', 'a\\'); DELETE vectors; --');", $body);
     }
 
+    public function testStoreCanClear()
+    {
+        $requests = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests): JsonMockResponse {
+            $requests[] = ['url' => $url, 'body' => $options['body'] ?? null];
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse([
+                    'code' => 200,
+                    'details' => 'Authentication succeeded.',
+                    'token' => 'bar',
+                ], [
+                    'http_code' => 200,
+                ]);
+            }
+
+            return new JsonMockResponse([], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
+
+        $store->clear();
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame('http://127.0.0.1:8000/sql', $requests[1]['url']);
+        $this->assertSame('DELETE vectors;', $requests[1]['body']);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test', 'test', 'test_namespace', 'test_database', 'test_table');

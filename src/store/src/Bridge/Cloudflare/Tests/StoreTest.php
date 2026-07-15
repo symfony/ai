@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Cloudflare\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -111,6 +112,150 @@ final class StoreTest extends TestCase
         $store->drop();
 
         $this->assertSame(1, $mockHttpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotClearWithExtraOptions()
+    {
+        $store = new Store(new MockHttpClient(), 'random');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+        $this->expectExceptionCode(0);
+        $store->clear([
+            'foo' => 'bar',
+        ]);
+    }
+
+    public function testStoreCannotClearWithInvalidBatchSize()
+    {
+        $store = new Store(new MockHttpClient(), 'random');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "batch_size" option must be a positive integer.');
+        $store->clear(['batch_size' => 0]);
+    }
+
+    public function testStoreCanClearWithCustomBatchSize()
+    {
+        $mockHttpClient = new MockHttpClient([
+            function (string $method, string $url): JsonMockResponse {
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/list?count=250', $url);
+
+                return new JsonMockResponse([
+                    'result' => ['vectors' => [], 'isTruncated' => false],
+                    'success' => true,
+                ]);
+            },
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $store->clear(['batch_size' => 250]);
+
+        $this->assertSame(1, $mockHttpClient->getRequestsCount());
+    }
+
+    public function testStoreCanClear()
+    {
+        $mockHttpClient = new MockHttpClient([
+            function (string $method, string $url): JsonMockResponse {
+                $this->assertSame('GET', $method);
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/list?count=1000', $url);
+
+                return new JsonMockResponse([
+                    'result' => [
+                        'vectors' => [['id' => 'foo'], ['id' => 'bar']],
+                        'isTruncated' => false,
+                    ],
+                    'success' => true,
+                ]);
+            },
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/delete_by_ids', $url);
+
+                $this->assertIsString($options['body']);
+                $this->assertSame(['ids' => ['foo', 'bar']], json_decode($options['body'], true));
+
+                return new JsonMockResponse(['result' => [], 'success' => true]);
+            },
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $store->clear();
+
+        $this->assertSame(2, $mockHttpClient->getRequestsCount());
+    }
+
+    public function testStoreClearsFollowingThePaginationCursor()
+    {
+        // the listing is a snapshot, so already deleted vectors keep showing up until the cursor is exhausted
+        $mockHttpClient = new MockHttpClient([
+            function (string $method, string $url): JsonMockResponse {
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/list?count=1000', $url);
+
+                return new JsonMockResponse([
+                    'result' => [
+                        'vectors' => [['id' => 'foo']],
+                        'isTruncated' => true,
+                        'nextCursor' => 'next-page',
+                    ],
+                    'success' => true,
+                ]);
+            },
+            new JsonMockResponse(['result' => [], 'success' => true]),
+            function (string $method, string $url): JsonMockResponse {
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/list?count=1000&cursor=next-page', $url);
+
+                return new JsonMockResponse([
+                    'result' => [
+                        'vectors' => [['id' => 'bar']],
+                        'isTruncated' => false,
+                    ],
+                    'success' => true,
+                ]);
+            },
+            new JsonMockResponse(['result' => [], 'success' => true]),
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $store->clear();
+
+        $this->assertSame(4, $mockHttpClient->getRequestsCount());
+    }
+
+    public function testStoreCanClearEmptyIndex()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [
+                    'vectors' => [],
+                    'isTruncated' => false,
+                ],
+                'success' => true,
+            ]),
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $store->clear();
+
+        $this->assertSame(1, $mockHttpClient->getRequestsCount());
+    }
+
+    public function testStoreCannotClearOnMalformedListResponse()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse(['success' => true]),
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The Cloudflare list response is malformed.');
+        $store->clear();
     }
 
     public function testStoreCannotAddOnInvalidResponse()

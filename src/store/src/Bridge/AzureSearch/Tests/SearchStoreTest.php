@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -270,6 +271,161 @@ final class SearchStoreTest extends TestCase
         $store = new SearchStore($httpClient, 'test-index');
 
         $store->remove('doc1');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClearSearchesAndDeletesAllDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/search', $url);
+
+                $this->assertArrayHasKey('body', $options);
+                $this->assertIsString($options['body']);
+                $body = json_decode($options['body'], true);
+                $this->assertIsArray($body);
+                $this->assertSame('*', $body['search']);
+                $this->assertSame('id', $body['select']);
+                $this->assertSame(1000, $body['top']);
+
+                return new JsonMockResponse([
+                    'value' => [
+                        ['id' => 'doc1'],
+                        ['id' => 'doc2'],
+                    ],
+                ], ['http_code' => 200]);
+            },
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/index', $url);
+
+                $this->assertArrayHasKey('body', $options);
+                $this->assertIsString($options['body']);
+                $body = json_decode($options['body'], true);
+                $this->assertIsArray($body);
+                $this->assertCount(2, $body['value']);
+                $this->assertSame('doc1', $body['value'][0]['id']);
+                $this->assertSame('delete', $body['value'][0]['@search.action']);
+                $this->assertSame('doc2', $body['value'][1]['id']);
+                $this->assertSame('delete', $body['value'][1]['@search.action']);
+
+                return new JsonMockResponse(['value' => []], ['http_code' => 200]);
+            },
+            new JsonMockResponse(['value' => []], ['http_code' => 200]),
+        ], 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $store->clear();
+
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testClearRetriesWhileTheIndexHasNotCaughtUp()
+    {
+        // an already deleted document can still show up in the search result, which must not be mistaken
+        // for an empty index - the store deletes it again until the index reports no documents left
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['value' => [['id' => 'doc1']]], ['http_code' => 200]),
+            new JsonMockResponse(['value' => []], ['http_code' => 200]),
+            new JsonMockResponse(['value' => [['id' => 'doc1']]], ['http_code' => 200]),
+            new JsonMockResponse(['value' => []], ['http_code' => 200]),
+            new JsonMockResponse(['value' => []], ['http_code' => 200]),
+        ], 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $store->clear();
+
+        $this->assertSame(5, $httpClient->getRequestsCount());
+    }
+
+    public function testClearFailsWhenTheIndexKeepsReturningTheSameDocuments()
+    {
+        $responses = [];
+        for ($i = 0; $i < 24; ++$i) {
+            $responses[] = new JsonMockResponse(['value' => [['id' => 'doc1']]], ['http_code' => 200]);
+            $responses[] = new JsonMockResponse(['value' => []], ['http_code' => 200]);
+        }
+
+        $httpClient = new MockHttpClient($responses, 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "test-index" index still returns the same 1 document(s) after deleting them repeatedly.');
+
+        $store->clear();
+    }
+
+    public function testClearFailsOnPartiallyFailedDeletes()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['value' => [['id' => 'doc1']]], ['http_code' => 200]),
+            new JsonMockResponse(['value' => [
+                ['key' => 'doc1', 'status' => false, 'errorMessage' => 'Document not found'],
+            ]], ['http_code' => 207]),
+        ], 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Azure Search request failed for 1 document(s): "doc1: Document not found".');
+
+        $store->clear();
+    }
+
+    public function testClearWithCustomBatchSize()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertIsString($options['body']);
+                $body = json_decode($options['body'], true);
+                $this->assertIsArray($body);
+                $this->assertSame(250, $body['top']);
+
+                return new JsonMockResponse(['value' => []], ['http_code' => 200]);
+            },
+        ], 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $store->clear(['batch_size' => 250]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClearWithInvalidBatchSize()
+    {
+        $store = new SearchStore(new MockHttpClient(), 'test-index');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "batch_size" option must be a positive integer.');
+
+        $store->clear(['batch_size' => 0]);
+    }
+
+    public function testClearWithUnsupportedOption()
+    {
+        $store = new SearchStore(new MockHttpClient(), 'test-index');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+
+        $store->clear(['foo' => 'bar']);
+    }
+
+    public function testClearWithEmptyIndex()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['value' => []], ['http_code' => 200]),
+        ], 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $store->clear();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

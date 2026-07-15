@@ -180,6 +180,35 @@ final class StoreTest extends TestCase
         $this->assertSame(1, (int) $result->fetchColumn());
     }
 
+    public function testClear()
+    {
+        $pdo = $this->createPdo();
+        $store = new Store($pdo, 'test_vectors');
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'test']);
+        $metadata->setText('Some text');
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata),
+            new VectorDocument('doc-2', new Vector([0.4, 0.5, 0.6]), new Metadata(['name' => 'second'])),
+        ]);
+
+        $store->clear();
+
+        $result = $pdo->query('SELECT COUNT(*) FROM test_vectors');
+        $this->assertSame(0, (int) $result->fetchColumn());
+
+        $result = $pdo->query('SELECT COUNT(*) FROM test_vectors_fts');
+        $this->assertSame(0, (int) $result->fetchColumn());
+
+        $result = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='test_vectors'");
+        $this->assertSame('test_vectors', $result->fetchColumn());
+
+        $result = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='test_vectors_fts'");
+        $this->assertSame('test_vectors_fts', $result->fetchColumn());
+    }
+
     public function testQueryVector()
     {
         $store = $this->createStore();

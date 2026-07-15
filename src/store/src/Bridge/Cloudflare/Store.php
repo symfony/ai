@@ -29,6 +29,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const BATCH_SIZE = 1000;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $index,
@@ -86,6 +88,58 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    /**
+     * @param array{batch_size?: int} $options
+     */
+    public function clear(array $options = []): void
+    {
+        // Vectorize has no delete-all operation, so the vectors are listed and removed by id, page by page.
+        // Its deletes are asynchronous and take a few seconds to apply, so listing the first page again after
+        // every delete - as a store with synchronous deletes would - keeps returning the very same ids and
+        // never terminates. The cursor is walked once instead, and ends the loop when the listing is done.
+        //
+        // Note that clear() therefore returns before the index has caught up with the deletes it requested.
+        $batchSize = $this->getBatchSize($options);
+        $cursor = null;
+
+        do {
+            $query = ['count' => $batchSize];
+
+            if (null !== $cursor) {
+                $query['cursor'] = $cursor;
+            }
+
+            $response = $this->request('GET', \sprintf('vectorize/v2/indexes/%s/list', $this->index), [], $query);
+
+            $result = $response['result'] ?? null;
+            if (!\is_array($result)) {
+                throw new RuntimeException('The Cloudflare list response is malformed.');
+            }
+
+            $vectors = $result['vectors'] ?? null;
+            if (!\is_array($vectors)) {
+                throw new RuntimeException('The Cloudflare list response does not contain a vector set.');
+            }
+
+            $ids = [];
+            foreach ($vectors as $vector) {
+                if (!\is_array($vector) || !\is_string($vector['id'] ?? null)) {
+                    throw new RuntimeException('The Cloudflare list response contains an invalid vector.');
+                }
+
+                $ids[] = $vector['id'];
+            }
+
+            if ([] !== $ids) {
+                $this->remove($ids);
+            }
+
+            $cursor = true === ($result['isTruncated'] ?? false) && \is_string($result['nextCursor'] ?? null)
+                ? $result['nextCursor']
+                : null;
+        } while (null !== $cursor);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -124,11 +178,30 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
+     * @param array{batch_size?: int} $options
+     */
+    private function getBatchSize(array $options): int
+    {
+        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
+            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        }
+
+        $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
+
+        if ($batchSize < 1) {
+            throw new InvalidArgumentException('The "batch_size" option must be a positive integer.');
+        }
+
+        return $batchSize;
+    }
+
+    /**
      * @param array<string, mixed> $payload
+     * @param array<string, mixed> $query
      *
      * @return array<mixed>
      */
-    private function request(string $method, string $endpoint, \Closure|array $payload = []): array
+    private function request(string $method, string $endpoint, \Closure|array $payload = [], array $query = []): array
     {
         $options = [];
 
@@ -140,8 +213,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['body'] = $payload();
         }
 
-        if (\is_array($payload)) {
+        if (\is_array($payload) && [] !== $payload) {
             $options['json'] = $payload;
+        }
+
+        if ([] !== $query) {
+            $options['query'] = $query;
         }
 
         $response = $this->httpClient->request($method, $endpoint, $options);

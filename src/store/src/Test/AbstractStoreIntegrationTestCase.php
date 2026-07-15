@@ -22,12 +22,15 @@ use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 abstract class AbstractStoreIntegrationTestCase extends TestCase
 {
+    private const WRITE_CHUNK_SIZE = 500;
+
     private const DOCUMENT_ID_1 = '367e550e-6c92-4f12-8a6b-3f3f1d5e8c9a';
     private const DOCUMENT_ID_2 = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
     private const DOCUMENT_ID_3 = '123e4567-e89b-12d3-a456-426614174000';
@@ -38,11 +41,11 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     {
         self::$store = static::createStore();
 
-        if (!self::$store instanceof ManagedStoreInterface) {
-            $this->markTestSkipped('Store does not implement ManagedStoreInterface.');
+        // this test must not be skipped, since the tests depending on it would be skipped as well, and
+        // a store provisioning its schema outside of setup() would never get tested at all
+        if (self::$store instanceof ManagedStoreInterface) {
+            self::$store->setup(static::getSetupOptions());
         }
-
-        self::$store->setup(static::getSetupOptions());
 
         $this->addToAssertionCount(1);
     }
@@ -105,8 +108,12 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     #[Depends('testAddDocuments')]
     public function testQueryDocumentsWithTextQuery()
     {
+        // this test must not be skipped, since the tests depending on it would be skipped as well,
+        // and the store would never get to the point of being removed from, cleared or dropped
         if (!self::$store->supports(TextQuery::class)) {
-            $this->markTestSkipped('Store does not support TextQuery.');
+            $this->addToAssertionCount(1);
+
+            return;
         }
 
         // Search for text that should match the third document
@@ -129,7 +136,9 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     public function testQueryDocumentsWithHybridQuery()
     {
         if (!self::$store->supports(HybridQuery::class)) {
-            $this->markTestSkipped('Store does not support HybridQuery.');
+            $this->addToAssertionCount(1);
+
+            return;
         }
 
         // Hybrid query combining vector [0,0,1] (matches doc 3) with text "machine learning" (matches doc 2)
@@ -164,7 +173,11 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
         try {
             self::$store->remove(self::DOCUMENT_ID_3);
         } catch (UnsupportedFeatureException) {
-            $this->markTestSkipped('Store does not support remove().');
+            // this test must not be skipped, since the tests depending on it would be skipped as well,
+            // and the store would never get to the point of being cleared or dropped
+            $this->addToAssertionCount(1);
+
+            return;
         }
 
         $this->waitForIndexing();
@@ -177,6 +190,80 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     }
 
     #[Depends('testRemoveDocuments')]
+    public function testClearStore()
+    {
+        self::$store->clear();
+
+        $this->waitForIndexing();
+
+        $results = self::$store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])));
+
+        $this->assertCount(0, iterator_to_array($results, false));
+    }
+
+    #[Depends('testClearStore')]
+    public function testStoreIsReusableAfterClear()
+    {
+        // in contrast to drop(), clear() keeps the underlying table/index/collection intact,
+        // so documents can be added and queried again without another setup() call
+        self::$store->add(new VectorDocument(
+            self::DOCUMENT_ID_1,
+            new Vector([1.0, 0.0, 0.0]),
+            new Metadata(['name' => 'document after clear'])
+        ));
+
+        $this->waitForIndexing();
+
+        $results = self::$store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])));
+
+        $found = null;
+        foreach ($results as $result) {
+            if (self::DOCUMENT_ID_1 === $result->getId()) {
+                $found = $result;
+                break;
+            }
+        }
+
+        $this->assertNotNull($found);
+        $this->assertSame('document after clear', $found->getMetadata()['name']);
+    }
+
+    #[Depends('testStoreIsReusableAfterClear')]
+    public function testClearRemovesDocumentsBeyondASingleBatch()
+    {
+        $documentCount = static::getVolumeDocumentCount();
+
+        // written in chunks, so the high volume tier below does not turn the whole set into one huge request
+        for ($written = 0; $written < $documentCount; $written += self::WRITE_CHUNK_SIZE) {
+            $documents = [];
+            for ($i = $written; $i < min($written + self::WRITE_CHUNK_SIZE, $documentCount); ++$i) {
+                $documents[] = new VectorDocument(
+                    Uuid::v4()->toRfc4122(),
+                    new Vector([1.0, $i / $documentCount, 0.0]),
+                    new Metadata(['name' => \sprintf('bulk document %d', $i)])
+                );
+            }
+
+            self::$store->add($documents);
+        }
+
+        $this->waitForIndexing();
+
+        // guard against a vacuous assertion: clearing an already-empty store would pass the check below
+        $results = self::$store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])));
+
+        $this->assertNotCount(0, iterator_to_array($results, false));
+
+        self::$store->clear(static::getClearOptions());
+
+        $this->waitForIndexing();
+
+        $results = self::$store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])));
+
+        $this->assertCount(0, iterator_to_array($results, false));
+    }
+
+    #[Depends('testClearRemovesDocumentsBeyondASingleBatch')]
     public function testDropStore()
     {
         if (!self::$store instanceof ManagedStoreInterface) {
@@ -194,6 +281,51 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
      * @return array<string, mixed>
      */
     protected static function getSetupOptions(): array
+    {
+        return [];
+    }
+
+    /**
+     * Number of documents written by testClearRemovesDocumentsBeyondASingleBatch().
+     *
+     * High enough to exceed the result limits engines apply by default, so a clear() that only wipes
+     * the first page of documents gets caught, but still cheap enough to run on every pull request.
+     */
+    protected static function getVolumeDocumentCount(): int
+    {
+        if (self::isHighVolumeRun()) {
+            return static::getHighVolumeDocumentCount();
+        }
+
+        return 250;
+    }
+
+    /**
+     * Number of documents written once STORE_HIGH_VOLUME_TESTS=1 is set.
+     *
+     * Engines also truncate bulk operations at hard server-side limits, which sit far above what a
+     * per-pull-request run can afford to write. Stores whose clear() has to work around such a limit
+     * should raise this until it exceeds theirs, and get covered by the scheduled high volume build.
+     */
+    protected static function getHighVolumeDocumentCount(): int
+    {
+        return 10_000;
+    }
+
+    protected static function isHighVolumeRun(): bool
+    {
+        return '1' === getenv('STORE_HIGH_VOLUME_TESTS');
+    }
+
+    /**
+     * Options passed to clear() by testClearRemovesDocumentsBeyondASingleBatch().
+     *
+     * Stores paginating their clear() should lower "batch_size" here, so the volume test above forces
+     * several iterations instead of wiping everything in one round-trip.
+     *
+     * @return array<string, mixed>
+     */
+    protected static function getClearOptions(): array
     {
         return [];
     }

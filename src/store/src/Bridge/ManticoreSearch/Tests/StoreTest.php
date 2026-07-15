@@ -201,6 +201,30 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCanClear()
+    {
+        $requestedMethod = null;
+        $requestedUrl = null;
+        $requestedBody = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedMethod, &$requestedUrl, &$requestedBody): MockResponse {
+            $requestedMethod = $method;
+            $requestedUrl = $url;
+            $requestedBody = $options['body'];
+
+            return new MockResponse('Query OK, 0 rows affected (0.006 sec)'.\PHP_EOL, [
+                'http_code' => 200,
+            ]);
+        });
+
+        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store->clear();
+
+        $this->assertSame('POST', $requestedMethod);
+        $this->assertSame('http://127.0.0.1:9308/cli', $requestedUrl);
+        $this->assertSame('TRUNCATE TABLE bar', $requestedBody);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStoreNormalizesTrailingSlashOnEndpoint()
     {
         $requestedUrl = null;

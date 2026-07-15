@@ -4,6 +4,8 @@ CHANGELOG
 0.11
 ----
 
+ * [BC BREAK] Add `StoreInterface::clear()` method to remove all documents from a store while keeping table, index or collection intact
+ * Add `ai:store:clear` command to remove all documents from a store
  * Add `DirectoryLoader` that scans a directory and delegates each file to a per-extension sub-loader, with optional recursion
  * `Vectorizer` now always sends a single batched `Platform::invoke()` call when vectorizing multiple strings or documents, instead of consulting the model catalog and falling back to one call per item
 
