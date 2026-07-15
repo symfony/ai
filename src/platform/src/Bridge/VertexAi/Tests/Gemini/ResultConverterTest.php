@@ -15,7 +15,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -256,6 +258,68 @@ final class ResultConverterTest extends TestCase
         $toolCalls = $result->getContent();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('sig_call', $toolCalls[0]->getSignature());
+    }
+
+    public function testConvertReturnsEmptyTextResultForCandidateWithoutContentParts()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        // Gemini occasionally returns a valid completion with a terminal finish reason but no
+        // content parts, e.g. an empty message after a tool result.
+        $response->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => ['role' => 'model'],
+                    'finishReason' => 'STOP',
+                ],
+            ],
+        ]);
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($response));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('', $result->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::STOP));
+    }
+
+    public function testConvertThrowsWhenResponseContainsNoCandidates()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('toArray')->willReturn([
+            'candidates' => [],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Response does not contain any content.');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    public function testConvertCoercesEmptyStringToolCallArgumentsToNull()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        // Gemini emits empty strings for optional object properties it has no value for; empty
+        // strings inside list arguments are legitimate values and must be preserved.
+        $response->method('toArray')->willReturn([
+            'candidates' => [
+                ['content' => ['parts' => [
+                    ['functionCall' => ['name' => 'search', 'args' => [
+                        'query' => 'Symfony',
+                        'departureDate' => '',
+                        'nested' => ['since' => ''],
+                        'tags' => ['a', '', 'b'],
+                    ]]],
+                ]]],
+            ],
+        ]);
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($response));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $arguments = $result->getContent()[0]->getArguments();
+        $this->assertSame('Symfony', $arguments['query']);
+        $this->assertNull($arguments['departureDate']);
+        $this->assertNull($arguments['nested']['since']);
+        $this->assertSame(['a', '', 'b'], $arguments['tags']);
     }
 
     public function testConvertsInlineDataToBinaryResult()
