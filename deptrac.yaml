@@ -189,6 +189,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Generic\\.*
+    - name: HiggsfieldPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Higgsfield\\.*
     - name: HuggingFacePlatform
       collectors:
         - type: classLike
@@ -486,6 +490,8 @@ deptrac:
     GeminiPlatform:
       - PlatformComponent
     GenericPlatform:
+      - PlatformComponent
+    HiggsfieldPlatform:
       - PlatformComponent
     HuggingFacePlatform:
       - PlatformComponent

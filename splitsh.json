@@ -60,6 +60,7 @@
         "ai-failover-platform": "src/platform/src/Bridge/Failover",
         "ai-gemini-platform": "src/platform/src/Bridge/Gemini",
         "ai-generic-platform": "src/platform/src/Bridge/Generic",
+        "ai-higgsfield-platform": "src/platform/src/Bridge/Higgsfield",
         "ai-hugging-face-platform": "src/platform/src/Bridge/HuggingFace",
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
