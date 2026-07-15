@@ -28,6 +28,9 @@ use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -350,6 +353,152 @@ final class ResultConverterTest extends TestCase
         $this->assertNull($arguments['departureDate']);
         $this->assertNull($arguments['nested']['since']);
         $this->assertSame(['a', '', 'b'], $arguments['tags']);
+    }
+
+    public function testStreamConvertsSingleThoughtPartToThinkingDelta()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        // A thinking-enabled model streams thought parts, which convertChoice() turns into a
+        // ThinkingResult; the stream frames it with ThinkingStart and ThinkingComplete boundaries.
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [
+                    ['content' => ['parts' => [
+                        ['text' => 'Let me think.', 'thought' => true, 'thoughtSignature' => 'sig_1'],
+                    ]]],
+                ],
+            ];
+        })());
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+        $items = iterator_to_array($result->getContent());
+
+        $this->assertCount(3, $items);
+        $this->assertInstanceOf(ThinkingStart::class, $items[0]);
+        $this->assertInstanceOf(ThinkingDelta::class, $items[1]);
+        $this->assertSame('Let me think.', $items[1]->getThinking());
+        $this->assertInstanceOf(ThinkingComplete::class, $items[2]);
+        $this->assertSame('Let me think.', $items[2]->getThinking());
+        $this->assertSame('sig_1', $items[2]->getSignature());
+    }
+
+    public function testStreamExpandsMultiPartCandidateIntoDeltas()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        // A candidate with several parts (thought + text) is a MultiPartResult; the thought is framed
+        // with ThinkingStart / ThinkingComplete and the text follows as a TextDelta.
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [
+                    ['content' => ['parts' => [
+                        ['text' => 'Reasoning.', 'thought' => true],
+                        ['text' => 'Final answer.'],
+                    ]]],
+                ],
+            ];
+        })());
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+        $items = iterator_to_array($result->getContent());
+
+        $this->assertCount(4, $items);
+        $this->assertInstanceOf(ThinkingStart::class, $items[0]);
+        $this->assertInstanceOf(ThinkingDelta::class, $items[1]);
+        $this->assertSame('Reasoning.', $items[1]->getThinking());
+        $this->assertInstanceOf(ThinkingComplete::class, $items[2]);
+        $this->assertSame('Reasoning.', $items[2]->getThinking());
+        $this->assertInstanceOf(TextDelta::class, $items[3]);
+        $this->assertSame('Final answer.', $items[3]->getText());
+    }
+
+    public function testStreamFramesThoughtPartsSplitAcrossChunksWithSingleBoundaryPair()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        // Gemini splits a thinking block across several chunks before the answer; the boundary logic
+        // must emit a single ThinkingStart, one ThinkingDelta per chunk, and one ThinkingComplete
+        // whose accumulated text is the concatenation, then the answer as a TextDelta.
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [
+                    ['content' => ['parts' => [
+                        ['text' => 'First thought. ', 'thought' => true],
+                    ]]],
+                ],
+            ];
+            yield [
+                'candidates' => [
+                    ['content' => ['parts' => [
+                        ['text' => 'Second thought.', 'thought' => true, 'thoughtSignature' => 'sig_final'],
+                    ]]],
+                ],
+            ];
+            yield [
+                'candidates' => [
+                    ['content' => ['parts' => [
+                        ['text' => 'The answer.'],
+                    ]]],
+                ],
+            ];
+        })());
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+        $items = iterator_to_array($result->getContent());
+
+        $this->assertCount(5, $items);
+        $this->assertInstanceOf(ThinkingStart::class, $items[0]);
+        $this->assertInstanceOf(ThinkingDelta::class, $items[1]);
+        $this->assertSame('First thought. ', $items[1]->getThinking());
+        $this->assertInstanceOf(ThinkingDelta::class, $items[2]);
+        $this->assertSame('Second thought.', $items[2]->getThinking());
+        $this->assertInstanceOf(ThinkingComplete::class, $items[3]);
+        $this->assertSame('First thought. Second thought.', $items[3]->getThinking());
+        $this->assertSame('sig_final', $items[3]->getSignature());
+        $this->assertInstanceOf(TextDelta::class, $items[4]);
+        $this->assertSame('The answer.', $items[4]->getText());
+    }
+
+    public function testStreamExpandsToolCallWithTextIntoDeltas()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [
+                    ['content' => ['parts' => [
+                        ['text' => 'Calling tool.'],
+                        ['functionCall' => ['name' => 'search', 'args' => ['q' => 'x']]],
+                    ]]],
+                ],
+            ];
+        })());
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+        $items = iterator_to_array($result->getContent());
+
+        $this->assertCount(2, $items);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Calling tool.', $items[0]->getText());
+        $this->assertInstanceOf(ToolCallComplete::class, $items[1]);
+        $this->assertSame('search', $items[1]->getToolCalls()[0]->getName());
     }
 
     public function testStreamSkipsCandidatesWithoutContentParts()

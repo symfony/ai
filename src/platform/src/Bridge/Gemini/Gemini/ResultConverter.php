@@ -30,6 +30,9 @@ use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -124,6 +127,10 @@ final class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface $result): \Generator
     {
         $finishReason = null;
+        // Thinking boundary state, carried across chunks: Gemini streams thought parts (often split
+        // over several chunks) before the answer, so a thinking block may span multiple iterations.
+        $thinking = null;
+        $thinkingSignature = null;
 
         foreach ($result->getDataStream() as $data) {
             // Gemini repeats the reason on every candidate of the terminal chunk; the leading one wins,
@@ -138,12 +145,57 @@ final class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
+            // The multi-candidate path is exotic for Gemini; preserve its bare-delta behavior.
             if (1 !== \count($choices)) {
-                yield new ChoiceDelta(array_map($this->resultToDelta(...), $choices));
+                $deltas = [];
+                foreach ($choices as $choice) {
+                    $deltas = array_merge($deltas, iterator_to_array($this->resultToDeltas($choice), false));
+                }
+
+                if ([] !== $deltas) {
+                    yield new ChoiceDelta($deltas);
+                }
+
                 continue;
             }
 
-            yield $this->resultToDelta($choices[0]);
+            // A single candidate may carry multiple parts (e.g. a thought part plus text, or a tool
+            // call plus text) that convertChoice() returns as a MultiPartResult; flatten to leaves so
+            // thought and non-thought parts are framed identically whether combined in one chunk or
+            // split across chunks.
+            foreach ($this->flattenResult($choices[0]) as $leaf) {
+                if ($leaf instanceof ThinkingResult) {
+                    if (null === $thinking) {
+                        yield new ThinkingStart();
+                        $thinking = '';
+                    }
+
+                    $content = $leaf->getContent() ?? '';
+                    $thinking .= $content;
+
+                    if (null !== $leaf->getSignature()) {
+                        $thinkingSignature = $leaf->getSignature();
+                    }
+
+                    yield new ThinkingDelta($content);
+
+                    continue;
+                }
+
+                // The first non-thinking part closes an open thinking block.
+                if (null !== $thinking) {
+                    yield new ThinkingComplete($thinking, $thinkingSignature);
+                    $thinking = null;
+                    $thinkingSignature = null;
+                }
+
+                yield from $this->resultToDeltas($leaf);
+            }
+        }
+
+        // A thinking block still open at the end of the stream is completed before the terminal metadata.
+        if (null !== $thinking) {
+            yield new ThinkingComplete($thinking, $thinkingSignature);
         }
 
         // Emitted last: the terminal chunk carries both the finish reason and its content parts.
@@ -152,13 +204,61 @@ final class ResultConverter implements ResultConverterInterface
         }
     }
 
-    private function resultToDelta(ToolCallResult|TextResult|BinaryResult $result): DeltaInterface
+    /**
+     * Flattens a single choice into its leaf results so the streaming thinking-boundary logic can walk
+     * thought and non-thought parts uniformly, whether they arrive combined in one MultiPartResult
+     * chunk or split across chunks.
+     *
+     * @return list<ResultInterface>
+     */
+    private function flattenResult(ResultInterface $result): array
     {
-        return match (true) {
-            $result instanceof TextResult => new TextDelta($result->getContent()),
-            $result instanceof BinaryResult => new BinaryDelta($result->getContent(), $result->getMimeType()),
-            $result instanceof ToolCallResult => new ToolCallComplete($result->getContent()),
-        };
+        if (!$result instanceof MultiPartResult) {
+            return [$result];
+        }
+
+        $leaves = [];
+        foreach ($result->getContent() as $part) {
+            foreach ($this->flattenResult($part) as $leaf) {
+                $leaves[] = $leaf;
+            }
+        }
+
+        return $leaves;
+    }
+
+    /**
+     * ExecutableCodeResult and CodeExecutionResult have no streaming delta representation and are
+     * only exposed through the buffered result; they are skipped here instead of crashing.
+     *
+     * @return \Generator<DeltaInterface>
+     */
+    private function resultToDeltas(ResultInterface $result): \Generator
+    {
+        switch (true) {
+            case $result instanceof MultiPartResult:
+                foreach ($result->getContent() as $part) {
+                    yield from $this->resultToDeltas($part);
+                }
+
+                return;
+            case $result instanceof ThinkingResult:
+                yield new ThinkingDelta($result->getContent() ?? '');
+
+                return;
+            case $result instanceof TextResult:
+                yield new TextDelta($result->getContent());
+
+                return;
+            case $result instanceof BinaryResult:
+                yield new BinaryDelta($result->getContent(), $result->getMimeType());
+
+                return;
+            case $result instanceof ToolCallResult:
+                yield new ToolCallComplete($result->getContent());
+
+                return;
+        }
     }
 
     /**
@@ -169,7 +269,7 @@ final class ResultConverter implements ResultConverterInterface
      *     }
      * } $choice
      */
-    private function convertChoice(array $choice): ToolCallResult|TextResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|MultiPartResult|null
+    private function convertChoice(array $choice): ToolCallResult|TextResult|ThinkingResult|BinaryResult|ExecutableCodeResult|CodeExecutionResult|MultiPartResult|null
     {
         if (!isset($choice['content']['parts'])) {
             return null;
