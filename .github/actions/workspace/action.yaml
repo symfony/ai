@@ -1,0 +1,58 @@
+name: Workspace
+description: Installs every package of the monorepo into a single vendor tree and exposes it to each package
+
+inputs:
+    php-version:
+        description: The PHP version to set up
+        required: true
+    extensions:
+        description: The PHP extensions to install
+        required: true
+    symfony-version:
+        description: The Symfony version to pin via SYMFONY_REQUIRE (optional)
+        required: false
+        default: ''
+
+runs:
+    using: composite
+    steps:
+        - name: Setup PHP
+          uses: shivammathur/setup-php@v2
+          with:
+              php-version: ${{ inputs.php-version }}
+              tools: flex
+              extensions: ${{ inputs.extensions }}
+
+        - name: Install root dependencies
+          uses: ramsey/composer-install@v4
+
+        - name: Build packages
+          shell: bash
+          run: php .github/build-packages.php
+
+        - name: Build workspace
+          shell: bash
+          run: php .github/build-workspace.php
+
+        - name: Install workspace dependencies
+          shell: bash
+          env:
+              SYMFONY_REQUIRE: ${{ inputs.symfony-version || '>=7.4' }}
+          run: |
+              rm -rf vendor
+              composer update --no-interaction --no-progress --no-scripts --ansi
+
+        - name: Expose workspace vendor to each package
+          shell: bash
+          run: |
+              # phpunit.xml.dist bootstraps "vendor/autoload.php" and phpstan.dist.neon includes
+              # "vendor/phpstan/...", both relative to the package. Symlinking the whole root vendor
+              # would create a cycle, since vendor/symfony/ai-* symlinks back into src/. So expose
+              # only the two paths the configs actually resolve.
+              root="$PWD"
+              find src \( -name phpunit.xml.dist -o -name phpstan.dist.neon \) -not -path '*/vendor/*' \
+                  | xargs -r -n1 dirname | sort -u | while read -r dir; do
+                  mkdir -p "$dir/vendor"
+                  printf '<?php return require %s;\n' "'$root/vendor/autoload.php'" > "$dir/vendor/autoload.php"
+                  ln -sfn "$root/vendor/phpstan" "$dir/vendor/phpstan"
+              done
