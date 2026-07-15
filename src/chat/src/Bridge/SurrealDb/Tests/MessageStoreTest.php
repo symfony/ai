@@ -188,8 +188,13 @@ final class MessageStoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
+                    // SurrealDB rewrites the reserved "id" field into a table-prefixed record id on
+                    // read-back; the message UUID is preserved under the dedicated "messageId" field.
                     'result' => [
-                        $serializer->normalize(Message::ofUser('Hello World')),
+                        [
+                            'id' => 'test:⟨0197f6a2-1c8f-7b3e-9d4a-1234567890ab⟩',
+                            ...$serializer->normalize(Message::ofUser('Hello World'), context: ['identifier' => 'messageId']),
+                        ],
                     ],
                     'status' => 'OK',
                     'time' => '263.208µs',
@@ -208,5 +213,37 @@ final class MessageStoreTest extends TestCase
 
         $message = $messages->getUserMessage();
         $this->assertSame('Hello World', $message->asText());
+    }
+
+    public function testStoreSavesMessageUuidOutsideReservedIdField()
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$capturedBody): JsonMockResponse {
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse([
+                    'code' => 200,
+                    'details' => 'Authentication succeeded.',
+                    'token' => 'bar',
+                ], ['http_code' => 200]);
+            }
+
+            $capturedBody = json_decode($options['body'], true);
+
+            return new JsonMockResponse([[
+                'result' => [],
+                'status' => 'OK',
+                'time' => '263.208µs',
+            ]], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new MessageStore($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test', 'test', table: 'test');
+
+        $store->save(new MessageBag(Message::ofUser('Hello world')));
+
+        // The UUID must not land in SurrealDB's reserved "id" field, otherwise it is corrupted on load.
+        $this->assertIsArray($capturedBody);
+        $this->assertArrayNotHasKey('id', $capturedBody);
+        $this->assertArrayHasKey('messageId', $capturedBody);
     }
 }

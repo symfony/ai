@@ -66,7 +66,12 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
     public function save(MessageBag $messages): void
     {
         foreach ($messages->getMessages() as $message) {
-            $this->request('POST', \sprintf('key/%s', $this->table), $this->serializer->normalize($message));
+            // SurrealDB treats the "id" field as the reserved record identifier and rewrites it into
+            // a table-prefixed record id ("table:⟨uuid⟩") on read-back, which is no longer a valid
+            // UUID. Store the message UUID under a dedicated field so it round-trips untouched.
+            $this->request('POST', \sprintf('key/%s', $this->table), $this->serializer->normalize($message, context: [
+                'identifier' => 'messageId',
+            ]));
         }
     }
 
@@ -75,7 +80,9 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         $messages = $this->request('GET', \sprintf('key/%s', $this->table), []);
 
         return new MessageBag(...array_map(
-            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class),
+            fn (array $message): MessageInterface => $this->serializer->denormalize($message, MessageInterface::class, context: [
+                'identifier' => 'messageId',
+            ]),
             $messages[0]['result'],
         ));
     }
