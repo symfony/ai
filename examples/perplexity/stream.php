@@ -30,5 +30,5 @@ foreach ($result->asTextStream() as $delta) {
 }
 echo \PHP_EOL;
 
-print_search_results($result->getResult()->getMetadata()->get('search_results'));
-print_citations($result->getResult()->getMetadata()->get('citations'));
+print_search_results($result->getResult()->getMetadata()->get('search_results', []));
+print_citations($result->getResult()->getMetadata()->get('citations', []));
