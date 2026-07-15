@@ -42,6 +42,7 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 
 - [Getting Started](https://symfony.com/doc/current/ai/index.html): Official documentation index
 - [Platform Component](https://symfony.com/doc/current/ai/components/platform.html): Unified interface to AI platforms (OpenAI, Anthropic, Azure, Gemini, VertexAI, Ollama, Mistral, Bedrock, and more)
+- [OpenAI Server Tools](https://symfony.com/doc/current/ai/components/platform/openai-server-tools.html): OpenAI built-in server-side tools (web search, file search, and more) hosted via the Responses API used by the OpenAI, Azure OpenAI, and Scaleway bridges
 - [Anthropic Server Tools](https://symfony.com/doc/current/ai/components/platform/anthropic-server-tools.html): Anthropic built-in server-side tools for code execution and file editing in a sandboxed environment
 - [Vertex AI](https://symfony.com/doc/current/ai/components/platform/vertexai.html): Google Vertex AI platform setup and usage
 - [Vertex AI Server Tools](https://symfony.com/doc/current/ai/components/platform/vertexai-server-tools.html): Server-side tool calling with Vertex AI
@@ -49,6 +50,7 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 - [Models.dev Platform](https://symfony.com/doc/current/ai/components/platform/models-dev.html): Using Models.dev as an AI platform
 - [Model Catalogs](https://symfony.com/doc/current/ai/components/platform/model-catalogs.html): How platforms resolve model names into Model objects with capabilities, and how to extend catalogs for new or local models
 - [Voyage AI](https://symfony.com/doc/current/ai/components/platform/voyage.html): Voyage AI embedding platform
+- [Deepgram](https://symfony.com/doc/current/ai/components/platform/deepgram.html): Deepgram speech-to-text (STT) and text-to-speech (TTS) bridge over the Deepgram REST endpoints
 - [Agent Component](https://symfony.com/doc/current/ai/components/agent.html): Framework for building AI agents with tool calling, memory, and multi-step reasoning
 - [Store Component](https://symfony.com/doc/current/ai/components/store.html): Vector database abstraction for RAG with 20+ store backends
 - [Local Stores](https://symfony.com/doc/current/ai/components/store/local.html): InMemory and PSR-6 Cache store backends
@@ -69,6 +71,7 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 - [AI Bundle Fast Track](https://symfony.com/doc/current/ai/cookbook/ai-bundle-fast-track.html): Wire platforms, agents, tools, and a vector store in a Symfony app with YAML
 - [Tool Calling with Agents](https://symfony.com/doc/current/ai/cookbook/tool-calling-with-agents.html): Let AI agents call your PHP functions to fetch data or trigger actions
 - [Dynamic Tools](https://symfony.com/doc/current/ai/cookbook/dynamic-tools.html): Build a dynamic Toolbox for flexible tool management at runtime
+- [Runtime-driven Tool Parameters](https://symfony.com/doc/current/ai/cookbook/runtime-driven-tool-parameters.html): Constrain tool parameters and structured output with values from env, a database, or services
 - [Human in the Loop](https://symfony.com/doc/current/ai/cookbook/human-in-the-loop.html): Implement human-in-the-loop confirmation for tool execution
 - [Multi-Agent Orchestration](https://symfony.com/doc/current/ai/cookbook/multi-agent-orchestration.html): Route questions to specialist agents with a central orchestrator
 - [Chatbot with Memory](https://symfony.com/doc/current/ai/cookbook/chatbot-with-memory.html): Build a chatbot with persistent conversation memory
@@ -107,7 +110,7 @@ Symfony integration for the official MCP SDK. Install with `composer require sym
 
 ## Supported AI Platforms
 
-OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, TransformersPHP, and more.
+OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, TransformersPHP, and more.
 
 ## Supported Vector Stores
 
