@@ -24,7 +24,7 @@ $messages = new MessageBag(
     Message::ofUser('What is the Symfony framework?'),
 );
 $result = $agent->call($messages, [
-    'max_output_tokens' => 500, // specific options just for this call
+    'max_output_tokens' => 2000, // specific options just for this call; reasoning models spend part of this budget on reasoning tokens
 ]);
 
 print_token_usage($result->getMetadata()->get('token_usage'));
