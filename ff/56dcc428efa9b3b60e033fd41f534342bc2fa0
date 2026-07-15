@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-10T23:55:16Z
+
+btw, PHPStan issue in the demo should be gone after rebase on latest `main`
+
+---------------------------------------------------------------------------
+
+by khaperets at 2026-07-11T18:31:31Z
+
+@chr-hertel Thanks for your feedback, PR updated
