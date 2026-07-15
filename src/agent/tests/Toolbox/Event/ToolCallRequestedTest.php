@@ -36,11 +36,11 @@ final class ToolCallRequestedTest extends TestCase
         $this->assertSame($this->toolCall, $event->getToolCall());
     }
 
-    public function testGetMetadata()
+    public function testGetDefinition()
     {
         $event = new ToolCallRequested($this->toolCall, $this->metadata);
 
-        $this->assertSame($this->metadata, $event->getMetadata());
+        $this->assertSame($this->metadata, $event->getDefinition());
     }
 
     public function testInitialStateIsNotDenied()

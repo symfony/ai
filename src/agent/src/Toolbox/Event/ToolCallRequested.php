@@ -27,7 +27,7 @@ final class ToolCallRequested implements StoppableEventInterface
 
     public function __construct(
         private readonly ToolCall $toolCall,
-        private readonly Tool $metadata,
+        private readonly Tool $definition,
     ) {
     }
 
@@ -36,9 +36,9 @@ final class ToolCallRequested implements StoppableEventInterface
         return $this->toolCall;
     }
 
-    public function getMetadata(): Tool
+    public function getDefinition(): Tool
     {
-        return $this->metadata;
+        return $this->definition;
     }
 
     /**

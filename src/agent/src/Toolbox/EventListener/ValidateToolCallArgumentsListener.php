@@ -37,7 +37,7 @@ final class ValidateToolCallArgumentsListener
         }
 
         if (\count($violations = $validator->getViolations())) {
-            throw new InvalidToolCallArgumentsException(\sprintf('Invalid arguments provided for "%s" tool.', $event->getMetadata()->getName()), 0, null, $violations);
+            throw new InvalidToolCallArgumentsException(\sprintf('Invalid arguments provided for "%s" tool.', $event->getDefinition()->getName()), 0, null, $violations);
         }
     }
 }

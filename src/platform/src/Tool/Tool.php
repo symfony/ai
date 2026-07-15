@@ -21,13 +21,15 @@ use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 final class Tool
 {
     /**
-     * @param JsonSchema|null $parameters
+     * @param JsonSchema|null      $parameters
+     * @param array<string, mixed> $metadata   Arbitrary custom data attached to the tool
      */
     public function __construct(
         private readonly ExecutionReference $reference,
         private readonly string $name,
         private readonly string $description,
         private readonly ?array $parameters = null,
+        private readonly array $metadata = [],
     ) {
     }
 
@@ -52,5 +54,18 @@ final class Tool
     public function getParameters(): ?array
     {
         return $this->parameters;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function getMetadataValue(string $key, mixed $default = null): mixed
+    {
+        return $this->metadata[$key] ?? $default;
     }
 }

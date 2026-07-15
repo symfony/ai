@@ -17,10 +17,15 @@ namespace Symfony\AI\Agent\Toolbox\Attribute;
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
 final class AsTool
 {
+    /**
+     * @param array<string, mixed> $metadata Arbitrary custom data attached to the tool, carried to
+     *                                       {@see \Symfony\AI\Platform\Tool\Tool::getMetadata()}
+     */
     public function __construct(
         public readonly string $name,
         public readonly string $description,
         public readonly string $method = '__invoke',
+        public readonly array $metadata = [],
     ) {
     }
 }

@@ -1,6 +1,18 @@
 UPGRADE FROM 0.10 to 0.11
 =========================
 
+Agent
+-----
+
+ * Rename of `getMetadata()` of tool call events to `getDefinition()` affecting
+   `ToolCallRequested`, `ToolCallArgumentsResolved`, `ToolCallSucceeded` and `ToolCallFailed`.
+   Update custom listeners:
+
+   ```diff
+   -$event->getMetadata()->getName();
+   +$event->getDefinition()->getName();
+   ```
+
 Platform
 --------
 

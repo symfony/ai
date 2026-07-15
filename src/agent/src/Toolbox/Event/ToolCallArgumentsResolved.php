@@ -25,7 +25,7 @@ final class ToolCallArgumentsResolved
      */
     public function __construct(
         private readonly object $tool,
-        private readonly Tool $metadata,
+        private readonly Tool $definition,
         private readonly array $arguments,
     ) {
     }
@@ -35,9 +35,9 @@ final class ToolCallArgumentsResolved
         return $this->tool;
     }
 
-    public function getMetadata(): Tool
+    public function getDefinition(): Tool
     {
-        return $this->metadata;
+        return $this->definition;
     }
 
     /**

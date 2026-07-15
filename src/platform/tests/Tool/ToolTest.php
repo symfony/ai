@@ -67,4 +67,23 @@ final class ToolTest extends TestCase
 
         $this->assertNull($tool->getParameters());
     }
+
+    public function testReturnsMetadata()
+    {
+        $reference = new ExecutionReference('MyClass');
+        $tool = new Tool($reference, 'tool_name', 'tool description', null, ['hitl' => true]);
+
+        $this->assertSame(['hitl' => true], $tool->getMetadata());
+        $this->assertTrue($tool->getMetadataValue('hitl'));
+    }
+
+    public function testReturnsEmptyMetadataByDefault()
+    {
+        $reference = new ExecutionReference('MyClass');
+        $tool = new Tool($reference, 'tool_name', 'tool description');
+
+        $this->assertSame([], $tool->getMetadata());
+        $this->assertNull($tool->getMetadataValue('hitl'));
+        $this->assertSame('fallback', $tool->getMetadataValue('hitl', 'fallback'));
+    }
 }
