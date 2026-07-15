@@ -1,0 +1,49 @@
+---------------------------------------------------------------------------
+
+by tacman at 2026-06-22T09:37:27Z
+
+Yeah, you're right — keying inputs is the bridge's job, not something core content classes should advertise. The fix I have in mind keeps an interface (so it stays extensible) but moves it into the bridge as a strategy:
+
+```php
+namespace Symfony\AI\Platform\Bridge\Cache;
+
+interface CacheKeyGenerator
+{
+    public function supports(object $input): bool;
+    public function generate(object $input): string;
+}
+```
+
+`CachePlatform` holds an ordered list of these (default set covers `DocumentUrl`/`ImageUrl`/`File`), so the dependency points bridge → component, content classes go back to pure, and a userland content type can register its own generator instead of implementing a core interface. `CacheableInputInterface` and the `getCacheKey()` methods get dropped.
+
+One thing I want your call on before I push, since it shapes the implementation: **should `MessageBag` route through the same generator mechanism, or stay inline?** Today it's keyed inline (`$input->getId()`). I'd lean toward folding it into a `MessageBagCacheKeyGenerator` so *all* object inputs go through one consistent path — otherwise we've got two parallel mechanisms for objects, which is a bit of the same smell. But if you'd rather keep `MessageBag` special-cased inline and only route the content objects through generators, that's an easy variant. Which do you prefer?
+
+---------------------------------------------------------------------------
+
+by tacman at 2026-06-24T14:49:46Z
+
+@chr-hertel thoughts on this?  I'd love to get it in before 0.11  -- the mistral calls are relatively expensive, so I'd love to cache them.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-24T14:57:40Z
+
+that pattern looks like a good fit to me 👍
+
+---------------------------------------------------------------------------
+
+by tacman at 2026-06-24T15:06:15Z
+
+CacheKeyGenerator, with MessageBag going through it as well? I'll submit a PR shortly.
+
+---------------------------------------------------------------------------
+
+by tacman at 2026-06-24T15:36:50Z
+
+Pushed the `CacheKeyGenerator` strategy as discussed — it lives entirely in the Cache bridge now, so there are **no changes to the Platform component or its content classes** (`CacheableInputInterface` and the `getCacheKey()` methods are gone). `MessageBag` routes through the same mechanism (`MessageBagCacheKeyGenerator`), so all object inputs share one consistent path, and custom input types opt in by registering their own generator. Default set: `MessageBag`, `DocumentUrl`, `ImageUrl`, `File`/`Audio`. CHANGELOG is under 0.11.
+
+---------------------------------------------------------------------------
+
+by tacman at 2026-06-25T18:03:32Z
+
+Green now — the last red was a Fabbot nit (exception value needed double-quoting in `CachePlatform`), fixed. Recap of where this landed vs your review: the caching concern is fully isolated in the bridge via the `CacheKeyGenerator` strategy you sketched — nothing leaks into the Platform component or its content classes, and `MessageBag` routes through the same path. I credited you as co-author on the `CacheKeyGenerator` interface since the shape was your call. Mind giving it another look when you have a sec? 🙏
