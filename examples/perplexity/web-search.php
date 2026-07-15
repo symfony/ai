@@ -20,15 +20,16 @@ $platform = Factory::createPlatform(env('PERPLEXITY_API_KEY'), http_client());
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
 $result = $platform->invoke('sonar', $messages, [
     'search_domain_filter' => [
-        'https://en.wikipedia.org/wiki/Cheese',
+        // Perplexity expects bare domains here, not full URLs with a path.
+        'wikipedia.org',
     ],
     'search_mode' => 'web',
     'enable_search_classifier' => true,
-    'search_recency_filter' => 'week',
+    'search_recency_filter' => 'month',
 ]);
 
 echo $result->asText().\PHP_EOL;
 echo \PHP_EOL;
 
-print_search_results($result->getMetadata()->get('search_results'));
-print_citations($result->getMetadata()->get('citations'));
+print_search_results($result->getMetadata()->get('search_results', []));
+print_citations($result->getMetadata()->get('citations', []));
