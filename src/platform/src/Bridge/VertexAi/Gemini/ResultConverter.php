@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 
+use Symfony\AI\Platform\Bridge\Gemini\Gemini\FinishReasonMapper;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -27,6 +29,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -52,6 +55,8 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public const OUTCOME_OK = 'OUTCOME_OK';
     public const OUTCOME_FAILED = 'OUTCOME_FAILED';
     public const OUTCOME_DEADLINE_EXCEEDED = 'OUTCOME_DEADLINE_EXCEEDED';
@@ -105,7 +110,10 @@ final class ResultConverter implements ResultConverterInterface
 
         $choices = array_map($this->convertChoice(...), $data['candidates']);
 
-        return 1 === \count($choices) ? $choices[0] : new ChoiceResult($choices);
+        return $this->withFinishReason(
+            1 === \count($choices) ? $choices[0] : new ChoiceResult($choices),
+            FinishReasonMapper::map($data['candidates'][0]['finishReason'] ?? null),
+        );
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
@@ -118,9 +126,17 @@ final class ResultConverter implements ResultConverterInterface
      */
     private function convertStream(RawResultInterface $result): \Generator
     {
+        $finishReason = null;
+
         foreach ($result->getDataStream() as $data) {
             if (isset($data['usageMetadata']['totalTokenCount']) && 0 < $data['usageMetadata']['totalTokenCount']) {
                 yield $this->getTokenUsageExtractor()->fromUsageMetadata($data['usageMetadata']);
+            }
+
+            // Gemini repeats the reason on every candidate of the terminal chunk; the leading one wins,
+            // matching the buffered path.
+            if (null !== ($data['candidates'][0]['finishReason'] ?? null)) {
+                $finishReason ??= FinishReasonMapper::map($data['candidates'][0]['finishReason']);
             }
 
             $choices = array_values(array_filter(array_map($this->convertChoice(...), $data['candidates'] ?? [])));
@@ -135,6 +151,11 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             yield $this->resultToDelta($choices[0]);
+        }
+
+        // Emitted last: the terminal chunk carries both the finish reason and its content parts.
+        if (null !== $finishReason) {
+            yield new MetadataDelta('finish_reason', $finishReason);
         }
     }
 

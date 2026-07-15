@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -26,6 +27,7 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -46,6 +48,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 class ResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Claude;
@@ -143,11 +147,10 @@ class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response content does not contain any supported content.');
         }
 
-        if (1 === \count($results)) {
-            return $results[0];
-        }
-
-        return new MultiPartResult($results);
+        return $this->withFinishReason(
+            1 === \count($results) ? $results[0] : new MultiPartResult($results),
+            FinishReasonMapper::map($data['stop_reason'] ?? null),
+        );
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
@@ -323,6 +326,12 @@ class ResultConverter implements ResultConverterInterface
 
         if ($inMessage) {
             throw new IncompleteStreamException('Anthropic stream ended before message_stop.');
+        }
+
+        // Anthropic reports the stop reason on message_delta, before message_stop. A `max_tokens`
+        // truncation has already thrown above, so any reason reaching here is a normal completion.
+        if (null !== $stopReason) {
+            yield new MetadataDelta('finish_reason', FinishReasonMapper::map($stopReason));
         }
     }
 }

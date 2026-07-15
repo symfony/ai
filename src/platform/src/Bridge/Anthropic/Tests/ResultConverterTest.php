@@ -19,12 +19,16 @@ use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReason;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -231,7 +235,7 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(ToolInputDelta::class, $chunks[2]);
         $this->assertInstanceOf(ToolInputDelta::class, $chunks[3]);
 
-        $toolCallComplete = $chunks[\count($chunks) - 1];
+        $toolCallComplete = array_values(array_filter($chunks, static fn (DeltaInterface $delta) => $delta instanceof ToolCallComplete))[0] ?? null;
         $this->assertInstanceOf(ToolCallComplete::class, $toolCallComplete);
         $toolCalls = $toolCallComplete->getToolCalls();
         $this->assertCount(1, $toolCalls);
@@ -453,7 +457,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Let me check ', $textDeltas[0]->getText());
         $this->assertSame('the weather.', $textDeltas[1]->getText());
 
-        $toolCallComplete = $chunks[\count($chunks) - 1];
+        $toolCallComplete = array_values(array_filter($chunks, static fn (DeltaInterface $delta) => $delta instanceof ToolCallComplete))[0] ?? null;
         $this->assertInstanceOf(ToolCallComplete::class, $toolCallComplete);
 
         $toolCalls = $toolCallComplete->getToolCalls();
@@ -555,7 +559,7 @@ final class ResultConverterTest extends TestCase
         $this->assertCount(1, $textDeltas);
         $this->assertSame('Let me search.', $textDeltas[0]->getText());
 
-        $toolCallComplete = $chunks[\count($chunks) - 1];
+        $toolCallComplete = array_values(array_filter($chunks, static fn (DeltaInterface $delta) => $delta instanceof ToolCallComplete))[0] ?? null;
         $this->assertInstanceOf(ToolCallComplete::class, $toolCallComplete);
         $this->assertSame('toolu_01', $toolCallComplete->getToolCalls()[0]->getId());
         $this->assertSame('search', $toolCallComplete->getToolCalls()[0]->getName());
@@ -740,6 +744,54 @@ final class ResultConverterTest extends TestCase
             $this->assertNotInstanceOf(ServerException::class, $e);
             $this->assertStringContainsString('Bad input', $e->getMessage());
         }
+    }
+
+    public function testConvertExposesStopReasonAsFinishReasonMetadata()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [['type' => 'text', 'text' => 'Truncated']],
+            'stop_reason' => 'max_tokens',
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertInstanceOf(FinishReason::class, $finishReason);
+        $this->assertTrue($finishReason->is(FinishReasonCase::LENGTH));
+        $this->assertSame('max_tokens', $finishReason->getRaw());
+    }
+
+    public function testConvertWithoutStopReasonOmitsFinishReasonMetadata()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [['type' => 'text', 'text' => 'Hello']],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertFalse($result->getMetadata()->has('finish_reason'));
+    }
+
+    public function testStreamingExposesStopReasonAsFinishReasonMetadata()
+    {
+        $events = [
+            ['type' => 'message_start', 'message' => ['usage' => ['input_tokens' => 3]]],
+            ['type' => 'content_block_delta', 'delta' => ['text' => 'Hello']],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn'], 'usage' => ['output_tokens' => 1]],
+            ['type' => 'message_stop'],
+        ];
+
+        $streamResult = (new ResultConverter())->convert($this->createRawResult($events), ['stream' => true]);
+
+        $chunks = iterator_to_array($streamResult->getContent());
+        $metadataDelta = $chunks[\count($chunks) - 1];
+
+        $this->assertInstanceOf(MetadataDelta::class, $metadataDelta);
+        $this->assertSame('finish_reason', $metadataDelta->getKey());
+        $this->assertTrue($metadataDelta->getValue()->is(FinishReasonCase::STOP));
+        $this->assertSame('end_turn', $metadataDelta->getValue()->getRaw());
     }
 
     /**

@@ -17,6 +17,8 @@ use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReason;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -24,6 +26,7 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -109,6 +112,49 @@ final class ResultConverterTest extends TestCase
         $toolCall = $result->getContent()[1]->getContent()[0];
         $this->assertInstanceOf(ToolCall::class, $toolCall);
         $this->assertSame('1234', $toolCall->getId());
+    }
+
+    public function testConvertExposesFinishReasonAsMetadata()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => ['parts' => [['text' => 'Truncated']]],
+                    'finishReason' => 'MAX_TOKENS',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertInstanceOf(FinishReason::class, $finishReason);
+        $this->assertTrue($finishReason->is(FinishReasonCase::LENGTH));
+        $this->assertSame('MAX_TOKENS', $finishReason->getRaw());
+    }
+
+    public function testConvertNormalizesGeminiSpecificFinishReasonToOther()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => ['parts' => [['text' => 'Quoted']]],
+                    'finishReason' => 'RECITATION',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertTrue($finishReason->is(FinishReasonCase::OTHER));
+        $this->assertSame('RECITATION', $finishReason->getRaw());
     }
 
     public function testConvertsInlineDataToBinaryResult()
@@ -281,9 +327,15 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(StreamResult::class, $result);
 
         $items = iterator_to_array($result->getContent());
-        $this->assertCount(1, $items);
+        $this->assertCount(2, $items);
         $this->assertInstanceOf(TextDelta::class, $items[0]);
         $this->assertSame('Hello', $items[0]->getText());
+
+        // The content-less candidate is skipped, but still contributes its finish reason.
+        $this->assertInstanceOf(MetadataDelta::class, $items[1]);
+        $this->assertSame('finish_reason', $items[1]->getKey());
+        $this->assertTrue($items[1]->getValue()->is(FinishReasonCase::STOP));
+        $this->assertSame('STOP', $items[1]->getValue()->getRaw());
     }
 
     /**

@@ -11,8 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 
+use Symfony\AI\Platform\Bridge\Bedrock\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -26,6 +28,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 class NovaResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Nova;
@@ -50,10 +54,10 @@ class NovaResultConverter implements ResultConverterInterface
             }
         }
         if ([] !== $toolCalls) {
-            return new ToolCallResult($toolCalls);
+            return $this->withFinishReason(new ToolCallResult($toolCalls), FinishReasonMapper::map($data['stopReason'] ?? null));
         }
 
-        return new TextResult($data['output']['message']['content'][0]['text']);
+        return $this->withFinishReason(new TextResult($data['output']['message']['content'][0]['text']), FinishReasonMapper::map($data['stopReason'] ?? null));
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface

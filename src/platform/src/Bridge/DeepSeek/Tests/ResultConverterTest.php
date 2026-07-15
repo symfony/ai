@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\InvalidRequestException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -259,7 +260,7 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('world!', $chunks[1]->getText());
         $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
         $this->assertSame('finish_reason', $chunks[2]->getKey());
-        $this->assertSame('stop', $chunks[2]->getValue());
+        $this->assertSame(FinishReasonCase::STOP, $chunks[2]->getValue()->getCase());
     }
 
     public function testThrowsServerExceptionOnServerErrorStatusBeforeStreaming()

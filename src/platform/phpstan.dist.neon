@@ -31,6 +31,9 @@ parameters:
         -
             identifier: 'trait.unused'
             path: src/JsonBodyEncodingTrait.php # only used by bridges, which are excluded from analysis
+        -
+            identifier: 'trait.unused'
+            path: src/FinishReason/FinishReasonAwareTrait.php # only used by bridges, which are excluded from analysis
 
 services:
     - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x

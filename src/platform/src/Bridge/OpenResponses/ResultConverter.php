@@ -33,6 +33,7 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -146,7 +147,9 @@ class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
-        return 1 === \count($results) ? array_pop($results) : new MultiPartResult(array_values($results));
+        $converted = 1 === \count($results) ? array_pop($results) : new MultiPartResult(array_values($results));
+
+        return $this->withResponsesFinishReason($converted, $data['incomplete_details']['reason'] ?? $data['status'] ?? null);
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
@@ -163,6 +166,49 @@ class ResultConverter implements ResultConverterInterface
     protected function extractRateLimitReset(ResponseInterface $response): ?int
     {
         return null;
+    }
+
+    /**
+     * The Responses API has no per-choice `finish_reason`: a successful response reports `status: completed`
+     * and an aborted one `status: incomplete` plus an `incomplete_details.reason` such as `max_output_tokens`.
+     *
+     * It also reports `completed` when the model stopped to call a function, so the normalized case is derived
+     * from the converted output while the raw provider value is preserved as reported.
+     *
+     * @template T of ResultInterface
+     *
+     * @param T $result
+     *
+     * @return T
+     */
+    private function withResponsesFinishReason(ResultInterface $result, ?string $rawFinishReason): ResultInterface
+    {
+        if (null === $rawFinishReason || '' === $rawFinishReason) {
+            return $result;
+        }
+
+        $result->getMetadata()->add('finish_reason', FinishReasonMapper::map($rawFinishReason, $this->containsToolCall($result)));
+
+        return $result;
+    }
+
+    private function containsToolCall(ResultInterface $result): bool
+    {
+        if ($result instanceof ToolCallResult) {
+            return true;
+        }
+
+        if (!$result instanceof MultiPartResult) {
+            return false;
+        }
+
+        foreach ($result->getContent() as $part) {
+            if ($part instanceof ToolCallResult) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -371,6 +417,7 @@ class ResultConverter implements ResultConverterInterface
         $toolCalls = [];
         $sawResponseEvent = false;
         $sawResponseCompleted = false;
+        $sawToolCallComplete = false;
 
         foreach ($result->getDataStream() as $event) {
             $type = $event['type'] ?? '';
@@ -453,14 +500,22 @@ class ResultConverter implements ResultConverterInterface
             [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
 
             if ($toolCallResult) {
+                $sawToolCallComplete = true;
                 yield new ToolCallComplete($toolCallResult->getContent());
             } elseif ([] !== $toolCalls) {
+                $sawToolCallComplete = true;
                 yield new ToolCallComplete(array_values($toolCalls));
             }
         }
 
         if ($sawResponseEvent && !$sawResponseCompleted) {
             throw new IncompleteStreamException('Responses API stream ended before response.completed.');
+        }
+
+        // A stream that reaches response.completed always finished cleanly: response.incomplete and
+        // response.failed throw above. Only the tool-call case needs to be told apart from a plain stop.
+        if ($sawResponseCompleted) {
+            yield new MetadataDelta('finish_reason', FinishReasonMapper::map('completed', $sawToolCallComplete));
         }
     }
 

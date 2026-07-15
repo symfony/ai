@@ -529,6 +529,65 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ChoiceDelta` -- a choice delta (e.g. multiple completions)
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` -- a chunk of binary data
 
+Finish Reason
+~~~~~~~~~~~~~
+
+Every bridge whose provider reports why generation stopped exposes it as the ``finish_reason``
+result metadata, for both buffered and streamed results. This is what tells a complete answer
+apart from one that was cut off by the output token limit::
+
+    use Symfony\AI\Platform\FinishReason\FinishReasonCase;
+
+    $result = $platform->invoke($model, $messages, ['max_tokens' => 50]);
+
+    $finishReason = $result->getMetadata()->get('finish_reason');
+
+    if ($finishReason?->is(FinishReasonCase::LENGTH)) {
+        // the answer is truncated -- continue generation or raise the limit
+    }
+
+Providers spell the reason differently, so the value is a
+:class:`Symfony\\AI\\Platform\\FinishReason\\FinishReason` object that normalizes it into a
+:class:`Symfony\\AI\\Platform\\FinishReason\\FinishReasonCase` while keeping the provider's own
+wording available::
+
+    $finishReason->getCase(); // FinishReasonCase::LENGTH
+    $finishReason->getRaw();  // "max_tokens" on Anthropic, "MAX_TOKENS" on Gemini, "length" on OpenAI
+
+The normalized cases are ``STOP``, ``LENGTH``, ``TOOL_CALL``, ``CONTENT_FILTER``,
+``STOP_SEQUENCE`` and ``OTHER``. A provider-specific reason without an equivalent -- such as
+Gemini's ``RECITATION`` -- normalizes to ``OTHER``, and ``getRaw()`` tells those apart.
+
+The translation itself lives in the bridge, in a ``FinishReasonMapper`` next to its result converter,
+the same way ``TokenUsageExtractor`` is provided per bridge. A new bridge maps its own vocabulary onto
+the cases above without touching the Platform component.
+
+.. note::
+
+    The metadata is only set when the provider reports a reason, so guard against ``null``.
+    The normalized case reflects what the provider actually reported: a provider that ends a
+    tool-call turn with a plain ``stop`` surfaces as ``STOP``, not ``TOOL_CALL``.
+
+When streaming, the reason is only known once the stream has been consumed. It is emitted as
+the final ``MetadataDelta``, which ``asStream()`` promotes into the result metadata and skips
+from the visible deltas::
+
+    foreach ($result->asTextStream() as $delta) {
+        echo $delta;
+    }
+
+    // available after the stream has been fully consumed
+    $finishReason = $result->getMetadata()->get('finish_reason');
+
+.. note::
+
+    A streamed ``LENGTH`` is not surfaced by every bridge. Some providers -- Anthropic among them --
+    treat a truncation at the output token limit as an error mid-stream and throw a
+    :class:`Symfony\\AI\\Platform\\Exception\\MaxOutputTokensException` instead of emitting the reason,
+    so the same ``max_tokens`` case that surfaces as ``LENGTH`` on a buffered result raises an exception
+    when streamed. Wrap the consumption loop in a ``try``/``catch`` when you need to handle truncation
+    of a streamed response.
+
 Streaming in a Symfony Controller
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

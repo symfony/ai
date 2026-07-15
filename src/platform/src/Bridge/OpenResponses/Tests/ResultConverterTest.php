@@ -22,6 +22,8 @@ use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReason;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
@@ -35,6 +37,7 @@ use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -558,6 +561,79 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_1', $result->getCallId());
     }
 
+    public function testConvertExposesIncompleteReasonAsFinishReasonMetadata()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => 'Truncated']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertInstanceOf(FinishReason::class, $finishReason);
+        $this->assertTrue($finishReason->is(FinishReasonCase::LENGTH));
+        $this->assertSame('max_output_tokens', $finishReason->getRaw());
+    }
+
+    public function testConvertReportsCompletedResponseAsStop()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => 'Hello']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertTrue($finishReason->is(FinishReasonCase::STOP));
+        $this->assertSame('completed', $finishReason->getRaw());
+    }
+
+    public function testConvertReportsCompletedToolCallResponseAsToolCall()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'function_call',
+                    'id' => 'fc_1',
+                    'call_id' => 'call_1',
+                    'name' => 'get_weather',
+                    'arguments' => '{"city":"Berlin"}',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        // The Responses API reports `completed` for tool calls too; the normalized case still says TOOL_CALL.
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertTrue($finishReason->is(FinishReasonCase::TOOL_CALL));
+        $this->assertSame('completed', $finishReason->getRaw());
+    }
+
     public function testThrowsRuntimeExceptionWhenIncompleteResponseHasNoContent()
     {
         $converter = new ResultConverter();
@@ -921,8 +997,10 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $part;
         }
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[1]);
+        $this->assertTrue($chunks[1]->getValue()->is(FinishReasonCase::TOOL_CALL));
         $toolCalls = $chunks[0]->getToolCalls();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('call_456', $toolCalls[0]->getId());
@@ -960,8 +1038,10 @@ final class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[1]);
+        $this->assertTrue($chunks[1]->getValue()->is(FinishReasonCase::TOOL_CALL));
         $toolCalls = $chunks[0]->getToolCalls();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('call_456', $toolCalls[0]->getId());
@@ -1000,8 +1080,10 @@ final class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[1]);
+        $this->assertTrue($chunks[1]->getValue()->is(FinishReasonCase::TOOL_CALL));
         $toolCalls = $chunks[0]->getToolCalls();
         $this->assertCount(1, $toolCalls);
         $this->assertSame('call_789', $toolCalls[0]->getId());
@@ -1202,7 +1284,7 @@ final class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(5, $chunks);
+        $this->assertCount(6, $chunks);
         $this->assertInstanceOf(ThinkingStart::class, $chunks[0]);
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
         $this->assertSame('Let me think', $chunks[1]->getThinking());

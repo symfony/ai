@@ -14,6 +14,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
+use Symfony\AI\Platform\FinishReason\FinishReason;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
@@ -150,6 +152,23 @@ function print_token_usage(?TokenUsageInterface $tokenUsage): void
     if ($tokenUsage instanceof TokenUsageAggregation) {
         output()->writeln(sprintf('<comment>Aggregated token usage from %d calls.</comment>', $tokenUsage->count()));
     }
+}
+
+function print_finish_reason(?FinishReason $finishReason): void
+{
+    if (null === $finishReason) {
+        output()->writeln('<error>No finish reason information available.</error>');
+        exit(1);
+    }
+
+    $table = new Table(output());
+    $table->setHeaderTitle('Finish Reason');
+    $table->setRows([
+        ['Normalized case', $finishReason->getCase()->value],
+        ['Raw provider value', $finishReason->getRaw()],
+        ['Truncated', $finishReason->is(FinishReasonCase::LENGTH) ? '<error>yes</error>' : 'no'],
+    ]);
+    $table->render();
 }
 
 function print_vectors(DeferredResult $result): void

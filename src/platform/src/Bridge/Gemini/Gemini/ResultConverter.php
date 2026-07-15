@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -27,6 +28,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ChoiceDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -51,6 +53,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
  */
 final class ResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     use HttpStatusErrorHandlingTrait;
 
     public const OUTCOME_OK = 'OUTCOME_OK';
@@ -96,7 +100,10 @@ final class ResultConverter implements ResultConverterInterface
 
         $choices = array_map($this->convertChoice(...), $data['candidates']);
 
-        return 1 === \count($choices) ? $choices[0] : new ChoiceResult($choices);
+        return $this->withFinishReason(
+            1 === \count($choices) ? $choices[0] : new ChoiceResult($choices),
+            FinishReasonMapper::map($data['candidates'][0]['finishReason'] ?? null),
+        );
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractor
@@ -106,7 +113,15 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface $result): \Generator
     {
+        $finishReason = null;
+
         foreach ($result->getDataStream() as $data) {
+            // Gemini repeats the reason on every candidate of the terminal chunk; the leading one wins,
+            // matching the buffered path.
+            if (null !== ($data['candidates'][0]['finishReason'] ?? null)) {
+                $finishReason ??= FinishReasonMapper::map($data['candidates'][0]['finishReason']);
+            }
+
             $choices = array_values(array_filter(array_map($this->convertChoice(...), $data['candidates'] ?? [])));
 
             if (!$choices) {
@@ -119,6 +134,11 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             yield $this->resultToDelta($choices[0]);
+        }
+
+        // Emitted last: the terminal chunk carries both the finish reason and its content parts.
+        if (null !== $finishReason) {
+            yield new MetadataDelta('finish_reason', $finishReason);
         }
     }
 

@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -38,12 +39,14 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
  */
 trait CompletionsConversionTrait
 {
+    use FinishReasonAwareTrait;
+
     protected function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
         $reasoning = '';
         $sawChunk = false;
-        $sawFinishReason = false;
+        $finishReason = null;
 
         foreach ($result->getDataStream() as $data) {
             if (isset($data['error'])) {
@@ -67,9 +70,10 @@ trait CompletionsConversionTrait
 
             // A non-null finish_reason on the leading choice marks the terminal content chunk.
             // It is null on every non-final chunk, and a trailing usage-only chunk has choices: [].
+            // With n > 1 every choice terminates in its own chunk; the leading one wins, matching
+            // the buffered path where the metadata of the first choice surfaces on the result.
             if (null !== ($data['choices'][0]['finish_reason'] ?? null)) {
-                $sawFinishReason = true;
-                yield new MetadataDelta('finish_reason', $data['choices'][0]['finish_reason']);
+                $finishReason ??= FinishReasonMapper::map($data['choices'][0]['finish_reason']);
             }
 
             if (isset($data['usage'])) {
@@ -108,8 +112,14 @@ trait CompletionsConversionTrait
             yield new ThinkingComplete($reasoning);
         }
 
-        if ($sawChunk && !$sawFinishReason) {
+        if ($sawChunk && null === $finishReason) {
             throw new IncompleteStreamException('Completions stream ended before a finish reason was received.');
+        }
+
+        // Emitted last so the reason never precedes the visible deltas of the chunk that carried it:
+        // providers such as Mistral bundle the final content token and the finish_reason in one chunk.
+        if (null !== $finishReason) {
+            yield new MetadataDelta('finish_reason', $finishReason);
         }
     }
 
@@ -220,11 +230,11 @@ trait CompletionsConversionTrait
     protected function convertChoice(array $choice): ToolCallResult|TextResult
     {
         if ('tool_calls' === $choice['finish_reason']) {
-            return new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls']));
+            return $this->withFinishReason(new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls'])), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         if (\in_array($choice['finish_reason'], ['stop', 'length'], true)) {
-            return new TextResult($choice['message']['content']);
+            return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));

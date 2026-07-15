@@ -11,9 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 
+use Symfony\AI\Platform\Bridge\Bedrock\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -25,6 +27,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
  */
 class LlamaResultConverter implements ResultConverterInterface
 {
+    use FinishReasonAwareTrait;
+
     public function supports(Model $model): bool
     {
         return $model instanceof Llama;
@@ -38,7 +42,7 @@ class LlamaResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
-        return new TextResult($data['generation']);
+        return $this->withFinishReason(new TextResult($data['generation']), FinishReasonMapper::map($data['stop_reason'] ?? null));
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface

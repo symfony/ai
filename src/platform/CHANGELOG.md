@@ -23,8 +23,8 @@ CHANGELOG
  * Add OpenAI image editing via the `images/edits` endpoint: pass the source image as a `Content\Image` through the `image` option of `Platform::invoke()`
  * [BC BREAK] Rename the OpenAI `DallE` bridge to `Image` (`Bridge\OpenAi\DallE` → `Bridge\OpenAi\Image`, and the `Bridge\OpenAi\DallE\*` namespace → `Bridge\OpenAi\Image\*`) and remove the `dall-e-2`/`dall-e-3` catalog entries retired by OpenAI
  * [BC BREAK] Replace the bridge-specific `ImageResult`, `Base64Image`, and `UrlImage` classes of the OpenAI image bridge with the generic `Result\BinaryResult` (single image) and `Result\MultiPartResult` (multiple images), matching the other multi-modal bridges
- * Add streamed Generic completions `finish_reason` values as result metadata
  * Add an exception is the `response_format` option looks like a class, but is not
+ * Add the `finish_reason` result metadata, exposing why a model stopped generating as a `FinishReason\FinishReason` object that normalizes the provider value (`length`, `max_tokens`, `MAX_TOKENS`, ...) into a `FinishReason\FinishReasonCase` while keeping the raw value. Set for buffered and streamed results by the OpenAI, Anthropic, Gemini, VertexAI, Amazon Bedrock, Azure, Ollama, Cohere, Mistral, DeepSeek, Cerebras, Scaleway, Docker Model Runner, Perplexity, MiniMax, amazee.ai and Generic bridges
 
 0.10
 ----

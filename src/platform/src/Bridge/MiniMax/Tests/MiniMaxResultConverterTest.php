@@ -19,11 +19,13 @@ use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -90,11 +92,14 @@ final class MiniMaxResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($result->getContent());
 
-        $this->assertCount(2, $chunks);
+        $this->assertCount(3, $chunks);
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertInstanceOf(TextDelta::class, $chunks[1]);
         $this->assertSame('Generated ', $chunks[0]->getText());
         $this->assertSame('text', $chunks[1]->getText());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
+        $this->assertSame('finish_reason', $chunks[2]->getKey());
+        $this->assertTrue($chunks[2]->getValue()->is(FinishReasonCase::STOP));
     }
 
     public function testItConvertsSynchronousSpeech()
