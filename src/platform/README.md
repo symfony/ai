@@ -32,6 +32,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Codex               | `symfony/ai-codex-platform`               |
 | Cohere              | `symfony/ai-cohere-platform`              |
 | Decart              | `symfony/ai-decart-platform`              |
+| Deepgram            | `symfony/ai-deepgram-platform`            |
 | DeepSeek            | `symfony/ai-deep-seek-platform`           |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |
 | ElevenLabs          | `symfony/ai-eleven-labs-platform`         |
@@ -41,6 +42,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Hugging Face        | `symfony/ai-hugging-face-platform`        |
 | LM Studio           | `symfony/ai-lm-studio-platform`           |
 | Meta Llama          | `symfony/ai-meta-platform`                |
+| MiniMax             | `symfony/ai-mini-max-platform`            |
 | Mistral             | `symfony/ai-mistral-platform`             |
 | Models.dev          | `symfony/ai-models-dev-platform`          |
 | Ollama              | `symfony/ai-ollama-platform`              |

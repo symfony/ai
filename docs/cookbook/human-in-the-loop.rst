@@ -129,9 +129,9 @@ response through an HTTP endpoint or WebSocket.
 
 .. tip::
 
-    The event also exposes the tool's metadata via ``$event->getMetadata()``, which includes the
-    tool's description and parameter schema. Use it to show the user more context before they
-    decide.
+    The event also exposes the tool's definition via ``$event->getDefinition()``, which returns a
+    ``Tool`` object whose ``getDescription()`` and ``getParameters()`` methods expose the tool's
+    description and parameter schema. Use it to show the user more context before they decide.
 
 Step 5: Wire the Policy and Handler Together
 --------------------------------------------
