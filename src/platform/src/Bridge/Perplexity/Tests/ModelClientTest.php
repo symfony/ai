@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Perplexity;
+namespace Symfony\AI\Platform\Bridge\Perplexity\Tests;
 
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;

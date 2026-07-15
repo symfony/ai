@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Scaleway;
+namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Scaleway\Factory;

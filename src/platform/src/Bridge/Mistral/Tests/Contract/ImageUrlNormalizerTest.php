@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Mistral\Contract;
+namespace Symfony\AI\Platform\Bridge\Mistral\Tests\Contract;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

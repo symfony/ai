@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Scaleway\Embeddings;
+namespace Symfony\AI\Platform\Bridge\Scaleway\Tests\Embeddings;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Scaleway\Embeddings\ResultConverter;
