@@ -284,6 +284,74 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('sig_call', $toolCalls[0]->getSignature());
     }
 
+    public function testConvertReturnsEmptyTextResultForCandidateWithoutContentParts()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        // Gemini occasionally returns a valid completion with a terminal finish reason but no
+        // content parts, e.g. an empty message after a tool result.
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                [
+                    'content' => ['role' => 'model'],
+                    'finishReason' => 'STOP',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('', $result->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::STOP));
+    }
+
+    public function testConvertThrowsWhenResponseContainsNoCandidates()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Response does not contain any content.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertCoercesEmptyStringToolCallArgumentsToNull()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        // Gemini emits empty strings for optional object properties it has no value for; empty
+        // strings inside list arguments are legitimate values and must be preserved.
+        $httpResponse->method('toArray')->willReturn([
+            'candidates' => [
+                ['content' => ['parts' => [
+                    ['functionCall' => ['name' => 'search', 'args' => [
+                        'query' => 'Symfony',
+                        'departureDate' => '',
+                        'nested' => ['since' => ''],
+                        'tags' => ['a', '', 'b'],
+                    ]]],
+                ]]],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $arguments = $result->getContent()[0]->getArguments();
+        $this->assertSame('Symfony', $arguments['query']);
+        $this->assertNull($arguments['departureDate']);
+        $this->assertNull($arguments['nested']['since']);
+        $this->assertSame(['a', '', 'b'], $arguments['tags']);
+    }
+
     public function testStreamSkipsCandidatesWithoutContentParts()
     {
         $converter = new ResultConverter();

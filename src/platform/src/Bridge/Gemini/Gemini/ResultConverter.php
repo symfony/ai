@@ -95,6 +95,16 @@ final class ResultConverter implements ResultConverterInterface
                 throw new RuntimeException(\sprintf('Error "%s" - "%s": "%s".', $data['error']['code'], $data['error']['status'], $data['error']['message']));
             }
 
+            // Gemini can return a well-formed completion with a terminal finish reason but no
+            // content parts (e.g. an empty message after a tool result). Treat it as empty text
+            // instead of crashing on an otherwise valid response.
+            if (isset($data['candidates'][0]['finishReason'])) {
+                return $this->withFinishReason(
+                    new TextResult(''),
+                    FinishReasonMapper::map($data['candidates'][0]['finishReason']),
+                );
+            }
+
             throw new RuntimeException('Response does not contain any content.');
         }
 
@@ -208,6 +218,30 @@ final class ResultConverter implements ResultConverterInterface
      */
     private function convertToolCall(array $toolCall, ?string $signature = null): ToolCall
     {
-        return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $toolCall['args'], $signature);
+        return new ToolCall($toolCall['id'] ?? '', $toolCall['name'], $this->normalizeArguments($toolCall['args']), $signature);
+    }
+
+    /**
+     * Gemini emits empty strings for optional object properties it has no value for, whereas other
+     * providers omit them or send null. Coerce those empty strings to null (recursing into nested
+     * structures) so downstream denormalization — e.g. of nullable DateTime properties — behaves
+     * consistently across bridges. List elements (integer-keyed) are left untouched, as an empty
+     * string can be a legitimate value inside a list argument.
+     *
+     * @param mixed[] $arguments
+     *
+     * @return mixed[]
+     */
+    private function normalizeArguments(array $arguments): array
+    {
+        foreach ($arguments as $key => $value) {
+            if (\is_array($value)) {
+                $arguments[$key] = $this->normalizeArguments($value);
+            } elseif ('' === $value && !\is_int($key)) {
+                $arguments[$key] = null;
+            }
+        }
+
+        return $arguments;
     }
 }
