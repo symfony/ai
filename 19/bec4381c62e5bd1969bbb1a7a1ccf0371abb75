@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-14T23:44:36Z
+
+Thanks for the review — all addressed in 8c555117c:
+
+- Reworded metadata as arbitrary custom data (not "classification") in the `Tool`/`AsTool` docblocks, the docs and both changelogs.
+- Trimmed the redundant `Tool::getMetadata()` docblock.
+- Reworked the human-in-the-loop docs example to listen on `ToolCallRequested` and `deny()` the call, instead of throwing on `ToolCallArgumentsResolved`.
+- Switched the example key to `needs_confirmation` (also in the test fixture, for consistency).
+- Applied the `CHANGELOG` and `UPGRADE.md` suggestions verbatim.
