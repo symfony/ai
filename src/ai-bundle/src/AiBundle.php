@@ -253,6 +253,7 @@ final class AiBundle extends AbstractBundle
         if ([] === $stores) {
             $builder->removeDefinition('ai.command.setup_store');
             $builder->removeDefinition('ai.command.drop_store');
+            $builder->removeDefinition('ai.command.clear_store');
         }
 
         if ([] !== ($config['message_store'] ?? [])) {
@@ -396,6 +397,7 @@ final class AiBundle extends AbstractBundle
         if (!ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.command.setup_store');
             $builder->removeDefinition('ai.command.drop_store');
+            $builder->removeDefinition('ai.command.clear_store');
             $builder->removeDefinition('ai.command.index');
             $builder->removeDefinition('ai.command.retrieve');
         }
