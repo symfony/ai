@@ -27,15 +27,20 @@
         "ext-fileinfo": "*",
         "phpdocumentor/reflection-docblock": "^5.4|^6.0",
         "phpstan/phpdoc-parser": "^2.1",
+        "psr/cache": "^3.0",
+        "psr/event-dispatcher": "^1.0",
         "psr/log": "^3.0",
         "symfony/ai-platform": "^0.11",
         "symfony/clock": "^7.3|^8.0",
+        "symfony/filesystem": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/polyfill-php85": "^1.33",
+        "symfony/process": "^7.3|^8.0",
         "symfony/property-access": "^7.3|^8.0",
         "symfony/property-info": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0",
-        "symfony/type-info": "^7.3|^8.0"
+        "symfony/type-info": "^7.3|^8.0",
+        "symfony/workflow": "^7.3|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
@@ -43,10 +48,22 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
         "symfony/ai-store": "^0.11",
+        "symfony/console": "^7.3|^8.0",
+        "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/event-dispatcher": "^7.3|^8.0",
+        "symfony/expression-language": "^7.3|^8.0",
+        "symfony/lock": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",
         "symfony/translation-contracts": "^3.6",
         "symfony/validator": "^7.3|^8.0"
+    },
+    "suggest": {
+        "psr/cache-implementation": "Required for Cache WorkflowStateStore bridge",
+        "psr/event-dispatcher-implementation": "Required to dispatch workflow lifecycle events",
+        "ext-redis": "Required for Redis WorkflowStateStore bridge",
+        "symfony/console": "Required for the ai:workflow:* console commands",
+        "symfony/expression-language": "Required for the expression-based transition resolver and guard",
+        "symfony/lock": "Required for concurrency-safe workflow runs"
     },
     "minimum-stability": "dev",
     "autoload": {

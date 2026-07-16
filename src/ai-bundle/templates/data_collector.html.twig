@@ -1,7 +1,7 @@
 {% extends '@WebProfiler/Profiler/layout.html.twig' %}
 
 {% block toolbar %}
-    {% if collector.platformCalls|length > 0 %}
+    {% if collector.platformCalls|length > 0 or collector.agentWorkflows|length > 0 %}
         {% set icon %}
             {{ include('@Ai/icon.svg') }}
             <span class="sf-toolbar-value">{{ collector.platformCalls|length }}</span>
@@ -39,6 +39,14 @@
                 <div class="sf-toolbar-info-piece">
                     <b class="label">Stores used</b>
                     <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Agent workflows used</b>
+                    <span class="sf-toolbar-status">{{ collector.agentWorkflows|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Workflow store operations</b>
+                    <span class="sf-toolbar-status">{{ collector.workflowStateStores|length }}</span>
                 </div>
             </div>
         {% endset %}
@@ -93,6 +101,17 @@
             <div class="metric">
                 <span class="value">{{ collector.toolCalls|length }}</span>
                 <span class="label">Tool Calls</span>
+            </div>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-group">
+            <div class="metric">
+                <span class="value">{{ collector.agentWorkflows|length }}</span>
+                <span class="label">Workflow Runs</span>
+            </div>
+            <div class="metric">
+                <span class="value">{{ collector.workflowStateStores|length }}</span>
+                <span class="label">Store Operations</span>
             </div>
         </div>
     </section>
@@ -314,6 +333,122 @@
     {% else %}
         <div class="empty">
             <p>No tool calls were made.</p>
+        </div>
+    {% endif %}
+
+    <h3>Workflow Runs</h3>
+    {% if collector.agentWorkflows|length %}
+        {% for run in collector.agentWorkflows %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th colspan="2">{{ run.action|title }} #{{ loop.index }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Action</th>
+                        <td>{{ run.action }}</td>
+                    </tr>
+                    <tr>
+                        <th>State ID</th>
+                        <td><code>{{ run.state is defined ? run.state.id : run.id }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Called at</th>
+                        <td>{{ run.called_at|date('H:i:s.u') }}</td>
+                    </tr>
+                    {% if run.state is defined %}
+                        <tr>
+                            <th>Initial data</th>
+                            <td>{{ dump(run.state.all) }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <p>No agent workflows were run.</p>
+        </div>
+    {% endif %}
+
+    <h3>Workflow State Store Operations</h3>
+    {% if collector.workflowStateStores|length %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Method</th>
+                    <th>State ID</th>
+                    <th>Called at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for operation in collector.workflowStateStores %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ operation.method }}</strong></td>
+                        <td>
+                            {% if operation.state is defined %}
+                                <code>{{ operation.state.id }}</code>
+                            {% elseif operation.id is defined %}
+                                <code>{{ operation.id }}</code>
+                            {% else %}
+                                <i>—</i>
+                            {% endif %}
+                        </td>
+                        <td>{{ operation.called_at|date('H:i:s.u') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            <p>No workflow state store operations were recorded.</p>
+        </div>
+    {% endif %}
+
+    <h3>Workflow Timeline</h3>
+    {% if collector.workflowTimeline|length %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Event</th>
+                    <th>Place / Transition</th>
+                    <th>State ID</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in collector.workflowTimeline %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <strong>{{ entry.type }}</strong>
+                            {% if entry.error %}
+                                <br /><code class="status-error">{{ entry.error }}</code>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if entry.place %}
+                                {{ entry.place }}
+                            {% elseif entry.transition %}
+                                <em>{{ entry.transition }}</em>
+                            {% else %}
+                                <i>—</i>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ entry.state_id }}</code></td>
+                        <td>{{ entry.at|date('H:i:s.u') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            <p>No workflow timeline was recorded.</p>
         </div>
     {% endif %}
 {% endblock %}

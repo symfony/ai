@@ -838,6 +838,589 @@ useful when certain interactions shouldn't be influenced by the memory context::
     ]);
 
 
+Workflow
+--------
+
+The Agent component provides a workflow engine for orchestrating multi-step AI pipelines on top of
+the `Symfony Workflow component`_. A workflow is a directed graph of *places* (steps) connected by
+*transitions*; each place is handled by an :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`
+that performs work — calling an agent, running a command, or executing custom logic. The workflow
+state is persisted after every place, so an interrupted run can be resumed exactly where it stopped.
+
+Typical use cases are content pipelines (generate, review, publish), multi-agent hand-offs, and any
+process that chains several AI calls with branching and recovery.
+
+.. note::
+
+    The workflow engine requires the ``symfony/workflow`` package:
+    ``composer require symfony/workflow``.
+
+How It Works
+~~~~~~~~~~~~
+
+The engine builds on three pieces:
+
+* the **Symfony Workflow component** owns the graph (places, transitions, initial place) and
+  decides which transitions are enabled;
+* an :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface` is mapped to each place and performs
+  the actual work;
+* a :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowStateInterface` carries data between places and is
+  persisted by a :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowStateStoreInterface`.
+
+:class:`Symfony\\AI\\Agent\\Workflow\\AgentWorkflow` ties them together. Calling ``run()`` repeats a
+loop until a final place is reached: it persists the state with the current place, runs that place's
+guards and executor, marks the place completed and persists again, then asks the transition resolver
+which transition to apply before moving to the next place.
+
+Because the Symfony Workflow component drives the graph, the workflow definition must use a
+single-state marking store bound to a ``marking`` property, as shown in the examples below.
+
+Basic Usage
+~~~~~~~~~~~
+
+To create a workflow, define the graph using the Symfony Workflow component, map each place to an executor,
+and run it with an initial :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowState`::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Workflow\AgentWorkflow;
+    use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+    use Symfony\AI\Agent\Workflow\Executor\CallableExecutor;
+    use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+    use Symfony\Component\Workflow\DefinitionBuilder;
+    use Symfony\Component\Workflow\MarkingStore\MethodMarkingStore;
+    use Symfony\Component\Workflow\Transition;
+    use Symfony\Component\Workflow\Workflow;
+
+    // Platform and agent instantiation
+
+    $builder = new DefinitionBuilder();
+    $builder
+        ->addPlaces(['generate', 'summarize', 'done'])
+        ->addTransition(new Transition('to_summarize', 'generate', 'summarize'))
+        ->addTransition(new Transition('to_done', 'summarize', 'done'))
+        ->setInitialPlaces(['generate']);
+
+    $workflow = new Workflow(
+        $builder->build(),
+        new MethodMarkingStore(singleState: true, property: 'marking'),
+    );
+
+    $executors = [
+        'generate' => new AgentExecutor($writerAgent, inputKey: 'topic', outputKey: 'draft'),
+        'summarize' => new AgentExecutor($summarizerAgent, inputKey: 'draft', outputKey: 'summary'),
+        'done' => new CallableExecutor(
+            static fn (WorkflowStateInterface $state, string $place): WorkflowStateInterface => $state->set('completed_at', date('c')),
+        ),
+    ];
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, new WorkflowStateStore());
+
+    $finalState = $agentWorkflow->run(
+        new WorkflowState('my-run-id', ['topic' => 'Space exploration']),
+    );
+
+    echo $finalState->get('summary');
+
+WorkflowState
+~~~~~~~~~~~~~
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowState` is an **immutable** data bag that flows
+through the whole workflow. Every mutator returns a *new* instance, so executors must return the
+updated state instead of relying on side effects::
+
+    use Symfony\AI\Agent\Workflow\WorkflowState;
+
+    $state = new WorkflowState('unique-id', ['topic' => 'AI']);
+
+    // Reading data
+    $state->get('topic');           // 'AI'
+    $state->get('missing', 'n/a');  // 'n/a' (default)
+    $state->has('topic');           // true
+    $state->all();                  // ['topic' => 'AI']
+    count($state);                  // 1
+
+    // Writing data — each call returns a new instance
+    $state = $state->set('draft', 'a paragraph');
+    $state = $state->merge(['score' => 9, 'reviewed' => true]);
+    $state = $state->unset('draft');
+
+The state also tracks workflow progress and the conditional-branching hint:
+
+* ``getCurrentPlace()`` returns the place currently executing, or ``null`` once the run completed;
+* ``getCompletedPlaces()`` returns the ordered list of places that already finished;
+* ``getNextTransition()``, ``withNextTransition()`` and ``clearNextTransition()`` manage the
+  transition hint read by the resolver (see `Transitions and Conditional Branching`_).
+
+The first constructor argument is a unique, non-empty identifier; reuse the same id to ``resume()``
+a run later. Generating a UUID is a good default::
+
+    use Symfony\Component\Uid\Uuid;
+
+    $state = new WorkflowState(Uuid::v7()->toRfc4122(), ['topic' => 'AI']);
+
+Executors
+~~~~~~~~~
+
+Every place is mapped to an :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`. An executor
+receives the current state and the place name, performs its work, and returns the updated state.
+The component ships three ready-to-use executors plus a ``RetryExecutor`` decorator.
+
+AgentExecutor
+.............
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\AgentExecutor` delegates to an
+:class:`Symfony\\AI\\Agent\\AgentInterface`. It reads the prompt from a state key, calls the agent,
+and writes the result back::
+
+    use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+
+    $executor = new AgentExecutor(
+        $agent,
+        inputKey: 'prompt',                // state key to read the input from (default: 'input')
+        outputKey: 'response',             // state key to write the result content to (default: 'output')
+        metadataKey: 'usage',              // optional: state key to write the result metadata to
+        options: ['temperature' => 0.2],   // optional: options sent with every agent call
+        optionsKey: 'agent_options',       // optional: state key holding extra per-run options
+        historyKey: 'conversation',        // optional: state key accumulating the conversation
+    );
+
+The input value can be a ``string`` (wrapped into a user message) or a
+:class:`Symfony\\AI\\Platform\\Message\\MessageBag`. When ``metadataKey`` is set, the result
+metadata (token usage, model information, …) is stored under that key as an array. If the agent
+throws, the failure is wrapped in a :class:`Symfony\\AI\\Agent\\Exception\\WorkflowExecutorException`.
+
+The ``options`` are passed to every agent call; when ``optionsKey`` is set, options found under that
+state key are merged on top of them, so a run can tune the call at runtime. When ``historyKey`` is
+set, the executor reads a :class:`Symfony\\AI\\Platform\\Message\\MessageBag` from that key, appends
+the prompt and the response to it, and writes it back — so several ``AgentExecutor`` places sharing
+the same key build up one continuous conversation.
+
+ProcessExecutor
+...............
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\ProcessExecutor` runs a command with the Symfony
+Process component. The command is either a static array or a closure that builds it from state::
+
+    use Symfony\AI\Agent\Workflow\Executor\ProcessExecutor;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    // Static command
+    $executor = new ProcessExecutor(
+        command: ['wc', '-w', '/path/to/file'],
+        outputKey: 'word_count',   // default: 'process_output'
+        timeout: 30,               // seconds, or null to disable (default: 60)
+    );
+
+    // Dynamic command built from state, also capturing stderr and the exit code
+    $executor = new ProcessExecutor(
+        command: static fn (WorkflowStateInterface $state, string $place): array => [
+            'grep', '-c', $state->get('search_term'), $state->get('file_path'),
+        ],
+        outputKey: 'match_count',
+        errorOutputKey: 'grep_errors',  // optional: state key for the standard error output
+        exitCodeKey: 'grep_exit_code',  // optional: state key for the process exit code
+    );
+
+The process must succeed (exit code ``0``); a non-zero exit raises a
+:class:`Symfony\\AI\\Agent\\Exception\\WorkflowExecutorException`.
+
+CallableExecutor
+................
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\CallableExecutor` delegates to a closure. The
+closure receives the state and the place name, and must return a ``WorkflowState``::
+
+    use Symfony\AI\Agent\Workflow\Executor\CallableExecutor;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    $executor = new CallableExecutor(
+        static function (WorkflowStateInterface $state, string $place): WorkflowStateInterface {
+            // Do work and update the state
+            return $state->set('result', 'computed value');
+        },
+    );
+
+Use it for glue logic — aggregating results, formatting output, or branching decisions — that does
+not warrant a dedicated class.
+
+Custom Executors
+................
+
+For reusable logic, implement :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface` directly::
+
+    use Symfony\AI\Agent\Workflow\ExecutorInterface;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    final class ScoringExecutor implements ExecutorInterface
+    {
+        public function execute(WorkflowStateInterface $state, string $place): WorkflowStateInterface
+        {
+            $score = $this->scorer->score($state->get('draft'));
+
+            return $state->set('score', $score);
+        }
+    }
+
+An executor should throw a :class:`Symfony\\AI\\Agent\\Exception\\WorkflowExecutorException` when it
+fails, so the engine persists the state and stops the run cleanly.
+
+Retrying a Failing Executor
+...........................
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\RetryExecutor` wraps any executor and retries it
+when it throws::
+
+    use Symfony\AI\Agent\Workflow\Executor\RetryExecutor;
+    use Symfony\AI\Agent\Workflow\RetryStrategy;
+
+    $executor = new RetryExecutor(
+        new AgentExecutor($agent),
+        maxAttempts: 3,                        // total attempts before giving up (default: 3)
+        baseDelayMs: 1000,                     // base delay between attempts (default: 1000)
+        strategy: RetryStrategy::Exponential,  // or RetryStrategy::Fixed
+    );
+
+With ``RetryStrategy::Fixed`` every wait equals ``baseDelayMs``; with ``RetryStrategy::Exponential``
+the delay doubles after each attempt. A
+:class:`Symfony\\AI\\Platform\\Exception\\RateLimitExceededException` overrides the computed delay
+with its own ``Retry-After`` hint. Guard rejections (``WorkflowGuardException``) and the step-cap
+error (``WorkflowMaxStepsExceededException``) are never retried — they cannot succeed on a second
+attempt. When every attempt fails, the last exception is rethrown unchanged.
+
+Timing Out an Executor
+......................
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\TimeoutExecutor` wraps any executor and aborts it
+when it runs longer than a number of seconds::
+
+    use Symfony\AI\Agent\Workflow\Executor\TimeoutExecutor;
+
+    $executor = new TimeoutExecutor(new AgentExecutor($agent), timeout: 30);
+
+A run exceeding the limit throws a :class:`Symfony\\AI\\Agent\\Exception\\WorkflowTimeoutException`.
+The timeout is enforced with a ``SIGALRM`` signal, so it requires the ``pcntl`` extension on a
+Unix-like platform; where ``pcntl`` is unavailable the executor runs without a timeout and a warning
+is logged. Combine it with ``RetryExecutor`` — ``new RetryExecutor(new TimeoutExecutor(...))`` — so
+every retry attempt gets its own deadline.
+
+Guards
+~~~~~~
+
+A guard runs *before* a place's executor and decides whether the place may execute. A guard
+implements :class:`Symfony\\AI\\Agent\\Workflow\\GuardInterface`, which declares ``supports()`` —
+the places the guard applies to — and ``allows()`` — the actual check.
+
+The :class:`Symfony\\AI\\Agent\\Workflow\\AbstractGuard` base class implements ``supports()`` from
+the list of places passed to its constructor, so a concrete guard only implements ``allows()``::
+
+    use Symfony\AI\Agent\Workflow\AbstractGuard;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    final class MinimumLengthGuard extends AbstractGuard
+    {
+        public function allows(WorkflowStateInterface $state, string $place): bool
+        {
+            return mb_strlen((string) $state->get('draft', '')) >= 100;
+        }
+    }
+
+Guards are passed to the workflow as a flat list — each guard decides which places it applies to::
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store, guards: [
+        new MinimumLengthGuard(['review']),
+    ]);
+
+A guard that applies to several places lists them all, and a guard constructed without any place
+applies to every place. Every guard supporting a place must return ``true`` from ``allows()``; if
+any returns ``false``, the engine throws a
+:class:`Symfony\\AI\\Agent\\Exception\\WorkflowGuardException`, persists the state at that place,
+and stops — so the run can be resumed once the blocking condition is resolved.
+
+For dynamic place matching, implement :class:`Symfony\\AI\\Agent\\Workflow\\GuardInterface` directly
+and provide your own ``supports()`` instead of extending ``AbstractGuard``.
+
+When the check fits in a single expression, the
+:class:`Symfony\\AI\\Agent\\Workflow\\ExpressionGuard` evaluates one instead of a PHP method (it
+requires the ``symfony/expression-language`` package)::
+
+    use Symfony\AI\Agent\Workflow\ExpressionGuard;
+
+    $guard = new ExpressionGuard('data["score"] >= 0.7', ['review']);
+
+The expression has access to ``state`` (the ``WorkflowStateInterface``), ``data`` (the state data
+array) and ``place`` (the place being entered), and must evaluate to a boolean.
+
+When guards are wired through the AI Bundle, the
+:class:`Symfony\\AI\\Agent\\Workflow\\Attribute\\AsWorkflowGuard` attribute registers a guard on a
+workflow without listing it explicitly; see the :doc:`AI Bundle documentation </bundles/ai-bundle>`.
+
+Transitions and Conditional Branching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After a place completes, a :class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolverInterface`
+decides which transition to apply. The default
+:class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolver\\StateBasedTransitionResolver`:
+
+* returns no transition when none is enabled — the workflow is then complete;
+* applies the only enabled transition automatically when there is exactly one;
+* when several transitions are enabled, applies the one named by the state's *next transition*
+  hint, and throws a :class:`Symfony\\AI\\Agent\\Exception\\TransitionResolutionException` if no
+  hint was set.
+
+An executor sets the hint by calling ``withNextTransition()`` on the state it returns::
+
+    use Symfony\AI\Agent\Workflow\Executor\CallableExecutor;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $reviewExecutor = new CallableExecutor(
+        static function (WorkflowStateInterface $state, string $place) use ($reviewerAgent): WorkflowStateInterface {
+            $feedback = $reviewerAgent->call(new MessageBag(
+                Message::ofUser('Review: '.$state->get('draft')),
+            ))->getContent();
+
+            $state = $state->set('feedback', $feedback);
+
+            if (str_contains($feedback, 'APPROVED')) {
+                return $state->withNextTransition('approve');
+            }
+
+            return $state->withNextTransition('reject');
+        },
+    );
+
+Given a ``review`` place with two outgoing transitions ``approve`` and ``reject``, the executor
+above routes the workflow to the ``approved`` or ``rejected`` place accordingly.
+
+To implement custom routing — for example picking a transition from a numeric score — implement
+:class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolverInterface` and pass it as the fourth
+constructor argument of :class:`Symfony\\AI\\Agent\\Workflow\\AgentWorkflow`.
+
+For declarative routing, the
+:class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolver\\ExpressionTransitionResolver` picks a
+transition by evaluating one boolean expression per candidate (it requires the
+``symfony/expression-language`` package)::
+
+    use Symfony\AI\Agent\Workflow\TransitionResolver\ExpressionTransitionResolver;
+
+    $resolver = new ExpressionTransitionResolver([
+        'approve' => 'data["score"] >= 0.7',
+        'reject' => 'data["score"] < 0.7',
+    ]);
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store, transitionResolver: $resolver);
+
+The first expression whose transition is enabled and which evaluates truthy wins; when none match,
+resolution falls back to ``StateBasedTransitionResolver`` semantics. Expressions have access to
+``state``, ``data``, ``place`` and ``transitions`` (the enabled transition names).
+
+Parallel Execution and Merge Policies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A workflow definition may *fork* — an AND-split transition leads to several places at once — and
+later *join* them back. When a marking holds more than one place, the engine runs every branch
+through a :class:`Symfony\\AI\\Agent\\Workflow\\ParallelExecutionStrategyInterface` and merges the
+branch states before continuing. Linear workflows (one place at a time) keep their fast path with no
+added overhead.
+
+The default :class:`Symfony\\AI\\Agent\\Workflow\\ParallelExecution\\ConcurrentExecutionStrategy`
+dispatches branch agent calls together, so their HTTP requests overlap and a fan-out of
+``AgentExecutor`` branches costs close to the slowest branch rather than the sum of all of them.
+Branches whose executors are not agent calls still run correctly, but sequentially and without that
+speedup. The :class:`Symfony\\AI\\Agent\\Workflow\\ParallelExecution\\SequentialExecutionStrategy`
+runs every branch one after another and is available as a deterministic fallback; pass either as the
+``parallelStrategy`` argument of ``AgentWorkflow``.
+
+Once every branch finishes, their states are merged. When two branches write **different** values to
+the **same** state key, a :class:`Symfony\\AI\\Agent\\Workflow\\MergePolicy` decides the outcome:
+
+* ``MergePolicy::FailOnConflict`` (default) — throws a
+  :class:`Symfony\\AI\\Agent\\Exception\\WorkflowMergeConflictException`;
+* ``MergePolicy::LastBranchWins`` / ``MergePolicy::FirstBranchWins`` — keeps the last / first branch's value;
+* ``MergePolicy::PreferNonNull`` — keeps whichever value is not ``null``.
+
+Pass the policy as the ``mergePolicy`` argument::
+
+    use Symfony\AI\Agent\Workflow\MergePolicy;
+    use Symfony\AI\Agent\Workflow\ParallelExecution\SequentialExecutionStrategy;
+
+    $agentWorkflow = new AgentWorkflow(
+        $workflow, $executors, $store,
+        parallelStrategy: new SequentialExecutionStrategy(),
+        mergePolicy: MergePolicy::LastBranchWins,
+    );
+
+Branches that write disjoint keys never conflict, so the policy only matters for genuinely
+overlapping writes. If a branch fails, a
+:class:`Symfony\\AI\\Agent\\Exception\\WorkflowBranchException` reports which place threw. The
+branches that *did* finish are folded into the persisted state, so resuming the run re-executes only
+the branches that had not completed — a failed fan-out never repeats the agent calls that already
+succeeded.
+
+State Persistence
+~~~~~~~~~~~~~~~~~
+
+The workflow state is persisted after every place through a
+:class:`Symfony\\AI\\Agent\\Workflow\\WorkflowStateStoreInterface`. The component ships four
+implementations:
+
+* **In-memory** — ``Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore``, constructed without
+  arguments. Best for testing and single-request runs; state is lost when the process ends.
+* **Cache** — ``Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore``, backed by a PSR-6
+  ``CacheItemPoolInterface``. Accepts a key prefix and a TTL (default one day).
+* **Filesystem** — ``Symfony\AI\Agent\Workflow\Bridge\Filesystem\WorkflowStateStore``, backed by the
+  Symfony Filesystem component and a target directory.
+* **Redis** — ``Symfony\AI\Agent\Workflow\Bridge\Redis\WorkflowStateStore``, backed by the ``\Redis``
+  extension and a key prefix.
+
+Configure a store and pass it to the workflow::
+
+    use Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore;
+    use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+
+    $store = new WorkflowStateStore(new FilesystemAdapter(), '_workflow_', 3600);
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store);
+
+The cache, filesystem and Redis stores also implement
+:class:`Symfony\\AI\\Agent\\Workflow\\ManagedWorkflowStateStoreInterface`, which exposes ``setup()``
+to provision the backend and ``drop()`` to remove every stored workflow state. ``drop()`` only
+deletes the store's own entries — it never clears unrelated cache or Redis keys.
+
+All four stores additionally implement
+:class:`Symfony\\AI\\Agent\\Workflow\\ListableWorkflowStateStoreInterface`, whose ``list()`` method
+enumerates the ids of every persisted workflow state — useful for dashboards or cleanup jobs.
+
+Resuming a Workflow
+~~~~~~~~~~~~~~~~~~~
+
+Because the state is persisted after every place, a run can be resumed by id with ``resume()``::
+
+    // First run — may stop early if a place fails
+    $agentWorkflow->run(new WorkflowState('order-42', ['topic' => 'AI']));
+
+    // Later, in another request or process, continue from where it stopped
+    $finalState = $agentWorkflow->resume('order-42');
+
+When a run is interrupted — an executor throws, a guard rejects a place, or the process is killed —
+the state is persisted together with the place that was running. ``resume()`` then re-runs the
+interrupted place if the run stopped *during* a place, or applies the next transition if it stopped
+*between* two places. Places that already completed are never executed again, so resuming never
+repeats a paid agent call.
+
+Resuming an id that has no persisted state throws a
+:class:`Symfony\\AI\\Agent\\Exception\\WorkflowStateNotFoundException`.
+
+Concurrency-safe Locking
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the same workflow id may be started or resumed from several processes — a web request and a
+worker, or two queue consumers — pass a ``LockFactory`` so only one of them runs at a time (it
+requires the ``symfony/lock`` package)::
+
+    use Symfony\Component\Lock\LockFactory;
+    use Symfony\Component\Lock\Store\FlockStore;
+
+    $agentWorkflow = new AgentWorkflow(
+        $workflow, $executors, $store,
+        lockFactory: new LockFactory(new FlockStore()),
+    );
+
+``run()`` and ``resume()`` acquire a non-blocking lock keyed on the workflow id. If another process
+already holds it, the call fails fast with a
+:class:`Symfony\\AI\\Agent\\Exception\\WorkflowLockedException` instead of executing the same steps
+twice. Without a ``LockFactory`` the workflow runs unlocked.
+
+Lifecycle Events
+~~~~~~~~~~~~~~~~
+
+Pass a PSR-14 event dispatcher to :class:`Symfony\\AI\\Agent\\Workflow\\AgentWorkflow` to observe a
+run. The following events from the ``Symfony\AI\Agent\Workflow\Event`` namespace are dispatched:
+
+* ``WorkflowStartedEvent`` — a ``run()`` or ``resume()`` call started; ``isResume()`` tells which;
+* ``PlaceEnteredEvent`` — a place's guards passed and its executor is about to run;
+* ``PlaceCompletedEvent`` — a place's executor finished successfully;
+* ``TransitionAppliedEvent`` — a transition moved the workflow to the next place;
+* ``WorkflowCompletedEvent`` — the workflow reached a final place;
+* ``WorkflowFailedEvent`` — a guard rejected a place, an executor threw, or the step cap was hit;
+  ``getError()`` exposes the cause.
+
+Every event exposes the current ``WorkflowStateInterface`` through ``getState()``::
+
+    use Symfony\AI\Agent\Workflow\AgentWorkflow;
+    use Symfony\AI\Agent\Workflow\Event\PlaceCompletedEvent;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addListener(PlaceCompletedEvent::class, function (PlaceCompletedEvent $event): void {
+        echo \sprintf('Place "%s" done for run %s', $event->getPlace(), $event->getState()->getId());
+    });
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store, eventDispatcher: $dispatcher);
+
+Logging
+~~~~~~~
+
+Pass a PSR-3 logger to record the same lifecycle — run start and resume, place transitions,
+failures and completion::
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store, logger: $logger);
+
+The logger and the event dispatcher are independent; either, both, or neither may be provided.
+
+Limiting Execution Steps
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A workflow definition may contain cycles — for instance a ``reject`` transition routing back to an
+earlier place. To prevent an unbounded run, :class:`Symfony\\AI\\Agent\\Workflow\\AgentWorkflow`
+caps the number of execution steps with the ``maxSteps`` argument (default ``100``)::
+
+    $agentWorkflow = new AgentWorkflow($workflow, $executors, $store, maxSteps: 25);
+
+When the cap is exceeded, a :class:`Symfony\\AI\\Agent\\Exception\\WorkflowMaxStepsExceededException`
+is thrown.
+
+Error Handling
+~~~~~~~~~~~~~~
+
+All workflow exceptions live in the ``Symfony\AI\Agent\Exception`` namespace and implement the
+component's ``ExceptionInterface``:
+
+* ``InvalidArgumentException`` — a workflow place has no registered executor; thrown before any
+  place runs;
+* ``WorkflowGuardException`` — a guard rejected a place;
+* ``WorkflowExecutorException`` — an executor failed;
+* ``WorkflowTimeoutException`` — an executor exceeded its ``TimeoutExecutor`` deadline;
+* ``TransitionResolutionException`` — no transition could be resolved (ambiguous or unknown hint);
+* ``WorkflowMaxStepsExceededException`` — the ``maxSteps`` cap was exceeded;
+* ``WorkflowStateNotFoundException`` — ``resume()`` was called with an unknown id;
+* ``WorkflowLockedException`` — another process already holds the workflow id's lock;
+* ``WorkflowBranchException`` — a branch of a parallel (AND-split) section failed;
+* ``WorkflowMergeConflictException`` — parallel branches wrote conflicting values while the merge
+  policy was ``FailOnConflict``.
+
+Whenever a run stops on an error, the state is left persisted at the failing place, so it can be
+inspected and the run resumed once the cause is fixed.
+
+Using Workflows with the AI Bundle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With the AI Bundle, workflows are configured declaratively under the ``workflow`` key — executors,
+guards, state store and transition resolver are wired from configuration, and an
+:class:`Symfony\\AI\\Agent\\Workflow\\AgentWorkflowInterface` service is exposed for injection. See
+the :doc:`AI Bundle documentation </bundles/ai-bundle>` for the full reference.
+
+Workflow Code Examples
+~~~~~~~~~~~~~~~~~~~~~~
+
+* `Linear Workflow`_
+* `Conditional Branching Workflow`_
+* `Mixed Executors Workflow`_
+* `Parallel Fan-out Workflow`_
+
+
 Testing
 -------
 
@@ -1051,3 +1634,8 @@ Code Examples
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
 .. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
 .. _`Tool Call Argument Validation`: https://github.com/symfony/ai/blob/main/examples/toolbox/validation.php
+.. _`Symfony Workflow component`: https://symfony.com/doc/current/components/workflow.html
+.. _`Linear Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/linear.php
+.. _`Conditional Branching Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/conditional-branching.php
+.. _`Mixed Executors Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/process-executor.php
+.. _`Parallel Fan-out Workflow`: https://github.com/symfony/ai/blob/main/examples/workflow/parallel-fan-out.php

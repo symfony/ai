@@ -33,9 +33,26 @@ use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+use Symfony\AI\Agent\Workflow\AgentWorkflow;
+use Symfony\AI\Agent\Workflow\AgentWorkflowInterface;
+use Symfony\AI\Agent\Workflow\Attribute\AsWorkflowGuard;
+use Symfony\AI\Agent\Workflow\Bridge\Cache\WorkflowStateStore as CacheWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Bridge\Filesystem\WorkflowStateStore as FilesystemWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Bridge\Redis\WorkflowStateStore as RedisWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\Executor\AgentExecutor;
+use Symfony\AI\Agent\Workflow\Executor\RetryExecutor;
+use Symfony\AI\Agent\Workflow\Executor\TimeoutExecutor;
+use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore as InMemoryWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\ManagedWorkflowStateStoreInterface;
+use Symfony\AI\Agent\Workflow\MergePolicy;
+use Symfony\AI\Agent\Workflow\RetryStrategy;
+use Symfony\AI\Agent\Workflow\TransitionResolver\ExpressionTransitionResolver;
+use Symfony\AI\Agent\Workflow\TransitionResolver\StateBasedTransitionResolver;
+use Symfony\AI\Agent\Workflow\WorkflowStateStoreInterface;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
+use Symfony\AI\AiBundle\DependencyInjection\WorkflowGuardCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
@@ -156,11 +173,13 @@ use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -180,6 +199,7 @@ final class AiBundle extends AbstractBundle
         $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
         $container->addCompilerPass(new SchemaProviderValidationPass());
+        $container->addCompilerPass(new WorkflowGuardCompilerPass());
     }
 
     public function configure(DefinitionConfigurator $definition): void
@@ -229,6 +249,36 @@ final class AiBundle extends AbstractBundle
             foreach ($config['multi_agent'] as $multiAgentName => $multiAgent) {
                 $this->processMultiAgentConfig($multiAgentName, $multiAgent, $builder);
             }
+        }
+
+        if ([] !== ($config['workflow'] ?? [])) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Workflow configuration requires "symfony/ai-agent" package. Try running "composer require symfony/ai-agent".');
+            }
+
+            $workflowStoreReferences = [];
+            foreach ($config['workflow'] as $workflowName => $workflow) {
+                $this->processWorkflowConfig($workflowName, $workflow, $builder);
+                $workflowStoreReferences[$workflowName] = new Reference('ai.workflow.'.$workflowName.'.store');
+            }
+
+            $workflows = array_keys($builder->findTaggedServiceIds('ai.agent_workflow'));
+            if (1 === \count($workflows)) {
+                $builder->setAlias(AgentWorkflowInterface::class, reset($workflows));
+            }
+
+            $workflowStoreLocator = ServiceLocatorTagPass::register($builder, $workflowStoreReferences);
+            $builder->getDefinition('ai.command.workflow_setup')->setArgument(0, $workflowStoreLocator);
+            $builder->getDefinition('ai.command.workflow_drop')->setArgument(0, $workflowStoreLocator);
+            $builder->getDefinition('ai.command.workflow_list')->setArgument(0, $workflowStoreLocator);
+            $builder->getDefinition('ai.command.workflow_delete')->setArgument(0, $workflowStoreLocator);
+            $builder->getDefinition('ai.command.workflow_prune')->setArgument(0, $workflowStoreLocator);
+        } else {
+            $builder->removeDefinition('ai.command.workflow_setup');
+            $builder->removeDefinition('ai.command.workflow_drop');
+            $builder->removeDefinition('ai.command.workflow_list');
+            $builder->removeDefinition('ai.command.workflow_delete');
+            $builder->removeDefinition('ai.command.workflow_prune');
         }
 
         $setupStoresOptions = [];
@@ -352,10 +402,21 @@ final class AiBundle extends AbstractBundle
                 ]);
             });
 
+            $builder->registerAttributeForAutoconfiguration(AsWorkflowGuard::class, static function (ChildDefinition $definition, AsWorkflowGuard $attribute): void {
+                $definition->addTag('ai.agent_workflow.guard', [
+                    'workflow' => $attribute->workflow,
+                    'priority' => $attribute->priority,
+                ]);
+            });
+
             $builder->registerForAutoconfiguration(InputProcessorInterface::class)
                 ->addTag('ai.agent.input_processor', ['tagged_by' => 'interface']);
             $builder->registerForAutoconfiguration(OutputProcessorInterface::class)
                 ->addTag('ai.agent.output_processor', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(WorkflowStateStoreInterface::class)
+                ->addTag('ai.agent_workflow.state_store', ['tagged_by' => 'interface']);
+            $builder->registerForAutoconfiguration(ManagedWorkflowStateStoreInterface::class)
+                ->addTag('ai.agent_workflow.state_store', ['tagged_by' => 'interface']);
         }
 
         $builder->registerForAutoconfiguration(ModelClientInterface::class)
@@ -2712,5 +2773,146 @@ final class AiBundle extends AbstractBundle
 
         $definition = $builder->getDefinition($modelCatalogId);
         $definition->setArguments([$additionalModels]);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processWorkflowConfig(string $name, array $config, ContainerBuilder $container): void
+    {
+        // 1. Register executors
+        $executorReferences = [];
+        foreach ($config['executors'] as $place => $executorConfig) {
+            $executorId = 'ai.workflow.'.$name.'.executor.'.$place;
+
+            if ('agent' === $executorConfig['type']) {
+                $container->setDefinition($executorId, new Definition(AgentExecutor::class, [
+                    new Reference(self::normalizeAgentServiceId($executorConfig['agent'])),
+                    $executorConfig['input_key'],
+                    $executorConfig['output_key'],
+                    $executorConfig['metadata_key'],
+                    $executorConfig['options'],
+                    $executorConfig['options_key'],
+                    $executorConfig['history_key'],
+                ]));
+
+                $executorReference = new Reference($executorId);
+            } elseif ('service' === $executorConfig['type']) {
+                $executorReference = new Reference($executorConfig['service']);
+            } else {
+                throw new InvalidArgumentException(\sprintf('Unsupported executor type "%s".', $executorConfig['type']));
+            }
+
+            if ($executorConfig['timeout'] > 0) {
+                $timeoutDefinition = new Definition(TimeoutExecutor::class, [
+                    $executorReference,
+                    $executorConfig['timeout'],
+                    new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ]);
+
+                $container->setDefinition($executorId.'.timeout', $timeoutDefinition);
+                $executorReference = new Reference($executorId.'.timeout');
+            }
+
+            if ($executorConfig['retry']['enabled']) {
+                $retryDefinition = new Definition(RetryExecutor::class, [
+                    $executorReference,
+                    $executorConfig['retry']['max_attempts'],
+                    $executorConfig['retry']['base_delay_ms'],
+                    RetryStrategy::from($executorConfig['retry']['strategy']),
+                ]);
+                $retryDefinition->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE));
+
+                $container->setDefinition($executorId.'.retryable', $retryDefinition);
+                $executorReference = new Reference($executorId.'.retryable');
+            }
+
+            $executorReferences[$place] = $executorReference;
+        }
+
+        // 2. Register state store
+        $storeConfig = $config['store'];
+        $storeId = 'ai.workflow.'.$name.'.store';
+
+        $store = match ($storeConfig['type']) {
+            'memory' => new Definition(InMemoryWorkflowStateStore::class),
+            'cache' => new Definition(CacheWorkflowStateStore::class, [
+                new Reference($storeConfig['cache_service']),
+                $storeConfig['prefix'],
+                $storeConfig['ttl'],
+            ]),
+            'filesystem' => new Definition(FilesystemWorkflowStateStore::class, [
+                new Definition(Filesystem::class),
+                $storeConfig['directory'],
+            ]),
+            'redis' => new Definition(RedisWorkflowStateStore::class, [
+                new Reference($storeConfig['redis_client']),
+                $storeConfig['prefix'],
+            ]),
+            'service' => new Reference($storeConfig['service']),
+            default => throw new InvalidArgumentException(\sprintf('Unsupported store type "%s"', $storeConfig['type'])),
+        };
+
+        if ($store instanceof Reference) {
+            // A custom store service is tagged through WorkflowStateStoreInterface autoconfiguration.
+            $container->setAlias($storeId, (string) $store);
+        } else {
+            $store->addTag('ai.agent_workflow.state_store');
+            $container->setDefinition($storeId, $store);
+        }
+
+        // 3. Register guards
+        $guardReferences = array_map(
+            static fn (string $guardService): Reference => new Reference($guardService),
+            $config['guards'] ?? [],
+        );
+
+        // 4. Register transition resolver
+        if ([] !== $config['transition_expressions']) {
+            $transitionResolverId = 'ai.workflow.'.$name.'.transition_resolver';
+            $container->setDefinition($transitionResolverId, new Definition(ExpressionTransitionResolver::class, [
+                $config['transition_expressions'],
+            ]));
+            $transitionResolverRef = new Reference($transitionResolverId);
+        } elseif (null !== $config['transition_resolver']) {
+            $transitionResolverRef = new Reference($config['transition_resolver']);
+        } else {
+            $transitionResolverId = 'ai.workflow.'.$name.'.transition_resolver';
+            $container->setDefinition($transitionResolverId, new Definition(StateBasedTransitionResolver::class));
+            $transitionResolverRef = new Reference($transitionResolverId);
+        }
+
+        // 5. Resolve optional locking and parallel-execution services
+        $lockFactoryReference = null;
+        if ($config['lock']['enabled']) {
+            $lockFactoryReference = new Reference($config['lock']['factory']);
+        }
+
+        $parallelStrategyReference = null;
+        if (null !== $config['parallel']['strategy']) {
+            $parallelStrategyReference = new Reference($config['parallel']['strategy']);
+        }
+
+        // 6. Register the workflow orchestrator
+        $agentWorkflowDefinition = (new Definition(AgentWorkflow::class))
+            ->setLazy(true)
+            ->setArguments([
+                new Reference('workflow.'.$config['workflow']),
+                $executorReferences,
+                new Reference($storeId),
+                $transitionResolverRef,
+                $guardReferences,
+                $config['max_steps'],
+                new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                $lockFactoryReference,
+                $parallelStrategyReference,
+                MergePolicy::from($config['parallel']['merge_policy']),
+            ])
+            ->addTag('proxy', ['interface' => AgentWorkflowInterface::class])
+            ->addTag('ai.agent_workflow', ['name' => $name]);
+
+        $container->setDefinition('ai.workflow.'.$name, $agentWorkflowDefinition);
+        $container->registerAliasForArgument('ai.workflow.'.$name, AgentWorkflowInterface::class, (new Target($name))->getParsedName());
     }
 }

@@ -18,9 +18,15 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
+use Symfony\AI\Agent\Workflow\Command\DeleteWorkflowCommand;
+use Symfony\AI\Agent\Workflow\Command\DropWorkflowCommand;
+use Symfony\AI\Agent\Workflow\Command\ListWorkflowCommand;
+use Symfony\AI\Agent\Workflow\Command\PruneWorkflowCommand;
+use Symfony\AI\Agent\Workflow\Command\SetupWorkflowCommand;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
+use Symfony\AI\AiBundle\Profiler\WorkflowTraceSubscriber;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
@@ -272,6 +278,9 @@ return static function (ContainerConfigurator $container): void {
             ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])
 
         // profiler
+        ->set('ai.workflow_trace_subscriber', WorkflowTraceSubscriber::class)
+            ->tag('kernel.event_subscriber')
+            ->tag('kernel.reset', ['method' => 'reset'])
         ->set('ai.data_collector', DataCollector::class)
             ->args([
                 tagged_iterator('ai.traceable_platform'),
@@ -280,6 +289,9 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_chat'),
                 tagged_iterator('ai.traceable_agent'),
                 tagged_iterator('ai.traceable_store'),
+                tagged_iterator('ai.traceable_agent_workflow'),
+                tagged_iterator('ai.traceable_agent_workflow_state_store'),
+                service('ai.workflow_trace_subscriber'),
             ])
             ->tag('data_collector', ['id' => 'ai'])
 
@@ -332,6 +344,31 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.drop_message_store', DropMessageStoreCommand::class)
             ->args([
                 tagged_locator('ai.message_store', 'name'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.workflow_setup', SetupWorkflowCommand::class)
+            ->args([
+                abstract_arg('workflow state store locator'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.workflow_drop', DropWorkflowCommand::class)
+            ->args([
+                abstract_arg('workflow state store locator'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.workflow_list', ListWorkflowCommand::class)
+            ->args([
+                abstract_arg('workflow state store locator'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.workflow_delete', DeleteWorkflowCommand::class)
+            ->args([
+                abstract_arg('workflow state store locator'),
+            ])
+            ->tag('console.command')
+        ->set('ai.command.workflow_prune', PruneWorkflowCommand::class)
+            ->args([
+                abstract_arg('workflow state store locator'),
             ])
             ->tag('console.command')
     ;

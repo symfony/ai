@@ -23,6 +23,7 @@ Framework for building AI agents with user interaction and task execution. Built
 - **Toolbox** (`src/Toolbox/`): Function calling capabilities
 - **MultiAgent** (`src/MultiAgent/`): Orchestration across multiple specialized agents
 - **Bridge** (`src/Bridge/`): Third-party tool integrations (Brave, Tavily, Wikipedia, etc.)
+- **Workflow** (`src/Workflow/`): Multi-step agent orchestration using the Symfony Workflow component
 
 ## Essential Commands
 

@@ -14,6 +14,9 @@ namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
+use Symfony\AI\Agent\Workflow\InMemory\WorkflowStateStore as InMemoryWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\TraceableAgentWorkflow;
+use Symfony\AI\Agent\Workflow\TraceableWorkflowStateStore;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
@@ -36,6 +39,8 @@ final class DebugCompilerPassTest extends TestCase
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
         $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
         $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
+        $container->register('ai.agent_workflow.workflow', \stdClass::class)->addTag('ai.agent_workflow');
+        $container->register('ai.agent_workflow.state_store.state_store', InMemoryWorkflowStateStore::class)->addTag('ai.agent_workflow.state_store');
 
         (new DebugCompilerPass())->process($container);
 
@@ -80,6 +85,26 @@ final class DebugCompilerPassTest extends TestCase
         $this->assertEquals([new Reference('.inner')], $traceableStore->getArguments());
         $this->assertTrue($traceableStore->hasTag('ai.traceable_store'));
         $this->assertSame([['method' => 'reset']], $traceableStore->getTag('kernel.reset'));
+
+        $traceableAgentWorkflow = $container->getDefinition('ai.traceable_agent_workflow.workflow');
+        $this->assertSame(TraceableAgentWorkflow::class, $traceableAgentWorkflow->getClass());
+        $this->assertSame(['ai.agent_workflow.workflow', null, -1024], $traceableAgentWorkflow->getDecoratedService());
+        $this->assertEquals([
+            new Reference('.inner'),
+            new Reference(ClockInterface::class),
+        ], $traceableAgentWorkflow->getArguments());
+        $this->assertTrue($traceableAgentWorkflow->hasTag('ai.traceable_agent_workflow'));
+        $this->assertSame([['method' => 'reset']], $traceableAgentWorkflow->getTag('kernel.reset'));
+
+        $traceableAgentWorkflowStateStore = $container->getDefinition('ai.traceable_agent_workflow_state_store.state_store');
+        $this->assertSame(TraceableWorkflowStateStore::class, $traceableAgentWorkflowStateStore->getClass());
+        $this->assertSame(['ai.agent_workflow.state_store.state_store', null, -1024], $traceableAgentWorkflowStateStore->getDecoratedService());
+        $this->assertEquals([
+            new Reference('.inner'),
+            new Reference(ClockInterface::class),
+        ], $traceableAgentWorkflowStateStore->getArguments());
+        $this->assertTrue($traceableAgentWorkflowStateStore->hasTag('ai.traceable_agent_workflow_state_store'));
+        $this->assertSame([['method' => 'reset']], $traceableAgentWorkflowStateStore->getTag('kernel.reset'));
     }
 
     public function testProcessSkipsWhenDebugDisabled()
@@ -93,6 +118,8 @@ final class DebugCompilerPassTest extends TestCase
         $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
         $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
         $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
+        $container->register('ai.agent_workflow.workflow', \stdClass::class)->addTag('ai.agent_workflow');
+        $container->register('ai.agent_workflow.state_store.store', \stdClass::class)->addTag('ai.agent_workflow.state_store');
 
         (new DebugCompilerPass())->process($container);
 
@@ -102,5 +129,20 @@ final class DebugCompilerPassTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.traceable_toolbox.my_agent'));
         $this->assertFalse($container->hasDefinition('ai.traceable_agent.my_agent'));
         $this->assertFalse($container->hasDefinition('ai.traceable_store.store'));
+        $this->assertFalse($container->hasDefinition('ai.traceable_agent_workflow.workflow'));
+        $this->assertFalse($container->hasDefinition('ai.traceable_agent_workflow_state_store.state_store'));
+    }
+
+    public function testProcessSkipsWorkflowStateStoreTracingForUnsupportedStore()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', true);
+
+        // A custom store that does not implement the managed/listable interfaces cannot be wrapped.
+        $container->register('ai.agent_workflow.state_store.custom', \stdClass::class)->addTag('ai.agent_workflow.state_store');
+
+        (new DebugCompilerPass())->process($container);
+
+        $this->assertFalse($container->hasDefinition('ai.traceable_agent_workflow_state_store.custom'));
     }
 }
