@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Preserve paragraph breaks between streamed reasoning summary parts when summary indices restart
+
 0.11
 ----
 

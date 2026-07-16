@@ -16,4 +16,13 @@ namespace Symfony\AI\Platform\Result\Stream\Delta;
  */
 final class ThinkingStart implements DeltaInterface
 {
+    public function __construct(
+        private readonly ?string $id = null,
+    ) {
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id;
+    }
 }

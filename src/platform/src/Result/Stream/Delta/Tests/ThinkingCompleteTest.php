@@ -26,9 +26,10 @@ final class ThinkingCompleteTest extends TestCase
 
     public function testThinkingCompleteWithoutSignature()
     {
-        $content = new ThinkingComplete('reasoning here');
+        $content = new ThinkingComplete('reasoning here', id: 'reasoning-1');
 
         $this->assertSame('reasoning here', $content->getThinking());
         $this->assertNull($content->getSignature());
+        $this->assertSame('reasoning-1', $content->getId());
     }
 }

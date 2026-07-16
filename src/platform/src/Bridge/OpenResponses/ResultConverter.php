@@ -412,7 +412,10 @@ class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
-        $currentThinking = null;
+        /** @var array<int, string> $thinkingByOutputIndex */
+        $thinkingByOutputIndex = [];
+        /** @var array<int, true> $completedThinkingParts */
+        $completedThinkingParts = [];
         /** @var array<string, ToolCall> $toolCalls */
         $toolCalls = [];
         $sawResponseEvent = false;
@@ -467,22 +470,54 @@ class ResultConverter implements ResultConverterInterface
                 yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
             }
 
+            if ('response.output_text.delta' === $type && isset($thinkingByOutputIndex[0]) && 1 === \count($thinkingByOutputIndex)) {
+                yield new ThinkingComplete($thinkingByOutputIndex[0]);
+                unset($thinkingByOutputIndex[0], $completedThinkingParts[0]);
+            }
+
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
                 yield new TextDelta($event['delta']);
             }
 
-            if ('response.reasoning_summary_text.delta' === $type && isset($event['delta'])) {
-                if (null === $currentThinking) {
-                    $currentThinking = '';
-                    yield new ThinkingStart();
+            if ('response.output_item.added' === $type && \is_array($event['item'] ?? null) && 'reasoning' === ($event['item']['type'] ?? null)) {
+                $outputIndex = $event['output_index'] ?? null;
+                if (\is_int($outputIndex)) {
+                    $thinkingByOutputIndex[$outputIndex] = '';
+                    yield new ThinkingStart((string) $outputIndex);
                 }
-                $currentThinking .= $event['delta'];
-                yield new ThinkingDelta($event['delta']);
             }
 
-            if ('response.reasoning_summary_text.done' === $type) {
-                yield new ThinkingComplete($currentThinking ?? '');
-                $currentThinking = null;
+            if ('response.reasoning_summary_text.delta' === $type && isset($event['delta'])) {
+                $outputIndex = $event['output_index'] ?? 0;
+                $id = (string) $outputIndex;
+                if (!isset($thinkingByOutputIndex[$outputIndex])) {
+                    $thinkingByOutputIndex[$outputIndex] = '';
+                    yield new ThinkingStart($id);
+                }
+                if (isset($completedThinkingParts[$outputIndex]) && '' !== $thinkingByOutputIndex[$outputIndex] && !str_ends_with($thinkingByOutputIndex[$outputIndex], "\n\n")) {
+                    $thinkingByOutputIndex[$outputIndex] .= "\n\n";
+                    yield new ThinkingDelta("\n\n", $id);
+                }
+                unset($completedThinkingParts[$outputIndex]);
+                $thinkingByOutputIndex[$outputIndex] .= $event['delta'];
+                yield new ThinkingDelta($event['delta'], $id);
+            }
+
+            if ('response.reasoning_summary_part.done' === $type) {
+                $outputIndex = $event['output_index'] ?? 0;
+                $completedThinkingParts[$outputIndex] = true;
+            }
+
+            if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'reasoning' === ($event['item']['type'] ?? null)) {
+                $outputIndex = $event['output_index'] ?? null;
+                $thinking = implode("\n\n", array_column($event['item']['summary'] ?? $event['item']['content'] ?? [], 'text'));
+                if ('' === $thinking && \is_int($outputIndex)) {
+                    $thinking = $thinkingByOutputIndex[$outputIndex] ?? '';
+                }
+                yield new ThinkingComplete($thinking, id: \is_int($outputIndex) ? (string) $outputIndex : null);
+                if (\is_int($outputIndex)) {
+                    unset($thinkingByOutputIndex[$outputIndex], $completedThinkingParts[$outputIndex]);
+                }
             }
 
             if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'function_call' === ($event['item']['type'] ?? null)) {
