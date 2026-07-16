@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Anthropic;
+namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\TokenUsageExtractor;

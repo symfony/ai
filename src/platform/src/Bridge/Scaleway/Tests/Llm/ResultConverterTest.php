@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Bridge\Scaleway\Llm;
+namespace Symfony\AI\Platform\Bridge\Scaleway\Tests\Llm;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Scaleway\Llm\ResultConverter;
