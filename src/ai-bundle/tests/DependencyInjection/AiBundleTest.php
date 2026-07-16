@@ -197,9 +197,11 @@ class AiBundleTest extends TestCase
 
         $this->assertFalse($container->hasDefinition('ai.command.setup_store'));
         $this->assertFalse($container->hasDefinition('ai.command.drop_store'));
+        $this->assertFalse($container->hasDefinition('ai.command.clear_store'));
         $removedIds = $container->getRemovedIds();
         $this->assertArrayHasKey('ai.command.setup_store', $removedIds);
         $this->assertArrayHasKey('ai.command.drop_store', $removedIds);
+        $this->assertArrayHasKey('ai.command.clear_store', $removedIds);
         $this->assertArrayHasKey('ai.command.setup_message_store', $removedIds);
         $this->assertArrayHasKey('ai.command.drop_message_store', $removedIds);
     }
@@ -245,6 +247,12 @@ class AiBundleTest extends TestCase
         $dropStoreCommandDefinition = $container->getDefinition('ai.command.drop_store');
         $this->assertCount(1, $dropStoreCommandDefinition->getArguments());
         $this->assertArrayHasKey('console.command', $dropStoreCommandDefinition->getTags());
+
+        $this->assertTrue($container->hasDefinition('ai.command.clear_store'));
+
+        $clearStoreCommandDefinition = $container->getDefinition('ai.command.clear_store');
+        $this->assertCount(1, $clearStoreCommandDefinition->getArguments());
+        $this->assertArrayHasKey('console.command', $clearStoreCommandDefinition->getTags());
     }
 
     public function testMessageStoreCommandsAreDefined()
