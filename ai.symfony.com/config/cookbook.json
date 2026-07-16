@@ -47,6 +47,15 @@
         ]
     },
     {
+        "slug": "generator-reviewer-loop",
+        "title": "Generator and Reviewer Loop",
+        "description": "Pair a generating agent with a reviewing agent that validates its findings over several iterations.",
+        "icon": "shield-search",
+        "components": [
+            "Agent"
+        ]
+    },
+    {
         "slug": "runtime-driven-tool-parameters",
         "title": "Runtime-driven Tool Parameters",
         "description": "Constrain tool parameters and structured output with values from env, a database, or services.",
