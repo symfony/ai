@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -647,17 +648,24 @@ class ResultConverterTest extends TestCase
                 ],
             ],
         ], 'Error "server_error"-- (-): "The model failed to generate a response".'];
+    }
 
-        yield 'response incomplete' => [[
-            [
-                'type' => 'response.incomplete',
-                'response' => [
-                    'incomplete_details' => [
-                        'reason' => 'max_output_tokens',
-                    ],
-                ],
-            ],
-        ], 'Responses API stream ended incomplete (max_output_tokens).'];
+    public function testStreamThrowsWhenTruncatedAtMaxOutputTokens()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], [[
+            'type' => 'response.incomplete',
+            'response' => ['incomplete_details' => ['reason' => 'max_output_tokens']],
+        ]], $httpResponse), ['stream' => true]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('OpenResponses truncated the response after reaching the output token limit.');
+
+        iterator_to_array($streamResult->getContent());
     }
 
     public function testStreamThrowsRateLimitExceptionOnRateLimitEvent()

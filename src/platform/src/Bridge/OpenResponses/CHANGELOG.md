@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Throw `MaxOutputTokensException` when a response reaches its output token limit
+
 0.11
 ----
 
