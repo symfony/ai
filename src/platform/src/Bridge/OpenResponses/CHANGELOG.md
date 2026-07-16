@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Throw `MaxOutputTokensException` when a response reaches its output token limit
+ * Throw a clear exception for malformed tool call arguments
 
 0.11
 ----

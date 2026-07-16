@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -575,11 +576,15 @@ class ResultConverter implements ResultConverterInterface
     /**
      * @param FunctionCall $toolCall
      *
-     * @throws \JsonException
+     * @throws MalformedToolCallException
      */
     private function convertFunctionCall(array $toolCall): ToolCall
     {
-        $arguments = json_decode($toolCall['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+        try {
+            $arguments = json_decode($toolCall['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new MalformedToolCallException(\sprintf('OpenResponses returned malformed JSON arguments for the "%s" tool: "%s"', $toolCall['name'], $e->getMessage()), 0, $e);
+        }
 
         // The Responses API addresses tool results by "call_id"; some providers (e.g. Scaleway)
         // only send "call_id" and leave "id" empty, so prefer it and fall back to "id".
