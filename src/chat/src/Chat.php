@@ -17,7 +17,6 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Result\TextResult;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -43,9 +42,7 @@ final class Chat implements ChatInterface
         $messages->add($message);
         $result = $this->agent->call($messages);
 
-        \assert($result instanceof TextResult);
-
-        $assistantMessage = Message::ofAssistant($result->getContent());
+        $assistantMessage = Message::ofAssistant($result);
         $assistantMessage->getMetadata()->merge($result->getMetadata());
         $messages->add($assistantMessage);
 
