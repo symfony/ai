@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
-use Symfony\AI\Platform\Bridge\Generic\Completions\FinishReasonMapper;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -23,9 +22,6 @@ use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
@@ -82,55 +78,5 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractor
     {
         return new TokenUsageExtractor();
-    }
-
-    /**
-     * @param array{
-     *     index: int,
-     *     message: array{
-     *         role: 'assistant',
-     *         content: ?string,
-     *         tool_calls: array{
-     *             id: string,
-     *             type: 'function',
-     *             function: array{
-     *                 name: string,
-     *                 arguments: string
-     *             },
-     *         },
-     *         refusal: ?mixed
-     *     },
-     *     logprobs: string,
-     *     finish_reason: 'stop'|'length'|'tool_calls'|'content_filter',
-     * } $choice
-     */
-    protected function convertChoice(array $choice): ToolCallResult|TextResult
-    {
-        if ('tool_calls' === $choice['finish_reason']) {
-            return $this->withFinishReason(new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls'])), FinishReasonMapper::map($choice['finish_reason']));
-        }
-
-        if ('stop' === $choice['finish_reason']) {
-            return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
-        }
-
-        throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));
-    }
-
-    /**
-     * @param array{
-     *     id: string,
-     *     type: 'function',
-     *     function: array{
-     *         name: string,
-     *         arguments: string
-     *     }
-     * } $toolCall
-     */
-    protected function convertToolCall(array $toolCall): ToolCall
-    {
-        $arguments = json_decode((string) $toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
-
-        return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
     }
 }
