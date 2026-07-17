@@ -43,6 +43,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
         return new TokenUsage(
             promptTokens: $content['usage']['prompt_tokens'] ?? null,
             completionTokens: $content['usage']['completion_tokens'] ?? null,
+            cachedTokens: $content['usage']['prompt_tokens_details']['cached_tokens'] ?? null,
             remainingTokensMinute: null !== $remainingTokensMinute ? (int) $remainingTokensMinute : null,
             remainingTokensMonth: null !== $remainingTokensMonth ? (int) $remainingTokensMonth : null,
             totalTokens: $content['usage']['total_tokens'] ?? null,

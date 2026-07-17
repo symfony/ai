@@ -53,6 +53,28 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(30, $tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getCachedTokens());
+    }
+
+    public function testItExtractsCachedTokens()
+    {
+        $extractor = new TokenUsageExtractor();
+        $result = new InMemoryRawResult([
+            'usage' => [
+                'prompt_tokens' => 128,
+                'completion_tokens' => 20,
+                'total_tokens' => 148,
+                'prompt_tokens_details' => [
+                    'cached_tokens' => 64,
+                ],
+            ],
+        ], object: $this->createResponseObject());
+
+        $tokenUsage = $extractor->extract($result);
+
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(128, $tokenUsage->getPromptTokens());
+        $this->assertSame(64, $tokenUsage->getCachedTokens());
     }
 
     public function testItHandlesMissingUsageFields()
