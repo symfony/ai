@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `acp` platform configuration for the ACP bridge
+
 0.11
 ----
 
@@ -15,7 +20,6 @@ CHANGELOG
  * Add support for `ScopingHttpClient` usage in `SurrealDB` store via `http_client` option
  * Register `StringToMessageBagListener` in DI to enable string-to-MessageBag upcasting by default
  * Command `ai:platform:invoke` now adds choices when model is not provided as argument
- * Add `acp` platform configuration for the ACP bridge
 
 0.10
 ----
