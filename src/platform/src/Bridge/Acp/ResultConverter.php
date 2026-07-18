@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -52,12 +53,25 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         $text = '';
+        $thinking = '';
         $toolCalls = [];
 
         foreach ($result->getDataStream() as $message) {
             $delta = $this->messageToDelta($message);
-            if (null !== $delta) {
-                $this->accumulateDelta($delta, $text, $toolCalls);
+            if (null === $delta) {
+                continue;
+            }
+
+            if ($delta instanceof TextDelta) {
+                $text .= $delta->getText();
+            }
+            if ($delta instanceof ThinkingDelta) {
+                $thinking .= $delta->getThinking();
+            }
+            if ($delta instanceof ToolCallComplete) {
+                foreach ($delta->getToolCalls() as $toolCall) {
+                    $toolCalls[$toolCall->getId()] = $toolCall;
+                }
             }
         }
 
@@ -68,6 +82,10 @@ final class ResultConverter implements ResultConverterInterface
 
         if ('' !== $text) {
             $results[] = new TextResult($text);
+        }
+
+        if ('' !== $thinking) {
+            $results[] = new ThinkingResult($thinking);
         }
 
         if ([] === $results) {
@@ -212,21 +230,5 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return null;
-    }
-
-    /**
-     * @param array<ToolCall> $toolCalls
-     */
-    private function accumulateDelta(DeltaInterface $delta, string &$text, array &$toolCalls): void
-    {
-        if ($delta instanceof TextDelta) {
-            $text .= $delta->getText();
-        } elseif ($delta instanceof ThinkingDelta) {
-            $text .= $delta->getThinking();
-        } elseif ($delta instanceof ToolCallComplete) {
-            foreach ($delta->getToolCalls() as $toolCall) {
-                $toolCalls[] = $toolCall;
-            }
-        }
     }
 }
