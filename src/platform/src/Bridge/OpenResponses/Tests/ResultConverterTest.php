@@ -1254,64 +1254,15 @@ final class ResultConverterTest extends TestCase
 
         $events = [
             [
-                'type' => 'response.output_item.added',
-                'output_index' => 0,
-                'item' => ['type' => 'reasoning'],
-            ],
-            [
-                'type' => 'response.reasoning_summary_part.added',
-                'output_index' => 0,
-                'summary_index' => 0,
-            ],
-            [
                 'type' => 'response.reasoning_summary_text.delta',
-                'output_index' => 0,
-                'summary_index' => 0,
                 'delta' => 'Let me think',
             ],
             [
                 'type' => 'response.reasoning_summary_text.delta',
-                'output_index' => 0,
-                'summary_index' => 0,
                 'delta' => ' about this...',
             ],
             [
                 'type' => 'response.reasoning_summary_text.done',
-                'output_index' => 0,
-            ],
-            [
-                'type' => 'response.reasoning_summary_part.done',
-                'output_index' => 0,
-            ],
-            [
-                'type' => 'response.reasoning_summary_part.added',
-                'output_index' => 0,
-                'summary_index' => 1,
-            ],
-            [
-                'type' => 'response.reasoning_summary_text.delta',
-                'output_index' => 0,
-                'summary_index' => 1,
-                'delta' => 'Then verify it.',
-            ],
-            [
-                'type' => 'response.reasoning_summary_text.done',
-                'output_index' => 0,
-            ],
-            [
-                'type' => 'response.reasoning_summary_part.done',
-                'output_index' => 0,
-            ],
-            [
-                'type' => 'response.output_item.done',
-                'output_index' => 0,
-                'item' => [
-                    'type' => 'reasoning',
-                    'summary' => [
-                        ['text' => 'Let me think about this...'],
-                        ['text' => 'Then verify it.'],
-                    ],
-                ],
             ],
             [
                 'type' => 'response.output_text.delta',
@@ -1333,108 +1284,16 @@ final class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(8, $chunks);
+        $this->assertCount(6, $chunks);
         $this->assertInstanceOf(ThinkingStart::class, $chunks[0]);
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
         $this->assertSame('Let me think', $chunks[1]->getThinking());
         $this->assertInstanceOf(ThinkingDelta::class, $chunks[2]);
         $this->assertSame(' about this...', $chunks[2]->getThinking());
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[3]);
-        $this->assertSame("\n\n", $chunks[3]->getThinking());
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[4]);
-        $this->assertSame('Then verify it.', $chunks[4]->getThinking());
-        $this->assertInstanceOf(ThinkingComplete::class, $chunks[5]);
-        $this->assertSame("Let me think about this...\n\nThen verify it.", $chunks[5]->getThinking());
-        $this->assertInstanceOf(TextDelta::class, $chunks[6]);
-        $this->assertSame('The answer is 42.', $chunks[6]->getText());
-        $this->assertInstanceOf(MetadataDelta::class, $chunks[7]);
-        $this->assertTrue($chunks[7]->getValue()->is(FinishReasonCase::STOP));
-    }
-
-    public function testStreamUsesPartDoneEventWhenSummaryIndicesRestart()
-    {
-        $converter = new ResultConverter();
-
-        $httpResponse = $this->createStub(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(200);
-
-        $events = [
-            ['type' => 'response.output_item.added', 'output_index' => 0, 'item' => ['type' => 'reasoning']],
-            ['type' => 'response.reasoning_summary_part.added', 'output_index' => 0, 'summary_index' => 0],
-            ['type' => 'response.reasoning_summary_text.delta', 'output_index' => 0, 'summary_index' => 0, 'delta' => 'First'],
-            ['type' => 'response.reasoning_summary_text.done', 'output_index' => 0, 'summary_index' => 0],
-            ['type' => 'response.reasoning_summary_part.done', 'output_index' => 0, 'summary_index' => 0],
-            ['type' => 'response.reasoning_summary_part.added', 'output_index' => 0, 'summary_index' => 0],
-            ['type' => 'response.reasoning_summary_text.delta', 'output_index' => 0, 'summary_index' => 0, 'delta' => 'Second'],
-            ['type' => 'response.reasoning_summary_text.done', 'output_index' => 0, 'summary_index' => 0],
-            ['type' => 'response.reasoning_summary_part.done', 'output_index' => 0, 'summary_index' => 0],
-            [
-                'type' => 'response.output_item.done',
-                'output_index' => 0,
-                'item' => [
-                    'type' => 'reasoning',
-                    'summary' => [
-                        ['text' => 'First'],
-                        ['text' => 'Second'],
-                    ],
-                ],
-            ],
-            ['type' => 'response.completed', 'response' => ['output' => []]],
-        ];
-
-        $chunks = iterator_to_array($converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true])->getContent());
-
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[2]);
-        $this->assertSame("\n\n", $chunks[2]->getThinking());
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[3]);
-        $this->assertSame('Second', $chunks[3]->getThinking());
-        $this->assertInstanceOf(ThinkingComplete::class, $chunks[4]);
-        $this->assertSame("First\n\nSecond", $chunks[4]->getThinking());
-    }
-
-    public function testStreamKeepsSeparateReasoningOutputItems()
-    {
-        $converter = new ResultConverter();
-
-        $httpResponse = $this->createStub(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(200);
-
-        $events = [
-            ['type' => 'response.output_item.added', 'output_index' => 0, 'item' => ['type' => 'reasoning']],
-            ['type' => 'response.reasoning_summary_text.delta', 'output_index' => 0, 'summary_index' => 0, 'delta' => '**Third**'],
-            [
-                'type' => 'response.output_item.done',
-                'output_index' => 0,
-                'item' => ['type' => 'reasoning', 'summary' => [['text' => '**Third**']]],
-            ],
-            ['type' => 'response.output_item.added', 'output_index' => 1, 'item' => ['type' => 'reasoning']],
-            ['type' => 'response.reasoning_summary_text.delta', 'output_index' => 1, 'summary_index' => 0, 'delta' => '**Fourth**'],
-            [
-                'type' => 'response.output_item.done',
-                'output_index' => 1,
-                'item' => ['type' => 'reasoning', 'summary' => [['text' => '**Fourth**']]],
-            ],
-            ['type' => 'response.completed', 'response' => ['output' => []]],
-        ];
-
-        $chunks = iterator_to_array($converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true])->getContent());
-
-        $this->assertInstanceOf(ThinkingStart::class, $chunks[0]);
-        $this->assertSame('0', $chunks[0]->getId());
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[1]);
-        $this->assertSame('**Third**', $chunks[1]->getThinking());
-        $this->assertSame('0', $chunks[1]->getId());
-        $this->assertInstanceOf(ThinkingComplete::class, $chunks[2]);
-        $this->assertSame('**Third**', $chunks[2]->getThinking());
-        $this->assertSame('0', $chunks[2]->getId());
-        $this->assertInstanceOf(ThinkingStart::class, $chunks[3]);
-        $this->assertSame('1', $chunks[3]->getId());
-        $this->assertInstanceOf(ThinkingDelta::class, $chunks[4]);
-        $this->assertSame('**Fourth**', $chunks[4]->getThinking());
-        $this->assertSame('1', $chunks[4]->getId());
-        $this->assertInstanceOf(ThinkingComplete::class, $chunks[5]);
-        $this->assertSame('**Fourth**', $chunks[5]->getThinking());
-        $this->assertSame('1', $chunks[5]->getId());
+        $this->assertInstanceOf(ThinkingComplete::class, $chunks[3]);
+        $this->assertSame('Let me think about this...', $chunks[3]->getThinking());
+        $this->assertInstanceOf(TextDelta::class, $chunks[4]);
+        $this->assertSame('The answer is 42.', $chunks[4]->getText());
     }
 
     public function testThrowsServerExceptionOnServerErrorStatusBeforeStreaming()

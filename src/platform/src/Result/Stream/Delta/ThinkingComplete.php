@@ -21,7 +21,6 @@ final class ThinkingComplete implements DeltaInterface
     public function __construct(
         private readonly string $thinking,
         private readonly ?string $signature = null,
-        private readonly ?string $id = null,
     ) {
     }
 
@@ -33,10 +32,5 @@ final class ThinkingComplete implements DeltaInterface
     public function getSignature(): ?string
     {
         return $this->signature;
-    }
-
-    public function getId(): ?string
-    {
-        return $this->id;
     }
 }
