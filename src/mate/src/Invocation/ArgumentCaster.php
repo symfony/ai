@@ -55,7 +55,7 @@ final class ArgumentCaster
                 continue;
             }
 
-            throw new InvalidArgumentException(\sprintf('Missing required argument "%s" for %s::%s().', $name, $method->class, $method->name));
+            throw new InvalidArgumentException(\sprintf('Missing required argument "%s" for "%s::%s()".', $name, $method->class, $method->name));
         }
 
         return $finalArgs;

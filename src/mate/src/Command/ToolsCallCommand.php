@@ -203,7 +203,7 @@ HELP
     private function resolveInput(InputInterface $input): array
     {
         if ($input instanceof ArgvInput) {
-            return $this->parseRawTokens($input->getRawTokens(true));
+            return $this->parseRawTokens($this->rawTokensAfterCommand($input));
         }
 
         $toolName = $input->getArgument('tool-name');
@@ -216,6 +216,53 @@ HELP
             \is_string($json) ? $json : null,
             [],
         ];
+    }
+
+    /**
+     * Returns the raw command-line tokens that follow the command name (i.e. the tool
+     * name and its dynamic `--<param>` options).
+     *
+     * `ArgvInput::getRawTokens()` only exists since symfony/console 7.1, so for the
+     * supported 5.4/6.4 versions the same "keep everything after the first argument"
+     * behavior is reproduced from `$_SERVER['argv']`.
+     *
+     * @return list<string>
+     */
+    private function rawTokensAfterCommand(ArgvInput $input): array
+    {
+        if (method_exists($input, 'getRawTokens')) {
+            /** @var list<string> $tokens */
+            $tokens = $input->getRawTokens(true);
+
+            return $tokens;
+        }
+
+        $argv = $_SERVER['argv'] ?? [];
+        if (!\is_array($argv) || [] === $argv) {
+            return [];
+        }
+
+        // Drop the script name, mirroring ArgvInput's own token handling.
+        array_shift($argv);
+
+        $commandName = $input->getFirstArgument();
+        $parameters = [];
+        $keep = false;
+        foreach ($argv as $value) {
+            if (!\is_string($value)) {
+                continue;
+            }
+            if (!$keep) {
+                if ($value === $commandName) {
+                    $keep = true;
+                }
+
+                continue;
+            }
+            $parameters[] = $value;
+        }
+
+        return $parameters;
     }
 
     /**
