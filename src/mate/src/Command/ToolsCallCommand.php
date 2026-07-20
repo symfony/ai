@@ -222,24 +222,16 @@ HELP
      * Returns the raw command-line tokens that follow the command name (i.e. the tool
      * name and its dynamic `--<param>` options).
      *
-     * `ArgvInput::getRawTokens()` only exists since symfony/console 7.1, so for the
-     * supported 5.4/6.4 versions the same "keep everything after the first argument"
-     * behavior is reproduced from `$_SERVER['argv']`.
+     * This reproduces `ArgvInput::getRawTokens(true)` (added in symfony/console 7.1) so
+     * the same "keep everything after the first argument" behavior works on the supported
+     * 5.4/6.4 versions too. The `tokens` property is private but has existed on ArgvInput
+     * across all supported versions, and reflection can read it without setAccessible() on
+     * PHP 8.1+.
      *
      * @return list<string>
      */
     private function rawTokensAfterCommand(ArgvInput $input): array
     {
-        if (method_exists($input, 'getRawTokens')) {
-            /** @var list<string> $tokens */
-            $tokens = $input->getRawTokens(true);
-
-            return $tokens;
-        }
-
-        // symfony/console < 7.1: reproduce getRawTokens(true) from the input's own token
-        // list. The `tokens` property is private but has existed on ArgvInput across all
-        // supported versions, and reflection can read it without setAccessible() on PHP 8.1+.
         try {
             $tokens = (new \ReflectionProperty(ArgvInput::class, 'tokens'))->getValue($input);
         } catch (\ReflectionException) {
