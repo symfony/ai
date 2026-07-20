@@ -751,7 +751,7 @@ Example: Customer Service Bot
 Commands
 --------
 
-The AI Bundle provides several console commands for interacting with AI platforms, agents, and stores.
+The AI Bundle provides several console commands for interacting with AI platforms, agents, stores, and workflows.
 
 ``ai:platform:invoke``
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -876,6 +876,66 @@ This is useful for ad-hoc indexing operations or testing different data sources.
 
     This command only works with indexers that have a ``loader`` configured. Document indexers
     (those without a loader) must be used programmatically in your code.
+
+``ai:workflow:setup``
+~~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:workflow:setup`` command prepares the state-store backend of a configured workflow (e.g.,
+creates the directory used by a filesystem store).
+
+.. code-block:: terminal
+
+    $ php bin/console ai:workflow:setup <workflow>
+
+    $ php bin/console ai:workflow:setup content_pipeline
+
+``ai:workflow:drop``
+~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:workflow:drop`` command removes every persisted state of a workflow and tears its
+state-store backend down. The ``--force`` option is required.
+
+.. code-block:: terminal
+
+    $ php bin/console ai:workflow:drop <workflow> --force
+
+    $ php bin/console ai:workflow:drop content_pipeline --force
+
+``ai:workflow:list``
+~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:workflow:list`` command lists the ids of every workflow state currently persisted by a
+workflow's state store — useful for finding runs to resume.
+
+.. code-block:: terminal
+
+    $ php bin/console ai:workflow:list <workflow>
+
+    $ php bin/console ai:workflow:list content_pipeline
+
+``ai:workflow:delete``
+~~~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:workflow:delete`` command removes a single persisted workflow state by id.
+
+.. code-block:: terminal
+
+    $ php bin/console ai:workflow:delete <workflow> <id>
+
+    $ php bin/console ai:workflow:delete content_pipeline run-1234
+
+``ai:workflow:prune``
+~~~~~~~~~~~~~~~~~~~~~
+
+The ``ai:workflow:prune`` command deletes the persisted states of a workflow that have not been
+updated within a given period — useful for clearing out abandoned runs. The ``--force`` option is
+required; without it the command only reports how many states would be removed.
+
+.. code-block:: terminal
+
+    $ php bin/console ai:workflow:prune <workflow> --older-than="7 days" --force
+
+    $ php bin/console ai:workflow:prune content_pipeline --force
 
 Usage
 -----
@@ -1431,7 +1491,519 @@ When only STT is configured (no TTS), the agent returns the same result type as 
 
     Handling both speech-to-text and text-to-speech introduces latency as most of the process is synchronous.
 
+Workflow
+--------
+
+The AI Bundle provides a configuration system for orchestrating multi-step AI agent pipelines using the
+`Symfony Workflow component`_. A workflow defines a sequence of places (steps) connected by transitions,
+where each place is executed by an :class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface` — either
+wrapping a configured AI agent or invoking a custom service.
+
+The bundle **does not** define the workflow graph (places, transitions, initial place) itself. Instead,
+it references an existing Symfony Workflow defined using the standard ``framework.workflows`` configuration.
+This means you benefit from the full power of the Symfony Workflow component (visualization, event listeners,
+metadata) while the AI Bundle handles executor mapping, state persistence, guards, and transition resolution.
+
+For details on the standalone PHP workflow API (``WorkflowState``, executors, conditional branching,
+state persistence), see the :doc:`Agent component workflow documentation </components/agent>`.
+
+.. note::
+
+    Workflow configuration requires the ``symfony/ai-agent`` and ``symfony/workflow`` packages.
+
+Defining the Symfony Workflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, define the workflow using the standard Symfony Workflow component configuration. For linear AI
+pipelines, a ``state_machine`` with ``single_state: true`` marking store is typical:
+
+.. code-block:: yaml
+
+    # config/packages/workflow.yaml
+    framework:
+        workflows:
+            content_pipeline:
+                type: state_machine
+                marking_store:
+                    type: method
+                    property: marking
+                supports:
+                    - stdClass
+                initial_marking: generate
+                places:
+                    - generate
+                    - review
+                    - publish
+                    - done
+                transitions:
+                    to_review:
+                        from: generate
+                        to: review
+                    to_publish:
+                        from: review
+                        to: publish
+                    to_done:
+                        from: publish
+                        to: done
+
+This registers a ``workflow.content_pipeline`` service that the AI Bundle will reference.
+
+Configuring a Workflow
+~~~~~~~~~~~~~~~~~~~~~~
+
+In your AI Bundle configuration, the ``workflow`` key maps named workflow definitions. Each entry
+references an existing Symfony Workflow by name and maps executors to its places:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+        agent:
+            writer:
+                model: 'gpt-4o-mini'
+                prompt: 'You are a creative content writer.'
+            reviewer:
+                model: 'gpt-4o-mini'
+                prompt: 'You review content for quality and accuracy.'
+            publisher:
+                model: 'gpt-4o-mini'
+                prompt: 'You format content for publication.'
+        workflow:
+            content_pipeline:
+                workflow: 'content_pipeline'
+                executors:
+                    generate:
+                        type: agent
+                        agent: 'writer'
+                        input_key: 'topic'
+                        output_key: 'draft'
+                    review:
+                        type: agent
+                        agent: 'reviewer'
+                        input_key: 'draft'
+                        output_key: 'reviewed_draft'
+                    publish:
+                        type: agent
+                        agent: 'publisher'
+                        input_key: 'reviewed_draft'
+                        output_key: 'final_content'
+                    done:
+                        type: service
+                        service: 'App\Workflow\Executor\CompletionExecutor'
+
+This registers a service ``ai.workflow.content_pipeline`` tagged with ``ai.workflow``.
+
+Executor Types
+~~~~~~~~~~~~~~
+
+Each place in the workflow must be mapped to an executor. The bundle supports two types: ``agent``
+(wrapping a configured AI agent) and ``service`` (referencing a custom service implementing
+:class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`).
+
+Agent Executor
+..............
+
+The ``agent`` executor delegates to a configured AI agent. It reads input from a state key and writes
+the agent's response to another:
+
+.. code-block:: yaml
+
+    executors:
+        generate:
+            type: agent
+            agent: 'writer'          # references ai.agent.writer
+            input_key: 'topic'       # state key to read input from (default: 'input')
+            output_key: 'draft'      # state key to write result to (default: 'output')
+            metadata_key: 'usage'    # optional: state key for the result metadata
+            options:                 # optional: options sent with every agent call
+                temperature: 0.2
+            options_key: 'opts'      # optional: state key holding extra per-run options
+            history_key: 'history'   # optional: state key accumulating the conversation
+
+The input value can be a ``string`` (converted to a user message) or a ``MessageBag``. Internally,
+this creates an :class:`Symfony\\AI\\Agent\\Workflow\\Executor\\AgentExecutor`. The ``history_key``
+lets several agent places share one running conversation; see the
+:doc:`Agent component workflow documentation </components/agent>` for the underlying semantics.
+
+Retrying Executors
+..................
+
+Any executor — ``agent`` or ``service`` — can be wrapped with automatic retries through the
+per-executor ``retry`` option:
+
+.. code-block:: yaml
+
+    executors:
+        generate:
+            type: agent
+            agent: 'writer'
+            retry:
+                enabled: true
+                max_attempts: 3        # default: 3
+                base_delay_ms: 1000    # default: 1000
+                strategy: exponential  # 'exponential' (default) or 'fixed'
+
+When enabled, the bundle wraps the executor in a
+:class:`Symfony\\AI\\Agent\\Workflow\\Executor\\RetryExecutor`. Rate-limit errors honor the
+provider's ``Retry-After`` hint; guard rejections are never retried.
+
+Timing Out Executors
+....................
+
+The per-executor ``timeout`` option (in seconds, ``0`` disables it) wraps the executor in a
+:class:`Symfony\\AI\\Agent\\Workflow\\Executor\\TimeoutExecutor`:
+
+.. code-block:: yaml
+
+    executors:
+        generate:
+            type: agent
+            agent: 'writer'
+            timeout: 30   # seconds; 0 (default) disables the timeout
+
+A place exceeding the limit raises a ``WorkflowTimeoutException``. The timeout relies on the
+``pcntl`` extension; where it is unavailable the executor runs untimed and a warning is logged.
+``timeout`` and ``retry`` can be combined — each retry attempt then gets its own deadline.
+
+Service Executor
+................
+
+The ``service`` executor references any service implementing
+:class:`Symfony\\AI\\Agent\\Workflow\\ExecutorInterface`. This is useful for non-AI steps such as
+data transformation, file operations, or HTTP calls:
+
+.. code-block:: yaml
+
+    executors:
+        done:
+            type: service
+            service: 'App\Workflow\Executor\CompletionExecutor'
+
+The referenced service receives the full :class:`Symfony\\AI\\Agent\\Workflow\\WorkflowStateInterface`
+and controls what it reads and writes::
+
+    use Symfony\AI\Agent\Workflow\ExecutorInterface;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    final class CompletionExecutor implements ExecutorInterface
+    {
+        public function execute(WorkflowStateInterface $state, string $place): WorkflowStateInterface
+        {
+            return $state->set('completed_at', date('c'));
+        }
+    }
+
+State Store Types
+~~~~~~~~~~~~~~~~~
+
+Workflow state is persisted after each step, enabling pause and resume. The ``store`` option
+(optional, defaults to ``memory``) configures where state is saved.
+
+Memory
+......
+
+The default store type. State lives only in PHP memory for the current request. Suitable for
+testing and single-request workflows:
+
+.. code-block:: yaml
+
+    workflow:
+        my_workflow:
+            workflow: 'my_workflow'
+            executors: { ... }
+            # store defaults to memory — no configuration needed
+
+Cache
+.....
+
+Uses a PSR-6 cache pool for state persistence:
+
+.. code-block:: yaml
+
+    workflow:
+        my_workflow:
+            workflow: 'my_workflow'
+            executors: { ... }
+            store:
+                type: cache
+                cache_service: 'cache.app'       # default: 'cache.app'
+                prefix: '_workflow_state_'        # default: '_workflow_state_'
+                ttl: 86400                        # default: 86400 (24 hours)
+
+Filesystem
+..........
+
+Uses the Symfony Filesystem component to persist state as JSON files:
+
+.. code-block:: yaml
+
+    workflow:
+        my_workflow:
+            workflow: 'my_workflow'
+            executors: { ... }
+            store:
+                type: filesystem
+                directory: '%kernel.project_dir%/var/workflows'
+
+Redis
+.....
+
+Uses a Redis client for high-performance state persistence:
+
+.. code-block:: yaml
+
+    workflow:
+        my_workflow:
+            workflow: 'my_workflow'
+            executors: { ... }
+            store:
+                type: redis
+                redis_client: 'my_redis_client'  # service ID of the Redis client
+                prefix: '_workflow_state_'        # default: '_workflow_state_'
+
+Custom Service
+..............
+
+For custom persistence backends, reference a service implementing
+:class:`Symfony\\AI\\Agent\\Workflow\\WorkflowStateStoreInterface`:
+
+.. code-block:: yaml
+
+    workflow:
+        my_workflow:
+            workflow: 'my_workflow'
+            executors: { ... }
+            store:
+                type: service
+                service: 'App\Workflow\Store\DatabaseWorkflowStateStore'
+
+Guards
+~~~~~~
+
+Guards are optional pre-execution checks that run before a place's executor. They are configured as
+a flat list of service IDs, each implementing :class:`Symfony\\AI\\Agent\\Workflow\\GuardInterface`;
+every guard decides which places it applies to. When a guard returns ``false`` for a place it
+supports, a ``WorkflowGuardException`` is thrown and execution stops:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        workflow:
+            content_pipeline:
+                workflow: 'content_pipeline'
+                executors: { ... }
+                guards:
+                    - 'App\Workflow\Guard\ContentQualityGuard'
+                    - 'App\Workflow\Guard\ApprovalGuard'
+
+A guard extends :class:`Symfony\\AI\\Agent\\Workflow\\AbstractGuard`, which restricts the guard to
+the places passed to its constructor::
+
+    use Symfony\AI\Agent\Workflow\AbstractGuard;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    final class ContentQualityGuard extends AbstractGuard
+    {
+        public function allows(WorkflowStateInterface $state, string $place): bool
+        {
+            $draft = $state->get('draft', '');
+
+            // Reject if the draft is too short
+            return \strlen($draft) > 100;
+        }
+    }
+
+Bind the places when registering the guard service:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        App\Workflow\Guard\ContentQualityGuard:
+            arguments:
+                $places: ['review']
+
+Guards via Attribute
+....................
+
+Instead of listing a guard under the ``guards`` key, mark its class with the
+:class:`Symfony\\AI\\Agent\\Workflow\\Attribute\\AsWorkflowGuard` attribute and the bundle attaches
+it to the named workflow automatically::
+
+    use Symfony\AI\Agent\Workflow\AbstractGuard;
+    use Symfony\AI\Agent\Workflow\Attribute\AsWorkflowGuard;
+    use Symfony\AI\Agent\Workflow\WorkflowStateInterface;
+
+    #[AsWorkflowGuard(workflow: 'content_pipeline', priority: 10)]
+    final class ContentQualityGuard extends AbstractGuard
+    {
+        public function __construct()
+        {
+            parent::__construct(['review']);
+        }
+
+        public function allows(WorkflowStateInterface $state, string $place): bool
+        {
+            return \strlen((string) $state->get('draft', '')) > 100;
+        }
+    }
+
+The ``workflow`` argument names the workflow the guard is added to; omit it (or pass ``null``) to
+register the guard on every configured workflow. The optional ``priority`` orders guards within a
+workflow, higher first. The attribute is repeatable, so one guard class can be attached to several
+workflows. The guard still declares the places it applies to itself — through the ``AbstractGuard``
+constructor or a custom ``supports()`` method.
+
+Guards registered through the attribute and guards listed under the ``guards`` key are combined, so
+both styles can be mixed.
+
+Custom Transition Resolver
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the bundle uses the
+:class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolver\\StateBasedTransitionResolver`, which reads
+the next transition hint from the workflow state or automatically picks the single enabled
+transition. When a place has multiple outgoing transitions, executors set this hint using
+``$state->withNextTransition('transition_name')`` to influence routing.
+
+To provide custom transition resolution logic, set the ``transition_resolver`` option to a service
+implementing :class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolverInterface`:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        workflow:
+            content_pipeline:
+                workflow: 'content_pipeline'
+                executors: { ... }
+                transition_resolver: 'App\Workflow\MyCustomTransitionResolver'
+
+Alternatively, the ``transition_expressions`` option maps transition names to boolean expressions
+and builds an :class:`Symfony\\AI\\Agent\\Workflow\\TransitionResolver\\ExpressionTransitionResolver`
+(it requires the ``symfony/expression-language`` package). It is mutually exclusive with
+``transition_resolver``:
+
+.. code-block:: yaml
+
+    ai:
+        workflow:
+            content_pipeline:
+                workflow: 'content_pipeline'
+                executors: { ... }
+                transition_expressions:
+                    approve: 'data["score"] >= 0.7'
+                    reject: 'data["score"] < 0.7'
+
+For more details on conditional branching and state-based transition resolution, see the
+:doc:`Agent component workflow documentation </components/agent>`.
+
+Concurrency-safe Locking
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The optional ``lock`` option guards ``run()`` and ``resume()`` with a Symfony lock, so the same
+workflow id is never executed twice concurrently (it requires the ``symfony/lock`` package):
+
+.. code-block:: yaml
+
+    ai:
+        workflow:
+            content_pipeline:
+                workflow: 'content_pipeline'
+                executors: { ... }
+                lock:
+                    enabled: true
+                    factory: 'lock.factory'   # LockFactory service ID (default: 'lock.factory')
+
+A contended id then fails fast with a ``WorkflowLockedException`` instead of running its steps twice.
+
+Parallel Execution
+~~~~~~~~~~~~~~~~~~
+
+When a workflow definition forks into concurrent places (an AND-split), the ``parallel`` option
+controls how the branches run and how their states are merged back together:
+
+.. code-block:: yaml
+
+    ai:
+        workflow:
+            content_pipeline:
+                workflow: 'content_pipeline'
+                executors: { ... }
+                parallel:
+                    # fail_on_conflict (default), last_branch_wins, first_branch_wins, prefer_non_null
+                    merge_policy: fail_on_conflict
+                    # optional service implementing ParallelExecutionStrategyInterface
+                    strategy: 'App\Workflow\MyStrategy'
+
+By default branches run through the concurrent strategy and a conflicting merge throws a
+``WorkflowMergeConflictException``. See the
+:doc:`Agent component workflow documentation </components/agent>` for the merge-policy semantics.
+
+Using Workflows
+~~~~~~~~~~~~~~~
+
+The workflow service can be injected into your services using the
+:class:`Symfony\\AI\\Agent\\Workflow\\AgentWorkflowInterface`. When a single workflow is configured,
+the bundle automatically aliases it::
+
+    use Symfony\AI\Agent\Workflow\AgentWorkflowInterface;
+    use Symfony\AI\Agent\Workflow\WorkflowState;
+
+    final class ContentPipelineService
+    {
+        public function __construct(
+            private AgentWorkflowInterface $workflow,
+        ) {
+        }
+
+        public function generateContent(string $topic): string
+        {
+            $state = $this->workflow->run(
+                new WorkflowState('run-'.uniqid(), ['topic' => $topic]),
+            );
+
+            return $state->get('final_content');
+        }
+
+        public function resumeWorkflow(string $id): string
+        {
+            $state = $this->workflow->resume($id);
+
+            return $state->get('final_content');
+        }
+    }
+
+When multiple workflows are configured, use the ``#[Autowire]`` attribute to inject a specific one::
+
+    use Symfony\AI\Agent\Workflow\AgentWorkflowInterface;
+    use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+    final class MyService
+    {
+        public function __construct(
+            #[Autowire(service: 'ai.workflow.content_pipeline')]
+            private AgentWorkflowInterface $contentPipeline,
+            #[Autowire(service: 'ai.workflow.review_pipeline')]
+            private AgentWorkflowInterface $reviewPipeline,
+        ) {
+        }
+    }
+
+Workflow Profiler Integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In debug mode, workflows are automatically decorated with
+:class:`Symfony\\AI\\AiBundle\\Profiler\\TraceableAgentWorkflow`, which tracks all ``run()`` and
+``resume()`` calls. Workflow execution data appears in the Symfony Profiler panel alongside agent,
+platform, and tool data.
+
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform
 .. _`Symfony AI Store`: https://github.com/symfony/ai-store
+.. _`Symfony Workflow component`: https://symfony.com/doc/current/components/workflow.html

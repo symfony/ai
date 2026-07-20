@@ -21,7 +21,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Agent implements AgentInterface
+final class Agent implements DeferrableAgentInterface
 {
     /**
      * @param InputProcessorInterface[]  $inputProcessors
@@ -56,6 +56,11 @@ final class Agent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
+        return $this->finish($this->prepare($messages, $options));
+    }
+
+    public function prepare(MessageBag $messages, array $options = []): DeferredAgentCall
+    {
         $input = new Input($this->getModel(), $messages, $options);
         foreach ($this->inputProcessors as $inputProcessor) {
             if (!$inputProcessor instanceof InputProcessorInterface) {
@@ -73,9 +78,14 @@ final class Agent implements AgentInterface
         $messages = $input->getMessageBag();
         $options = $input->getOptions();
 
-        $result = $this->platform->invoke($model, $messages, $options)->getResult();
+        return new DeferredAgentCall($this->platform->invoke($model, $messages, $options), $model, $messages, $options);
+    }
 
-        $output = new Output($model, $result, $messages, $options);
+    public function finish(DeferredAgentCall $call): ResultInterface
+    {
+        $result = $call->deferredResult->getResult();
+
+        $output = new Output($call->model, $result, $call->messages, $call->options);
         foreach ($this->outputProcessors as $outputProcessor) {
             if (!$outputProcessor instanceof OutputProcessorInterface) {
                 throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));

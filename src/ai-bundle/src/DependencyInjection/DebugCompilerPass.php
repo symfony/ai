@@ -13,6 +13,10 @@ namespace Symfony\AI\AiBundle\DependencyInjection;
 
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
+use Symfony\AI\Agent\Workflow\ManagedWorkflowStateStoreInterface;
+use Symfony\AI\Agent\Workflow\TraceableAgentWorkflow;
+use Symfony\AI\Agent\Workflow\TraceableWorkflowStateStore;
+use Symfony\AI\Agent\Workflow\WorkflowStateStoreInterface;
 use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\TraceablePlatform;
@@ -98,5 +102,55 @@ final class DebugCompilerPass implements CompilerPassInterface
             $suffix = u($store)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_store.'.$suffix, $traceableStoreDefinition);
         }
+
+        foreach (array_keys($container->findTaggedServiceIds('ai.agent_workflow')) as $agentWorkflow) {
+            $traceableAgentWorkflowDefinition = (new Definition(TraceableAgentWorkflow::class))
+                ->setDecoratedService($agentWorkflow, priority: -1024)
+                ->setArguments([
+                    new Reference('.inner'),
+                    new Reference(ClockInterface::class),
+                ])
+                ->addTag('ai.traceable_agent_workflow')
+                ->addTag('kernel.reset', ['method' => 'reset']);
+            $suffix = u($agentWorkflow)->afterLast('.')->toString();
+            $container->setDefinition('ai.traceable_agent_workflow.'.$suffix, $traceableAgentWorkflowDefinition);
+        }
+
+        foreach (array_keys($container->findTaggedServiceIds('ai.agent_workflow.state_store')) as $workflowStateStore) {
+            if (!$this->supportsWorkflowStateStoreTracing($container, $workflowStateStore)) {
+                continue;
+            }
+
+            $traceableWorkflowStateStoreDefinition = (new Definition(TraceableWorkflowStateStore::class))
+                ->setDecoratedService($workflowStateStore, priority: -1024)
+                ->setArguments([
+                    new Reference('.inner'),
+                    new Reference(ClockInterface::class),
+                ])
+                ->addTag('ai.traceable_agent_workflow_state_store')
+                ->addTag('kernel.reset', ['method' => 'reset']);
+            $suffix = u($workflowStateStore)->afterLast('.')->toString();
+            $container->setDefinition('ai.traceable_agent_workflow_state_store.'.$suffix, $traceableWorkflowStateStoreDefinition);
+        }
+    }
+
+    /**
+     * The traceable decorator requires a store that is both readable/writable and manageable; custom
+     * stores implementing fewer interfaces are left untraced rather than breaking the container build.
+     */
+    private function supportsWorkflowStateStoreTracing(ContainerBuilder $container, string $serviceId): bool
+    {
+        $class = $container->findDefinition($serviceId)->getClass() ?? (class_exists($serviceId) ? $serviceId : null);
+
+        if (null === $class) {
+            return false;
+        }
+
+        if (!class_exists($class) && !interface_exists($class)) {
+            return false;
+        }
+
+        return is_a($class, WorkflowStateStoreInterface::class, true)
+            && is_a($class, ManagedWorkflowStateStoreInterface::class, true);
     }
 }
