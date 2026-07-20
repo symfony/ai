@@ -24,6 +24,11 @@ MCP Bundle
    registered as services — or registered through a custom `Mcp\Capability\Registry\Loader\LoaderInterface`
    implementation (autoconfigured with the `mcp.loader` tag).
 
+ * The `Symfony\AI\McpBundle\Profiler\TraceableRegistry` class has been removed. The profiler data
+   collector now builds the MCP server itself to read the registry, so the panel shows the full
+   capability set on every request. The collector (and the `mcp` profiler panel) is only registered
+   when at least one `client_transports` option is enabled.
+
 Platform
 --------
 

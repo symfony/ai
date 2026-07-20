@@ -12,10 +12,10 @@
 namespace Symfony\AI\McpBundle\Tests\Profiler;
 
 use Mcp\Capability\Registry;
+use Mcp\Server;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
-use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -25,8 +25,7 @@ final class DataCollectorTest extends TestCase
     public function testGetNameReturnsShortName()
     {
         $registry = new Registry(null, new NullLogger());
-        $traceableRegistry = new TraceableRegistry($registry);
-        $dataCollector = new DataCollector($traceableRegistry);
+        $dataCollector = new DataCollector(Server::builder()->setRegistry($registry), $registry);
 
         $name = $dataCollector->getName();
 
@@ -36,29 +35,44 @@ final class DataCollectorTest extends TestCase
         $this->assertStringNotContainsString('DataCollector', $name);
     }
 
-    public function testLateCollectPopulatesData()
+    public function testLateCollectBuildsServerToPopulateEmptyRegistry()
     {
         $registry = new Registry(null, new NullLogger());
-        $traceableRegistry = new TraceableRegistry($registry);
-        $dataCollector = new DataCollector($traceableRegistry);
+        $builder = Server::builder()
+            ->setRegistry($registry)
+            ->addTool([ToolFixture::class, 'greet'], 'greeting', description: 'Greets a person');
+
+        $dataCollector = new DataCollector($builder, $registry);
+
+        // The registry is empty before collection — as on a request that never served MCP.
+        $this->assertFalse($registry->hasTools());
 
         $dataCollector->lateCollect();
 
-        // Verify data is collected
-        $this->assertIsArray($dataCollector->getTools());
-        $this->assertIsArray($dataCollector->getPrompts());
-        $this->assertIsArray($dataCollector->getResources());
-        $this->assertIsArray($dataCollector->getResourceTemplates());
+        $tools = $dataCollector->getTools();
+        $this->assertCount(1, $tools);
+        $this->assertSame('greeting', $tools[0]['name']);
+        $this->assertSame('Greets a person', $tools[0]['description']);
+        $this->assertSame(ToolFixture::class.'::greet()', $tools[0]['handler']);
+        $this->assertArrayHasKey('inputSchema', $tools[0]);
+        $this->assertSame(1, $dataCollector->getTotalCount());
     }
 
     public function testGetTotalCountReturnsZeroForEmptyRegistry()
     {
         $registry = new Registry(null, new NullLogger());
-        $traceableRegistry = new TraceableRegistry($registry);
-        $dataCollector = new DataCollector($traceableRegistry);
+        $dataCollector = new DataCollector(Server::builder()->setRegistry($registry), $registry);
 
         $dataCollector->lateCollect();
 
         $this->assertSame(0, $dataCollector->getTotalCount());
+    }
+}
+
+class ToolFixture
+{
+    public function greet(string $name): string
+    {
+        return 'Hello '.$name;
     }
 }

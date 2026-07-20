@@ -6,6 +6,7 @@ CHANGELOG
 
  * Register tools, prompts, resources, and resource templates via container instead of the SDK's file-based discovery
  * Add `debug:mcp` command listing the registered MCP capabilities with their handlers
+ * Show MCP capabilities (including their handlers) in the profiler panel on every request, not only on requests serving MCP
 
 0.11
 ----

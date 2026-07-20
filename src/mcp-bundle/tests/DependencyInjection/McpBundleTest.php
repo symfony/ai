@@ -51,10 +51,17 @@ class McpBundleTest extends TestCase
 
     public function testDataCollectorTagIncludesId()
     {
-        $container = $this->buildContainer([]);
+        $container = $this->buildContainer(['mcp' => ['client_transports' => ['http' => true]]]);
         $definition = $container->getDefinition('mcp.data_collector');
         $this->assertTrue($definition->hasTag('data_collector'));
         $this->assertSame([['id' => 'mcp']], $definition->getTag('data_collector'));
+    }
+
+    public function testDataCollectorNotRegisteredWithoutTransports()
+    {
+        $container = $this->buildContainer([]);
+
+        $this->assertFalse($container->hasDefinition('mcp.data_collector'));
     }
 
     public function testCustomConfiguration()
