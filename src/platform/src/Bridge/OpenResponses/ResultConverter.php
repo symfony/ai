@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -460,7 +461,11 @@ class ResultConverter implements ResultConverterInterface
                     $reason = 'unknown';
                 }
 
-                throw new RuntimeException(\sprintf('Responses API stream ended incomplete (%s).', $reason));
+                if ('max_output_tokens' === $reason) {
+                    throw new MaxOutputTokensException('OpenResponses truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.');
+                }
+
+                throw new RuntimeException(\sprintf('Responses API response is incomplete (%s).', $reason));
             }
 
             if (isset($event['response']['usage'])) {
