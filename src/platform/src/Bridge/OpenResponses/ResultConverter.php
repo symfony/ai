@@ -142,6 +142,10 @@ class ResultConverter implements ResultConverterInterface
                     $reason = 'unknown';
                 }
 
+                if ('max_output_tokens' === $reason) {
+                    throw new MaxOutputTokensException('Responses API truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.');
+                }
+
                 throw new RuntimeException(\sprintf('Responses API response is incomplete (%s) and contains no content.', $reason));
             }
 
@@ -462,7 +466,7 @@ class ResultConverter implements ResultConverterInterface
                 }
 
                 if ('max_output_tokens' === $reason) {
-                    throw new MaxOutputTokensException('OpenResponses truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.');
+                    throw new MaxOutputTokensException('Responses API truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.');
                 }
 
                 throw new RuntimeException(\sprintf('Responses API response is incomplete (%s).', $reason));

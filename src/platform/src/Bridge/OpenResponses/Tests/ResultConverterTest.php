@@ -641,7 +641,7 @@ final class ResultConverterTest extends TestCase
         $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('toArray')->willReturn([
             'status' => 'incomplete',
-            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'incomplete_details' => ['reason' => 'content_filter'],
             'output' => [
                 [
                     'type' => 'reasoning',
@@ -652,7 +652,29 @@ final class ResultConverterTest extends TestCase
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Responses API response is incomplete (max_output_tokens) and contains no content.');
+        $this->expectExceptionMessage('Responses API response is incomplete (content_filter) and contains no content.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsMaxOutputTokensExceptionWhenIncompleteResponseHasNoContent()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [
+                [
+                    'type' => 'reasoning',
+                    'id' => 'rs_1',
+                    'summary' => [],
+                ],
+            ],
+        ]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -1185,7 +1207,7 @@ final class ResultConverterTest extends TestCase
         ]], $httpResponse), ['stream' => true]);
 
         $this->expectException(MaxOutputTokensException::class);
-        $this->expectExceptionMessage('OpenResponses truncated the response after reaching the output token limit.');
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
 
         iterator_to_array($streamResult->getContent());
     }
