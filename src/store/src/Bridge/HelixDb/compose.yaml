@@ -1,0 +1,6 @@
+services:
+    helixdb:
+        # Verify the published image name/tag against https://github.com/HelixDB/helix-db
+        image: helixdb/helixdb
+        ports:
+            - '6969:6969'

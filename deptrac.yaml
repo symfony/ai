@@ -285,6 +285,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Elasticsearch\\.*
+    - name: HelixDbStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\HelixDb\\.*
     - name: ManticoreSearchStore
       collectors:
         - type: classLike
@@ -553,6 +557,9 @@ deptrac:
       - StoreComponent
       - PlatformComponent
     ElasticsearchStore:
+      - StoreComponent
+      - PlatformComponent
+    HelixDbStore:
       - StoreComponent
       - PlatformComponent
     ManticoreSearchStore:

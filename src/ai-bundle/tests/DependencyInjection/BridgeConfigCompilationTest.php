@@ -338,6 +338,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'clickhouse' => ['clickhouse', ['default' => ['dsn' => 'http://localhost:9000', 'database' => 'db', 'table' => 'tbl']], 'ai.store.clickhouse.default'];
         yield 'cloudflare' => ['cloudflare', ['default' => ['account_id' => 'a', 'api_key' => 'k', 'index_name' => 'idx']], 'ai.store.cloudflare.default'];
         yield 'elasticsearch' => ['elasticsearch', ['default' => ['endpoint' => 'http://localhost:9200']], 'ai.store.elasticsearch.default'];
+        yield 'helixdb' => ['helixdb', ['default' => ['endpoint' => 'http://localhost:6969', 'dimensions' => 768]], 'ai.store.helixdb.default'];
         yield 'manticoresearch' => ['manticoresearch', ['default' => ['endpoint' => 'http://localhost:9306', 'table' => 'tbl', 'field' => 'vec', 'type' => 'hnsw', 'similarity' => 'cosine', 'dimensions' => 768]], 'ai.store.manticoresearch.default'];
         yield 'mariadb' => ['mariadb', ['default' => ['connection' => 'default', 'table_name' => 'tbl', 'index_name' => 'idx', 'vector_field_name' => 'vec']], 'ai.store.mariadb.default'];
         yield 'meilisearch' => ['meilisearch', ['default' => ['endpoint' => 'http://localhost:7700', 'api_key' => 'k', 'index_name' => 'idx']], 'ai.store.meilisearch.default'];

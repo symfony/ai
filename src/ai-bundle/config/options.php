@@ -411,6 +411,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/clickhouse'))
                     ->append($import('store/cloudflare'))
                     ->append($import('store/elasticsearch'))
+                    ->append($import('store/helixdb'))
                     ->append($import('store/manticoresearch'))
                     ->append($import('store/mariadb'))
                     ->append($import('store/meilisearch'))

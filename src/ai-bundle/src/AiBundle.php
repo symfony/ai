@@ -108,6 +108,8 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
+use Symfony\AI\Store\Bridge\HelixDb\Store as HelixDbStore;
+use Symfony\AI\Store\Bridge\HelixDb\StoreFactory as HelixDbStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
@@ -1770,6 +1772,31 @@ final class AiBundle extends AbstractBundle
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
 
                 $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
+            }
+        }
+
+        if ('helixdb' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-helix-db-store', HelixDbStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('HelixDB store configuration requires "symfony/ai-helix-db-store" package. Try running "composer require symfony/ai-helix-db-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = (new Definition(HelixDbStore::class))
+                    ->setFactory(HelixDbStoreFactory::class.'::create')
+                    ->setLazy(true)
+                    ->setArguments([
+                        $store['endpoint'],
+                        new Reference($store['http_client']),
+                        $store['dimensions'],
+                        $store['top_k'],
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
             }
         }
 

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add HelixDB store integration
+
 0.11
 ----
 
