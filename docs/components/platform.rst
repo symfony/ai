@@ -156,6 +156,8 @@ Supported Models & Platforms
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
   * `Cartesia TTS`_ with `Cartesia`_ as Platform
   * `Cartesia STT`_ with `Cartesia`_ as Platform
+  * `Inworld TTS`_ with `Inworld`_ as Platform
+  * `Inworld STT`_ with `Inworld`_ as Platform
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
 
@@ -1606,6 +1608,9 @@ Code Examples
 .. _`ElevenLabs`: https://elevenlabs.io/
 .. _`ElevenLabs STT`: https://elevenlabs.io/speech-to-text
 .. _`ElevenLabs TTS`: https://elevenlabs.io/text-to-speech
+.. _`Inworld`: https://inworld.ai/
+.. _`Inworld STT`: https://docs.inworld.ai/api-reference/sttAPI/speechtotext/transcribe
+.. _`Inworld TTS`: https://docs.inworld.ai/api-reference/ttsAPI/texttospeech/synthesize-speech
 .. _`LiteLLM example`: https://github.com/symfony/ai/blob/main/examples/litellm/chat.php
 .. _`Meta's Llama`: https://www.llama.com/
 .. _`Ollama`: https://ollama.com/

@@ -60,6 +60,8 @@ Advanced Example with Multiple Agents
                 api_key: '%env(DEEPGRAM_API_KEY)%'
             elevenlabs:
                 api_key: '%env(ELEVEN_LABS_API_KEY)%'
+            inworld:
+                api_key: '%env(INWORLD_API_KEY)%'
             gemini:
                 api_key: '%env(GEMINI_API_KEY)%'
             perplexity:
@@ -1399,6 +1401,9 @@ must be configured. Both can be enabled independently:
 - **TTS only**: configure ``text_to_speech_platform`` along with ``tts_model`` (and optionally ``tts_options``) to convert the agent's text response to audio
 - **STT only**: configure ``speech_to_text_platform`` along with ``stt_model`` (and optionally ``stt_options``) to transcribe audio input before sending it to the agent
 - **STS**: configure both for a full speech-to-speech pipeline
+
+Any platform tagged with ``ai.platform.speech`` can be used as ``text_to_speech_platform`` or ``speech_to_text_platform``. The
+``cartesia``, ``elevenlabs`` and ``inworld`` platforms expose this tag out of the box.
 
 Speech is disabled by default and can be disabled when needed with ``speech: false``:
 

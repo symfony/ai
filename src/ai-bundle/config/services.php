@@ -44,6 +44,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog as HuggingFaceModelCatalog;
+use Symfony\AI\Platform\Bridge\Inworld\Contract\InworldContract;
 use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
 use Symfony\AI\Platform\Bridge\Meta\ModelCatalog as MetaModelCatalog;
 use Symfony\AI\Platform\Bridge\MiniMax\Contract\MiniMaxContract;
@@ -104,6 +105,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([GeminiContract::class, 'create'])
         ->set('ai.platform.contract.huggingface', Contract::class)
             ->factory([HuggingFaceContract::class, 'create'])
+        ->set('ai.platform.contract.inworld', Contract::class)
+            ->factory([InworldContract::class, 'create'])
         ->set('ai.platform.contract.minimax', Contract::class)
             ->factory([MiniMaxContract::class, 'create'])
         ->set('ai.platform.contract.vertexai.gemini', Contract::class)

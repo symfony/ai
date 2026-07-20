@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `inworld` platform configuration for TTS and STT
+
 0.11
 ----
 
