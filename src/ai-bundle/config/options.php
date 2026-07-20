@@ -43,6 +43,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/dockermodelrunner'))
                     ->append($import('platform/elevenlabs'))
                     ->append($import('platform/failover'))
+                    ->append($import('platform/fireworks'))
                     ->append($import('platform/gemini'))
                     ->append($import('platform/generic'))
                     ->append($import('platform/huggingface'))

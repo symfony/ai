@@ -5265,6 +5265,55 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_custom_http_client', (string) $arguments[1]);
     }
 
+    public function testFireworksPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'fireworks' => [
+                        'api_key' => 'fw-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.fireworks'));
+
+        $definition = $container->getDefinition('ai.platform.fireworks');
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(4, $arguments);
+        $this->assertSame('fw-test-key', $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('http_client', (string) $arguments[1]);
+        $this->assertNull($arguments[2]);
+        $this->assertInstanceOf(Reference::class, $arguments[3]);
+        $this->assertSame('event_dispatcher', (string) $arguments[3]);
+    }
+
+    #[TestDox('Fireworks platform uses custom http_client when configured')]
+    public function testFireworksPlatformUsesCustomHttpClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'fireworks' => [
+                        'api_key' => 'fw-test-key',
+                        'http_client' => 'my_custom_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.fireworks'));
+
+        $definition = $container->getDefinition('ai.platform.fireworks');
+        $arguments = $definition->getArguments();
+
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('my_custom_http_client', (string) $arguments[1]);
+    }
+
     public function testTransformersPhpConfiguration()
     {
         $container = $this->buildContainer([
