@@ -59,6 +59,7 @@ use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog
 use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
 use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog as ScalewayModelCatalog;
 use Symfony\AI\Platform\Bridge\TransformersPhp\ModelCatalog as TransformersPhpModelCatalog;
+use Symfony\AI\Platform\Bridge\Venice\Contract\Contract as VeniceContract;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGeminiContract;
 use Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog as VertexAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
@@ -106,6 +107,8 @@ return static function (ContainerConfigurator $container): void {
             ->factory([HuggingFaceContract::class, 'create'])
         ->set('ai.platform.contract.minimax', Contract::class)
             ->factory([MiniMaxContract::class, 'create'])
+        ->set('ai.platform.contract.venice', Contract::class)
+            ->factory([VeniceContract::class, 'create'])
         ->set('ai.platform.contract.vertexai.gemini', Contract::class)
             ->factory([VertexAiGeminiContract::class, 'create'])
         ->set('ai.platform.contract.ollama', Contract::class)
