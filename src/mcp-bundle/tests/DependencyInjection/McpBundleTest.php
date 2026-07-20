@@ -25,10 +25,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -45,8 +47,6 @@ class McpBundleTest extends TestCase
         $this->assertNull($container->getParameter('mcp.website_url'));
         $this->assertSame(50, $container->getParameter('mcp.pagination_limit'));
         $this->assertNull($container->getParameter('mcp.instructions'));
-        $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame([], $container->getParameter('mcp.discovery.exclude_dirs'));
     }
 
     public function testDataCollectorTagIncludesId()
@@ -515,55 +515,53 @@ class McpBundleTest extends TestCase
         $this->assertSame(1800, $arguments[2]);
     }
 
-    public function testDiscoveryDefaultConfiguration()
+    public function testNoDiscoveryMethodCallOnBuilder()
     {
         $container = $this->buildContainer([]);
 
-        $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame([], $container->getParameter('mcp.discovery.exclude_dirs'));
+        foreach ($container->getDefinition('mcp.server.builder')->getMethodCalls() as $call) {
+            $this->assertNotSame('setDiscovery', $call[0], 'ServerBuilder must not use file-based discovery');
+        }
+    }
 
-        // Verify the builder service uses the correct parameters
-        $builderDefinition = $container->getDefinition('mcp.server.builder');
-        $methodCalls = $builderDefinition->getMethodCalls();
+    public function testMcpAttributeAutoconfigurationTagsMethod()
+    {
+        $container = $this->buildContainer([]);
 
-        $setDiscoveryCall = null;
-        foreach ($methodCalls as $call) {
-            if ('setDiscovery' === $call[0]) {
-                $setDiscoveryCall = $call;
-                break;
-            }
+        $attributes = [
+            McpTool::class => 'mcp.tool',
+            McpPrompt::class => 'mcp.prompt',
+            McpResource::class => 'mcp.resource',
+            McpResourceTemplate::class => 'mcp.resource_template',
+        ];
+
+        $autoconfigurators = $container->getAttributeAutoconfigurators();
+
+        foreach ($attributes as $attributeClass => $tag) {
+            $this->assertArrayHasKey($attributeClass, $autoconfigurators);
         }
 
-        $this->assertNotNull($setDiscoveryCall, 'ServerBuilder should have setDiscovery method call');
+        $configurator = $autoconfigurators[McpTool::class][0];
+
+        $definition = new ChildDefinition('abstract');
+        $configurator($definition, new McpTool(), new \ReflectionMethod(InvokableService::class, '__invoke'));
+        $this->assertSame([['method' => '__invoke']], $definition->getTag('mcp.tool'));
+
+        $definition = new ChildDefinition('abstract');
+        $configurator($definition, new McpTool(), new \ReflectionClass(InvokableService::class));
+        $this->assertSame([['method' => '__invoke']], $definition->getTag('mcp.tool'));
     }
 
-    public function testDiscoveryCustomConfiguration()
+    public function testMcpAttributeAutoconfigurationRejectsNonInvokableClass()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'discovery' => [
-                    'scan_dirs' => ['src', 'lib', 'modules'],
-                    'exclude_dirs' => ['src/DataFixtures', 'tests'],
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer([]);
 
-        $this->assertSame(['src', 'lib', 'modules'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame(['src/DataFixtures', 'tests'], $container->getParameter('mcp.discovery.exclude_dirs'));
-    }
+        $configurator = $container->getAttributeAutoconfigurators()[McpTool::class][0];
 
-    public function testDiscoveryWithExcludeDirsOnly()
-    {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'discovery' => [
-                    'exclude_dirs' => ['src/DataFixtures'],
-                ],
-            ],
-        ]);
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage(\sprintf('The class "%s" uses #[%s] as a class-level attribute but has no "__invoke()" method.', NonInvokableService::class, McpTool::class));
 
-        $this->assertSame(['src'], $container->getParameter('mcp.discovery.scan_dirs'));
-        $this->assertSame(['src/DataFixtures'], $container->getParameter('mcp.discovery.exclude_dirs'));
+        $configurator(new ChildDefinition('abstract'), new McpTool(), new \ReflectionClass(NonInvokableService::class));
     }
 
     public function testLoaderInterfaceAutoconfiguration()
@@ -639,5 +637,21 @@ class McpBundleTest extends TestCase
         $extension->load($configuration, $container);
 
         return $container;
+    }
+}
+
+class InvokableService
+{
+    public function __invoke(): string
+    {
+        return 'ok';
+    }
+}
+
+class NonInvokableService
+{
+    public function doSomething(): string
+    {
+        return 'ok';
     }
 }

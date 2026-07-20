@@ -38,7 +38,6 @@ return static function (ContainerConfigurator $container): void {
             ->call('addRequestHandlers', [tagged_iterator('mcp.request_handler')])
             ->call('addNotificationHandlers', [tagged_iterator('mcp.notification_handler')])
             ->call('addLoaders', [tagged_iterator('mcp.loader')])
-            ->call('setDiscovery', [param('kernel.project_dir'), param('mcp.discovery.scan_dirs'), param('mcp.discovery.exclude_dirs')])
             ->call('setLogger', [service('logger')])
             ->tag('monolog.logger', ['channel' => 'mcp'])
 
