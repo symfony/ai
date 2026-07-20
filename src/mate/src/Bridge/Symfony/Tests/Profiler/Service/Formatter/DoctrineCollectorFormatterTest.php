@@ -63,7 +63,8 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertSame(1, $result['queries'][1]['count']);
         $this->assertSame(0.8, $result['queries'][1]['total_time_ms']);
         $this->assertSame(0.8, $result['queries'][1]['avg_time_ms']);
-        $this->assertSame([1], $result['queries'][1]['sample_params']);
+        // Parameter values are redacted; the shape (one bound parameter) is kept.
+        $this->assertSame(['***REDACTED***'], $result['queries'][1]['sample_params']);
     }
 
     public function testFormatMultipleConnections()
@@ -128,7 +129,7 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertSame(3, $result['queries'][0]['count']);
         $this->assertSame(6.0, $result['queries'][0]['total_time_ms']);
         $this->assertSame(2.0, $result['queries'][0]['avg_time_ms']);
-        $this->assertSame([1], $result['queries'][0]['sample_params']);
+        $this->assertSame(['***REDACTED***'], $result['queries'][0]['sample_params']);
         $this->assertSame('SELECT * FROM posts', $result['queries'][1]['sql']);
         $this->assertSame(1, $result['queries'][1]['count']);
         $this->assertSame(1.0, $result['queries'][1]['total_time_ms']);
@@ -137,23 +138,44 @@ final class DoctrineCollectorFormatterTest extends TestCase
         $this->assertArrayNotHasKey('duplicate_queries', $result);
     }
 
-    public function testFormatTruncatesLongSampleParams()
+    public function testFormatRedactsSampleParamValues()
     {
-        $longParam = str_repeat('a', 150);
-
         $collector = $this->createCollector(
             ['default' => 'doctrine.default'],
             [
                 'default' => [
-                    ['sql' => 'SELECT * FROM users WHERE bio = ?', 'params' => [$longParam], 'executionMS' => 0.001, 'types' => []],
+                    [
+                        'sql' => 'SELECT * FROM users WHERE email = ? AND password = ?',
+                        'params' => ['alice@example.com', 's3cr3t-hash'],
+                        'executionMS' => 0.001,
+                        'types' => [],
+                    ],
                 ],
             ],
         );
 
         $result = $this->formatter->format($collector);
 
-        $this->assertSame(103, \strlen($result['queries'][0]['sample_params'][0]));
-        $this->assertStringEndsWith('...', $result['queries'][0]['sample_params'][0]);
+        // No raw parameter value survives; the parameter count is still visible.
+        $this->assertSame(['***REDACTED***', '***REDACTED***'], $result['queries'][0]['sample_params']);
+        $this->assertStringNotContainsString('alice@example.com', json_encode($result));
+        $this->assertStringNotContainsString('s3cr3t-hash', json_encode($result));
+    }
+
+    public function testFormatRedactsNestedSampleParamValues()
+    {
+        $collector = $this->createCollector(
+            ['default' => 'doctrine.default'],
+            [
+                'default' => [
+                    ['sql' => 'SELECT * FROM t WHERE id IN (?)', 'params' => [[1, 2, 3]], 'executionMS' => 0.001, 'types' => []],
+                ],
+            ],
+        );
+
+        $result = $this->formatter->format($collector);
+
+        $this->assertSame([['***REDACTED***', '***REDACTED***', '***REDACTED***']], $result['queries'][0]['sample_params']);
     }
 
     public function testFormatNoQueries()
