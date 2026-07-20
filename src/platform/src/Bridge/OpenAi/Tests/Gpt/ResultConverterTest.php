@@ -663,7 +663,7 @@ class ResultConverterTest extends TestCase
         ]], $httpResponse), ['stream' => true]);
 
         $this->expectException(MaxOutputTokensException::class);
-        $this->expectExceptionMessage('OpenResponses truncated the response after reaching the output token limit.');
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
 
         iterator_to_array($streamResult->getContent());
     }
