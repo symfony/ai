@@ -53,6 +53,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Perplexity          | `symfony/ai-perplexity-platform`          |
 | Replicate           | `symfony/ai-replicate-platform`           |
 | Scaleway            | `symfony/ai-scaleway-platform`            |
+| Together            | `symfony/ai-together-platform`            |
 | TransformersPHP     | `symfony/ai-transformers-php-platform`    |
 | Google Vertex AI    | `symfony/ai-vertex-ai-platform`           |
 | Voyage              | `symfony/ai-voyage-platform`              |

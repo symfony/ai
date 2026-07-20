@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `together` platform configuration
+
 0.11
 ----
 
