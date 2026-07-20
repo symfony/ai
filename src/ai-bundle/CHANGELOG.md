@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `tts_stream` option in agent `speech` configuration to enable streaming text-to-speech (returns a cancellable `StreamResult` of `BinaryDelta` chunks; requires bridge support, e.g. ElevenLabs)
+
 0.11
 ----
 

@@ -95,4 +95,32 @@ final class RawHttpResultTest extends TestCase
 
         $this->assertSame([], $results);
     }
+
+    public function testCancelPropagatesToUnderlyingResponse()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())->method('cancel');
+
+        $rawResult = new RawHttpResult($response);
+
+        $this->assertFalse($rawResult->isCancelled());
+
+        $rawResult->cancel();
+
+        $this->assertTrue($rawResult->isCancelled());
+    }
+
+    public function testCancelIsIdempotent()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())->method('cancel');
+
+        $rawResult = new RawHttpResult($response);
+
+        $rawResult->cancel();
+        $rawResult->cancel();
+        $rawResult->cancel();
+
+        $this->assertTrue($rawResult->isCancelled());
+    }
 }

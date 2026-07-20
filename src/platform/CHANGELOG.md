@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `stop()` / `isStopRequested()` to `Symfony\AI\Platform\Result\Stream\Event` so stream listeners can request an early termination from `onStart()` / `onDelta()`. `StreamResult` honours the request by cancelling the underlying HTTP response and returning from its generator.
+ * Add `CancellableInterface` to allow cancelling in-flight results; implemented by `RawHttpResult` and `StreamResult`. `cancel()` propagates to the underlying `Symfony\Contracts\HttpClient\ResponseInterface::cancel()`, stopping streaming TTS or aborting an unresolved deferred result.
+
 0.11
 ----
 

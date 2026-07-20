@@ -26,6 +26,8 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 
 final class SpeechAgentTest extends TestCase
@@ -248,6 +250,94 @@ final class SpeechAgentTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-response', $result->getContent());
         $this->assertSame('It is sunny', $result->getMetadata()->get('text'));
+    }
+
+    public function testCallPropagatesStreamOptionToTtsWhenTtsStreamEnabled()
+    {
+        $ttsResult = new DeferredResult(new PlainConverter(new BinaryResult('audio-binary')), new InMemoryRawResult());
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with(
+                'eleven_multilingual_v2',
+                'hello',
+                $this->callback(static fn (array $options): bool => true === ($options['stream'] ?? null) && 'voice-id' === ($options['voice'] ?? null)),
+            )
+            ->willReturn($ttsResult);
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('hello'));
+
+        $configuration = new SpeechConfiguration(
+            ttsModel: 'eleven_multilingual_v2',
+            ttsOptions: ['voice' => 'voice-id'],
+            ttsStream: true,
+        );
+
+        $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
+        $agent->call(new MessageBag(Message::ofUser('Say hello')));
+    }
+
+    public function testCallReturnsCancellableStreamResultWhenTtsStreamEnabled()
+    {
+        $streamResult = new StreamResult((static function () {
+            yield new BinaryDelta('chunk1');
+            yield new BinaryDelta('chunk2');
+            yield new BinaryDelta('chunk3');
+        })());
+        $ttsResult = new DeferredResult(new PlainConverter($streamResult), new InMemoryRawResult());
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')->willReturn($ttsResult);
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())
+            ->method('call')
+            ->willReturn(new TextResult('hello'));
+
+        $configuration = new SpeechConfiguration(
+            ttsModel: 'eleven_multilingual_v2',
+            ttsStream: true,
+        );
+
+        $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
+        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')));
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+        $this->assertSame('hello', $result->getMetadata()->get('text'));
+
+        $collected = [];
+        foreach ($result->getContent() as $delta) {
+            $collected[] = $delta;
+            if (1 === \count($collected)) {
+                $result->cancel();
+            }
+        }
+
+        $this->assertCount(1, $collected);
+        $this->assertTrue($result->isCancelled());
+    }
+
+    public function testStreamFlagIsIgnoredWhenNoTtsModel()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
+
+        $innerResult = new TextResult('hello');
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())
+            ->method('call')
+            ->willReturn($innerResult);
+
+        $configuration = new SpeechConfiguration(ttsStream: true);
+
+        $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
+        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')));
+
+        $this->assertSame($innerResult, $result);
     }
 
     public function testGetNameDelegatesToInnerAgent()
