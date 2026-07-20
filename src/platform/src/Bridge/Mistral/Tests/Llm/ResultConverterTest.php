@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -53,6 +54,31 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello world', $result->getContent());
+    }
+
+    public function testConvertTruncatedTextResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'choices' => [
+                [
+                    'index' => 0,
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => 'Truncated answ',
+                    ],
+                    'finish_reason' => 'length',
+                ],
+            ],
+        ]));
+
+        $httpResponse = $httpClient->request('POST', 'https://api.mistral.ai/v1/chat/completions');
+        $converter = new ResultConverter();
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Truncated answ', $result->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
     }
 
     public function testConvertThrowsExceedContextSizeExceptionOnContextOverflow()
