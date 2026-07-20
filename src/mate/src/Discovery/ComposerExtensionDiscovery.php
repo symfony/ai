@@ -14,7 +14,7 @@ namespace Symfony\AI\Mate\Discovery;
 use Psr\Log\LoggerInterface;
 
 /**
- * Discovers MCP extensions via extra.ai-mate config in composer.json.
+ * Discovers Mate extensions via extra.ai-mate config in composer.json.
  *
  * Extensions must declare themselves in composer.json:
  * {

@@ -70,8 +70,8 @@ final class AgentInstructionsMaterializerTest extends TestCase
         $this->assertStringContainsString(AgentInstructionsMaterializer::AGENTS_START_MARKER, $agents);
         $this->assertStringContainsString(AgentInstructionsMaterializer::AGENTS_END_MARKER, $agents);
         $this->assertStringContainsString('AI Mate Summary:', $agents);
-        $this->assertStringContainsString('- Role: MCP-powered, project-aware coding guidance and tools.', $agents);
-        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.', $agents);
+        $this->assertStringContainsString('- Role: project-aware coding tools exposed through the `vendor/bin/mate` CLI.', $agents);
+        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over the equivalent raw shell commands whenever possible.', $agents);
         $this->assertStringContainsString('- Installed extensions: vendor/package-a.', $agents);
     }
 
@@ -110,7 +110,7 @@ MD
         $this->assertStringContainsString('Keep this line.', $agents);
         $this->assertStringContainsString('Footer line.', $agents);
         $this->assertStringContainsString('AI Mate Summary:', $agents);
-        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.', $agents);
+        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over the equivalent raw shell commands whenever possible.', $agents);
         $this->assertStringContainsString('- Installed extensions: See `mate/extensions.php`.', $agents);
         $this->assertSame(1, substr_count($agents, AgentInstructionsMaterializer::AGENTS_START_MARKER));
         $this->assertSame(1, substr_count($agents, AgentInstructionsMaterializer::AGENTS_END_MARKER));

@@ -1,12 +1,11 @@
 {
     "name": "symfony/ai-mate",
-    "description": "AI development assistant MCP server for Symfony projects",
+    "description": "AI development assistant CLI for Symfony projects",
     "license": "MIT",
     "type": "library",
     "keywords": [
         "ai",
-        "mcp",
-        "model-context-protocol",
+        "cli",
         "symfony",
         "debug",
         "development",
@@ -31,7 +30,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "mcp/sdk": "^0.6|^0.7",
+        "psr/container": "^1.1|^2.0",
         "psr/log": "^2.0|^3.0",
         "symfony/ai-mate-composer-plugin": "^0.12",
         "symfony/config": "^5.4|^6.4|^7.3|^8.0",

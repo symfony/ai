@@ -80,9 +80,6 @@ class InitCommand extends Command
             'mate/.env',
             'mate/.gitignore',
             'mate/AGENT_INSTRUCTIONS.md',
-            'mcp.json',
-            'bin/codex',
-            'bin/codex.bat',
         ];
         foreach ($files as $file) {
             $fullPath = $this->rootDir.'/'.$file;
@@ -100,44 +97,11 @@ class InitCommand extends Command
             }
         }
 
-        // Only prompt when the freshly written mcp.json still carries the
-        // placeholders; a kept existing file has nothing left to configure.
-        $mcpJsonPath = $this->rootDir.'/mcp.json';
-        if ($this->mcpJsonNeedsPhpBinary($mcpJsonPath)) {
-            $phpBinary = $this->resolvePhpBinary($io);
-            $this->applyPhpBinaryToMcpJson($mcpJsonPath, $phpBinary);
-            $actions[] = ['✓', 'Configured', \sprintf('mcp.json launch command ("%s")', $phpBinary)];
-        }
-
-        // Create symlink from .mcp.json to mcp.json for compatibility
-        $mcpJsonSymlink = $this->rootDir.'/.mcp.json';
-        if (file_exists($mcpJsonPath)) {
-            if (is_link($mcpJsonSymlink)) {
-                unlink($mcpJsonSymlink);
-            }
-            if (!file_exists($mcpJsonSymlink)) {
-                if (@symlink('mcp.json', $mcpJsonSymlink)) {
-                    $actions[] = ['✓', 'Created', '.mcp.json (symlink to mcp.json)'];
-                } else {
-                    $actions[] = ['⚠', 'Warning', 'Could not create .mcp.json symlink (symlink failed). You may need to manually copy mcp.json to .mcp.json'];
-                }
-            } elseif ($io->confirm(\sprintf('<question>%s already exists. Replace with symlink?</question>', $mcpJsonSymlink), false)) {
-                unlink($mcpJsonSymlink);
-                if (@symlink('mcp.json', $mcpJsonSymlink)) {
-                    $actions[] = ['✓', 'Updated', '.mcp.json (symlink to mcp.json)'];
-                } else {
-                    $actions[] = ['⚠', 'Warning', 'Could not create .mcp.json symlink (symlink failed). You may need to manually copy mcp.json to .mcp.json'];
-                }
-            } else {
-                $actions[] = ['○', 'Skipped', '.mcp.json (already exists)'];
-            }
-        }
-
         $mateSrcDir = $this->rootDir.'/mate/src';
         if (!is_dir($mateSrcDir)) {
             mkdir($mateSrcDir, FilePermissions::DIRECTORY, true);
             file_put_contents($mateSrcDir.'/.gitignore', '');
-            $actions[] = ['✓', 'Created', 'mate/src/ directory (for custom MCP tools)'];
+            $actions[] = ['✓', 'Created', 'mate/src/ directory (for custom tools)'];
         } else {
             $actions[] = ['○', 'Exists', 'mate/src/ directory'];
         }
@@ -160,8 +124,9 @@ class InitCommand extends Command
         $io->comment([
             'Next steps:',
             '  1. Run "composer dump-autoload" to register the Mate\\ autoloader',
-            '  2. Add custom MCP tools/resources/prompts to mate/src/',
-            '  3. Run your preferred coding agent (e.g. Claude Code) — it picks up the generated mcp.json; for Codex, use "./bin/codex"',
+            '  2. Add custom tools to mate/src/ (public methods with the #[AsTool] attribute)',
+            '  3. Point your coding agent at the CLI — it reads mate/AGENT_INSTRUCTIONS.md and runs',
+            '     "vendor/bin/mate tools:list", "tools:inspect <tool>" and "tools:call <tool> --<param>=<value>"',
         ]);
 
         if (!class_exists(Toon::class)) {
@@ -183,69 +148,11 @@ class InitCommand extends Command
 
     private function postCopyTemplateAction(string $template, string $destination): void
     {
-        if ('bin/codex' === $template) {
-            chmod($destination, FilePermissions::EXECUTABLE);
-
-            return;
-        }
-
         // Restrict files that may contain secrets or local configuration so they are not
         // readable by other users on shared hosts.
         if (\in_array($template, self::SENSITIVE_FILES, true)) {
             @chmod($destination, FilePermissions::FILE);
         }
-    }
-
-    /**
-     * PHP binary the agent uses to launch Mate, defaulted by environment
-     * detection (containers such as DDEV need a wrapper) and confirmed by the user.
-     */
-    private function resolvePhpBinary(SymfonyStyle $io): string
-    {
-        $default = is_dir($this->rootDir.'/.ddev') ? 'ddev exec php' : 'php';
-
-        return trim($io->ask('PHP binary to run Mate for your coding agent', $default) ?? $default);
-    }
-
-    /**
-     * Whether the mcp.json at the given path still holds the unresolved
-     * placeholders, i.e. it was just written from the template this run.
-     */
-    private function mcpJsonNeedsPhpBinary(string $mcpJsonPath): bool
-    {
-        $contents = @file_get_contents($mcpJsonPath);
-
-        return \is_string($contents) && str_contains($contents, '##PHP_BINARY##');
-    }
-
-    /**
-     * Replace the mcp.json placeholders with the PHP binary. A multi-word binary
-     * (e.g. "ddev exec php") is split into the command and its leading args.
-     */
-    private function applyPhpBinaryToMcpJson(string $mcpJsonPath, string $phpBinary): void
-    {
-        $parts = preg_split('/\s+/', trim($phpBinary), -1, \PREG_SPLIT_NO_EMPTY);
-        $contents = file_get_contents($mcpJsonPath);
-        if (false === $parts || [] === $parts || false === $contents) {
-            return;
-        }
-
-        $command = array_shift($parts);
-        $args = [...$parts, './vendor/bin/mate', 'serve', '--force-keep-alive'];
-        $encodedArgs = implode(', ', array_map(
-            static fn (string $arg): string => json_encode($arg, \JSON_UNESCAPED_SLASHES),
-            $args
-        ));
-
-        // The args placeholder is quoted in the template so it stays valid JSON;
-        // the encoded fragment brings its own quotes, so the quotes are replaced too.
-        $contents = str_replace(
-            ['##PHP_BINARY##', '"##MATE_ARGS##"'],
-            [$command, $encodedArgs],
-            $contents
-        );
-
-        file_put_contents($mcpJsonPath, $contents);
     }
 
     /**

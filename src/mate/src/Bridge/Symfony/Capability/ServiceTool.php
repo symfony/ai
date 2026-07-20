@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
-use Mcp\Capability\Attribute\McpTool;
+use Symfony\AI\Mate\Attribute\AsTool;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\ServiceNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Model\Container;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
@@ -32,7 +32,7 @@ class ServiceTool
      * @param string|null $query Filter by service ID or class name (case-insensitive partial match)
      * @param string|null $tag   Filter by DI tag name (e.g. kernel.event_listener, twig.extension)
      */
-    #[McpTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID, class name, or tag name. Returns a map of service IDs to their class names.')]
+    #[AsTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID, class name, or tag name. Returns a map of service IDs to their class names.')]
     public function getServices(?string $query = null, ?string $tag = null): string
     {
         $container = $this->readContainer();
@@ -72,7 +72,7 @@ class ServiceTool
     /**
      * @param string $id The exact service ID to retrieve details for
      */
-    #[McpTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, and constructor/factory information.')]
+    #[AsTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, and constructor/factory information.')]
     public function getServiceDetail(string $id): string
     {
         $container = $this->readContainer();

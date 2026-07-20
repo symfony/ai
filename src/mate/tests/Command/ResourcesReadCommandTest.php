@@ -12,12 +12,12 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use HelgeSverre\Toon\Toon;
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
-use Symfony\AI\Mate\Service\RegistryProvider;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
+use Symfony\AI\Mate\Invocation\ResourceReader;
 use Symfony\AI\Mate\Tests\Command\Fixtures\SampleResources;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -117,14 +117,15 @@ final class ResourcesReadCommandTest extends TestCase
         ];
 
         $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
-        $registryProvider = new RegistryProvider($loader, $logger);
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, [], $discoverer, $logger);
 
         $container = new ContainerBuilder();
         $container->set(SampleResources::class, new SampleResources());
 
-        return new class($registryProvider, $container) extends ResourcesReadCommand {
+        $reader = new ResourceReader($registry, $container);
+
+        return new class($reader) extends ResourcesReadCommand {
             protected function isToonFormatAvailable(): bool
             {
                 return true;

@@ -14,7 +14,7 @@ namespace Symfony\AI\Mate\Encoding;
 use HelgeSverre\Toon\Toon;
 
 /**
- * Encodes data for MCP tool responses.
+ * Encodes data for tool responses.
  *
  * Uses TOON (Token-Oriented Object Notation) format when the helgesverre/toon
  * package is installed, falling back to JSON otherwise.
@@ -24,7 +24,7 @@ use HelgeSverre\Toon\Toon;
 final class ResponseEncoder
 {
     /**
-     * Encodes data for MCP tool responses using TOON if available, JSON otherwise.
+     * Encodes data for tool responses using TOON if available, JSON otherwise.
      */
     public static function encode(mixed $data): string
     {

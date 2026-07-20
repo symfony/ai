@@ -184,8 +184,8 @@ final class AgentInstructionsMaterializer
         return implode("\n", [
             self::AGENTS_START_MARKER,
             'AI Mate Summary:',
-            '- Role: MCP-powered, project-aware coding guidance and tools.',
-            '- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.',
+            '- Role: project-aware coding tools exposed through the `vendor/bin/mate` CLI.',
+            '- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over the equivalent raw shell commands whenever possible.',
             '- Installed extensions: '.$this->buildInstalledExtensionsText($extensions),
             self::AGENTS_END_MARKER,
         ]);
@@ -230,7 +230,7 @@ final class AgentInstructionsMaterializer
 
 No extension-specific instructions are currently available.
 Run `vendor/bin/mate discover` to refresh discovered extensions and instructions.
-Prefer MCP tools over equivalent shell commands when possible.
+Prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over equivalent shell commands when possible.
 TEXT;
     }
 }

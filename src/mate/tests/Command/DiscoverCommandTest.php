@@ -267,7 +267,7 @@ PHP
             $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
 
             $output = $tester->getDisplay();
-            $this->assertStringContainsString('No MCP extensions found', $output);
+            $this->assertStringContainsString('No Mate extensions found', $output);
             $this->assertFileExists($tempDir.'/mate/AGENT_INSTRUCTIONS.md');
             $this->assertFileExists($tempDir.'/AGENTS.md');
         } finally {
@@ -338,7 +338,7 @@ PHP
             $tester->execute([]);
 
             $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-            $this->assertStringContainsString('No MCP extensions found', $tester->getDisplay());
+            $this->assertStringContainsString('No Mate extensions found', $tester->getDisplay());
             // Root-project skills are installed even though zero Composer extensions exist.
             $this->assertFileExists($tempDir.'/.agents/skills/mate-root-skill/SKILL.md');
             $this->assertTrue(is_link($tempDir.'/.claude/skills/mate-root-skill'));

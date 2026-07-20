@@ -12,12 +12,12 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use HelgeSverre\Toon\Toon;
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ToolsListCommand;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -48,7 +48,7 @@ final class ToolsListCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('MCP Tools', $output);
+        $this->assertStringContainsString('Available Tools', $output);
         $this->assertStringContainsString('Total:', $output);
         $this->assertStringContainsString('tool(s)', $output);
         $this->assertStringContainsString('server-info', $output);
@@ -127,10 +127,9 @@ final class ToolsListCommandTest extends TestCase
 
     public function testExecuteWithInvalidNameFilter()
     {
-        $rootDir = $this->fixturesDir.'/with-ai-mate-config';
+        $rootDir = __DIR__.'/../..';
         $extensions = [
-            'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
         ];
 
         $command = $this->createCommand($rootDir, $extensions);
@@ -156,7 +155,7 @@ final class ToolsListCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('MCP Tools', $output);
+        $this->assertStringContainsString('Available Tools', $output);
         $this->assertStringContainsString('Tool Name', $output);
         $this->assertStringContainsString('Description', $output);
         $this->assertStringContainsString('Handler', $output);
@@ -170,10 +169,7 @@ final class ToolsListCommandTest extends TestCase
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
         ];
 
-        $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
-        $collector = new CapabilityCollector($loader);
+        $collector = $this->createCollector($rootDir, $extensions);
 
         $command = new class($extensions, $collector) extends ToolsListCommand {
             protected function isToonFormatAvailable(): bool
@@ -212,12 +208,22 @@ final class ToolsListCommandTest extends TestCase
      * @param array<string, array{dirs: string[], includes: string[]}> $extensions
      * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
      */
-    private function createCommand(string $rootDir, array $extensions, array $disabledFeatures = []): ToolsListCommand
+    private function createCollector(string $rootDir, array $extensions, array $disabledFeatures = []): CapabilityCollector
     {
         $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
-        $collector = new CapabilityCollector($loader);
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+
+        return new CapabilityCollector($registry);
+    }
+
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
+     */
+    private function createCommand(string $rootDir, array $extensions, array $disabledFeatures = []): ToolsListCommand
+    {
+        $collector = $this->createCollector($rootDir, $extensions, $disabledFeatures);
 
         return new class($extensions, $collector) extends ToolsListCommand {
             protected function isToonFormatAvailable(): bool
