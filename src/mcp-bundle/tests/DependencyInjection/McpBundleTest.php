@@ -125,6 +125,7 @@ class McpBundleTest extends TestCase
                 'mcp.server.command' => false,
                 'mcp.server.controller' => false,
                 'mcp.server.route_loader' => false,
+                'mcp.server.debug_command' => false,
             ],
         ];
 
@@ -137,6 +138,7 @@ class McpBundleTest extends TestCase
                 'mcp.server.command' => true,
                 'mcp.server.controller' => false,
                 'mcp.server.route_loader' => true,
+                'mcp.server.debug_command' => true,
             ],
         ];
 
@@ -149,6 +151,7 @@ class McpBundleTest extends TestCase
                 'mcp.server.command' => false,
                 'mcp.server.controller' => true,
                 'mcp.server.route_loader' => true,
+                'mcp.server.debug_command' => true,
             ],
         ];
 
@@ -161,6 +164,7 @@ class McpBundleTest extends TestCase
                 'mcp.server.command' => true,
                 'mcp.server.controller' => true,
                 'mcp.server.route_loader' => true,
+                'mcp.server.debug_command' => true,
             ],
         ];
     }

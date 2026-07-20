@@ -24,6 +24,7 @@ use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Command\DebugCommand;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpAppPass;
@@ -183,6 +184,13 @@ final class McpBundle extends AbstractBundle
 
         // Configure session store based on HTTP config
         $this->configureSessionStore($httpConfig['session'], $container);
+
+        $container->register('mcp.server.debug_command', DebugCommand::class)
+            ->setArguments([
+                new Reference('mcp.server.builder'),
+                new Reference('mcp.registry'),
+            ])
+            ->addTag('console.command');
 
         if ($transports['stdio']) {
             $container->register('mcp.server.command', McpCommand::class)
