@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Automatic refresh of discovered extensions on `composer install` / `composer update` is now expected to run via the `symfony/ai-mate` Symfony Flex recipe
+
 0.11
 ----
 
