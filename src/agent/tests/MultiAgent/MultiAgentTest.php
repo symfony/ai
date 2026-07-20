@@ -25,6 +25,8 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\Exception\InterruptedException;
+use Symfony\AI\Platform\Result\InterruptionSignal;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 
@@ -373,5 +375,56 @@ class MultiAgentTest extends TestCase
         $messages = new MessageBag(Message::ofUser('Question'));
 
         $multiAgent->call($messages);
+    }
+
+    public function testCallAbortsWhenSignalAlreadyInterrupted()
+    {
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->expects($this->never())->method('call');
+
+        $fallback = $this->createMock(AgentInterface::class);
+        $handoff = new Handoff(new MockAgent(name: 'technical'), ['technical']);
+
+        $multiAgent = new MultiAgent($orchestrator, [$handoff], $fallback);
+
+        $signal = new InterruptionSignal();
+        $signal->interrupt();
+
+        $this->expectException(InterruptedException::class);
+        $multiAgent->call(new MessageBag(Message::ofUser('Question')), ['interruption_signal' => $signal]);
+    }
+
+    public function testCallAbortsAfterOrchestratorDecision()
+    {
+        $signal = new InterruptionSignal();
+
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->method('getName')->willReturn('orchestrator');
+
+        $decisionResult = $this->createMock(ResultInterface::class);
+        $decisionResult->method('getContent')->willReturn(new Decision('technical', 'reason'));
+
+        $orchestrator->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(static function () use ($signal, $decisionResult): ResultInterface {
+                // Simulate an external interruption fired while orchestration runs.
+                $signal->interrupt();
+
+                return $decisionResult;
+            });
+
+        $target = $this->createMock(AgentInterface::class);
+        $target->method('getName')->willReturn('technical');
+        $target->expects($this->never())->method('call');
+
+        $fallback = $this->createMock(AgentInterface::class);
+        $fallback->method('getName')->willReturn('fallback');
+        $fallback->expects($this->never())->method('call');
+
+        $handoff = new Handoff($target, ['technical']);
+        $multiAgent = new MultiAgent($orchestrator, [$handoff], $fallback);
+
+        $this->expectException(InterruptedException::class);
+        $multiAgent->call(new MessageBag(Message::ofUser('Question')), ['interruption_signal' => $signal]);
     }
 }

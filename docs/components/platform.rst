@@ -628,6 +628,77 @@ which formats each chunk as a JSON event that can be consumed by an ``EventSourc
 reader. For more robust real-time delivery — automatic reconnection or multiplexing across
 clients — an additional layer like `Mercure`_ can be used.
 
+Cancelling an in-flight result
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Results that hold non-trivial I/O implement
+:class:`Symfony\\AI\\Platform\\Result\\CancellableInterface`. The interface exposes
+two idempotent methods, ``cancel(): void`` and ``isCancelled(): bool``. Built-in
+implementers are :class:`Symfony\\AI\\Platform\\Result\\DeferredResult`,
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult`, and the HTTP raw result
+:class:`Symfony\\AI\\Platform\\Result\\RawHttpResult`. Calling ``cancel()`` cascades
+to the underlying ``Symfony\Contracts\HttpClient\ResponseInterface::cancel()``, so
+the network round-trip stops as soon as possible::
+
+    $result = $platform->invoke($model, $messages, ['stream' => true]);
+
+    foreach ($result->asStream() as $delta) {
+        // ...
+        if ($somethingHappened) {
+            $result->cancel();      // closes the HTTP response
+            break;                  // exit the loop
+        }
+    }
+
+    $result->isCancelled();         // true
+
+For a :class:`Symfony\\AI\\Platform\\Result\\StreamResult`, the cancelled flag is
+also honoured inside the generator itself: any subsequent iteration returns
+without yielding. A stream listener can request the same termination from inside
+``onStart()`` / ``onDelta()`` by calling ``$event->stop()`` — the
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` cancels itself at the next
+boundary.
+
+Accessing a :class:`Symfony\\AI\\Platform\\Result\\DeferredResult` after cancellation
+throws a :class:`Symfony\\AI\\Platform\\Result\\Exception\\CancelledResultException`,
+so a caller that races with a ``cancel()`` from another coroutine gets a clear
+signal instead of a half-built result.
+
+Interruption signal
+~~~~~~~~~~~~~~~~~~~
+
+Multi-step pipelines (for example the speech pipeline STT → LLM → TTS) can accept a
+cooperative interruption signal via their options array. The signal is an object
+implementing :class:`Symfony\\AI\\Platform\\Result\\InterruptionSignalInterface`
+with a single method, ``isInterrupted(): bool``, checked at every phase boundary::
+
+    use Symfony\AI\Platform\Result\Exception\InterruptedException;
+    use Symfony\AI\Platform\Result\InterruptionSignal;
+
+    $signal = new InterruptionSignal();
+
+    try {
+        $result = $agent->call($messages, ['interruption_signal' => $signal]);
+    } catch (InterruptedException) {
+        // an external actor flipped the signal — the pipeline aborted cleanly
+    }
+
+    // From another coroutine / event handler:
+    $signal->interrupt();
+
+When the pipeline detects an interrupted signal at a phase boundary it throws an
+:class:`Symfony\\AI\\Platform\\Result\\Exception\\InterruptedException`. This is the
+building block used by
+:class:`Symfony\\AI\\Agent\\Speech\\SpeechSession` to abort an in-flight speech
+pipeline when a fresh user input arrives in an event-loop context.
+
+.. note::
+
+    Symfony AI uses the signal ``options['interruption_signal']`` across its
+    built-in agents. Third-party components can adopt the same contract by checking
+    :class:`Symfony\\AI\\Platform\\Result\\InterruptionSignalInterface` at their own
+    phase boundaries.
+
 Code Examples
 ~~~~~~~~~~~~~
 

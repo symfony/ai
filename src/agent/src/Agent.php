@@ -23,6 +23,8 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 final class Agent implements AgentInterface
 {
+    use InterruptibleTrait;
+
     /**
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
@@ -56,6 +58,10 @@ final class Agent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
+        $signal = $this->extractInterruptionSignal($options);
+
+        $this->checkInterruptionSignal($signal);
+
         $input = new Input($this->getModel(), $messages, $options);
         foreach ($this->inputProcessors as $inputProcessor) {
             if (!$inputProcessor instanceof InputProcessorInterface) {
@@ -69,11 +75,15 @@ final class Agent implements AgentInterface
             $inputProcessor->processInput($input);
         }
 
+        $this->checkInterruptionSignal($signal);
+
         $model = $input->getModel();
         $messages = $input->getMessageBag();
         $options = $input->getOptions();
 
         $result = $this->platform->invoke($model, $messages, $options)->getResult();
+
+        $this->checkInterruptionSignal($signal);
 
         $output = new Output($model, $result, $messages, $options);
         foreach ($this->outputProcessors as $outputProcessor) {

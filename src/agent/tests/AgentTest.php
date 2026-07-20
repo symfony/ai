@@ -20,6 +20,7 @@ use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Platform\Exception\InvalidArgumentException as PlatformInvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -28,8 +29,11 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\Exception\InterruptedException;
+use Symfony\AI\Platform\Result\InterruptionSignal;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
 
 final class AgentTest extends TestCase
@@ -249,5 +253,76 @@ final class AgentTest extends TestCase
         $agent = new Agent($platform, 'gpt-4', [], [], $name);
 
         $this->assertSame($name, $agent->getName());
+    }
+
+    public function testCallAbortsImmediatelyWhenSignalAlreadyInterrupted()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
+
+        $inputProcessor = $this->createMock(InputProcessorInterface::class);
+        $inputProcessor->expects($this->never())->method('processInput');
+
+        $signal = new InterruptionSignal();
+        $signal->interrupt();
+
+        $agent = new Agent($platform, 'gpt-4', [$inputProcessor]);
+
+        $this->expectException(InterruptedException::class);
+        $agent->call(new MessageBag(new UserMessage(new Text('hi'))), ['interruption_signal' => $signal]);
+    }
+
+    public function testCallAbortsBetweenInputProcessorsAndPlatform()
+    {
+        $signal = new InterruptionSignal();
+
+        $inputProcessor = $this->createMock(InputProcessorInterface::class);
+        $inputProcessor->expects($this->once())
+            ->method('processInput')
+            ->willReturnCallback(static function () use ($signal): void {
+                $signal->interrupt();
+            });
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->never())->method('invoke');
+
+        $agent = new Agent($platform, 'gpt-4', [$inputProcessor]);
+
+        $this->expectException(InterruptedException::class);
+        $agent->call(new MessageBag(new UserMessage(new Text('hi'))), ['interruption_signal' => $signal]);
+    }
+
+    public function testCallAbortsBetweenPlatformAndOutputProcessors()
+    {
+        $signal = new InterruptionSignal();
+        $rawResult = $this->createStub(RawResultInterface::class);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->willReturnCallback(static function () use ($signal, $rawResult): DeferredResult {
+                $signal->interrupt();
+
+                return new DeferredResult(new PlainConverter(new TextResult('hello')), $rawResult);
+            });
+
+        $outputProcessor = $this->createMock(OutputProcessorInterface::class);
+        $outputProcessor->expects($this->never())->method('processOutput');
+
+        $agent = new Agent($platform, 'gpt-4', [], [$outputProcessor]);
+
+        $this->expectException(InterruptedException::class);
+        $agent->call(new MessageBag(new UserMessage(new Text('hi'))), ['interruption_signal' => $signal]);
+    }
+
+    public function testCallRejectsInvalidSignalType()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+
+        $agent = new Agent($platform, 'gpt-4');
+
+        $this->expectException(PlatformInvalidArgumentException::class);
+        $this->expectExceptionMessage('The "interruption_signal" option must be an instance of');
+        $agent->call(new MessageBag(new UserMessage(new Text('hi'))), ['interruption_signal' => 'not-a-signal']);
     }
 }

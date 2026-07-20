@@ -17,6 +17,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\InterruptibleTrait;
 use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -32,6 +33,8 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 final class MultiAgent implements AgentInterface
 {
+    use InterruptibleTrait;
+
     /**
      * @param AgentInterface   $orchestrator Agent responsible for analyzing requests and selecting appropriate handoffs
      * @param Handoff[]        $handoffs     Handoff definitions for agent routing
@@ -64,6 +67,10 @@ final class MultiAgent implements AgentInterface
      */
     public function call(MessageBag $messages, array $options = []): ResultInterface
     {
+        $signal = $this->extractInterruptionSignal($options);
+
+        $this->checkInterruptionSignal($signal);
+
         $userMessages = $messages->withoutSystemMessage();
 
         $userMessage = $userMessages->getUserMessage();
@@ -83,6 +90,8 @@ final class MultiAgent implements AgentInterface
         $decision = $this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
             'response_format' => Decision::class,
         ]))->getContent();
+
+        $this->checkInterruptionSignal($signal);
 
         if (!$decision instanceof Decision) {
             $this->logger->debug('MultiAgent: Failed to get decision, falling back to orchestrator');

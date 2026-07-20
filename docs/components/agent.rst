@@ -1025,11 +1025,175 @@ A full speech-to-speech pipeline (STT + TTS) can be created by configuring both 
 
     Handling both `text-to-speech` and `speech-to-text` introduces latency as most of the process is synchronous.
 
+Streaming TTS
+.............
+
+When the TTS bridge supports it (e.g. ElevenLabs), set ``ttsStream: true`` on the
+:class:`Symfony\\AI\\Agent\\Speech\\SpeechConfiguration` so the agent forwards
+``stream: true`` to the bridge and returns a
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` of
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` chunks instead of
+a fully buffered :class:`Symfony\\AI\\Platform\\Result\\BinaryResult`. The consumer
+iterates the stream and forwards each chunk to its transport (audio sink, WebSocket
+client, file)::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\SpeechAgent;
+    use Symfony\AI\Agent\Speech\SpeechConfiguration;
+    use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\AI\Platform\Result\Stream\Delta\BinaryDelta;
+    use Symfony\AI\Platform\Result\StreamResult;
+
+    $openAIPlatform = OpenAiFactory::createPlatform('key');
+    $agent = new Agent($openAIPlatform, 'gpt-4o');
+
+    $elevenLabsPlatform = ElevenLabsFactory::createPlatform(apiKey: 'key');
+
+    $speechAgent = new SpeechAgent($agent, new SpeechConfiguration(
+        ttsModel: 'eleven_multilingual_v2',
+        ttsOptions: ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
+        ttsStream: true,
+    ), textToSpeechPlatform: $elevenLabsPlatform);
+
+    $answer = $speechAgent->call(new MessageBag(
+        Message::ofUser('Tell me a story.'),
+    ));
+
+    \assert($answer instanceof StreamResult);
+
+    foreach ($answer->getContent() as $delta) {
+        if ($delta instanceof BinaryDelta) {
+            // forward $delta->getData() to the audio sink / WebSocket / file
+        }
+    }
+
+The stream can be stopped before completion by calling ``cancel()`` on the
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult`. The underlying HTTP response is
+closed and the generator returns cleanly at the next boundary — no exception is
+thrown::
+
+    $answer->cancel();          // stops at the next delta
+    $answer->isCancelled();     // true
+
+Session-level interruption
+..........................
+
+In long-running contexts (WebSocket servers, CLI daemons, event loops), a fresh user input
+often needs to supersede an in-flight agent call. Holding the previous
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` manually to call ``cancel()`` on it
+works but is tedious. :class:`Symfony\\AI\\Agent\\Speech\\SpeechSession` automates this:
+every new ``call()`` on the session cancels the previously retained cancellable result::
+
+    use Symfony\AI\Agent\Speech\SpeechSession;
+
+    $session = new SpeechSession($speechAgent);
+
+    $first = $session->call($messages1);
+    // The caller iterates $first->getContent() in the event loop...
+
+    // A new user input arrives. call() cancels $first automatically.
+    $second = $session->call($messages2);
+
+``SpeechSession`` implements :class:`Symfony\\AI\\Agent\\AgentInterface`, so it is a drop-in
+replacement wherever a plain agent is expected. If the consumer needs to stop without
+starting a new call, calling ``cancel()`` directly on the returned
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` remains the supported way.
+
+.. note::
+
+    A synchronous phase (Whisper upload, non-streaming LLM) already executing inside the
+    wrapped agent cannot be aborted from the outside in synchronous PHP. The session
+    effectively interrupts when the retained result is a
+    :class:`Symfony\\AI\\Platform\\Result\\StreamResult` (streaming TTS) or an unresolved
+    :class:`Symfony\\AI\\Platform\\Result\\DeferredResult`.
+
+Internally, each ``call()`` also creates a fresh
+:class:`Symfony\\AI\\Platform\\Result\\InterruptionSignal` and passes it through
+``options['interruption_signal']``. The wrapped :class:`Symfony\\AI\\Agent\\SpeechAgent`
+checks the signal before its STT phase, between STT and LLM, and between LLM and TTS.
+For streaming TTS, :class:`Symfony\\AI\\Agent\\SpeechAgent` additionally attaches a
+:class:`Symfony\\AI\\Agent\\Speech\\InterruptionStreamListener` to the returned
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult`, so the signal is observed at every
+delta boundary too — not only between coarse phases. When the previous signal is flipped
+by a fresh ``call()``, the in-flight agent aborts at its next checkpoint (phase boundary
+or delta) with an
+:class:`Symfony\\AI\\Platform\\Result\\Exception\\InterruptedException`.
+
+Event loop integration
+......................
+
+In a ReactPHP, amphp or Ratchet handler, a user message handler wraps the agent in a
+session and forwards the streamed audio back to the client. A fresh message received
+on the same connection triggers a new ``call()`` — which both cancels the previous
+:class:`Symfony\\AI\\Platform\\Result\\StreamResult` (stopping TTS immediately) and
+flips the interruption signal so the previous pipeline, if still inside its STT or LLM
+phase, aborts at its next phase boundary::
+
+    use Symfony\AI\Platform\Result\Exception\InterruptedException;
+
+    $session = new SpeechSession($speechAgent);
+
+    $onMessage = function ($connection, string $input) use ($session): void {
+        try {
+            $result = $session->call(new MessageBag(Message::ofUser($input)));
+        } catch (InterruptedException) {
+            // A fresher call() arrived mid-phase; nothing to forward.
+            return;
+        }
+
+        foreach ($result->asStream() as $delta) {
+            if ($delta instanceof BinaryDelta) {
+                $connection->send($delta->getData());
+            }
+        }
+    };
+
+.. note::
+
+    Symfony AI does not ship its own WebSocket transport; the example above assumes an
+    external event loop (ReactPHP, amphp, Ratchet, Swoole, RoadRunner...). Only the
+    session and signal primitives are provided — wiring them to a transport is left to
+    the application.
+
+Cooperative interruption in any agent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The interruption signal is not specific to :class:`Symfony\\AI\\Agent\\SpeechAgent`.
+Any agent that uses :class:`Symfony\\AI\\Agent\\InterruptibleTrait` honours the
+``options['interruption_signal']`` contract: the base :class:`Symfony\\AI\\Agent\\Agent`
+checks the signal before its input processors, between input processors and the
+platform invoke, and between the platform invoke and its output processors.
+:class:`Symfony\\AI\\Agent\\MultiAgent\\MultiAgent` applies the same pattern between
+its orchestration and delegation phases. For streaming returns,
+:class:`Symfony\\AI\\Agent\\Speech\\InterruptionStreamListener` provides a reusable
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\ListenerInterface` that throws
+:class:`Symfony\\AI\\Platform\\Result\\Exception\\InterruptedException` from
+``onStart`` / ``onDelta`` as soon as the signal is observed::
+
+    use Symfony\AI\Platform\Result\Exception\InterruptedException;
+    use Symfony\AI\Platform\Result\InterruptionSignal;
+
+    $signal = new InterruptionSignal();
+
+    try {
+        $result = $agent->call($messages, ['interruption_signal' => $signal]);
+    } catch (InterruptedException) {
+        // An external actor flipped the signal between phases — the pipeline aborted cleanly.
+    }
+
+    // Elsewhere (event handler, timer, fresh input):
+    $signal->interrupt();
+
 Code Examples
 ~~~~~~~~~~~~~
 
 * `Chat with static memory`_
 * `Chat with embedding search memory`_
+* `Cooperative interruption signal`_
+* `Speech session with streaming TTS interruption`_
 
 
 .. _`Platform Component`: https://github.com/symfony/ai-platform
@@ -1051,3 +1215,5 @@ Code Examples
 .. _`Chat with embedding search memory`: https://github.com/symfony/ai/blob/main/examples/memory/mariadb.php
 .. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
 .. _`Tool Call Argument Validation`: https://github.com/symfony/ai/blob/main/examples/toolbox/validation.php
+.. _`Cooperative interruption signal`: https://github.com/symfony/ai/blob/main/examples/misc/interruption-signal.php
+.. _`Speech session with streaming TTS interruption`: https://github.com/symfony/ai/blob/main/examples/speech/agent-eleven-labs-speech-session.php
