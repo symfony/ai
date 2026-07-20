@@ -237,18 +237,23 @@ HELP
             return $tokens;
         }
 
-        $argv = $_SERVER['argv'] ?? [];
-        if (!\is_array($argv) || [] === $argv) {
+        // symfony/console < 7.1: reproduce getRawTokens(true) from the input's own token
+        // list. The `tokens` property is private but has existed on ArgvInput across all
+        // supported versions, and reflection can read it without setAccessible() on PHP 8.1+.
+        try {
+            $tokens = (new \ReflectionProperty(ArgvInput::class, 'tokens'))->getValue($input);
+        } catch (\ReflectionException) {
             return [];
         }
 
-        // Drop the script name, mirroring ArgvInput's own token handling.
-        array_shift($argv);
+        if (!\is_array($tokens)) {
+            return [];
+        }
 
         $commandName = $input->getFirstArgument();
         $parameters = [];
         $keep = false;
-        foreach ($argv as $value) {
+        foreach ($tokens as $value) {
             if (!\is_string($value)) {
                 continue;
             }
