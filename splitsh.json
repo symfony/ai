@@ -40,6 +40,7 @@
         "ai-platform": {
             "prefixes": [{ "from": "src/platform", "to": "", "excludes": ["src/Bridge"] }]
         },
+        "ai-acp-platform": "src/platform/src/Bridge/Acp",
         "ai-ai-ml-api-platform": "src/platform/src/Bridge/AiMlApi",
         "ai-albert-platform": "src/platform/src/Bridge/Albert",
         "ai-amazee-ai-platform": "src/platform/src/Bridge/AmazeeAi",

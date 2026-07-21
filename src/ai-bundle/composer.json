@@ -34,6 +34,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "symfony/ai-acp-platform": "dev-main",
         "symfony/ai-agent": "^0.11",
         "symfony/ai-ai-ml-api-platform": "^0.11",
         "symfony/ai-albert-platform": "^0.11",
@@ -109,6 +110,12 @@
         "symfony/translation": "^7.3|^8.0",
         "symfony/validator": "^7.3|^8.0"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Acp"
+        }
+    ],
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {

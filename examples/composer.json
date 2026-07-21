@@ -5,6 +5,7 @@
     "type": "project",
     "require": {
         "php": ">=8.2",
+        "symfony/ai-acp-platform": "dev-main",
         "symfony/ai-agent": "^0.11",
         "symfony/ai-ai-ml-api-platform": "^0.11",
         "symfony/ai-albert-platform": "^0.11",
@@ -94,6 +95,12 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/platform/src/Bridge/Acp"
+        }
+    ],
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
