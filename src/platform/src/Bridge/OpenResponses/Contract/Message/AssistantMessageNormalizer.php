@@ -32,7 +32,9 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
      * @return array{
      *     role: 'assistant',
      *     type: 'message',
-     *     content: ?string
+     *     id: string,
+     *     status: 'completed',
+     *     content: list<array{type: 'output_text', text: string, annotations: array{}}>
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
@@ -41,17 +43,23 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             return $this->normalizer->normalize($data->getToolCalls(), $format, $context);
         }
 
-        $text = '';
+        $content = [];
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
-                $text .= $part->getText();
+                $content[] = [
+                    'type' => 'output_text',
+                    'text' => $part->getText(),
+                    'annotations' => [],
+                ];
             }
         }
 
         return [
             'role' => $data->getRole()->value,
             'type' => 'message',
-            'content' => '' === $text ? null : $text,
+            'id' => 'msg_'.str_replace('-', '', $data->getId()->toRfc4122()),
+            'status' => 'completed',
+            'content' => $content,
         ];
     }
 

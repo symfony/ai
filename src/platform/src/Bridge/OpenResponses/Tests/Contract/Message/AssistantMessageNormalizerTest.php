@@ -27,7 +27,7 @@ use Symfony\Component\Serializer\Serializer;
 class AssistantMessageNormalizerTest extends TestCase
 {
     /**
-     * @param array{role: 'assistant', type: 'message', content: ?string} $expected
+     * @param array{role: 'assistant', type: 'message', id: string, status: 'completed', content: list<array{type: 'output_text', text: string, annotations: array{}}>} $expected
      */
     #[DataProvider('normalizeProvider')]
     public function testNormalize(AssistantMessage $message, array $expected)
@@ -47,7 +47,38 @@ class AssistantMessageNormalizerTest extends TestCase
             [
                 'role' => 'assistant',
                 'type' => 'message',
-                'content' => 'Foo',
+                'id' => 'msg_'.str_replace('-', '', $message->getId()->toRfc4122()),
+                'status' => 'completed',
+                'content' => [
+                    ['type' => 'output_text', 'text' => 'Foo', 'annotations' => []],
+                ],
+            ],
+        ];
+
+        $multiPartMessage = Message::ofAssistant(new Text('Foo'), new Text('Bar'));
+        yield 'with multiple text parts' => [
+            $multiPartMessage,
+            [
+                'role' => 'assistant',
+                'type' => 'message',
+                'id' => 'msg_'.str_replace('-', '', $multiPartMessage->getId()->toRfc4122()),
+                'status' => 'completed',
+                'content' => [
+                    ['type' => 'output_text', 'text' => 'Foo', 'annotations' => []],
+                    ['type' => 'output_text', 'text' => 'Bar', 'annotations' => []],
+                ],
+            ],
+        ];
+
+        $emptyMessage = Message::ofAssistant();
+        yield 'without content' => [
+            $emptyMessage,
+            [
+                'role' => 'assistant',
+                'type' => 'message',
+                'id' => 'msg_'.str_replace('-', '', $emptyMessage->getId()->toRfc4122()),
+                'status' => 'completed',
+                'content' => [],
             ],
         ];
 

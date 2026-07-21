@@ -68,7 +68,11 @@ class MessageBagNormalizerTest extends TestCase
             [
                 'role' => 'assistant',
                 'type' => 'message',
-                'content' => 'Anything else?',
+                'id' => 'msg_'.str_replace('-', '', $assistantMessage->getId()->toRfc4122()),
+                'status' => 'completed',
+                'content' => [
+                    ['type' => 'output_text', 'text' => 'Anything else?', 'annotations' => []],
+                ],
             ],
             [
                 'arguments' => json_encode($toolCall->getArguments()),
