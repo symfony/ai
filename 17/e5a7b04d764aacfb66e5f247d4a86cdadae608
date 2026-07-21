@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-15T00:12:33Z
+
+@wachterjohannes having some of your use-cases in mind here - i guess you solved it already differently or is this interesting for you?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-07-20T04:37:55Z
+
+> @wachterjohannes having some of your use-cases in mind here - i guess you solved it already differently or is this interesting for you?
+
+i have not rewritten this part of Sulu.ai with symfony/ai - but this PR solves a real blind spot for us 🎉
