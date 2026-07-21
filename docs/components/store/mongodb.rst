@@ -197,7 +197,7 @@ Removing Documents
 
 ::
 
-    $store->remove($document->getId()->toString());
+    $store->remove($document->getId());
 
     // Or remove multiple documents at once:
     $store->remove([$id1, $id2, $id3]);

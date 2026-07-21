@@ -789,11 +789,11 @@ Memory integration is handled through the :class:`Symfony\\AI\\Agent\\Memory\\Me
 
     // Platform instantiation
 
-    $personalFacts = new StaticMemoryProvider(
+    $personalFacts = new StaticMemoryProvider([
         'My name is Wilhelm Tell',
         'I wish to be a swiss national hero',
         'I am struggling with hitting apples but want to be professional with the bow and arrow',
-    );
+    ]);
     $memoryProcessor = new MemoryInputProcessor([$personalFacts]);
 
     $agent = new Agent($platform, $model, [$memoryProcessor]);
@@ -813,10 +813,10 @@ information that should be consistently available without being directly added t
 
     use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 
-    $staticMemory = new StaticMemoryProvider(
+    $staticMemory = new StaticMemoryProvider([
         'The user is allergic to nuts',
         'The user prefers brief explanations',
-    );
+    ]);
 
 Embedding Provider
 ..................

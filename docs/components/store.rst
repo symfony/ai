@@ -79,7 +79,7 @@ search for documents in a store based on a query string. It vectorizes the query
     $documents = $retriever->retrieve('What is the capital of France?');
 
     foreach ($documents as $document) {
-        echo $document->metadata->get('source');
+        echo $document->getMetadata()->getSource();
     }
 
 The retriever accepts optional parameters to customize the retrieval:
