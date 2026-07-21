@@ -33,7 +33,7 @@ final class ApiClient
      */
     public function getModels(): array
     {
-        $result = $this->httpClient->request('GET', \sprintf('%s/models', $this->apiUrl), [
+        $result = $this->httpClient->request('GET', \sprintf('%s/v1/models', rtrim($this->apiUrl, '/')), [
             'auth_bearer' => $this->apiKey,
         ]);
 

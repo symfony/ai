@@ -8950,7 +8950,7 @@ class AiBundleTest extends TestCase
                     ],
                     'albert' => [
                         'api_key' => 'albert-test-key',
-                        'base_url' => 'https://albert.api.etalab.gouv.fr/v1',
+                        'base_url' => 'https://albert.api.etalab.gouv.fr',
                     ],
                     'azure' => [
                         'my_azure_instance' => [

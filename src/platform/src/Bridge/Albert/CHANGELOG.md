@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * [BC BREAK] The `baseUrl` must no longer include the API version (e.g. use `https://albert.api.etalab.gouv.fr`
+   instead of `https://albert.api.etalab.gouv.fr/v1`), aligning with the Generic bridge convention
+
 0.11
 ----
 

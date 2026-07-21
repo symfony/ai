@@ -1,3 +1,21 @@
+UPGRADE FROM 0.11 to 0.12
+=========================
+
+Platform
+--------
+
+ * The Albert bridge now follows the same `base_url` convention as the Generic bridge:
+   the API version must **not** be included in `baseUrl`, it is part of the path instead.
+   Remove the version segment from your configured URL:
+
+   ```diff
+   -Symfony\AI\Platform\Bridge\Albert\Factory::createPlatform($apiKey, 'https://albert.api.etalab.gouv.fr/v1');
+   +Symfony\AI\Platform\Bridge\Albert\Factory::createPlatform($apiKey, 'https://albert.api.etalab.gouv.fr');
+   ```
+
+   This also applies to `Albert\ApiClient`, which now appends `/v1/models` (instead of `/models`)
+   to the configured URL when listing models.
+
 UPGRADE FROM 0.10 to 0.11
 =========================
 
