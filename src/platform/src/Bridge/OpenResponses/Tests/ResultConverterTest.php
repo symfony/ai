@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -1070,6 +1071,40 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_456', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $toolCalls[0]->getArguments());
+    }
+
+    public function testStreamThrowsClearExceptionForMalformedToolCallArguments()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $raw = new InMemoryRawResult([], [
+            [
+                'type' => 'response.output_item.done',
+                'item' => [
+                    'type' => 'function_call',
+                    'id' => 'call_456',
+                    'name' => 'read_file',
+                    'arguments' => '{"path":"C:\docs'."\n".'next"}',
+                ],
+            ],
+            [
+                'type' => 'response.completed',
+                'response' => ['output' => []],
+            ],
+        ], $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        try {
+            iterator_to_array($streamResult->getContent());
+            $this->fail('Expected malformed tool arguments to throw.');
+        } catch (MalformedToolCallException $e) {
+            $this->assertSame('OpenResponses returned malformed JSON arguments for the "read_file" tool: "Syntax error"', $e->getMessage());
+            $this->assertInstanceOf(\JsonException::class, $e->getPrevious());
+        }
     }
 
     public function testStreamWithToolCallOutputItemDoneUsesCallIdWhenIdIsMissing()
