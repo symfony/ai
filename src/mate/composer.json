@@ -33,11 +33,10 @@
         "php": ">=8.2",
         "mcp/sdk": "^0.6|^0.7",
         "psr/log": "^2.0|^3.0",
-        "symfony/ai-mate-composer-plugin": "^0.11",
+        "symfony/ai-mate-composer-plugin": "^0.12",
         "symfony/config": "^5.4|^6.4|^7.3|^8.0",
         "symfony/console": "^5.4|^6.4|^7.3|^8.0",
         "symfony/dependency-injection": "^5.4|^6.4|^7.3|^8.0",
-        "symfony/ai-mate-composer-plugin": "^0.10",
         "symfony/filesystem": "^5.4|^6.4|^7.3|^8.0",
         "symfony/finder": "^5.4|^6.4|^7.3|^8.0"
     },
