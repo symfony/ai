@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Cohere\Llm;
 use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
@@ -171,13 +172,20 @@ final class ResultConverter implements ResultConverterInterface
      *         arguments: string
      *     }
      * } $toolCall
+     *
+     * @throws MalformedToolCallException
      */
     private function convertToolCall(array $toolCall): ToolCall
     {
         $argumentsJson = (string) $toolCall['function']['arguments'];
-        $arguments = '' !== $argumentsJson
-            ? json_decode($argumentsJson, true, flags: \JSON_THROW_ON_ERROR)
-            : [];
+        $arguments = [];
+        if ('' !== $argumentsJson) {
+            try {
+                $arguments = json_decode($argumentsJson, true, flags: \JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                throw new MalformedToolCallException(\sprintf('Cohere returned malformed JSON arguments for the "%s" tool: "%s"', $toolCall['function']['name'], $e->getMessage()), 0, $e);
+            }
+        }
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
     }

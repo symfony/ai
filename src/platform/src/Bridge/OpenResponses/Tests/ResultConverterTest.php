@@ -104,6 +104,27 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
     }
 
+    public function testConvertThrowsClearExceptionForMalformedToolCallArguments()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'function_call',
+                    'id' => 'call_123',
+                    'name' => 'get_weather',
+                    'arguments' => '{"city":Berlin}',
+                ],
+            ],
+        ]);
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('OpenResponses returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testConvertToolCallResultUsesCallIdWhenIdIsMissing()
     {
         $converter = new ResultConverter();

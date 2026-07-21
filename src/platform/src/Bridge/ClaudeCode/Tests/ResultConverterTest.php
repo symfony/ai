@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\ClaudeCode;
 use Symfony\AI\Platform\Bridge\ClaudeCode\ResultConverter;
 use Symfony\AI\Platform\Bridge\ClaudeCode\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -257,6 +258,27 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('toolu_01ABC123', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
         $this->assertSame(['location' => 'Berlin'], $toolCalls[0]->getArguments());
+    }
+
+    public function testConvertStreamingThrowsClearExceptionForMalformedToolCallArguments()
+    {
+        $converter = new ResultConverter();
+        $rawResult = new InMemoryRawResult(
+            [],
+            [
+                ['type' => 'stream_event', 'event' => ['type' => 'message_start']],
+                ['type' => 'stream_event', 'event' => ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'get_weather']]],
+                ['type' => 'stream_event', 'event' => ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"city":Berlin}']]],
+                ['type' => 'stream_event', 'event' => ['type' => 'content_block_stop', 'index' => 0]],
+            ],
+        );
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('Claude Code returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+
+        iterator_to_array($result->getContent(), false);
     }
 
     public function testConvertStreamingThrowsWhenMessageStopIsMissing()

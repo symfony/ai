@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Throw a clear exception for malformed tool call arguments
+
 0.10
 ----
 

@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -100,6 +101,38 @@ class ResultConverterTest extends TestCase
         $this->assertSame('call_123', $toolCalls[0]->getId());
         $this->assertSame('test_function', $toolCalls[0]->getName());
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
+    }
+
+    public function testConvertThrowsClearExceptionForMalformedToolCallArguments()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'choices' => [
+                [
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => null,
+                        'tool_calls' => [
+                            [
+                                'id' => 'call_123',
+                                'type' => 'function',
+                                'function' => [
+                                    'name' => 'get_weather',
+                                    'arguments' => '{"city":Berlin}',
+                                ],
+                            ],
+                        ],
+                    ],
+                    'finish_reason' => 'tool_calls',
+                ],
+            ],
+        ]);
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('Model returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+
+        $converter->convert(new RawHttpResult($httpResponse));
     }
 
     public function testConvertToolWithEmptyArgsCallResult()

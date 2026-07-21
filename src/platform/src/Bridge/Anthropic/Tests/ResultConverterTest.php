@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -335,6 +336,28 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('reaching the maximum of 16000 output tokens');
 
         iterator_to_array($streamResult->getContent());
+    }
+
+    public function testStreamingThrowsClearExceptionForMalformedToolCallArguments()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $raw = new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'get_weather']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"city":Berlin}']],
+            ['type' => 'content_block_stop', 'index' => 0],
+        ], $httpResponse);
+
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('Anthropic returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+
+        iterator_to_array($streamResult->getContent(), false);
     }
 
     public function testStreamingThrowsBeforeYieldingToolCallWhenTruncatedAtMaxTokens()

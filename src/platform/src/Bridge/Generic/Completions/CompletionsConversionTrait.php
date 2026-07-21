@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -249,11 +250,17 @@ trait CompletionsConversionTrait
      *         arguments?: string
      *     }
      * } $toolCall
+     *
+     * @throws MalformedToolCallException
      */
     protected function convertToolCall(array $toolCall): ToolCall
     {
         if (isset($toolCall['function']['arguments']) && '' !== $toolCall['function']['arguments']) {
-            $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+            try {
+                $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                throw new MalformedToolCallException(\sprintf('Model returned malformed JSON arguments for the "%s" tool: "%s"', $toolCall['function']['name'], $e->getMessage()), 0, $e);
+            }
         } else {
             $arguments = [];
         }
