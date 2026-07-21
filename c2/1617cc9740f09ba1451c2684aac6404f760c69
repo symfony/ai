@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-07-01T09:33:19Z
+
+Please check the failing CI step, thanks
+
+---------------------------------------------------------------------------
+
+by jvancoillie at 2026-07-01T10:26:17Z
+
+Email fixed, the remaining Resampler.php failure is unrelated to my changes.
