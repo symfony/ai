@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -291,9 +292,14 @@ class ResultConverter implements ResultConverterInterface
                 }
 
                 if (null !== $currentToolCall) {
-                    $input = '' !== $currentToolCallJson
-                        ? json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR)
-                        : [];
+                    $input = [];
+                    if ('' !== $currentToolCallJson) {
+                        try {
+                            $input = json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR);
+                        } catch (\JsonException $e) {
+                            throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "%s" tool: "%s"', $currentToolCall['name'], $e->getMessage()), 0, $e);
+                        }
+                    }
                     $toolCalls[] = new ToolCall(
                         $currentToolCall['id'],
                         $currentToolCall['name'],

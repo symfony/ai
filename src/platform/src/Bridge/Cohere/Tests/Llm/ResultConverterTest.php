@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Llm\ResultConverter;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -115,6 +116,33 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_123', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
         $this->assertSame(['city' => 'Paris'], $toolCalls[0]->getArguments());
+    }
+
+    public function testItThrowsClearExceptionForMalformedToolCallArguments()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+        $response->method('toArray')->willReturn([
+            'finish_reason' => 'TOOL_CALL',
+            'message' => [
+                'tool_calls' => [
+                    [
+                        'id' => 'call_123',
+                        'function' => [
+                            'name' => 'get_weather',
+                            'arguments' => '{"city":Berlin}',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $converter = new ResultConverter();
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('Cohere returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+
+        $converter->convert(new RawHttpResult($response));
     }
 
     public function testItThrowsExceptionOnUnsupportedFinishReason()
