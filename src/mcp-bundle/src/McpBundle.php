@@ -32,7 +32,6 @@ use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
-use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
@@ -81,19 +80,6 @@ final class McpBundle extends AbstractBundle
 
         $builder->registerForAutoconfiguration(NotificationHandlerInterface::class)
             ->addTag('mcp.notification_handler');
-
-        if ($builder->getParameter('kernel.debug')) {
-            $traceableRegistry = (new Definition('mcp.traceable_registry'))
-                ->setClass(TraceableRegistry::class)
-                ->setArguments([new Reference('.inner')])
-                ->setDecoratedService('mcp.registry');
-            $builder->setDefinition('mcp.traceable_registry', $traceableRegistry);
-
-            $dataCollector = (new Definition(DataCollector::class))
-                ->setArguments([new Reference('mcp.traceable_registry')])
-                ->addTag('data_collector', ['id' => 'mcp']);
-            $builder->setDefinition('mcp.data_collector', $dataCollector);
-        }
 
         if (isset($config['client_transports'])) {
             $this->configureClient($config['client_transports'], $config['http'], $builder);
@@ -191,6 +177,19 @@ final class McpBundle extends AbstractBundle
                 new Reference('mcp.registry'),
             ])
             ->addTag('console.command');
+
+        // The collector builds the server itself so every profiled request shows the full
+        // capability set. It needs the same transport prerequisites as the server (session store),
+        // hence the registration here and not unconditionally.
+        if ($container->getParameter('kernel.debug')) {
+            $dataCollector = (new Definition(DataCollector::class))
+                ->setArguments([
+                    new Reference('mcp.server.builder'),
+                    new Reference('mcp.registry'),
+                ])
+                ->addTag('data_collector', ['id' => 'mcp']);
+            $container->setDefinition('mcp.data_collector', $dataCollector);
+        }
 
         if ($transports['stdio']) {
             $container->register('mcp.server.command', McpCommand::class)

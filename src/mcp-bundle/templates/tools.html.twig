@@ -7,6 +7,9 @@
                     {% if tool.description %}
                         <p><strong>Description:</strong> {{ tool.description }}</p>
                     {% endif %}
+                    {% if tool.handler is defined %}
+                        <p><strong>Handler:</strong> <code>{{ tool.handler }}</code></p>
+                    {% endif %}
 
                     {% if tool.inputSchema.properties is defined and tool.inputSchema.properties|length %}
                         <h4>Parameters</h4>

@@ -7,6 +7,9 @@
                     {% if prompt.description %}
                         <p><strong>Description:</strong> {{ prompt.description }}</p>
                     {% endif %}
+                    {% if prompt.handler is defined %}
+                        <p><strong>Handler:</strong> <code>{{ prompt.handler }}</code></p>
+                    {% endif %}
 
                     {% if prompt.arguments|length %}
                         <h4>Arguments</h4>

@@ -10,6 +10,12 @@
                                 <th>URI</th>
                                 <td><code>{{ resource.uri }}</code></td>
                             </tr>
+                            {% if resource.handler is defined %}
+                                <tr>
+                                    <th>Handler</th>
+                                    <td><code>{{ resource.handler }}</code></td>
+                                </tr>
+                            {% endif %}
                             {% if resource.description %}
                                 <tr>
                                     <th>Description</th>
