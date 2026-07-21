@@ -557,6 +557,20 @@ You can customize the logging level and destination according to your needs:
                 channels: ['mcp']
                 webhook_url: '%env(SLACK_WEBHOOK)%'
 
+Debug Command
+-------------
+
+The ``debug:mcp`` command lists all MCP capabilities registered with the server — useful to verify
+that an attributed class was actually picked up (only registered, autoconfigured services are):
+
+.. code-block:: terminal
+
+    # list all tools, prompts, resources, and resource templates with their handlers
+    $ php bin/console debug:mcp
+
+    # show the details of a single element, including the tool's input schema
+    $ php bin/console debug:mcp current-time
+
 Profiler
 --------
 
