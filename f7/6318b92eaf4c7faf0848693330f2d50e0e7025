@@ -1,0 +1,62 @@
+---------------------------------------------------------------------------
+
+by Guikingone at 2026-06-24T13:10:43Z
+
+What about using https://packagist.org/packages/guikingone/agent-skills as the retrieval layer for skills? Already implement the specifications and allows to add new loader if needed 🤔
+
+This could also trigger discussion about #1718
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-24T20:50:18Z
+
+Thanks @Guikingone — looked at both `agent-skills` and #1718. I think we're solving two different layers, so I don't think the package replaces this PR:
+
+- **`agent-skills` / #1718** load skills *into* a PHP agent runtime (system-prompt injection, skill-as-tool, eval/grading).
+- **This PR** goes the other way: it *materializes* skills onto disk (`.agents/skills/` + symlinks into `.claude/skills/`) so external coding-agent CLIs read them — the polyfill side of SEP-2640 until they consume `skill://` directly.
+
+The only real overlap is the thin "parse `SKILL.md`" slice. That's worth sharing — but I'd rather see a common spec/parse abstraction land **first-party in the Agent component via #1718** than have Mate core take a third-party dependency. Happy to align this PR with whatever #1718 settles on.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-25T20:44:27Z
+
+@kbond i have striped down the scope of this PR i have a few ideas for further PRs but that is not important for the first tests here.
+
+@chr-hertel you can review but i would wait for @kbond to test this feature with maker skills
+
+---------------------------------------------------------------------------
+
+by kbond at 2026-07-08T13:25:33Z
+
+@wachterjohannes Ok, I finally got around to testing this.
+
+I used zenstruck/foundry as an example package to add skills. Here's [the branch](https://github.com/zenstruck/foundry/compare/2.x...kbond:foundry:ai-skills).
+
+It worked as expected but I had to run `vendor/bin/mate discover` explicitly to sync. I have the plugin installed/enabled. Maybe something to do with my local vendor setup?
+
+I love the simplicity of this! Let's discuss how to move forward!
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-07-08T19:43:19Z
+
+@kbond thanks for the feedback - this first version is indeed a very simple version that just proves that it works and make sense.
+
+As discussed in slack one-by-one i think your developer setup with the link binary do not trigger the composer plugin and thats the reason why it does not run discover automatically.
+
+The next steps should be following:
+
+1. En/Disable Skills - so that they will not be symlinked or removed from the "blacklist"
+2. Overwrite Skills- that will copy the skill into the directory instead of symlink and not overwrite it in any later on run of skills install
+3. Make the init command more interactive
+  - ask for agents (codex, claude, ...) so that the symlinks, wrappers, ... can be build ontop of that information
+  - ask for the purpose - mcp or skills or both - so that the developer can decide what he actually needs
+  - maybe other questions to individualize that
+5. Some kind of debugging command
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-21T19:59:30Z
+
+Btw, rebase should fix the pipeline
