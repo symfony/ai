@@ -334,7 +334,7 @@ class DataCollectorTest extends TestCase
         $this->assertCount(1, $dataCollector->getAgents());
         $this->assertCount(1, $traceableAgent->getCalls());
         $this->assertEquals([
-            'messages' => $messageBag,
+            'input' => $messageBag,
             'options' => [],
             'called_at' => $clock->now(),
         ], $dataCollector->getAgents()[0]);

@@ -1,6 +1,29 @@
 UPGRADE FROM 0.11 to 0.12
 =========================
 
+Agent
+-----
+
+ * `AgentInterface::call()` now accepts a `string` or a single `UserMessage` next to a `MessageBag`, and its
+   first parameter has been renamed from `$messages` to `$input`. Calls with a `MessageBag` keep working
+   unchanged, but custom implementations of `AgentInterface` have to widen their signature:
+
+   ```diff
+   -public function call(MessageBag $messages, array $options = []): ResultInterface
+   +public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    {
+   +    $messages = InputNormalizer::toMessageBag($input);
+        // ...
+    }
+   ```
+
+   `TraceableAgent::getCalls()` reports the untouched input under the `input` key instead of `messages`:
+
+   ```diff
+   -$call['messages'];
+   +$call['input'];
+   ```
+
 MCP Bundle
 ----------
 

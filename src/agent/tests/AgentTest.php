@@ -20,9 +20,11 @@ use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
+use Symfony\AI\Agent\Tests\Fixtures\MessageBagCapturingProcessor;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
@@ -61,6 +63,43 @@ final class AgentTest extends TestCase
         $agent = new Agent($platform, 'gpt-4o');
 
         $this->assertSame('gpt-4o', $agent->getModel());
+    }
+
+    public function testCallNormalizesStringInputIntoUserMessage()
+    {
+        $processor = new MessageBagCapturingProcessor();
+
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor]);
+        $agent->call('Hello there');
+
+        $this->assertInstanceOf(MessageBag::class, $processor->messageBag);
+        $messages = $processor->messageBag->getMessages();
+        $this->assertCount(1, $messages);
+        $this->assertInstanceOf(UserMessage::class, $messages[0]);
+        $this->assertSame('Hello there', $messages[0]->asText());
+    }
+
+    public function testCallNormalizesUserMessageIntoMessageBag()
+    {
+        $processor = new MessageBagCapturingProcessor();
+        $userMessage = Message::ofUser('Hello there');
+
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor]);
+        $agent->call($userMessage);
+
+        $this->assertInstanceOf(MessageBag::class, $processor->messageBag);
+        $this->assertSame([$userMessage], $processor->messageBag->getMessages());
+    }
+
+    public function testCallKeepsAGivenMessageBagAsIs()
+    {
+        $processor = new MessageBagCapturingProcessor();
+        $messageBag = new MessageBag(Message::ofUser('Hello there'));
+
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor]);
+        $agent->call($messageBag);
+
+        $this->assertSame($messageBag, $processor->messageBag);
     }
 
     public function testSetsAgentOnAgentAwareProcessors()

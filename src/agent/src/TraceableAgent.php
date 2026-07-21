@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent;
 
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
@@ -21,7 +22,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  *
  * @phpstan-type AgentData array{
- *     messages: MessageBag,
+ *     input: string|MessageBag|UserMessage,
  *     options: array<string, mixed>,
  *     called_at: \DateTimeImmutable,
  * }
@@ -39,15 +40,15 @@ final class TraceableAgent implements AgentInterface, ResetInterface
     ) {
     }
 
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
     {
         $this->calls[] = [
-            'messages' => $messages,
+            'input' => $input,
             'options' => $options,
             'called_at' => $this->clock->now(),
         ];
 
-        return $this->agent->call($messages, $options);
+        return $this->agent->call($input, $options);
     }
 
     public function getName(): string

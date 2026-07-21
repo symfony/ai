@@ -57,18 +57,10 @@ final class MockAgent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
     {
-        $lastMessage = $messages->getMessages()[\count($messages->getMessages()) - 1];
-        $content = '';
-
-        if ($lastMessage instanceof UserMessage) {
-            foreach ($lastMessage->getContent() as $messageContent) {
-                if ($messageContent instanceof Text) {
-                    $content .= $messageContent->getText();
-                }
-            }
-        }
+        $messages = InputNormalizer::toMessageBag($input);
+        $content = $this->extractText($messages);
 
         if (!isset($this->responses[$content])) {
             throw new RuntimeException(\sprintf('No response configured for input "%s".', $content));
@@ -250,5 +242,22 @@ final class MockAgent implements AgentInterface
     public function getName(): string
     {
         return $this->name;
+    }
+
+    private function extractText(MessageBag $messages): string
+    {
+        $lastMessage = $messages->getMessages()[\count($messages->getMessages()) - 1];
+        if (!$lastMessage instanceof UserMessage) {
+            return '';
+        }
+
+        $content = '';
+        foreach ($lastMessage->getContent() as $messageContent) {
+            if ($messageContent instanceof Text) {
+                $content .= $messageContent->getText();
+            }
+        }
+
+        return $content;
     }
 }

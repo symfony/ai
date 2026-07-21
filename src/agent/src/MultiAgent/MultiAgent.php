@@ -17,9 +17,11 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\InputNormalizer;
 use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -62,8 +64,9 @@ final class MultiAgent implements AgentInterface
     /**
      * @throws ExceptionInterface When the agent encounters an error during orchestration or handoffs
      */
-    public function call(MessageBag $messages, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
     {
+        $messages = InputNormalizer::toMessageBag($input);
         $userMessages = $messages->withoutSystemMessage();
 
         $userMessage = $userMessages->getUserMessage();
