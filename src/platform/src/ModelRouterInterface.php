@@ -11,18 +11,23 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
+use Symfony\AI\Platform\ModelRouter\RoutingDecision;
+
 /**
- * Resolves which provider should handle a given model invocation.
+ * Resolves which provider handles a given model invocation, and optionally which model.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 interface ModelRouterInterface
 {
     /**
-     * @param non-empty-string            $model     The model name to resolve
+     * @param non-empty-string|Model      $model     The requested model name to resolve via the catalog, or a fully defined model
      * @param iterable<ProviderInterface> $providers The available providers
      * @param array<mixed>|string|object  $input     The input data
      * @param array<string, mixed>        $options   The invocation options
+     *
+     * @throws ModelNotFoundException When no provider can serve the model
      */
-    public function resolve(string $model, iterable $providers, array|string|object $input, array $options = []): ProviderInterface;
+    public function resolve(string|Model $model, iterable $providers, array|string|object $input, array $options = []): RoutingDecision;
 }

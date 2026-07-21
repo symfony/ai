@@ -148,7 +148,7 @@ final class Provider implements ProviderInterface
             }
         }
 
-        throw new RuntimeException(\sprintf('No ModelClient registered for model "%s" (%s) in provider "%s".', $model->getName(), $model::class, $this->name));
+        throw new ModelNotFoundException(\sprintf('No ModelClient registered for model "%s" (%s) in provider "%s".', $model->getName(), $model::class, $this->name));
     }
 
     /**

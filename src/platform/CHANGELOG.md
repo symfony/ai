@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * [BC BREAK] Widen `ModelRouterInterface::resolve()` to accept `non-empty-string|Model` and return the new `ModelRouter\RoutingDecision` instead of a `ProviderInterface`, so a router can select the model - by input, rule set, or cost - and rewrite the invocation options for the selected provider, not only pick the provider serving the request. `Platform` now routes `Model` instances through the router and `ModelRoutingEvent` as well, instead of resolving them on a separate path
+ * [BC BREAK] Throw `ModelNotFoundException` instead of `RuntimeException` when a provider has no `ModelClient` registered for a model, so a routing decision naming a provider that cannot serve the model fails consistently with an unknown model name
+
 0.11
 ----
 

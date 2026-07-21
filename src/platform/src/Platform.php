@@ -13,10 +13,10 @@ namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Event\ModelRoutingEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
+use Symfony\AI\Platform\ModelRouter\RoutingDecision;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -47,17 +47,18 @@ final class Platform implements PlatformInterface
 
     public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
-        if ($model instanceof Model) {
-            return $this->resolveProviderForModel($model)->invoke($model, $input, $options);
-        }
-
         $event = new ModelRoutingEvent($model, $input, $options);
         $this->eventDispatcher?->dispatch($event);
 
-        $provider = $event->getProvider()
-            ?? $this->modelRouter->resolve($event->getModel(), $this->providers, $event->getInput(), $event->getOptions());
+        $decision = null !== $event->getProvider()
+            ? new RoutingDecision($event->getProvider())
+            : $this->modelRouter->resolve($event->getModel(), $this->providers, $event->getInput(), $event->getOptions());
 
-        return $provider->invoke($event->getModel(), $event->getInput(), $event->getOptions());
+        return $decision->getProvider()->invoke(
+            $decision->getModel() ?? $event->getModel(),
+            $event->getInput(),
+            $decision->getOptions() ?? $event->getOptions(),
+        );
     }
 
     public function getModelCatalog(): ModelCatalogInterface
@@ -68,19 +69,5 @@ final class Platform implements PlatformInterface
                 $this->providers,
             ),
         );
-    }
-
-    /**
-     * Routes a fully defined model to the first provider whose model clients accept it.
-     */
-    private function resolveProviderForModel(Model $model): ProviderInterface
-    {
-        foreach ($this->providers as $provider) {
-            if ($provider->supports($model)) {
-                return $provider;
-            }
-        }
-
-        throw new ModelNotFoundException(\sprintf('No provider found for model "%s" (%s).', $model->getName(), $model::class));
     }
 }

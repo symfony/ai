@@ -11,13 +11,14 @@
 
 namespace Symfony\AI\Platform\Event;
 
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * Event dispatched by Platform before resolving a model to a provider.
  *
- * Allows listeners to observe or modify the model name, input, and options
+ * Allows listeners to observe or modify the model, input, and options
  * before routing takes place. Setting a provider on the event skips the
  * model router entirely.
  *
@@ -28,29 +29,29 @@ final class ModelRoutingEvent extends Event
     private ?ProviderInterface $provider = null;
 
     /**
-     * @param non-empty-string           $model
+     * @param non-empty-string|Model     $model
      * @param array<mixed>|string|object $input
      * @param array<string, mixed>       $options
      */
     public function __construct(
-        private string $model,
+        private string|Model $model,
         private array|string|object $input,
         private array $options = [],
     ) {
     }
 
     /**
-     * @return non-empty-string
+     * @return non-empty-string|Model
      */
-    public function getModel(): string
+    public function getModel(): string|Model
     {
         return $this->model;
     }
 
     /**
-     * @param non-empty-string $model
+     * @param non-empty-string|Model $model
      */
-    public function setModel(string $model): void
+    public function setModel(string|Model $model): void
     {
         $this->model = $model;
     }

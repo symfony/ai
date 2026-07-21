@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Event;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Event\ModelRoutingEvent;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ProviderInterface;
 
 final class ModelRoutingEventTest extends TestCase
@@ -26,6 +27,15 @@ final class ModelRoutingEventTest extends TestCase
         $this->assertSame(['temperature' => 0.7], $event->getOptions());
     }
 
+    public function testGetModelReturnsModelInstance()
+    {
+        $model = new Model('custom-model', []);
+
+        $event = new ModelRoutingEvent($model, 'Hello');
+
+        $this->assertSame($model, $event->getModel());
+    }
+
     public function testSetModel()
     {
         $event = new ModelRoutingEvent('gpt-4o', 'Hello');
@@ -33,6 +43,16 @@ final class ModelRoutingEventTest extends TestCase
         $event->setModel('claude-3-5-sonnet');
 
         $this->assertSame('claude-3-5-sonnet', $event->getModel());
+    }
+
+    public function testSetModelWithModelInstance()
+    {
+        $event = new ModelRoutingEvent('gpt-4o', 'Hello');
+        $model = new Model('custom-model', []);
+
+        $event->setModel($model);
+
+        $this->assertSame($model, $event->getModel());
     }
 
     public function testSetInput()

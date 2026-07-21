@@ -32,6 +32,42 @@ MCP Bundle
 Platform
 --------
 
+ * `ModelRouterInterface::resolve()` now returns a `ModelRouter\RoutingDecision` instead of a
+   `ProviderInterface`, and accepts a `Model` instance next to a model name. This lets a router
+   select the model itself (based on the input, a rule set, or cost) instead of only dispatching a
+   pre-decided model to a provider. Custom routers must wrap their provider in a `RoutingDecision`:
+
+   ```diff
+   -use Symfony\AI\Platform\ProviderInterface;
+   +use Symfony\AI\Platform\Model;
+   +use Symfony\AI\Platform\ModelRouter\RoutingDecision;
+
+    final class MyModelRouter implements ModelRouterInterface
+    {
+   -    public function resolve(string $model, iterable $providers, array|string|object $input, array $options = []): ProviderInterface
+   +    public function resolve(string|Model $model, iterable $providers, array|string|object $input, array $options = []): RoutingDecision
+        {
+   -        return $this->pickProvider($model, $providers);
+   +        return new RoutingDecision($this->pickProvider($model, $providers));
+        }
+    }
+   ```
+
+   Passing a model or options to the `RoutingDecision` constructor replaces the requested model or
+   options for that invocation; leaving them out keeps the requested values. Calling
+   `Platform::invoke()` is unchanged.
+
+   As a consequence, `Model` instances passed to `Platform::invoke()` are no longer resolved on a
+   separate path: they now go through the `ModelRoutingEvent` and the model router like model names
+   do. Listeners of `ModelRoutingEvent` therefore have to expect `getModel()` to return either a
+   `non-empty-string` or a `Model`.
+
+ * A provider without a `ModelClient` registered for the invoked model now throws
+   `Exception\ModelNotFoundException` instead of `Exception\RuntimeException`, so that a routing
+   decision naming a provider that cannot serve the model fails the same way as an unknown model
+   name. Both implement `Exception\ExceptionInterface`, but note that `ModelNotFoundException`
+   extends `\InvalidArgumentException`, not `\RuntimeException`.
+
  * The Albert bridge now follows the same `base_url` convention as the Generic bridge:
    the API version must **not** be included in `baseUrl`, it is part of the path instead.
    Remove the version segment from your configured URL:
