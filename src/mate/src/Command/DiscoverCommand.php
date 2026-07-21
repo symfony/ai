@@ -14,6 +14,7 @@ namespace Symfony\AI\Mate\Command;
 use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
+use Symfony\AI\Mate\Service\SkillsInstaller;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,6 +29,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * and generates/updates mate/extensions.php with discovered extensions.
  * Also refreshes AGENT instruction artifacts for coding agents.
  *
+ * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
+ * @phpstan-import-type InstallResult from SkillsInstaller
+ *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
@@ -38,6 +42,7 @@ class DiscoverCommand extends Command
         private ComposerExtensionDiscovery $extensionDiscovery,
         private ExtensionConfigSynchronizer $extensionConfigSynchronizer,
         private AgentInstructionsMaterializer $instructionsMaterializer,
+        private SkillsInstaller $skillsInstaller,
     ) {
         parent::__construct(self::getDefaultName());
     }
@@ -78,9 +83,9 @@ class DiscoverCommand extends Command
 
         $count = \count($extensions);
         if (0 === $count) {
-            $materializationResult = $this->instructionsMaterializer->materializeForExtensions([
-                '_custom' => $rootProjectExtension,
-            ]);
+            $rootOnlyExtensions = ['_custom' => $rootProjectExtension];
+            $materializationResult = $this->instructionsMaterializer->materializeForExtensions($rootOnlyExtensions);
+            $skillResult = $this->syncSkills($rootOnlyExtensions);
 
             if ($composerMode) {
                 $io->write('<info>AI Mate:</info> No extensions found.');
@@ -90,6 +95,7 @@ class DiscoverCommand extends Command
                     'Packages must have "extra.ai-mate" configuration in their composer.json.',
                 ]);
                 $this->displayInstructionsStatus($io, $materializationResult);
+                $this->displaySkillStatus($io, $skillResult);
                 $io->note('Run "composer require vendor/package" to install MCP extensions.');
             }
 
@@ -117,6 +123,8 @@ class DiscoverCommand extends Command
         }
 
         $materializationResult = $this->instructionsMaterializer->materializeForExtensions($enabledExtensionsForInstructions);
+
+        $skillResult = $this->syncSkills($enabledExtensionsForInstructions);
 
         if ($composerMode) {
             $this->displayComposerSummary($io, $count, $newPackages, $removedPackages);
@@ -152,6 +160,7 @@ class DiscoverCommand extends Command
         }
 
         $this->displayInstructionsStatus($io, $materializationResult);
+        $this->displaySkillStatus($io, $skillResult);
 
         $io->comment([
             'Next steps:',
@@ -159,6 +168,33 @@ class DiscoverCommand extends Command
         ]);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Install skills shipped by enabled extensions into the agent skill directories.
+     *
+     * Only new/missing skills are installed here; existing entries are left untouched.
+     * Extensions without skills are filtered out by the installer.
+     *
+     * @param array<string, ExtensionData> $enabledExtensions enabled extensions plus the root project ("_custom")
+     *
+     * @return InstallResult
+     */
+    private function syncSkills(array $enabledExtensions): array
+    {
+        return $this->skillsInstaller->install($enabledExtensions);
+    }
+
+    /**
+     * @param InstallResult $skillResult
+     */
+    private function displaySkillStatus(SymfonyStyle $io, array $skillResult): void
+    {
+        if ([] === $skillResult['installed']) {
+            return;
+        }
+
+        $io->text(\sprintf('Installed %d skill(s): <info>%s</info>.', \count($skillResult['installed']), implode(', ', $skillResult['installed'])));
     }
 
     /**

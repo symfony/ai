@@ -44,7 +44,7 @@ final class ExtensionConfigSynchronizerTest extends TestCase
     {
         $synchronizer = new ExtensionConfigSynchronizer($this->rootDir);
 
-        $synchronizer->synchronize(['vendor/package-a' => ['dirs' => [], 'includes' => []]]);
+        $synchronizer->synchronize(['vendor/package-a' => ['dirs' => [], 'includes' => [], 'skills' => []]]);
 
         $extensions = include $this->rootDir.'/mate/extensions.php';
 
@@ -59,7 +59,7 @@ final class ExtensionConfigSynchronizerTest extends TestCase
         // and inject additional array entries / PHP code under naive interpolation.
         $maliciousName = "evil', 'injected' => ['enabled' => true], 'x";
 
-        $synchronizer->synchronize([$maliciousName => ['dirs' => [], 'includes' => []]]);
+        $synchronizer->synchronize([$maliciousName => ['dirs' => [], 'includes' => [], 'skills' => []]]);
 
         $extensions = include $this->rootDir.'/mate/extensions.php';
 

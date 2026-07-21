@@ -52,7 +52,7 @@ final class AgentInstructionsAggregatorTest extends TestCase
     {
         $aggregator = new AgentInstructionsAggregator(
             $this->rootDir,
-            ['acme/ext' => ['dirs' => [], 'includes' => [], 'instructions' => 'INSTRUCTIONS.md']],
+            ['acme/ext' => ['dirs' => [], 'includes' => [], 'instructions' => 'INSTRUCTIONS.md', 'skills' => []]],
             new NullLogger(),
         );
 
@@ -66,7 +66,7 @@ final class AgentInstructionsAggregatorTest extends TestCase
     {
         $aggregator = new AgentInstructionsAggregator(
             $this->rootDir,
-            ['acme/ext' => ['dirs' => [], 'includes' => [], 'instructions' => '../../../secret.md']],
+            ['acme/ext' => ['dirs' => [], 'includes' => [], 'instructions' => '../../../secret.md', 'skills' => []]],
             new NullLogger(),
         );
 
@@ -77,7 +77,7 @@ final class AgentInstructionsAggregatorTest extends TestCase
     {
         $aggregator = new AgentInstructionsAggregator(
             $this->rootDir,
-            ['_custom' => ['dirs' => [], 'includes' => [], 'instructions' => '../secret.md']],
+            ['_custom' => ['dirs' => [], 'includes' => [], 'instructions' => '../secret.md', 'skills' => []]],
             new NullLogger(),
         );
 

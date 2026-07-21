@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add `skills:install` command and `extra.ai-mate.skills` config key to install Agent Skills shipped by extensions into `.agents/skills` and `.claude/skills` for coding agents
+
 0.11
 ----
 

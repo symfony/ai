@@ -165,6 +165,40 @@ Example configuration:
         }
     }
 
+Skills
+~~~~~~
+
+``extra.ai-mate.skills`` (optional)
+
+- List of directories holding `Agent Skills <https://agentskills.io>`_, relative to package root
+  (a single string is also accepted)
+- Each immediate subdirectory is one skill and must contain a ``SKILL.md`` file
+- Conventionally a single ``skills`` directory
+- When a project runs ``mate discover`` (or ``mate skills:install``), each skill directory is
+  installed into the project's ``.agents/skills/`` and symlinked into ``.claude/skills/`` so coding
+  agents can use it
+
+Example configuration:
+
+.. code-block:: json
+
+    {
+        "extra": {
+            "ai-mate": {
+                "scan-dirs": ["src"],
+                "skills": ["skills"]
+            }
+        }
+    }
+
+The directory layout for the example above::
+
+    skills/
+    └── my-skill/
+        ├── SKILL.md
+        └── references/
+            └── details.md
+
 Extension Discovery Opt-Out
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

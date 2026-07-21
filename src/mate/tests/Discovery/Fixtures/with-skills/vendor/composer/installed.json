@@ -1,0 +1,14 @@
+{
+    "packages": [
+        {
+            "name": "vendor/package-with-skills",
+            "type": "library",
+            "extra": {
+                "ai-mate": {
+                    "scan-dirs": ["src"],
+                    "skills": ["skills"]
+                }
+            }
+        }
+    ]
+}

@@ -37,6 +37,8 @@
         "symfony/config": "^5.4|^6.4|^7.3|^8.0",
         "symfony/console": "^5.4|^6.4|^7.3|^8.0",
         "symfony/dependency-injection": "^5.4|^6.4|^7.3|^8.0",
+        "symfony/ai-mate-composer-plugin": "^0.10",
+        "symfony/filesystem": "^5.4|^6.4|^7.3|^8.0",
         "symfony/finder": "^5.4|^6.4|^7.3|^8.0"
     },
     "require-dev": {
@@ -75,7 +77,10 @@
             "scan-dirs": [
                 "src/Capability"
             ],
-            "instructions": "INSTRUCTIONS.md"
+            "instructions": "INSTRUCTIONS.md",
+            "skills": [
+                "skills"
+            ]
         }
     }
 }

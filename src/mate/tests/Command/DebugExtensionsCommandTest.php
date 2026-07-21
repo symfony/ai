@@ -36,9 +36,9 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a', 'vendor/package-b'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            'vendor/package-b' => ['dirs' => ['vendor/vendor/package-b/lib'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            'vendor/package-b' => ['dirs' => ['vendor/vendor/package-b/lib'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -60,8 +60,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -81,8 +81,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -101,8 +101,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -130,8 +130,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -159,8 +159,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -178,7 +178,7 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = [];
         $loadedExtensions = [
-            '_custom' => ['dirs' => [], 'includes' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -196,8 +196,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -214,8 +214,8 @@ final class DebugExtensionsCommandTest extends TestCase
         $rootDir = $this->fixturesDir.'/with-ai-mate-config';
         $enabledExtensions = ['vendor/package-a'];
         $loadedExtensions = [
-            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            'vendor/package-a' => ['dirs' => ['vendor/vendor/package-a/src'], 'includes' => [], 'skills' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -243,8 +243,9 @@ final class DebugExtensionsCommandTest extends TestCase
             'vendor/package-with-includes' => [
                 'dirs' => [],
                 'includes' => [$rootDir.'/vendor/vendor/package-with-includes/config/config.php'],
+                'skills' => [],
             ],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            '_custom' => ['dirs' => [], 'includes' => [], 'skills' => []],
         ];
 
         $command = $this->createCommand($rootDir, $enabledExtensions, $loadedExtensions);
@@ -258,8 +259,8 @@ final class DebugExtensionsCommandTest extends TestCase
     }
 
     /**
-     * @param array<string>                                            $enabledExtensions
-     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string>                                                              $enabledExtensions
+     * @param array<string, array{dirs: string[], includes: string[], skills: string[]}> $extensions
      */
     private function createCommand(string $rootDir, array $enabledExtensions, array $extensions): DebugExtensionsCommand
     {

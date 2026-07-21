@@ -43,7 +43,8 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/mate/
 ### Running the Server
 ```bash
 bin/mate init                               # Initialize configuration
-bin/mate discover                           # Discover extensions
+bin/mate discover                           # Discover extensions (also installs extension skills)
+bin/mate skills:install                     # Install extension skills
 bin/mate serve                              # Start MCP server
 bin/mate clear-cache                        # Clear cache
 
@@ -66,6 +67,13 @@ Running `bin/mate discover` generates `mate/AGENT_INSTRUCTIONS.md` with extensio
 - `mate/config.php`: Custom service configuration
 - `mate/.env`: Environment variables for mate configuration
 - `mate/src/`: Directory for user-defined MCP tools
+
+## Skills
+
+Extensions ship Agent Skills (`SKILL.md`) via the `extra.ai-mate.skills` directory key. `skills:install`
+(run automatically by `discover`) symlinks each skill under a `mate-` prefixed directory into `.agents/skills/`
+(read by Codex/OpenCode/Copilot) and into `.claude/skills/` for Claude Code, so they auto-update with the
+package. The core package ships a built-in `system-information` skill.
 
 ### Extension Exclusion
 
