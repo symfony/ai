@@ -28,6 +28,7 @@ use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpAppPass;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
+use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Profiler\TraceableRegistry;
@@ -66,8 +67,6 @@ final class McpBundle extends AbstractBundle
         $builder->setParameter('mcp.icons', $config['icons']);
         $builder->setParameter('mcp.pagination_limit', $config['pagination_limit']);
         $builder->setParameter('mcp.instructions', $config['instructions']);
-        $builder->setParameter('mcp.discovery.scan_dirs', $config['discovery']['scan_dirs']);
-        $builder->setParameter('mcp.discovery.exclude_dirs', $config['discovery']['exclude_dirs']);
         $builder->setParameter('mcp.apps.enabled', $config['apps']['enabled']);
 
         $this->registerMcpAttributes($builder);
@@ -126,6 +125,10 @@ final class McpBundle extends AbstractBundle
         }
     }
 
+    /**
+     * The tag records which method carries the attribute, so {@see McpPass} can reflect it at compile
+     * time and register the element with the server builder (replacing file-based discovery).
+     */
     private function registerMcpAttributes(ContainerBuilder $builder): void
     {
         $mcpAttributes = [
@@ -138,8 +141,18 @@ final class McpBundle extends AbstractBundle
         foreach ($mcpAttributes as $attributeClass => $tag) {
             $builder->registerAttributeForAutoconfiguration(
                 $attributeClass,
-                static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag): void {
-                    $definition->addTag($tag);
+                static function (ChildDefinition $definition, object $attribute, \Reflector $reflector) use ($tag, $attributeClass): void {
+                    if ($reflector instanceof \ReflectionMethod) {
+                        $definition->addTag($tag, ['method' => $reflector->getName()]);
+
+                        return;
+                    }
+
+                    if ($reflector instanceof \ReflectionClass && !$reflector->hasMethod('__invoke')) {
+                        throw new LogicException(\sprintf('The class "%s" uses #[%s] as a class-level attribute but has no "__invoke()" method. Add an __invoke() method or move the attribute to a method.', $reflector->getName(), $attributeClass));
+                    }
+
+                    $definition->addTag($tag, ['method' => '__invoke']);
                 }
             );
         }

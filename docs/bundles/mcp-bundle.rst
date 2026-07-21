@@ -36,7 +36,9 @@ To use your application as an MCP server, exposing tools, prompts, resources, an
 Creating MCP Capabilities
 .........................
 
-MCP capabilities are automatically discovered using PHP attributes.
+MCP capabilities are registered using PHP attributes on services: every service carrying one of the MCP attributes is
+picked up automatically at container compile time. In a default Symfony application (with autoconfiguration
+enabled and the classes in ``src/`` registered as services) it is enough to add the attribute to a class.
 
 Tools
 ^^^^^
@@ -120,7 +122,12 @@ Dynamic resources with parameters:
         }
     }
 
-All capabilities are automatically discovered in the ``src/`` directory when the server starts.
+All capabilities are collected from the service container when it is compiled: the attributes are
+reflected once, including the generation of the tool input schemas, and the result is cached in the
+compiled container. Classes that are not registered as services (for example excluded in
+``services.yaml`` or shipped by a third-party package) must be registered as services to be exposed.
+For fully custom registration logic you can implement ``Mcp\Capability\Registry\Loader\LoaderInterface``;
+implementations are autoconfigured with the ``mcp.loader`` tag and run when the server is built.
 
 Attribute Placement Patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -484,10 +491,6 @@ Configuration
             All timestamps are in UTC unless specified otherwise.
 
             Example contexts: logging, debugging, time-sensitive operations.
-
-        # Provide configuration for modelcontextprotocol/php-sdk built in discovery
-        discovery:
-            scan_dirs: ['src/Mcp'] # limit discovery scanning to a directory where you can group all your tools, resources, prompts, etc ...
 
         # MCP Apps (interactive HTML UI resources, registered with #[AsMcpApp])
         apps:

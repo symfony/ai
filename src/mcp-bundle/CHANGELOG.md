@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Register tools, prompts, resources, and resource templates via container instead of the SDK's file-based discovery
+
 0.11
 ----
 

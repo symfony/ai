@@ -1,6 +1,29 @@
 UPGRADE FROM 0.11 to 0.12
 =========================
 
+MCP Bundle
+----------
+
+ * MCP elements (tools, prompts, resources, resource templates) are now registered from the service
+   container at compile time instead of the SDK's runtime file-based discovery, and the `mcp.discovery`
+   configuration has been removed:
+
+   ```diff
+    # config/packages/mcp.yaml
+    mcp:
+        app: 'app'
+   -    discovery:
+   -        scan_dirs: ['src/Mcp']
+   -        exclude_dirs: []
+   ```
+
+   In a default Symfony application no further change is needed: any service carrying an MCP attribute
+   (`#[McpTool]`, `#[McpPrompt]`, `#[McpResource]`, `#[McpResourceTemplate]`) is picked up through
+   autoconfiguration. Classes that were previously discovered by scanning the filesystem but are not
+   registered as services (e.g. excluded in `services.yaml` or shipped in `vendor/`) must now be
+   registered as services — or registered through a custom `Mcp\Capability\Registry\Loader\LoaderInterface`
+   implementation (autoconfigured with the `mcp.loader` tag).
+
 Platform
 --------
 
