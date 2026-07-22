@@ -23,6 +23,7 @@ use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
@@ -46,6 +47,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
@@ -5541,6 +5543,8 @@ class AiBundleTest extends TestCase
         $this->assertNotEmpty($tags);
         $this->assertSame('ai.agent.test_agent', $tags[0]['agent']);
         $this->assertSame(-40, $tags[0]['priority']);
+
+        $this->assertStaticMemoryProviderLoadsFact($container, 'ai.agent.test_agent.static_memory_provider', 'Static memory for testing');
     }
 
     #[TestDox('Agent without memory configuration does not create memory processor')]
@@ -5614,6 +5618,7 @@ class AiBundleTest extends TestCase
         $memoryArguments = $memoryDefinition->getArguments();
         $this->assertInstanceOf(Reference::class, $memoryArguments[0][0]);
         $this->assertSame('ai.agent.test_agent.static_memory_provider', (string) $memoryArguments[0][0]);
+        $this->assertStaticMemoryProviderLoadsFact($container, 'ai.agent.test_agent.static_memory_provider', 'conversation_memory_service');
 
         // Verify memory processor has highest priority (runs first)
         $memoryTags = $memoryDefinition->getTag('ai.agent.input_processor');
@@ -5700,6 +5705,9 @@ class AiBundleTest extends TestCase
 
         $thirdTags = $thirdMemoryDef->getTag('ai.agent.input_processor');
         $this->assertSame('ai.agent.agent_with_different_memory', $thirdTags[0]['agent']);
+
+        $this->assertStaticMemoryProviderLoadsFact($container, 'ai.agent.agent_with_memory.static_memory_provider', 'first_memory_service');
+        $this->assertStaticMemoryProviderLoadsFact($container, 'ai.agent.agent_with_different_memory.static_memory_provider', 'second_memory_service');
     }
 
     #[TestDox('Memory processor uses MemoryInputProcessor class')]
@@ -5955,7 +5963,8 @@ class AiBundleTest extends TestCase
         $staticProvider = $container->getDefinition('ai.agent.test_agent.static_memory_provider');
         $this->assertSame(StaticMemoryProvider::class, $staticProvider->getClass());
         $staticProviderArgs = $staticProvider->getArguments();
-        $this->assertSame('This is static memory content', $staticProviderArgs[0]);
+        $this->assertSame(['This is static memory content'], $staticProviderArgs[0]);
+        $this->assertStaticMemoryProviderLoadsFact($container, 'ai.agent.test_agent.static_memory_provider', 'This is static memory content');
 
         // Check that memory processor uses the StaticMemoryProvider
         $memoryProcessor = $container->getDefinition('ai.agent.test_agent.memory_input_processor');
@@ -6051,7 +6060,8 @@ class AiBundleTest extends TestCase
         $staticProvider = $container->getDefinition('ai.agent.agent_with_static.static_memory_provider');
         $this->assertSame(StaticMemoryProvider::class, $staticProvider->getClass());
         $staticProviderArgs = $staticProvider->getArguments();
-        $this->assertSame('Static memory context for this agent', $staticProviderArgs[0]);
+        $this->assertSame(['Static memory context for this agent'], $staticProviderArgs[0]);
+        $this->assertStaticMemoryProviderLoadsFact($container, 'ai.agent.agent_with_static.static_memory_provider', 'Static memory context for this agent');
     }
 
     #[TestDox('Model configuration with query parameters in model name works correctly')]
@@ -8899,6 +8909,22 @@ class AiBundleTest extends TestCase
         $this->assertSame(['voice_id' => 'abc123'], $speechConfigDefinition->getArgument('$ttsOptions'));
         $this->assertSame('whisper', $speechConfigDefinition->getArgument('$sttModel'));
         $this->assertSame(['language' => 'fr'], $speechConfigDefinition->getArgument('$sttOptions'));
+    }
+
+    /**
+     * Instantiates the provider from the definition's arguments to ensure the wiring
+     * survives contact with the constructor, and asserts the fact ends up in the memory.
+     */
+    private function assertStaticMemoryProviderLoadsFact(ContainerBuilder $container, string $serviceId, string $fact): void
+    {
+        $definition = $container->getDefinition($serviceId);
+        $this->assertSame(StaticMemoryProvider::class, $definition->getClass());
+
+        $provider = new StaticMemoryProvider(...$definition->getArguments());
+        $memories = $provider->load(new Input('gpt-4', new MessageBag()));
+
+        $this->assertCount(1, $memories);
+        $this->assertStringContainsString($fact, $memories[0]->getContent());
     }
 
     /**
