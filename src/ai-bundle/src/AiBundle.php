@@ -1363,9 +1363,9 @@ final class AiBundle extends AbstractBundle
                 // Array configuration with service key - use the service directly
                 $memoryProviderReference = new Reference($memoryValue['service']);
             } else {
-                // String configuration - always create StaticMemoryProvider
+                // String configuration - always create StaticMemoryProvider, which expects a list of facts
                 $staticMemoryProviderDefinition = (new Definition(StaticMemoryProvider::class))
-                    ->setArguments([$memoryValue]);
+                    ->setArguments([[$memoryValue]]);
 
                 $staticMemoryServiceId = 'ai.agent.'.$name.'.static_memory_provider';
                 $container->setDefinition($staticMemoryServiceId, $staticMemoryProviderDefinition);
