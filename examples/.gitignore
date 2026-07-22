@@ -1,6 +1,7 @@
 .env.local
 .transformers-cache
 composer.lock
+report.md
 vendor
 tmp
 var
