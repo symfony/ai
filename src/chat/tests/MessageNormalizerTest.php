@@ -217,6 +217,28 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame([], $toolCalls[1]->getArguments());
     }
 
+    public function testItCanNormalizeAndDenormalizeAssistantMessageWithImage()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $dataUrl = 'data:image/png;base64,SGVsbG8=';
+        $message = new AssistantMessage(Image::fromDataUrl($dataUrl));
+
+        $payload = $serializer->normalize($message);
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(AssistantMessage::class, $denormalized);
+
+        $content = $denormalized->getContent();
+        $this->assertCount(1, $content);
+        $this->assertInstanceOf(Image::class, $content[0]);
+        $this->assertSame($dataUrl, $content[0]->asDataUrl());
+    }
+
     public function testItPreservesAssistantPartOrderingAcrossRoundtrip()
     {
         $serializer = new Serializer([
