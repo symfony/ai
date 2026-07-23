@@ -1,11 +1,13 @@
 ---
 name: php-environment-check
-description: Confirm the PHP runtime with server-info when a Mate tool errors or a feature is unavailable in a way that points at the environment rather than the app, or when you need the PHP version, OS, or loaded extensions before relying on a feature. Not for diagnosing the app itself (use the profiler, log, or service skills).
+description: Check the PHP runtime with server-info, its version, OS, and loaded extensions. Reach for it when a Mate tool itself fails or a capability is missing and you suspect the environment, a missing extension or an old PHP, rather than the app or its config. Not for diagnosing app behavior (profiler, log investigation) or DI wiring that is present but wrong (service inspection).
 ---
 
 # PHP environment check
 
 `server-info` takes no arguments and returns `php_version`, `operating_system`, `operating_system_family`, and `extensions` (the extensions loaded for this runtime). Calling it is trivial; the judgment is knowing when a failure is the runtime, not the code, and reading the result against what a feature needs.
+
+`server-info` accepts `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. The loaded-extension list is long, so pass `--format=json` when you only need to test for one extension.
 
 ## When to reach for it
 

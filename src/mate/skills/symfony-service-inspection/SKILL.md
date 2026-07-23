@@ -1,6 +1,6 @@
 ---
 name: symfony-service-inspection
-description: Diagnose a Symfony dependency-injection or wiring problem, service not found, wrong implementation injected, an autoconfigured tag not applied, or a factory/decorator not doing what you expect. Use for container/config bugs, not runtime request errors (profiler) or log trends (log investigation).
+description: Diagnose a Symfony dependency-injection or wiring problem, service not found, wrong implementation injected, an autoconfigured tag not applied, or a factory/decorator not doing what you expect. Use for container/config bugs, not runtime request errors (profiler), log trends (log investigation), or a missing PHP extension breaking the tool itself (php environment check).
 ---
 
 # Service inspection
@@ -9,6 +9,8 @@ Reads the compiled DI container through Mate's CLI, from the dumped `*DebugConta
 
 - `symfony-services` (opt `query`, `tag`): `query` is a case-insensitive partial match on service id OR class; `tag` is an exact tag name. Returns a map of `id => class`.
 - `symfony-service-detail --id=<exact id>`: full detail for one service, `{id, class, tags, calls, factory?}`. The id must be exact.
+
+Every command accepts `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. The service map can be large, so filter it rather than dumping it wide.
 
 ## Workflow
 
@@ -28,5 +30,5 @@ Reads the compiled DI container through Mate's CLI, from the dumped `*DebugConta
 ## Failure paths
 
 - `symfony-service-detail` errors "Service ... not found": the id is not exact. Ids are case-sensitive and a leading dot is stripped (`.inner` is stored as `inner`). Re-run `symfony-services` with a fragment to copy the real id. Note a service can exist yet be private; it still appears here.
-- `symfony-services` returns an empty map: the container XML could not be found or loaded. The dump only exists after the container is compiled. Warm it (`bin/console cache:warmup`, or just boot the app once) in the environment you are inspecting, then retry.
+- `symfony-services` returns an empty map: the container XML could not be found or loaded. The dump only exists after the container is compiled. Warm it (`bin/console cache:warmup`, or just boot the app once) in the environment you are inspecting, then retry. If it is still empty after warming, the parse itself may be failing because the runtime lacks `simplexml`; confirm the environment with php environment check.
 - Reads the first of dev/test/prod it finds. If you are chasing an env-specific binding, make sure that environment's container has been compiled, otherwise you are reading dev.

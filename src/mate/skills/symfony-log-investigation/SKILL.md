@@ -13,6 +13,8 @@ Reads Monolog files through Mate's CLI. Entries come back as `{datetime, channel
 - `monolog-search` (`term`, `regex`, `level`, `channel`, `environment`, `from`, `to`, `limit`): searches across all files. Empty `term` with filters set = filter-only.
 - `monolog-context-search` (`key`, `value`, `level`, `environment`, `limit`): matches a structured context field. No channel or date filter here.
 
+Every command accepts `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. A wide search returns many entries, so narrow with filters and a `limit` before widening the output format.
+
 ## Workflow
 
 1. Orient: `mate tools:call monolog-list-files`. Confirm the environment you care about is present and recently modified.

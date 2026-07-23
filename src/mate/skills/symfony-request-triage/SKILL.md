@@ -1,6 +1,6 @@
 ---
 name: symfony-request-triage
-description: Starting point when a Symfony request misbehaved (error, wrong result, or slow) and you do not yet know whether to look at the profiler, the logs, or the container. Routes to the right investigation. Skip it if you already know the profile token, the log channel, or that it is a wiring bug.
+description: First step ONLY when a Symfony request misbehaved and you do not yet know whether the answer is in the profiler, the logs, or the container. One call, then it hands off to the right skill. Skip it entirely and go straight to that skill if you already know the profile token, the log channel or query, or that it is a DI wiring bug.
 ---
 
 # Request triage
