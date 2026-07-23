@@ -361,6 +361,10 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Symfony\\AI\\Mate\\(?!Bridge\\).*
+    - name: MateKnowledgeBridge
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Mate\\Bridge\\Knowledge\\.*
     - name: MateMonologBridge
       collectors:
         - type: classLike
@@ -610,7 +614,11 @@ deptrac:
       - StoreComponent
       - PlatformComponent
     MateComponent: ~
+    MateKnowledgeBridge:
+      - MateComponent
+      - StoreComponent
     MateMonologBridge:
       - MateComponent
     MateSymfonyBridge:
       - MateComponent
+      - MateKnowledgeBridge

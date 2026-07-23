@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.9
+---
+
+ * Add `SymfonyDocsProvider` registering the official Symfony documentation as a knowledge provider when `symfony/ai-knowledge-mate-extension` is installed; the cloned branch is auto-detected from the host application's installed Symfony version (`Composer\InstalledVersions`) and can be overridden via `ai_mate_symfony.docs_branch` / `ai_mate_symfony.docs_repository_url`
+
 0.7
 ---
 
