@@ -21,4 +21,6 @@ interface ListenerInterface
     public function onDelta(DeltaEvent $event): void;
 
     public function onComplete(CompleteEvent $event): void;
+
+    public function onError(ErrorEvent $event): void;
 }

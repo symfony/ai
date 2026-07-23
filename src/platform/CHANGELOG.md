@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * [BC BREAK] Add `ListenerInterface::onError()`, receiving the new `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws (right before the exception is rethrown to the caller) so a listener can finalize on a stream that reported its token usage on a delta and then threw - e.g. `MaxOutputTokensException` on a response completed at the output-token ceiling - where `onComplete` never fires. `AbstractStreamListener` provides a no-op default, and `onComplete`/`onError` are mutually exclusive terminal events
+
 0.12
 ----
 

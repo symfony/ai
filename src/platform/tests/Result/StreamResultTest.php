@@ -13,9 +13,11 @@ namespace Symfony\AI\Platform\Tests\Result;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
+use Symfony\AI\Platform\Result\Stream\CompleteEvent;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
+use Symfony\AI\Platform\Result\Stream\ErrorEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 
 final class StreamResultTest extends TestCase
@@ -93,5 +95,76 @@ final class StreamResultTest extends TestCase
 
         // After consumption, metadata is populated
         $this->assertTrue($result->getMetadata()->has('seen_chunk2'));
+    }
+
+    public function testListenerIsNotifiedOnErrorNotOnCompleteWhenStreamThrows()
+    {
+        $exception = new \RuntimeException('stream failed mid-flight');
+
+        $result = new StreamResult((static function () use ($exception): \Generator {
+            yield new TextDelta('chunk1');
+
+            throw $exception;
+        })());
+
+        $listener = new class extends AbstractStreamListener {
+            public ?\Throwable $error = null;
+            public bool $completed = false;
+
+            public function onComplete(CompleteEvent $event): void
+            {
+                $this->completed = true;
+            }
+
+            public function onError(ErrorEvent $event): void
+            {
+                $this->error = $event->getError();
+            }
+        };
+        $result->addListener($listener);
+
+        $caught = null;
+        try {
+            iterator_to_array($result->getContent());
+        } catch (\RuntimeException $e) {
+            $caught = $e;
+        }
+
+        $this->assertSame($exception, $caught);
+        $this->assertSame($exception, $listener->error);
+        $this->assertFalse($listener->completed);
+    }
+
+    public function testErrorListenerReadsMetadataMergedBeforeTheThrow()
+    {
+        $result = new StreamResult((static function (): \Generator {
+            yield new TextDelta('chunk1');
+
+            throw new \RuntimeException('truncated at the output token ceiling');
+        })());
+
+        $result->addListener(new class extends AbstractStreamListener {
+            public function onDelta(DeltaEvent $event): void
+            {
+                $event->getResult()->getMetadata()->add('token_usage', true);
+            }
+        });
+
+        $listener = new class extends AbstractStreamListener {
+            public bool $sawUsageAtError = false;
+
+            public function onError(ErrorEvent $event): void
+            {
+                $this->sawUsageAtError = $event->getResult()->getMetadata()->has('token_usage');
+            }
+        };
+        $result->addListener($listener);
+
+        try {
+            iterator_to_array($result->getContent());
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertTrue($listener->sawUsageAtError);
     }
 }
