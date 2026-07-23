@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `SystemPromptInputProcessor::getSystemPrompt()` to read the configured system prompt without reflection
  * [BC BREAK] Change the default value of the `maxToolCalls` parameter of `AgentProcessor` from `null` (unbounded) to `50`. Pass `null` explicitly to restore the previous unbounded behaviour.
+ * `ValidateToolCallArgumentsListener` now also validates scalar and array tool parameters carrying a `#[Schema]` attribute (`pattern`, `minLength`/`maxLength`, `minimum`/`maximum`/`exclusiveMinimum`/`exclusiveMaximum`, `multipleOf`, `minItems`/`maxItems`, `uniqueItems`, `enum`, `const`), not only object parameters validated through Symfony Validator constraints
 
 0.8
 ---
