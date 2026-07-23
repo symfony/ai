@@ -215,7 +215,7 @@ To leverage JSON Schema validation rules, configure the :class:`Symfony\\AI\\Pla
          * @param array<string> $categories List of valid categories
          */
         public function __invoke(
-            #[Schema(pattern: '/([a-z0-1]){5}/')]
+            #[Schema(pattern: '^[a-z0-1]{5}$')]
             string $name,
             #[Schema(minimum: 0, maximum: 10)]
             int $number,
@@ -230,7 +230,12 @@ See attribute class :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Attribu
 
 .. note::
 
-    Please be aware, that this is only converted in a JSON Schema for the LLM to respect, but not validated by Symfony AI itself.
+    ``pattern`` follows the JSON Schema convention: a plain regular expression without PCRE delimiters
+    (e.g. ``'^[a-z0-9]{5}$'``, not ``'/^[a-z0-9]{5}$/'``).
+
+By itself, ``#[Schema]`` is only converted into a JSON Schema for the LLM to respect, it is not enforced by Symfony AI.
+To reject tool calls whose arguments don't actually satisfy these constraints, register the
+:class:`Symfony\\AI\\Agent\\Toolbox\\EventListener\\ValidateToolCallArgumentsListener`, see `Tool Call Argument Validation`_.
 
 Defining Schema from File
 .........................
@@ -373,6 +378,25 @@ to the event dispatcher that is passed to :class:`Symfony\\AI\\Agent\\Toolbox\\T
 
 This makes the toolbox throw :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\InvalidToolCallArgumentsException` before the tool is invoked if any of the
 arguments did not pass validation. When using the AI Bundle, the event listener is registered automatically and validation happens out-of-the-box.
+
+The listener validates both kinds of parameters:
+
+* Object parameters (like ``Person`` above), using the Symfony Validator constraints declared on their properties;
+* Scalar and array parameters carrying a ``#[Schema]`` attribute, using its runtime-enforceable keywords (``pattern``, ``minLength``/``maxLength``,
+  ``minimum``/``maximum``/``exclusiveMinimum``/``exclusiveMaximum``, ``multipleOf``, ``minItems``/``maxItems``, ``uniqueItems``, ``enum`` and ``const``).
+  This closes the gap described in the note above: a tool call whose ``reference`` argument doesn't match its ``#[Schema(pattern: ...)]`` is rejected
+  instead of silently reaching the tool::
+
+      #[AsTool('get_order', 'Get the status of an order by its reference')]
+      final class GetOrderTool
+      {
+          public function __invoke(
+              #[Schema(pattern: '^ORD-\d{4}-\d{4}$')]
+              string $reference,
+          ): string {
+              // Only ever reached with a well-formed reference, e.g. "ORD-2026-0042"
+          }
+      }
 
 See `Tool Call Argument Validation`_ for a complete example.
 
