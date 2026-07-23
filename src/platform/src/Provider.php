@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Platform;
 
+use Symfony\AI\Platform\Batch\BatchInput;
+use Symfony\AI\Platform\Batch\BatchResultConverterInterface;
+use Symfony\AI\Platform\Batch\BatchSubmitClientInterface;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultErrorEvent;
@@ -37,9 +40,10 @@ final class Provider implements ProviderInterface
     private ?Model $resolvedModel = null;
 
     /**
-     * @param non-empty-string                   $name
-     * @param iterable<ModelClientInterface>     $modelClients
-     * @param iterable<ResultConverterInterface> $resultConverters
+     * @param non-empty-string                     $name
+     * @param iterable<ModelClientInterface>       $modelClients
+     * @param iterable<ResultConverterInterface>   $resultConverters
+     * @param iterable<BatchSubmitClientInterface> $batchSubmitClients Clients handling `['batch' => true]` submissions
      */
     public function __construct(
         private readonly string $name,
@@ -48,6 +52,7 @@ final class Provider implements ProviderInterface
         private readonly ModelCatalogInterface $modelCatalog,
         private ?Contract $contract = null,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        private readonly iterable $batchSubmitClients = [],
     ) {
         $this->contract = $contract ?? Contract::create();
     }
@@ -97,6 +102,10 @@ final class Provider implements ProviderInterface
         $model = $invocationEvent->getModel();
         $input = $invocationEvent->getInput();
         $options = $invocationEvent->getOptions();
+
+        if ($options['batch'] ?? false) {
+            return $this->invokeBatch($model, $input, $options);
+        }
 
         $payload = $this->contract->createRequestPayload($model, $input, $options);
         $options = array_merge($model->getOptions(), $options);
@@ -152,11 +161,59 @@ final class Provider implements ProviderInterface
     }
 
     /**
+     * @param iterable<BatchInput> $inputs
+     * @param array<string, mixed> $options
+     */
+    private function invokeBatch(Model $model, iterable $inputs, array $options): DeferredResult
+    {
+        unset($options['batch']);
+        $options = array_merge($model->getOptions(), $options);
+
+        if (isset($options['tools'])) {
+            $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
+        }
+
+        $requests = (function () use ($inputs, $model, $options): \Generator {
+            foreach ($inputs as $input) {
+                if (!$input instanceof BatchInput) {
+                    throw new RuntimeException(\sprintf('A batch invocation expects "%s" instances as input, got "%s".', BatchInput::class, get_debug_type($input)));
+                }
+
+                yield [
+                    'id' => $input->getId(),
+                    'payload' => $this->contract->createRequestPayload($model, $input->getInput(), $options),
+                ];
+            }
+        })();
+
+        foreach ($this->batchSubmitClients as $batchSubmitClient) {
+            if ($batchSubmitClient->supports($model)) {
+                $rawResult = $batchSubmitClient->submitBatch($model, $requests, $options);
+
+                foreach ($this->resultConverters as $resultConverter) {
+                    if ($resultConverter instanceof BatchResultConverterInterface && $resultConverter->supports($model)) {
+                        return new DeferredResult($resultConverter, $rawResult, $options);
+                    }
+                }
+
+                throw new RuntimeException(\sprintf('No batch result converter registered for model "%s" (%s) in provider "%s".', $model->getName(), $model::class, $this->name));
+            }
+        }
+
+        throw new RuntimeException(\sprintf('No batch submit client registered for model "%s" (%s) in provider "%s".', $model->getName(), $model::class, $this->name));
+    }
+
+    /**
      * @param array<string, mixed> $options
      */
     private function convertResult(Model $model, RawResultInterface $result, array $options): DeferredResult
     {
         foreach ($this->resultConverters as $resultConverter) {
+            // Batch converters only apply to the dedicated batch flow, never to a regular invocation.
+            if ($resultConverter instanceof BatchResultConverterInterface) {
+                continue;
+            }
+
             if ($resultConverter->supports($model)) {
                 return new DeferredResult($resultConverter, $result, $options);
             }

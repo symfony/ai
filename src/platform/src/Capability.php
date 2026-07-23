@@ -65,6 +65,9 @@ enum Capability: string
     // Thinking
     case THINKING = 'thinking';
 
+    // Asynchronous batch processing
+    case BATCH = 'batch';
+
     // Fill-in-the-middle (insert)
     case FILL_IN_THE_MIDDLE = 'fill-in-the-middle';
 
