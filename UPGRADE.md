@@ -1,3 +1,37 @@
+UPGRADE FROM 0.12 to 0.13
+=========================
+
+Platform
+--------
+
+ * `Result\Stream\ListenerInterface` gained an `onError()` method, dispatched with the new
+   `Result\Stream\ErrorEvent` when draining a `StreamResult` throws, right before the exception is
+   rethrown to the caller. This lets a listener finalize on a stream that reported its token usage on
+   a delta and then failed — e.g. `MaxOutputTokensException` on a response completed at the
+   output-token ceiling — where `onComplete()` never fires. Listeners extending
+   `AbstractStreamListener` inherit a no-op default and need no change; direct implementers of the
+   interface must add the method:
+
+   ```diff
+   +use Symfony\AI\Platform\Result\Stream\ErrorEvent;
+
+    final class MyStreamListener implements ListenerInterface
+    {
+        public function onComplete(CompleteEvent $event): void
+        {
+            // ...
+        }
+   +
+   +    public function onError(ErrorEvent $event): void
+   +    {
+   +        // ...
+   +    }
+    }
+   ```
+
+   `onComplete()` and `onError()` are mutually exclusive: a drained stream reaches exactly one of
+   them, and a stream the consumer abandons reaches neither.
+
 UPGRADE FROM 0.11 to 0.12
 =========================
 

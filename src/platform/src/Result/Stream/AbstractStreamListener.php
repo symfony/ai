@@ -27,4 +27,8 @@ abstract class AbstractStreamListener implements ListenerInterface
     public function onComplete(CompleteEvent $event): void
     {
     }
+
+    public function onError(ErrorEvent $event): void
+    {
+    }
 }
