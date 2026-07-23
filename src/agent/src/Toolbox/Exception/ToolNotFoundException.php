@@ -12,29 +12,18 @@
 namespace Symfony\AI\Agent\Toolbox\Exception;
 
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Tool\ExecutionReference;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class ToolNotFoundException extends \RuntimeException implements ExceptionInterface
 {
-    private ?ToolCall $toolCall = null;
-
-    public static function notFoundForToolCall(ToolCall $toolCall): self
+    public function __construct(private ToolCall $toolCall)
     {
-        $exception = new self(\sprintf('Tool not found for call: %s.', $toolCall->getName()));
-        $exception->toolCall = $toolCall;
-
-        return $exception;
+        parent::__construct(\sprintf('Tool not found for call: %s.', $toolCall->getName()));
     }
 
-    public static function notFoundForReference(ExecutionReference $reference): self
-    {
-        return new self(\sprintf('Tool not found for reference: %s::%s.', $reference->getClass(), $reference->getMethod()));
-    }
-
-    public function getToolCall(): ?ToolCall
+    public function getToolCall(): ToolCall
     {
         return $this->toolCall;
     }
