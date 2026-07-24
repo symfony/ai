@@ -60,6 +60,8 @@ use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory as ChromaDbStoreFactory;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
+use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
+use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
@@ -1224,6 +1226,104 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testElasticsearchStoreCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'elasticsearch' => [
+                        'my_elasticsearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.elasticsearch.my_elasticsearch_store'));
+
+        $definition = $container->getDefinition('ai.store.elasticsearch.my_elasticsearch_store');
+        $this->assertSame([ElasticsearchStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(ElasticsearchStore::class, $definition->getClass());
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('my_elasticsearch_store', $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertSame('_vectors', $definition->getArgument(3));
+        $this->assertSame(1536, $definition->getArgument(4));
+        $this->assertSame('cosine', $definition->getArgument(5));
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([
+            ['interface' => StoreInterface::class],
+            ['interface' => ManagedStoreInterface::class],
+        ], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.store'));
+
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_elasticsearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $myElasticsearchStore'));
+        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $elasticsearch_my_elasticsearch_store'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $elasticsearchMyElasticsearchStore'));
+        $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testElasticsearchStoreWithCustomIndexCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'elasticsearch' => [
+                        'my_elasticsearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'index_name' => 'foo',
+                            'vectors_field' => 'embedding',
+                            'dimensions' => 768,
+                            'similarity' => 'dot_product',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.elasticsearch.my_elasticsearch_store');
+        $this->assertSame([ElasticsearchStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(ElasticsearchStore::class, $definition->getClass());
+
+        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame('http://127.0.0.1:9200', $definition->getArgument(1));
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('http_client', (string) $definition->getArgument(2));
+        $this->assertSame('embedding', $definition->getArgument(3));
+        $this->assertSame(768, $definition->getArgument(4));
+        $this->assertSame('dot_product', $definition->getArgument(5));
+    }
+
+    public function testElasticsearchStoreWithCustomHttpClientCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'elasticsearch' => [
+                        'my_elasticsearch_store' => [
+                            'endpoint' => 'http://127.0.0.1:9200',
+                            'http_client' => 'my.scoped_http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.elasticsearch.my_elasticsearch_store');
+        $this->assertSame([ElasticsearchStoreFactory::class, 'create'], $definition->getFactory());
+        $this->assertSame(ElasticsearchStore::class, $definition->getClass());
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
+        $this->assertSame('my.scoped_http_client', (string) $definition->getArgument(2));
     }
 
     public function testManticoreSearchStoreCanBeConfigured()

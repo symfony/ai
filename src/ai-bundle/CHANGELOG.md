@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Wire `Elasticsearch\StoreFactory` from `AiBundle`
+
 0.11
 ----
 
