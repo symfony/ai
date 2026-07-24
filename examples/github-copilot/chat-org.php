@@ -1,0 +1,67 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Generic\PlatformFactory;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+
+require_once dirname(__DIR__).'/bootstrap.php';
+
+$client = http_client()->withOptions([
+    'headers' => [
+        'Accept' => 'application/vnd.github+json',
+        'X-GitHub-Api-Version' => '2022-11-28',
+        'Content-Type' => 'application/json'
+    ],
+]);
+
+$modelCatalog = new ModelCatalog([
+    'openai/gpt-4.1' => [
+        'class' => CompletionsModel::class,
+        'capabilities' => [
+            Capability::INPUT_MESSAGES,
+            Capability::OUTPUT_TEXT,
+            Capability::TOOL_CALLING,
+            Capability::OUTPUT_STREAMING,
+            Capability::OUTPUT_STRUCTURED,
+        ],
+    ],
+]);
+
+$platform = PlatformFactory::create(
+    baseUrl: env('GITHUB_HOST_URL'),
+    apiKey: env('GITHUB_MODELS_TOKEN'),
+    httpClient: $client,
+    modelCatalog: $modelCatalog,
+    supportsEmbeddings: false,
+    completionsPath: sprintf('/orgs/%s/inference/chat/completions', env('GITHUB_MODELS_ORG')),
+);
+
+$messages = new MessageBag(
+    Message::forSystem('You are a pirate and you write funny.'),
+    Message::ofUser('What is the Symfony framework?'),
+);
+
+$result = $platform->invoke('openai/gpt-4.1', $messages, [
+    'max_tokens' => 500
+]);
+
+echo $result->asText().\PHP_EOL;
+
+$tokenUsage = $result->getMetadata()->get('token_usage');
+
+if (null !== $tokenUsage) {
+    print_token_usage($tokenUsage);
+    echo \PHP_EOL;
+}
