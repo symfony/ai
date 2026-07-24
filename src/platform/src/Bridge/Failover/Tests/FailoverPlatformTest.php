@@ -130,6 +130,7 @@ final class FailoverPlatformTest extends TestCase
         $failedPlatform = $this->createMock(PlatformInterface::class);
         $failedPlatform->expects($this->any())->method('invoke')
             ->willReturnCallback(static function (): DeferredResult {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -168,6 +169,7 @@ final class FailoverPlatformTest extends TestCase
         $failedPlatform = $this->createMock(PlatformInterface::class);
         $failedPlatform->expects($this->any())->method('getModelCatalog')
             ->willReturnCallback(static function (): ModelCatalogInterface {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -199,6 +201,7 @@ final class FailoverPlatformTest extends TestCase
         $firstPlatform = $this->createMock(PlatformInterface::class);
         $firstPlatform->expects($this->any())->method('invoke')
             ->willReturnCallback(static function (): DeferredResult {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -214,6 +217,7 @@ final class FailoverPlatformTest extends TestCase
         $failedPlatform = $this->createMock(PlatformInterface::class);
         $failedPlatform->expects($this->any())->method('invoke')
             ->willReturnCallback(static function (): DeferredResult {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -250,6 +254,7 @@ final class FailoverPlatformTest extends TestCase
         $firstPlatform = $this->createMock(PlatformInterface::class);
         $firstPlatform->expects($this->any())->method('getModelCatalog')
             ->willReturnCallback(static function (): ModelCatalogInterface {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -262,6 +267,7 @@ final class FailoverPlatformTest extends TestCase
         $failedPlatform = $this->createMock(PlatformInterface::class);
         $failedPlatform->expects($this->any())->method('getModelCatalog')
             ->willReturnCallback(static function (): ModelCatalogInterface {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -296,6 +302,7 @@ final class FailoverPlatformTest extends TestCase
         $firstPlatform = $this->createMock(PlatformInterface::class);
         $firstPlatform->expects($this->any())->method('invoke')
             ->willReturnCallback(static function (): DeferredResult {
+                /** @var int $call */
                 static $call = 0;
 
                 if (4 === ++$call) {
@@ -311,6 +318,7 @@ final class FailoverPlatformTest extends TestCase
         $failedPlatform = $this->createMock(PlatformInterface::class);
         $failedPlatform->expects($this->any())->method('invoke')
             ->willReturnCallback(static function (): DeferredResult {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -352,6 +360,7 @@ final class FailoverPlatformTest extends TestCase
         $firstPlatform = $this->createMock(PlatformInterface::class);
         $firstPlatform->expects($this->any())->method('getModelCatalog')
             ->willReturnCallback(static function (): ModelCatalogInterface {
+                /** @var int $call */
                 static $call = 0;
 
                 if (4 === ++$call) {
@@ -364,6 +373,7 @@ final class FailoverPlatformTest extends TestCase
         $failedPlatform = $this->createMock(PlatformInterface::class);
         $failedPlatform->expects($this->any())->method('getModelCatalog')
             ->willReturnCallback(static function (): ModelCatalogInterface {
+                /** @var int $call */
                 static $call = 0;
 
                 if (1 === ++$call) {
@@ -394,6 +404,260 @@ final class FailoverPlatformTest extends TestCase
         $clock->sleep(1);
 
         $failoverPlatform->getModelCatalog();
+    }
+
+    public function testPlatformCanPerformInvokeWithoutModelOverride()
+    {
+        $failedPlatform = $this->createMock(PlatformInterface::class);
+        $failedPlatform->expects($this->once())->method('invoke')
+            ->with('gpt-4', 'foo', [])
+            ->willThrowException(new \Exception('Primary platform failed.'));
+
+        $fallbackPlatform = $this->createMock(PlatformInterface::class);
+        $fallbackPlatform->expects($this->once())->method('invoke')
+            ->with('gpt-4', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('fallback result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            $failedPlatform,
+            $fallbackPlatform,
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $result = $failoverPlatform->invoke('gpt-4', 'foo');
+
+        $this->assertSame('fallback result', $result->asText());
+    }
+
+    public function testPlatformCanPerformInvokeWithModelOverride()
+    {
+        $failedPlatform = $this->createMock(PlatformInterface::class);
+        $failedPlatform->expects($this->once())->method('invoke')
+            ->willThrowException(new \Exception('Primary platform failed.'));
+
+        $fallbackPlatform = $this->createMock(PlatformInterface::class);
+        $fallbackPlatform->expects($this->once())->method('invoke')
+            ->with('claude-3-opus', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('fallback result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            $failedPlatform,
+            ['platform' => $fallbackPlatform, 'model' => 'claude-3-opus'],
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $result = $failoverPlatform->invoke('gpt-4', 'foo');
+
+        $this->assertSame('fallback result', $result->asText());
+    }
+
+    public function testPlatformCanPerformInvokeWithModelOverrideOnAllPlatforms()
+    {
+        $primaryPlatform = $this->createMock(PlatformInterface::class);
+        $primaryPlatform->expects($this->once())->method('invoke')
+            ->with('llama3', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('primary result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $failoverPlatform = new FailoverPlatform([
+            ['platform' => $primaryPlatform, 'model' => 'llama3'],
+        ], self::createRateLimiterFactory());
+
+        $result = $failoverPlatform->invoke('gpt-4', 'foo');
+
+        $this->assertSame('primary result', $result->asText());
+    }
+
+    public function testPlatformCanPerformInvokeWithMixedKeysAndModelOverrides()
+    {
+        $firstPlatform = $this->createMock(PlatformInterface::class);
+        $firstPlatform->expects($this->once())->method('invoke')
+            ->with('gpt-4', 'foo', [])
+            ->willThrowException(new \Exception('First platform failed.'));
+
+        $secondPlatform = $this->createMock(PlatformInterface::class);
+        $secondPlatform->expects($this->once())->method('invoke')
+            ->with('claude-3-opus', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('second result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            $firstPlatform,
+            ['platform' => $secondPlatform, 'model' => 'claude-3-opus'],
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $result = $failoverPlatform->invoke('gpt-4', 'foo');
+
+        $this->assertSame('second result', $result->asText());
+    }
+
+    public function testPlatformWithoutModelOverrideUsesDefaultModel()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')
+            ->with('gpt-4', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $failoverPlatform = new FailoverPlatform([
+            $platform,
+        ], self::createRateLimiterFactory());
+
+        $result = $failoverPlatform->invoke('gpt-4', 'foo');
+
+        $this->assertSame('result', $result->asText());
+    }
+
+    public function testPlatformCanPerformInvokeWithMultipleModelOverrides()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')
+            ->with('model-a', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $failoverPlatform = new FailoverPlatform([
+            ['platform' => $platform, 'model' => ['model-a', 'model-b']],
+        ], self::createRateLimiterFactory());
+
+        $result = $failoverPlatform->invoke('default', 'foo');
+
+        $this->assertSame('result', $result->asText());
+    }
+
+    public function testPlatformCanPerformInvokeWithMultipleModelOverridesAfterFirstModelFails()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->exactly(2))->method('invoke')
+            ->willReturnCallback(static function (string $model): DeferredResult {
+                if ('model-a' === $model) {
+                    throw new \Exception('model-a failed.');
+                }
+
+                return new DeferredResult(
+                    new PlainConverter(new TextResult('result from model-b')),
+                    new InMemoryRawResult(['foo' => 'bar']),
+                );
+            });
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning');
+        $logger->expects($this->never())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            ['platform' => $platform, 'model' => ['model-a', 'model-b']],
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $result = $failoverPlatform->invoke('default', 'foo');
+
+        $this->assertSame('result from model-b', $result->asText());
+    }
+
+    public function testPlatformFallsToNextPlatformWhenAllModelsExhausted()
+    {
+        $firstPlatform = $this->createMock(PlatformInterface::class);
+        $firstPlatform->expects($this->exactly(2))->method('invoke')
+            ->willThrowException(new \Exception('All models failed on platform A.'));
+
+        $secondPlatform = $this->createMock(PlatformInterface::class);
+        $secondPlatform->expects($this->once())->method('invoke')
+            ->with('default-model', 'foo', [])
+            ->willReturn(new DeferredResult(
+                new PlainConverter(new TextResult('fallback result')),
+                new InMemoryRawResult(['foo' => 'bar']),
+            ));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('warning');
+        $logger->expects($this->once())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            ['platform' => $firstPlatform, 'model' => ['model-a', 'model-b']],
+            $secondPlatform,
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $result = $failoverPlatform->invoke('default-model', 'foo');
+
+        $this->assertSame('fallback result', $result->asText());
+    }
+
+    public function testPlatformThrowsWhenAllPlatformsAndAllModelsExhausted()
+    {
+        $firstPlatform = $this->createMock(PlatformInterface::class);
+        $firstPlatform->expects($this->exactly(2))->method('invoke')
+            ->willThrowException(new \Exception('Platform A model failed.'));
+
+        $secondPlatform = $this->createMock(PlatformInterface::class);
+        $secondPlatform->expects($this->once())->method('invoke')
+            ->willThrowException(new \Exception('Platform B failed.'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('warning');
+        $logger->expects($this->exactly(2))->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            ['platform' => $firstPlatform, 'model' => ['model-a', 'model-b']],
+            ['platform' => $secondPlatform, 'model' => 'model-c'],
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('All platforms failed.');
+        $failoverPlatform->invoke('default', 'foo');
+    }
+
+    public function testPlatformCanPerformInvokeWithMixedSingleAndMultipleModelOverrides()
+    {
+        $firstPlatform = $this->createMock(PlatformInterface::class);
+        $firstPlatform->expects($this->once())->method('invoke')
+            ->with('single-model', 'foo', [])
+            ->willThrowException(new \Exception('Platform A failed.'));
+
+        $secondPlatform = $this->createMock(PlatformInterface::class);
+        $secondPlatform->expects($this->exactly(2))->method('invoke')
+            ->willReturnCallback(static function (string $model): DeferredResult {
+                if ('model-x' === $model) {
+                    throw new \Exception('model-x failed.');
+                }
+
+                return new DeferredResult(
+                    new PlainConverter(new TextResult('result from model-y')),
+                    new InMemoryRawResult(['foo' => 'bar']),
+                );
+            });
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning');
+        $logger->expects($this->once())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            ['platform' => $firstPlatform, 'model' => 'single-model'],
+            ['platform' => $secondPlatform, 'model' => ['model-x', 'model-y']],
+        ], self::createRateLimiterFactory(), logger: $logger);
+
+        $result = $failoverPlatform->invoke('default', 'foo');
+
+        $this->assertSame('result from model-y', $result->asText());
     }
 
     private static function createRateLimiterFactory(): RateLimiterFactoryInterface
