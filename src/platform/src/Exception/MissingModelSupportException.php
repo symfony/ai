@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class MissingModelSupportException extends RuntimeException
+final class MissingModelSupportException extends UnrecoverableRuntimeException
 {
     private function __construct(Model $model, string $support)
     {

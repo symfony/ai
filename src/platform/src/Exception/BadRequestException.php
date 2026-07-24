@@ -14,6 +14,6 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Oscar Esteve <oscarsdt@gmail.com>
  */
-class BadRequestException extends RuntimeException
+class BadRequestException extends UnrecoverableRuntimeException
 {
 }
