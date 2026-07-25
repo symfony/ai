@@ -74,6 +74,7 @@ abstract class AbstractToolbox implements ToolboxInterface
 
             $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
         } catch (ToolExecutionExceptionInterface $e) {
+            $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->getName()), ['exception' => $e]);
             $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments, $e));
             throw $e;
         } catch (\Throwable $e) {

@@ -7,6 +7,7 @@ Agent
  * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns
    `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the
    retriever it reads from. Code narrowing the returned documents to the concrete class has to widen.
+ * `Toolbox\ToolCallArgumentResolver` throws `Toolbox\Exception\InvalidToolCallArgumentsException` instead of `Toolbox\Exception\ToolException`.
 
 Platform
 --------
