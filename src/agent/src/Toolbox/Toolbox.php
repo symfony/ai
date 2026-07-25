@@ -93,6 +93,7 @@ final class Toolbox implements ToolboxInterface
         }
 
         $tool = $this->getExecutable($metadata);
+        $arguments = [];
 
         try {
             $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
@@ -113,11 +114,11 @@ final class Toolbox implements ToolboxInterface
 
             $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
         } catch (ToolExecutionExceptionInterface $e) {
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments, $e));
             throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->getName()), ['exception' => $e]);
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
+            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments, $e));
             throw ToolExecutionException::executionFailed($toolCall, $e);
         }
 
