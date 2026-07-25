@@ -106,7 +106,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
                 try {
                     $value = $this->denormalizer->denormalize($value, $parameterType, 'json');
                 } catch (SerializerExceptionInterface $e) {
-                    throw new InvalidToolCallArgumentsException(\sprintf('Invalid value for parameter "%s" of tool "%s": %s', $name, $toolCall->getName(), $e->getMessage()), previous: $e);
+                    throw new InvalidToolCallArgumentsException(\sprintf('Invalid value for parameter "%s" of tool "%s": "%s"', $name, $toolCall->getName(), $e->getMessage()), previous: $e);
                 }
             }
 
