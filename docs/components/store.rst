@@ -86,6 +86,18 @@ The retriever accepts optional parameters to customize the retrieval:
 
 * ``$options``: An array of options to pass to the underlying store query (e.g., limit, filters)
 
+The ``platform_options`` key is the one exception: it is not passed to the store, but to the
+vectorizer, and from there to the platform that embeds the query. Some embedding models treat a
+stored document and a search query differently, and expect to be told which of the two they are
+looking at::
+
+    use Symfony\AI\Platform\Bridge\Cohere\InputType;
+
+    $documents = $retriever->retrieve('What is the capital of France?', [
+        'maxItems' => 5,
+        'platform_options' => ['input_type' => InputType::SearchQuery],
+    ]);
+
 Example Usage
 ~~~~~~~~~~~~~
 

@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `platform_options` to `Retriever::retrieve()` options, forwarded to the vectorizer instead of the store, e.g. to embed the query with a provider's query mode (`['platform_options' => ['input_type' => InputType::SearchQuery]]` for Cohere)
  * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
  * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
  * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead
