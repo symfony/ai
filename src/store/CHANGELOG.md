@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add `platform_options` to `Retriever::retrieve()` options, forwarded to the vectorizer instead of the store, e.g. to embed the query with a provider's query mode (`['platform_options' => ['input_type' => InputType::SearchQuery]]` for Cohere)
+
 0.11
 ----
 

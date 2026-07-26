@@ -26,8 +26,8 @@ interface RetrieverInterface
     /**
      * Retrieve documents from the store that are similar to the given query.
      *
-     * @param string               $query   The search query to vectorize and use for similarity search
-     * @param array<string, mixed> $options Options to pass to the store query (e.g., limit, filters)
+     * @param string                                                              $query   The search query to vectorize and use for similarity search
+     * @param array{platform_options?: array<string, mixed>}&array<string, mixed> $options Options to pass to the store query (e.g., limit, filters), except `platform_options`, which is passed to the vectorizer
      *
      * @return iterable<VectorDocument> The retrieved documents with similarity scores
      */
