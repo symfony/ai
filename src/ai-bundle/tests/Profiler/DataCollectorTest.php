@@ -545,4 +545,54 @@ class DataCollectorTest extends TestCase
         $this->assertSame('research_agent', $tools[0]->getName());
         $this->assertSame('writer_agent', $tools[1]->getName());
     }
+
+    public function testItCollectsConfiguredInstancesWithTheirServiceIds()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+
+        $dataCollector = new DataCollector(
+            ['ai.platform.openai' => new TraceablePlatform($this->createStub(PlatformInterface::class))],
+            ['ai.toolbox.default' => new TraceableToolbox($toolbox)],
+            [],
+            ['ai.message_store.default' => new TraceableMessageStore(new InMemoryMessageStore(), new MockClock())],
+            ['ai.agent.blog' => new TraceableAgent(new MockAgent()), 'ai.agent.movies' => new TraceableAgent(new MockAgent())],
+            ['ai.store.memory.main' => new TraceableStore(new Store())],
+        );
+        $dataCollector->lateCollect();
+
+        $this->assertSame(['ai.platform.openai'], $dataCollector->getConfiguredPlatforms());
+        $this->assertSame(['ai.toolbox.default'], $dataCollector->getConfiguredToolboxes());
+        $this->assertSame(['ai.message_store.default'], $dataCollector->getConfiguredMessageStores());
+        $this->assertSame(['ai.agent.blog', 'ai.agent.movies'], $dataCollector->getConfiguredAgents());
+        $this->assertSame(['ai.store.memory.main'], $dataCollector->getConfiguredStores());
+    }
+
+    public function testConfiguredInstancesAreEmptyBeforeCollecting()
+    {
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], []);
+
+        $this->assertSame([], $dataCollector->getConfiguredPlatforms());
+        $this->assertFalse($dataCollector->hasCalls());
+    }
+
+    public function testItHasNoCallsWithoutAnyTracedCall()
+    {
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], [new TraceableStore(new Store())]);
+        $dataCollector->lateCollect();
+
+        $this->assertFalse($dataCollector->hasCalls());
+    }
+
+    public function testItHasCallsWithoutPlatformCall()
+    {
+        $traceableStore = new TraceableStore(new Store());
+        $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
+
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], [$traceableStore]);
+        $dataCollector->lateCollect();
+
+        $this->assertTrue($dataCollector->hasCalls());
+        $this->assertSame([], $dataCollector->getPlatformCalls());
+    }
 }
