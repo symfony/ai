@@ -545,4 +545,67 @@ class DataCollectorTest extends TestCase
         $this->assertSame('research_agent', $tools[0]->getName());
         $this->assertSame('writer_agent', $tools[1]->getName());
     }
+
+    public function testItCollectsConfiguredInstancesWithTheirServiceIds()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+
+        $dataCollector = new DataCollector(
+            ['ai.platform.openai' => new TraceablePlatform($this->createStub(PlatformInterface::class))],
+            ['ai.toolbox.default' => new TraceableToolbox($toolbox)],
+            [],
+            ['ai.message_store.default' => new TraceableMessageStore(new InMemoryMessageStore(), new MockClock())],
+            ['ai.agent.blog' => new TraceableAgent(new MockAgent()), 'ai.agent.movies' => new TraceableAgent(new MockAgent())],
+            ['ai.store.memory.main' => new TraceableStore(new Store())],
+        );
+        $dataCollector->lateCollect();
+
+        $this->assertSame(['count' => 1, 'names' => ['ai.platform.openai']], $dataCollector->getConfiguredPlatforms());
+        $this->assertSame(['count' => 1, 'names' => ['ai.toolbox.default']], $dataCollector->getConfiguredToolboxes());
+        $this->assertSame(['count' => 1, 'names' => ['ai.message_store.default']], $dataCollector->getConfiguredMessageStores());
+        $this->assertSame(['count' => 2, 'names' => ['ai.agent.blog', 'ai.agent.movies']], $dataCollector->getConfiguredAgents());
+        $this->assertSame(['count' => 1, 'names' => ['ai.store.memory.main']], $dataCollector->getConfiguredStores());
+    }
+
+    public function testItCollectsConfiguredInstancesWithoutServiceIds()
+    {
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertSame(['count' => 1, 'names' => []], $dataCollector->getConfiguredPlatforms());
+        $this->assertSame(['count' => 0, 'names' => []], $dataCollector->getConfiguredAgents());
+    }
+
+    public function testConfiguredInstancesAreEmptyBeforeCollecting()
+    {
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], []);
+
+        $this->assertSame(['count' => 0, 'names' => []], $dataCollector->getConfiguredPlatforms());
+        $this->assertSame(0, $dataCollector->getTotalCalls());
+    }
+
+    public function testItSumsUpCallsOfEveryTracedComponent()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter(new TextResult('Assistant response')), $this->createStub(RawResultInterface::class)));
+        $traceablePlatform = new TraceablePlatform($platform);
+        $traceablePlatform->invoke('gpt-4o', new MessageBag(Message::ofUser(new Text('Hello'))));
+
+        $traceableAgent = new TraceableAgent(new MockAgent(['Hello there' => 'General Kenobi']), $clock);
+        $traceableAgent->call(new MessageBag(Message::ofUser('Hello there')));
+
+        $traceableMessageStore = new TraceableMessageStore(new InMemoryMessageStore(), $clock);
+        $traceableMessageStore->save(new MessageBag(Message::ofUser('Hello there')));
+
+        $traceableStore = new TraceableStore(new Store());
+        $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [$traceableMessageStore], [$traceableAgent], [$traceableStore]);
+        $dataCollector->lateCollect();
+
+        $this->assertSame(4, $dataCollector->getTotalCalls());
+    }
 }
