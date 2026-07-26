@@ -37,7 +37,7 @@ final class Retriever implements RetrieverInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array{semanticRatio?: float, platform_options?: array<string, mixed>}&array<string, mixed> $options Store options; `platform_options` is forwarded to the vectorizer instead
      *
      * @return iterable<VectorDocument>
      */
@@ -49,7 +49,12 @@ final class Retriever implements RetrieverInterface
             [$query, $options] = $this->dispatchPreQuery($query, $options);
         }
 
-        $queryObject = $this->createQuery($query, $options);
+        // Configures the query embedding, not the store query, so it must not reach the store:
+        // bridges like MongoDB merge the options they get straight into their query payload.
+        $platformOptions = $options['platform_options'] ?? [];
+        unset($options['platform_options']);
+
+        $queryObject = $this->createQuery($query, $options, $platformOptions);
 
         $this->logger->debug('Searching store', ['query_type' => $queryObject::class]);
 
@@ -106,9 +111,10 @@ final class Retriever implements RetrieverInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array{semanticRatio?: float}&array<string, mixed> $options
+     * @param array<string, mixed>                              $platformOptions Options for the platform that embeds the query
      */
-    private function createQuery(string $query, array $options): QueryInterface
+    private function createQuery(string $query, array $options, array $platformOptions): QueryInterface
     {
         if (null === $this->vectorizer) {
             $this->logger->debug('No vectorizer configured, using TextQuery if supported');
@@ -125,11 +131,11 @@ final class Retriever implements RetrieverInterface
         if ($this->store->supports(HybridQuery::class)) {
             $this->logger->debug('Store supports hybrid queries, using HybridQuery with semantic ratio', ['semanticRatio' => $options['semanticRatio'] ?? 0.5]);
 
-            return new HybridQuery($this->vectorizer->vectorize($query), explode(' ', $query), $options['semanticRatio'] ?? 0.5);
+            return new HybridQuery($this->vectorizer->vectorize($query, $platformOptions), explode(' ', $query), $options['semanticRatio'] ?? 0.5);
         }
 
         $this->logger->debug('Store supports vector queries, using VectorQuery');
 
-        return new VectorQuery($this->vectorizer->vectorize($query));
+        return new VectorQuery($this->vectorizer->vectorize($query, $platformOptions));
     }
 }
