@@ -37,7 +37,7 @@ final class DebugCompilerPass implements CompilerPassInterface
             $traceablePlatformDefinition = (new Definition(TraceablePlatform::class))
                 ->setDecoratedService($platform, priority: -1024)
                 ->setArguments([new Reference('.inner')])
-                ->addTag('ai.traceable_platform')
+                ->addTag('ai.traceable_platform', ['name' => $platform])
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($platform)->after('ai.platform.')->toString();
             $container->setDefinition('ai.traceable_platform.'.$suffix, $traceablePlatformDefinition);
@@ -50,7 +50,7 @@ final class DebugCompilerPass implements CompilerPassInterface
                     new Reference('.inner'),
                     new Reference(ClockInterface::class),
                 ])
-                ->addTag('ai.traceable_message_store')
+                ->addTag('ai.traceable_message_store', ['name' => $messageStore])
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($messageStore)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
@@ -63,7 +63,7 @@ final class DebugCompilerPass implements CompilerPassInterface
                     new Reference('.inner'),
                     new Reference(ClockInterface::class),
                 ])
-                ->addTag('ai.traceable_chat')
+                ->addTag('ai.traceable_chat', ['name' => $chat])
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($chat)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
@@ -73,7 +73,7 @@ final class DebugCompilerPass implements CompilerPassInterface
             $traceableToolboxDefinition = (new Definition(TraceableToolbox::class))
                 ->setDecoratedService($toolbox, priority: -1024)
                 ->setArguments([new Reference('.inner')])
-                ->addTag('ai.traceable_toolbox')
+                ->addTag('ai.traceable_toolbox', ['name' => $toolbox])
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($toolbox)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_toolbox.'.$suffix, $traceableToolboxDefinition);
@@ -83,7 +83,7 @@ final class DebugCompilerPass implements CompilerPassInterface
             $traceableAgentDefinition = (new Definition(TraceableAgent::class))
                 ->setDecoratedService($agent, priority: -1024)
                 ->setArguments([new Reference('.inner')])
-                ->addTag('ai.traceable_agent')
+                ->addTag('ai.traceable_agent', ['name' => $agent])
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($agent)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_agent.'.$suffix, $traceableAgentDefinition);
@@ -93,7 +93,7 @@ final class DebugCompilerPass implements CompilerPassInterface
             $traceableStoreDefinition = (new Definition(TraceableStore::class))
                 ->setDecoratedService($store, priority: -1024)
                 ->setArguments([new Reference('.inner')])
-                ->addTag('ai.traceable_store')
+                ->addTag('ai.traceable_store', ['name' => $store])
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($store)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_store.'.$suffix, $traceableStoreDefinition);

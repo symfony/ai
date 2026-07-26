@@ -274,12 +274,12 @@ return static function (ContainerConfigurator $container): void {
         // profiler
         ->set('ai.data_collector', DataCollector::class)
             ->args([
-                tagged_iterator('ai.traceable_platform'),
-                tagged_iterator('ai.traceable_toolbox'),
-                tagged_iterator('ai.traceable_message_store'),
-                tagged_iterator('ai.traceable_chat'),
-                tagged_iterator('ai.traceable_agent'),
-                tagged_iterator('ai.traceable_store'),
+                tagged_iterator('ai.traceable_platform', 'name'),
+                tagged_iterator('ai.traceable_toolbox', 'name'),
+                tagged_iterator('ai.traceable_message_store', 'name'),
+                tagged_iterator('ai.traceable_chat', 'name'),
+                tagged_iterator('ai.traceable_agent', 'name'),
+                tagged_iterator('ai.traceable_store', 'name'),
             ])
             ->tag('data_collector', ['id' => 'ai'])
 
