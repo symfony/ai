@@ -1359,6 +1359,10 @@ the profiler, in the ``ai`` category. A platform invocation spans until its resu
 until its stream is fully consumed, so it includes the time waiting for the model's response. An
 agent call spans the consumption of its execution, since the agent only runs while it is consumed.
 
+Next to the platform calls, the registered tools and the tool calls, the panel lists the calls
+collected for agents, chats, message stores and stores, as well as every configured component
+with the service id it was registered under.
+
 Testing agents
 ~~~~~~~~~~~~~~
 
