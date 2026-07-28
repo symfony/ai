@@ -45,6 +45,9 @@ cd ../../.. && vendor/bin/php-cs-fixer fix src/mate/
 bin/mate init                               # Initialize configuration
 bin/mate discover                           # Discover extensions (also installs extension skills)
 bin/mate skills:install                     # Install extension skills
+bin/mate skills:list                        # List skills with mode, state and status
+bin/mate skills:validate                    # Check generated folders against recorded state
+bin/mate skills:prune                       # Remove leftover generated mate-* folders
 bin/mate serve                              # Start MCP server
 bin/mate clear-cache                        # Clear cache
 
@@ -70,10 +73,17 @@ Running `bin/mate discover` generates `mate/AGENT_INSTRUCTIONS.md` with extensio
 
 ## Skills
 
-Extensions ship Agent Skills (`SKILL.md`) via the `extra.ai-mate.skills` directory key. `skills:install`
-(run automatically by `discover`) symlinks each skill under a `mate-` prefixed directory into `.agents/skills/`
-(read by Codex/OpenCode/Copilot) and into `.claude/skills/` for Claude Code, so they auto-update with the
-package. The core package ships a built-in `system-information` skill.
+Extensions (and the root project) ship Agent Skills (`SKILL.md`) via the `extra.ai-mate.skills`
+directory key. `skills:install` (run automatically by `discover`) is an idempotent reconciler that
+copies each skill under a `mate-` prefixed directory into `.agents/skills/` (read by
+Codex/OpenCode/Copilot) with a relative symlink mirror in `.claude/skills/` for Claude Code. Skills
+are copied, never symlinked into `vendor/`, so the installed content is readable and diffable.
+
+All skill state lives in `mate/extensions.php`: `enabled` and `mode` (`managed`|`override`) are
+user-editable, while `state`, `source`, `source_hash`, `hash` and `targets` are written by the
+installer and rewritten on every run. `skills:list` shows the overview, `skills:validate` checks the
+generated folders against the record, and `skills:prune` removes leftover `mate-*` folders. The core
+package ships a built-in `system-information` skill.
 
 ### Extension Exclusion
 

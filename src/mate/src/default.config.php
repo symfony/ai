@@ -22,6 +22,9 @@ use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
 use Symfony\AI\Mate\Command\SkillsInstallCommand;
+use Symfony\AI\Mate\Command\SkillsListCommand;
+use Symfony\AI\Mate\Command\SkillsPruneCommand;
+use Symfony\AI\Mate\Command\SkillsValidateCommand;
 use Symfony\AI\Mate\Command\StopCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
@@ -32,10 +35,16 @@ use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
 use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\AI\Mate\Service\Logger;
 use Symfony\AI\Mate\Service\RegistryProvider;
-use Symfony\AI\Mate\Service\SkillsInstaller;
+use Symfony\AI\Mate\Skill\Linker;
+use Symfony\AI\Mate\Skill\LinkerInterface;
+use Symfony\AI\Mate\Skill\SkillContentHasher;
+use Symfony\AI\Mate\Skill\SkillDiscovery;
+use Symfony\AI\Mate\Skill\SkillFrontmatter;
+use Symfony\AI\Mate\Skill\SkillInstaller;
+use Symfony\AI\Mate\Skill\SkillManager;
+use Symfony\AI\Mate\Skill\SkillStateRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\Filesystem\Filesystem;
 
 return static function (ContainerConfigurator $container): void {
     $debugLogFile = $_SERVER['MATE_DEBUG_LOG_FILE'] ?? 'dev.log';
@@ -50,8 +59,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('mate.cache_dir', sys_get_temp_dir().'/mate')
         ->set('mate.env_file', null)
         ->set('mate.disabled_features', [])
-        ->set('mate.skills_dir', '.agents/skills')
-        ->set('mate.skill_mirrors', ['claude' => '.claude/skills'])
         ->set('mate.debug_log_file', $debugLogFile)
         ->set('mate.debug_file_enabled', $debugFileEnabled)
         ->set('mate.debug_enabled', $debugEnabled)
@@ -69,8 +76,6 @@ return static function (ContainerConfigurator $container): void {
             ->bind('$disabledFeatures', '%mate.disabled_features%')
             ->bind('$enabledExtensions', '%mate.enabled_extensions%')
             ->bind('$mcpProtocolVersion', '%mate.mcp_protocol_version%')
-            ->bind('$skillsDir', '%mate.skills_dir%')
-            ->bind('$skillMirrors', '%mate.skill_mirrors%')
 
         ->set('_build.logger', Logger::class)
             ->private() // To be removed when we compile
@@ -104,8 +109,15 @@ return static function (ContainerConfigurator $container): void {
         ->set(AgentInstructionsMaterializer::class)
         ->set(ExtensionConfigSynchronizer::class)
 
-        ->set(Filesystem::class)
-        ->set(SkillsInstaller::class)
+        // Skill lifecycle management
+        ->set(SkillFrontmatter::class)
+        ->set(SkillContentHasher::class)
+        ->set(SkillDiscovery::class)
+        ->set(SkillStateRepository::class)
+        ->set(Linker::class)
+            ->alias(LinkerInterface::class, Linker::class)
+        ->set(SkillInstaller::class)
+        ->set(SkillManager::class)
 
         // Register all commands
         ->set(InitCommand::class)
@@ -142,6 +154,15 @@ return static function (ContainerConfigurator $container): void {
             ->public()
 
         ->set(SkillsInstallCommand::class)
+            ->public()
+
+        ->set(SkillsListCommand::class)
+            ->public()
+
+        ->set(SkillsValidateCommand::class)
+            ->public()
+
+        ->set(SkillsPruneCommand::class)
             ->public()
     ;
 };

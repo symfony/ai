@@ -12,134 +12,75 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\SkillsInstallCommand;
-use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
-use Symfony\AI\Mate\Service\SkillsInstaller;
+use Symfony\AI\Mate\Skill\SkillStateRepository;
+use Symfony\AI\Mate\Tests\Skill\SkillFixtureTrait;
+use Symfony\AI\Mate\Tests\Skill\SkillServicesTrait;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class SkillsInstallCommandTest extends TestCase
 {
-    private Filesystem $filesystem;
+    use SkillFixtureTrait;
+    use SkillServicesTrait;
 
-    /**
-     * @var string[]
-     */
-    private array $roots = [];
+    private string $rootDir;
 
     protected function setUp(): void
     {
-        $this->filesystem = new Filesystem();
+        $this->rootDir = sys_get_temp_dir().'/mate-skills-install-cmd-'.uniqid();
+        mkdir($this->rootDir, 0777, true);
     }
 
     protected function tearDown(): void
     {
-        foreach ($this->roots as $root) {
-            $this->filesystem->remove($root);
-        }
+        $this->removeDirectory($this->rootDir);
     }
 
-    public function testInstallsSkills()
+    public function testInstallsDeclaredSkills()
     {
-        $root = $this->createRoot();
-        $tester = new CommandTester($this->createCommand($root));
+        $this->createPackageWithSkill();
 
+        $tester = new CommandTester($this->command());
         $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertStringContainsString('Installed 1 skill', $tester->getDisplay());
+        $this->assertDirectoryExists($this->rootDir.'/.agents/skills/mate-system-information');
+        $this->assertFileDoesNotExist($this->rootDir.'/mate/skills.lock.php');
 
-        $source = $root.'/.agents/skills/mate-demo-skill';
-        $this->assertFileExists($source.'/SKILL.md');
-        $this->assertTrue(is_link($source));
-        $this->assertTrue(is_link($root.'/.claude/skills/mate-demo-skill'));
+        $config = (new SkillStateRepository($this->rootDir))->read();
+        $this->assertSame('managed', $config['vendor/pkg-a']['skills']['system-information']['state']);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Installed 1 new skill', $output);
+        $this->assertStringContainsString('mate-system-information', $output);
     }
 
-    public function testReRunSkipsExistingSkill()
+    public function testSecondRunIsIdempotent()
     {
-        $root = $this->createRoot();
+        $this->createPackageWithSkill();
 
-        (new CommandTester($this->createCommand($root)))->execute([]);
+        (new CommandTester($this->command()))->execute([]);
 
-        $tester = new CommandTester($this->createCommand($root));
+        $tester = new CommandTester($this->command());
         $tester->execute([]);
 
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertStringContainsString('No new skills to install', $tester->getDisplay());
+        $output = $tester->getDisplay();
+        $this->assertStringNotContainsString('Installed 1 new skill', $output);
+        $this->assertStringContainsString('1 skill installed', $output);
     }
 
-    public function testReportsNothingWhenNoSkillsAvailable()
+    private function createPackageWithSkill(): void
     {
-        $root = sys_get_temp_dir().'/mate-skills-command-'.uniqid();
-        $this->roots[] = $root;
-        $this->filesystem->mkdir($root.'/vendor/composer');
-        file_put_contents($root.'/vendor/composer/installed.json', '{"packages": []}');
-
-        $tester = new CommandTester($this->createCommand($root));
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertStringContainsString('No new skills to install', $tester->getDisplay());
+        $this->createInstalledPackage($this->rootDir);
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.');
     }
 
-    public function testInstallsRootProjectSkill()
+    private function command(): SkillsInstallCommand
     {
-        $root = sys_get_temp_dir().'/mate-skills-command-'.uniqid();
-        $this->roots[] = $root;
-
-        $this->filesystem->mkdir($root.'/vendor/composer');
-        file_put_contents($root.'/vendor/composer/installed.json', '{"packages": []}');
-        file_put_contents($root.'/composer.json', '{"extra": {"ai-mate": {"skills": ["skills"]}}}');
-        $this->filesystem->mkdir($root.'/skills/root-skill');
-        file_put_contents($root.'/skills/root-skill/SKILL.md', "---\nname: root-skill\ndescription: demo\n---\n");
-
-        $tester = new CommandTester($this->createCommand($root));
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertFileExists($root.'/.agents/skills/mate-root-skill/SKILL.md');
-        $this->assertTrue(is_link($root.'/.claude/skills/mate-root-skill'));
-    }
-
-    private function createCommand(string $root): SkillsInstallCommand
-    {
-        $discovery = new ComposerExtensionDiscovery($root, new NullLogger());
-        $installer = new SkillsInstaller($root, new NullLogger(), $this->filesystem, '.agents/skills', ['claude' => '.claude/skills']);
-
-        return new SkillsInstallCommand(
-            ['vendor/package-with-skills'],
-            $discovery,
-            $installer,
-        );
-    }
-
-    private function createRoot(): string
-    {
-        $root = sys_get_temp_dir().'/mate-skills-command-'.uniqid();
-        $this->roots[] = $root;
-
-        $this->filesystem->mkdir($root.'/vendor/composer');
-        file_put_contents($root.'/vendor/composer/installed.json', <<<'JSON'
-            {
-                "packages": [
-                    {
-                        "name": "vendor/package-with-skills",
-                        "type": "library",
-                        "extra": { "ai-mate": { "skills": ["skills"] } }
-                    }
-                ]
-            }
-            JSON);
-
-        $skillDir = $root.'/vendor/vendor/package-with-skills/skills/demo-skill';
-        $this->filesystem->mkdir($skillDir);
-        file_put_contents($skillDir.'/SKILL.md', "---\nname: demo-skill\ndescription: demo\n---\n");
-
-        return $root;
+        return new SkillsInstallCommand($this->createManager($this->rootDir));
     }
 }

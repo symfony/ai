@@ -21,6 +21,9 @@ use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
 use Symfony\AI\Mate\Command\ServeCommand;
 use Symfony\AI\Mate\Command\SkillsInstallCommand;
+use Symfony\AI\Mate\Command\SkillsListCommand;
+use Symfony\AI\Mate\Command\SkillsPruneCommand;
+use Symfony\AI\Mate\Command\SkillsValidateCommand;
 use Symfony\AI\Mate\Command\StopCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
@@ -56,6 +59,9 @@ final class App
             ToolsCallCommand::class,
             ResourcesReadCommand::class,
             SkillsInstallCommand::class,
+            SkillsListCommand::class,
+            SkillsValidateCommand::class,
+            SkillsPruneCommand::class,
         ];
 
         foreach ($commands as $commandClass) {

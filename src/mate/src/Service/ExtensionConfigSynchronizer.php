@@ -12,14 +12,21 @@
 namespace Symfony\AI\Mate\Service;
 
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\AI\Mate\Skill\Model\DiscoveredSkill;
+use Symfony\AI\Mate\Skill\SkillStateRepository;
 
 /**
- * Synchronizes discovered extensions with mate/extensions.php while preserving enabled flags.
+ * Reconciles discovered extensions with mate/extensions.php while preserving user intent.
+ *
+ * This is the discovery half of the state file: it decides which packages keep an entry and seeds
+ * newly discovered skills with default intent. It never touches the facts recorded by the installer,
+ * and it never drops a skill entry whose source vanished — the installer needs the recorded targets
+ * to delete the generated folders before the entry goes away.
  *
  * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
+ * @phpstan-import-type SkillState from SkillStateRepository
+ * @phpstan-import-type ExtensionConfigMap from SkillStateRepository
  *
- * @phpstan-type ExtensionConfig array{enabled: bool}
- * @phpstan-type ExtensionConfigMap array<string, ExtensionConfig>
  * @phpstan-type SynchronizationResult array{
  *     extensions: ExtensionConfigMap,
  *     new_packages: string[],
@@ -32,24 +39,25 @@ use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 final class ExtensionConfigSynchronizer
 {
     public function __construct(
-        private string $rootDir,
+        private SkillStateRepository $repository,
     ) {
     }
 
     public function extensionsFileExists(): bool
     {
-        return file_exists($this->rootDir.'/mate/extensions.php');
+        return $this->repository->exists();
     }
 
     /**
      * @param array<string, ExtensionData> $discoveredExtensions
+     * @param list<DiscoveredSkill>        $discoveredSkills
      *
      * @return SynchronizationResult
      */
-    public function synchronize(array $discoveredExtensions): array
+    public function synchronize(array $discoveredExtensions, array $discoveredSkills = []): array
     {
-        $extensionsFile = $this->rootDir.'/mate/extensions.php';
-        $existingExtensions = $this->readExistingExtensions($extensionsFile);
+        $existingExtensions = $this->repository->read();
+        $skillsByOwner = $this->groupSkillsByOwner($discoveredSkills);
 
         $newPackages = [];
         foreach (array_keys($discoveredExtensions) as $packageName) {
@@ -60,78 +68,85 @@ final class ExtensionConfigSynchronizer
 
         $removedPackages = [];
         foreach (array_keys($existingExtensions) as $packageName) {
+            if ('_custom' === $packageName) {
+                continue;
+            }
+
             if (!isset($discoveredExtensions[$packageName])) {
                 $removedPackages[] = $packageName;
             }
         }
 
-        $finalExtensions = [];
-        foreach (array_keys($discoveredExtensions) as $packageName) {
-            $enabled = true;
-            if (isset($existingExtensions[$packageName]) && \is_array($existingExtensions[$packageName])) {
-                $enabledValue = $existingExtensions[$packageName]['enabled'] ?? true;
-                if (\is_bool($enabledValue)) {
-                    $enabled = $enabledValue;
-                }
-            }
-
-            $finalExtensions[$packageName] = [
-                'enabled' => $enabled,
-            ];
+        // Owners that keep an entry: every discovered package, plus "_custom" when the root ships skills.
+        $owners = array_keys($discoveredExtensions);
+        if (isset($skillsByOwner['_custom'])) {
+            $owners[] = '_custom';
         }
 
-        $this->writeExtensionsFile($extensionsFile, $finalExtensions);
+        $finalExtensions = [];
+        foreach ($owners as $owner) {
+            $enabled = true;
+            if (isset($existingExtensions[$owner])) {
+                $enabled = $existingExtensions[$owner]['enabled'];
+            }
+
+            $config = ['enabled' => $enabled];
+
+            $skills = $this->synchronizeSkills(
+                $existingExtensions[$owner]['skills'] ?? [],
+                $skillsByOwner[$owner] ?? [],
+            );
+            if ([] !== $skills) {
+                $config['skills'] = $skills;
+            }
+
+            $finalExtensions[$owner] = $config;
+        }
+
+        $this->repository->write($finalExtensions);
 
         return [
             'extensions' => $finalExtensions,
             'new_packages' => $newPackages,
             'removed_packages' => $removedPackages,
-            'file' => $extensionsFile,
+            'file' => $this->repository->path(),
         ];
     }
 
     /**
-     * @return array<string, array{enabled?: bool}>
+     * @param array<string, SkillState> $existingSkills
+     * @param list<string>              $discoveredNames
+     *
+     * @return array<string, SkillState>
      */
-    private function readExistingExtensions(string $extensionsFile): array
+    private function synchronizeSkills(array $existingSkills, array $discoveredNames): array
     {
-        if (!file_exists($extensionsFile)) {
-            return [];
+        $skills = $existingSkills;
+        foreach ($discoveredNames as $name) {
+            if (isset($skills[$name])) {
+                continue;
+            }
+
+            $skills[$name] = ['enabled' => true, 'mode' => 'managed'];
         }
 
-        $existingExtensions = include $extensionsFile;
-        if (!\is_array($existingExtensions)) {
-            return [];
-        }
+        ksort($skills);
 
-        /* @var array<string, array{enabled?: bool}> $existingExtensions */
-        return $existingExtensions;
+        return $skills;
     }
 
     /**
-     * @param ExtensionConfigMap $extensions
+     * @param list<DiscoveredSkill> $discoveredSkills
+     *
+     * @return array<string, list<string>>
      */
-    private function writeExtensionsFile(string $filePath, array $extensions): void
+    private function groupSkillsByOwner(array $discoveredSkills): array
     {
-        $dir = \dirname($filePath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        $grouped = [];
+        foreach ($discoveredSkills as $skill) {
+            $grouped[$skill->package][] = $skill->originalName;
         }
 
-        $content = "<?php\n\n";
-        $content .= "// This file is managed by 'mate discover'\n";
-        $content .= "// You can manually edit to enable/disable extensions\n\n";
-        $content .= "return [\n";
-
-        foreach ($extensions as $packageName => $config) {
-            $enabled = $config['enabled'] ? 'true' : 'false';
-            // Package names originate from third-party composer.json files and are written into a
-            // PHP file that is later included; var_export() escapes them safely to prevent code injection.
-            $content .= \sprintf("    %s => ['enabled' => %s],\n", var_export($packageName, true), $enabled);
-        }
-
-        $content .= "];\n";
-
-        file_put_contents($filePath, $content);
+        return $grouped;
     }
 }

@@ -38,6 +38,23 @@ AI Bundle
 
    The default (`false`, tool messages are preserved) is unchanged.
 
+Mate
+----
+
+ * Skills are now copied into `.agents/skills/mate-<name>/` instead of being symlinked into
+   `vendor/`, and `.claude/skills/` mirrors them with relative symlinks. Both folders are generated
+   output that `mate skills:install` rebuilds from source on every run, so stop editing them by hand
+   — to own a skill's content, set `'mode' => 'override'` for it in `mate/extensions.php` and edit
+   your copy under `mate/skills/<name>/` instead. Because they are now plain copies rather than
+   symlinks into `vendor/`, committing them is safe and recommended: an upstream skill change then
+   shows up as a reviewable diff. Mate does not add them to your `.gitignore`.
+
+ * All per-skill state now lives in `mate/extensions.php`. `enabled` and `mode`
+   (`managed` or `override`) are yours to edit; `state`, `source`, `source_hash`, `hash` and
+   `targets` are written by `mate skills:install` and rewritten on every run. If you ran a `0.13`
+   development build, delete the now-unused `mate/skills.lock.php` — it is neither read nor written
+   anymore.
+
 Platform
 --------
 
