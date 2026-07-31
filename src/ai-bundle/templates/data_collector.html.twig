@@ -23,54 +23,52 @@
 
         {% set text %}
             <div class="sf-toolbar-info-piece">
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Configured Platforms</b>
-                    <span class="sf-toolbar-status">{{ collector.configuredPlatforms.count }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Platform Calls</b>
-                    <span class="sf-toolbar-status">{{ collector.platformCalls|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Registered Tools</b>
-                    <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Tool Calls</b>
-                    <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Configured Agents</b>
-                    <span class="sf-toolbar-status">{{ collector.configuredAgents.count }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Agent Calls</b>
-                    <span class="sf-toolbar-status">{{ collector.agents|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Configured Chats</b>
-                    <span class="sf-toolbar-status">{{ collector.configuredChats.count }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Chat Calls</b>
-                    <span class="sf-toolbar-status">{{ collector.chats|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Configured Stores</b>
-                    <span class="sf-toolbar-status">{{ collector.configuredStores.count }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Store Calls</b>
-                    <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Configured Message Stores</b>
-                    <span class="sf-toolbar-status">{{ collector.configuredMessageStores.count }}</span>
-                </div>
-                <div class="sf-toolbar-info-piece">
-                    <b class="label">Messages stored</b>
-                    <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
-                </div>
+                <b class="label">Configured Platforms</b>
+                <span class="sf-toolbar-status">{{ collector.configuredPlatforms.count }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Platform Calls</b>
+                <span class="sf-toolbar-status">{{ collector.platformCalls|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Registered Tools</b>
+                <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Tool Calls</b>
+                <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Configured Agents</b>
+                <span class="sf-toolbar-status">{{ collector.configuredAgents.count }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Agent Calls</b>
+                <span class="sf-toolbar-status">{{ collector.agents|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Configured Chats</b>
+                <span class="sf-toolbar-status">{{ collector.configuredChats.count }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Chat Calls</b>
+                <span class="sf-toolbar-status">{{ collector.chats|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Configured Stores</b>
+                <span class="sf-toolbar-status">{{ collector.configuredStores.count }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Store Calls</b>
+                <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Configured Message Stores</b>
+                <span class="sf-toolbar-status">{{ collector.configuredMessageStores.count }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b class="label">Messages Stored</b>
+                <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
             </div>
         {% endset %}
 
