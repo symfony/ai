@@ -18,12 +18,16 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArrayMultidimensional;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolObjectFloat;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithNullableClass;
+use Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 
 class ToolCallArgumentResolverTest extends TestCase
 {
@@ -115,5 +119,38 @@ class ToolCallArgumentResolverTest extends TestCase
         $toolCall = new ToolCall('invocation', 'tool_with_nullable_class', $toolParams);
 
         $this->assertEquals($expected, $resolver->resolveArguments($metadata, $toolCall));
+    }
+
+    public function testResolveArgumentsThrowsWhenMandatoryParameterIsMissing()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolRequiredParams::class, 'bar'), 'tool_required_params', 'A tool with required parameters');
+        $toolCall = new ToolCall('invocation', 'tool_required_params', ['text' => 'Hello']);
+
+        $this->expectException(InvalidToolCallArgumentsException::class);
+        $this->expectExceptionMessage('Parameter "number" is mandatory for tool "tool_required_params".');
+
+        $resolver->resolveArguments($metadata, $toolCall);
+    }
+
+    public function testResolveArgumentsThrowsWhenValueCannotBeDenormalized()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolWithBackedEnums::class, '__invoke'), 'tool_with_backed_enums', 'A tool with backed enum parameters');
+        $toolCall = new ToolCall('invocation', 'tool_with_backed_enums', [
+            'searchTerms' => ['symfony'],
+            'mode' => 'not_a_mode',
+            'priority' => 'high',
+        ]);
+
+        try {
+            $resolver->resolveArguments($metadata, $toolCall);
+            $this->fail(\sprintf('Expected exception of type "%s" to be thrown.', InvalidToolCallArgumentsException::class));
+        } catch (InvalidToolCallArgumentsException $e) {
+            $this->assertStringStartsWith('Invalid value for parameter "mode" of tool "tool_with_backed_enums":', $e->getMessage());
+            $this->assertInstanceOf(NotNormalizableValueException::class, $e->getPrevious());
+        }
     }
 }

@@ -11,12 +11,13 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
-use Symfony\AI\Agent\Toolbox\Exception\ToolException;
+use Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -63,7 +64,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
     /**
      * @return array<string, mixed>
      *
-     * @throws ToolException When a mandatory tool parameter is missing from the tool call arguments
+     * @throws InvalidToolCallArgumentsException When a mandatory tool parameter is missing from the tool call arguments or an argument cannot be denormalized to the expected parameter type
      */
     public function resolveArguments(Tool $metadata, ToolCall $toolCall): array
     {
@@ -76,7 +77,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
         foreach ($parameters as $name => $reflectionParameter) {
             if (!\array_key_exists($name, $toolCall->getArguments())) {
                 if (!$reflectionParameter->isOptional()) {
-                    throw new ToolException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
+                    throw new InvalidToolCallArgumentsException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
                 }
                 continue;
             }
@@ -102,7 +103,11 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
             $parameterType .= $dimensions;
 
             if ($this->denormalizer->supportsDenormalization($value, $parameterType, 'json')) {
-                $value = $this->denormalizer->denormalize($value, $parameterType, 'json');
+                try {
+                    $value = $this->denormalizer->denormalize($value, $parameterType, 'json');
+                } catch (SerializerExceptionInterface $e) {
+                    throw new InvalidToolCallArgumentsException(\sprintf('Invalid value for parameter "%s" of tool "%s": "%s"', $name, $toolCall->getName(), $e->getMessage()), previous: $e);
+                }
             }
 
             $arguments[$name] = $value;

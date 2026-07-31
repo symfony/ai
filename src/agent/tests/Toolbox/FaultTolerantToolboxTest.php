@@ -14,11 +14,14 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
+use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -77,6 +80,33 @@ final class FaultTolerantToolboxTest extends TestCase
         $actual = $faultTolerantToolbox->execute($toolCall);
 
         $this->assertSame($expected, $actual->getResult());
+    }
+
+    public function testMissingMandatoryParameterIsSurfacedToTheLlm()
+    {
+        $faultTolerantToolbox = new FaultTolerantToolbox(new Toolbox([new ToolRequiredParams()]));
+
+        $toolCall = new ToolCall('123456789', 'tool_required_params', ['text' => 'Hello']);
+        $actual = $faultTolerantToolbox->execute($toolCall);
+
+        $this->assertSame('Parameter "number" is mandatory for tool "tool_required_params".', $actual->getResult());
+    }
+
+    public function testUndeserializableArgumentIsSurfacedToTheLlm()
+    {
+        $toolFactory = (new MemoryToolFactory())
+            ->addTool(ToolWithBackedEnums::class, 'tool_with_backed_enums', 'A tool with backed enum parameters');
+        $faultTolerantToolbox = new FaultTolerantToolbox(new Toolbox([new ToolWithBackedEnums()], $toolFactory));
+
+        $toolCall = new ToolCall('123456789', 'tool_with_backed_enums', [
+            'searchTerms' => ['symfony'],
+            'mode' => 'not_a_mode',
+            'priority' => 'high',
+        ]);
+        $actual = $faultTolerantToolbox->execute($toolCall);
+
+        $this->assertIsString($actual->getResult());
+        $this->assertStringStartsWith('Invalid value for parameter "mode" of tool "tool_with_backed_enums":', $actual->getResult());
     }
 
     private function createFaultyToolbox(\Closure $exceptionFactory): ToolboxInterface
