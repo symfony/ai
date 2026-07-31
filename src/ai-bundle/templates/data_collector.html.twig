@@ -1,5 +1,16 @@
 {% extends '@WebProfiler/Profiler/layout.html.twig' %}
 
+{% block stylesheets %}
+    {{ parent() }}
+
+    <style>
+        {# the metric groups wrap into multiple rows, which the profiler CSS does not space out vertically #}
+        .ai-metrics {
+            row-gap: 1em;
+        }
+    </style>
+{% endblock %}
+
 {% block toolbar %}
     {% if collector.totalCalls > 0 %}
         {% set icon %}
@@ -157,7 +168,7 @@
 
 {% block panel %}
     <h2>Symfony AI</h2>
-    <section class="metrics">
+    <section class="metrics ai-metrics">
         <div class="metric-group">
             <div class="metric">
                 <span class="value">{{ collector.configuredPlatforms.count }}</span>
