@@ -12,6 +12,7 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
 use Symfony\AI\Mate\Attribute\MateTool;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\InvalidCollectorException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
@@ -25,6 +26,16 @@ use Symfony\AI\Mate\Exception\RuntimeException;
  */
 final class ProfilerTool
 {
+    /**
+     * Metric that decides the verdict of a comparison, per collector. Collectors without an
+     * entry fall back to the first numeric metric of their summary.
+     *
+     * @var array<string, string>
+     */
+    private const LEADING_METRICS = [
+        'db' => 'query_count',
+    ];
+
     public function __construct(
         private readonly ?ProfilerDataProvider $dataProvider = null,
     ) {
@@ -114,6 +125,76 @@ final class ProfilerTool
         }
 
         return ResponseEncoder::encodeUntrusted($data);
+    }
+
+    /**
+     * @param string $baseline  The profiler token of the profile measured before the change
+     * @param string $current   The profiler token of the profile measured after the change
+     * @param string $collector The collector to compare (e.g. db, time, memory, logger)
+     */
+    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Returns both summaries, the difference for every numeric metric and a verdict (improved, unchanged, regressed).')]
+    public function compare(string $baseline, string $current, string $collector = 'db'): string
+    {
+        $baselineSummary = $this->getCollectorSummary($baseline, $collector);
+        $currentSummary = $this->getCollectorSummary($current, $collector);
+
+        $delta = [];
+        foreach ($currentSummary as $key => $currentValue) {
+            if (!\is_int($currentValue) && !\is_float($currentValue)) {
+                continue;
+            }
+
+            $baselineValue = $baselineSummary[$key] ?? null;
+            if (!\is_int($baselineValue) && !\is_float($baselineValue)) {
+                continue;
+            }
+
+            $difference = $currentValue - $baselineValue;
+            $delta[$key] = \is_float($difference) ? round($difference, 2) : $difference;
+        }
+
+        return ResponseEncoder::encode([
+            'collector' => $collector,
+            'baseline' => array_merge(['token' => $baseline], $baselineSummary),
+            'current' => array_merge(['token' => $current], $currentSummary),
+            'delta' => $delta,
+            'verdict' => $this->buildVerdict($collector, $delta),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getCollectorSummary(string $token, string $collector): array
+    {
+        $summary = $this->getDataProvider()->getCollectorData($token, $collector)['summary'];
+
+        if ([] === $summary) {
+            throw new InvalidCollectorException(\sprintf('Collector "%s" of profile "%s" does not provide a summary to compare', $collector, $token));
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param array<string, float|int> $delta
+     */
+    private function buildVerdict(string $collector, array $delta): string
+    {
+        $leadingMetric = self::LEADING_METRICS[$collector] ?? array_key_first($delta);
+        if (null === $leadingMetric || !isset($delta[$leadingMetric])) {
+            return 'unchanged';
+        }
+
+        if ($delta[$leadingMetric] < 0) {
+            return 'improved';
+        }
+
+        if ($delta[$leadingMetric] > 0) {
+            return 'regressed';
+        }
+
+        return 'unchanged';
     }
 
     private function getDataProvider(): ProfilerDataProvider
