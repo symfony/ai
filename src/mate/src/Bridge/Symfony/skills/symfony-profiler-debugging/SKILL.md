@@ -9,6 +9,7 @@ Reads the profiler through Mate's CLI. Two tools, two resources:
 
 - `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns summaries with a `resource_uri` per profile.
 - `symfony-profiler-get --token=<t>` returns one profile's metadata. It does NOT list collectors.
+- `symfony-profiler-compare --baseline=<t1> --current=<t2> [--collector=db]` diffs the `summary` of one collector across two profiles.
 - `symfony-profiler://profile/{token}` lists the collectors this profile actually has, each with its URI.
 - `symfony-profiler://profile/{token}/{collector}` returns that collector, as `{name, data, summary}`. `summary` is the triage view, `data` the full detail.
 
@@ -40,6 +41,21 @@ Branch on the symptom.
 **Tie a log line to the request:** `logger` has `error_count` / `warning_count` / `deprecation_count` and the per-request `logs` (message, level, `channel`, context; capped at 100). Use it to see what the code logged during exactly this request, which the global log files cannot pin to one request.
 
 Other collectors present in the profile (router, security, twig, ...) are readable at the same URI shape; they return raw dumps rather than a curated shape.
+
+## Prove the fix
+
+A performance fix is not done when the page still renders. It is done when the number moved.
+Keep the token you diagnosed on, then after the change reproduce the same request, take the new
+token from `symfony-profiler-list --limit=1`, and compare:
+
+```
+mate tools:call symfony-profiler-compare --baseline=<old> --current=<new> --collector=db
+```
+
+It returns both summaries, a `delta` per numeric metric, and a `verdict` (`improved`,
+`unchanged`, `regressed`). Report the delta, not the impression. `--collector=time` or
+`memory` works the same way for whatever metric the symptom was about. `unchanged` after a
+fix means the fix did not hit the hot path — go back to the reading order.
 
 ## Failure paths
 

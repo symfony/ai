@@ -14,10 +14,16 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Capability;
 use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\InvalidCollectorException;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollector;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollectorFormatter;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\RuntimeException;
+use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -27,6 +33,11 @@ final class ProfilerToolTest extends TestCase
     private ProfilerTool $tool;
     private string $fixtureDir;
 
+    /**
+     * @var list<string>
+     */
+    private array $temporaryDirs = [];
+
     protected function setUp(): void
     {
         $this->fixtureDir = __DIR__.'/../Fixtures/profiler';
@@ -34,6 +45,15 @@ final class ProfilerToolTest extends TestCase
         $provider = new ProfilerDataProvider($this->fixtureDir, $registry);
 
         $this->tool = new ProfilerTool($provider);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->temporaryDirs as $dir) {
+            $this->removeDirectory($dir);
+        }
+
+        $this->temporaryDirs = [];
     }
 
     public function testListProfilesReturnsAllProfiles()
@@ -144,6 +164,109 @@ final class ProfilerToolTest extends TestCase
         $this->assertSame([0, 1, 2], $keys);
     }
 
+    public function testCompareReportsImprovementWhenQueryCountDrops()
+    {
+        $tool = $this->createComparableTool(
+            ['query_count' => 42, 'total_time_ms' => 120.5, 'duplicate_query_count' => 7],
+            ['query_count' => 3, 'total_time_ms' => 18.25, 'duplicate_query_count' => 0],
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current'));
+
+        $this->assertSame('db', $result['collector']);
+        $this->assertSame('improved', $result['verdict']);
+        $this->assertSame('baseline', $result['baseline']['token']);
+        $this->assertSame(42, $result['baseline']['query_count']);
+        $this->assertSame('current', $result['current']['token']);
+        $this->assertSame(3, $result['current']['query_count']);
+        $this->assertSame(-39, $result['delta']['query_count']);
+        $this->assertSame(-102.25, $result['delta']['total_time_ms']);
+        $this->assertSame(-7, $result['delta']['duplicate_query_count']);
+    }
+
+    public function testCompareReportsUnchangedForIdenticalSummaries()
+    {
+        $summary = ['query_count' => 12, 'total_time_ms' => 33.0, 'duplicate_query_count' => 2];
+        $tool = $this->createComparableTool($summary, $summary);
+
+        $result = Toon::decode($tool->compare('baseline', 'current'));
+
+        $this->assertSame('unchanged', $result['verdict']);
+        foreach ($result['delta'] as $value) {
+            $this->assertEquals(0, $value);
+        }
+    }
+
+    public function testCompareReportsRegressionWhenQueryCountRises()
+    {
+        $tool = $this->createComparableTool(
+            ['query_count' => 4],
+            ['query_count' => 61],
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current'));
+
+        $this->assertSame('regressed', $result['verdict']);
+        $this->assertSame(57, $result['delta']['query_count']);
+    }
+
+    public function testCompareSkipsNonNumericSummaryFields()
+    {
+        $tool = $this->createComparableTool(
+            ['query_count' => 8, 'connection' => 'default', 'truncated' => false],
+            ['query_count' => 8, 'connection' => 'replica', 'truncated' => true],
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current'));
+
+        $this->assertSame(['query_count'], array_keys($result['delta']));
+        $this->assertSame('replica', $result['current']['connection']);
+    }
+
+    public function testCompareUsesFirstNumericMetricForCollectorsWithoutLeadingMetric()
+    {
+        $tool = $this->createComparableTool(
+            ['duration_ms' => 250.0],
+            ['duration_ms' => 100.0],
+            'time',
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current', 'time'));
+
+        $this->assertSame('time', $result['collector']);
+        $this->assertSame('improved', $result['verdict']);
+        $this->assertEquals(-150.0, $result['delta']['duration_ms']);
+    }
+
+    public function testCompareThrowsExceptionForUnknownToken()
+    {
+        $tool = $this->createComparableTool(['query_count' => 1], ['query_count' => 1]);
+
+        $this->expectException(ProfileNotFoundException::class);
+        $this->expectExceptionMessage('Profile not found for token: "nonexistent"');
+
+        $tool->compare('baseline', 'nonexistent');
+    }
+
+    public function testCompareThrowsExceptionForUnknownCollector()
+    {
+        $tool = $this->createComparableTool(['query_count' => 1], ['query_count' => 1]);
+
+        $this->expectException(InvalidCollectorException::class);
+
+        $tool->compare('baseline', 'current', 'unknown');
+    }
+
+    public function testCompareThrowsExceptionForCollectorWithoutSummary()
+    {
+        $tool = $this->createComparableTool(['query_count' => 1], ['query_count' => 1]);
+
+        $this->expectException(InvalidCollectorException::class);
+        $this->expectExceptionMessage('Collector "unformatted" of profile "baseline" does not provide a summary to compare');
+
+        $tool->compare('baseline', 'current', 'unformatted');
+    }
+
     public function testProfilerToolsFailClearlyWhenProfilerSupportIsUnavailable()
     {
         $tool = new ProfilerTool();
@@ -168,5 +291,67 @@ final class ProfilerToolTest extends TestCase
         $this->assertSame(ResponseEncoder::UNTRUSTED_NOTICE, $decoded['_security_notice']);
 
         return $decoded['untrusted_data'];
+    }
+
+    /**
+     * Builds a tool over two profiles named "baseline" and "current", each carrying the given
+     * summary in the given collector.
+     *
+     * @param array<string, mixed> $baselineSummary
+     * @param array<string, mixed> $currentSummary
+     */
+    private function createComparableTool(array $baselineSummary, array $currentSummary, string $collector = 'db'): ProfilerTool
+    {
+        $dir = sys_get_temp_dir().'/mate-profiler-compare-'.bin2hex(random_bytes(8));
+        mkdir($dir, 0755, true);
+        $this->temporaryDirs[] = $dir;
+
+        $storage = new FileProfilerStorage('file:'.$dir);
+        $this->assertTrue($storage->write($this->createProfile('baseline', $collector, $baselineSummary)));
+        $this->assertTrue($storage->write($this->createProfile('current', $collector, $currentSummary)));
+        clearstatcache();
+
+        $registry = new CollectorRegistry([new TestCollectorFormatter($collector)]);
+
+        return new ProfilerTool(new ProfilerDataProvider($dir, $registry));
+    }
+
+    /**
+     * @param array<string, mixed> $summary
+     */
+    private function createProfile(string $token, string $collector, array $summary): Profile
+    {
+        $profile = new Profile($token);
+        $profile->setIp('127.0.0.1');
+        $profile->setMethod('GET');
+        $profile->setUrl('/api/users');
+        $profile->setStatusCode(200);
+        // FileProfilerStorage::write() randomly prunes profiles older than two days.
+        $profile->setTime(time());
+        $profile->setCollectors([
+            new TestCollector($collector, $summary),
+            new TestCollector('unformatted', ['irrelevant' => true]),
+        ]);
+
+        return $profile;
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir) ?: [], ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir.'/'.$file;
+            if (is_dir($path)) {
+                $this->removeDirectory($path);
+            } else {
+                unlink($path);
+            }
+        }
+
+        rmdir($dir);
     }
 }
