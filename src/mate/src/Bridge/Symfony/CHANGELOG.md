@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
+ * Add an investigation loop with an explicit stop condition for slow requests to the `symfony-profiler-debugging` skill, replacing the reading order that read as a menu of single lookups
 
 0.14
 ----
