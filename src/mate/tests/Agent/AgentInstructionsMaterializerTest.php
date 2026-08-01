@@ -116,6 +116,84 @@ MD
         $this->assertSame(1, substr_count($agents, AgentInstructionsMaterializer::AGENTS_END_MARKER));
     }
 
+    public function testMaterializeCreatesClaudeFileImportingAgentsFile()
+    {
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+        $this->assertFileExists($this->tempDir.'/CLAUDE.md');
+
+        $claude = file_get_contents($this->tempDir.'/CLAUDE.md');
+        $this->assertIsString($claude);
+        $this->assertStringContainsString('@AGENTS.md', $claude);
+        $this->assertStringContainsString(AgentInstructionsMaterializer::CLAUDE_START_MARKER, $claude);
+        $this->assertStringContainsString(AgentInstructionsMaterializer::CLAUDE_END_MARKER, $claude);
+    }
+
+    public function testMaterializeAppendsImportBlockToUnrelatedClaudeFile()
+    {
+        file_put_contents($this->tempDir.'/CLAUDE.md', "# CLAUDE.md\n\nKeep this line.\n");
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+
+        $claude = file_get_contents($this->tempDir.'/CLAUDE.md');
+        $this->assertIsString($claude);
+        $this->assertStringContainsString('Keep this line.', $claude);
+        $this->assertStringContainsString('@AGENTS.md', $claude);
+        $this->assertSame(1, substr_count($claude, AgentInstructionsMaterializer::CLAUDE_START_MARKER));
+    }
+
+    public function testMaterializeLeavesClaudeFileUntouchedWhenItAlreadyReferencesAgentsFile()
+    {
+        $existing = "# CLAUDE.md\n\nSee AGENTS.md for the project rules.\n";
+        file_put_contents($this->tempDir.'/CLAUDE.md', $existing);
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+        $this->assertSame($existing, file_get_contents($this->tempDir.'/CLAUDE.md'));
+    }
+
+    public function testMaterializeIsIdempotentForClaudeFile()
+    {
+        $materializer = $this->createMaterializer();
+
+        $materializer->synchronizeFromCurrentInstructionsFile();
+        $afterFirstRun = file_get_contents($this->tempDir.'/CLAUDE.md');
+
+        $materializer->synchronizeFromCurrentInstructionsFile();
+        $afterSecondRun = file_get_contents($this->tempDir.'/CLAUDE.md');
+
+        $this->assertIsString($afterFirstRun);
+        $this->assertSame($afterFirstRun, $afterSecondRun);
+        $this->assertSame(1, substr_count($afterFirstRun, '@AGENTS.md'));
+    }
+
+    public function testMaterializeReportsFailureWhenClaudeFileIsNotWritable()
+    {
+        $path = $this->tempDir.'/CLAUDE.md';
+        file_put_contents($path, "# CLAUDE.md\n");
+        chmod($path, 0444);
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertFalse($result['claude_file_updated']);
+        $this->assertSame("# CLAUDE.md\n", file_get_contents($path));
+    }
+
+    private function createMaterializer(): AgentInstructionsMaterializer
+    {
+        $logger = new NullLogger();
+
+        return new AgentInstructionsMaterializer(
+            $this->tempDir,
+            new AgentInstructionsAggregator($this->tempDir, [], $logger),
+            $logger,
+        );
+    }
+
     private function removeDirectory(string $dir): void
     {
         if (!is_dir($dir)) {
