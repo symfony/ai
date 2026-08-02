@@ -31,6 +31,15 @@ final class SkillReferenceIntegrityTest extends TestCase
     private const SRC_DIR = __DIR__.'/../src';
     private const SKILLS_DIR = __DIR__.'/../skills';
 
+    /**
+     * Tools that deliberately carry no workflow prose. Leaving a tool out has to be a
+     * decision someone wrote down, not something that slipped through — so the reverse
+     * check below fails for anything not listed here.
+     *
+     * @var list<string>
+     */
+    private const TOOLS_WITHOUT_GUIDANCE = [];
+
     public function testSourceScanFindsCapabilities()
     {
         $this->assertNotSame([], $this->toolNames(), 'No #[AsTool] names found; the source scan is broken.');
@@ -133,6 +142,41 @@ final class SkillReferenceIntegrityTest extends TestCase
                 yield basename($dir) => [$dir, $file];
             }
         }
+    }
+
+    /**
+     * The other direction of the drift guard: a tool nobody documents is a tool nobody
+     * finds. Adding a capability without mentioning it in a skill or in the extension
+     * instructions leaves agents on the long path they already know, which is exactly the
+     * failure this component exists to remove.
+     */
+    public function testEveryToolIsMentionedInGuidance()
+    {
+        $documented = '';
+
+        $finder = (new Finder())->files()->in(self::SKILLS_DIR)->name('SKILL.md');
+        foreach ($finder as $file) {
+            $documented .= $file->getContents();
+        }
+
+        $instructions = (new Finder())->files()->in(self::SRC_DIR)->name('INSTRUCTIONS.md');
+        foreach ($instructions as $file) {
+            $documented .= $file->getContents();
+        }
+
+        $undocumented = [];
+        foreach ($this->toolNames() as $name) {
+            if (!str_contains($documented, $name)) {
+                $undocumented[] = $name;
+            }
+        }
+
+        $undocumented = array_values(array_diff($undocumented, self::TOOLS_WITHOUT_GUIDANCE));
+
+        $this->assertSame([], $undocumented, \sprintf(
+            'These tools exist but no SKILL.md or INSTRUCTIONS.md mentions them: %s. Add a line where an agent would look, or list the tool in TOOLS_WITHOUT_GUIDANCE with a reason.',
+            implode(', ', $undocumented)
+        ));
     }
 
     /**
