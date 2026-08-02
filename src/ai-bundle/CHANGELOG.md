@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.12
+0.13
 ----
 
  * Add `acp` platform configuration for the ACP bridge
