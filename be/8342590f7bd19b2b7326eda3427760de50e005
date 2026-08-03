@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by ghisleouf at 2026-07-23T16:24:09Z
+
+Fixed the changelog/upgrade placement: `v0.12.0` is already tagged. They now live in a new upcoming `0.13` section in `src/platform/CHANGELOG.md`, and a new `UPGRADE FROM 0.12 to 0.13` block in the root `UPGRADE.md`.
+
+---------------------------------------------------------------------------
+
+by ghisleouf at 2026-08-02T22:50:10Z
+
+Regarding the 2 red checks left:
+
+- `Validate Changelog & Upgrade Entries` fails on the missing BC Break label, which I can't add myself. Could you please  set it?
+- `Unit / PHP 8.2 / Symfony 7.4` failed in `src/chat/src/Bridge/MongoDb` which is untouched by this PR and identical to the previous push, which passed that same job.
+
+Thanks for your help!
