@@ -1034,6 +1034,53 @@ The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool`
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
 
+Tool Execution Strategy
+-----------------------
+
+By default, tool calls are executed sequentially, one after another. The bundle lets you switch the
+executor per agent through the ``execution_strategy`` option under ``tools``. Built-in values are
+``sequential`` (default) and ``fiber``; any other value is treated as a service ID of a custom
+:class:`Symfony\\AI\\Agent\\Toolbox\\ToolExecutorInterface` implementation.
+
+**Sequential** (default)
+    Executes tool calls one at a time in the order they are received. Safe and predictable; no
+    additional knowledge is required from tool authors.
+
+**Fiber**
+    Runs all tool calls concurrently using PHP Fibers. All fibers are started before any result is
+    collected, and a round-robin scheduler gives each suspended fiber a turn in every pass, so
+    I/O-bound tools that yield wait for their responses at the same time instead of one after
+    another. Results are still returned in the order of the tool calls.
+
+Configure the strategy per agent under the ``tools`` option:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                model: 'gpt-4o-mini'
+                tools:
+                    execution_strategy: fiber # "sequential" (default), "fiber", or a custom service ID
+                    services:
+                        - 'App\Tool\WeatherTool'
+                        - 'App\Tool\CalendarTool'
+
+To use a custom executor, implement
+:class:`Symfony\\AI\\Agent\\Toolbox\\ToolExecutorInterface` and register it as a service, then
+reference its service ID:
+
+.. code-block:: yaml
+
+    ai:
+        agent:
+            my_agent:
+                tools:
+                    execution_strategy: 'app.my_custom_executor'
+
+To write tools that cooperate with the Fiber strategy, see
+:ref:`Writing Fiber-Compatible Tools <agent-fiber-compatible-tools>` in the Agent component documentation.
+
 Token Usage Tracking
 --------------------
 

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add support for configuring a tool execution strategy per agent via the `execution_strategy` option under `tools` (`sequential`, `fiber`, or a custom service ID)
+
 0.13
 ----
 
