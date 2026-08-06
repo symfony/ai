@@ -9,6 +9,7 @@ CHANGELOG
  * Add a per-skill status table to `skills:install` output (same columns as `skills:list`, plus an `action` column showing installed/rebuilt/skipped/unchanged), and `--format=json`/`--format=toon` support, matching `skills:list`
  * Add a size-based auto-fallback to `tools:call`: when the effective format is `pretty` (the default, or explicitly requested) and the result's compact JSON encoding exceeds 8 KB, render it as `json` instead and print a note explaining why, since `renderPretty()` folds a large nested value onto a single unreadable line; `--format=json`/`--format=toon` are unaffected
  * Change `tools:call`'s `--format=pretty` rendering to print one unpadded `key: value` line per result field instead of `SymfonyStyle::definitionList()`, which padded every value to the width of the widest one in the list, inflating small/medium results with whitespace alone (a representative real result rendered ~5x smaller after this change, with no information loss)
+ * Add `symfony-profiler-triage` answering query count, duplicates, the most expensive statements, duration, exception state and logger counts for one request in a single call
 
 0.13
 ----
