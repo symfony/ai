@@ -1,0 +1,33 @@
+---------------------------------------------------------------------------
+
+by mahono at 2026-07-30T10:47:44Z
+
+Is there still a way to inject logic before and after calling the LLM?
+
+Because this is needed to integrate proper PII protection and also prompt injection detection.
+
+update:
+I just had a look. It is. All fine for me. 🙂
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-30T21:38:34Z
+
+@mahono switching from InputProcessor to EventListener on the Platform?
+
+---------------------------------------------------------------------------
+
+by ineersa at 2026-08-01T03:41:22Z
+
+Looks good to me!
+Moving loop to agent is good, and `ToolExecutorInterface` is good as extension point.
+I use [similar one](https://github.com/ineersa/agent-core/blob/main/src/AgentCore/Contract/Tool/ToolExecutorInterface.php) but for a single tool call.
+
+Batching support in interface is useful, is a good fit for synchronous/in-process strategies, also can implement something with fibers.
+For my case I'm using messenger for now for parallel execution, so I'm handling batching on other level.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-06T23:04:20Z
+
+Tested in demo and examples - looks good :+1:
