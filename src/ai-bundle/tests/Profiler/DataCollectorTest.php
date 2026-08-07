@@ -452,13 +452,6 @@ class DataCollectorTest extends TestCase
         $this->assertSame('writer_agent', $tools[1]->getName());
     }
 
-    private function execution(ResultInterface $result): Execution
-    {
-        return new Execution(static function () use ($result): \Generator {
-            yield new ResultUpdate($result);
-        });
-    }
-
     public function testItCollectsConfiguredInstancesWithTheirServiceIds()
     {
         $toolbox = $this->createStub(ToolboxInterface::class);
@@ -522,5 +515,12 @@ class DataCollectorTest extends TestCase
         $dataCollector->lateCollect();
 
         $this->assertSame(4, $dataCollector->getTotalCalls());
+    }
+
+    private function execution(ResultInterface $result): Execution
+    {
+        return new Execution(static function () use ($result): \Generator {
+            yield new ResultUpdate($result);
+        });
     }
 }
