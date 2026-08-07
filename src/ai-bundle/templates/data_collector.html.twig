@@ -22,54 +22,66 @@
         {% endset %}
 
         {% set text %}
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Configured Platforms</b>
-                <span class="sf-toolbar-status">{{ collector.configuredPlatforms.count }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Platform Calls</b>
-                <span class="sf-toolbar-status">{{ collector.platformCalls|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Registered Tools</b>
-                <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Tool Calls</b>
-                <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Configured Agents</b>
-                <span class="sf-toolbar-status">{{ collector.configuredAgents.count }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Agent Calls</b>
-                <span class="sf-toolbar-status">{{ collector.agents|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Configured Chats</b>
-                <span class="sf-toolbar-status">{{ collector.configuredChats.count }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Chat Calls</b>
-                <span class="sf-toolbar-status">{{ collector.chats|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Configured Stores</b>
-                <span class="sf-toolbar-status">{{ collector.configuredStores.count }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Store Calls</b>
-                <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Configured Message Stores</b>
-                <span class="sf-toolbar-status">{{ collector.configuredMessageStores.count }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Messages Stored</b>
-                <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
-            </div>
+            {% if collector.configuredPlatforms.count > 0 %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Platforms</b>
+                    <span class="sf-toolbar-status">{{ collector.configuredPlatforms.count }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Platform Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.platformCalls|length }}</span>
+                </div>
+            {% endif %}
+            {% if collector.configuredToolboxes.count > 0 %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Registered Tools</b>
+                    <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Tool Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.toolCalls|length }}</span>
+                </div>
+            {% endif %}
+            {% if collector.configuredAgents.count > 0 %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Agents</b>
+                    <span class="sf-toolbar-status">{{ collector.configuredAgents.count }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Agent Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.agents|length }}</span>
+                </div>
+            {% endif %}
+            {% if collector.configuredChats.count > 0 %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Chats</b>
+                    <span class="sf-toolbar-status">{{ collector.configuredChats.count }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Chat Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.chats|length }}</span>
+                </div>
+            {% endif %}
+            {% if collector.configuredStores.count > 0 %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Stores</b>
+                    <span class="sf-toolbar-status">{{ collector.configuredStores.count }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Store Calls</b>
+                    <span class="sf-toolbar-status">{{ collector.stores|length }}</span>
+                </div>
+            {% endif %}
+            {% if collector.configuredMessageStores.count > 0 %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Configured Message Stores</b>
+                    <span class="sf-toolbar-status">{{ collector.configuredMessageStores.count }}</span>
+                </div>
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">Messages Stored</b>
+                    <span class="sf-toolbar-status">{{ collector.messages|length }}</span>
+                </div>
+            {% endif %}
         {% endset %}
 
         {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { 'link': true }) }}
@@ -165,426 +177,441 @@
 {% endmacro %}
 
 {% block panel %}
+    {% set ai_components = [
+        {
+            label: 'Platforms',
+            count: collector.configuredPlatforms.count,
+            calls_label: 'Platform Calls',
+            calls: collector.platformCalls|length,
+            services_label: 'Platforms',
+            instances: collector.configuredPlatforms,
+        },
+        {
+            label: 'Tools',
+            count: collector.tools|length,
+            calls_label: 'Tool Calls',
+            calls: collector.toolCalls|length,
+            services_label: 'Toolboxes',
+            instances: collector.configuredToolboxes,
+        },
+        {
+            label: 'Agents',
+            count: collector.configuredAgents.count,
+            calls_label: 'Agent Calls',
+            calls: collector.agents|length,
+            services_label: 'Agents',
+            instances: collector.configuredAgents,
+        },
+        {
+            label: 'Chats',
+            count: collector.configuredChats.count,
+            calls_label: 'Chat Calls',
+            calls: collector.chats|length,
+            services_label: 'Chats',
+            instances: collector.configuredChats,
+        },
+        {
+            label: 'Stores',
+            count: collector.configuredStores.count,
+            calls_label: 'Store Calls',
+            calls: collector.stores|length,
+            services_label: 'Stores',
+            instances: collector.configuredStores,
+        },
+        {
+            label: 'Message Stores',
+            count: collector.configuredMessageStores.count,
+            calls_label: 'Messages Stored',
+            calls: collector.messages|length,
+            services_label: 'Message Stores',
+            instances: collector.configuredMessageStores,
+        },
+    ]|filter(component => component.instances.count > 0) %}
+
     <h2>Symfony AI</h2>
-    <section class="metrics ai-metrics">
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.configuredPlatforms.count }}</span>
-                <span class="label">Platforms</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.platformCalls|length }}</span>
-                <span class="label">Platform Calls</span>
-            </div>
+    {% if ai_components is empty %}
+        <div class="empty">
+            <p>No AI components are configured.</p>
         </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.tools|length }}</span>
-                <span class="label">Tools</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.toolCalls|length }}</span>
-                <span class="label">Tool Calls</span>
-            </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.configuredAgents.count }}</span>
-                <span class="label">Agents</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.agents|length }}</span>
-                <span class="label">Agent Calls</span>
-            </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.configuredChats.count }}</span>
-                <span class="label">Chats</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.chats|length }}</span>
-                <span class="label">Chat Calls</span>
-            </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.configuredStores.count }}</span>
-                <span class="label">Stores</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.stores|length }}</span>
-                <span class="label">Store Calls</span>
-            </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.configuredMessageStores.count }}</span>
-                <span class="label">Message Stores</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.messages|length }}</span>
-                <span class="label">Messages Stored</span>
-            </div>
-        </div>
-    </section>
-    <h3>Platform Calls</h3>
-    {% if collector.platformCalls|length %}
-        <div class="sf-tabs">
-            <div class="tab {{ collector.platformCalls|length == 0 ? 'disabled' }}">
-                <h3 class="tab-title">Platform Calls <span class="badge">{{ collector.platformCalls|length }}</span></h3>
-                <div class="tab-content">
-                    {% for call in collector.platformCalls %}
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th colspan="2">Call {{ loop.index }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <th>Model</th>
-                                    <td><strong>{{ call.model }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <th>Input</th>
-                                    <td>
-                                        {{ _self.message_bag(call.input) }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Options</th>
-                                    <td>
-                                        <ul>
-                                            {% for key, value in call.options %}
-                                                {% if key == 'tools' %}
-                                                    <li>{{ key }}:
-                                                        <ul>
-                                                            {% for tool in value %}
-                                                                <li>
-                                                                    <strong>{{ tool.name }}</strong>
-                                                                    {% if tool.parameters %}
-                                                                        <button class="btn btn-sm hidden" data-clipboard-text="{{ tool.parameters|json_encode|e('html_attr') }}">Copy JSON Schema</button>
-                                                                        {{ dump(tool.parameters) }}
-                                                                    {% endif %}
-                                                                </li>
-                                                            {% endfor %}
-                                                        </ul>
-                                                    </li>
-                                                {% else %}
-                                                    <li>{{ key }}: {{ dump(value) }}</li>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </ul>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Result</th>
-                                    <td>
-                                        {% if call.result_type == 'tool_calls' %}
-                                            {{ _self.tool_calls(call.result) }}
-                                        {% elseif call.result_type == 'vectors' %}
-                                            <ol>
-                                                {% for vector in call.result %}
-                                                    <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
-                                                {% endfor %}
-                                            </ol>
-                                        {% elseif call.result_type == 'error' %}
-                                            <strong class="status-error">Failed:</strong>
-                                            <code>{{ call.error.class }}</code>: {{ call.error.message }}
-                                        {% else %}
-                                            {{ dump(call.result) }}
-                                        {% endif %}
-                                        {% if call.metadata|length > 0 %}
-                                            <br />
-                                            <strong>Metadata</strong>
+    {% else %}
+        <section class="metrics ai-metrics">
+            {% for component in ai_components %}
+                {% if not loop.first %}
+                    <div class="metric-divider"></div>
+                {% endif %}
+                <div class="metric-group">
+                    <div class="metric">
+                        <span class="value">{{ component.count }}</span>
+                        <span class="label">{{ component.label }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="value">{{ component.calls }}</span>
+                        <span class="label">{{ component.calls_label }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    {% if collector.configuredPlatforms.count > 0 %}
+        <h3>Platform Calls</h3>
+        {% if collector.platformCalls|length %}
+            <div class="sf-tabs">
+                <div class="tab {{ collector.platformCalls|length == 0 ? 'disabled' }}">
+                    <h3 class="tab-title">Platform Calls <span class="badge">{{ collector.platformCalls|length }}</span></h3>
+                    <div class="tab-content">
+                        {% for call in collector.platformCalls %}
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Call {{ loop.index }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>Model</th>
+                                        <td><strong>{{ call.model }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Input</th>
+                                        <td>
+                                            {{ _self.message_bag(call.input) }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Options</th>
+                                        <td>
                                             <ul>
-                                                {% for key, value in call.metadata.all %}
-                                                    <li>{{ key }}:<br />{{ dump(value) }}</li>
+                                                {% for key, value in call.options %}
+                                                    {% if key == 'tools' %}
+                                                        <li>{{ key }}:
+                                                            <ul>
+                                                                {% for tool in value %}
+                                                                    <li>
+                                                                        <strong>{{ tool.name }}</strong>
+                                                                        {% if tool.parameters %}
+                                                                            <button class="btn btn-sm hidden" data-clipboard-text="{{ tool.parameters|json_encode|e('html_attr') }}">Copy JSON Schema</button>
+                                                                            {{ dump(tool.parameters) }}
+                                                                        {% endif %}
+                                                                    </li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </li>
+                                                    {% else %}
+                                                        <li>{{ key }}: {{ dump(value) }}</li>
+                                                    {% endif %}
                                                 {% endfor %}
                                             </ul>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    {% endfor %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Result</th>
+                                        <td>
+                                            {% if call.result_type == 'tool_calls' %}
+                                                {{ _self.tool_calls(call.result) }}
+                                            {% elseif call.result_type == 'vectors' %}
+                                                <ol>
+                                                    {% for vector in call.result %}
+                                                        <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
+                                                    {% endfor %}
+                                                </ol>
+                                            {% elseif call.result_type == 'error' %}
+                                                <strong class="status-error">Failed:</strong>
+                                                <code>{{ call.error.class }}</code>: {{ call.error.message }}
+                                            {% else %}
+                                                {{ dump(call.result) }}
+                                            {% endif %}
+                                            {% if call.metadata|length > 0 %}
+                                                <br />
+                                                <strong>Metadata</strong>
+                                                <ul>
+                                                    {% for key, value in call.metadata.all %}
+                                                        <li>{{ key }}:<br />{{ dump(value) }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-        </div>
-    {% else %}
-        <div class="empty">
-            <p>No platform calls were made.</p>
-        </div>
+        {% else %}
+            <div class="empty">
+                <p>No platform calls were made.</p>
+            </div>
+        {% endif %}
     {% endif %}
 
-    <h3>Tools</h3>
-    {% if collector.tools|length %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Class & Method</th>
-                    <th>Parameters</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tool in collector.tools %}
-                    <tr>
-                        <th>{{ tool.name }}</th>
-                        <td>{{ tool.description }}</td>
-                        <td>{{ tool.reference.class }}::{{ tool.reference.method }}</td>
-                        <td>
-                            {% if tool.parameters %}
-                                <ul>
-                                    {% for name, parameter in tool.parameters.properties %}
-                                        {% set parameterType %}
-                                            {%- if parameter.type is defined -%}
-                                                {{ parameter.type is iterable ? parameter.type|join(', ') : parameter.type }}
-                                            {%- elseif parameter.anyOf is defined -%}
-                                                {{ parameter.anyOf|map(p => p.type)|join(', ') }}
-                                            {%- endif -%}
-                                        {% endset %}
-                                        <li>
-                                            <strong>{{ name }} ({{ parameterType }})</strong><br />
-                                            <i>{{ parameter.description|default() }}</i>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <i>none</i>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="empty">
-            <p>No tools were registered.</p>
-        </div>
-    {% endif %}
-
-    <h3>Tool Calls</h3>
-    {% if collector.toolCalls|length %}
-        {% for toolResult in collector.toolCalls %}
+    {% if collector.configuredToolboxes.count > 0 %}
+        <h3>Tools</h3>
+        {% if collector.tools|length %}
             <table class="table">
                 <thead>
                     <tr>
-                        <th colspan="2">{{ toolResult.toolCall.name }}</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Class & Method</th>
+                        <th>Parameters</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <th>ID</th>
-                        <td>{{ toolResult.toolCall.id }}</td>
-                    </tr>
-                    <tr>
-                        <th>Arguments</th>
-                        <td>{{ dump(toolResult.toolCall.arguments) }}</td>
-                    </tr>
-                    <tr>
-                        <th>Result</th>
-                        <td>{{ dump(toolResult.result) }}</td>
-                    </tr>
+                    {% for tool in collector.tools %}
+                        <tr>
+                            <th>{{ tool.name }}</th>
+                            <td>{{ tool.description }}</td>
+                            <td>{{ tool.reference.class }}::{{ tool.reference.method }}</td>
+                            <td>
+                                {% if tool.parameters %}
+                                    <ul>
+                                        {% for name, parameter in tool.parameters.properties %}
+                                            {% set parameterType %}
+                                                {%- if parameter.type is defined -%}
+                                                    {{ parameter.type is iterable ? parameter.type|join(', ') : parameter.type }}
+                                                {%- elseif parameter.anyOf is defined -%}
+                                                    {{ parameter.anyOf|map(p => p.type)|join(', ') }}
+                                                {%- endif -%}
+                                            {% endset %}
+                                            <li>
+                                                <strong>{{ name }} ({{ parameterType }})</strong><br />
+                                                <i>{{ parameter.description|default() }}</i>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <i>none</i>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
-        {% endfor %}
-    {% else %}
-        <div class="empty">
-            <p>No tool calls were made.</p>
-        </div>
+        {% else %}
+            <div class="empty">
+                <p>No tools were registered.</p>
+            </div>
+        {% endif %}
+
+        <h3>Tool Calls</h3>
+        {% if collector.toolCalls|length %}
+            {% for toolResult in collector.toolCalls %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">{{ toolResult.toolCall.name }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <td>{{ toolResult.toolCall.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Arguments</th>
+                            <td>{{ dump(toolResult.toolCall.arguments) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Result</th>
+                            <td>{{ dump(toolResult.result) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <p>No tool calls were made.</p>
+            </div>
+        {% endif %}
     {% endif %}
 
-    <h3>Agent Calls</h3>
-    {% if collector.agents|length %}
-        {% for call in collector.agents %}
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th colspan="2">Call {{ loop.index }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>Input</th>
-                        <td>
-                            {% if call.input.messages is defined or call.input.content is defined %}
-                                {{ _self.message_bag(call.input) }}
-                            {% else %}
-                                {{ call.input }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Options</th>
-                        <td>{{ [] == call.options ? '<i>none</i>'|raw : dump(call.options) }}</td>
-                    </tr>
-                    <tr>
-                        <th>Called at</th>
-                        <td>{{ call.called_at|date('H:i:s.v') }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        {% endfor %}
-    {% else %}
-        <div class="empty">
-            <p>No agent calls were made.</p>
-        </div>
-    {% endif %}
-
-    <h3>Chat Calls</h3>
-    {% if collector.chats|length %}
-        {% for call in collector.chats %}
-            {% set called_at = call.submitted_at ?? call.streamed_at ?? call.initiated_at ?? null %}
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th colspan="2">{{ call.action }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>Message{{ call.bag is defined ? 's' }}</th>
-                        <td>{{ _self.message_bag(call.bag ?? call.message) }}</td>
-                    </tr>
-                    {% if called_at is not null %}
+    {% if collector.configuredAgents.count > 0 %}
+        <h3>Agent Calls</h3>
+        {% if collector.agents|length %}
+            {% for call in collector.agents %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Call {{ loop.index }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Input</th>
+                            <td>
+                                {% if call.input.messages is defined or call.input.content is defined %}
+                                    {{ _self.message_bag(call.input) }}
+                                {% else %}
+                                    {{ call.input }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Options</th>
+                            <td>{{ [] == call.options ? '<i>none</i>'|raw : dump(call.options) }}</td>
+                        </tr>
                         <tr>
                             <th>Called at</th>
-                            <td>{{ called_at|date('H:i:s.v') }}</td>
+                            <td>{{ call.called_at|date('H:i:s.v') }}</td>
                         </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        {% endfor %}
-    {% else %}
-        <div class="empty">
-            <p>No chat calls were made.</p>
-        </div>
+                    </tbody>
+                </table>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <p>No agent calls were made.</p>
+            </div>
+        {% endif %}
     {% endif %}
 
-    <h3>Message Store Calls</h3>
-    {% if collector.messages|length %}
-        {% for call in collector.messages %}
+    {% if collector.configuredChats.count > 0 %}
+        <h3>Chat Calls</h3>
+        {% if collector.chats|length %}
+            {% for call in collector.chats %}
+                {% set called_at = call.submitted_at ?? call.streamed_at ?? call.initiated_at ?? null %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">{{ call.action }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Message{{ call.bag is defined ? 's' }}</th>
+                            <td>{{ _self.message_bag(call.bag ?? call.message) }}</td>
+                        </tr>
+                        {% if called_at is not null %}
+                            <tr>
+                                <th>Called at</th>
+                                <td>{{ called_at|date('H:i:s.v') }}</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <p>No chat calls were made.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    {% if collector.configuredMessageStores.count > 0 %}
+        <h3>Message Store Calls</h3>
+        {% if collector.messages|length %}
+            {% for call in collector.messages %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Save {{ loop.index }} <span class="badge">{{ call.bag.messages|length }} message{{ call.bag.messages|length > 1 ? 's' }}</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Messages</th>
+                            <td>{{ _self.message_bag(call.bag) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Saved at</th>
+                            <td>{{ call.saved_at|date('H:i:s.v') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <p>No messages were stored.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    {% if collector.configuredStores.count > 0 %}
+        <h3>Store Calls</h3>
+        {% if collector.stores|length %}
             <table class="table">
                 <thead>
                     <tr>
-                        <th colspan="2">Save {{ loop.index }} <span class="badge">{{ call.bag.messages|length }} message{{ call.bag.messages|length > 1 ? 's' }}</span></th>
+                        <th>Method</th>
+                        <th>Payload</th>
+                        <th>Options</th>
+                        <th>Called at</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <th>Messages</th>
-                        <td>{{ _self.message_bag(call.bag) }}</td>
-                    </tr>
-                    <tr>
-                        <th>Saved at</th>
-                        <td>{{ call.saved_at|date('H:i:s.v') }}</td>
-                    </tr>
+                    {% for call in collector.stores %}
+                        <tr>
+                            <th>{{ call.method }}</th>
+                            <td>
+                                {% if call.documents is defined %}
+                                    {% set documents = call.documents.id is defined ? [call.documents] : call.documents %}
+                                    {{ documents|length }} document{{ documents|length > 1 ? 's' }}
+                                    <ol>
+                                        {% for document in documents %}
+                                            <li>
+                                                <code>{{ document.id }}</code>
+                                                {% if document.vector is defined %}
+                                                    &mdash; vector with <strong>{{ document.vector.dimensions }}</strong> dimensions
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ol>
+                                {% elseif call.query is defined %}
+                                    {% if call.query.text is defined %}
+                                        {{ call.query.text }}
+                                    {% endif %}
+                                    {% if call.query.vector is defined %}
+                                        Vector with <strong>{{ call.query.vector.dimensions }}</strong> dimensions
+                                    {% endif %}
+                                    {% if call.query.text is not defined and call.query.vector is not defined %}
+                                        {{ dump(call.query) }}
+                                    {% endif %}
+                                {% elseif call.ids is defined %}
+                                    {{ dump(call.ids) }}
+                                {% else %}
+                                    <i>none</i>
+                                {% endif %}
+                            </td>
+                            <td>{{ [] == call.options|default([]) ? '<i>none</i>'|raw : dump(call.options) }}</td>
+                            <td>{{ call.called_at|date('H:i:s.v') }}</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
-        {% endfor %}
-    {% else %}
-        <div class="empty">
-            <p>No messages were stored.</p>
-        </div>
+        {% else %}
+            <div class="empty">
+                <p>No store calls were made.</p>
+            </div>
+        {% endif %}
     {% endif %}
 
-    <h3>Store Calls</h3>
-    {% if collector.stores|length %}
+    {% if ai_components is not empty %}
+        <h3>Configured Components</h3>
         <table class="table">
             <thead>
                 <tr>
-                    <th>Method</th>
-                    <th>Payload</th>
-                    <th>Options</th>
-                    <th>Called at</th>
+                    <th>Component</th>
+                    <th>Configured</th>
+                    <th>Services</th>
                 </tr>
             </thead>
             <tbody>
-                {% for call in collector.stores %}
+                {% for component in ai_components %}
                     <tr>
-                        <th>{{ call.method }}</th>
+                        <th>{{ component.services_label }}</th>
+                        <td>{{ component.instances.count }}</td>
                         <td>
-                            {% if call.documents is defined %}
-                                {% set documents = call.documents.id is defined ? [call.documents] : call.documents %}
-                                {{ documents|length }} document{{ documents|length > 1 ? 's' }}
-                                <ol>
-                                    {% for document in documents %}
-                                        <li>
-                                            <code>{{ document.id }}</code>
-                                            {% if document.vector is defined %}
-                                                &mdash; vector with <strong>{{ document.vector.dimensions }}</strong> dimensions
-                                            {% endif %}
-                                        </li>
-                                    {% endfor %}
-                                </ol>
-                            {% elseif call.query is defined %}
-                                {% if call.query.text is defined %}
-                                    {{ call.query.text }}
-                                {% endif %}
-                                {% if call.query.vector is defined %}
-                                    Vector with <strong>{{ call.query.vector.dimensions }}</strong> dimensions
-                                {% endif %}
-                                {% if call.query.text is not defined and call.query.vector is not defined %}
-                                    {{ dump(call.query) }}
-                                {% endif %}
-                            {% elseif call.ids is defined %}
-                                {{ dump(call.ids) }}
+                            {% if component.instances.names|length %}
+                                {% for name in component.instances.names %}
+                                    <code>{{ name }}</code>{{ not loop.last ? ', ' }}
+                                {% endfor %}
                             {% else %}
                                 <i>none</i>
                             {% endif %}
                         </td>
-                        <td>{{ [] == call.options|default([]) ? '<i>none</i>'|raw : dump(call.options) }}</td>
-                        <td>{{ call.called_at|date('H:i:s.v') }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <div class="empty">
-            <p>No store calls were made.</p>
-        </div>
     {% endif %}
-
-    <h3>Configured Components</h3>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Component</th>
-                <th>Configured</th>
-                <th>Services</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for label, instances in {
-                'Platforms': collector.configuredPlatforms,
-                'Toolboxes': collector.configuredToolboxes,
-                'Agents': collector.configuredAgents,
-                'Chats': collector.configuredChats,
-                'Message Stores': collector.configuredMessageStores,
-                'Stores': collector.configuredStores,
-            } %}
-                <tr>
-                    <th>{{ label }}</th>
-                    <td>{{ instances.count }}</td>
-                    <td>
-                        {% if instances.names|length %}
-                            {% for name in instances.names %}
-                                <code>{{ name }}</code>{{ not loop.last ? ', ' }}
-                            {% endfor %}
-                        {% else %}
-                            <i>none</i>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 {% endblock %}
