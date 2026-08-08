@@ -79,7 +79,7 @@ final class Runner
 
         if ($result instanceof StreamResult) {
             $result->addListener(new StreamListener(
-                fn (ToolCallResult $toolCallResult, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface => $this->handleToolCalls($agent, $messages, $options, $toolCallResult, $streamedAssistantResponse),
+                fn (ToolCallResult $toolCallResult, ?AssistantMessage $assistantResponse = null): ResultInterface => $this->handleToolCalls($agent, $messages, $options, $toolCallResult, $assistantResponse),
             ));
 
             return $result;
@@ -91,7 +91,8 @@ final class Runner
             return $result;
         }
 
-        return $this->handleToolCalls($agent, $messages, $options, $toolCallResult);
+        // Pass the full mixed result so thinking and text survive the tool round-trip
+        return $this->handleToolCalls($agent, $messages, $options, $toolCallResult, Message::ofAssistant($result));
     }
 
     /**
@@ -131,16 +132,12 @@ final class Runner
     /**
      * @param array<string, mixed> $options
      */
-    private function handleToolCalls(AgentInterface $agent, MessageBag $messages, array $options, ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface
+    private function handleToolCalls(AgentInterface $agent, MessageBag $messages, array $options, ToolCallResult $result, ?AssistantMessage $assistantResponse = null): ResultInterface
     {
         \assert($this->toolExecutor instanceof ToolExecutorInterface);
 
         ++$this->nestingLevel;
         $messages = $this->excludeToolMessages ? clone $messages : $messages;
-
-        if (null !== $streamedAssistantResponse && [] !== $streamedAssistantResponse->getContent()) {
-            $messages->add($streamedAssistantResponse);
-        }
 
         try {
             $iterations = 0;
@@ -152,7 +149,16 @@ final class Runner
                 $toolCalls = array_values($result->getContent());
                 $toolResults = $this->toolExecutor->execute($toolCalls);
 
-                $messages->add(Message::ofAssistant(...$toolCalls));
+                // Preserve the provider's original content on the first iteration; later
+                // tool-only iterations synthesize the assistant tool-call message as before
+                if (null === $assistantResponse) {
+                    $assistantResponse = Message::ofAssistant(...$toolCalls);
+                } elseif (!$assistantResponse->hasToolCalls()) {
+                    $assistantResponse = new AssistantMessage(...$assistantResponse->getContent(), ...$toolCalls);
+                }
+                $messages->add($assistantResponse);
+                $assistantResponse = null;
+
                 foreach ($toolResults as $i => $toolResult) {
                     $messages->add(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult)));
                 }

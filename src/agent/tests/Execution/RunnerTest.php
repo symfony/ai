@@ -22,15 +22,22 @@ use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
@@ -133,6 +140,36 @@ final class RunnerTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $actual);
         $this->assertSame('Final response', $actual->getContent());
+    }
+
+    public function testThinkingIsPreservedInAssistantToolCallMessage()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
+
+        $result = new MultiPartResult([
+            new ThinkingResult('I should use a tool.', 'sig_123'),
+            new ToolCallResult([$toolCall]),
+        ]);
+        $agent = $this->createStub(AgentInterface::class);
+        $agent->method('call')->willReturn(new TextResult('Final response'));
+        $messages = new MessageBag();
+
+        $runner = $this->createRunner($this->platform($result), $toolbox);
+        $runner->run($agent, 'claude', $messages, []);
+
+        $assistantMessage = $messages->getMessages()[0];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $content = $assistantMessage->getContent();
+        $this->assertCount(2, $content);
+        $this->assertInstanceOf(Thinking::class, $content[0]);
+        $this->assertSame('I should use a tool.', $content[0]->getContent());
+        $this->assertSame('sig_123', $content[0]->getSignature());
+        $this->assertSame($toolCall, $content[1]);
     }
 
     public function testMultiPartResultWithSeveralToolCallPartsExecutesAllOfThem()
@@ -402,13 +439,67 @@ final class RunnerTest extends TestCase
         $result = $runner->run($agent, 'gpt-4', new MessageBag(), []);
         iterator_to_array($result->getContent());
 
-        $this->assertNotNull($capturedMessages);
-        $textMessages = array_filter(
+        $this->assertInstanceOf(MessageBag::class, $capturedMessages);
+        $assistantMessages = array_values(array_filter(
             $capturedMessages->getMessages(),
-            static fn ($message): bool => $message instanceof AssistantMessage && !$message->hasToolCalls(),
-        );
-        $this->assertCount(1, $textMessages);
-        $this->assertSame('Let me check that.', reset($textMessages)->asText());
+            static fn ($message): bool => $message instanceof AssistantMessage,
+        ));
+        $this->assertCount(1, $assistantMessages);
+        $this->assertTrue($assistantMessages[0]->hasToolCalls());
+        $this->assertSame('Let me check that.', $assistantMessages[0]->asText());
+    }
+
+    public function testStreamedThinkingIsPreservedInAssistantToolCallMessage()
+    {
+        $toolCall1 = new ToolCall('call_1', 'tool_1');
+        $toolCall2 = new ToolCall('call_2', 'tool_2');
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnCallback(static fn (ToolCall $toolCall): ToolResult => new ToolResult($toolCall, 'Test response'));
+
+        $stream = new StreamResult((static function () use ($toolCall1, $toolCall2) {
+            yield new ThinkingStart();
+            yield new ThinkingSignature('opaque_sig');
+            yield new ThinkingComplete('', 'opaque_sig');
+            yield new ToolCallStart($toolCall1->getId(), $toolCall1->getName());
+            yield new ThinkingStart();
+            yield new ThinkingDelta('A visible summary.');
+            yield new ThinkingSignature('summary_sig');
+            yield new ThinkingComplete('A visible summary.', 'summary_sig');
+            yield new ToolCallStart($toolCall2->getId(), $toolCall2->getName());
+            yield new ToolCallComplete([$toolCall1, $toolCall2]);
+        })());
+
+        $capturedMessages = null;
+        $agent = $this->createMock(AgentInterface::class);
+        $agent
+            ->expects($this->once())
+            ->method('call')
+            ->willReturnCallback(static function (MessageBag $messages) use (&$capturedMessages): TextResult {
+                $capturedMessages = $messages;
+
+                return new TextResult('Final response');
+            });
+
+        $runner = $this->createRunner($this->platform($stream), $toolbox);
+        $result = $runner->run($agent, 'claude', new MessageBag(), []);
+        iterator_to_array($result->getContent());
+
+        $this->assertInstanceOf(MessageBag::class, $capturedMessages);
+        $assistantMessage = $capturedMessages->getMessages()[0];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $content = $assistantMessage->getContent();
+        $this->assertCount(4, $content);
+        $this->assertInstanceOf(Thinking::class, $content[0]);
+        $this->assertSame('', $content[0]->getContent());
+        $this->assertSame('opaque_sig', $content[0]->getSignature());
+        $this->assertSame($toolCall1, $content[1]);
+        $this->assertInstanceOf(Thinking::class, $content[2]);
+        $this->assertSame('A visible summary.', $content[2]->getContent());
+        $this->assertSame('summary_sig', $content[2]->getSignature());
+        $this->assertSame($toolCall2, $content[3]);
     }
 
     public function testUsageMetadataGetsPropagatedInStreaming()
