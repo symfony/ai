@@ -54,6 +54,19 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new EmbeddingsModel('text-embedding-3-small'), 'test text');
     }
 
+    public function testItDoesNotEscapeForwardSlashesInNamespacedModelNames()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('{"model":"qwen/qwen3-embedding","input":"test text"}', $options['body']);
+            self::assertStringNotContainsString('qwen\/qwen3-embedding', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-api-key');
+        $modelClient->request(new EmbeddingsModel('qwen/qwen3-embedding'), 'test text');
+    }
+
     public function testItIsExecutingTheCorrectRequestWithCustomOptions()
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {

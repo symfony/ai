@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Generic\Embeddings;
 
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -25,6 +26,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class ModelClient implements ModelClientInterface
 {
+    use JsonBodyEncodingTrait;
+
     private readonly string $baseUrl;
 
     /**
@@ -49,10 +52,10 @@ class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => array_merge($options, [
+            'body' => $this->encodeJsonBody(array_merge($options, [
                 'model' => $model->getName(),
                 'input' => $payload,
-            ]),
+            ])),
         ]));
     }
 }

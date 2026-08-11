@@ -189,7 +189,7 @@ final class DeepgramClientTest extends TestCase
 
         $this->assertSame('POST', $capturedMethod);
         $this->assertSame('/v1/listen', parse_url($capturedUrl, \PHP_URL_PATH));
-        $this->assertSame('{"url":"https:\/\/example.com\/audio.mp3"}', $capturedBody);
+        $this->assertSame('{"url":"https://example.com/audio.mp3"}', $capturedBody);
     }
 
     public function testSpeechToTextRejectsDataUrlScheme()

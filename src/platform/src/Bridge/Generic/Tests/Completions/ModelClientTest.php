@@ -72,6 +72,19 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new CompletionsModel('gpt-4o'), ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['temperature' => 0.7]);
     }
 
+    public function testItDoesNotEscapeForwardSlashesInNamespacedModelNames()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('{"model":"qwen/qwen3.5-4b","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+            self::assertStringNotContainsString('qwen\/qwen3.5-4b', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-valid-api-key');
+        $modelClient->request(new CompletionsModel('qwen/qwen3.5-4b'), ['model' => 'qwen/qwen3.5-4b', 'messages' => [['role' => 'user', 'content' => 'Hello']]]);
+    }
+
     public function testItRequestsUsageForStreamedResponses()
     {
         $resultCallback = function (string $method, string $url, array $options): HttpResponse {
