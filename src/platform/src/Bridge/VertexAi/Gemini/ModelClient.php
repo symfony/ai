@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\VertexAi\Gemini;
 
 use Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait;
+use Symfony\AI\Platform\Bridge\VertexAi\SchemaNormalizer;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -65,7 +66,7 @@ final class ModelClient implements ModelClientInterface
 
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $options['generationConfig']['responseMimeType'] = 'application/json';
-            $options['generationConfig']['responseSchema'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
+            $options['generationConfig']['responseSchema'] = SchemaNormalizer::normalize($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema']);
 
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }

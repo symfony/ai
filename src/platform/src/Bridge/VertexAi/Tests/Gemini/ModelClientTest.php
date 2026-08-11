@@ -179,6 +179,45 @@ final class ModelClientTest extends TestCase
         $client->request(new Model('gemini-2.0-flash'), $payload, ['server_tools' => ['google_search' => true]]);
     }
 
+    public function testItNormalizesNullableFieldsInStructuredOutputResponseSchema()
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'type' => ['string', 'null'],
+                    'description' => 'A nullable name',
+                ],
+                'tags' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => ['string', 'null'],
+                    ],
+                ],
+            ],
+            'additionalProperties' => false,
+        ];
+
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+            $responseSchema = $body['generationConfig']['responseSchema'];
+
+            $this->assertSame('application/json', $body['generationConfig']['responseMimeType']);
+            $this->assertSame('string', $responseSchema['properties']['name']['type']);
+            $this->assertTrue($responseSchema['properties']['name']['nullable']);
+            $this->assertSame('string', $responseSchema['properties']['tags']['items']['type']);
+            $this->assertTrue($responseSchema['properties']['tags']['items']['nullable']);
+            $this->assertArrayNotHasKey('additionalProperties', $responseSchema);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'global', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], [
+            'response_format' => ['json_schema' => ['schema' => $schema]],
+        ]);
+    }
+
     public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
