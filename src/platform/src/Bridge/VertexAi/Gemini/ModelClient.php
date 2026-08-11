@@ -64,9 +64,10 @@ final class ModelClient implements ModelClientInterface
             $query['alt'] = 'sse';
         }
 
-        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
+        $responseSchema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'] ?? null;
+        if (\is_array($responseSchema)) {
             $options['generationConfig']['responseMimeType'] = 'application/json';
-            $options['generationConfig']['responseSchema'] = SchemaNormalizer::normalize($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema']);
+            $options['generationConfig']['responseSchema'] = SchemaNormalizer::normalize($responseSchema);
 
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
