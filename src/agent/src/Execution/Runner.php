@@ -51,6 +51,12 @@ final class Runner
      */
     private int $nestingLevel = 0;
 
+    /**
+     * Tool calling iterations get counted on class level to also cover the nested agent calls.
+     * They get reset when the outermost agent call is finished via nesting level.
+     */
+    private int $iterations = 0;
+
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly ?ToolboxInterface $toolbox = null,
@@ -143,9 +149,8 @@ final class Runner
         }
 
         try {
-            $iterations = 0;
             do {
-                if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
+                if (null !== $this->maxToolCalls && ++$this->iterations > $this->maxToolCalls) {
                     throw new MaxIterationsExceededException($this->maxToolCalls);
                 }
 
@@ -172,6 +177,10 @@ final class Runner
             } while ($result instanceof ToolCallResult);
         } finally {
             --$this->nestingLevel;
+
+            if (0 === $this->nestingLevel) {
+                $this->iterations = 0;
+            }
 
             if ($this->includeSources && 0 === $this->nestingLevel && $result instanceof ToolCallResult) {
                 $this->sources = new SourceCollection();
