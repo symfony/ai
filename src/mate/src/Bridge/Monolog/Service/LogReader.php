@@ -22,53 +22,44 @@ use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
  */
 final class LogReader
 {
+    /**
+     * @var array<string|int, string>
+     */
+    private readonly array $logDirs;
+
+    /**
+     * @param string|array<string, string> $logDir A single log directory, or a map of context name to log
+     *                                             directory for multi-kernel (APP_ID) applications
+     */
     public function __construct(
         private LogParser $parser,
-        private string $logDir,
+        string|array $logDir,
     ) {
+        $this->logDirs = \is_string($logDir) ? [0 => $logDir] : $logDir;
     }
 
     /**
      * @return string[]
      */
-    public function getLogFiles(): array
+    public function getLogFiles(?string $kernelContext = null): array
     {
-        if (!is_dir($this->logDir)) {
-            return [];
-        }
-
-        $files = glob($this->logDir.'/*.log');
-        if (false === $files) {
-            return [];
-        }
-
-        usort($files, static fn (string $a, string $b) => filemtime($b) <=> filemtime($a));
-
-        return $files;
+        return $this->collectLogFiles($this->resolveLogDirs($kernelContext));
     }
 
     /**
      * @return string[]
      */
-    public function getLogFilesForEnvironment(string $environment): array
+    public function getLogFilesForEnvironment(string $environment, ?string $kernelContext = null): array
     {
-        $files = $this->getLogFiles();
-
-        return array_filter($files, static function (string $file) use ($environment) {
-            $filename = basename($file);
-
-            // Match files like dev.log, prod.log, test.log
-            // Or files containing the environment name like app_dev.log
-            return str_contains($filename, $environment);
-        });
+        return $this->filterForEnvironment($this->getLogFiles($kernelContext), $environment);
     }
 
     /**
      * @return \Generator<LogEntry>
      */
-    public function readAll(?SearchCriteria $criteria = null): \Generator
+    public function readAll(?SearchCriteria $criteria = null, ?string $kernelContext = null): \Generator
     {
-        $files = $this->getLogFiles();
+        $files = $this->getLogFiles($kernelContext);
 
         yield from $this->readFiles($files, $criteria);
     }
@@ -76,9 +67,9 @@ final class LogReader
     /**
      * @return \Generator<LogEntry>
      */
-    public function readForEnvironment(string $environment, ?SearchCriteria $criteria = null): \Generator
+    public function readForEnvironment(string $environment, ?SearchCriteria $criteria = null, ?string $kernelContext = null): \Generator
     {
-        $files = $this->getLogFilesForEnvironment($environment);
+        $files = $this->getLogFilesForEnvironment($environment, $kernelContext);
 
         yield from $this->readFiles($files, $criteria);
     }
@@ -124,11 +115,12 @@ final class LogReader
             try {
                 $lineNumber = 0;
                 $relativePath = $this->getRelativePath($file);
+                $fileContext = $this->getKernelContext($file);
 
                 while (false !== ($line = fgets($handle))) {
                     ++$lineNumber;
 
-                    $entry = $this->parser->parse($line, $relativePath, $lineNumber);
+                    $entry = $this->parser->parse($line, $relativePath, $lineNumber, $fileContext);
                     if (null === $entry) {
                         continue;
                     }
@@ -156,38 +148,71 @@ final class LogReader
     }
 
     /**
+     * Returns the most recent entries of the newest log file of every configured context.
+     *
      * @return LogEntry[]
      */
-    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null, ?string $channel = null): array
+    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null, ?string $channel = null, ?string $kernelContext = null): array
     {
-        $files = null !== $environment
-            ? $this->getLogFilesForEnvironment($environment)
-            : $this->getLogFiles();
+        $entriesPerContext = [];
 
-        if ([] === $files) {
+        foreach ($this->resolveLogDirs($kernelContext) as $context => $dir) {
+            $files = $this->collectLogFiles([$context => $dir]);
+            if (null !== $environment) {
+                $files = $this->filterForEnvironment($files, $environment);
+            }
+
+            if ([] === $files) {
+                continue;
+            }
+
+            $file = $files[0];
+            if (!file_exists($file) || !is_readable($file)) {
+                continue;
+            }
+
+            $entriesPerContext[] = $this->tailFromFile($file, $lines, $level, $channel);
+        }
+
+        if ([] === $entriesPerContext) {
             return [];
         }
 
-        $file = $files[0];
-        if (!file_exists($file) || !is_readable($file)) {
-            return [];
+        if (1 === \count($entriesPerContext)) {
+            return $entriesPerContext[0];
         }
 
-        return $this->tailFromFile($file, $lines, $level, $channel);
+        $entries = array_merge(...$entriesPerContext);
+        usort($entries, static fn (LogEntry $a, LogEntry $b) => $a->getDatetime() <=> $b->getDatetime());
+
+        return \array_slice($entries, -$lines);
     }
 
     /**
      * @return string[]
      */
-    public function getUniqueChannels(): array
+    public function getUniqueChannels(?string $kernelContext = null): array
     {
         $channels = [];
 
-        foreach ($this->readAll() as $entry) {
+        foreach ($this->readAll(null, $kernelContext) as $entry) {
             $channels[$entry->getChannel()] = true;
         }
 
         return array_keys($channels);
+    }
+
+    /**
+     * The context a log file belongs to, or null when a single log directory is configured.
+     */
+    public function getKernelContext(string $filePath): ?string
+    {
+        $logDir = $this->findLogDir($filePath);
+        if (null === $logDir) {
+            return null;
+        }
+
+        return \is_string($logDir[0]) ? $logDir[0] : null;
     }
 
     /**
@@ -204,6 +229,7 @@ final class LogReader
             $buffer = [];
             $lineNumber = 0;
             $relativePath = $this->getRelativePath($file);
+            $fileContext = $this->getKernelContext($file);
 
             while (false !== ($line = fgets($handle))) {
                 ++$lineNumber;
@@ -217,7 +243,7 @@ final class LogReader
 
             $entries = [];
             for ($i = \count($buffer) - 1; $i >= 0 && \count($entries) < $lines; --$i) {
-                $entry = $this->parser->parse($buffer[$i]['line'], $relativePath, $buffer[$i]['number']);
+                $entry = $this->parser->parse($buffer[$i]['line'], $relativePath, $buffer[$i]['number'], $fileContext);
                 if (null === $entry) {
                     continue;
                 }
@@ -241,10 +267,104 @@ final class LogReader
 
     private function getRelativePath(string $filePath): string
     {
-        if (str_starts_with($filePath, $this->logDir)) {
-            return ltrim(substr($filePath, \strlen($this->logDir)), '/\\');
+        $logDir = $this->findLogDir($filePath);
+        if (null === $logDir) {
+            return basename($filePath);
         }
 
-        return basename($filePath);
+        return ltrim(substr($filePath, \strlen($logDir[1])), '/\\');
+    }
+
+    /**
+     * Returns the configured directory a file belongs to, the longest match wins so nested
+     * context directories are resolved to the most specific one.
+     *
+     * @return array{0: string|int, 1: string}|null
+     */
+    private function findLogDir(string $filePath): ?array
+    {
+        $matchedContext = null;
+        $matchedDir = null;
+
+        foreach ($this->logDirs as $context => $dir) {
+            if (!str_starts_with($filePath, $dir)) {
+                continue;
+            }
+
+            if (null === $matchedDir || \strlen($dir) > \strlen($matchedDir)) {
+                $matchedContext = $context;
+                $matchedDir = $dir;
+            }
+        }
+
+        if (null === $matchedDir || null === $matchedContext) {
+            return null;
+        }
+
+        return [$matchedContext, $matchedDir];
+    }
+
+    /**
+     * @param string[] $files
+     *
+     * @return string[]
+     */
+    private function filterForEnvironment(array $files, string $environment): array
+    {
+        return array_values(array_filter($files, static function (string $file) use ($environment) {
+            $filename = basename($file);
+
+            // Match files like dev.log, prod.log, test.log
+            // Or files containing the environment name like app_dev.log
+            return str_contains($filename, $environment);
+        }));
+    }
+
+    /**
+     * @param array<string|int, string> $logDirs
+     *
+     * @return string[]
+     */
+    private function collectLogFiles(array $logDirs): array
+    {
+        $allFiles = [];
+
+        foreach ($logDirs as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+
+            $files = glob($dir.'/*.log');
+            if (false === $files) {
+                continue;
+            }
+
+            foreach ($files as $file) {
+                $allFiles[] = $file;
+            }
+        }
+
+        usort($allFiles, static fn (string $a, string $b) => filemtime($b) <=> filemtime($a));
+
+        return $allFiles;
+    }
+
+    /**
+     * @return array<string|int, string>
+     */
+    private function resolveLogDirs(?string $kernelContext): array
+    {
+        if (null === $kernelContext || '' === $kernelContext) {
+            return $this->logDirs;
+        }
+
+        $logDirs = [];
+        foreach ($this->logDirs as $context => $dir) {
+            if ($context === $kernelContext) {
+                $logDirs[$context] = $dir;
+            }
+        }
+
+        return $logDirs;
     }
 }

@@ -127,4 +127,119 @@ final class LogReaderTest extends TestCase
 
         $this->assertSame([], $files);
     }
+
+    public function testSingleLogDirectoryDoesNotStampKernelContext()
+    {
+        $entries = iterator_to_array($this->reader->readAll());
+
+        foreach ($entries as $entry) {
+            $this->assertNull($entry->getKernelContext());
+        }
+    }
+
+    public function testSupportsMultipleLogDirectories()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $files = $reader->getLogFiles();
+
+        // 2 files in the fixtures directory + 2 files in the nested logs directory
+        $this->assertCount(4, $files);
+        $this->assertContains($this->fixturesDir.'/sample.log', $files);
+        $this->assertContains($this->fixturesDir.'/logs/prod.log', $files);
+    }
+
+    public function testGetLogFilesFiltersByKernelContext()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $files = $reader->getLogFiles('admin');
+
+        $this->assertCount(2, $files);
+        $this->assertContains($this->fixturesDir.'/logs/prod.log', $files);
+        $this->assertContains($this->fixturesDir.'/logs/app_test.log', $files);
+    }
+
+    public function testGetKernelContextResolvesTheMostSpecificDirectory()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $this->assertSame('website', $reader->getKernelContext($this->fixturesDir.'/sample.log'));
+        $this->assertSame('admin', $reader->getKernelContext($this->fixturesDir.'/logs/prod.log'));
+        $this->assertNull($reader->getKernelContext('/somewhere/else/dev.log'));
+    }
+
+    public function testReadAllStampsKernelContextOnEntries()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $entries = iterator_to_array($reader->readAll());
+
+        // 11 entries in the fixtures directory + 4 entries in the nested logs directory
+        $this->assertCount(15, $entries);
+
+        $contexts = [];
+        foreach ($entries as $entry) {
+            $contexts[$entry->getKernelContext()] = true;
+        }
+
+        $this->assertArrayHasKey('website', $contexts);
+        $this->assertArrayHasKey('admin', $contexts);
+        $this->assertCount(2, $contexts);
+    }
+
+    public function testReadAllFiltersByKernelContext()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $entries = iterator_to_array($reader->readAll(null, 'admin'));
+
+        $this->assertCount(4, $entries);
+        foreach ($entries as $entry) {
+            $this->assertSame('admin', $entry->getKernelContext());
+        }
+    }
+
+    public function testGetUniqueChannelsFiltersByKernelContext()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $channels = $reader->getUniqueChannels('admin');
+
+        $this->assertContains('test', $channels);
+        $this->assertNotContains('security', $channels);
+    }
+
+    public function testTailMergesTheNewestFileOfEveryKernelContext()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $entries = $reader->tail(3);
+
+        // Both contexts are tailed, merged and sorted by time: the admin fixtures are the most recent ones
+        $this->assertCount(3, $entries);
+        $this->assertSame('website', $entries[0]->getKernelContext());
+        $this->assertSame('admin', $entries[1]->getKernelContext());
+        $this->assertSame('admin', $entries[2]->getKernelContext());
+    }
+
+    public function testTailFiltersByKernelContext()
+    {
+        $reader = $this->createMultiKernelReader();
+
+        $entries = $reader->tail(10, kernelContext: 'admin');
+
+        $this->assertCount(2, $entries);
+        foreach ($entries as $entry) {
+            $this->assertSame('admin', $entry->getKernelContext());
+        }
+    }
+
+    private function createMultiKernelReader(): LogReader
+    {
+        return new LogReader(new LogParser(), [
+            'website' => $this->fixturesDir,
+            'admin' => $this->fixturesDir.'/logs',
+        ]);
+    }
 }

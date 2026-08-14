@@ -22,7 +22,8 @@ namespace Symfony\AI\Mate\Bridge\Monolog\Model;
  *     context: array<string, mixed>,
  *     extra: array<string, mixed>,
  *     source_file: string|null,
- *     line_number: int|null
+ *     line_number: int|null,
+ *     kernel_context?: string
  * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -83,6 +84,7 @@ final class LogEntry
         private readonly array $extra = [],
         private readonly ?string $sourceFile = null,
         private readonly ?int $lineNumber = null,
+        private readonly ?string $kernelContext = null,
     ) {
     }
 
@@ -133,11 +135,20 @@ final class LogEntry
     }
 
     /**
+     * The kernel context this entry was read from, e.g. the APP_ID of a multi-kernel
+     * application. Named `kernelContext` to avoid confusion with the Monolog context.
+     */
+    public function getKernelContext(): ?string
+    {
+        return $this->kernelContext;
+    }
+
+    /**
      * @phpstan-return LogEntryArray
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'datetime' => $this->datetime->format(\DateTimeInterface::ATOM),
             'channel' => $this->channel,
             'level' => $this->level,
@@ -147,6 +158,12 @@ final class LogEntry
             'source_file' => $this->sourceFile,
             'line_number' => $this->lineNumber,
         ];
+
+        if (null !== $this->kernelContext) {
+            $data['kernel_context'] = $this->kernelContext;
+        }
+
+        return $data;
     }
 
     public function matchesTerm(string $term): bool

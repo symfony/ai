@@ -27,7 +27,7 @@ final class LogParser
      */
     private const LINE_PATTERN = '/^\[(?<datetime>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:?\d{2}|Z)?)\]\s+(?<channel>[\w.-]+)\.(?<level>\w+):\s+(?<rest>.+)$/';
 
-    public function parse(string $line, ?string $sourceFile = null, ?int $lineNumber = null): ?LogEntry
+    public function parse(string $line, ?string $sourceFile = null, ?int $lineNumber = null, ?string $kernelContext = null): ?LogEntry
     {
         $line = trim($line);
 
@@ -35,11 +35,11 @@ final class LogParser
             return null;
         }
 
-        return $this->tryParseJson($line, $sourceFile, $lineNumber)
-            ?? $this->tryParseText($line, $sourceFile, $lineNumber);
+        return $this->tryParseJson($line, $sourceFile, $lineNumber, $kernelContext)
+            ?? $this->tryParseText($line, $sourceFile, $lineNumber, $kernelContext);
     }
 
-    private function tryParseJson(string $line, ?string $sourceFile, ?int $lineNumber): ?LogEntry
+    private function tryParseJson(string $line, ?string $sourceFile, ?int $lineNumber, ?string $kernelContext): ?LogEntry
     {
         if (!str_starts_with($line, '{')) {
             return null;
@@ -91,10 +91,11 @@ final class LogParser
             extra: $extra,
             sourceFile: $sourceFile,
             lineNumber: $lineNumber,
+            kernelContext: $kernelContext,
         );
     }
 
-    private function tryParseText(string $line, ?string $sourceFile, ?int $lineNumber): ?LogEntry
+    private function tryParseText(string $line, ?string $sourceFile, ?int $lineNumber, ?string $kernelContext): ?LogEntry
     {
         if (!preg_match(self::LINE_PATTERN, $line, $matches)) {
             return null;
@@ -116,6 +117,7 @@ final class LogParser
             extra: $extra,
             sourceFile: $sourceFile,
             lineNumber: $lineNumber,
+            kernelContext: $kernelContext,
         );
     }
 

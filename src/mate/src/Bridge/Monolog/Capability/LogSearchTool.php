@@ -29,16 +29,17 @@ final class LogSearchTool
     }
 
     /**
-     * @param string      $term        Text to search for in log messages, or a regex pattern when $regex is true
-     * @param bool        $regex       When true, treat $term as a regular expression pattern
-     * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
-     * @param string|null $channel     Filter by Monolog channel name (e.g. app, security, doctrine)
-     * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
-     * @param string|null $from        Start date filter, any PHP-parseable date string (e.g. 2024-01-01, -1 hour, yesterday)
-     * @param string|null $to          End date filter, any PHP-parseable date string
-     * @param int         $limit       Maximum number of entries to return
+     * @param string      $term          Text to search for in log messages, or a regex pattern when $regex is true
+     * @param bool        $regex         When true, treat $term as a regular expression pattern
+     * @param string|null $level         Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+     * @param string|null $channel       Filter by Monolog channel name (e.g. app, security, doctrine)
+     * @param string|null $environment   Filter by Symfony environment (e.g. dev, prod, test)
+     * @param string|null $from          Start date filter, any PHP-parseable date string (e.g. 2024-01-01, -1 hour, yesterday)
+     * @param string|null $to            End date filter, any PHP-parseable date string
+     * @param int         $limit         Maximum number of entries to return
+     * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[McpTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only.')]
+    #[McpTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter.')]
     public function search(
         string $term,
         bool $regex = false,
@@ -48,6 +49,7 @@ final class LogSearchTool
         ?string $from = null,
         ?string $to = null,
         int $limit = 100,
+        ?string $kernelContext = null,
     ): string {
         if ($regex) {
             $pattern = $term;
@@ -74,15 +76,16 @@ final class LogSearchTool
             );
         }
 
-        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
+        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment, $kernelContext)]);
     }
 
     /**
-     * @param string      $key         The context field name to search for (e.g. user_id, exception, order_id)
-     * @param string      $value       The value to match in the context field
-     * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
-     * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
-     * @param int         $limit       Maximum number of entries to return
+     * @param string      $key           The context field name to search for (e.g. user_id, exception, order_id)
+     * @param string      $value         The value to match in the context field
+     * @param string|null $level         Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+     * @param string|null $environment   Filter by Symfony environment (e.g. dev, prod, test)
+     * @param int         $limit         Maximum number of entries to return
+     * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
     #[McpTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value.')]
     public function searchContext(
@@ -91,6 +94,7 @@ final class LogSearchTool
         ?string $level = null,
         ?string $environment = null,
         int $limit = 100,
+        ?string $kernelContext = null,
     ): string {
         $criteria = new SearchCriteria(
             level: $level,
@@ -99,62 +103,74 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
+        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment, $kernelContext)]);
     }
 
     /**
-     * @param int         $lines       Number of most recent log entries to return
-     * @param string|null $level       Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
-     * @param string|null $environment Filter by Symfony environment (e.g. dev, prod, test)
-     * @param string|null $channel     Filter by Monolog channel name (e.g. app, security, doctrine)
+     * @param int         $lines         Number of most recent log entries to return
+     * @param string|null $level         Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
+     * @param string|null $environment   Filter by Symfony environment (e.g. dev, prod, test)
+     * @param string|null $channel       Filter by Monolog channel name (e.g. app, security, doctrine)
+     * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[McpTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel.')]
-    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null, ?string $channel = null): string
+    #[McpTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel. When multiple kernel contexts are configured, the most recent entries of every context are merged.')]
+    public function tail(int $lines = 50, ?string $level = null, ?string $environment = null, ?string $channel = null, ?string $kernelContext = null): string
     {
-        $entries = $this->reader->tail($lines, $level, $environment, $channel);
+        $entries = $this->reader->tail($lines, $level, $environment, $channel, $kernelContext);
 
         return ResponseEncoder::encode(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
     }
 
     /**
-     * @param string|null $environment Filter log files by Symfony environment (e.g. dev, prod, test)
+     * @param string|null $environment   Filter log files by Symfony environment (e.g. dev, prod, test)
+     * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[McpTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching.')]
-    public function listFiles(?string $environment = null): string
+    #[McpTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching. When multiple kernel contexts are configured, files carry a kernel_context field.')]
+    public function listFiles(?string $environment = null, ?string $kernelContext = null): string
     {
         $files = null !== $environment
-            ? $this->reader->getLogFilesForEnvironment($environment)
-            : $this->reader->getLogFiles();
+            ? $this->reader->getLogFilesForEnvironment($environment, $kernelContext)
+            : $this->reader->getLogFiles($kernelContext);
         $result = [];
 
         foreach ($files as $file) {
-            $result[] = [
+            $entry = [
                 'name' => basename($file),
                 'path' => $file,
                 'size' => filesize($file) ?: 0,
                 'modified' => date(\DateTimeInterface::ATOM, filemtime($file) ?: 0),
             ];
+
+            $context = $this->reader->getKernelContext($file);
+            if (null !== $context) {
+                $entry['kernel_context'] = $context;
+            }
+
+            $result[] = $entry;
         }
 
         return ResponseEncoder::encode(['files' => $result]);
     }
 
+    /**
+     * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
+     */
     #[McpTool(name: 'monolog-list-channels', title: 'List Log Channels', description: 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
-    public function listChannels(): string
+    public function listChannels(?string $kernelContext = null): string
     {
-        return ResponseEncoder::encode(['channels' => $this->reader->getUniqueChannels()]);
+        return ResponseEncoder::encode(['channels' => $this->reader->getUniqueChannels($kernelContext)]);
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    private function collectResults(SearchCriteria $criteria, ?string $environment = null): array
+    private function collectResults(SearchCriteria $criteria, ?string $environment = null, ?string $kernelContext = null): array
     {
         $results = [];
 
         $generator = null !== $environment
-            ? $this->reader->readForEnvironment($environment, $criteria)
-            : $this->reader->readAll($criteria);
+            ? $this->reader->readForEnvironment($environment, $criteria, $kernelContext)
+            : $this->reader->readAll($criteria, $kernelContext);
 
         foreach ($generator as $entry) {
             $results[] = $entry->toArray();

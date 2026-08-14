@@ -22,25 +22,116 @@ use Symfony\AI\Mate\Encoding\ResponseEncoder;
  */
 class ServiceTool
 {
+    private const ENVIRONMENTS = ['', '/dev', '/test', '/prod'];
+
+    /**
+     * @var array<string|int, string>
+     */
+    private readonly array $cacheDirs;
+
+    private readonly bool $hasContexts;
+
+    /**
+     * @param string|array<string, string> $cacheDir A single cache directory, or a map of context name to cache
+     *                                               directory for multi-kernel (APP_ID) applications
+     */
     public function __construct(
-        private string $cacheDir,
+        string|array $cacheDir,
         private ContainerProvider $provider,
     ) {
+        $this->hasContexts = \is_array($cacheDir);
+        $this->cacheDirs = \is_string($cacheDir) ? [0 => $cacheDir] : $cacheDir;
     }
 
     /**
-     * @param string|null $query Filter by service ID or class name (case-insensitive partial match)
-     * @param string|null $tag   Filter by DI tag name (e.g. kernel.event_listener, twig.extension)
+     * @param string|null $query   Filter by service ID or class name (case-insensitive partial match)
+     * @param string|null $tag     Filter by DI tag name (e.g. kernel.event_listener, twig.extension)
+     * @param string|null $context Filter by Symfony kernel context, only relevant when multiple cache directories are configured
      */
-    #[McpTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID, class name, or tag name. Returns a map of service IDs to their class names.')]
-    public function getServices(?string $query = null, ?string $tag = null): string
+    #[McpTool(name: 'symfony-services', title: 'Symfony Services', description: 'Search Symfony dependency injection container services. Optionally filter by service ID, class name, or tag name. Returns a map of service IDs to their class names. When multiple kernel contexts are configured, the map is nested per context and can be narrowed with the context parameter.')]
+    public function getServices(?string $query = null, ?string $tag = null, ?string $context = null): string
     {
-        $container = $this->readContainer();
-        if (null === $container) {
-            return ResponseEncoder::encode([]);
+        $containers = $this->readContainers($context);
+
+        if (!$this->hasContexts) {
+            $container = $containers[0] ?? null;
+            if (null === $container) {
+                return ResponseEncoder::encode([]);
+            }
+
+            return ResponseEncoder::encode($this->collectServices($container, $query, $tag));
         }
 
         $output = [];
+        foreach ($containers as $containerContext => $container) {
+            $output[$containerContext] = $this->collectServices($container, $query, $tag);
+        }
+
+        return ResponseEncoder::encode($output);
+    }
+
+    /**
+     * @param string      $id      The exact service ID to retrieve details for
+     * @param string|null $context Filter by Symfony kernel context, only relevant when multiple cache directories are configured
+     */
+    #[McpTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, and constructor/factory information. When multiple kernel contexts are configured, the containers are searched in order and the result carries the context it was found in.')]
+    public function getServiceDetail(string $id, ?string $context = null): string
+    {
+        $containers = $this->readContainers($context);
+        if ([] === $containers) {
+            throw new ServiceNotFoundException(\sprintf('Service "%s" not found: container could not be loaded.', $id));
+        }
+
+        foreach ($containers as $containerContext => $container) {
+            $services = $container->getServices();
+            if (!isset($services[$id])) {
+                continue;
+            }
+
+            $service = $services[$id];
+
+            $tags = [];
+            foreach ($service->getTags() as $tag) {
+                $entry = ['name' => $tag->getName()];
+                foreach ($tag->getAttributes() as $key => $value) {
+                    $entry[$key] = $value;
+                }
+                $tags[] = $entry;
+            }
+
+            [$factoryClass, $factoryMethod] = $service->getConstructor();
+            $constructor = null;
+            if (null !== $factoryClass) {
+                $constructor = $factoryClass.'::'.$factoryMethod;
+            }
+
+            $output = [
+                'id' => $service->getId(),
+                'class' => $service->getClass(),
+                'tags' => $tags,
+                'calls' => $service->getCalls(),
+            ];
+
+            if (null !== $constructor) {
+                $output['factory'] = $constructor;
+            }
+
+            if (\is_string($containerContext)) {
+                $output['context'] = $containerContext;
+            }
+
+            return ResponseEncoder::encode($output);
+        }
+
+        throw new ServiceNotFoundException(\sprintf('Service "%s" not found in the container.', $id));
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function collectServices(Container $container, ?string $query, ?string $tag): array
+    {
+        $services = [];
         foreach ($container->getServices() as $service) {
             if (null !== $query && '' !== $query) {
                 $matches = str_contains(strtolower($service->getId()), strtolower($query))
@@ -63,64 +154,38 @@ class ServiceTool
                 }
             }
 
-            $output[$service->getId()] = $service->getClass();
+            $services[$service->getId()] = $service->getClass();
         }
 
-        return ResponseEncoder::encode($output);
+        return $services;
     }
 
     /**
-     * @param string $id The exact service ID to retrieve details for
+     * @return array<string|int, Container>
      */
-    #[McpTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, and constructor/factory information.')]
-    public function getServiceDetail(string $id): string
+    private function readContainers(?string $context = null): array
     {
-        $container = $this->readContainer();
-        if (null === $container) {
-            throw new ServiceNotFoundException(\sprintf('Service "%s" not found: container could not be loaded.', $id));
-        }
-
-        $services = $container->getServices();
-        if (!isset($services[$id])) {
-            throw new ServiceNotFoundException(\sprintf('Service "%s" not found in the container.', $id));
-        }
-
-        $service = $services[$id];
-
-        $tags = [];
-        foreach ($service->getTags() as $tag) {
-            $entry = ['name' => $tag->getName()];
-            foreach ($tag->getAttributes() as $key => $value) {
-                $entry[$key] = $value;
+        $containers = [];
+        foreach ($this->cacheDirs as $cacheContext => $cacheDir) {
+            if (null !== $context && '' !== $context && $cacheContext !== $context) {
+                continue;
             }
-            $tags[] = $entry;
+
+            $container = $this->readContainer($cacheDir);
+            if (null === $container) {
+                continue;
+            }
+
+            $containers[$cacheContext] = $container;
         }
 
-        [$factoryClass, $factoryMethod] = $service->getConstructor();
-        $constructor = null;
-        if (null !== $factoryClass) {
-            $constructor = $factoryClass.'::'.$factoryMethod;
-        }
-
-        $output = [
-            'id' => $service->getId(),
-            'class' => $service->getClass(),
-            'tags' => $tags,
-            'calls' => $service->getCalls(),
-        ];
-
-        if (null !== $constructor) {
-            $output['factory'] = $constructor;
-        }
-
-        return ResponseEncoder::encode($output);
+        return $containers;
     }
 
-    private function readContainer(): ?Container
+    private function readContainer(string $cacheDir): ?Container
     {
-        $environments = ['', '/dev', '/test', '/prod'];
-        foreach ($environments as $env) {
-            $dir = $this->cacheDir.$env;
+        foreach (self::ENVIRONMENTS as $env) {
+            $dir = $cacheDir.$env;
             $files = glob($dir.'/*DebugContainer.xml');
             if (false !== $files && [] !== $files) {
                 sort($files);
