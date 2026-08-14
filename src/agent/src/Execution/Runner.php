@@ -51,6 +51,13 @@ final class Runner
      */
     private int $nestingLevel = 0;
 
+    /**
+     * Counts the tool calling iterations of the outermost agent call, which the agent nests into
+     * one level per iteration. Reset together with the nesting level, so that the limit applies
+     * per conversation and does not leak into the next one in a long-running process.
+     */
+    private int $iterations = 0;
+
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly ?ToolboxInterface $toolbox = null,
@@ -143,9 +150,8 @@ final class Runner
         }
 
         try {
-            $iterations = 0;
             do {
-                if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
+                if (null !== $this->maxToolCalls && ++$this->iterations > $this->maxToolCalls) {
                     throw new MaxIterationsExceededException($this->maxToolCalls);
                 }
 
@@ -172,6 +178,10 @@ final class Runner
             } while ($result instanceof ToolCallResult);
         } finally {
             --$this->nestingLevel;
+
+            if (0 === $this->nestingLevel) {
+                $this->iterations = 0;
+            }
 
             if ($this->includeSources && 0 === $this->nestingLevel && $result instanceof ToolCallResult) {
                 $this->sources = new SourceCollection();

@@ -468,6 +468,32 @@ final class RunnerTest extends TestCase
         $runner->run($agent, 'gpt-4', new MessageBag(), []);
     }
 
+    public function testThrowsExceptionWhenMaxIterationsExceededAcrossNestedAgentCalls()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Test response'));
+
+        // A real agent re-enters the runner for every tool call instead of looping in place,
+        // so the limit has to be counted across the whole conversation, not per entry.
+        $platform = $this->platform(
+            new ToolCallResult([$toolCall]),
+            new ToolCallResult([$toolCall]),
+            new ToolCallResult([$toolCall]),
+            new ToolCallResult([$toolCall]),
+            new TextResult('Never reached, the limit stops the loop before this.'),
+        );
+
+        $agent = new Agent($platform, 'foo-bar', toolbox: $toolbox, maxToolCalls: 3);
+
+        $this->expectException(MaxIterationsExceededException::class);
+        $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
+
+        $agent->call(new MessageBag());
+    }
+
     public function testCustomMaxIterationsLimitAllowsConfiguredIterations()
     {
         $toolCall1 = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
