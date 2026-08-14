@@ -359,6 +359,40 @@ If you already have a JSON Schema defined in a file, you can reference it using 
 .. note::
 
     When using ``ref``, other arguments on the ``#[Schema]`` attribute are not allowed as the entire schema is loaded from the file.
+    The only exception is ``name``, which renames the key the schema is stored under instead of describing its value.
+
+Renaming Keys with ``#[Schema(name: ...)]``
+...........................................
+
+By default the JSON key is the PHP property or parameter name. Use the ``name`` argument to expose a
+different key to the model while keeping an idiomatic PHP name::
+
+    use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
+
+    final readonly class CircuitMetadata
+    {
+        public function __construct(
+            #[Schema(
+                description: 'Rest between rounds in seconds',
+                minimum: 0,
+                name: 'rest_between_rounds',
+            )]
+            public int $restBetweenRounds,
+        ) {
+        }
+    }
+
+The generated schema uses ``rest_between_rounds`` as key and requires it under that name, while the
+value is written back to ``$restBetweenRounds``. The rename is applied consistently on both sides:
+structured output is hydrated from the renamed key, and a tool call answering with the renamed key
+is passed to the original PHP parameter.
+
+.. note::
+
+    Declare ``name`` on the property, the constructor parameter or the setter parameter of the property.
+    Symfony AI's ``#[Schema(name: ...)]`` is the only renaming taken into account - serializer metadata
+    like ``#[SerializedName]`` is ignored by the JSON Schema factory, and therefore also ignored when
+    hydrating structured output.
 
 Runtime-driven Schema with ``#[Schema(provider: ...)]``
 .......................................................

@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ContextAwareProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\LongerStaticEnumDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\SearchQueryDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\CircuitMetadata;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SchemaAttributeRefDto;
 
@@ -37,6 +38,7 @@ final class SchemaAttributeDescriberTest extends TestCase
     #[TestWith([['pattern' => '^foo$'], new PropertySubject('value3', new \ReflectionParameter([ToolWithObjectAccessors::class, '__construct'], 'value3'))], 'constructor')]
     #[TestWith([['description' => 'The quantity of the ingredient', 'example' => '2 cups'], new PropertySubject('quantity', new \ReflectionParameter([ExampleDto::class, '__construct'], 'quantity'))], 'example')]
     #[TestWith([['type' => 'string', 'description' => 'This is a test schema from a ref file.'], new PropertySubject('schemaFromFile', new \ReflectionParameter([SchemaAttributeRefDto::class, '__construct'], 'schemaFromFile'))], 'schema from file')]
+    #[TestWith([['description' => 'Rest between rounds in seconds', 'minimum' => 0], new PropertySubject('restBetweenRounds', new \ReflectionParameter([CircuitMetadata::class, '__construct'], 'restBetweenRounds'))], 'name is not part of the property schema')]
     public function testDescribeProperty(array $expectedSchema, PropertySubject $property)
     {
         $describer = new SchemaAttributeDescriber();

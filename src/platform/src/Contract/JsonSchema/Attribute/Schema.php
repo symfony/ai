@@ -22,9 +22,10 @@ final class Schema
     /**
      * @param list<int|float|string|null>|null $enum
      * @param string|int|string[]|null         $const
-     * @param string|null                      $ref      A path to external schema file. This is mutually exclusive with all the other arguments.
+     * @param string|null                      $ref      A path to external schema file. This is mutually exclusive with all the other arguments, except "name".
      * @param string|null                      $provider Service ID of a SchemaProviderInterface implementation (FQCN or any container ID) contributing a runtime fragment merged on top of the static schema
      * @param array<string, mixed>             $context  Passed to the provider's getSchemaFragment() call
+     * @param string|null                      $name     JSON key to use instead of the PHP property or parameter name, e.g. "rest_between_rounds" for $restBetweenRounds
      */
     public function __construct(
         // can be used by many types
@@ -63,9 +64,20 @@ final class Schema
         // runtime-computed fragment
         public readonly ?string $provider = null,
         public readonly array $context = [],
+
+        // the key in the generated schema
+        public readonly ?string $name = null,
     ) {
+        if (\is_string($name)) {
+            if ('' === trim($name)) {
+                throw new InvalidArgumentException('Name string must not be empty.');
+            }
+        }
+
         if ($this->ref) {
             $values = array_filter((array) $this, static fn (mixed $value) => null !== $value && [] !== $value);
+            // "name" renames the key instead of describing the value, so it stays allowed next to "ref"
+            unset($values['name']);
             if (\count($values) > 1) {
                 throw new InvalidArgumentException('When "ref" is defined, no other arguments are allowed.');
             }
