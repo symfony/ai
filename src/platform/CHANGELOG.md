@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * [BC BREAK] Add `ListenerInterface::onError()` and `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws, so a listener can finalize on a failed stream where `onComplete()` never fires; `AbstractStreamListener` provides a no-op default
+ * Add `name` argument to `#[Schema]` to use a different JSON key than the PHP property or parameter name, e.g. `#[Schema(name: 'rest_between_rounds')]` on `$restBetweenRounds`; schema generation and structured output hydration stay in sync, while serializer metadata like `#[SerializedName]` stays ignored
 
 0.12
 ----

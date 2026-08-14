@@ -66,9 +66,11 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
         $schema = $required = [];
         foreach ($this->objectDescribers as $describer) {
             foreach ($describer->describeObject($subject, $schema) as $property) {
-                $this->describeProperty($property, $schema['properties'][$property->getName()]);
+                $schemaName = $property->getSchemaName();
+
+                $this->describeProperty($property, $schema['properties'][$schemaName]);
                 if ($property->isRequired()) {
-                    $required[$property->getName()] = true;
+                    $required[$schemaName] = true;
                 }
             }
         }

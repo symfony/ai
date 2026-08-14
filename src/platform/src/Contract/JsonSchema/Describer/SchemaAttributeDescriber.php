@@ -47,7 +47,7 @@ final class SchemaAttributeDescriber implements PropertyDescriberInterface
                 }
             } else {
                 $attributeSchema = array_filter((array) $attribute, static fn ($value) => null !== $value && [] !== $value);
-                unset($attributeSchema['provider'], $attributeSchema['context']);
+                unset($attributeSchema['provider'], $attributeSchema['context'], $attributeSchema['name']);
             }
 
             $schema = array_replace_recursive($schema ?? [], $attributeSchema);

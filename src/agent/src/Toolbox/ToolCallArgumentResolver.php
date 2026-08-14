@@ -12,6 +12,8 @@
 namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
+use Symfony\AI\Platform\Contract\JsonSchema\SchemaNameConverter;
+use Symfony\AI\Platform\Contract\JsonSchema\SchemaNameResolver;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
@@ -49,6 +51,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
                 new DateTimeNormalizer(),
                 new BackedEnumNormalizer(),
                 new ObjectNormalizer(
+                    nameConverter: new SchemaNameConverter(),
                     classDiscriminatorResolver: new ClassDiscriminatorFromClassMetadata($classMetadataFactory),
                     propertyTypeExtractor: $propertyTypeExtractor,
                 ),
@@ -74,14 +77,16 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
         $arguments = [];
 
         foreach ($parameters as $name => $reflectionParameter) {
-            if (!\array_key_exists($name, $toolCall->getArguments())) {
+            $key = SchemaNameResolver::forReflector($reflectionParameter, $name);
+
+            if (!\array_key_exists($key, $toolCall->getArguments())) {
                 if (!$reflectionParameter->isOptional()) {
-                    throw new ToolException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
+                    throw new ToolException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $key, $toolCall->getName()));
                 }
                 continue;
             }
 
-            $value = $toolCall->getArguments()[$name];
+            $value = $toolCall->getArguments()[$key];
             $parameterType = $this->typeResolver->resolve($reflectionParameter);
 
             if ($parameterType instanceof NullableType) {
