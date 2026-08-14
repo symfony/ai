@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * [BC BREAK] Add `ListenerInterface::onError()` and `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws, so a listener can finalize on a failed stream where `onComplete()` never fires; `AbstractStreamListener` provides a no-op default
+ * Add `Endpoint` value object and expose it on `Model` (`getEndpoints()`, `hasEndpoints()`, `getDefaultEndpoint()`, `getEndpoint()`, `supportsEndpoint()`); catalogs declare a model's endpoints via the new `AbstractModelCatalog::endpointsForModel()` hook (defaults to none, fully backward-compatible)
 
 0.12
 ----
