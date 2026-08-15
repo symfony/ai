@@ -26,9 +26,9 @@ $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the pia
 
 echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;
 
-// Waiting is explicit and the budget is yours to choose - video routinely runs for several minutes.
-$runner = new JobRunner(pollInterval: 1.0, maxPolls: 600);
-$result = $runner->wait($platform->getJobClient($handle), $handle);
+// Waiting is explicit, but how long is not something the caller has to know: the handle states that
+// video generation may run for minutes, and the runner honours that unless it is told otherwise.
+$result = (new JobRunner())->wait($platform->getJobClient($handle), $handle);
 
 $result->asFile(__DIR__.'/minimax-video.mp4');
 

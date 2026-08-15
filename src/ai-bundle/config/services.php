@@ -170,9 +170,9 @@ return static function (ContainerConfigurator $container): void {
             ->tag('kernel.event_listener', ['event' => InvocationEvent::class])
 
         // asynchronous jobs
-        // Registered with the application's clock so a test can control the waiting. The default
-        // budget suits a job finishing in seconds; a longer-running one - video generation runs for
-        // minutes - deserves its own runner rather than stretching this one for everybody.
+        // Registered with the application's clock so a test can control the waiting. No budget is
+        // configured on purpose: each job states how long it may take, so one shared runner serves
+        // a speech job finishing in seconds and a video job running for minutes alike.
         ->set('ai.platform.job_runner', JobRunner::class)
             ->args([
                 service('clock'),

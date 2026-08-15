@@ -30,19 +30,28 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 final class JobHandle implements \JsonSerializable
 {
     /**
-     * @param string               $id       the job identifier as issued by the provider
-     * @param array<string, mixed> $data     provider-specific data needed to poll and fetch the job
-     * @param string|null          $provider the platform-level provider name; filled in by `Provider`
-     *                                       after conversion, since a converter does not know under
-     *                                       which name its provider was registered
+     * @param string               $id          the job identifier as issued by the provider
+     * @param array<string, mixed> $data        provider-specific data needed to poll and fetch the job
+     * @param string|null          $provider    the platform-level provider name; filled in by `Provider`
+     *                                          after conversion, since a converter does not know under
+     *                                          which name its provider was registered
+     * @param int|null             $maxDuration how long, in seconds, this kind of job may reasonably
+     *                                          take at this provider - the bridge knows that video
+     *                                          generation runs for minutes where speech takes seconds,
+     *                                          and a caller usually does not
      */
     public function __construct(
         private readonly string $id,
         private readonly array $data = [],
         private readonly ?string $provider = null,
+        private readonly ?int $maxDuration = null,
     ) {
         if ('' === $this->id) {
             throw new InvalidArgumentException('A job handle needs a non-empty job identifier.');
+        }
+
+        if (null !== $this->maxDuration && $this->maxDuration < 1) {
+            throw new InvalidArgumentException(\sprintf('The maximum duration of a job must be at least one second, "%d" given.', $this->maxDuration));
         }
     }
 
@@ -74,11 +83,22 @@ final class JobHandle implements \JsonSerializable
     }
 
     /**
+     * How long this kind of job may reasonably take, in seconds, as far as the bridge knows - or
+     * null when it has no expectation. A {@see JobRunner} waits that long unless its caller decided
+     * otherwise, so a job that runs for minutes does not have to be waited for by a caller who knows
+     * nothing about the provider's timings.
+     */
+    public function getMaxDuration(): ?int
+    {
+        return $this->maxDuration;
+    }
+
+    /**
      * Returns a copy bound to the given provider name.
      */
     public function withProvider(string $provider): self
     {
-        return new self($this->id, $this->data, $provider);
+        return new self($this->id, $this->data, $provider, $this->maxDuration);
     }
 
     /**
@@ -88,11 +108,11 @@ final class JobHandle implements \JsonSerializable
      */
     public function withData(array $data): self
     {
-        return new self($this->id, [...$this->data, ...$data], $this->provider);
+        return new self($this->id, [...$this->data, ...$data], $this->provider, $this->maxDuration);
     }
 
     /**
-     * @return array{id: string, provider: string|null, data: array<string, mixed>}
+     * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null}
      */
     public function toArray(): array
     {
@@ -100,6 +120,7 @@ final class JobHandle implements \JsonSerializable
             'id' => $this->id,
             'provider' => $this->provider,
             'data' => $this->data,
+            'max_duration' => $this->maxDuration,
         ];
     }
 
@@ -128,12 +149,18 @@ final class JobHandle implements \JsonSerializable
             throw new InvalidArgumentException(\sprintf('The "data" key of a serialized job handle must be an array, "%s" given.', get_debug_type($data)));
         }
 
+        $maxDuration = $handle['max_duration'] ?? null;
+
+        if (null !== $maxDuration && !\is_int($maxDuration)) {
+            throw new InvalidArgumentException(\sprintf('The "max_duration" key of a serialized job handle must be an integer or null, "%s" given.', get_debug_type($maxDuration)));
+        }
+
         /* @var array<string, mixed> $data */
-        return new self($id, $data, $provider);
+        return new self($id, $data, $provider, $maxDuration);
     }
 
     /**
-     * @return array{id: string, provider: string|null, data: array<string, mixed>}
+     * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null}
      */
     public function jsonSerialize(): array
     {

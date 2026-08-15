@@ -36,19 +36,26 @@ use Symfony\Component\Clock\MonotonicClock;
 final class JobRunner
 {
     /**
-     * @param float $pollInterval seconds to wait between two polls
-     * @param int   $maxPolls     how often to poll before giving up
+     * How long to wait for a job whose handle carries no expectation of its own.
+     */
+    private const DEFAULT_MAX_DURATION = 120;
+
+    /**
+     * @param float    $pollInterval seconds to wait between two polls
+     * @param int|null $maxPolls     how often to poll before giving up; null defers to what the job
+     *                               says it needs (see {@see JobHandle::getMaxDuration()}), which is
+     *                               usually the better answer - pass a number to overrule it
      */
     public function __construct(
         private readonly ClockInterface $clock = new MonotonicClock(),
         private readonly float $pollInterval = 1.0,
-        private readonly int $maxPolls = 120,
+        private readonly ?int $maxPolls = null,
     ) {
         if ($this->pollInterval <= 0) {
             throw new InvalidArgumentException(\sprintf('The poll interval must be greater than zero, "%s" given.', $this->pollInterval));
         }
 
-        if ($this->maxPolls < 1) {
+        if (null !== $this->maxPolls && $this->maxPolls < 1) {
             throw new InvalidArgumentException(\sprintf('The maximum number of polls must be at least one, "%d" given.', $this->maxPolls));
         }
     }
@@ -59,7 +66,9 @@ final class JobRunner
      */
     public function wait(JobClientInterface $jobClient, JobHandle $handle): ResultInterface
     {
-        for ($poll = 1; $poll <= $this->maxPolls; ++$poll) {
+        $maxPolls = $this->maxPolls ?? $this->maxPollsFor($handle);
+
+        for ($poll = 1; $poll <= $maxPolls; ++$poll) {
             $status = $jobClient->getStatus($handle);
 
             if ($status->is(JobStateCase::SUCCEEDED)) {
@@ -71,11 +80,19 @@ final class JobRunner
             }
 
             // Not after the last poll: the caller would only wait for a status nobody reads.
-            if ($poll < $this->maxPolls) {
+            if ($poll < $maxPolls) {
                 $this->clock->sleep($this->pollInterval);
             }
         }
 
-        throw new JobTimeoutException($handle, \sprintf('The job "%s" did not finish within %d poll(s) every %s second(s). It may still be running - keep the handle and poll again later.', $handle->getId(), $this->maxPolls, $this->pollInterval));
+        throw new JobTimeoutException($handle, \sprintf('The job "%s" did not finish within %d poll(s) every %s second(s). It may still be running - keep the handle and poll again later.', $handle->getId(), $maxPolls, $this->pollInterval));
+    }
+
+    /**
+     * Turns what the job says it needs into a number of polls at the configured interval.
+     */
+    private function maxPollsFor(JobHandle $handle): int
+    {
+        return max(1, (int) ceil(($handle->getMaxDuration() ?? self::DEFAULT_MAX_DURATION) / $this->pollInterval));
     }
 }
