@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Register `ai.platform.job_runner` (autowired as `Platform\Job\JobRunner`) using the application clock, and render an asynchronous job in the profiler as the handle it carries instead of as a result
+
 0.11
 ----
 

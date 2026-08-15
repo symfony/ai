@@ -982,6 +982,11 @@ the caller — seconds for speech synthesis, minutes for video::
 
     $result->asFile('video.mp4');
 
+In a Symfony application a runner with the application clock and the default budget is available as
+``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. That
+default suits a job finishing in seconds; for a longer-running one, build a runner with its own
+budget rather than stretching the shared one for everybody.
+
 The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
 ends the job without a result, and a :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException`
 when the budget runs out while the job is still going. The latter carries the handle, so the job can
