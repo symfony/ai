@@ -1039,6 +1039,68 @@ Code Examples
 * `PDF Input with GPT`_
 * `PDF Input with Claude`_
 
+Asynchronous Jobs
+-----------------
+
+Some work cannot be answered in the same request it was asked for: video generation runs for minutes,
+and several providers offer asynchronous or batch endpoints that accept a request now and produce the
+result later. Those providers answer the invocation with a job identifier, so ``invoke()`` returns a
+:class:`Symfony\\AI\\Platform\\Result\\JobResult` whose content is a
+:class:`Symfony\\AI\\Platform\\Job\\JobHandle`::
+
+    $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano'), [
+        'duration' => 6,
+    ])->asJob();
+
+The handle holds no connection and no client, only what is needed to ask the provider about that job
+again — so it can be stored and picked up somewhere else entirely::
+
+    // in the process that started the job
+    $repository->save($id, json_encode($handle));
+
+    // in a worker, possibly much later
+    $handle = JobHandle::fromArray(json_decode($repository->load($id), true));
+    $jobClient = $platform->getJobClient($handle);
+
+    if ($jobClient->getStatus($handle)->is(JobStateCase::SUCCEEDED)) {
+        $jobClient->getResult($handle)->asFile('video.mp4');
+    }
+
+:method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` performs exactly one request and
+never sleeps. To simply block until the job is done, hand it to a
+:class:`Symfony\\AI\\Platform\\Job\\JobRunner`, which owns the polling loop and takes its budget from
+the caller — seconds for speech synthesis, minutes for video::
+
+    use Symfony\AI\Platform\Job\JobRunner;
+
+    $runner = new JobRunner(pollInterval: 1.0, maxPolls: 600);
+    $result = $runner->wait($platform->getJobClient($handle), $handle);
+
+    $result->asFile('video.mp4');
+
+The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
+ends the job without a result, and a :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException`
+when the budget runs out while the job is still going. The latter carries the handle, so the job can
+be handed on rather than lost.
+
+Providers spell their states differently, so a bridge maps them onto a
+:class:`Symfony\\AI\\Platform\\Job\\JobStateCase` while
+:method:`Symfony\\AI\\Platform\\Job\\JobStatus::getRaw` keeps the provider's own wording — the same
+split as ``FinishReason``. A state no bridge knows about is reported as ``UNKNOWN`` and treated as
+non-terminal, so a provider adding a state does not abort a running job.
+
+.. note::
+
+    Only bridges whose provider works this way return a ``JobResult``; everything else answers
+    synchronously as before. Currently this is the MiniMax bridge, for video generation and
+    asynchronous speech synthesis.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `Asynchronous Video Generation with MiniMax`_
+* `Resuming a MiniMax Video Job`_
+
 Audio Processing
 ----------------
 
@@ -1988,6 +2050,8 @@ Code Examples
 .. _`Binary Image Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-binary.php
 .. _`Image URL Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-url.php
 .. _`Audio Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-input.php
+.. _`Asynchronous Video Generation with MiniMax`: https://github.com/symfony/ai/blob/main/examples/minimax/text-to-video.php
+.. _`Resuming a MiniMax Video Job`: https://github.com/symfony/ai/blob/main/examples/minimax/video-job-resume.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php

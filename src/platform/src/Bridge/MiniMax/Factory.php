@@ -44,10 +44,11 @@ final class Factory
         return new Provider(
             $name,
             [new MiniMaxClient($httpClient, $apiKey, $endpoint)],
-            [new MiniMaxResultConverter($httpClient, $apiKey, $endpoint)],
+            [new MiniMaxResultConverter()],
             $modelCatalog,
             $contract ?? MiniMaxContract::create(),
             $eventDispatcher,
+            new MiniMaxJobClient($httpClient, $apiKey, $endpoint),
         );
     }
 

@@ -406,6 +406,37 @@ Platform
    `ToolCallStart` and without a terminal batch. A consumer walking `ChoiceDelta::getDeltas()` still has to
    merge those.
 
+ * The MiniMax bridge no longer blocks inside its result converter while an asynchronous task runs.
+   Video generation and asynchronous speech synthesis (`async: true`) now return a `Result\JobResult`
+   carrying a serializable `Job\JobHandle`, and waiting for the job became explicit. Reading the
+   result directly through `asBinary()`/`asFile()` therefore throws an `UnexpectedResultTypeException`:
+
+   ```diff
+   +use Symfony\AI\Platform\Job\JobRunner;
+   +
+   -$result = $platform->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6]);
+   -$result->asFile('video.mp4');
+   +$handle = $platform->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6])->asJob();
+   +
+   +$result = (new JobRunner(maxPolls: 600))->wait($platform->getJobClient($handle), $handle);
+   +$result->asFile('video.mp4');
+   ```
+
+   How long to wait is now the caller's decision instead of a constant in the bridge: the former
+   budgets were 120 polls for audio and 600 for video, one second apart. A job that does not finish
+   in time raises a `JobTimeoutException` that carries the handle, so the job can be picked up later
+   instead of being lost — including from another process, via
+   `Platform::getJobClient($handle)`.
+
+   Accordingly, `Bridge\MiniMax\MiniMaxResultConverter` no longer takes an HTTP client, API key,
+   endpoint or clock; polling moved to the new `Bridge\MiniMax\MiniMaxJobClient`. Code building the
+   bridge through `Bridge\MiniMax\Factory` is unaffected.
+
+   ```diff
+   -$converter = new MiniMaxResultConverter($httpClient, $apiKey, $endpoint, $clock);
+   +$converter = new MiniMaxResultConverter();
+   ```
+
  * `Result\Stream\ListenerInterface` gained an `onError()` method, dispatched with the new
    `Result\Stream\ErrorEvent`. Listeners not extending
    `AbstractStreamListener` must add the method:
