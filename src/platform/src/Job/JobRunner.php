@@ -25,48 +25,56 @@ use Symfony\Component\Clock\MonotonicClock;
  * {@see JobClientInterface} and stay free of polling; a caller who does not want to block skips this
  * class entirely and drives {@see JobClientInterface::getStatus()} from a worker or a scheduler.
  *
- * How long to wait is the caller's decision, not the bridge's: a text-to-speech job finishes in
- * seconds, a video job routinely runs for minutes.
+ * How long the work takes is the provider's knowledge, carried on the handle; how long you are
+ * willing to wait for it is yours. State it per call, where the decision usually belongs - the same
+ * video job may run for ten minutes in a worker and be given five seconds inside a web request:
  *
  *     $handle = $platform->invoke('MiniMax-Hailuo-02', $prompt)->asJob();
- *     $result = (new JobRunner(maxPolls: 600))->wait($jobClient, $handle);
+ *
+ *     $result = $runner->wait($jobClient, $handle);                    // as long as the job needs
+ *     $result = $runner->wait($jobClient, $handle, maxDuration: 5);    // or not a second longer
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class JobRunner
 {
     /**
-     * How long to wait for a job whose handle carries no expectation of its own.
+     * How long to wait for a job that states no expectation of its own.
      */
     private const DEFAULT_MAX_DURATION = 120;
 
     /**
      * @param float    $pollInterval seconds to wait between two polls
-     * @param int|null $maxPolls     how often to poll before giving up; null defers to what the job
-     *                               says it needs (see {@see JobHandle::getMaxDuration()}), which is
-     *                               usually the better answer - pass a number to overrule it
+     * @param int|null $maxDuration  seconds to wait before giving up, for every job this runner
+     *                               waits for; null defers to what each job says it needs (see
+     *                               {@see JobHandle::getMaxDuration()}), which is usually the better
+     *                               answer - a single call can still overrule both
      */
     public function __construct(
         private readonly ClockInterface $clock = new MonotonicClock(),
         private readonly float $pollInterval = 1.0,
-        private readonly ?int $maxPolls = null,
+        private readonly ?int $maxDuration = null,
     ) {
         if ($this->pollInterval <= 0) {
             throw new InvalidArgumentException(\sprintf('The poll interval must be greater than zero, "%s" given.', $this->pollInterval));
         }
 
-        if (null !== $this->maxPolls && $this->maxPolls < 1) {
-            throw new InvalidArgumentException(\sprintf('The maximum number of polls must be at least one, "%d" given.', $this->maxPolls));
-        }
+        self::assertDuration($this->maxDuration);
     }
 
     /**
+     * @param int|null $maxDuration seconds to wait for this job, overruling both the runner's own
+     *                              budget and what the job asks for
+     *
      * @throws JobFailedException  when the job reached a terminal state without a result
      * @throws JobTimeoutException when the job was still running after the last poll
      */
-    public function wait(JobClientInterface $jobClient, JobHandle $handle): ResultInterface
+    public function wait(JobClientInterface $jobClient, JobHandle $handle, ?int $maxDuration = null): ResultInterface
     {
-        $maxPolls = $this->maxPolls ?? $this->maxPollsFor($handle);
+        self::assertDuration($maxDuration);
+
+        $budget = $maxDuration ?? $this->maxDuration ?? $handle->getMaxDuration() ?? self::DEFAULT_MAX_DURATION;
+        $maxPolls = $this->maxPollsFor($budget);
 
         for ($poll = 1; $poll <= $maxPolls; ++$poll) {
             $status = $jobClient->getStatus($handle);
@@ -85,14 +93,21 @@ final class JobRunner
             }
         }
 
-        throw new JobTimeoutException($handle, \sprintf('The job "%s" did not finish within %d poll(s) every %s second(s). It may still be running - keep the handle and poll again later.', $handle->getId(), $maxPolls, $this->pollInterval));
+        throw new JobTimeoutException($handle, \sprintf('The job "%s" did not finish within %d second(s). It may still be running - keep the handle and wait for it again later, or allow more time via the "maxDuration" argument.', $handle->getId(), $budget));
     }
 
     /**
-     * Turns what the job says it needs into a number of polls at the configured interval.
+     * Turns a duration into a number of polls at the configured interval.
      */
-    private function maxPollsFor(JobHandle $handle): int
+    private function maxPollsFor(int $maxDuration): int
     {
-        return max(1, (int) ceil(($handle->getMaxDuration() ?? self::DEFAULT_MAX_DURATION) / $this->pollInterval));
+        return max(1, (int) ceil($maxDuration / $this->pollInterval));
+    }
+
+    private static function assertDuration(?int $maxDuration): void
+    {
+        if (null !== $maxDuration && $maxDuration < 1) {
+            throw new InvalidArgumentException(\sprintf('The maximum duration to wait must be at least one second, "%d" given.', $maxDuration));
+        }
     }
 }

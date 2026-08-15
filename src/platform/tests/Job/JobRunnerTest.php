@@ -128,7 +128,7 @@ final class JobRunnerTest extends TestCase
         $this->assertSame(150, $jobClient->statusCalls);
     }
 
-    public function testAnExplicitBudgetOverrulesWhatTheJobAsksFor()
+    public function testARunnerBudgetOverrulesWhatTheJobAsksFor()
     {
         $jobClient = $this->jobClient(...array_fill(0, 10, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
@@ -139,6 +139,48 @@ final class JobRunnerTest extends TestCase
         }
 
         $this->assertSame(3, $jobClient->statusCalls);
+    }
+
+    /**
+     * How long to wait usually belongs to the call, not to the runner: the same job may be given ten
+     * minutes in a worker and five seconds inside a web request, both through the same shared
+     * service. So a per-call budget wins over everything else.
+     */
+    public function testACallBudgetOverrulesTheRunnerAndTheJob()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 10, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+        $runner = new JobRunner(new MockClock(), 1.0, 300);
+
+        try {
+            $runner->wait($jobClient, new JobHandle('task-1', maxDuration: 600), maxDuration: 4);
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException $exception) {
+            $this->assertStringContainsString('did not finish within 4 second(s)', $exception->getMessage());
+        }
+
+        $this->assertSame(4, $jobClient->statusCalls);
+    }
+
+    public function testTheCallBudgetIsSpentInSecondsRegardlessOfThePollInterval()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 10, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1'), maxDuration: 10);
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        // 10 seconds at one poll every two seconds - the caller states time, not poll counts.
+        $this->assertSame(5, $jobClient->statusCalls);
+    }
+
+    public function testItRejectsANonsensicalCallBudget()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least one second');
+
+        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), maxDuration: 0);
     }
 
     public function testAHandleWithoutAnExpectationFallsBackToTheDefaultBudget()
@@ -163,7 +205,7 @@ final class JobRunnerTest extends TestCase
             (new JobRunner(new MockClock(), 1.0, 3))->wait($jobClient, $handle);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException $exception) {
-            $this->assertStringContainsString('did not finish within 3 poll(s)', $exception->getMessage());
+            $this->assertStringContainsString('did not finish within 3 second(s)', $exception->getMessage());
             $this->assertSame($handle, $exception->getHandle());
         }
 
@@ -171,16 +213,18 @@ final class JobRunnerTest extends TestCase
         $this->assertSame(0, $jobClient->resultCalls);
     }
 
-    public function testItRejectsANonsensicalBudget()
+    public function testItRejectsANonsensicalPollInterval()
     {
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('greater than zero');
 
         new JobRunner(new MockClock(), 0.0);
     }
 
-    public function testItRejectsAZeroPollBudget()
+    public function testItRejectsANonsensicalRunnerBudget()
     {
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least one second');
 
         new JobRunner(new MockClock(), 1.0, 0);
     }
