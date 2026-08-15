@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform;
 
 use Symfony\AI\Platform\Event\ModelRoutingEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Job\JobClientInterface;
+use Symfony\AI\Platform\Job\JobHandle;
+use Symfony\AI\Platform\Job\JobProviderInterface;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -59,6 +62,41 @@ final class Platform implements PlatformInterface
             $event->getInput(),
             $decision->getOptions() ?? $event->getOptions(),
         );
+    }
+
+    /**
+     * Returns the job client of the provider a {@see JobHandle} belongs to.
+     *
+     * This is how an asynchronous job is picked up again, typically in a different process than the
+     * one that started it: store the handle, rebuild it with `JobHandle::fromArray()`, and ask the
+     * platform for the client that can resolve it.
+     *
+     *     $status = $platform->getJobClient($handle)->getStatus($handle);
+     *
+     * @throws InvalidArgumentException when the handle names no provider, or names one this platform
+     *                                  does not have or that cannot run jobs
+     */
+    public function getJobClient(JobHandle $handle): JobClientInterface
+    {
+        $name = $handle->getProvider();
+
+        if (null === $name) {
+            throw new InvalidArgumentException(\sprintf('The job handle "%s" is not bound to a provider.', $handle->getId()));
+        }
+
+        foreach ($this->providers as $provider) {
+            if ($provider->getName() !== $name) {
+                continue;
+            }
+
+            if (!$provider instanceof JobProviderInterface || null === $jobClient = $provider->getJobClient()) {
+                throw new InvalidArgumentException(\sprintf('The provider "%s" does not run asynchronous jobs.', $name));
+            }
+
+            return $jobClient;
+        }
+
+        throw new InvalidArgumentException(\sprintf('No provider named "%s" is configured on this platform.', $name));
     }
 
     public function getModelCatalog(): ModelCatalogInterface
