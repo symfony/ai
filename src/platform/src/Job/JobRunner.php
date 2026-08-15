@@ -14,7 +14,9 @@ namespace Symfony\AI\Platform\Job;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\JobFailedException;
 use Symfony\AI\Platform\Exception\JobTimeoutException;
-use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\PlainConverter;
+use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
 
@@ -33,6 +35,10 @@ use Symfony\Component\Clock\MonotonicClock;
  *
  *     $result = $runner->wait($jobClient, $handle);                    // as long as the job needs
  *     $result = $runner->wait($jobClient, $handle, maxDuration: 5);    // or not a second longer
+ *
+ * What comes back is a {@see DeferredResult}, the same thing `Platform::invoke()` hands out, so
+ * finishing a job reads like any other invocation - `->asFile()`, `->asBinary()`, `->asText()` -
+ * instead of leaving the caller to narrow a bare `ResultInterface` itself.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -69,7 +75,7 @@ final class JobRunner
      * @throws JobFailedException  when the job reached a terminal state without a result
      * @throws JobTimeoutException when the job was still running after the last poll
      */
-    public function wait(JobClientInterface $jobClient, JobHandle $handle, ?int $maxDuration = null): ResultInterface
+    public function wait(JobClientInterface $jobClient, JobHandle $handle, ?int $maxDuration = null): DeferredResult
     {
         self::assertDuration($maxDuration);
 
@@ -80,7 +86,9 @@ final class JobRunner
             $status = $jobClient->getStatus($handle);
 
             if ($status->is(JobStateCase::SUCCEEDED)) {
-                return $jobClient->getResult($handle);
+                // The result is already there; PlainConverter only carries it into a DeferredResult
+                // so the caller reaches it through the same accessors as a synchronous invocation.
+                return new DeferredResult(new PlainConverter($jobClient->getResult($handle)), new InMemoryRawResult());
             }
 
             if ($status->isTerminal()) {
