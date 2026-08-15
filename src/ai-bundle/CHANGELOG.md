@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add support for template variables in file prompts
  * Add an `embedding_function` option to the `chromadb` store, referencing a service implementing `Codewithkyrian\ChromaDB\Embeddings\EmbeddingFunction`, so a bundle-configured store can serve a `TextQuery`
+ * Register `ai.platform.job_runner` (autowired as `Platform\Job\JobRunner`) using the application clock, and render an asynchronous job in the profiler as the handle it carries instead of as a result
 
 0.11
 ----

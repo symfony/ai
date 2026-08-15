@@ -49,6 +49,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -170,6 +171,19 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.data_collector');
         $this->assertTrue($definition->hasTag('data_collector'));
         $this->assertSame([['id' => 'ai']], $definition->getTag('data_collector'));
+    }
+
+    public function testJobRunnerIsAvailableAsAServiceUsingTheApplicationClock()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+        $definition = $container->getDefinition('ai.platform.job_runner');
+
+        $this->assertSame(JobRunner::class, $definition->getClass());
+
+        // Injected rather than defaulted, so a test can control how a job is waited for.
+        $this->assertSame('clock', (string) $definition->getArgument(0));
+
+        $this->assertSame('ai.platform.job_runner', (string) $container->getAlias(JobRunner::class));
     }
 
     public function testTemplateRendererListenerReceivesNormalizer()
