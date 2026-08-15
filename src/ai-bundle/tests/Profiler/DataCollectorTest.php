@@ -24,6 +24,7 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
+use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -32,6 +33,7 @@ use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -163,6 +165,30 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('vectors', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    /**
+     * A job has not produced anything yet, so there is nothing to render as a result - what the
+     * profiler can show is the handle needed to follow the job up.
+     */
+    public function testCollectsDataForJobResult()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $jobResult = new JobResult(new JobHandle('task-1', ['mime_type' => 'video/mp4'], 'minimax'));
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($jobResult), $this->createStub(RawResultInterface::class)));
+
+        $traceablePlatform->invoke('MiniMax-Hailuo-02', 'A cat playing the piano');
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $call = $dataCollector->getPlatformCalls()[0];
+
+        $this->assertSame('job', $call['result_type']);
+        $this->assertSame('task-1', $call['result']['id']);
+        $this->assertSame('minimax', $call['result']['provider']);
     }
 
     public function testRecordsErrorWhenResultConversionFails()

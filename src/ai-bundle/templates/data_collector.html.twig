@@ -209,6 +209,10 @@
                                                     <li>Vector with <strong>{{ vector.dimensions }}</strong> dimensions</li>
                                                 {% endfor %}
                                             </ol>
+                                        {% elseif call.result_type == 'job' %}
+                                            <strong>Asynchronous job</strong> started at provider
+                                            <code>{{ call.result.provider ?? 'unknown' }}</code>, id
+                                            <code>{{ call.result.id }}</code> &mdash; no result yet.
                                         {% elseif call.result_type == 'error' %}
                                             <strong class="status-error">Failed:</strong>
                                             <code>{{ call.error.class }}</code>: {{ call.error.message }}
