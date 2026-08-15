@@ -110,6 +110,50 @@ final class JobRunnerTest extends TestCase
         yield 'canceled' => [JobStateCase::CANCELED];
     }
 
+    /**
+     * The bridge knows that video generation runs for minutes where speech takes seconds; the caller
+     * usually does not. So a handle that states how long it may take decides the budget.
+     */
+    public function testItWaitsAsLongAsTheJobSaysItNeeds()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1', maxDuration: 300));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        // 300 seconds at one poll every two seconds.
+        $this->assertSame(150, $jobClient->statusCalls);
+    }
+
+    public function testAnExplicitBudgetOverrulesWhatTheJobAsksFor()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 10, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 1.0, 3))->wait($jobClient, new JobHandle('task-1', maxDuration: 600));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        $this->assertSame(3, $jobClient->statusCalls);
+    }
+
+    public function testAHandleWithoutAnExpectationFallsBackToTheDefaultBudget()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1'));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        $this->assertSame(120, $jobClient->statusCalls);
+    }
+
     public function testItGivesUpAfterTheLastPollAndHandsTheHandleBack()
     {
         $jobClient = $this->jobClient(...array_fill(0, 3, new JobStatus(JobStateCase::RUNNING, 'Processing')));

@@ -23,7 +23,7 @@ final class JobHandleTest extends TestCase
 {
     public function testItSurvivesASerializationRoundTrip()
     {
-        $handle = new JobHandle('task-1', ['query_path' => 'query/video_generation', 'mime_type' => 'video/mp4'], 'minimax');
+        $handle = new JobHandle('task-1', ['query_path' => 'query/video_generation', 'mime_type' => 'video/mp4'], 'minimax', 600);
 
         $restored = JobHandle::fromArray(json_decode(json_encode($handle), true, flags: \JSON_THROW_ON_ERROR));
 
@@ -31,6 +31,25 @@ final class JobHandleTest extends TestCase
         $this->assertSame('minimax', $restored->getProvider());
         $this->assertSame('query/video_generation', $restored->get('query_path'));
         $this->assertSame('video/mp4', $restored->get('mime_type'));
+
+        // Without this a job picked up in a worker would be waited for with the wrong budget.
+        $this->assertSame(600, $restored->getMaxDuration());
+    }
+
+    public function testCopiesKeepTheExpectedDuration()
+    {
+        $handle = new JobHandle('task-1', [], null, 600);
+
+        $this->assertSame(600, $handle->withProvider('minimax')->getMaxDuration());
+        $this->assertSame(600, $handle->withData(['file_id' => '1'])->getMaxDuration());
+    }
+
+    public function testItRejectsANonsensicalDuration()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least one second');
+
+        new JobHandle('task-1', [], null, 0);
     }
 
     public function testItIsNotBoundToAProviderUntilStamped()
@@ -88,5 +107,6 @@ final class JobHandleTest extends TestCase
         yield 'id not a string' => [['id' => 42], 'non-empty "id" key'];
         yield 'provider not a string' => [['id' => 'task-1', 'provider' => 42], '"provider" key'];
         yield 'data not an array' => [['id' => 'task-1', 'data' => 'nope'], '"data" key'];
+        yield 'max duration not an int' => [['id' => 'task-1', 'max_duration' => '600'], '"max_duration" key'];
     }
 }

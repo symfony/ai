@@ -1068,20 +1068,23 @@ again — so it can be stored and picked up somewhere else entirely::
 
 :method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` performs exactly one request and
 never sleeps. To simply block until the job is done, hand it to a
-:class:`Symfony\\AI\\Platform\\Job\\JobRunner`, which owns the polling loop and takes its budget from
-the caller — seconds for speech synthesis, minutes for video::
+:class:`Symfony\\AI\\Platform\\Job\\JobRunner`, which owns the polling loop::
 
     use Symfony\AI\Platform\Job\JobRunner;
 
-    $runner = new JobRunner(pollInterval: 1.0, maxPolls: 600);
-    $result = $runner->wait($platform->getJobClient($handle), $handle);
+    $result = (new JobRunner())->wait($platform->getJobClient($handle), $handle);
 
     $result->asFile('video.mp4');
 
-In a Symfony application a runner with the application clock and the default budget is available as
-``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. That
-default suits a job finishing in seconds; for a longer-running one, build a runner with its own
-budget rather than stretching the shared one for everybody.
+How long to wait is not something the caller has to know. A bridge that knows its provider's timings
+— MiniMax video generation runs for minutes where speech synthesis takes seconds — states it on the
+handle, and the runner honours it. Pass ``maxPolls`` to overrule that, for instance to give up early
+inside a web request::
+
+    $result = (new JobRunner(maxPolls: 5))->wait($platform->getJobClient($handle), $handle);
+
+In a Symfony application a runner using the application clock is available as
+``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`.
 
 The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
 ends the job without a result, and a :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException`
