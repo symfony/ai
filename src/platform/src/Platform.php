@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Event\ModelRoutingEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Job\JobClientInterface;
 use Symfony\AI\Platform\Job\JobHandle;
+use Symfony\AI\Platform\Job\JobPlatformInterface;
 use Symfony\AI\Platform\Job\JobProviderInterface;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -31,7 +32,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Platform implements PlatformInterface
+final class Platform implements PlatformInterface, JobPlatformInterface
 {
     private ?ModelCatalogInterface $modelCatalog = null;
 
