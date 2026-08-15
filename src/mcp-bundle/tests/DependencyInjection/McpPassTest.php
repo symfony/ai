@@ -20,6 +20,7 @@ use Mcp\Schema\ToolAnnotations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Exception\LogicException;
+use Symfony\AI\McpBundle\McpBundle;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -236,7 +237,7 @@ final class McpPassTest extends TestCase
         (new McpPass())->process($container);
 
         $this->assertSame([], $this->callsNamed($container, 'addTool'));
-        $this->assertSame([], $container->getDefinition('mcp.server.builder')->getMethodCalls());
+        $this->assertSame([], $container->getDefinition('mcp.server.default.builder')->getMethodCalls());
     }
 
     public function testDoesNothingWhenNoMcpServicesTagged()
@@ -245,10 +246,10 @@ final class McpPassTest extends TestCase
 
         (new McpPass())->process($container);
 
-        $this->assertSame([], $container->getDefinition('mcp.server.builder')->getMethodCalls());
+        $this->assertSame([], $container->getDefinition('mcp.server.default.builder')->getMethodCalls());
     }
 
-    public function testDoesNothingWhenNoServerBuilder()
+    public function testDoesNothingWhenNoServerConfigured()
     {
         $container = new ContainerBuilder();
         $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
@@ -263,10 +264,22 @@ final class McpPassTest extends TestCase
         $this->assertSame([], $serviceLocators);
     }
 
-    private function containerWithBuilder(): ContainerBuilder
+    /**
+     * @param array<string, array<string, list<string>>> $elements
+     */
+    private function containerWithBuilder(array $elements = ['default' => []]): ContainerBuilder
     {
         $container = new ContainerBuilder();
-        $container->setDefinition('mcp.server.builder', new Definition());
+
+        foreach ($elements as $server => $lists) {
+            $container->setDefinition('mcp.server.'.$server.'.builder', new Definition());
+
+            foreach (array_keys(McpBundle::ELEMENT_KINDS) as $kind) {
+                $elements[$server][$kind] ??= ['*'];
+            }
+        }
+
+        $container->setParameter('mcp.servers.elements', $elements);
 
         return $container;
     }
@@ -274,10 +287,10 @@ final class McpPassTest extends TestCase
     /**
      * @return list<array{0: string, 1: array<int, mixed>}>
      */
-    private function callsNamed(ContainerBuilder $container, string $method): array
+    private function callsNamed(ContainerBuilder $container, string $method, string $server = 'default'): array
     {
         return array_values(array_filter(
-            $container->getDefinition('mcp.server.builder')->getMethodCalls(),
+            $container->getDefinition('mcp.server.'.$server.'.builder')->getMethodCalls(),
             static fn (array $call): bool => $call[0] === $method,
         ));
     }
@@ -285,9 +298,9 @@ final class McpPassTest extends TestCase
     /**
      * @return array<string, ServiceClosureArgument>
      */
-    private function locatorServices(ContainerBuilder $container): array
+    private function locatorServices(ContainerBuilder $container, string $server = 'default'): array
     {
-        $setContainerCalls = $this->callsNamed($container, 'setContainer');
+        $setContainerCalls = $this->callsNamed($container, 'setContainer', $server);
         $this->assertCount(1, $setContainerCalls);
 
         $serviceLocatorId = (string) $setContainerCalls[0][1][0];

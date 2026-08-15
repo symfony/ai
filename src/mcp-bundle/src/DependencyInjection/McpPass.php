@@ -51,17 +51,39 @@ final class McpPass implements CompilerPassInterface
         'mcp.resource_template' => McpResourceTemplate::class,
     ];
 
+    private const TAG_KINDS = [
+        'mcp.tool' => 'tools',
+        'mcp.prompt' => 'prompts',
+        'mcp.resource' => 'resources',
+        'mcp.resource_template' => 'resource_templates',
+    ];
+
+    private const TAG_CALLS = [
+        'mcp.tool' => 'addTool',
+        'mcp.prompt' => 'addPrompt',
+        'mcp.resource' => 'addResource',
+        'mcp.resource_template' => 'addResourceTemplate',
+    ];
+
     public function process(ContainerBuilder $container): void
     {
-        if (!$container->hasDefinition('mcp.server.builder')) {
+        /** @var array<string, array<string, list<string>>> $servers */
+        $servers = $container->hasParameter('mcp.servers.elements') ? $container->getParameter('mcp.servers.elements') : [];
+        if ([] === $servers) {
             return;
         }
 
-        $builder = $container->getDefinition('mcp.server.builder');
+        $builders = [];
+        foreach (array_keys($servers) as $name) {
+            $builders[$name] = $container->getDefinition('mcp.server.'.$name.'.builder');
+        }
+
+        $matcher = new ElementMatcher($servers);
         $schemaGenerator = new SchemaGenerator(new DocBlockParser());
 
         $serviceReferences = [];
         $registered = [];
+        $unassigned = [];
 
         foreach (self::ELEMENT_TAGS as $tag => $attributeClass) {
             foreach ($container->findTaggedServiceIds($tag) as $serviceId => $tags) {
@@ -75,10 +97,20 @@ final class McpPass implements CompilerPassInterface
                     throw new LogicException(\sprintf('The MCP service "%s" is tagged "%s" but maps to class "%s" which does not exist.', $serviceId, $tag, $class));
                 }
 
-                // The SDK's ReferenceHandler resolves [class, method] handlers by class name; keep the
-                // service id as an additional key for handlers registered with a non-class service id.
-                $serviceReferences[$class] = new Reference($serviceId);
-                $serviceReferences[$serviceId] ??= new Reference($serviceId);
+                $targets = $matcher->match(self::TAG_KINDS[$tag], $serviceId, $class);
+                if ([] === $targets) {
+                    // Not an error: a third-party bundle may ship MCP elements this application
+                    // deliberately does not expose. Recorded so "debug:mcp" can report them.
+                    $unassigned[self::TAG_KINDS[$tag]][] = $serviceId;
+                    continue;
+                }
+
+                foreach ($targets as $server) {
+                    // The SDK's ReferenceHandler resolves [class, method] handlers by class name; keep
+                    // the service id as an additional key for handlers registered with a non-class id.
+                    $serviceReferences[$server][$class] = new Reference($serviceId);
+                    $serviceReferences[$server][$serviceId] ??= new Reference($serviceId);
+                }
 
                 foreach ($tags as $tagAttributes) {
                     $hasExplicitMethod = isset($tagAttributes['method']);
@@ -109,24 +141,105 @@ final class McpPass implements CompilerPassInterface
 
                     $registered[$tag][$class][$method] = true;
 
-                    match ($tag) {
-                        'mcp.tool' => $this->registerTool($builder, $class, $method, $attribute, $schemaGenerator, $serviceId),
-                        'mcp.prompt' => $this->registerPrompt($builder, $class, $method, $attribute),
-                        'mcp.resource' => $this->registerResource($builder, $class, $method, $attribute),
-                        'mcp.resource_template' => $this->registerResourceTemplate($builder, $class, $method, $attribute),
+                    // Reflection and schema generation run once per element, no matter how many
+                    // servers expose it; only the resulting method call is repeated.
+                    $arguments = match ($tag) {
+                        'mcp.tool' => $this->toolArguments($class, $method, $attribute, $schemaGenerator, $serviceId),
+                        'mcp.prompt' => $this->promptArguments($class, $method, $attribute),
+                        'mcp.resource' => $this->resourceArguments($class, $method, $attribute),
+                        'mcp.resource_template' => $this->resourceTemplateArguments($class, $method, $attribute),
                     };
+
+                    foreach ($targets as $server) {
+                        $builders[$server]->addMethodCall(self::TAG_CALLS[$tag], $this->copy($arguments));
+                    }
                 }
             }
         }
 
-        if ([] === $serviceReferences) {
+        $this->assertPatternsAreUsed($matcher);
+
+        $container->setParameter('mcp.servers.unassigned', $unassigned);
+
+        /** @var array<string, array<string, string>> $appHandlers */
+        $appHandlers = $container->hasParameter('mcp.servers.app_handlers') ? $container->getParameter('mcp.servers.app_handlers') : [];
+        /** @var array<string, array<string, array{template: string, meta: array<string, mixed>|null}>> $appTemplates */
+        $appTemplates = $container->hasParameter('mcp.servers.app_tool_templates') ? $container->getParameter('mcp.servers.app_tool_templates') : [];
+
+        foreach (array_keys($servers) as $server) {
+            foreach ($appHandlers[$server] ?? [] as $key => $id) {
+                $serviceReferences[$server][$key] ??= new Reference($id);
+            }
+
+            if ([] === ($serviceReferences[$server] ?? [])) {
+                continue;
+            }
+
+            $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences[$server]);
+            $builders[$server]->addMethodCall('setContainer', [$serviceLocatorRef]);
+
+            $this->configureAppReferenceHandler($container, $server, $serviceLocatorRef, $appTemplates[$server] ?? []);
+        }
+    }
+
+    private function assertPatternsAreUsed(ElementMatcher $matcher): void
+    {
+        $unused = $matcher->getUnusedPatterns();
+        if ([] === $unused) {
             return;
         }
 
-        $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences);
-        $builder->addMethodCall('setContainer', [$serviceLocatorRef]);
+        $messages = array_map(
+            static fn (array $entry): string => \sprintf('"%s" under "mcp.servers.%s.%s"', $entry[2], $entry[0], $entry[1]),
+            $unused,
+        );
 
-        $this->configureAppReferenceHandler($container, $serviceLocatorRef);
+        throw new LogicException(\sprintf('The following MCP element patterns do not match any registered service: "%s". Elements are collected from container services carrying an MCP attribute, so check for a typo or make sure the class is registered as a service.', implode(', ', $messages)));
+    }
+
+    /**
+     * Deep-copies the inline definitions in a method call's arguments so two server builders
+     * never share the same Definition instance.
+     *
+     * @param list<mixed> $arguments
+     *
+     * @return list<mixed>
+     */
+    private function copy(array $arguments): array
+    {
+        foreach ($arguments as $key => $argument) {
+            if ($argument instanceof Definition) {
+                $copy = clone $argument;
+                $copy->setArguments($this->copy(array_values($argument->getArguments())));
+                $copy->setProperties($this->copyMap($argument->getProperties()));
+                $arguments[$key] = $copy;
+            } elseif (\is_array($argument)) {
+                $arguments[$key] = $this->copyMap($argument);
+            }
+        }
+
+        return $arguments;
+    }
+
+    /**
+     * @param array<array-key, mixed> $values
+     *
+     * @return array<array-key, mixed>
+     */
+    private function copyMap(array $values): array
+    {
+        foreach ($values as $key => $value) {
+            if ($value instanceof Definition) {
+                $copy = clone $value;
+                $copy->setArguments($this->copy(array_values($value->getArguments())));
+                $copy->setProperties($this->copyMap($value->getProperties()));
+                $values[$key] = $copy;
+            } elseif (\is_array($value)) {
+                $values[$key] = $this->copyMap($value);
+            }
+        }
+
+        return $values;
     }
 
     /**
@@ -152,7 +265,10 @@ final class McpPass implements CompilerPassInterface
         return ([] !== $attributes) ? $attributes[0]->newInstance() : null;
     }
 
-    private function registerTool(Definition $builder, string $class, string $method, McpTool $attribute, SchemaGenerator $schemaGenerator, string $serviceId): void
+    /**
+     * @return list<mixed>
+     */
+    private function toolArguments(string $class, string $method, McpTool $attribute, SchemaGenerator $schemaGenerator, string $serviceId): array
     {
         try {
             $inputSchema = $schemaGenerator->generate(new \ReflectionMethod($class, $method));
@@ -160,7 +276,7 @@ final class McpPass implements CompilerPassInterface
             throw new LogicException(\sprintf('Cannot generate the input schema for MCP tool "%s::%s()" (service "%s"): "%s"', $class, $method, $serviceId, $e->getMessage()), 0, $e);
         }
 
-        $builder->addMethodCall('addTool', [
+        return [
             [$class, $method],
             $attribute->name,
             $attribute->title,
@@ -170,24 +286,30 @@ final class McpPass implements CompilerPassInterface
             $this->iconDefinitions($attribute->icons),
             $this->dumpableOrNull($attribute->meta),
             $this->dumpableOrNull($attribute->outputSchema),
-        ]);
+        ];
     }
 
-    private function registerPrompt(Definition $builder, string $class, string $method, McpPrompt $attribute): void
+    /**
+     * @return list<mixed>
+     */
+    private function promptArguments(string $class, string $method, McpPrompt $attribute): array
     {
-        $builder->addMethodCall('addPrompt', [
+        return [
             [$class, $method],
             $attribute->name,
             $attribute->title,
             $attribute->description,
             $this->iconDefinitions($attribute->icons),
             $this->dumpableOrNull($attribute->meta),
-        ]);
+        ];
     }
 
-    private function registerResource(Definition $builder, string $class, string $method, McpResource $attribute): void
+    /**
+     * @return list<mixed>
+     */
+    private function resourceArguments(string $class, string $method, McpResource $attribute): array
     {
-        $builder->addMethodCall('addResource', [
+        return [
             [$class, $method],
             $attribute->uri,
             $attribute->name,
@@ -198,12 +320,15 @@ final class McpPass implements CompilerPassInterface
             $this->annotationsDefinition($attribute->annotations),
             $this->iconDefinitions($attribute->icons),
             $this->dumpableOrNull($attribute->meta),
-        ]);
+        ];
     }
 
-    private function registerResourceTemplate(Definition $builder, string $class, string $method, McpResourceTemplate $attribute): void
+    /**
+     * @return list<mixed>
+     */
+    private function resourceTemplateArguments(string $class, string $method, McpResourceTemplate $attribute): array
     {
-        $builder->addMethodCall('addResourceTemplate', [
+        return [
             [$class, $method],
             $attribute->uriTemplate,
             $attribute->name,
@@ -212,7 +337,7 @@ final class McpPass implements CompilerPassInterface
             $attribute->mimeType,
             $this->annotationsDefinition($attribute->annotations),
             $this->dumpableOrNull($attribute->meta),
-        ]);
+        ];
     }
 
     private function toolAnnotationsDefinition(?ToolAnnotations $annotations): ?Definition
@@ -298,26 +423,26 @@ final class McpPass implements CompilerPassInterface
      * into the tool result's `html` field. It decorates the SDK default handler, which keeps the
      * reflection-derived input schema and argument mapping intact.
      */
-    private function configureAppReferenceHandler(ContainerBuilder $container, Reference $serviceLocatorRef): void
+    /**
+     * @param array<string, mixed> $toolTemplates
+     */
+    private function configureAppReferenceHandler(ContainerBuilder $container, string $server, Reference $serviceLocatorRef, array $toolTemplates): void
     {
-        $toolTemplates = $container->hasParameter('mcp.apps.tool_templates')
-            ? $container->getParameter('mcp.apps.tool_templates')
-            : [];
-
         if ([] === $toolTemplates) {
             return;
         }
 
+        $handlerId = \sprintf('mcp.server.%s.app.reference_handler', $server);
         $innerHandler = new Definition(ReferenceHandler::class, [$serviceLocatorRef]);
 
-        $container->register('mcp.app.reference_handler', McpAppReferenceHandler::class)
+        $container->register($handlerId, McpAppReferenceHandler::class)
             ->setArguments([
                 $innerHandler,
                 new Reference(McpAppRenderer::SERVICE_ID),
                 $toolTemplates,
             ]);
 
-        $container->getDefinition('mcp.server.builder')
-            ->addMethodCall('setReferenceHandler', [new Reference('mcp.app.reference_handler')]);
+        $container->getDefinition('mcp.server.'.$server.'.builder')
+            ->addMethodCall('setReferenceHandler', [new Reference($handlerId)]);
     }
 }

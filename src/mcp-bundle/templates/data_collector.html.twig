@@ -12,21 +12,15 @@
 
         {% set text %}
             <div class="sf-toolbar-info-piece">
-                <b class="label">Tools</b>
-                <span class="sf-toolbar-status">{{ collector.tools|length }}</span>
+                <b class="label">Servers</b>
+                <span class="sf-toolbar-status">{{ collector.serverCount }}</span>
             </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Prompts</b>
-                <span class="sf-toolbar-status">{{ collector.prompts|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Resources</b>
-                <span class="sf-toolbar-status">{{ collector.resources|length }}</span>
-            </div>
-            <div class="sf-toolbar-info-piece">
-                <b class="label">Resource Templates</b>
-                <span class="sf-toolbar-status">{{ collector.resourceTemplates|length }}</span>
-            </div>
+            {% for name, server in collector.servers %}
+                <div class="sf-toolbar-info-piece">
+                    <b class="label">{{ name }}</b>
+                    <span class="sf-toolbar-status">{{ server.tools|length }} tools, {{ server.prompts|length }} prompts, {{ server.resources|length }} resources, {{ server.resourceTemplates|length }} templates</span>
+                </div>
+            {% endfor %}
         {% endset %}
 
         {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { 'link': true }) }}
@@ -43,57 +37,68 @@
 
 {% block panel %}
     <h2>MCP Capabilities</h2>
-    <section class="metrics">
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.tools|length }}</span>
-                <span class="label">Tools</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.prompts|length }}</span>
-                <span class="label">Prompts</span>
-            </div>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-group">
-            <div class="metric">
-                <span class="value">{{ collector.resources|length }}</span>
-                <span class="label">Resources</span>
-            </div>
-            <div class="metric">
-                <span class="value">{{ collector.resourceTemplates|length }}</span>
-                <span class="label">Resource Templates</span>
-            </div>
-        </div>
-    </section>
 
-    <div class="sf-tabs">
-        <div class="tab {{ collector.tools is empty ? 'disabled' }}">
-            <h3 class="tab-title">Tools <span class="badge">{{ collector.tools|length }}</span></h3>
-            <div class="tab-content">
-                {{ include('@Mcp/tools.html.twig') }}
-            </div>
+    {% if collector.servers is empty %}
+        <div class="empty">
+            <p>No MCP server is configured. Declare one under <code>mcp.servers</code> in <code>config/packages/mcp.yaml</code>.</p>
         </div>
+    {% endif %}
 
-        <div class="tab {{ collector.prompts is empty ? 'disabled' }}">
-            <h3 class="tab-title">Prompts <span class="badge">{{ collector.prompts|length }}</span></h3>
-            <div class="tab-content">
-                {{ include('@Mcp/prompts.html.twig') }}
-            </div>
-        </div>
+    {% for name, server in collector.servers %}
+        <h3>Server <code>{{ name }}</code></h3>
 
-        <div class="tab {{ collector.resources is empty ? 'disabled' }}">
-            <h3 class="tab-title">Resources <span class="badge">{{ collector.resources|length }}</span></h3>
-            <div class="tab-content">
-                {{ include('@Mcp/resources.html.twig') }}
+        <section class="metrics">
+            <div class="metric-group">
+                <div class="metric">
+                    <span class="value">{{ server.tools|length }}</span>
+                    <span class="label">Tools</span>
+                </div>
+                <div class="metric">
+                    <span class="value">{{ server.prompts|length }}</span>
+                    <span class="label">Prompts</span>
+                </div>
             </div>
-        </div>
+            <div class="metric-divider"></div>
+            <div class="metric-group">
+                <div class="metric">
+                    <span class="value">{{ server.resources|length }}</span>
+                    <span class="label">Resources</span>
+                </div>
+                <div class="metric">
+                    <span class="value">{{ server.resourceTemplates|length }}</span>
+                    <span class="label">Resource Templates</span>
+                </div>
+            </div>
+        </section>
 
-        <div class="tab {{ collector.resourceTemplates is empty ? 'disabled' }}">
-            <h3 class="tab-title">Resource Templates <span class="badge">{{ collector.resourceTemplates|length }}</span></h3>
-            <div class="tab-content">
-                {{ include('@Mcp/resource_templates.html.twig') }}
+        <div class="sf-tabs">
+            <div class="tab {{ server.tools is empty ? 'disabled' }}">
+                <h3 class="tab-title">Tools <span class="badge">{{ server.tools|length }}</span></h3>
+                <div class="tab-content">
+                    {{ include('@Mcp/tools.html.twig', { tools: server.tools }, with_context = false) }}
+                </div>
+            </div>
+
+            <div class="tab {{ server.prompts is empty ? 'disabled' }}">
+                <h3 class="tab-title">Prompts <span class="badge">{{ server.prompts|length }}</span></h3>
+                <div class="tab-content">
+                    {{ include('@Mcp/prompts.html.twig', { prompts: server.prompts }, with_context = false) }}
+                </div>
+            </div>
+
+            <div class="tab {{ server.resources is empty ? 'disabled' }}">
+                <h3 class="tab-title">Resources <span class="badge">{{ server.resources|length }}</span></h3>
+                <div class="tab-content">
+                    {{ include('@Mcp/resources.html.twig', { resources: server.resources }, with_context = false) }}
+                </div>
+            </div>
+
+            <div class="tab {{ server.resourceTemplates is empty ? 'disabled' }}">
+                <h3 class="tab-title">Resource Templates <span class="badge">{{ server.resourceTemplates|length }}</span></h3>
+                <div class="tab-content">
+                    {{ include('@Mcp/resource_templates.html.twig', { resourceTemplates: server.resourceTemplates }, with_context = false) }}
+                </div>
             </div>
         </div>
-    </div>
+    {% endfor %}
 {% endblock %}

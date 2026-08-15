@@ -35,82 +35,105 @@ use Symfony\Component\DependencyInjection\Reference;
  * when the app declares a handler method — registers the linked tool with its `ui` link auto-set to
  * this app.
  *
- * Template-based apps share a single {@see McpAppResourceRenderer} service (the SDK resolves a manual
- * handler's instance by its class name, so a per-app service is not possible); the renderer dispatches
- * on the requested URI. Must run BEFORE {@see McpPass}: the services it tags `mcp.tool`/`mcp.resource`
- * here are what McpPass collects into the handler service locator.
+ * Which servers expose an app is decided by their `apps` configuration list, matched the same way as
+ * every other element (see {@see ElementMatcher}), so the same app can back several servers.
+ *
+ * Template-based apps share one {@see McpAppResourceRenderer} service per server (the SDK resolves a
+ * manual handler's instance by its class name, so a per-app service is not possible); the renderer
+ * dispatches on the requested URI. Must run BEFORE {@see McpPass}: the handler references it records in
+ * the `mcp.servers.app_handlers` parameter are what McpPass adds to each server's service locator.
  */
 final class McpAppPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
-        if (!$container->hasDefinition('mcp.server.builder')) {
+        /** @var array<string, array<string, list<string>>> $servers */
+        $servers = $container->hasParameter('mcp.servers.elements') ? $container->getParameter('mcp.servers.elements') : [];
+        if ([] === $servers) {
             return;
         }
 
-        $enabledFlag = $container->hasParameter('mcp.apps.enabled')
-            ? $container->getParameter('mcp.apps.enabled')
-            : null;
-
-        // Hard-disabled: register nothing, even if apps are present.
-        if (false === $enabledFlag) {
-            return;
-        }
-
+        $matcher = new ElementMatcher($servers);
         $appServiceIds = array_keys($container->findTaggedServiceIds('mcp.app'));
-        $builder = $container->getDefinition('mcp.server.builder');
 
-        if ((true === $enabledFlag || [] !== $appServiceIds) && !$this->extensionAlreadyEnabled($builder)) {
-            $builder->addMethodCall('enableExtension', [new Definition(McpApps::class)]);
-        }
-
-        $templateApps = [];
-        $toolTemplates = [];
-
+        $appsPerServer = [];
         foreach ($appServiceIds as $serviceId) {
             $class = $this->resolveClass($container, $serviceId);
-            $app = $this->readAttribute($class, $serviceId);
-
-            $uri = $app->uri ?? 'ui://'.$this->kebab($class);
-            if (!str_starts_with($uri, McpApps::URI_SCHEME.'://')) {
-                throw new LogicException(\sprintf('The MCP App "%s" must use a "%s://" URI, got "%s".', $class, McpApps::URI_SCHEME, $uri));
+            foreach ($matcher->match('apps', $serviceId, $class) as $server) {
+                $appsPerServer[$server][] = $serviceId;
             }
-            $slug = substr($uri, \strlen(McpApps::URI_SCHEME.'://'));
-
-            $handler = $this->resolveResourceHandler($container, $serviceId, $class, $app, $uri, $templateApps);
-
-            $descriptorMarker = (new Definition(\stdClass::class))->setFactory([McpApps::class, 'resourceMarker']);
-
-            $builder->addMethodCall('addResource', [
-                $handler,
-                $uri,
-                $slug, // resource name, derived from the URI ($name is the tool's)
-                $app->title,
-                null, // resource description (the model-facing description is the tool's)
-                McpApps::MIME_TYPE,
-                null, // size
-                null, // annotations
-                null, // icons
-                ['ui' => $descriptorMarker],
-            ]);
-
-            $this->registerTool($container, $serviceId, $class, $app, $uri, $slug, $builder, $toolTemplates);
-            $this->registerAppToolMethods($container, $serviceId, $class, $app, $uri, $builder, $toolTemplates);
         }
 
-        if ([] !== $templateApps) {
-            $container->register(McpAppResourceRenderer::class, McpAppResourceRenderer::class)
-                ->setArguments([new Reference(McpAppRenderer::SERVICE_ID), $templateApps])
-                ->addTag('mcp.resource');
+        $handlers = [];
+        $allToolTemplates = [];
+
+        foreach ($appsPerServer as $server => $serviceIds) {
+            $builder = $container->getDefinition('mcp.server.'.$server.'.builder');
+
+            if (!$this->extensionAlreadyEnabled($builder)) {
+                $builder->addMethodCall('enableExtension', [new Definition(McpApps::class)]);
+            }
+
+            $templateApps = [];
+            $toolTemplates = [];
+
+            foreach ($serviceIds as $serviceId) {
+                $class = $this->resolveClass($container, $serviceId);
+                $app = $this->readAttribute($class, $serviceId);
+
+                $uri = $app->uri ?? 'ui://'.$this->kebab($class);
+                if (!str_starts_with($uri, McpApps::URI_SCHEME.'://')) {
+                    throw new LogicException(\sprintf('The MCP App "%s" must use a "%s://" URI, got "%s".', $class, McpApps::URI_SCHEME, $uri));
+                }
+                $slug = substr($uri, \strlen(McpApps::URI_SCHEME.'://'));
+
+                $handler = $this->resolveResourceHandler($container, $serviceId, $class, $app, $uri, $templateApps);
+
+                $descriptorMarker = (new Definition(\stdClass::class))->setFactory([McpApps::class, 'resourceMarker']);
+
+                $builder->addMethodCall('addResource', [
+                    $handler,
+                    $uri,
+                    $slug, // resource name, derived from the URI ($name is the tool's)
+                    $app->title,
+                    null, // resource description (the model-facing description is the tool's)
+                    McpApps::MIME_TYPE,
+                    null, // size
+                    null, // annotations
+                    null, // icons
+                    ['ui' => $descriptorMarker],
+                ]);
+
+                $this->registerTool($container, $serviceId, $class, $app, $uri, $slug, $builder, $toolTemplates);
+                $this->registerAppToolMethods($container, $serviceId, $class, $app, $uri, $builder, $toolTemplates);
+
+                // App services are not matched against the "tools"/"resources" lists, so hand their
+                // handler references to McpPass explicitly for this server's locator.
+                $handlers[$server][$class] = $serviceId;
+                $handlers[$server][$serviceId] = $serviceId;
+            }
+
+            if ([] !== $templateApps) {
+                // One renderer per server: the SDK resolves a manual handler's instance by class name,
+                // and each server's locator must map that class to its own template set.
+                $rendererId = \sprintf('mcp.server.%s.app.resource_renderer', $server);
+                $container->register($rendererId, McpAppResourceRenderer::class)
+                    ->setArguments([new Reference(McpAppRenderer::SERVICE_ID), $templateApps]);
+
+                $handlers[$server][McpAppResourceRenderer::class] = $rendererId;
+            }
+
+            if ([] !== $toolTemplates && !$container->hasDefinition(McpAppRenderer::SERVICE_ID)) {
+                throw new LogicException('An MCP App tool declares a Twig template but Twig is not available. Run "composer require symfony/twig-bundle".');
+            }
+
+            $allToolTemplates[$server] = $toolTemplates;
         }
 
-        if ([] !== $toolTemplates && !$container->hasDefinition(McpAppRenderer::SERVICE_ID)) {
-            throw new LogicException('An MCP App tool declares a Twig template but Twig is not available. Run "composer require symfony/twig-bundle".');
-        }
-
-        // Consumed by McpPass to wire the McpAppReferenceHandler that renders these templates into the
-        // tool result's `html` field (keeps Twig out of the developer's tool methods).
-        $container->setParameter('mcp.apps.tool_templates', $toolTemplates);
+        // Consumed by McpPass: the handler references join each server's service locator, and the tool
+        // templates wire the McpAppReferenceHandler rendering them into the tool result's `html` field.
+        $container->setParameter('mcp.servers.app_handlers', $handlers);
+        $container->setParameter('mcp.servers.app_tool_templates', $allToolTemplates);
     }
 
     /**
@@ -125,8 +148,6 @@ final class McpAppPass implements CompilerPassInterface
     {
         // A class-level __invoke owns the full response, including its own content metadata.
         if (method_exists($class, '__invoke')) {
-            $container->getDefinition($serviceId)->addTag('mcp.resource');
-
             return [$class, '__invoke'];
         }
 
@@ -201,8 +222,6 @@ final class McpAppPass implements CompilerPassInterface
      */
     private function addTool(ContainerBuilder $container, Definition $builder, string $serviceId, string $method, string $name, ?string $title, ?string $description, string $uri, bool $appOnly, ?string $template, array &$toolTemplates): void
     {
-        $container->getDefinition($serviceId)->addTag('mcp.tool');
-
         $visibility = $appOnly ? [ToolVisibility::App] : [ToolVisibility::Model, ToolVisibility::App];
 
         $builder->addMethodCall('addTool', [

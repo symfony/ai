@@ -18,10 +18,12 @@ use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Tool;
 use Mcp\Server;
+use Mcp\Server\Builder;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Command\DebugCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 
 final class DebugCommandTest extends TestCase
 {
@@ -53,7 +55,7 @@ final class DebugCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $exitCode);
         $this->assertStringContainsString('No MCP capabilities are registered.', $display);
-        $this->assertStringContainsString('registered as services with autoconfiguration enabled', $display);
+        $this->assertStringContainsString('autoconfiguration enabled', $display);
     }
 
     public function testDescribesToolWithInputSchema()
@@ -92,10 +94,64 @@ final class DebugCommandTest extends TestCase
         $this->assertStringContainsString('No MCP capability named "unknown-element" is registered.', $tester->getDisplay());
     }
 
-    private function createTester(Registry $registry): CommandTester
+    public function testListsEveryServerSeparately()
     {
+        $tester = $this->createTester(['public' => new Registry(), 'editors' => $this->createPopulatedRegistry()]);
+
+        $this->assertSame(Command::SUCCESS, $tester->execute([]));
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Server "public"', $display);
+        $this->assertStringContainsString('Server "editors"', $display);
+        $this->assertStringContainsString('current-time', $display);
+    }
+
+    public function testRestrictsOutputToOneServer()
+    {
+        $tester = $this->createTester(['public' => new Registry(), 'editors' => $this->createPopulatedRegistry()]);
+
+        $this->assertSame(Command::SUCCESS, $tester->execute(['--server' => 'editors']));
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Server "editors"', $display);
+        $this->assertStringNotContainsString('Server "public"', $display);
+    }
+
+    public function testReportsUnknownServer()
+    {
+        $tester = $this->createTester(['editors' => $this->createPopulatedRegistry()]);
+
+        $this->assertSame(Command::INVALID, $tester->execute(['--server' => 'missing']));
+        $this->assertStringContainsString('No MCP server named "missing" is configured.', $tester->getDisplay());
+        $this->assertStringContainsString('Available: editors.', $tester->getDisplay());
+    }
+
+    public function testDescribingAnElementNamesTheServerExposingIt()
+    {
+        $tester = $this->createTester(['public' => new Registry(), 'editors' => $this->createPopulatedRegistry()]);
+
+        $this->assertSame(Command::SUCCESS, $tester->execute(['name' => 'current-time']));
+        $this->assertStringContainsString('Tool "current-time" on server "editors"', $tester->getDisplay());
+    }
+
+    /**
+     * @param array<string, Registry> $registries
+     */
+    private function createTester(Registry|array $registries): CommandTester
+    {
+        $registries = $registries instanceof Registry ? ['default' => $registries] : $registries;
+
         $command = new Command('debug:mcp');
-        $command->setCode(new DebugCommand(Server::builder()->setRegistry($registry), $registry));
+        $command->setCode(new DebugCommand(
+            new ServiceLocator(array_map(
+                static fn (Registry $registry): \Closure => static fn (): Builder => Server::builder()->setRegistry($registry),
+                $registries,
+            )),
+            new ServiceLocator(array_map(
+                static fn (Registry $registry): \Closure => static fn (): Registry => $registry,
+                $registries,
+            )),
+        ));
 
         return new CommandTester($command);
     }

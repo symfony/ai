@@ -17,6 +17,7 @@ use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
+use Symfony\Contracts\Service\ServiceProviderInterface;
 
 /**
  * Collects MCP server capabilities for the Web Profiler.
@@ -28,9 +29,13 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
+    /**
+     * @param ServiceProviderInterface<Builder>           $builders
+     * @param ServiceProviderInterface<RegistryInterface> $registries
+     */
     public function __construct(
-        private readonly Builder $builder,
-        private readonly RegistryInterface $registry,
+        private readonly ServiceProviderInterface $builders,
+        private readonly ServiceProviderInterface $registries,
     ) {
     }
 
@@ -40,99 +45,95 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
 
     public function lateCollect(): void
     {
-        // The registry is populated by the loaders when the server is built. Re-building on an MCP
-        // request is harmless: the same elements are registered again onto the shared registry.
-        $this->builder->build();
+        $this->data = ['servers' => []];
 
-        $tools = [];
-        foreach ($this->registry->getTools()->references as $tool) {
-            $tools[] = [
-                'name' => $tool->name,
-                'description' => $tool->description,
-                'inputSchema' => $tool->inputSchema,
-                'handler' => $this->formatHandler($this->registry->getTool($tool->name)->handler),
+        foreach (array_keys($this->registries->getProvidedServices()) as $server) {
+            // The registry is populated by the loaders when the server is built. Re-building on an MCP
+            // request is harmless: the same elements are registered again onto the shared registry.
+            $this->builders->get($server)->build();
+            $registry = $this->registries->get($server);
+
+            $tools = [];
+            foreach ($registry->getTools()->references as $tool) {
+                $tools[] = [
+                    'name' => $tool->name,
+                    'description' => $tool->description,
+                    'inputSchema' => $tool->inputSchema,
+                    'handler' => $this->formatHandler($registry->getTool($tool->name)->handler),
+                ];
+            }
+
+            $prompts = [];
+            foreach ($registry->getPrompts()->references as $prompt) {
+                $prompts[] = [
+                    'name' => $prompt->name,
+                    'description' => $prompt->description,
+                    'arguments' => array_map(static fn ($arg) => [
+                        'name' => $arg->name,
+                        'description' => $arg->description,
+                        'required' => $arg->required,
+                    ], $prompt->arguments ?? []),
+                    'handler' => $this->formatHandler($registry->getPrompt($prompt->name)->handler),
+                ];
+            }
+
+            $resources = [];
+            foreach ($registry->getResources()->references as $resource) {
+                $resources[] = [
+                    'uri' => $resource->uri,
+                    'name' => $resource->name,
+                    'description' => $resource->description,
+                    'mimeType' => $resource->mimeType,
+                    'handler' => $this->formatHandler($registry->getResource($resource->uri, false)->handler),
+                ];
+            }
+
+            $resourceTemplates = [];
+            foreach ($registry->getResourceTemplates()->references as $template) {
+                $resourceTemplates[] = [
+                    'uriTemplate' => $template->uriTemplate,
+                    'name' => $template->name,
+                    'description' => $template->description,
+                    'mimeType' => $template->mimeType,
+                    'handler' => $this->formatHandler($registry->getResourceTemplate($template->uriTemplate)->handler),
+                ];
+            }
+
+            $this->data['servers'][$server] = [
+                'tools' => $tools,
+                'prompts' => $prompts,
+                'resources' => $resources,
+                'resourceTemplates' => $resourceTemplates,
             ];
         }
-
-        $prompts = [];
-        foreach ($this->registry->getPrompts()->references as $prompt) {
-            $prompts[] = [
-                'name' => $prompt->name,
-                'description' => $prompt->description,
-                'arguments' => array_map(static fn ($arg) => [
-                    'name' => $arg->name,
-                    'description' => $arg->description,
-                    'required' => $arg->required,
-                ], $prompt->arguments ?? []),
-                'handler' => $this->formatHandler($this->registry->getPrompt($prompt->name)->handler),
-            ];
-        }
-
-        $resources = [];
-        foreach ($this->registry->getResources()->references as $resource) {
-            $resources[] = [
-                'uri' => $resource->uri,
-                'name' => $resource->name,
-                'description' => $resource->description,
-                'mimeType' => $resource->mimeType,
-                'handler' => $this->formatHandler($this->registry->getResource($resource->uri, false)->handler),
-            ];
-        }
-
-        $resourceTemplates = [];
-        foreach ($this->registry->getResourceTemplates()->references as $template) {
-            $resourceTemplates[] = [
-                'uriTemplate' => $template->uriTemplate,
-                'name' => $template->name,
-                'description' => $template->description,
-                'mimeType' => $template->mimeType,
-                'handler' => $this->formatHandler($this->registry->getResourceTemplate($template->uriTemplate)->handler),
-            ];
-        }
-
-        $this->data = [
-            'tools' => $tools,
-            'prompts' => $prompts,
-            'resources' => $resources,
-            'resourceTemplates' => $resourceTemplates,
-        ];
     }
 
     /**
-     * @return array<array{name: string, description: ?string, inputSchema: array<mixed>, handler: string}>
+     * @return array<string, array{
+     *     tools: array<array{name: string, description: ?string, inputSchema: array<mixed>, handler: string}>,
+     *     prompts: array<array{name: string, description: ?string, arguments: array<mixed>, handler: string}>,
+     *     resources: array<array{uri: string, name: string, description: ?string, mimeType: ?string, handler: string}>,
+     *     resourceTemplates: array<array{uriTemplate: string, name: string, description: ?string, mimeType: ?string, handler: string}>,
+     * }>
      */
-    public function getTools(): array
+    public function getServers(): array
     {
-        return $this->data['tools'] ?? [];
+        return $this->data['servers'] ?? [];
     }
 
-    /**
-     * @return array<array{name: string, description: ?string, arguments: array<mixed>, handler: string}>
-     */
-    public function getPrompts(): array
+    public function getServerCount(): int
     {
-        return $this->data['prompts'] ?? [];
-    }
-
-    /**
-     * @return array<array{uri: string, name: string, description: ?string, mimeType: ?string, handler: string}>
-     */
-    public function getResources(): array
-    {
-        return $this->data['resources'] ?? [];
-    }
-
-    /**
-     * @return array<array{uriTemplate: string, name: string, description: ?string, mimeType: ?string, handler: string}>
-     */
-    public function getResourceTemplates(): array
-    {
-        return $this->data['resourceTemplates'] ?? [];
+        return \count($this->getServers());
     }
 
     public function getTotalCount(): int
     {
-        return \count($this->getTools()) + \count($this->getPrompts()) + \count($this->getResources()) + \count($this->getResourceTemplates());
+        $total = 0;
+        foreach ($this->getServers() as $server) {
+            $total += \count($server['tools']) + \count($server['prompts']) + \count($server['resources']) + \count($server['resourceTemplates']);
+        }
+
+        return $total;
     }
 
     public function getName(): string

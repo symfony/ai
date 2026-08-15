@@ -34,7 +34,7 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
 
         $enable = $this->callsNamed($calls, 'enableExtension');
         $this->assertCount(1, $enable);
@@ -56,11 +56,14 @@ final class McpAppPassTest extends TestCase
         $this->assertSame(\stdClass::class, $marker->getClass());
         $this->assertSame([McpApps::class, 'resourceMarker'], $marker->getFactory());
 
-        // template apps share one URI-dispatched renderer service (keyed by its FQCN)
+        // template apps share one URI-dispatched renderer service per server, resolved by its FQCN
         $this->assertSame([McpAppResourceRenderer::class, '__invoke'], $args[0]);
-        $this->assertTrue($container->hasDefinition(McpAppResourceRenderer::class));
-        $rendererDef = $container->getDefinition(McpAppResourceRenderer::class);
-        $this->assertArrayHasKey('mcp.resource', $rendererDef->getTags());
+        $this->assertTrue($container->hasDefinition('mcp.server.default.app.resource_renderer'));
+        $rendererDef = $container->getDefinition('mcp.server.default.app.resource_renderer');
+        $this->assertSame(
+            'mcp.server.default.app.resource_renderer',
+            $container->getParameter('mcp.servers.app_handlers')['default'][McpAppResourceRenderer::class],
+        );
 
         // the renderer's URI => {template, contentMeta} map carries this app
         $map = $rendererDef->getArgument(1);
@@ -82,14 +85,15 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
         $resources = $this->callsNamed($calls, 'addResource');
         $this->assertCount(1, $resources);
         $this->assertSame([CustomHandlerApp::class, '__invoke'], $resources[0][1][0]);
         $this->assertSame('ui://custom', $resources[0][1][1]);
 
-        // the user class itself is tagged mcp.resource so McpPass adds it to the locator
-        $this->assertArrayHasKey('mcp.resource', $container->getDefinition(CustomHandlerApp::class)->getTags());
+        // the user class is handed to McpPass explicitly so it joins this server's handler locator
+        $handlers = $container->getParameter('mcp.servers.app_handlers')['default'];
+        $this->assertSame(CustomHandlerApp::class, $handlers[CustomHandlerApp::class]);
     }
 
     public function testExtensionEnabledOnlyOnceForMultipleApps()
@@ -100,41 +104,38 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
         $this->assertCount(1, $this->callsNamed($calls, 'enableExtension'));
         $this->assertCount(2, $this->callsNamed($calls, 'addResource'));
     }
 
-    public function testDisabledFlagRegistersNothing()
+    public function testEmptyAppListRegistersNothing()
     {
-        $container = $this->containerWithBuilder(withRenderer: true);
-        $container->setParameter('mcp.apps.enabled', false);
+        $container = $this->containerWithBuilder(withRenderer: true, apps: []);
         $container->setDefinition(StaticTemplateApp::class, (new Definition(StaticTemplateApp::class))->addTag('mcp.app'));
 
         (new McpAppPass())->process($container);
 
-        $this->assertEmpty($container->getDefinition('mcp.server.builder')->getMethodCalls());
+        $this->assertEmpty($container->getDefinition('mcp.server.default.builder')->getMethodCalls());
     }
 
-    public function testForcedEnabledWithoutAppsEnablesExtensionOnly()
+    public function testAppListNotMatchingTheAppRegistersNothing()
     {
-        $container = $this->containerWithBuilder(withRenderer: false);
-        $container->setParameter('mcp.apps.enabled', true);
+        $container = $this->containerWithBuilder(withRenderer: true, apps: ['App\\Other\\']);
+        $container->setDefinition(StaticTemplateApp::class, (new Definition(StaticTemplateApp::class))->addTag('mcp.app'));
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
-        $this->assertCount(1, $this->callsNamed($calls, 'enableExtension'));
-        $this->assertCount(0, $this->callsNamed($calls, 'addResource'));
+        $this->assertEmpty($container->getDefinition('mcp.server.default.builder')->getMethodCalls());
     }
 
-    public function testAutoModeWithoutAppsDoesNothing()
+    public function testWithoutAppsDoesNothing()
     {
         $container = $this->containerWithBuilder(withRenderer: false);
 
         (new McpAppPass())->process($container);
 
-        $this->assertEmpty($container->getDefinition('mcp.server.builder')->getMethodCalls());
+        $this->assertEmpty($container->getDefinition('mcp.server.default.builder')->getMethodCalls());
     }
 
     public function testTemplateAppWithoutTwigThrows()
@@ -155,7 +156,7 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
         $tools = $this->callsNamed($calls, 'addTool');
         $this->assertCount(1, $tools);
 
@@ -172,8 +173,9 @@ final class McpAppPassTest extends TestCase
         $this->assertSame('ui://widget', $ui->getArgument(0));
         $this->assertSame([ToolVisibility::Model, ToolVisibility::App], $ui->getArgument(1));
 
-        // app service tagged mcp.tool so McpPass adds it to the handler locator
-        $this->assertArrayHasKey('mcp.tool', $container->getDefinition(WidgetApp::class)->getTags());
+        // app service handed to McpPass explicitly so it joins this server's handler locator
+        $handlers = $container->getParameter('mcp.servers.app_handlers')['default'];
+        $this->assertSame(WidgetApp::class, $handlers[WidgetApp::class]);
     }
 
     public function testTemplateAppWithoutRenderMethodRegistersNoTool()
@@ -183,7 +185,7 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
         $this->assertCount(0, $this->callsNamed($calls, 'addTool'));
     }
 
@@ -205,7 +207,7 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $templates = $container->getParameter('mcp.apps.tool_templates');
+        $templates = $container->getParameter('mcp.servers.app_tool_templates')['default'];
         $this->assertSame('grid.html.twig', $templates[MultiToolApp::class.'::render']);
         $this->assertSame('detail.html.twig', $templates[MultiToolApp::class.'::showDetail']);
         $this->assertArrayNotHasKey(MultiToolApp::class.'::plain', $templates); // no template declared
@@ -218,7 +220,7 @@ final class McpAppPassTest extends TestCase
 
         (new McpAppPass())->process($container);
 
-        $calls = $container->getDefinition('mcp.server.builder')->getMethodCalls();
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
         $byName = [];
         foreach ($this->callsNamed($calls, 'addTool') as $tool) {
             $byName[$tool[1][1]] = $tool[1];
@@ -260,20 +262,25 @@ final class McpAppPassTest extends TestCase
         (new McpAppPass())->process($container);
     }
 
-    public function testDoesNothingWhenNoServerBuilder()
+    public function testDoesNothingWhenNoServerConfigured()
     {
         $container = new ContainerBuilder();
         $container->setDefinition(StaticTemplateApp::class, (new Definition(StaticTemplateApp::class))->addTag('mcp.app'));
 
         (new McpAppPass())->process($container);
 
-        $this->assertFalse($container->hasDefinition('mcp.server.builder'));
+        $this->assertFalse($container->hasDefinition('mcp.server.default.builder'));
     }
 
-    private function containerWithBuilder(bool $withRenderer): ContainerBuilder
+    /**
+     * @param list<string> $apps the "apps" element list of the "default" server
+     */
+    private function containerWithBuilder(bool $withRenderer, array $apps = ['*']): ContainerBuilder
     {
         $container = new ContainerBuilder();
-        $container->setDefinition('mcp.server.builder', new Definition());
+        $container->setDefinition('mcp.server.default.builder', new Definition());
+        $container->setParameter('mcp.servers.elements', ['default' => ['apps' => $apps]]);
+
         if ($withRenderer) {
             $container->setDefinition(McpAppRenderer::SERVICE_ID, new Definition(McpAppRenderer::class));
         }

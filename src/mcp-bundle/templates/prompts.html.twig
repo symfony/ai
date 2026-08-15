@@ -1,6 +1,6 @@
-{% if collector.prompts|length %}
+{% if prompts|length %}
     <div class="sf-tabs">
-        {% for prompt in collector.prompts %}
+        {% for prompt in prompts %}
             <div class="tab">
                 <h3 class="tab-title">{{ prompt.name }}</h3>
                 <div class="tab-content">

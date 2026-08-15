@@ -16,6 +16,8 @@ use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
+use Mcp\Schema\Icon;
+use Mcp\Server;
 use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
@@ -29,509 +31,390 @@ use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\Definition;
 
 class McpBundleTest extends TestCase
 {
-    public function testDefaultConfiguration()
+    public function testNoServersRegistersNothing()
     {
         $container = $this->buildContainer([]);
 
-        $this->assertSame('app', $container->getParameter('mcp.app'));
-        $this->assertSame('0.0.1', $container->getParameter('mcp.version'));
-        $this->assertNull($container->getParameter('mcp.description'));
-        $this->assertSame([], $container->getParameter('mcp.icons'));
-        $this->assertNull($container->getParameter('mcp.website_url'));
-        $this->assertSame(50, $container->getParameter('mcp.pagination_limit'));
-        $this->assertNull($container->getParameter('mcp.instructions'));
-    }
-
-    public function testDataCollectorTagIncludesId()
-    {
-        $container = $this->buildContainer(['mcp' => ['client_transports' => ['http' => true]]]);
-        $definition = $container->getDefinition('mcp.data_collector');
-        $this->assertTrue($definition->hasTag('data_collector'));
-        $this->assertSame([['id' => 'mcp']], $definition->getTag('data_collector'));
-    }
-
-    public function testDataCollectorNotRegisteredWithoutTransports()
-    {
-        $container = $this->buildContainer([]);
-
+        $this->assertFalse($container->hasDefinition('mcp.server.default'));
+        $this->assertFalse($container->hasDefinition('mcp.server.route_loader'));
         $this->assertFalse($container->hasDefinition('mcp.data_collector'));
+        $this->assertFalse($container->hasParameter('mcp.servers.elements'));
     }
 
-    public function testCustomConfiguration()
+    public function testServerIdentityDefaults()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'app' => 'my-mcp-app',
-                'version' => '1.2.3',
-                'description' => 'My MCP Application',
-                'icons' => [
-                    [
-                        'src' => 'https://example.com/icon.png',
-                        'mime_type' => 'image/png',
-                        'sizes' => ['64x64', '128x128'],
-                    ],
-                ],
-                'website_url' => 'https://example.com/mcp',
-                'pagination_limit' => 25,
-                'instructions' => 'This server provides weather and calendar tools',
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => []]));
 
-        $this->assertSame('my-mcp-app', $container->getParameter('mcp.app'));
-        $this->assertSame('1.2.3', $container->getParameter('mcp.version'));
-        $this->assertSame('My MCP Application', $container->getParameter('mcp.description'));
-        $this->assertSame([
-            [
-                'src' => 'https://example.com/icon.png',
-                'mime_type' => 'image/png',
-                'sizes' => ['64x64', '128x128'],
+        $calls = $this->callsNamed($container, 'setServerInfo');
+        $this->assertSame(['default', '0.0.1', null, null, null], $calls[0][1]);
+        $this->assertSame([50], $this->callsNamed($container, 'setPaginationLimit')[0][1]);
+        $this->assertSame([null], $this->callsNamed($container, 'setInstructions')[0][1]);
+    }
+
+    public function testServerIdentityCustom()
+    {
+        $container = $this->buildContainer($this->config(['default' => [
+            'name' => 'my-mcp-app',
+            'version' => '1.2.3',
+            'description' => 'My MCP Application',
+            'icons' => [
+                ['src' => 'https://example.com/icon.png', 'mime_type' => 'image/png', 'sizes' => ['64x64', '128x128']],
             ],
-        ], $container->getParameter('mcp.icons'));
-        $this->assertSame('https://example.com/mcp', $container->getParameter('mcp.website_url'));
-        $this->assertSame(25, $container->getParameter('mcp.pagination_limit'));
-        $this->assertSame('This server provides weather and calendar tools', $container->getParameter('mcp.instructions'));
+            'website_url' => 'https://example.com/mcp',
+            'pagination_limit' => 25,
+            'instructions' => 'This server provides weather and calendar tools',
+        ]]));
+
+        $arguments = $this->callsNamed($container, 'setServerInfo')[0][1];
+
+        $this->assertSame('my-mcp-app', $arguments[0]);
+        $this->assertSame('1.2.3', $arguments[1]);
+        $this->assertSame('My MCP Application', $arguments[2]);
+        $this->assertSame('https://example.com/mcp', $arguments[4]);
+
+        // Icons must reach the SDK as Icon objects: the raw config array would be serialized
+        // with its snake_case "mime_type" key instead of the protocol's "mimeType".
+        $this->assertCount(1, $arguments[3]);
+        $this->assertInstanceOf(Definition::class, $arguments[3][0]);
+        $this->assertSame(Icon::class, $arguments[3][0]->getClass());
+        $this->assertSame(['https://example.com/icon.png', 'image/png', ['64x64', '128x128']], $arguments[3][0]->getArguments());
+
+        $this->assertSame([25], $this->callsNamed($container, 'setPaginationLimit')[0][1]);
+        $this->assertSame(['This server provides weather and calendar tools'], $this->callsNamed($container, 'setInstructions')[0][1]);
+    }
+
+    public function testIconsDefaultToNullInsteadOfAnEmptyList()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $this->assertNull($this->callsNamed($container, 'setServerInfo')[0][1][3]);
     }
 
     /**
-     * @param array<string, mixed> $config
-     * @param array<string, bool>  $expectedServices
+     * @param array<string, bool> $transports
+     * @param array<string, bool> $expectedServices
      */
-    #[DataProvider('provideClientTransportsConfiguration')]
-    public function testClientTransportsConfiguration(array $config, array $expectedServices)
+    #[DataProvider('provideTransportsConfiguration')]
+    public function testTransportsConfiguration(array $transports, array $expectedServices)
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => $config,
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['transports' => $transports]]));
 
         foreach ($expectedServices as $serviceId => $shouldExist) {
-            if ($shouldExist) {
-                $this->assertTrue($container->hasDefinition($serviceId), \sprintf('Service "%s" should exist', $serviceId));
-            } else {
-                $this->assertFalse($container->hasDefinition($serviceId), \sprintf('Service "%s" should not exist', $serviceId));
-            }
+            $this->assertSame($shouldExist, $container->hasDefinition($serviceId), \sprintf('Service "%s"', $serviceId));
         }
     }
 
-    public static function provideClientTransportsConfiguration(): iterable
+    public static function provideTransportsConfiguration(): iterable
     {
         yield 'no transports enabled' => [
-            'config' => [
-                'stdio' => false,
-                'http' => false,
-            ],
+            'transports' => ['stdio' => false, 'http' => false],
             'expectedServices' => [
                 'mcp.server.command' => false,
-                'mcp.server.controller' => false,
-                'mcp.server.route_loader' => false,
-                'mcp.server.debug_command' => false,
+                'mcp.server.default.controller' => false,
+                'mcp.server.route_loader' => true,
+                'mcp.server.debug_command' => true,
             ],
         ];
 
         yield 'stdio transport enabled' => [
-            'config' => [
-                'stdio' => true,
-                'http' => false,
-            ],
+            'transports' => ['stdio' => true, 'http' => false],
             'expectedServices' => [
                 'mcp.server.command' => true,
-                'mcp.server.controller' => false,
-                'mcp.server.route_loader' => true,
+                'mcp.server.default.controller' => false,
                 'mcp.server.debug_command' => true,
             ],
         ];
 
         yield 'http transport enabled' => [
-            'config' => [
-                'stdio' => false,
-                'http' => true,
-            ],
+            'transports' => ['stdio' => false, 'http' => true],
             'expectedServices' => [
                 'mcp.server.command' => false,
-                'mcp.server.controller' => true,
-                'mcp.server.route_loader' => true,
-                'mcp.server.debug_command' => true,
+                'mcp.server.default.controller' => true,
+                'mcp.server.default.middleware_factory' => true,
             ],
         ];
 
         yield 'both transports enabled' => [
-            'config' => [
-                'stdio' => true,
-                'http' => true,
-            ],
+            'transports' => ['stdio' => true, 'http' => true],
             'expectedServices' => [
                 'mcp.server.command' => true,
-                'mcp.server.controller' => true,
-                'mcp.server.route_loader' => true,
-                'mcp.server.debug_command' => true,
+                'mcp.server.default.controller' => true,
             ],
         ];
     }
 
-    public function testServerServices()
+    public function testMultipleServersGetTheirOwnServiceGraph()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                    'http' => true,
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config([
+            'public' => ['http' => ['path' => '/mcp'], 'tools' => ['App\\Mcp\\Public\\']],
+            'editors' => ['http' => ['path' => '/mcp/editors'], 'tools' => ['*']],
+        ]));
 
-        // Test that core MCP services are registered
-        $this->assertTrue($container->hasDefinition('mcp.server'));
-        $this->assertTrue($container->hasDefinition('mcp.session.store'));
-
-        // Test that ServerBuilder is properly configured with EventDispatcher
-        $builderDefinition = $container->getDefinition('mcp.server.builder');
-        $methodCalls = $builderDefinition->getMethodCalls();
-
-        $hasEventDispatcherCall = false;
-        $hasRequestHandlers = false;
-        $hasNotificationHandlers = false;
-        $hasLoaders = false;
-
-        foreach ($methodCalls as $call) {
-            if ('setEventDispatcher' === $call[0]) {
-                $hasEventDispatcherCall = true;
-            }
-
-            if ('addRequestHandlers' === $call[0]) {
-                $argument = $call[1][0];
-                if (
-                    $argument instanceof TaggedIteratorArgument
-                    && 'mcp.request_handler' === $argument->getTag()
-                ) {
-                    $hasRequestHandlers = true;
-                }
-            }
-
-            if ('addNotificationHandlers' === $call[0]) {
-                $argument = $call[1][0];
-                if (
-                    $argument instanceof TaggedIteratorArgument
-                    && 'mcp.notification_handler' === $argument->getTag()
-                ) {
-                    $hasNotificationHandlers = true;
-                }
-            }
-
-            if ('addLoaders' === $call[0]) {
-                $argument = $call[1][0];
-                if (
-                    $argument instanceof TaggedIteratorArgument
-                    && 'mcp.loader' === $argument->getTag()
-                ) {
-                    $hasLoaders = true;
-                }
-            }
+        foreach (['public', 'editors'] as $name) {
+            $this->assertTrue($container->hasDefinition('mcp.server.'.$name));
+            $this->assertTrue($container->hasDefinition('mcp.server.'.$name.'.builder'));
+            $this->assertTrue($container->hasDefinition('mcp.server.'.$name.'.registry'));
+            $this->assertTrue($container->hasDefinition('mcp.server.'.$name.'.session.store'));
+            $this->assertTrue($container->hasDefinition('mcp.server.'.$name.'.controller'));
         }
 
-        $this->assertTrue($hasEventDispatcherCall, 'ServerBuilder should have setEventDispatcher method call');
-        $this->assertTrue($hasRequestHandlers, 'ServerBuilder should have addRequestHandlers with mcp.request_handler tag');
-        $this->assertTrue($hasNotificationHandlers, 'ServerBuilder should have addNotificationHandlers with mcp.notification_handler tag');
-        $this->assertTrue($hasLoaders, 'ServerBuilder should have addLoaders with mcp.loader tag');
+        // A shared registry would merge both servers' elements: the builder loads into it eagerly.
+        $this->assertNotSame(
+            $container->getDefinition('mcp.server.public.builder')->getMethodCalls(),
+            $container->getDefinition('mcp.server.editors.builder')->getMethodCalls(),
+        );
+
+        $this->assertSame([
+            'public' => ['tools' => ['App\\Mcp\\Public\\'], 'prompts' => [], 'resources' => [], 'resource_templates' => [], 'apps' => []],
+            'editors' => ['tools' => ['*'], 'prompts' => [], 'resources' => [], 'resource_templates' => [], 'apps' => []],
+        ], $container->getParameter('mcp.servers.elements'));
     }
 
-    public function testMcpToolAttributeAutoconfiguration()
+    public function testElementPatternsAreNormalized()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['tools' => ['\\App\\Mcp\\SearchTool']]]));
 
-        // Test that McpTool attribute is autoconfigured with mcp.tool tag
-        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey(McpTool::class, $attributeAutoconfigurators);
+        $this->assertSame(['App\\Mcp\\SearchTool'], $container->getParameter('mcp.servers.elements')['default']['tools']);
     }
 
-    public function testMcpPromptAttributeAutoconfiguration()
+    public function testServerWithoutAnyElementListIsRejected()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                ],
-            ],
-        ]);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('An MCP server must expose at least one of "tools", "prompts", "resources", "resource_templates" or "apps".');
 
-        // Test that McpPrompt attribute is autoconfigured with mcp.prompt tag
-        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey(McpPrompt::class, $attributeAutoconfigurators);
+        $this->buildContainer(['mcp' => ['servers' => ['default' => []]]]);
     }
 
-    public function testMcpResourceAttributeAutoconfiguration()
+    public function testWildcardCannotBeCombinedWithExplicitEntries()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                ],
-            ],
-        ]);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The "*" wildcard cannot be combined with explicit entries');
 
-        // Test that McpResource attribute is autoconfigured with mcp.resource tag
-        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey(McpResource::class, $attributeAutoconfigurators);
+        $this->buildContainer($this->config(['default' => ['tools' => ['*', 'App\\Mcp\\SearchTool']]]));
     }
 
-    public function testMcpResourceTemplateAttributeAutoconfiguration()
+    public function testInvalidServerNameIsRejected()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'stdio' => true,
-                ],
-            ],
-        ]);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('MCP server names must only contain letters, digits, underscores and hyphens');
 
-        // Test that McpResourceTemplate attribute is autoconfigured with mcp.resource_template tag
-        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey(McpResourceTemplate::class, $attributeAutoconfigurators);
+        $this->buildContainer($this->config(['my.server' => []]));
     }
 
-    public function testHttpConfigurationDefaults()
+    public function testCollidingHttpPathsAreRejected()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-            ],
-        ]);
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('are both configured on the HTTP path "/mcp"');
 
-        // Test HTTP route loader defaults
-        $this->assertTrue($container->hasDefinition('mcp.server.route_loader'));
-        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
-        $arguments = $routeLoaderDefinition->getArguments();
-        $this->assertTrue($arguments[0]); // HTTP transport enabled
-        $this->assertSame('/_mcp', $arguments[1]); // Default path
-
-        // Test session store defaults (file store)
-        $this->assertTrue($container->hasDefinition('mcp.session.store'));
-        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame(FileSessionStore::class, $sessionStoreDefinition->getClass());
-        $sessionArguments = $sessionStoreDefinition->getArguments();
-        $this->assertSame('%kernel.cache_dir%/mcp-sessions', $sessionArguments[0]); // Default directory
-        $this->assertSame(3600, $sessionArguments[1]); // Default TTL
+        $this->buildContainer($this->config([
+            'one' => ['http' => ['path' => '/mcp']],
+            'two' => ['http' => ['path' => '/mcp']],
+        ]));
     }
 
-    public function testHttpConfigurationCustom()
+    public function testSharedSessionStorageIsRejected()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'path' => '/custom-mcp',
-                    'session' => [
-                        'store' => 'memory',
-                        'directory' => '/custom/sessions',
-                        'ttl' => 7200,
-                    ],
-                ],
-            ],
-        ]);
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('share the same session storage');
 
-        // Test custom HTTP path
-        $routeLoaderDefinition = $container->getDefinition('mcp.server.route_loader');
-        $arguments = $routeLoaderDefinition->getArguments();
-        $this->assertSame('/custom-mcp', $arguments[1]);
+        $this->buildContainer($this->config([
+            'public' => ['http' => ['path' => '/mcp'], 'session' => ['store' => 'file', 'directory' => '/var/cache/mcp']],
+            'editors' => ['http' => ['path' => '/mcp/editors'], 'session' => ['store' => 'file', 'directory' => '/var/cache/mcp']],
+        ]));
+    }
 
-        // Test custom session store (memory)
-        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame(InMemorySessionStore::class, $sessionStoreDefinition->getClass());
-        $sessionArguments = $sessionStoreDefinition->getArguments();
-        $this->assertSame(7200, $sessionArguments[0]); // Custom TTL for memory store
+    public function testDataCollectorTagIncludesId()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $definition = $container->getDefinition('mcp.data_collector');
+        $this->assertTrue($definition->hasTag('data_collector'));
+        $this->assertSame([['id' => 'mcp']], $definition->getTag('data_collector'));
+    }
+
+    public function testBuilderIsConfiguredWithTheSharedTaggedIterators()
+    {
+        $container = $this->buildContainer($this->config(['default' => ['transports' => ['stdio' => true, 'http' => true]]]));
+
+        $this->assertCount(1, $this->callsNamed($container, 'setEventDispatcher'));
+
+        foreach (['addRequestHandlers' => 'mcp.request_handler', 'addNotificationHandlers' => 'mcp.notification_handler', 'addLoaders' => 'mcp.loader'] as $method => $tag) {
+            $argument = $this->callsNamed($container, $method)[0][1][0];
+            $this->assertInstanceOf(TaggedIteratorArgument::class, $argument);
+            $this->assertSame($tag, $argument->getTag());
+        }
+    }
+
+    public function testRegistryAndSessionStoreAreBoundToTheServer()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $this->assertSame('mcp.server.default.registry', (string) $this->callsNamed($container, 'setRegistry')[0][1][0]);
+        $this->assertSame('mcp.server.default.session.store', (string) $this->callsNamed($container, 'setSession')[0][1][0]);
+    }
+
+    public function testRouteLoaderCarriesOneEntryPerHttpServer()
+    {
+        $container = $this->buildContainer($this->config([
+            'public' => ['http' => ['path' => '/mcp']],
+            'editors' => [],
+            'cli' => ['transports' => ['stdio' => true, 'http' => false]],
+        ]));
+
+        $this->assertSame([
+            ['name' => 'public', 'path' => '/mcp', 'controller' => 'mcp.server.public.controller::handle'],
+            // No explicit path: derived from the server name, never a bare "/mcp".
+            ['name' => 'editors', 'path' => '/mcp/editors', 'controller' => 'mcp.server.editors.controller::handle'],
+        ], $container->getDefinition('mcp.server.route_loader')->getArgument(0));
+    }
+
+    public function testStdioCommandOnlyKnowsStdioServers()
+    {
+        $container = $this->buildContainer($this->config([
+            'public' => ['http' => ['path' => '/mcp']],
+            'cli' => ['transports' => ['stdio' => true, 'http' => false]],
+        ]));
+
+        $locatorId = (string) $container->getDefinition('mcp.server.command')->getArgument(0);
+        $this->assertSame(['cli'], array_keys($container->getDefinition($locatorId)->getArgument(0)));
+    }
+
+    public function testStdioCommandNotRegisteredWithoutStdioServer()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $this->assertFalse($container->hasDefinition('mcp.server.command'));
+    }
+
+    public function testServerIsAliasedForArgument()
+    {
+        $container = $this->buildContainer($this->config(['editors' => []]));
+
+        $this->assertTrue($container->hasAlias(Server::class.' $editorsServer'));
+        $this->assertSame('mcp.server.editors', (string) $container->getAlias(Server::class.' $editorsServer'));
     }
 
     public function testDnsRebindingProtectionDefaults()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => []]));
 
-        $factoryDefinition = $container->getDefinition('mcp.middleware_factory');
-        $arguments = $factoryDefinition->getArguments();
-        $this->assertNull($arguments[0]); // No allowed hosts configured: keep the SDK default (localhost only)
+        // No allowed hosts configured: keep the SDK default (localhost only).
+        $this->assertNull($container->getDefinition('mcp.server.default.middleware_factory')->getArgument(0));
     }
 
     public function testDnsRebindingProtectionWithAllowedHosts()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'allowed_hosts' => ['example.com', 'mcp.example.com'],
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['http' => ['allowed_hosts' => ['example.com', 'mcp.example.com']]]]));
 
-        $factoryDefinition = $container->getDefinition('mcp.middleware_factory');
-        $arguments = $factoryDefinition->getArguments();
-        $this->assertSame(['example.com', 'mcp.example.com'], $arguments[0]);
+        $this->assertSame(['example.com', 'mcp.example.com'], $container->getDefinition('mcp.server.default.middleware_factory')->getArgument(0));
     }
 
     public function testDnsRebindingProtectionDisabled()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'allowed_hosts' => false,
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['http' => ['allowed_hosts' => false]]]));
 
-        $factoryDefinition = $container->getDefinition('mcp.middleware_factory');
-        $arguments = $factoryDefinition->getArguments();
-        $this->assertFalse($arguments[0]);
+        $this->assertFalse($container->getDefinition('mcp.server.default.middleware_factory')->getArgument(0));
     }
 
-    public function testSessionStoreFileConfiguration()
+    public function testSessionStoreFileDefaultsAreScopedToTheServer()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'session' => [
-                        'store' => 'file',
-                        'directory' => '/var/cache/mcp',
-                        'ttl' => 1800,
-                    ],
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['editors' => []]));
 
-        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame(FileSessionStore::class, $sessionStoreDefinition->getClass());
-        $arguments = $sessionStoreDefinition->getArguments();
-        $this->assertSame('/var/cache/mcp', $arguments[0]); // Custom directory
-        $this->assertSame(1800, $arguments[1]); // Custom TTL
+        $definition = $container->getDefinition('mcp.server.editors.session.store');
+        $this->assertSame(FileSessionStore::class, $definition->getClass());
+        $this->assertSame('%kernel.cache_dir%/mcp-sessions/editors', $definition->getArgument(0));
+        $this->assertSame(3600, $definition->getArgument(1));
     }
 
-    public function testSessionStoreCacheConfigurationDefault()
+    public function testSessionStoreFileCustom()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'session' => [
-                        'store' => 'cache',
-                    ],
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['session' => ['store' => 'file', 'directory' => '/var/cache/mcp', 'ttl' => 1800]]]));
 
-        // Verify session store is configured with Psr16SessionStore
-        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame(Psr16SessionStore::class, $sessionStoreDefinition->getClass());
-        $arguments = $sessionStoreDefinition->getArguments();
-
-        // Check arguments
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('cache.mcp.sessions', (string) $arguments[0]); // Default cache pool
-        $this->assertSame('mcp-', $arguments[1]); // Default prefix
-        $this->assertSame(3600, $arguments[2]); // Default TTL
-
-        // Verify default cache pool was created as PSR-16 wrapper
-        $this->assertTrue($container->hasDefinition('cache.mcp.sessions'));
-        $cachePoolDefinition = $container->getDefinition('cache.mcp.sessions');
-        $this->assertSame(Psr16Cache::class, $cachePoolDefinition->getClass());
-        $cachePoolArgs = $cachePoolDefinition->getArguments();
-        $this->assertInstanceOf(Reference::class, $cachePoolArgs[0]);
-        $this->assertSame('cache.app', (string) $cachePoolArgs[0]);
+        $definition = $container->getDefinition('mcp.server.default.session.store');
+        $this->assertSame(FileSessionStore::class, $definition->getClass());
+        $this->assertSame('/var/cache/mcp', $definition->getArgument(0));
+        $this->assertSame(1800, $definition->getArgument(1));
     }
 
-    public function testSessionStoreCacheConfigurationCustom()
+    public function testSessionStoreMemory()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'session' => [
-                        'store' => 'cache',
-                        'cache_pool' => 'app.custom_cache',
-                        'prefix' => 'session-',
-                        'ttl' => 7200,
-                    ],
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['session' => ['store' => 'memory', 'ttl' => 7200]]]));
 
-        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame(Psr16SessionStore::class, $sessionStoreDefinition->getClass());
-        $arguments = $sessionStoreDefinition->getArguments();
+        $definition = $container->getDefinition('mcp.server.default.session.store');
+        $this->assertSame(InMemorySessionStore::class, $definition->getClass());
+        $this->assertSame(7200, $definition->getArgument(0));
+    }
 
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('app.custom_cache', (string) $arguments[0]); // Custom cache pool
-        $this->assertSame('session-', $arguments[1]); // Custom prefix
-        $this->assertSame(7200, $arguments[2]); // Custom TTL
+    public function testSessionStoreCacheDefaultsAreScopedToTheServer()
+    {
+        $container = $this->buildContainer($this->config(['editors' => ['session' => ['store' => 'cache']]]));
 
-        // No default cache pool definition should be created for custom cache pool
+        $definition = $container->getDefinition('mcp.server.editors.session.store');
+        $this->assertSame(Psr16SessionStore::class, $definition->getClass());
+        $this->assertSame('cache.mcp.sessions', (string) $definition->getArgument(0));
+        $this->assertSame('mcp-editors-', $definition->getArgument(1));
+        $this->assertSame(3600, $definition->getArgument(2));
+
+        // The default pool is auto-created as a PSR-16 wrapper around cache.app.
+        $cachePool = $container->getDefinition('cache.mcp.sessions');
+        $this->assertSame(Psr16Cache::class, $cachePool->getClass());
+        $this->assertSame('cache.app', (string) $cachePool->getArgument(0));
+    }
+
+    public function testSessionStoreCacheCustom()
+    {
+        $container = $this->buildContainer($this->config(['default' => ['session' => [
+            'store' => 'cache',
+            'cache_pool' => 'app.custom_cache',
+            'prefix' => 'session-',
+            'ttl' => 7200,
+        ]]]));
+
+        $definition = $container->getDefinition('mcp.server.default.session.store');
+        $this->assertSame(Psr16SessionStore::class, $definition->getClass());
+        $this->assertSame('app.custom_cache', (string) $definition->getArgument(0));
+        $this->assertSame('session-', $definition->getArgument(1));
+        $this->assertSame(7200, $definition->getArgument(2));
+
         $this->assertFalse($container->hasDefinition('cache.mcp.sessions'));
     }
 
-    public function testSessionStoreFrameworkConfiguration()
+    public function testSessionStoreFramework()
     {
-        $container = $this->buildContainer([
-            'mcp' => [
-                'client_transports' => [
-                    'http' => true,
-                ],
-                'http' => [
-                    'session' => [
-                        'store' => 'framework',
-                        'prefix' => 'mcp-',
-                        'ttl' => 1800,
-                    ],
-                ],
-            ],
-        ]);
+        $container = $this->buildContainer($this->config(['default' => ['session' => ['store' => 'framework', 'prefix' => 'mcp-', 'ttl' => 1800]]]));
 
-        $sessionStoreDefinition = $container->getDefinition('mcp.session.store');
-        $this->assertSame(FrameworkSessionStore::class, $sessionStoreDefinition->getClass());
-        $arguments = $sessionStoreDefinition->getArguments();
-
-        $this->assertInstanceOf(Reference::class, $arguments[0]);
-        $this->assertSame('session.handler', (string) $arguments[0]);
-        $this->assertSame('mcp-', $arguments[1]);
-        $this->assertSame(1800, $arguments[2]);
+        $definition = $container->getDefinition('mcp.server.default.session.store');
+        $this->assertSame(FrameworkSessionStore::class, $definition->getClass());
+        $this->assertSame('session.handler', (string) $definition->getArgument(0));
+        $this->assertSame('mcp-', $definition->getArgument(1));
+        $this->assertSame(1800, $definition->getArgument(2));
     }
 
     public function testNoDiscoveryMethodCallOnBuilder()
     {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        foreach ($container->getDefinition('mcp.server.default.builder')->getMethodCalls() as $call) {
+            $this->assertNotSame('setDiscovery', $call[0], 'ServerBuilder must not use file-based discovery');
+        }
+    }
+
+    public function testMcpAttributeAutoconfiguration()
+    {
         $container = $this->buildContainer([]);
 
-        foreach ($container->getDefinition('mcp.server.builder')->getMethodCalls() as $call) {
-            $this->assertNotSame('setDiscovery', $call[0], 'ServerBuilder must not use file-based discovery');
+        $autoconfigurators = $container->getAttributeAutoconfigurators();
+
+        foreach ([McpTool::class, McpPrompt::class, McpResource::class, McpResourceTemplate::class, AsMcpApp::class] as $attributeClass) {
+            $this->assertArrayHasKey($attributeClass, $autoconfigurators);
         }
     }
 
@@ -539,20 +422,7 @@ class McpBundleTest extends TestCase
     {
         $container = $this->buildContainer([]);
 
-        $attributes = [
-            McpTool::class => 'mcp.tool',
-            McpPrompt::class => 'mcp.prompt',
-            McpResource::class => 'mcp.resource',
-            McpResourceTemplate::class => 'mcp.resource_template',
-        ];
-
-        $autoconfigurators = $container->getAttributeAutoconfigurators();
-
-        foreach ($attributes as $attributeClass => $tag) {
-            $this->assertArrayHasKey($attributeClass, $autoconfigurators);
-        }
-
-        $configurator = $autoconfigurators[McpTool::class][0];
+        $configurator = $container->getAttributeAutoconfigurators()[McpTool::class][0];
 
         $definition = new ChildDefinition('abstract');
         $configurator($definition, new McpTool(), new \ReflectionMethod(InvokableService::class, '__invoke'));
@@ -580,8 +450,7 @@ class McpBundleTest extends TestCase
         $container = $this->buildContainer([]);
         $autoconfigured = $container->getAutoconfiguredInstanceof();
         $this->assertArrayHasKey(LoaderInterface::class, $autoconfigured);
-        $definition = $autoconfigured[LoaderInterface::class];
-        $this->assertTrue($definition->hasTag('mcp.loader'));
+        $this->assertTrue($autoconfigured[LoaderInterface::class]->hasTag('mcp.loader'));
     }
 
     public function testRequestHandlerInterfaceAutoconfiguration()
@@ -589,8 +458,7 @@ class McpBundleTest extends TestCase
         $container = $this->buildContainer([]);
         $autoconfigured = $container->getAutoconfiguredInstanceof();
         $this->assertArrayHasKey(RequestHandlerInterface::class, $autoconfigured);
-        $definition = $autoconfigured[RequestHandlerInterface::class];
-        $this->assertTrue($definition->hasTag('mcp.request_handler'));
+        $this->assertTrue($autoconfigured[RequestHandlerInterface::class]->hasTag('mcp.request_handler'));
     }
 
     public function testNotificationHandlerInterfaceAutoconfiguration()
@@ -598,30 +466,7 @@ class McpBundleTest extends TestCase
         $container = $this->buildContainer([]);
         $autoconfigured = $container->getAutoconfiguredInstanceof();
         $this->assertArrayHasKey(NotificationHandlerInterface::class, $autoconfigured);
-        $definition = $autoconfigured[NotificationHandlerInterface::class];
-        $this->assertTrue($definition->hasTag('mcp.notification_handler'));
-    }
-
-    public function testAppsDefaultConfiguration()
-    {
-        $container = $this->buildContainer([]);
-
-        $this->assertNull($container->getParameter('mcp.apps.enabled'));
-    }
-
-    public function testAppsEnabledFlag()
-    {
-        $container = $this->buildContainer(['mcp' => ['apps' => ['enabled' => true]]]);
-
-        $this->assertTrue($container->getParameter('mcp.apps.enabled'));
-    }
-
-    public function testAsMcpAppAttributeAutoconfiguration()
-    {
-        $container = $this->buildContainer([]);
-
-        $attributeAutoconfigurators = $container->getAttributeAutoconfigurators();
-        $this->assertArrayHasKey(AsMcpApp::class, $attributeAutoconfigurators);
+        $this->assertTrue($autoconfigured[NotificationHandlerInterface::class]->hasTag('mcp.notification_handler'));
     }
 
     public function testAppRendererRegisteredWhenTwigAvailable()
@@ -631,6 +476,34 @@ class McpBundleTest extends TestCase
         // Twig is a dev dependency of the bundle, so the renderer must be registered.
         $this->assertTrue(class_exists(\Twig\Environment::class));
         $this->assertTrue($container->hasDefinition(McpAppRenderer::SERVICE_ID));
+    }
+
+    /**
+     * Builds an "mcp" configuration from partial server definitions, defaulting each server to
+     * exposing every tool so the "at least one element list" validation is satisfied.
+     *
+     * @param array<string, array<string, mixed>> $servers
+     *
+     * @return array<string, mixed>
+     */
+    private function config(array $servers): array
+    {
+        foreach ($servers as $name => $server) {
+            $servers[$name] += ['tools' => ['*']];
+        }
+
+        return ['mcp' => ['servers' => $servers]];
+    }
+
+    /**
+     * @return list<array{0: string, 1: array<int, mixed>}>
+     */
+    private function callsNamed(ContainerBuilder $container, string $method, string $server = 'default'): array
+    {
+        return array_values(array_filter(
+            $container->getDefinition('mcp.server.'.$server.'.builder')->getMethodCalls(),
+            static fn (array $call): bool => $call[0] === $method,
+        ));
     }
 
     /**

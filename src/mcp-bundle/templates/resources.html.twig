@@ -1,6 +1,6 @@
-{% if collector.resources|length %}
+{% if resources|length %}
     <div class="sf-tabs">
-        {% for resource in collector.resources %}
+        {% for resource in resources %}
             <div class="tab">
                 <h3 class="tab-title">{{ resource.name }}</h3>
                 <div class="tab-content">

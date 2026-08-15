@@ -131,8 +131,9 @@ together.</p>
     Step 4: Configure Transport
     
 </h2>
-<p>Enable STDIO and/or HTTP transport in the bundle configuration. The STDIO transport is used by
-command-line clients; HTTP is used by web-based clients and the MCP Inspector:</p>
+<p>Declare your server and the transports it offers. The STDIO transport is used by command-line clients;
+HTTP is used by web-based clients and the MCP Inspector. A server exposes only what its capability lists
+name, so <code translate="no" class="notranslate">['*']</code> hands it everything you annotate:</p>
 <div translate="no" class="highlight-yaml notranslate">
     <table class="highlighttable">
         <tbody>
@@ -150,23 +151,35 @@ command-line clients; HTTP is used by web-based clients and the MCP Inspector:</
 9
 10
 11
-12</pre>
+12
+13
+14
+15
+16
+17
+18</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
                         <pre class="hljs yaml"><span class="hljs-comment"># config/packages/mcp.yaml</span>
 <span class="hljs-attr">mcp:</span>
-    <span class="hljs-attr">app:</span> <span class="hljs-string">'my-app'</span>
-    <span class="hljs-attr">version:</span> <span class="hljs-string">'1.0.0'</span>
-    <span class="hljs-attr">description:</span> <span class="hljs-string">'My Symfony MCP server'</span>
+    <span class="hljs-attr">servers:</span>
+        <span class="hljs-attr">default:</span>
+            <span class="hljs-attr">name:</span> <span class="hljs-string">'my-app'</span>
+            <span class="hljs-attr">version:</span> <span class="hljs-string">'1.0.0'</span>
+            <span class="hljs-attr">description:</span> <span class="hljs-string">'My Symfony MCP server'</span>
 
-    <span class="hljs-attr">client_transports:</span>
-        <span class="hljs-attr">stdio:</span> <span class="hljs-literal">true</span>
-        <span class="hljs-attr">http:</span> <span class="hljs-literal">true</span>
+            <span class="hljs-attr">transports:</span>
+                <span class="hljs-attr">stdio:</span> <span class="hljs-literal">true</span>
+                <span class="hljs-attr">http:</span> <span class="hljs-literal">true</span>
 
-    <span class="hljs-attr">http:</span>
-        <span class="hljs-attr">path:</span> <span class="hljs-string">/_mcp</span></pre>
+            <span class="hljs-attr">http:</span>
+                <span class="hljs-attr">path:</span> <span class="hljs-string">/_mcp</span>
+
+            <span class="hljs-attr">tools:</span> <span class="hljs-string">['*']</span>
+            <span class="hljs-attr">prompts:</span> <span class="hljs-string">['*']</span>
+            <span class="hljs-attr">resources:</span> <span class="hljs-string">['*']</span></pre>
                     </div>
                 </td>
             </tr>
@@ -355,7 +368,8 @@ client's configuration file pointing at your Symfony console command for STDIO t
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                 <span>Tip</span>
     </p><p>Run <code translate="no" class="notranslate">symfony console mcp:server</code> to start the STDIO server manually. This is useful for
-debugging before connecting a client.</p>
+debugging before connecting a client. With more than one server configured for STDIO, name the
+one to run: <code translate="no" class="notranslate">symfony console mcp:server default</code>.</p>
 </div>
 </div>
 <div class="section">

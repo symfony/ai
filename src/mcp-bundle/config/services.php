@@ -11,37 +11,28 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use Mcp\Capability\Registry;
-use Mcp\Server;
-use Mcp\Server\Builder;
+use Http\Discovery\Psr17Factory;
+use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
+use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 
+/*
+ * Only the server-agnostic services live here. Everything that carries per-server values
+ * (registry, builder, server, session store, controller) is registered per server in
+ * McpBundle::configureServer(): those values are method-call arguments on the builder, and
+ * method calls cannot be overridden through definition inheritance.
+ */
 return static function (ContainerConfigurator $container): void {
     $container->services()
-        ->set('mcp.registry', Registry::class)
-            ->args([service('event_dispatcher'), service('logger')])
-            ->tag('monolog.logger', ['channel' => 'mcp'])
+        ->set('mcp.psr17_factory', Psr17Factory::class)
 
-        ->set('mcp.server.builder', Builder::class)
-            ->factory([Server::class, 'builder'])
-            ->call('setServerInfo', [
-                param('mcp.app'),
-                param('mcp.version'),
-                param('mcp.description'),
-                param('mcp.icons'),
-                param('mcp.website_url'),
+        ->set('mcp.psr_http_factory', PsrHttpFactory::class)
+            ->args([
+                service('mcp.psr17_factory'),
+                service('mcp.psr17_factory'),
+                service('mcp.psr17_factory'),
+                service('mcp.psr17_factory'),
             ])
-            ->call('setPaginationLimit', [param('mcp.pagination_limit')])
-            ->call('setInstructions', [param('mcp.instructions')])
-            ->call('setEventDispatcher', [service('event_dispatcher')])
-            ->call('setRegistry', [service('mcp.registry')])
-            ->call('setSession', [service('mcp.session.store')])
-            ->call('addRequestHandlers', [tagged_iterator('mcp.request_handler')])
-            ->call('addNotificationHandlers', [tagged_iterator('mcp.notification_handler')])
-            ->call('addLoaders', [tagged_iterator('mcp.loader')])
-            ->call('setLogger', [service('logger')])
-            ->tag('monolog.logger', ['channel' => 'mcp'])
 
-        ->set('mcp.server', Server::class)
-            ->factory([service('mcp.server.builder'), 'build'])
+        ->set('mcp.http_foundation_factory', HttpFoundationFactory::class)
     ;
 };

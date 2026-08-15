@@ -64,23 +64,30 @@ tool name and can invoke it with parameters::
 Step 4: Configure Transport
 ---------------------------
 
-Enable STDIO and/or HTTP transport in the bundle configuration. The STDIO transport is used by
-command-line clients; HTTP is used by web-based clients and the MCP Inspector:
+Declare your server and the transports it offers. The STDIO transport is used by command-line clients;
+HTTP is used by web-based clients and the MCP Inspector. A server exposes only what its capability lists
+name, so ``['*']`` hands it everything you annotate:
 
 .. code-block:: yaml
 
     # config/packages/mcp.yaml
     mcp:
-        app: 'my-app'
-        version: '1.0.0'
-        description: 'My Symfony MCP server'
+        servers:
+            default:
+                name: 'my-app'
+                version: '1.0.0'
+                description: 'My Symfony MCP server'
 
-        client_transports:
-            stdio: true
-            http: true
+                transports:
+                    stdio: true
+                    http: true
 
-        http:
-            path: /_mcp
+                http:
+                    path: /_mcp
+
+                tools: ['*']
+                prompts: ['*']
+                resources: ['*']
 
 Step 5: Create a Prompt
 -----------------------
@@ -157,7 +164,8 @@ For the HTTP transport, point the client at your application's MCP endpoint inst
 .. tip::
 
     Run ``symfony console mcp:server`` to start the STDIO server manually. This is useful for
-    debugging before connecting a client.
+    debugging before connecting a client. With more than one server configured for STDIO, name the
+    one to run: ``symfony console mcp:server default``.
 
 Learn More
 ----------

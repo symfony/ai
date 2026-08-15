@@ -1,6 +1,21 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add support for multiple MCP servers per application, configured under `servers:` — each with its own
+   identity, transports, session store, HTTP route and set of exposed capabilities
+ * Add per-server capability lists (`tools`, `prompts`, `resources`, `resource_templates`, `apps`) matching
+   service ids, class names, namespace prefixes or `*`, replacing the implicit "every element on the one server"
+ * Add `clients:` configuration to act as an MCP client: each named client owns a set of remote `servers:`
+   reached over the stdio or HTTP transport
+ * Add `Symfony\AI\McpBundle\Client\McpClientInterface` (service `mcp.client.<name>`) and
+   `Symfony\AI\McpBundle\Client\ServerConnectionInterface` (service `mcp.client.<name>.server.<server>`),
+   which own the connection lifecycle: connecting on first use and disconnecting on kernel reset
+ * Add `mcp:client:debug` command to inspect the configured clients and what their remote servers advertise
+ * Add a `--server` option to `debug:mcp` and a server argument to `mcp:server`
+
 0.12
 ----
 

@@ -15,8 +15,11 @@ Installation
 Usage
 -----
 
-At first, you need to decide whether your application should act as a MCP server or client. Both can be configured in
-the ``mcp`` section of your ``config/packages/mcp.yaml`` file.
+An application can act as an MCP **server** (exposing tools, prompts and resources to clients), as an MCP
+**client** (consuming remote MCP servers), or as both. The two live side by side in the ``mcp`` section of
+``config/packages/mcp.yaml``: servers under ``servers:``, clients under ``clients:``. Both keys take named
+entries, so an application can expose several servers and use several clients at once.
+
 You also need to add few lines in the routing configuration for this bundle:
 
 .. code-block:: yaml
@@ -30,8 +33,28 @@ You also need to add few lines in the routing configuration for this bundle:
 Act as Server
 ~~~~~~~~~~~~~
 
-To use your application as an MCP server, exposing tools, prompts, resources, and resource templates to clients like `Claude Desktop`_, you need to configure in the
-``client_transports`` section the transports you want to expose to clients. You can use either STDIO or HTTP.
+To use your application as an MCP server, exposing tools, prompts, resources, and resource templates to
+clients like `Claude Desktop`_, declare a server under ``servers:``. Each server names the transports it
+offers (STDIO, HTTP or both) and the capabilities it exposes:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            default:
+                name: 'my-app'
+                transports:
+                    stdio: true
+                    http: true
+                http:
+                    path: /mcp
+                tools: ['*']          # expose every registered tool
+                prompts: ['*']
+
+A server exposes **only what it lists**. The ``tools``, ``prompts``, ``resources``, ``resource_templates``
+and ``apps:`` options each take a list of service ids, class names, namespace prefixes (written with a
+trailing backslash) or the ``*`` wildcard, as described in *Exposing capabilities* below.
 
 Creating MCP Capabilities
 .........................
@@ -128,6 +151,92 @@ compiled container. Classes that are not registered as services (for example exc
 ``services.yaml`` or shipped by a third-party package) must be registered as services to be exposed.
 For fully custom registration logic you can implement ``Mcp\Capability\Registry\Loader\LoaderInterface``;
 implementations are autoconfigured with the ``mcp.loader`` tag and run when the server is built.
+
+Exposing capabilities
+.....................
+
+Carrying an attribute makes a class *available*; a server's capability lists decide which of them it
+*exposes*. Each list entry matches one of:
+
+* ``'*'`` — every registered element of that kind;
+* ``App\Mcp\SearchTool`` — that exact class name, or a service id for services registered under one;
+* ``App\Mcp\Editor\`` — every element whose class or service id starts with that namespace.
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            default:
+                tools:
+                    - 'App\Mcp\Tool\'          # a whole namespace
+                    - 'App\Mcp\SearchTool'      # a single class
+                    - 'app.mcp.legacy_lookup'    # a custom service id
+                prompts: ['*']
+                # resources, resource_templates and the app list default to [] — nothing exposed
+
+.. note::
+
+    In YAML, write namespace prefixes in single quotes (or unquoted). Inside double quotes every
+    backslash has to be doubled.
+
+A server must expose at least one non-empty list, and a pattern that matches no service fails at
+compile time — that is nearly always a typo. The reverse is allowed on purpose: a service carrying an
+MCP attribute that no server lists (a tool shipped by a third-party bundle, say) is simply not exposed.
+Run ``debug:mcp`` to see those listed under *Not exposed by any server*.
+
+Multiple Servers
+................
+
+Because ``servers:`` is a map, one application can expose several MCP servers on different routes, each
+with its own identity and capability set. A common shape is a public server next to a privileged one:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            public:
+                name: 'acme'
+                transports: { http: true }
+                http:
+                    path: /mcp
+                    allowed_hosts: ['acme.example']
+                tools: ['App\Mcp\Public\']
+                resources: ['*']
+
+            editors:
+                name: 'acme-editors'
+                instructions: 'Editorial tooling. Requires an authenticated editor.'
+                transports: { http: true }
+                http:
+                    path: /mcp/editors
+                tools: ['*']
+                prompts: ['*']
+
+Access control is plain Symfony security — the routes have distinct, stable paths, so a firewall or an
+``access_control`` rule targets them directly:
+
+.. code-block:: yaml
+
+    # config/packages/security.yaml
+    security:
+        access_control:
+            - { path: ^/mcp/editors, roles: ROLE_EDITOR }
+
+Each server gets its own registry, session store and HTTP route (named ``_mcp_endpoint_<name>``), and its
+own services under ``mcp.server.<name>.*``. Autowire a specific server with ``Mcp\Server $editorsServer``.
+
+.. caution::
+
+    Give every server its own session storage. Session ids are not namespaced by server, so two servers
+    sharing a store would accept each other's sessions — across a firewall boundary that is a privilege
+    escalation. The defaults already isolate them (``%kernel.cache_dir%/mcp-sessions/<name>`` for the file
+    store, the ``mcp-<name>-`` prefix for the cache and framework stores), and a configuration that makes
+    two servers share a store is rejected when the container is compiled.
+
+If ``http.path`` is not set, it defaults to ``/mcp/<name>``. That default is always derived from the
+server's name rather than from how many servers exist, so adding a second server can never silently move
+the first one's endpoint.
 
 Attribute Placement Patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -242,15 +351,18 @@ You can declare CSP and permission requirements for the iframe directly on the a
         geolocation: true,
     )]
 
-The MCP Apps extension is enabled automatically as soon as one ``#[AsMcpApp]`` class exists. Use the
-``apps.enabled`` option to force it on or off:
+The MCP Apps extension is enabled on a server as soon as it exposes at least one ``#[AsMcpApp]`` class,
+which its ``apps:`` list decides like any other capability:
 
 .. code-block:: yaml
 
     # config/packages/mcp.yaml
     mcp:
-        apps:
-            enabled: true # null (default) = auto-enable when an app is registered; true/false forces it
+        servers:
+            default:
+                apps: ['*']                  # every app; [] (the default) exposes none
+            editors:
+                apps: ['App\Mcp\App\Editor\'] # only these
 
 Rendering with Twig (HTML-over-the-wire)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -347,10 +459,13 @@ render the result yourself, but the declarative attributes cover the common case
 Transport Types
 ...............
 
-The MCP Bundle supports two transport types for server communication:
+Each server declares its transports under ``transports:``:
 
-- **STDIO Transport** - For command-line clients (e.g., ``symfony console mcp:server``)
-- **HTTP Transport** - For web-based clients and MCP Inspector using streamable HTTP connections
+- **STDIO Transport** (``stdio``, default ``false``) - For command-line clients, served by
+  ``symfony console mcp:server <name>``. A process owns one STDIN/STDOUT pair, so one invocation serves
+  exactly one server; the argument may be omitted when only one server enables STDIO.
+- **HTTP Transport** (``http``, default ``true``) - For web-based clients and MCP Inspector, using
+  streamable HTTP connections on that server's route.
 
 The HTTP transport uses the MCP SDK's ``StreamableHttpTransport`` which supports:
 
@@ -369,8 +484,10 @@ public MCP server, configure the allowed hosts:
 .. code-block:: yaml
 
     mcp:
-        http:
-            allowed_hosts: ['example.com', 'mcp.example.com'] # Replaces the default localhost allowlist
+        servers:
+            default:
+                http:
+                    allowed_hosts: ['example.com', 'mcp.example.com'] # Replaces the default localhost allowlist
 
 Alternatively, disable the protection entirely (for example when the server sits behind a
 reverse proxy that already validates the ``Host`` header) by setting it to ``false``:
@@ -378,46 +495,52 @@ reverse proxy that already validates the ``Host`` header) by setting it to ``fal
 .. code-block:: yaml
 
     mcp:
-        http:
-            allowed_hosts: false
+        servers:
+            default:
+                http:
+                    allowed_hosts: false
 
 Session Storage
 ...............
 
-The MCP Bundle supports four types of session storage for the HTTP transport:
+The MCP Bundle supports four types of session storage, configured per server. Every server needs its own
+storage — see the caution in `Multiple Servers`_.
 
 **File Storage** (default) - Stores sessions on the filesystem:
 
 .. code-block:: yaml
 
     mcp:
-        http:
-            session:
-                store: file
-                directory: '%kernel.cache_dir%/mcp-sessions'
-                ttl: 3600
+        servers:
+            default:
+                session:
+                    store: file
+                    directory: '%kernel.cache_dir%/mcp-sessions/default' # defaults to this
+                    ttl: 3600
 
 **Memory Storage** - Stores sessions in memory (non-persistent):
 
 .. code-block:: yaml
 
     mcp:
-        http:
-            session:
-                store: memory
-                ttl: 3600
+        servers:
+            default:
+                session:
+                    store: memory
+                    ttl: 3600
 
 **PSR-16 Cache Storage** - Stores sessions in any PSR-16 compliant cache (Redis, Doctrine, APCu, etc.):
 
 .. code-block:: yaml
 
     mcp:
-        http:
-            session:
-                store: cache
-                cache_pool: 'cache.mcp.sessions' # Reference to your cache pool service (PSR-16)
-                prefix: 'mcp-' # Optional prefix for cache keys
-                ttl: 3600
+        servers:
+            default:
+                session:
+                    store: cache
+                    cache_pool: 'cache.mcp.sessions' # Reference to your cache pool service (PSR-16)
+                    prefix: 'mcp-default-' # Optional; defaults to "mcp-<name>-"
+                    ttl: 3600
 
 By default, if you don't configure a custom cache pool, the bundle automatically creates ``cache.mcp.sessions`` as a PSR-16 wrapper around Symfony's default ``cache.app`` pool.
 
@@ -444,11 +567,12 @@ See the `Symfony Cache documentation`_ for more details on configuring cache poo
 **Framework Storage** - Uses Symfony's ``SessionHandlerInterface`` for session persistence::
 
     mcp:
-        http:
-            session:
-                store: framework
-                prefix: 'mcp-' # Optional prefix for session keys
-                ttl: 3600
+        servers:
+            default:
+                session:
+                    store: framework
+                    prefix: 'mcp-default-' # Optional; defaults to "mcp-<name>-"
+                    ttl: 3600
 
 This wraps the configured Symfony session handler (e.g. Redis, database, filesystem — whatever
 your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
@@ -457,16 +581,128 @@ Expired sessions are cleaned up lazily on read.
 Act as Client
 ~~~~~~~~~~~~~
 
-.. warning::
+To consume remote MCP servers, declare a client under ``clients:``. A client is a named group of server
+connections: it carries the identity your application advertises during the handshake, and lists the
+remote ``servers`` it talks to over STDIO (a child process) or HTTP:
 
-    Not implemented yet, but planned for the future.
+.. code-block:: yaml
 
-To use your application as an MCP client, integrating other MCP servers, you need to configure the ``servers`` you want
-to connect to. You can use either STDIO or HTTP as transport methods.
+    # config/packages/mcp.yaml
+    mcp:
+        clients:
+            research:
+                client_info:
+                    name: 'acme-research'
+                    version: '1.0.0'
+                servers:
+                    github:
+                        transport: http
+                        url: 'https://api.githubcopilot.com/mcp/'
+                        headers:
+                            Authorization: 'Bearer %env(GITHUB_MCP_TOKEN)%'
+                    filesystem:
+                        transport: stdio
+                        command: ['npx', '-y', '@modelcontextprotocol/server-filesystem', '/tmp']
+
+            simple:
+                servers:
+                    github:
+                        transport: http
+                        url: 'https://api.githubcopilot.com/mcp/'
+
+Several clients can reach the same remote server; each keeps its own connection, since identity,
+timeouts and handlers are per client. Use a YAML anchor to avoid repeating a definition:
+
+.. code-block:: yaml
+
+    mcp:
+        clients:
+            research:
+                servers:
+                    github: &github
+                        transport: http
+                        url: 'https://api.githubcopilot.com/mcp/'
+            simple:
+                servers:
+                    github: *github
 
 You can find a list of example Servers in the `MCP Server List`_.
 
-Tools of those servers are available in your `AI Bundle`_ configuration and usable in your agents.
+Using a Client
+..............
+
+Each client is available as ``Symfony\AI\McpBundle\Client\McpClientInterface``, autowirable by the
+parameter name or with ``#[Target]``. Its connections implement
+``Symfony\AI\McpBundle\Client\ServerConnectionInterface``::
+
+    use Symfony\AI\McpBundle\Client\McpClientInterface;
+    use Symfony\Component\DependencyInjection\Attribute\Target;
+
+    class ResearchService
+    {
+        public function __construct(
+            #[Target('research')] private McpClientInterface $client,
+        ) {
+        }
+
+        public function run(string $path): string
+        {
+            $connection = $this->client->get('filesystem');
+
+            foreach ($connection->getTools() as $tool) {
+                // $tool is an Mcp\Schema\Tool
+            }
+
+            $result = $connection->callTool('read_file', ['path' => $path]);
+
+            return $result->content[0]->text;
+        }
+    }
+
+A client is also iterable, which is handy for fanning a question out over every server it knows::
+
+    foreach ($this->client as $name => $connection) {
+        $tools[$name] = $connection->getTools();
+    }
+
+When exactly one client is configured, a plain ``McpClientInterface`` type hint resolves to it.
+
+Connection Lifecycle
+....................
+
+You never call ``connect()``. A connection opens on its first request and closes on kernel reset, so
+resolving or iterating a client costs nothing until a request is actually made. That matters most for
+the STDIO transport, where connecting spawns a child process: a Messenger worker therefore starts a
+fresh process per message rather than carrying a stale one between them. Call ``disconnect()`` on a
+connection (or on the client, for all of them) to close early; it reconnects transparently afterwards.
+
+Failures surface as bundle exceptions naming the client and server:
+``Symfony\AI\McpBundle\Exception\ConnectionException`` when the handshake fails, and
+``RemoteCallException`` when a request does, both implementing
+``Symfony\AI\McpBundle\Exception\ExceptionInterface``.
+
+The HTTP transport uses the application's PSR-18 client (``psr18.http_client``, provided by
+``symfony/http-client``) unless the ``http_client`` option points at another service.
+
+Sampling and Elicitation
+........................
+
+A remote server can ask the client to run a completion (*sampling*) or to prompt the user
+(*elicitation*). Point the matching option at a service implementing the SDK's callback interface; the
+capability is advertised only when a handler backs it:
+
+.. code-block:: yaml
+
+    mcp:
+        clients:
+            research:
+                sampling: 'App\Mcp\SamplingHandler'      # Mcp\Client\Handler\Request\SamplingCallbackInterface
+                elicitation: 'App\Mcp\ElicitationHandler' # Mcp\Client\Handler\Request\ElicitationCallbackInterface
+                servers:
+                    github: { transport: http, url: 'https://api.githubcopilot.com/mcp/' }
+
+Logging notifications received from remote servers are written to the ``mcp`` logger channel; set
+``forward_server_logs: false`` to drop them.
 
 Configuration
 -------------
@@ -475,55 +711,92 @@ Configuration
 
     # config/packages/mcp.yaml
     mcp:
-        app: 'app' # Application name to be exposed to clients
-        version: '1.0.0' # Application version to be exposed to clients
-        description: 'A sample MCP server for time management.' # Application description to be exposed to clients
-        icons:
-            - src: 'https://example.com/icon.png' # Application icon URL
-              mime_type: 'image/png' # MIME type of the icon
-              sizes: ['64x64'] # Sizes of the icon
-        website_url: 'https://example.com' # Application website URL
-        pagination_limit: 50 # Maximum number of items returned per list request (default: 50)
-        instructions: | # Instructions describing server purpose and usage context (for LLMs)
-            This server provides time management capabilities for developers.
-
-            Use when working with timestamps, time zones, or time-based calculations.
-            All timestamps are in UTC unless specified otherwise.
-
-            Example contexts: logging, debugging, time-sensitive operations.
-
-        # MCP Apps (interactive HTML UI resources, registered with #[AsMcpApp])
-        apps:
-            enabled: ~ # null = auto-enable when at least one app exists; true/false forces it
-
-        client_transports:
-            stdio: true # Enable STDIO via command
-            http: true # Enable HTTP transport via controller
-
-        # HTTP transport configuration (optional)
-        http:
-            path: /_mcp # HTTP endpoint path (default: /_mcp)
-            session:
-                store: file # Session store type: 'file', 'memory', 'cache', or 'framework' (default: file)
-                directory: '%kernel.cache_dir%/mcp-sessions' # Directory for file store (default: cache_dir/mcp-sessions)
-                cache_pool: 'cache.mcp.sessions' # Cache pool service for cache store (default: cache.mcp.sessions)
-                prefix: 'mcp-' # Prefix for cache keys (default: 'mcp-')
-                ttl: 3600 # Session TTL in seconds (default: 3600)
-
-        # Not supported yet
+        # MCP servers this application exposes
         servers:
-            name:
-                transport: 'stdio' # Transport method to use, either 'stdio' or 'http'
-                stdio:
-                    command: 'php /path/bin/console mcp:server' # Command to execute to start the server
-                    arguments: [] # Arguments to pass to the command
+            default:
+                name: 'app' # Name advertised to clients (default: the configuration key)
+                version: '1.0.0' # Version advertised to clients
+                description: 'A sample MCP server for time management.' # Description advertised to clients
+                icons:
+                    - src: 'https://example.com/icon.png' # Icon URL
+                      mime_type: 'image/png' # MIME type of the icon
+                      sizes: ['64x64'] # Sizes of the icon
+                website_url: 'https://example.com' # Website URL advertised to clients
+                pagination_limit: 50 # Maximum number of items returned per list request (default: 50)
+                instructions: | # Instructions describing server purpose and usage context (for LLMs)
+                    This server provides time management capabilities for developers.
+
+                    Use when working with timestamps, time zones, or time-based calculations.
+
+                transports:
+                    stdio: false # Serve over STDIO via "mcp:server <name>" (default: false)
+                    http: true # Serve over HTTP via a controller and route (default: true)
+
                 http:
-                    url: 'http://localhost:8000/_mcp' # URL to HTTP endpoint of MCP server
+                    path: /mcp # HTTP endpoint path (default: /mcp/<name>)
+                    allowed_hosts: ['example.com'] # DNS rebinding allowlist; false disables the protection
+
+                session:
+                    store: file # 'file', 'memory', 'cache' or 'framework' (default: file)
+                    directory: '%kernel.cache_dir%/mcp-sessions/default' # File store (default: cache_dir/mcp-sessions/<name>)
+                    cache_pool: 'cache.mcp.sessions' # Cache pool service for the cache store (PSR-16)
+                    prefix: 'mcp-default-' # Key prefix for the cache/framework stores (default: mcp-<name>-)
+                    ttl: 3600 # Session TTL in seconds (default: 3600)
+
+                # What this server exposes: service ids, class names, namespace prefixes or '*'.
+                # Each defaults to [] — a server must list at least one non-empty kind.
+                tools: ['*']
+                prompts: ['*']
+                resources: ['*']
+                resource_templates: ['*']
+                apps: ['*'] # MCP Apps (interactive HTML UI resources, registered with #[AsMcpApp])
+
+        # MCP clients this application uses to reach remote MCP servers
+        clients:
+            research:
+                client_info: # Identity advertised during the initialize handshake
+                    name: 'acme-research' # (default: the configuration key)
+                    version: '1.0.0'
+                    description: null
+                protocol_version: null # MCP protocol version to negotiate (default: the SDK default)
+                capabilities:
+                    roots: false # Advertise the "roots" capability
+                    roots_list_changed: false
+                sampling: null # Service id implementing SamplingCallbackInterface; enables the capability
+                elicitation: null # Service id implementing ElicitationCallbackInterface; enables the capability
+                forward_server_logs: true # Write logging notifications to the "mcp" channel
+
+                # Defaults for every server of this client; each may override them
+                init_timeout: 30
+                request_timeout: 120
+                max_retries: 3
+
+                servers:
+                    github:
+                        transport: http # 'stdio' or 'http'
+                        url: 'https://api.githubcopilot.com/mcp/' # Required for the http transport
+                        headers:
+                            Authorization: 'Bearer %env(GITHUB_MCP_TOKEN)%'
+                        http_client: null # Service id of a PSR-18 client (default: psr18.http_client)
+                        max_sse_buffer_bytes: null # Bytes buffered per SSE event (default: the SDK value)
+                        request_timeout: 300 # Overrides the client-level value
+
+                    filesystem:
+                        transport: stdio
+                        # Required for the stdio transport; the first element is the program, not a shell string
+                        command: ['npx', '-y', '@modelcontextprotocol/server-filesystem', '/tmp']
+                        cwd: null # Working directory of the child process
+                        env: # Environment variables for the child process
+                            LOG_LEVEL: 'debug'
+                        inherit_env: true # Merge "env" over the current environment instead of replacing it
+                        max_buffer_size: null # Bytes buffered per line (default: the SDK value)
 
 Logging Configuration
 ---------------------
 
-By default, MCP uses a dedicated logger channel that inherits your application's default logging configuration.
+By default, MCP uses a dedicated logger channel that inherits your application's default logging
+configuration. It carries both the server side and the outbound client traffic, including the logging
+notifications remote servers send back.
 To configure MCP-specific logging, add the following to your ``config/packages/monolog.yaml``:
 
 .. code-block:: yaml
@@ -560,26 +833,45 @@ You can customize the logging level and destination according to your needs:
 Debug Command
 -------------
 
-The ``debug:mcp`` command lists all MCP capabilities registered with the server — useful to verify
-that an attributed class was actually picked up (only registered, autoconfigured services are):
+The ``debug:mcp`` command lists the MCP capabilities each configured server exposes — useful to verify
+that an attributed class was actually picked up (it must be a registered, autoconfigured service *and*
+be matched by a server's capability list):
 
 .. code-block:: terminal
 
-    # list all tools, prompts, resources, and resource templates with their handlers
+    # list every server's tools, prompts, resources, and resource templates with their handlers
     $ php bin/console debug:mcp
+
+    # restrict the output to one server
+    $ php bin/console debug:mcp --server=editors
 
     # show the details of a single element, including the tool's input schema
     $ php bin/console debug:mcp current-time
 
+Its last section, *Not exposed by any server*, lists the services that carry an MCP attribute but that no
+server's capability list matches.
+
+``mcp:client:debug`` does the same for the client side. Without arguments it prints the configured
+clients and their servers straight from the container, without opening a single connection; naming a
+server connects to it and lists what it advertises:
+
+.. code-block:: terminal
+
+    # list the configured clients and their servers
+    $ php bin/console mcp:client:debug
+
+    # connect and show the remote server's info, instructions, tools, prompts and resources
+    $ php bin/console mcp:client:debug research github
+
 Profiler
 --------
 
-When the Symfony Web Profiler is enabled, the MCP Bundle automatically adds a dedicated panel showing all registered MCP capabilities in your application:
+When the Symfony Web Profiler is enabled, the MCP Bundle automatically adds a dedicated panel showing the registered MCP capabilities of every configured server:
 
 .. image:: images/profiler-mcp.png
    :alt: MCP Profiler Panel
 
-The profiler displays:
+The profiler displays, per server:
 
 - **Tools**: All registered MCP tools with their descriptions and input schemas
 - **Prompts**: Available prompts with their arguments and requirements
@@ -629,5 +921,4 @@ The events are simple marker events that notify when lists have changed, but don
 .. _`mcp/sdk`: https://github.com/modelcontextprotocol/php-sdk
 .. _`Claude Desktop`: https://claude.ai/download
 .. _`MCP Server List`: https://modelcontextprotocol.io/examples
-.. _`AI Bundle`: https://github.com/symfony/ai-bundle
 .. _`Symfony Cache documentation`: https://symfony.com/doc/current/components/cache.html

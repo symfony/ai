@@ -13,9 +13,11 @@ namespace Symfony\AI\McpBundle\Tests\Profiler;
 
 use Mcp\Capability\Registry;
 use Mcp\Server;
+use Mcp\Server\Builder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -25,7 +27,7 @@ final class DataCollectorTest extends TestCase
     public function testGetNameReturnsShortName()
     {
         $registry = new Registry(null, new NullLogger());
-        $dataCollector = new DataCollector(Server::builder()->setRegistry($registry), $registry);
+        $dataCollector = $this->createCollector($registry);
 
         $name = $dataCollector->getName();
 
@@ -42,14 +44,14 @@ final class DataCollectorTest extends TestCase
             ->setRegistry($registry)
             ->addTool([ToolFixture::class, 'greet'], 'greeting', description: 'Greets a person');
 
-        $dataCollector = new DataCollector($builder, $registry);
+        $dataCollector = $this->createCollector($registry, $builder);
 
         // The registry is empty before collection — as on a request that never served MCP.
         $this->assertFalse($registry->hasTools());
 
         $dataCollector->lateCollect();
 
-        $tools = $dataCollector->getTools();
+        $tools = $dataCollector->getServers()['default']['tools'];
         $this->assertCount(1, $tools);
         $this->assertSame('greeting', $tools[0]['name']);
         $this->assertSame('Greets a person', $tools[0]['description']);
@@ -61,11 +63,48 @@ final class DataCollectorTest extends TestCase
     public function testGetTotalCountReturnsZeroForEmptyRegistry()
     {
         $registry = new Registry(null, new NullLogger());
-        $dataCollector = new DataCollector(Server::builder()->setRegistry($registry), $registry);
+        $dataCollector = $this->createCollector($registry);
 
         $dataCollector->lateCollect();
 
         $this->assertSame(0, $dataCollector->getTotalCount());
+    }
+
+    public function testCollectsEveryServerSeparately()
+    {
+        $public = new Registry(null, new NullLogger());
+        $editors = new Registry(null, new NullLogger());
+
+        $dataCollector = new DataCollector(
+            new ServiceLocator([
+                'public' => static fn (): Builder => Server::builder()->setRegistry($public),
+                'editors' => static fn (): Builder => Server::builder()->setRegistry($editors)
+                    ->addTool([ToolFixture::class, 'greet'], 'greeting'),
+            ]),
+            new ServiceLocator([
+                'public' => static fn (): Registry => $public,
+                'editors' => static fn (): Registry => $editors,
+            ]),
+        );
+
+        $dataCollector->lateCollect();
+
+        $servers = $dataCollector->getServers();
+        $this->assertSame(['public', 'editors'], array_keys($servers));
+        $this->assertSame([], $servers['public']['tools']);
+        $this->assertCount(1, $servers['editors']['tools']);
+        $this->assertSame(2, $dataCollector->getServerCount());
+        $this->assertSame(1, $dataCollector->getTotalCount());
+    }
+
+    private function createCollector(Registry $registry, ?Builder $builder = null): DataCollector
+    {
+        $builder ??= Server::builder()->setRegistry($registry);
+
+        return new DataCollector(
+            new ServiceLocator(['default' => static fn (): Builder => $builder]),
+            new ServiceLocator(['default' => static fn (): Registry => $registry]),
+        );
     }
 }
 
