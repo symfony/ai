@@ -20,7 +20,6 @@ use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Job\JobStateCase;
 use Symfony\AI\Platform\Job\JobStatus;
-use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Tests\Fixtures\Job\ScriptedJobClient;
 use Symfony\Component\Clock\MockClock;
 
@@ -40,8 +39,8 @@ final class JobRunnerTest extends TestCase
         $clock = new MockClock('2026-01-01 00:00:00');
         $result = (new JobRunner($clock, 2.0))->wait($jobClient, new JobHandle('task-1'));
 
-        $this->assertInstanceOf(TextResult::class, $result);
-        $this->assertSame('done', $result->getContent());
+        // A DeferredResult, like a synchronous invocation returns - not a bare ResultInterface.
+        $this->assertSame('done', $result->asText());
         $this->assertSame(3, $jobClient->statusCalls);
 
         // Slept after the two non-terminal polls, not after the successful one.
@@ -54,7 +53,7 @@ final class JobRunnerTest extends TestCase
 
         $result = (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1'));
 
-        $this->assertSame('done', $result->getContent());
+        $this->assertSame('done', $result->asText());
         $this->assertSame(1, $jobClient->statusCalls);
     }
 
@@ -67,7 +66,7 @@ final class JobRunnerTest extends TestCase
 
         $result = (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1'));
 
-        $this->assertSame('done', $result->getContent());
+        $this->assertSame('done', $result->asText());
         $this->assertSame(2, $jobClient->statusCalls);
     }
 

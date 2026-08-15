@@ -11,6 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\MiniMax\Factory;
 use Symfony\AI\Platform\Job\JobHandle;
+use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Job\JobStateCase;
 use Symfony\AI\Platform\Message\Content\Text;
 
@@ -56,7 +57,9 @@ if (!$status->is(JobStateCase::SUCCEEDED)) {
     exit(0);
 }
 
-$jobClient->getResult($handle)->asFile(__DIR__.'/minimax-video.mp4');
+// The job is done, so the runner returns without waiting - and hands back the same kind of result
+// a synchronous invocation would have.
+(new JobRunner())->wait($jobClient, $handle)->asFile(__DIR__.'/minimax-video.mp4');
 unlink($storage);
 
 echo 'Video saved to minimax-video.mp4'.\PHP_EOL;

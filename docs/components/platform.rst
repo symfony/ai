@@ -967,7 +967,7 @@ again — so it can be stored and picked up somewhere else entirely::
     $jobClient = $platform->getJobClient($handle);
 
     if ($jobClient->getStatus($handle)->is(JobStateCase::SUCCEEDED)) {
-        $jobClient->getResult($handle)->asFile('video.mp4');
+        $result = $jobClient->getResult($handle);
     }
 
 :method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` performs exactly one request and
@@ -979,6 +979,10 @@ never sleeps. To simply block until the job is done, hand it to a
     $result = (new JobRunner())->wait($platform->getJobClient($handle), $handle);
 
     $result->asFile('video.mp4');
+
+What the runner hands back is a :class:`Symfony\\AI\\Platform\\Result\\DeferredResult`, the same
+thing ``invoke()`` returns, so finishing a job reads like any other invocation instead of leaving
+you to narrow a bare ``ResultInterface`` yourself.
 
 How long the work takes and how long you are willing to wait for it are two different questions. The
 first is the provider's: a bridge that knows its timings — MiniMax video generation runs for minutes

@@ -110,6 +110,7 @@ final class MiniMaxJobClientTest extends TestCase
 
         $result = (new MiniMaxJobClient($httpClient, 'key'))->getResult($handle);
 
+        $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('FAKE_AUDIO', $result->getContent());
         $this->assertSame('audio/mpeg', $result->getMimeType());
     }
@@ -129,6 +130,7 @@ final class MiniMaxJobClientTest extends TestCase
 
         $result = (new MiniMaxJobClient($httpClient, 'key'))->getResult($this->speechHandle());
 
+        $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('ID3FAKE-MP3-PAYLOAD', $result->getContent());
         $this->assertSame('audio/mpeg', $result->getMimeType());
     }
@@ -194,7 +196,7 @@ final class MiniMaxJobClientTest extends TestCase
         $jobClient = new MiniMaxJobClient($httpClient, 'key');
         $result = (new JobRunner(new MockClock()))->wait($jobClient, $this->handle());
 
-        $this->assertSame('FAKE_VIDEO', $result->getContent());
+        $this->assertSame('FAKE_VIDEO', $result->asBinary());
     }
 
     private function speechHandle(): JobHandle
