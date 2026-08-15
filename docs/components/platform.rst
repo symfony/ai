@@ -1076,15 +1076,36 @@ never sleeps. To simply block until the job is done, hand it to a
 
     $result->asFile('video.mp4');
 
-How long to wait is not something the caller has to know. A bridge that knows its provider's timings
-— MiniMax video generation runs for minutes where speech synthesis takes seconds — states it on the
-handle, and the runner honours it. Pass ``maxPolls`` to overrule that, for instance to give up early
-inside a web request::
+How long the work takes and how long you are willing to wait for it are two different questions. The
+first is the provider's: a bridge that knows its timings — MiniMax video generation runs for minutes
+where speech synthesis takes seconds — states it on the handle, and the runner honours it, so a
+caller who knows nothing about the provider still waits the right amount.
 
-    $result = (new JobRunner(maxPolls: 5))->wait($platform->getJobClient($handle), $handle);
+The second is yours, and it usually belongs to the call rather than to the runner: the same job may
+be given ten minutes in a worker and five seconds inside a web request. Say so per call, in seconds::
+
+    $result = $runner->wait($platform->getJobClient($handle), $handle, maxDuration: 5);
+
+A budget passed to the runner's constructor applies to every job it waits for and sits between the
+two: it overrules what a job asks for, and a single call overrules it in turn.
 
 In a Symfony application a runner using the application clock is available as
-``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`.
+``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It
+carries no budget of its own, so the same shared service serves a job finishing in seconds and one
+running for minutes::
+
+    public function __construct(private JobRunner $jobRunner)
+    {
+    }
+
+    public function __invoke(JobHandle $handle): void
+    {
+        // trust the job
+        $this->jobRunner->wait($this->platform->getJobClient($handle), $handle);
+
+        // or bound it to what a request can afford
+        $this->jobRunner->wait($this->platform->getJobClient($handle), $handle, maxDuration: 5);
+    }
 
 The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
 ends the job without a result, and a :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException`
