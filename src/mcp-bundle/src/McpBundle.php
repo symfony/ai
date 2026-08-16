@@ -15,16 +15,19 @@ use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Completion\ProviderInterface as CompletionProviderInterface;
 use Mcp\Capability\Registry;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Client as McpSdkClient;
 use Mcp\Client\Builder as McpSdkClientBuilder;
 use Mcp\Client\Handler\Notification\LoggingNotificationHandler;
 use Mcp\Client\Handler\Request\ElicitationRequestHandler;
+use Mcp\Client\Handler\Request\ListRootsRequestHandler;
 use Mcp\Client\Handler\Request\SamplingRequestHandler;
 use Mcp\Client\Transport\HttpTransport;
 use Mcp\Client\Transport\StdioTransport;
 use Mcp\Schema\ClientCapabilities;
+use Mcp\Schema\Enum\CacheScope;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Icon;
 use Mcp\Server;
@@ -34,6 +37,13 @@ use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
+use Mcp\Server\Stateless\StatelessProtocol;
+use Mcp\Server\Subscription\InMemoryNotificationBus;
+use Mcp\Server\Subscription\Psr16NotificationBus;
+use Mcp\Server\Task\InMemoryTaskStore;
+use Mcp\Server\Task\Psr16TaskStore;
+use Mcp\Server\Task\TasksExtension;
+use Mcp\Server\Wire\CachePolicy;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
 use Symfony\AI\McpBundle\Client\McpClient;
@@ -45,6 +55,7 @@ use Symfony\AI\McpBundle\Command\ClientDebugCommand;
 use Symfony\AI\McpBundle\Command\DebugCommand;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\Controller\StatelessMcpController;
 use Symfony\AI\McpBundle\DependencyInjection\McpAppPass;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Exception\LogicException;
@@ -92,6 +103,11 @@ final class McpBundle extends AbstractBundle
 
         $builder->registerForAutoconfiguration(LoaderInterface::class)
             ->addTag('mcp.loader');
+
+        // Resolved from the server's container at request time, so a provider can
+        // have constructor dependencies like any other service.
+        $builder->registerForAutoconfiguration(CompletionProviderInterface::class)
+            ->addTag('mcp.completion_provider');
 
         $builder->registerForAutoconfiguration(RequestHandlerInterface::class)
             ->addTag('mcp.request_handler');
@@ -163,7 +179,9 @@ final class McpBundle extends AbstractBundle
                 ->setArguments([$clientName, new Reference($locatorId)])
                 ->addTag('mcp.client', ['name' => $clientName]);
 
+            // Both spellings; the documentation shows #[Target('research')].
             $container->registerAliasForArgument('mcp.client.'.$clientName, McpClientInterface::class, $clientName.' client');
+            $container->registerAliasForArgument('mcp.client.'.$clientName, McpClientInterface::class, $clientName);
 
             $clientReferences[$clientName] = new Reference('mcp.client.'.$clientName);
         }
@@ -231,9 +249,9 @@ final class McpBundle extends AbstractBundle
                 $client['client_info']['description'],
             ])
             ->addMethodCall('setCapabilities', [new Definition(ClientCapabilities::class, [
-                $client['capabilities']['roots'],
-                $client['capabilities']['roots_list_changed'],
                 // Advertised only when a handler backs them, otherwise the server gets "method not found".
+                null !== $client['roots'],
+                $client['capabilities']['roots_list_changed'],
                 null !== $client['sampling'],
                 null !== $client['elicitation'],
             ])])
@@ -248,6 +266,12 @@ final class McpBundle extends AbstractBundle
                 (new Definition(ProtocolVersion::class))
                     ->setFactory([ProtocolVersion::class, 'from'])
                     ->setArguments([$client['protocol_version']]),
+            ]);
+        }
+
+        if (null !== $client['roots']) {
+            $definition->addMethodCall('addRequestHandler', [
+                new Definition(ListRootsRequestHandler::class, [new Reference($client['roots']), $logger]),
             ]);
         }
 
@@ -315,7 +339,10 @@ final class McpBundle extends AbstractBundle
     {
         $registryId = \sprintf('mcp.server.%s.registry', $name);
         $builderId = \sprintf('mcp.server.%s.builder', $name);
-        $sessionId = $this->configureSessionStore($name, $server['session'], $container);
+        // 2026-07-28 removed sessions, so a stateless server needs no store.
+        $sessionId = 'stateless' === $server['lifecycle']
+            ? null
+            : $this->configureSessionStore($name, $server['session'], $container);
 
         $container->register($registryId, Registry::class)
             ->setArguments([new Reference('event_dispatcher'), new Reference('logger')])
@@ -334,7 +361,6 @@ final class McpBundle extends AbstractBundle
             ->addMethodCall('setInstructions', [$server['instructions']])
             ->addMethodCall('setEventDispatcher', [new Reference('event_dispatcher')])
             ->addMethodCall('setRegistry', [new Reference($registryId)])
-            ->addMethodCall('setSession', [new Reference($sessionId)])
             ->addMethodCall('addRequestHandlers', [new TaggedIteratorArgument('mcp.request_handler')])
             ->addMethodCall('addNotificationHandlers', [new TaggedIteratorArgument('mcp.notification_handler')])
             ->addMethodCall('addLoaders', [new TaggedIteratorArgument('mcp.loader')])
@@ -342,10 +368,32 @@ final class McpBundle extends AbstractBundle
             ->addTag('mcp.server.builder', ['server' => $name])
             ->addTag('monolog.logger', ['channel' => 'mcp']);
 
-        $container->register('mcp.server.'.$name, Server::class)
-            ->setFactory([new Reference($builderId), 'build']);
+        if (null !== $sessionId) {
+            $container->getDefinition($builderId)->addMethodCall('setSession', [new Reference($sessionId)]);
+        }
 
-        $container->registerAliasForArgument('mcp.server.'.$name, Server::class, $name.' server');
+        $stateless = 'stateless' === $server['lifecycle'];
+
+        $this->configureModernLifecycle($name, $server, $builderId, $container);
+
+        if ($stateless) {
+            // A dispatcher rather than a Server: there is no connection to run.
+            $container->register('mcp.server.'.$name, StatelessProtocol::class)
+                ->setFactory([new Reference($builderId), 'buildStateless'])
+                ->setArguments([array_map(
+                    static fn (string $version): Definition => (new Definition(ProtocolVersion::class))
+                        ->setFactory([ProtocolVersion::class, 'from'])
+                        ->setArguments([$version]),
+                    $server['protocol_versions'],
+                )]);
+
+            $container->registerAliasForArgument('mcp.server.'.$name, StatelessProtocol::class, $name.' server');
+        } else {
+            $container->register('mcp.server.'.$name, Server::class)
+                ->setFactory([new Reference($builderId), 'build']);
+
+            $container->registerAliasForArgument('mcp.server.'.$name, Server::class, $name.' server');
+        }
 
         if (!$server['transports']['http']) {
             return;
@@ -354,7 +402,10 @@ final class McpBundle extends AbstractBundle
         $container->register(\sprintf('mcp.server.%s.middleware_factory', $name), MiddlewareFactory::class)
             ->setArguments([$server['http']['allowed_hosts']]);
 
-        $container->register(\sprintf('mcp.server.%s.controller', $name), McpController::class)
+        $container->register(
+            \sprintf('mcp.server.%s.controller', $name),
+            $stateless ? StatelessMcpController::class : McpController::class,
+        )
             ->setArguments([
                 new Reference('mcp.server.'.$name),
                 new Reference('mcp.psr_http_factory'),
@@ -367,6 +418,109 @@ final class McpBundle extends AbstractBundle
             ->setPublic(true)
             ->addTag('controller.service_arguments')
             ->addTag('monolog.logger', ['channel' => 'mcp']);
+    }
+
+    /**
+     * The builder calls that only mean something under the 2026-07-28 lifecycle:
+     * multi-round-trip state, cache hints, subscription delivery and tasks.
+     *
+     * They are configured for either lifecycle so that one server definition can
+     * be mounted twice, but nothing here changes how a handshake-era server behaves.
+     *
+     * @param array<string, mixed> $server
+     */
+    private function configureModernLifecycle(string $name, array $server, string $builderId, ContainerBuilder $container): void
+    {
+        $builder = $container->getDefinition($builderId);
+
+        if (null !== $server['request_state']['key']) {
+            $builder->addMethodCall('setRequestState', [$server['request_state']['key'], $server['request_state']['ttl']]);
+        }
+
+        if (0 !== $server['cache']['ttl_ms'] || [] !== $server['cache']['methods']) {
+            $policy = (new Definition(CachePolicy::class))
+                ->setFactory([CachePolicy::class, 'default'])
+                ->setArguments([$server['cache']['ttl_ms'], $this->cacheScope($server['cache']['scope'])]);
+
+            foreach ($server['cache']['methods'] as $method => $override) {
+                $policy = (new Definition(CachePolicy::class))
+                    ->setFactory([$policy, 'withMethod'])
+                    ->setArguments([$method, $override['ttl_ms'], $this->cacheScope($override['scope'])]);
+            }
+
+            $builder->addMethodCall('setCachePolicy', [$policy]);
+        }
+
+        if ('none' !== $server['subscriptions']['bus']) {
+            $builder
+                ->addMethodCall('setNotificationBus', [$this->notificationBus($name, $server['subscriptions'], $container)])
+                ->addMethodCall('setSubscriptionLifetime', [$server['subscriptions']['lifetime']]);
+        }
+
+        if ('none' === $server['tasks']['store']) {
+            return;
+        }
+
+        $builder->addMethodCall('enableExtension', [
+            new Definition(TasksExtension::class, [
+                $this->taskStore($name, $server['tasks'], $container),
+                null === $server['tasks']['input_handler'] ? null : new Reference($server['tasks']['input_handler']),
+            ]),
+        ]);
+    }
+
+    private function cacheScope(string $scope): Definition
+    {
+        return (new Definition(CacheScope::class))
+            ->setFactory([CacheScope::class, 'from'])
+            ->setArguments([$scope]);
+    }
+
+    /**
+     * @param array{bus: string, cache_pool: string, lifetime: float} $subscriptions
+     */
+    private function notificationBus(string $name, array $subscriptions, ContainerBuilder $container): Reference
+    {
+        $id = \sprintf('mcp.server.%s.notification_bus', $name);
+
+        if ('memory' === $subscriptions['bus']) {
+            $container->register($id, InMemoryNotificationBus::class);
+
+            return new Reference($id);
+        }
+
+        $this->registerPsr16Fallback($subscriptions['cache_pool'], 'cache.mcp.notifications', $container);
+        $container->register($id, Psr16NotificationBus::class)
+            ->setArguments([new Reference($subscriptions['cache_pool'])]);
+
+        return new Reference($id);
+    }
+
+    /**
+     * @param array{store: string, cache_pool: string, input_handler: string|null} $tasks
+     */
+    private function taskStore(string $name, array $tasks, ContainerBuilder $container): Definition
+    {
+        if ('memory' === $tasks['store']) {
+            return new Definition(InMemoryTaskStore::class);
+        }
+
+        $this->registerPsr16Fallback($tasks['cache_pool'], 'cache.mcp.tasks', $container);
+
+        return new Definition(Psr16TaskStore::class, [new Reference($tasks['cache_pool'])]);
+    }
+
+    /**
+     * Creates the default PSR-16 pool as a wrapper around cache.app, as the session
+     * store already does, so the common case needs no services.yaml entry.
+     */
+    private function registerPsr16Fallback(string $id, string $default, ContainerBuilder $container): void
+    {
+        if ($id !== $default || $container->hasDefinition($id) || $container->hasAlias($id)) {
+            return;
+        }
+
+        $container->register($id, Psr16Cache::class)->setArguments([new Reference('cache.app')]);
     }
 
     /**
@@ -485,6 +639,11 @@ final class McpBundle extends AbstractBundle
                     throw new LogicException(\sprintf('The MCP servers "%s" and "%s" are both configured on the HTTP path "%s". Give each server its own "http.path".', $paths[$path], $name, $path));
                 }
                 $paths[$path] = $name;
+            }
+
+            if ('stateless' === $server['lifecycle']) {
+                // No session ids to collide: that is what the revision removed.
+                continue;
             }
 
             $session = $server['session'];

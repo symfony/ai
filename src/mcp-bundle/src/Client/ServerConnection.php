@@ -15,8 +15,12 @@ use Mcp\Client;
 use Mcp\Client\Transport\TransportInterface;
 use Mcp\Exception\ExceptionInterface as McpExceptionInterface;
 use Mcp\Schema\Enum\LoggingLevel;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Implementation;
+use Mcp\Schema\PromptReference;
+use Mcp\Schema\ResourceReference;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\Result\CompletionCompleteResult;
 use Mcp\Schema\Result\GetPromptResult;
 use Mcp\Schema\Result\ListPromptsResult;
 use Mcp\Schema\Result\ListResourcesResult;
@@ -106,6 +110,13 @@ final class ServerConnection implements ServerConnectionInterface, ResetInterfac
         return $this->client->getServerInfo();
     }
 
+    public function getProtocolVersion(): ?ProtocolVersion
+    {
+        $this->connect();
+
+        return $this->client->getProtocolVersion();
+    }
+
     public function getInstructions(): ?string
     {
         $this->connect();
@@ -173,9 +184,19 @@ final class ServerConnection implements ServerConnectionInterface, ResetInterfac
         return $this->call('prompts/get', fn (): GetPromptResult => $this->client->getPrompt($name, $arguments, $onProgress));
     }
 
+    public function complete(PromptReference|ResourceReference $ref, array $argument): CompletionCompleteResult
+    {
+        return $this->call('completion/complete', fn (): CompletionCompleteResult => $this->client->complete($ref, $argument));
+    }
+
     public function setLoggingLevel(LoggingLevel $level): void
     {
         $this->call('logging/setLevel', fn () => $this->client->setLoggingLevel($level));
+    }
+
+    public function sendRootsListChanged(): void
+    {
+        $this->call('notifications/roots/list_changed', fn () => $this->client->sendRootsListChanged());
     }
 
     /**

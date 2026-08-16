@@ -578,6 +578,143 @@ This wraps the configured Symfony session handler (e.g. Redis, database, filesys
 your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
 Expired sessions are cleaned up lazily on read.
 
+Stateless Lifecycle
+...................
+
+The 2026-07-28 revision drops the ``initialize`` handshake and the session that went with it: every
+request describes itself, so any worker can answer any request. Select it per server with
+``lifecycle``:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            api:
+                lifecycle: stateless
+                protocol_versions: ['2026-07-28']
+                http:
+                    path: /mcp
+                tools: ['*']
+
+What changes for the server:
+
+* no handshake and no session, so ``session:`` is ignored and no store is registered;
+* the endpoint is served by ``StatelessMcpController`` over the SDK's ``StatelessHttpTransport``, and
+  ``mcp.server.<name>`` is a ``StatelessProtocol`` dispatcher rather than an ``Mcp\Server``;
+* the revision is HTTP-only — combining ``lifecycle: stateless`` with ``transports.stdio`` is rejected
+  when the container is compiled. Declare a second, ``handshake`` server if you also need STDIO.
+
+Because there is no negotiation, a stateless server states which revisions it answers for through
+``protocol_versions``. The ``handshake`` lifecycle ignores the option: it negotiates instead.
+
+Request State
+^^^^^^^^^^^^^
+
+A handler that needs another round trip (returning an ``InputRequiredResult``) has nowhere to keep its
+progress once sessions are gone, so the state travels through the client and is signed to keep it
+honest:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                lifecycle: stateless
+                request_state:
+                    key: '%env(MCP_REQUEST_STATE_KEY)%'
+                    ttl: 600 # seconds a minted state stays valid
+
+The key is required for any stateless server whose handlers ask for more input, and **the same value
+must reach every process that might serve the retry** — a per-worker random key makes the follow-up
+request fail signature validation.
+
+Cache Hints
+^^^^^^^^^^^
+
+Without a session the client caches instead, and the revision expects the server to say for how long.
+``ttl_ms: 0`` (the default) refuses caching:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                cache:
+                    ttl_ms: 5000
+                    scope: private # or "public"
+                    methods:
+                        'tools/list': { ttl_ms: 60000, scope: public }
+                        'resources/read': { ttl_ms: 1000 }
+
+Use ``public`` only for answers that do not vary by caller — anything shaped by the current user must
+stay ``private``.
+
+Subscriptions
+^^^^^^^^^^^^^
+
+``subscriptions/listen`` replaces the held-open HTTP GET stream. Delivery needs a bus, and the choice
+depends on your runtime:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                subscriptions:
+                    bus: cache # none (default), memory, or cache
+                    cache_pool: 'cache.mcp.notifications'
+                    lifetime: 30.0 # seconds before the server closes a stream gracefully
+
+Under PHP-FPM the process publishing a notification is not the one holding the stream, so ``memory``
+cannot reach it — use ``cache``. ``memory`` suits a single-process runtime; ``lifetime: 0`` holds the
+stream until the client or the runtime ends it.
+
+Tasks
+^^^^^
+
+The tasks extension (SEP-2663) answers long work with a durable handle instead of an open connection:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                tasks:
+                    store: cache # none (default), memory, or cache
+                    cache_pool: 'cache.mcp.tasks'
+                    input_handler: 'App\Mcp\TaskInput' # Mcp\Server\Task\TaskInputHandlerInterface
+
+The worker that creates a task is generally not the one later polled for it, so ``memory`` only works
+in a single-process runtime. Set ``input_handler`` to answer a task parked waiting for input.
+
+Both ``cache.mcp.notifications`` and ``cache.mcp.tasks`` are auto-created as PSR-16 wrappers around
+``cache.app`` when you leave them at their defaults, exactly as the session store is.
+
+Completion Providers
+....................
+
+A class implementing ``Mcp\Capability\Completion\ProviderInterface`` is autoconfigured with the
+``mcp.completion_provider`` tag and resolved from the container at request time, so it can take
+constructor dependencies like any other service::
+
+    use Mcp\Capability\Completion\ProviderInterface;
+
+    class CityCompletionProvider implements ProviderInterface
+    {
+        public function __construct(private CityRepository $cities)
+        {
+        }
+
+        public function getCompletions(string $currentValue): array
+        {
+            return $this->cities->startingWith($currentValue);
+        }
+    }
+
+Providers are added to every server's handler locator, since the SDK resolves them by class name when
+a completion request arrives.
+
 Act as Client
 ~~~~~~~~~~~~~
 
@@ -684,22 +821,33 @@ Failures surface as bundle exceptions naming the client and server:
 The HTTP transport uses the application's PSR-18 client (``psr18.http_client``, provided by
 ``symfony/http-client``) unless the ``http_client`` option points at another service.
 
-Sampling and Elicitation
-........................
+Server-initiated Requests
+.........................
 
-A remote server can ask the client to run a completion (*sampling*) or to prompt the user
-(*elicitation*). Point the matching option at a service implementing the SDK's callback interface; the
-capability is advertised only when a handler backs it:
+A remote server can ask the client to run a completion (*sampling*), to prompt the user
+(*elicitation*), or for the filesystem roots it may work in (*roots*). Point the matching option at a
+service implementing the SDK's callback interface; each capability is advertised only when a handler
+backs it, because advertising one without a handler earns a "method not found" from the client:
 
 .. code-block:: yaml
 
     mcp:
         clients:
             research:
+                roots: 'App\Mcp\RootsHandler'            # Mcp\Client\Handler\Request\RootsCallbackInterface
                 sampling: 'App\Mcp\SamplingHandler'      # Mcp\Client\Handler\Request\SamplingCallbackInterface
                 elicitation: 'App\Mcp\ElicitationHandler' # Mcp\Client\Handler\Request\ElicitationCallbackInterface
+                capabilities:
+                    roots_list_changed: true
                 servers:
                     github: { transport: http, url: 'https://api.githubcopilot.com/mcp/' }
+
+When the set of roots changes, tell the server with ``$connection->sendRootsListChanged()``.
+
+Besides the tool, prompt and resource calls, a connection also exposes
+``$connection->complete($ref, $argument)`` to complete one argument of a prompt or resource template,
+and ``$connection->getProtocolVersion()`` for the revision negotiated with that server (``null`` until
+the first request opens the connection).
 
 Logging notifications received from remote servers are written to the ``mcp`` logger channel; set
 ``forward_server_logs: false`` to drop them.
@@ -736,7 +884,30 @@ Configuration
                     path: /mcp # HTTP endpoint path (default: /mcp/<name>)
                     allowed_hosts: ['example.com'] # DNS rebinding allowlist; false disables the protection
 
-                session:
+                lifecycle: handshake # 'handshake' (default) or 'stateless' (the 2026-07-28 revision)
+                protocol_versions: ['2026-07-28'] # Revisions a stateless server answers for; ignored by 'handshake'
+
+                request_state: # Signs the state a multi-round-trip answer carries through the client
+                    key: '%env(MCP_REQUEST_STATE_KEY)%' # Required for a stateless server asking for more input
+                    ttl: 600 # Seconds a minted state stays valid (default: 600)
+
+                cache: # Cache hints a stateless server puts on its answers
+                    ttl_ms: 0 # Default freshness in milliseconds; 0 (default) refuses caching
+                    scope: private # 'private' (default) or 'public'
+                    methods: # Per-method overrides
+                        'tools/list': { ttl_ms: 60000, scope: public }
+
+                subscriptions: # Delivery for "subscriptions/listen" streams
+                    bus: none # 'none' (default), 'memory' or 'cache'
+                    cache_pool: 'cache.mcp.notifications' # PSR-16 service for the 'cache' bus
+                    lifetime: 30.0 # Seconds a stream is held; 0 means until the client or runtime ends it
+
+                tasks: # The tasks extension (SEP-2663)
+                    store: none # 'none' (default), 'memory' or 'cache'
+                    cache_pool: 'cache.mcp.tasks' # PSR-16 service for the 'cache' store
+                    input_handler: null # Service id implementing Mcp\Server\Task\TaskInputHandlerInterface
+
+                session: # Ignored by a stateless server, which has no sessions
                     store: file # 'file', 'memory', 'cache' or 'framework' (default: file)
                     directory: '%kernel.cache_dir%/mcp-sessions/default' # File store (default: cache_dir/mcp-sessions/<name>)
                     cache_pool: 'cache.mcp.sessions' # Cache pool service for the cache store (PSR-16)
@@ -760,8 +931,8 @@ Configuration
                     description: null
                 protocol_version: null # MCP protocol version to negotiate (default: the SDK default)
                 capabilities:
-                    roots: false # Advertise the "roots" capability
-                    roots_list_changed: false
+                    roots_list_changed: false # The "roots" capability itself follows the handler below
+                roots: null # Service id implementing RootsCallbackInterface; enables the capability
                 sampling: null # Service id implementing SamplingCallbackInterface; enables the capability
                 elicitation: null # Service id implementing ElicitationCallbackInterface; enables the capability
                 forward_server_logs: true # Write logging notifications to the "mcp" channel

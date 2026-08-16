@@ -15,6 +15,17 @@ CHANGELOG
    which own the connection lifecycle: connecting on first use and disconnecting on kernel reset
  * Add `mcp:client:debug` command to inspect the configured clients and what their remote servers advertise
  * Add a `--server` option to `debug:mcp` and a server argument to `mcp:server`
+ * Add the `servers.<name>.lifecycle` option: `stateless` serves the 2026-07-28 revision (no `initialize`
+   handshake, no session, HTTP only), `handshake` keeps the 2025-11-25-and-earlier behavior
+ * Add `servers.<name>.protocol_versions` to declare the revisions a stateless server answers for
+ * Add `servers.<name>.request_state` to sign the state a multi-round-trip answer carries through the client
+ * Add `servers.<name>.cache` for the cache hints a stateless server puts on its answers, with per-method overrides
+ * Add `servers.<name>.subscriptions` configuring delivery for `subscriptions/listen` streams
+ * Add `servers.<name>.tasks` enabling the tasks extension (SEP-2663) with an in-memory or PSR-16 store
+ * Add autoconfiguration for `Mcp\Capability\Completion\ProviderInterface` (tag `mcp.completion_provider`),
+   so a completion provider is resolved from the container and can have constructor dependencies
+ * Add the `clients.<name>.roots` option pointing at a `RootsCallbackInterface` service, and
+   `getProtocolVersion()`, `complete()` and `sendRootsListChanged()` on `ServerConnectionInterface`
 
 0.12
 ----

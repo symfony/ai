@@ -23,10 +23,15 @@ use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
+use Mcp\Server\Stateless\StatelessProtocol;
+use Mcp\Server\Task\InMemoryTaskStore;
+use Mcp\Server\Task\TasksExtension;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Controller\McpController;
+use Symfony\AI\McpBundle\Controller\StatelessMcpController;
 use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
@@ -476,6 +481,111 @@ class McpBundleTest extends TestCase
         // Twig is a dev dependency of the bundle, so the renderer must be registered.
         $this->assertTrue(class_exists(\Twig\Environment::class));
         $this->assertTrue($container->hasDefinition(McpAppRenderer::SERVICE_ID));
+    }
+
+    public function testTheHandshakeLifecycleIsTheDefault()
+    {
+        $container = $this->buildContainer($this->config(['default' => ['tools' => ['*']]]));
+
+        $this->assertSame(Server::class, $container->getDefinition('mcp.server.default')->getClass());
+        $this->assertSame(McpController::class, $container->getDefinition('mcp.server.default.controller')->getClass());
+        $this->assertNotSame([], $this->callsNamed($container, 'setSession'));
+    }
+
+    public function testAStatelessServerIsBuiltAsADispatcherWithNoSession()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['lifecycle' => 'stateless', 'tools' => ['*']],
+        ]));
+
+        $server = $container->getDefinition('mcp.server.modern');
+        $this->assertSame(StatelessProtocol::class, $server->getClass());
+        $this->assertSame('buildStateless', $server->getFactory()[1]);
+
+        $this->assertSame([], $this->callsNamed($container, 'setSession', 'modern'));
+        $this->assertFalse($container->hasDefinition('mcp.server.modern.session.store'));
+
+        $this->assertSame(
+            StatelessMcpController::class,
+            $container->getDefinition('mcp.server.modern.controller')->getClass(),
+        );
+    }
+
+    public function testAStatelessServerAnswersForTheRevisionsItLists()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['lifecycle' => 'stateless', 'protocol_versions' => ['2026-07-28'], 'tools' => ['*']],
+        ]));
+
+        $versions = $container->getDefinition('mcp.server.modern')->getArgument(0);
+        $this->assertCount(1, $versions);
+        $this->assertSame(['2026-07-28'], $versions[0]->getArguments());
+    }
+
+    public function testStatelessRefusesStdio()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageMatches('/cannot be served over STDIO/');
+
+        $this->buildContainer($this->config([
+            'modern' => ['lifecycle' => 'stateless', 'transports' => ['stdio' => true], 'tools' => ['*']],
+        ]));
+    }
+
+    public function testRequestStateIsConfiguredForMultiRoundTripAnswers()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['lifecycle' => 'stateless', 'request_state' => ['key' => 'a-key', 'ttl' => 90], 'tools' => ['*']],
+        ]));
+
+        $this->assertSame([['a-key', 90]], array_column($this->callsNamed($container, 'setRequestState', 'modern'), 1));
+    }
+
+    public function testCacheHintsAreBuiltAsAPolicy()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => [
+                'lifecycle' => 'stateless',
+                'cache' => ['ttl_ms' => 30000, 'methods' => ['tools/list' => ['ttl_ms' => 3600000, 'scope' => 'public']]],
+                'tools' => ['*'],
+            ],
+        ]));
+
+        $calls = $this->callsNamed($container, 'setCachePolicy', 'modern');
+        $this->assertCount(1, $calls);
+
+        // The override wraps the default, so the outermost call is withMethod().
+        $policy = $calls[0][1][0];
+        $this->assertSame('withMethod', $policy->getFactory()[1]);
+        $this->assertSame('tools/list', $policy->getArgument(0));
+        $this->assertSame(3600000, $policy->getArgument(1));
+    }
+
+    public function testTasksAndSubscriptionsAreOptOut()
+    {
+        $container = $this->buildContainer($this->config(['modern' => ['lifecycle' => 'stateless', 'tools' => ['*']]]));
+
+        $this->assertSame([], $this->callsNamed($container, 'enableExtension', 'modern'));
+        $this->assertSame([], $this->callsNamed($container, 'setNotificationBus', 'modern'));
+    }
+
+    public function testTasksAndSubscriptionsAreWiredWhenAskedFor()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => [
+                'lifecycle' => 'stateless',
+                'tasks' => ['store' => 'memory'],
+                'subscriptions' => ['bus' => 'memory', 'lifetime' => 5.0],
+                'tools' => ['*'],
+            ],
+        ]));
+
+        $extension = $this->callsNamed($container, 'enableExtension', 'modern')[0][1][0];
+        $this->assertSame(TasksExtension::class, $extension->getClass());
+        $this->assertSame(InMemoryTaskStore::class, $extension->getArgument(0)->getClass());
+
+        $this->assertSame([5.0], $this->callsNamed($container, 'setSubscriptionLifetime', 'modern')[0][1]);
+        $this->assertTrue($container->hasDefinition('mcp.server.modern.notification_bus'));
     }
 
     /**

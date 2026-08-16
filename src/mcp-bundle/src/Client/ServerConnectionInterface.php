@@ -12,11 +12,15 @@
 namespace Symfony\AI\McpBundle\Client;
 
 use Mcp\Schema\Enum\LoggingLevel;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\Prompt;
+use Mcp\Schema\PromptReference;
 use Mcp\Schema\ResourceDefinition;
+use Mcp\Schema\ResourceReference;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\Result\CompletionCompleteResult;
 use Mcp\Schema\Result\GetPromptResult;
 use Mcp\Schema\Result\ListPromptsResult;
 use Mcp\Schema\Result\ListResourcesResult;
@@ -53,6 +57,11 @@ interface ServerConnectionInterface
     public function disconnect(): void;
 
     public function getServerInfo(): ?Implementation;
+
+    /**
+     * The protocol revision negotiated with this server, or null before the first request.
+     */
+    public function getProtocolVersion(): ?ProtocolVersion;
 
     public function getInstructions(): ?string;
 
@@ -105,5 +114,17 @@ interface ServerConnectionInterface
      */
     public function getPrompt(string $name, array $arguments = [], ?callable $onProgress = null): GetPromptResult;
 
+    /**
+     * Ask the server to complete one argument of a prompt or resource template.
+     *
+     * @param array{name: string, value: string} $argument
+     */
+    public function complete(PromptReference|ResourceReference $ref, array $argument): CompletionCompleteResult;
+
     public function setLoggingLevel(LoggingLevel $level): void;
+
+    /**
+     * Tell the server that this client's roots changed.
+     */
+    public function sendRootsListChanged(): void;
 }

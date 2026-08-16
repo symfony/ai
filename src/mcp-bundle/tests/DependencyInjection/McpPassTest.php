@@ -15,6 +15,7 @@ use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Completion\ProviderInterface as CompletionProviderInterface;
 use Mcp\Schema\Icon;
 use Mcp\Schema\ToolAnnotations;
 use PHPUnit\Framework\TestCase;
@@ -194,6 +195,27 @@ final class McpPassTest extends TestCase
         $reference = $services[TimeTool::class]->getValues()[0];
         $this->assertInstanceOf(Reference::class, $reference);
         $this->assertSame('app.time_tool', (string) $reference);
+    }
+
+    public function testCompletionProvidersJoinEveryServerLocator()
+    {
+        // Resolved by class name out of the server's container at request time.
+        $container = $this->containerWithBuilder(['default' => [], 'editors' => []]);
+        $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
+        $container->setDefinition('app.completion', (new Definition(CityCompletionProvider::class))->addTag('mcp.completion_provider'));
+
+        (new McpPass())->process($container);
+
+        foreach (['default', 'editors'] as $server) {
+            $services = $this->locatorServices($container, $server);
+
+            $this->assertArrayHasKey(CityCompletionProvider::class, $services, $server);
+            $this->assertArrayHasKey('app.completion', $services, $server);
+
+            $reference = $services[CityCompletionProvider::class]->getValues()[0];
+            $this->assertInstanceOf(Reference::class, $reference);
+            $this->assertSame('app.completion', (string) $reference);
+        }
     }
 
     public function testThrowsWhenExplicitTagMethodDoesNotExist()
@@ -403,6 +425,25 @@ class UserTemplate
     public function read(string $id): string
     {
         return $id;
+    }
+}
+
+class CityCompletionProvider implements CompletionProviderInterface
+{
+    /**
+     * A constructor dependency is the point: the provider cannot be new'ed by the SDK and has
+     * to be resolved from the server's container.
+     */
+    public function __construct(private readonly string $prefix = 'b')
+    {
+    }
+
+    public function getCompletions(string $currentValue): array
+    {
+        return array_values(array_filter(
+            ['berlin', 'brussels'],
+            fn (string $city): bool => str_starts_with($city, $this->prefix),
+        ));
     }
 }
 
