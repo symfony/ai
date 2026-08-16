@@ -48,6 +48,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
+use Symfony\AI\Platform\Job\JobClientInterface;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
@@ -4426,6 +4427,33 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $minimax'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
+    }
+
+    /**
+     * A worker resolving a stored handle holds the handle, not the invocation that produced it, so
+     * the job client is reachable on its own and tagged with the provider name the handle carries.
+     */
+    public function testMiniMaxRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'minimax' => [
+                        'api_key' => 'minimax_key_full',
+                        'endpoint' => 'https://api.minimax.io/v2',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.minimax');
+
+        $this->assertSame([MiniMaxFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('minimax_key_full', $definition->getArgument(0));
+        $this->assertSame('https://api.minimax.io/v2', $definition->getArgument(2));
+        $this->assertSame([['key' => 'minimax']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $minimax'));
     }
 
     public function testOllamaCanBeConfigured()

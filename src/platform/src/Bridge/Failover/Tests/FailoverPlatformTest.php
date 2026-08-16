@@ -16,19 +16,12 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Job\JobClientInterface;
-use Symfony\AI\Platform\Job\JobHandle;
-use Symfony\AI\Platform\Job\JobPlatformInterface;
-use Symfony\AI\Platform\Job\JobStateCase;
-use Symfony\AI\Platform\Job\JobStatus;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
 use Symfony\Component\Clock\MonotonicClock;
@@ -401,78 +394,6 @@ final class FailoverPlatformTest extends TestCase
         $clock->sleep(1);
 
         $failoverPlatform->getModelCatalog();
-    }
-
-    /**
-     * A handle belongs to the platform that issued it, so resolution must not fail over: it walks the
-     * platforms and returns the client of the one that recognizes the handle's provider.
-     */
-    public function testItResolvesAJobThroughThePlatformThatKnowsItsProvider()
-    {
-        $handle = (new JobHandle('task-1'))->withProvider('minimax');
-
-        $failoverPlatform = new FailoverPlatform([
-            $this->createStub(PlatformInterface::class),
-            $this->createJobPlatform('somewhere-else'),
-            $this->createJobPlatform('minimax'),
-        ], self::createRateLimiterFactory());
-
-        $this->assertTrue($failoverPlatform->getJobClient($handle)->getStatus($handle)->is(JobStateCase::SUCCEEDED));
-    }
-
-    public function testItSaysSoWhenNoPlatformKnowsTheHandle()
-    {
-        $failoverPlatform = new FailoverPlatform([
-            $this->createJobPlatform('somewhere-else'),
-        ], self::createRateLimiterFactory());
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('None of the failover platforms can resolve a job of provider "minimax"');
-
-        $failoverPlatform->getJobClient((new JobHandle('task-1'))->withProvider('minimax'));
-    }
-
-    private function createJobPlatform(string $provider): PlatformInterface&JobPlatformInterface
-    {
-        return new class($provider) implements PlatformInterface, JobPlatformInterface {
-            public function __construct(private readonly string $provider)
-            {
-            }
-
-            public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
-            {
-                throw new \LogicException('Resolving a job handle must not invoke a platform.');
-            }
-
-            public function getModelCatalog(): ModelCatalogInterface
-            {
-                throw new \LogicException('Resolving a job handle must not need the model catalog.');
-            }
-
-            public function getJobClient(JobHandle $handle): JobClientInterface
-            {
-                if ($handle->getProvider() !== $this->provider) {
-                    throw new InvalidArgumentException(\sprintf('No provider named "%s" is configured on this platform.', $handle->getProvider() ?? ''));
-                }
-
-                return new class implements JobClientInterface {
-                    public function supports(JobHandle $handle): bool
-                    {
-                        return true;
-                    }
-
-                    public function getStatus(JobHandle $handle): JobStatus
-                    {
-                        return new JobStatus(JobStateCase::SUCCEEDED, 'Success');
-                    }
-
-                    public function getResult(JobHandle $handle): ResultInterface
-                    {
-                        return new TextResult('done');
-                    }
-                };
-            }
-        };
     }
 
     private static function createRateLimiterFactory(): RateLimiterFactoryInterface

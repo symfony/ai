@@ -15,10 +15,10 @@ use Symfony\AI\Platform\Message\Content\Text;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('MINI_MAX_API_KEY'), http_client());
+$provider = Factory::createProvider(env('MINI_MAX_API_KEY'), http_client());
 
 // The async endpoint enqueues a task, so the invocation hands back a job handle instead of audio.
-$handle = $platform->invoke('speech-2.6-hd', new Text('The real danger is not that computers start thinking like people, but that people start thinking like computers.'), [
+$handle = $provider->invoke('speech-2.6-hd', new Text('The real danger is not that computers start thinking like people, but that people start thinking like computers.'), [
     'async' => true,
     'voice_setting' => [
         'voice_id' => 'English_expressive_narrator',
@@ -34,7 +34,7 @@ $handle = $platform->invoke('speech-2.6-hd', new Text('The real danger is not th
     ],
 ])->asJob();
 
-$result = (new JobRunner())->wait($platform->getJobClient($handle), $handle);
+$result = (new JobRunner())->wait($provider->getJobClient(), $handle);
 
 // MiniMax delivers the asynchronous result as a tar bundling the mp3 with a `.titles` and an
 // `.extra` file; the bridge unpacks the audio, so this is the same mp3 the synchronous endpoint

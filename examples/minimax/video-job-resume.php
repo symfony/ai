@@ -26,11 +26,11 @@ require_once dirname(__DIR__).'/bootstrap.php';
  * finish the job.
  */
 
-$platform = Factory::createPlatform(env('MINI_MAX_API_KEY'), http_client());
+$provider = Factory::createProvider(env('MINI_MAX_API_KEY'), http_client());
 $storage = __DIR__.'/minimax-video-job.json';
 
 if (!is_file($storage)) {
-    $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano on a stage, cinematic lighting'), [
+    $handle = $provider->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano on a stage, cinematic lighting'), [
         'duration' => 6,
         'resolution' => '768P',
     ])->asJob();
@@ -43,7 +43,9 @@ if (!is_file($storage)) {
 }
 
 $handle = JobHandle::fromArray(json_decode((string) file_get_contents($storage), true, flags: \JSON_THROW_ON_ERROR));
-$jobClient = $platform->getJobClient($handle);
+
+// A worker that never invoked anything builds the client on its own: Factory::createJobClient().
+$jobClient = $provider->getJobClient();
 
 $status = $jobClient->getStatus($handle);
 

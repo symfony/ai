@@ -4,7 +4,7 @@ CHANGELOG
 0.13
 ----
 
- * Add asynchronous job support: providers that answer a request with a job identifier instead of a result now return a `Result\JobResult`, whose `Job\JobHandle` is serializable and can be resolved in another process via `Platform::getJobClient()`. Adds `Job\JobClientInterface`, `Job\JobProviderInterface`, `Job\JobStatus`/`Job\JobStateCase`, `Job\JobRunner` (the only polling loop in the component), `Exception\JobFailedException`, `Exception\JobTimeoutException` and `DeferredResult::asJob()`; `Provider` takes an optional `JobClientInterface` as its last constructor argument
+ * Add asynchronous job support: providers that answer a request with a job identifier instead of a result now return a `Result\JobResult`, whose `Job\JobHandle` is serializable and can be resolved in another process through the job client of the provider that issued it. Adds `Job\JobClientInterface`, `Job\JobProviderInterface`, `Job\JobStatus`/`Job\JobStateCase`, `Job\JobRunner` (the only polling loop in the component), `Exception\JobFailedException`, `Exception\JobTimeoutException` and `DeferredResult::asJob()`; `Provider` takes an optional `JobClientInterface` as its last constructor argument
  * [BC BREAK] Add `ListenerInterface::onError()` and `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws, so a listener can finalize on a failed stream where `onComplete()` never fires; `AbstractStreamListener` provides a no-op default
 
 0.12

@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Tests\Job;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Job\JobClientInterface;
 use Symfony\AI\Platform\Job\JobHandle;
@@ -34,7 +33,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
  * The round trip that makes a job a job: start it, put the handle away, and resolve it later through
- * the platform - without the object that started it.
+ * the provider's job client - without the invocation that started it.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -48,43 +47,23 @@ final class JobResolutionTest extends TestCase
         $this->assertSame('renamed-provider', $handle->getProvider(), 'the converter cannot know the name, the provider stamps it');
     }
 
-    public function testAStoredHandleResolvesThroughThePlatformInAnotherProcess()
+    public function testAStoredHandleResolvesThroughTheProviderInAnotherProcess()
     {
         // Process one: start the job, keep nothing but the serialized handle.
         $stored = json_encode($this->platform()->invoke('async-model', 'go')->asJob(), \JSON_THROW_ON_ERROR);
 
-        // Process two: only the string survived, the platform is built from scratch.
+        // Process two: only the string survived, the provider is built from scratch.
         $handle = JobHandle::fromArray(json_decode($stored, true, flags: \JSON_THROW_ON_ERROR));
-        $jobClient = $this->platform()->getJobClient($handle);
+        $jobClient = $this->provider('jobs', $this->jobConverter(), $this->jobClient())->getJobClient();
 
+        $this->assertNotNull($jobClient);
         $this->assertTrue($jobClient->getStatus($handle)->is(JobStateCase::SUCCEEDED));
         $this->assertSame('FAKE_VIDEO', $jobClient->getResult($handle)->getContent());
     }
 
-    public function testAnUnboundHandleCannotBeResolved()
+    public function testAProviderWithoutJobsHasNoJobClient()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not bound to a provider');
-
-        $this->platform()->getJobClient(new JobHandle('task-1'));
-    }
-
-    public function testAHandleNamingAnUnknownProviderCannotBeResolved()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No provider named "elsewhere"');
-
-        $this->platform()->getJobClient((new JobHandle('task-1'))->withProvider('elsewhere'));
-    }
-
-    public function testAProviderWithoutJobsSaysSoInsteadOfReturningNull()
-    {
-        $platform = new Platform([$this->provider('sync-only', $this->jobConverter(), null)]);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('does not run asynchronous jobs');
-
-        $platform->getJobClient((new JobHandle('task-1'))->withProvider('sync-only'));
+        $this->assertNull($this->provider('sync-only', $this->jobConverter(), null)->getJobClient());
     }
 
     public function testAskingForAJobOnASynchronousResultFails()

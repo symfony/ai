@@ -15,21 +15,13 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cache\CacheKeyGenerator;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Job\JobClientInterface;
-use Symfony\AI\Platform\Job\JobHandle;
-use Symfony\AI\Platform\Job\JobPlatformInterface;
-use Symfony\AI\Platform\Job\JobStateCase;
-use Symfony\AI\Platform\Job\JobStatus;
 use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
@@ -309,62 +301,5 @@ final class CachePlatformTest extends TestCase
         $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
         $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
         $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
-    }
-
-    /**
-     * A job handle has to stay resolvable through the platform it came from, so the decorator must
-     * forward {@see JobPlatformInterface::getJobClient()} instead of hiding it behind its own type.
-     */
-    public function testItForwardsJobResolutionToTheDecoratedPlatform()
-    {
-        $handle = (new JobHandle('task-1'))->withProvider('minimax');
-        $cachedPlatform = new CachePlatform($this->createJobPlatform());
-
-        $this->assertTrue($cachedPlatform->getJobClient($handle)->getStatus($handle)->is(JobStateCase::SUCCEEDED));
-    }
-
-    public function testItSaysSoWhenTheDecoratedPlatformHasNoJobs()
-    {
-        $cachedPlatform = new CachePlatform($this->createStub(PlatformInterface::class));
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('does not run asynchronous jobs');
-
-        $cachedPlatform->getJobClient((new JobHandle('task-1'))->withProvider('minimax'));
-    }
-
-    private function createJobPlatform(): PlatformInterface&JobPlatformInterface
-    {
-        return new class implements PlatformInterface, JobPlatformInterface {
-            public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
-            {
-                throw new \LogicException('Resolving a job handle must not invoke the platform.');
-            }
-
-            public function getModelCatalog(): ModelCatalogInterface
-            {
-                throw new \LogicException('Resolving a job handle must not need the model catalog.');
-            }
-
-            public function getJobClient(JobHandle $handle): JobClientInterface
-            {
-                return new class implements JobClientInterface {
-                    public function supports(JobHandle $handle): bool
-                    {
-                        return true;
-                    }
-
-                    public function getStatus(JobHandle $handle): JobStatus
-                    {
-                        return new JobStatus(JobStateCase::SUCCEEDED, 'Success');
-                    }
-
-                    public function getResult(JobHandle $handle): ResultInterface
-                    {
-                        return new TextResult('done');
-                    }
-                };
-            }
-        };
     }
 }
