@@ -1,0 +1,67 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-05-31T09:17:54Z
+
+You should check Symfony repo there is an open pull request for cassettes like this IIRC
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-01T12:07:31Z
+
+> You should check Symfony repo there is an open pull request for cassettes like this IIRC
+
+@OskarStark you mean symfony/symfony#63781 (RecorderHttpClient, php‑vcr‑style HAR record/replay)? Good catch. That one records at the HTTP boundary, so it overlaps with the sibling #2128, not this PR.
+
+This RecordingProvider sits a layer higher: it records the already‑converted ResultInterface returned by a ProviderInterface, so it's bridge‑agnostic, needs no http-client, and on replay it skips the converter entirely. Different trade‑off, complementary to a HTTP‑level recorder. I'll add a note to the PR cross‑referencing #63781 so the layering is clear.
+
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-07-29T08:04:05Z
+
+Nice to see this landing. I built something in this space outside the framework a few months ago (`mikibuilder/llm-vcr`) and hit two problems that might be worth weighing while the API is still open.
+
+**Signature matching breaks on realistic prompts.** The docs say a replayed call must use the same arguments. That holds for fixed fixtures, but real prompts carry values that change between runs — timestamps, incident IDs, RAG context. Same case semantically, different signature. In practice people end up deleting and re-recording cassettes often, which quietly erodes the value of having them. Normalising volatile tokens before hashing fixed it for me, and making the signature function injectable would leave the door open without committing to a strategy now.
+
+**Cassettes get committed, so they can leak.** Recorded prompts contain whatever the user sent: emails, phone numbers, occasionally an API key pasted by mistake. I ended up making redaction the default rather than opt-in, on the assumption that nobody reads the configuration reference of a dev dependency. One subtle consequence in case it saves someone time: if you redact on write you also have to match on redacted text, otherwise a request carrying a real email never matches its own redacted cassette — and it fails precisely on the requests that contain personal data.
+
+One more thought on dropping token usage: it is the raw material for detecting when a provider silently changes model behaviour. A field going from `int` to `string` breaks a typed DTO in production and no test catches it, because the mocks still hold the value frozen months ago. Not suggesting it belongs in this PR, just that keeping usage data around leaves the option open.
+
+Happy to help if any of this is useful — mine is MIT ([mikibuilder/llm-vcr](https://github.com/MikiBuilder/llm-vcr)) and I am glad to extract any part as a PR here, or leave it as prior art if the approach differs.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-16T18:37:22Z
+
+Thanks, all three are concrete and worth having.
+
+**Signature matching**: agreed, and it was not injectable at all. Pushed a `signature` constructor argument, so volatile parts can be normalized before hashing instead of forcing a re-record.
+
+**Leaking**: this one lands on #2128 rather than here. A provider cassette stores the model, a hash of the input and the result, never the input itself, so there is nothing to redact on the request side and the mismatch trap you describe cannot bite. A recorded answer can of course still repeat back what the prompt contained, which the docs now say. #2128 does commit the request body verbatim, so I will take the point over there.
+
+**Token usage**: agreed on the value, but drift detection cannot live at this layer, since replay returns the already converted result and never runs the converter. That job belongs to #2128, where the raw bytes are kept. Preserving metadata here is still worth doing for tests that want to assert on usage, and it is out of this PR only because metadata holds arbitrary objects and needs its own serialization pass.
+
+Happy to look at anything from `llm-vcr`, the normalization rules especially.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-16T18:42:32Z
+
+@MikiBuilder tracked the two open points as issues so they do not get lost with this PR: #2409 for redacting recorded prompts and #2410 for keeping metadata and token usage. Both credit your review, feel free to take either one.
+
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-08-16T20:34:42Z
+
+Thanks for the thorough reply, and for the injectable signature, that closes the matching problem cleanly without locking the API into a strategy.
+
+You are right that the leak does not apply here. I had not registered that provider cassettes only store a hash of the input, so there is genuinely nothing to redact on the request side. Good correction.
+
+I would like to take [#2409](https://github.com/symfony/ai/pull/2409). The redaction rules and the redacted-signature detail are the parts I have already been through, so it is the one where I can be most useful. I will read [#2128](https://github.com/symfony/ai/pull/2128) first to see where the redaction hook fits before proposing anything.
+
+Two notes from my own implementation, in case they save time when I write it up:
+
+Making redaction opt-out rather than opt-in was the single decision I would keep. The failure mode is silent and only surfaces once the cassette is public, so a default that has to be switched on is a default that will not be.
+
+The rule set matters less than the extension point. I ship credentials (provider keys, JWTs, bearer tokens, cloud keys) as non-negotiable and PII (emails, phone numbers, national IDs, IBANs, card numbers) as a toggle, because sometimes the personal data is the thing under test. What people actually needed was a way to add their own patterns for domain-specific identifiers.
+
+On [#2410](https://github.com/symfony/ai/pull/2410), agreed that it is not a drift detector on its own, that was my framing being loose. Preserving usage for assertions is worth having on its own merit. Happy to leave that one for whoever wants it.
