@@ -35,14 +35,14 @@ if (!is_file($storage)) {
         'resolution' => '768P',
     ])->asJob();
 
-    file_put_contents($storage, json_encode($handle, \JSON_THROW_ON_ERROR));
+    file_put_contents($storage, $handle->toString());
 
     echo 'Started job '.$handle->getId().'. Run this example again to pick it up.'.\PHP_EOL;
 
     exit(0);
 }
 
-$handle = JobHandle::fromArray(json_decode((string) file_get_contents($storage), true, flags: \JSON_THROW_ON_ERROR));
+$handle = JobHandle::fromString((string) file_get_contents($storage));
 
 // A worker that never invoked anything builds the client on its own: Factory::createJobClient().
 $jobClient = $provider->getJobClient();

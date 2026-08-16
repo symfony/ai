@@ -85,6 +85,29 @@ final class JobHandleTest extends TestCase
         new JobHandle('');
     }
 
+    public function testItSurvivesAStringRoundTrip()
+    {
+        $handle = new JobHandle('task-1', ['mime_type' => 'video/mp4'], 'minimax', 600);
+
+        $this->assertEquals($handle, JobHandle::fromString($handle->toString()));
+    }
+
+    public function testItRejectsAStringThatIsNotJson()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must be valid JSON');
+
+        JobHandle::fromString('not json');
+    }
+
+    public function testItRejectsAStringThatIsNotAnArray()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must decode to an array');
+
+        JobHandle::fromString('"task-1"');
+    }
+
     /**
      * @param array<string, mixed> $handle
      */
