@@ -31,7 +31,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "mcp/sdk": "^0.6|^0.7",
+        "mcp/sdk": "^0.6|^0.7|^0.8",
         "psr/log": "^2.0|^3.0",
         "symfony/ai-mate-composer-plugin": "^0.12",
         "symfony/config": "^5.4|^6.4|^7.3|^8.0",
