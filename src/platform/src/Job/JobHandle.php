@@ -160,6 +160,32 @@ final class JobHandle implements \JsonSerializable
     }
 
     /**
+     * The handle as a single string, for storage that holds one column rather than a structure.
+     */
+    public function toString(): string
+    {
+        return json_encode($this->toArray(), \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Rebuilds a handle from {@see toString()}.
+     */
+    public static function fromString(string $handle): self
+    {
+        try {
+            $decoded = json_decode($handle, true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            throw new InvalidArgumentException(\sprintf('A serialized job handle must be valid JSON: %s', $exception->getMessage()), previous: $exception);
+        }
+
+        if (!\is_array($decoded)) {
+            throw new InvalidArgumentException(\sprintf('A serialized job handle must decode to an array, "%s" given.', get_debug_type($decoded)));
+        }
+
+        return self::fromArray($decoded);
+    }
+
+    /**
      * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null}
      */
     public function jsonSerialize(): array

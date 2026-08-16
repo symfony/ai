@@ -1056,14 +1056,20 @@ The handle holds no connection and no client, only what is needed to ask the pro
 again, so it can be stored and picked up somewhere else entirely::
 
     // in the process that started the job
-    $repository->save($id, json_encode($handle));
+    $repository->save($handle->getId(), $handle->toString());
 
     // in a worker, possibly much later
-    $handle = JobHandle::fromArray(json_decode($repository->load($id), true));
+    $handle = JobHandle::fromString($repository->load($id));
 
     if ($jobClient->getStatus($handle)->is(JobStateCase::SUCCEEDED)) {
         $result = $jobClient->getResult($handle);
     }
+
+:method:`Symfony\\AI\\Platform\\Job\\JobHandle::toString` and its ``fromString`` counterpart cover
+storage that holds a single column; ``toArray()``/``fromArray()`` cover the structured case, and the
+handle is ``JsonSerializable`` so it also drops straight into a Messenger message. Note that the job
+identifier is the provider's, so an application storing handles of several providers keys them by
+provider and id rather than by id alone.
 
 The client resolving a job belongs to the provider that issued it, so a provider hands it out through
 :method:`Symfony\\AI\\Platform\\Job\\JobProviderInterface::getJobClient`, and a bridge builds one
