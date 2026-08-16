@@ -1,0 +1,52 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-06-01T12:11:38Z
+
+@OskarStark symfony/symfony#63781 RecorderHttpClient is the same idea at the same layer. As this PR would only be an improvement to the current test-setup we could postpone that OR merge this as something internal, use it in the bridges of this Repo and replace as soon as the RecorderHttpClient is landed (and we bump to this version).
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-15T17:36:05Z
+
+Rebased on main and green. I'd like to get this in soon — not for its own sake, but because it unblocks the bigger piece: the bridge tests are still built on hand-written fixtures that drift from what providers actually return, which is exactly where the result-converter bugs keep coming from. With a recorder at the HTTP boundary we can start refactoring the platform tests onto recorded payloads and have them exercise the real Contract → `ModelClient` → `ResultConverter` path.
+
+Explicitly interim: symfony/symfony#63781 (`RecorderHttpClient`) is the same idea at the same layer upstream, so once that lands and we bump the requirement we swap our recorder out for it. The tests written against cassettes stay.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-16T08:25:41Z
+
+one thing next to the @internal confusing here:
+with #2128 and #2129 we end up with
+* `InMemoryPlatform`
+* A set of `MockSomething` implementations
+* Recording on Provider
+* Recording on Http Level
+
+i'm afraid everything has its justification, but we should streamline the docs when to use what maybe - or do you catch something we should remove in this set of implementations?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-16T18:27:34Z
+
+Good question, and I think the honest answer is that all four are needed, but the docs never said why, which is exactly what made the set look redundant. They are not four takes on the same idea: each one cuts the pipeline at a different depth, and what a test covers is whatever stays above the cut.
+
+| tool | what it replaces | what still runs for real | the answer is |
+| --- | --- | --- | --- |
+| `InMemoryPlatform` | the whole `PlatformInterface` | nothing | written by hand |
+| `RecordingProvider` (#2129) | one `ProviderInterface` | `Platform`, routing, model catalog | recorded, as a `ResultInterface` |
+| `MockPlatformFactory` + `Mock*` | `ModelClient` and `ResultConverter` | `Platform`, routing, catalog, `Contract` | written by hand |
+| `CassetteHttpClient` (#2128) | the network, nothing else | `Contract`, `ModelClient`, `ResultConverter` | recorded, as raw bytes |
+
+So there are two axes, not one: how deep the cut sits, and where the answer comes from. That second axis is why the two recorders are not just "the mocks with extra steps": a hand written answer cannot drift-check itself, a recorded one can.
+
+What each one would cost us if it went away:
+
+* **`InMemoryPlatform`**: the most common case by far is an agent test that just needs the model to say something (`AgentTest`, `RunnerTest`, `StreamingAgentToolCallTest` all use it). Without it, those have to assemble a provider, a catalog and routing first, for a test that cares about none of it.
+* **`Mock*`**: it is the only one that can assert on what the platform *built*. `MockModelClient::getCalls()` is how you test tool option translation, merged model options and multi-provider routing. A cassette cannot fill that hole, because you would need a recorded live call per routing permutation, and routing bugs are not payload bugs.
+* **`RecordingProvider`**: for a test that only needs a realistic answer, the alternatives are hand writing it (tedious and drift-prone for `VectorResult` or `ObjectResult`) or dropping to the HTTP layer and caring about a bridge's wire format that the test has no business knowing about. It is also the only provider agnostic one: swap the provider behind it and the cassette shape still holds.
+* **`CassetteHttpClient`**: without it nothing exercises contract payloads, converters, error mapping and SSE framing against what a provider actually sends, which is where the bugs we keep fixing live.
+
+Where I do see real overlap, since you asked whether something should go: `InMemoryPlatform` and `MockPlatformFactory` sit closest together, both hand written and both above the wire, separated only by how much of the platform stays real. And to be fair about it, `Mock*` currently has no consumer in this repo besides its own tests, so its case rests on capability rather than on usage today. If we ever collapse two of these, that is the pair to look at, not the recorders. I would not do it in this PR though.
+
+On the docs point, you are right and that was the actual problem, so I pushed a short "which one do I pick" overview to the top of the *Testing Tools* section, ordering the tools by cut depth with a one line "use it when" each. It covers the three that exist today; #2129 slots its row in above `MockPlatformFactory` when it lands.
