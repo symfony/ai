@@ -1053,18 +1053,24 @@ result later. Those providers answer the invocation with a job identifier, so ``
     ])->asJob();
 
 The handle holds no connection and no client, only what is needed to ask the provider about that job
-again — so it can be stored and picked up somewhere else entirely::
+again, so it can be stored and picked up somewhere else entirely::
 
     // in the process that started the job
     $repository->save($id, json_encode($handle));
 
     // in a worker, possibly much later
     $handle = JobHandle::fromArray(json_decode($repository->load($id), true));
-    $jobClient = $platform->getJobClient($handle);
 
     if ($jobClient->getStatus($handle)->is(JobStateCase::SUCCEEDED)) {
         $result = $jobClient->getResult($handle);
     }
+
+The client resolving a job belongs to the provider that issued it, so a provider hands it out through
+:method:`Symfony\\AI\\Platform\\Job\\JobProviderInterface::getJobClient`, and a bridge builds one
+directly for a process that only resolves jobs and never invokes anything::
+
+    $jobClient = $provider->getJobClient();                 // the provider that started the job
+    $jobClient = MiniMaxFactory::createJobClient($apiKey);  // or straight from the bridge, in a worker
 
 :method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` performs exactly one request and
 never sleeps. To simply block until the job is done, hand it to a
@@ -1072,7 +1078,7 @@ never sleeps. To simply block until the job is done, hand it to a
 
     use Symfony\AI\Platform\Job\JobRunner;
 
-    $result = (new JobRunner())->wait($platform->getJobClient($handle), $handle);
+    $result = (new JobRunner())->wait($jobClient, $handle);
 
     $result->asFile('video.mp4');
 
@@ -1081,14 +1087,14 @@ thing ``invoke()`` returns, so finishing a job reads like any other invocation i
 you to narrow a bare ``ResultInterface`` yourself.
 
 How long the work takes and how long you are willing to wait for it are two different questions. The
-first is the provider's: a bridge that knows its timings — MiniMax video generation runs for minutes
-where speech synthesis takes seconds — states it on the handle, and the runner honours it, so a
+first is the provider's: a bridge that knows its timings (MiniMax video generation runs for minutes
+where speech synthesis takes seconds) states it on the handle, and the runner honours it, so a
 caller who knows nothing about the provider still waits the right amount.
 
 The second is yours, and it usually belongs to the call rather than to the runner: the same job may
 be given ten minutes in a worker and five seconds inside a web request. Say so per call, in seconds::
 
-    $result = $runner->wait($platform->getJobClient($handle), $handle, maxDuration: 5);
+    $result = $runner->wait($jobClient, $handle, maxDuration: 5);
 
 A budget passed to the runner's constructor applies to every job it waits for and sits between the
 two: it overrules what a job asks for, and a single call overrules it in turn.
@@ -1096,19 +1102,37 @@ two: it overrules what a job asks for, and a single call overrules it in turn.
 In a Symfony application a runner using the application clock is available as
 ``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It
 carries no budget of its own, so the same shared service serves a job finishing in seconds and one
-running for minutes::
+running for minutes. Each job-capable platform also registers its client as
+``ai.platform.job_client.<name>``, autowired by argument name::
 
-    public function __construct(private JobRunner $jobRunner)
-    {
+    public function __construct(
+        private JobRunner $jobRunner,
+        private JobClientInterface $minimaxJobClient,
+    ) {
     }
 
     public function __invoke(JobHandle $handle): void
     {
         // trust the job
-        $this->jobRunner->wait($this->platform->getJobClient($handle), $handle);
+        $this->jobRunner->wait($this->minimaxJobClient, $handle);
 
         // or bound it to what a request can afford
-        $this->jobRunner->wait($this->platform->getJobClient($handle), $handle, maxDuration: 5);
+        $this->jobRunner->wait($this->minimaxJobClient, $handle, maxDuration: 5);
+    }
+
+An application holding handles of several providers picks the client by the name the handle carries,
+from a locator over the ``ai.platform.job_client`` tag::
+
+    public function __construct(
+        #[AutowireLocator('ai.platform.job_client', indexAttribute: 'key')]
+        private ContainerInterface $jobClients,
+        private JobRunner $jobRunner,
+    ) {
+    }
+
+    public function __invoke(JobHandle $handle): void
+    {
+        $this->jobRunner->wait($this->jobClients->get($handle->getProvider()), $handle);
     }
 
 The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider

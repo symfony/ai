@@ -15,9 +15,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Job\JobClientInterface;
-use Symfony\AI\Platform\Job\JobHandle;
-use Symfony\AI\Platform\Job\JobPlatformInterface;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlatformInterface;
@@ -29,7 +26,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class FailoverPlatform implements PlatformInterface, JobPlatformInterface
+final class FailoverPlatform implements PlatformInterface
 {
     /**
      * @var \WeakMap<PlatformInterface, int>
@@ -60,28 +57,6 @@ final class FailoverPlatform implements PlatformInterface, JobPlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->do(static fn (PlatformInterface $platform): ModelCatalogInterface => $platform->getModelCatalog());
-    }
-
-    /**
-     * Deliberately not routed through {@see do()}: a handle belongs to the one platform that issued
-     * it, so failing over to another would ask a provider about a job it never started. The handle
-     * names its provider, so the platform that can resolve it is the one that recognizes that name.
-     */
-    public function getJobClient(JobHandle $handle): JobClientInterface
-    {
-        foreach ($this->platforms as $platform) {
-            if (!$platform instanceof JobPlatformInterface) {
-                continue;
-            }
-
-            try {
-                return $platform->getJobClient($handle);
-            } catch (InvalidArgumentException) {
-                // This platform does not know the handle's provider; try the next one.
-            }
-        }
-
-        throw new InvalidArgumentException(\sprintf('None of the failover platforms can resolve a job of provider "%s".', $handle->getProvider() ?? 'unknown'));
     }
 
     private function do(\Closure $func): DeferredResult|ModelCatalogInterface

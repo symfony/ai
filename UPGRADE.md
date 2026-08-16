@@ -416,9 +416,10 @@ Platform
    +
    -$result = $platform->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6]);
    -$result->asFile('video.mp4');
-   +$handle = $platform->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6])->asJob();
+   +$provider = MiniMaxFactory::createProvider($apiKey);
+   +$handle = $provider->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6])->asJob();
    +
-   +$result = (new JobRunner())->wait($platform->getJobClient($handle), $handle);
+   +$result = (new JobRunner())->wait($provider->getJobClient(), $handle);
    +$result->asFile('video.mp4');
    ```
 
@@ -426,8 +427,9 @@ Platform
    than baked into the bridge, so waiting for a job needs no knowledge of the provider's timings.
    Pass `maxDuration` (in seconds) to `wait()` to bound a single call instead, for instance inside a
    web request. A job that does not finish in time raises a `JobTimeoutException` that carries the
-   handle, so the job can be picked up later instead of being lost — including from another process,
-   via `Platform::getJobClient($handle)`.
+   handle, so the job can be picked up later instead of being lost, including from another process:
+   the client resolving it comes from `ProviderInterface::getJobClient()`, or from
+   `Bridge\MiniMax\Factory::createJobClient()` in a worker that only resolves jobs.
 
    Accordingly, `Bridge\MiniMax\MiniMaxResultConverter` no longer takes an HTTP client, API key,
    endpoint or clock; polling moved to the new `Bridge\MiniMax\MiniMaxJobClient`. Code building the

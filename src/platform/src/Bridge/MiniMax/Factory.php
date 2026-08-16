@@ -48,8 +48,20 @@ final class Factory
             $modelCatalog,
             $contract ?? MiniMaxContract::create(),
             $eventDispatcher,
-            new MiniMaxJobClient($httpClient, $apiKey, $endpoint),
+            self::createJobClient($apiKey, $httpClient, $endpoint),
         );
+    }
+
+    /**
+     * The client resolving the jobs this bridge hands out, for a caller that holds a handle but not
+     * the provider that issued it - typically a worker picking up a stored handle.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        string $endpoint = 'https://api.minimax.io/v1',
+    ): MiniMaxJobClient {
+        return new MiniMaxJobClient($httpClient ?? new EventSourceHttpClient(), $apiKey, $endpoint);
     }
 
     /**

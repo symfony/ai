@@ -11,10 +11,6 @@
 
 namespace Symfony\AI\Platform;
 
-use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Job\JobClientInterface;
-use Symfony\AI\Platform\Job\JobHandle;
-use Symfony\AI\Platform\Job\JobPlatformInterface;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -33,7 +29,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *     result: DeferredResult,
  * }
  */
-final class TraceablePlatform implements PlatformInterface, JobPlatformInterface, ResetInterface
+final class TraceablePlatform implements PlatformInterface, ResetInterface
 {
     /**
      * @var PlatformCallData[]
@@ -75,15 +71,6 @@ final class TraceablePlatform implements PlatformInterface, JobPlatformInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->platform->getModelCatalog();
-    }
-
-    public function getJobClient(JobHandle $handle): JobClientInterface
-    {
-        if (!$this->platform instanceof JobPlatformInterface) {
-            throw new InvalidArgumentException(\sprintf('The traced platform "%s" does not run asynchronous jobs.', $this->platform::class));
-        }
-
-        return $this->platform->getJobClient($handle);
     }
 
     /**
