@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema\Subject;
 
+use Symfony\AI\Platform\Contract\JsonSchema\SchemaNameResolver;
+
 /**
  * Metadata for JSON schema property.
  */
@@ -22,9 +24,33 @@ final class PropertySubject
     ) {
     }
 
+    /**
+     * The PHP property or parameter name.
+     */
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * The key of this property in the generated JSON schema, which is the PHP name
+     * unless it is renamed with `#[Schema(name: '...')]`.
+     */
+    public function getSchemaName(): string
+    {
+        $name = SchemaNameResolver::forReflector($this->reflector, $this->name);
+        if ($name !== $this->name) {
+            return $name;
+        }
+
+        // The same property is described by several reflectors (the property itself, the constructor
+        // parameter writing it), and the attribute sits on only one of them.
+        $class = $this->getPropertyClass();
+        if (null === $class) {
+            return $this->name;
+        }
+
+        return SchemaNameResolver::forClass($class)[$this->name] ?? $this->name;
     }
 
     public function getReflector(): \ReflectionParameter|\ReflectionMethod|\ReflectionProperty
@@ -51,5 +77,29 @@ final class PropertySubject
     public function getAttributes(string $class): array
     {
         return array_map(static fn (\ReflectionAttribute $attribute) => $attribute->newInstance(), $this->reflector->getAttributes($class));
+    }
+
+    /**
+     * The class this subject describes a property of, or null if it does not describe one,
+     * e.g. for the parameters of a tool method.
+     *
+     * @return class-string|null
+     */
+    private function getPropertyClass(): ?string
+    {
+        if (!$this->reflector instanceof \ReflectionParameter) {
+            return $this->reflector->getDeclaringClass()->name;
+        }
+
+        $function = $this->reflector->getDeclaringFunction();
+        if (!$function instanceof \ReflectionMethod) {
+            return null;
+        }
+
+        if (!SchemaNameResolver::describesProperty($function->name)) {
+            return null;
+        }
+
+        return $function->getDeclaringClass()->name;
     }
 }

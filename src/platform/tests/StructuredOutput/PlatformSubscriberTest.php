@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -28,6 +29,7 @@ use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\CircuitMetadata;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoningWithAttributes;
@@ -39,6 +41,7 @@ use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\HumanReadableTimeUnion;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnixTimestampUnion;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\WorkoutPlan;
 
 final class PlatformSubscriberTest extends TestCase
 {
@@ -476,5 +479,34 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame(3500000, $city1->population);
         $this->assertSame('Paris', $city2->name);
         $this->assertSame(2161000, $city2->population);
+    }
+
+    public function testProcessOutputWithRenamedSchemaKeys()
+    {
+        $schema = (new Factory())->buildProperties(WorkoutPlan::class);
+
+        $this->assertSame(['plan_title', 'circuits'], array_keys($schema['properties']));
+        $this->assertStringContainsString('"rest_between_rounds"', json_encode($schema));
+
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), ['response_format' => WorkoutPlan::class]);
+        $processor->processInput($invocationEvent);
+
+        $converter = new PlainConverter(new TextResult('{"plan_title": "HIIT", "circuits": [{"rest_between_rounds": 30, "rounds": 4}]}'));
+        $deferred = new DeferredResult($converter, new InMemoryRawResult());
+        $resultEvent = new ResultEvent($model, $deferred, $invocationEvent->getOptions());
+
+        $processor->processResult($resultEvent);
+
+        /** @var WorkoutPlan $structure */
+        $structure = $resultEvent->getDeferredResult()->asObject();
+        $this->assertInstanceOf(WorkoutPlan::class, $structure);
+        $this->assertSame('HIIT', $structure->planTitle);
+        $this->assertCount(1, $structure->circuits);
+        $this->assertInstanceOf(CircuitMetadata::class, $structure->circuits[0]);
+        $this->assertSame(30, $structure->circuits[0]->restBetweenRounds);
+        $this->assertSame(4, $structure->circuits[0]->rounds);
     }
 }

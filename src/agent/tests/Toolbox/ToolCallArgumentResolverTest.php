@@ -20,6 +20,8 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolObjectFloat;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolScalarFloat;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithNullableClass;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithRenamedParameter;
+use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
@@ -126,5 +128,28 @@ class ToolCallArgumentResolverTest extends TestCase
         $toolCall = new ToolCall('invocation', 'tool_with_nullable_class', $toolParams);
 
         $this->assertEquals($expected, $resolver->resolveArguments($metadata, $toolCall));
+    }
+
+    public function testResolveRenamedArgument()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolWithRenamedParameter::class, '__invoke'), 'tool_with_renamed_parameter', 'test');
+        $toolCall = new ToolCall('invocation', 'tool_with_renamed_parameter', ['search_term' => 'symfony']);
+
+        $this->assertSame(['searchTerm' => 'symfony'], $resolver->resolveArguments($metadata, $toolCall));
+    }
+
+    public function testResolveRenamedArgumentIsMandatory()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolWithRenamedParameter::class, '__invoke'), 'tool_with_renamed_parameter', 'test');
+        $toolCall = new ToolCall('invocation', 'tool_with_renamed_parameter', ['searchTerm' => 'symfony']);
+
+        $this->expectException(ToolException::class);
+        $this->expectExceptionMessage('Parameter "search_term" is mandatory for tool "tool_with_renamed_parameter".');
+
+        $resolver->resolveArguments($metadata, $toolCall);
     }
 }
