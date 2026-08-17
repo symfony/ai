@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-16T20:42:04Z
+
+Tested this locally and the fix works end to end: with `gpt-5?reasoning.effort=medium` the option now reaches the request payload unchanged, and both option 1 and option 2 from #1437 are covered. I also probed the parser against `parse_str()` for nested arrays, `%2E`, periods in values and repeated names, no behaviour changes beyond the intended one.
+
+One note for later: `ModelOptionsParser` lands as new public API in a bug fix PR, and it really only exists for the two call sites. It should probably carry `@internal`. Nothing to change here, we will add that in a follow-up PR right after merge so this one stays a clean bug fix.
