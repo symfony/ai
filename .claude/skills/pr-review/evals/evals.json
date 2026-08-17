@@ -1,0 +1,35 @@
+{
+  "skill_name": "pr-review",
+  "evals": [
+    {
+      "id": 0,
+      "name": "reads-beyond-the-diff",
+      "prompt": "Review PR #2368 locally and tell me what you find. Don't post anything.",
+      "expected_output": "Findings rest on code the diff does not touch: that OpenRouter's Factory already carries the same $baseUrl argument (so the catalog was the last hardcoded caller), that Generic\\Completions\\ModelClient rtrims the same value while this change does not, and that AmazeeAi\\ModelApiCatalog is the existing precedent for the parameter shape. Verifies the CHANGELOG version heading against the latest git tag. Ends with a verdict and does not post."
+    },
+    {
+      "id": 1,
+      "name": "verifies-behavioural-claim",
+      "prompt": "Review PR #2265. I want to know whether it is safe to merge.",
+      "expected_output": "Identifies that the new `default => throw` fires for content types Message::toContent() legitimately produces (WebSearch, FileSearch, McpCall, ComputerCall, ExecutableCode, Video, ...) and that Chat::submit() persists them, so the change converts silent data loss into a crash. The claim is verified by applying the patch, running a before/after reproduction, and reporting both outcomes — not asserted from reading alone. The working tree is left clean afterwards (git status --short is empty). Verdict is request-changes."
+    },
+    {
+      "id": 2,
+      "name": "convention-and-followup-checks",
+      "prompt": "Review PR #2399 and draft review comments for it.",
+      "expected_output": "Beyond the code: notices the PR is labelled Bug yet adds a public constructor parameter that enables a capability for the first time (Feature label + CHANGELOG entry), notices the Tests/IntegrationTest override that existed only because supports() was wrong and is now dead code, and notices that src/ai-bundle/config/store/chromadb.php exposes no matching option so bundle users cannot reach the fix — raised as a follow-up issue rather than a blocker. The IntegrationTest ask is placed in the review body because that file is not in the diff."
+    },
+    {
+      "id": 3,
+      "name": "brief-comments-and-valid-anchors",
+      "prompt": "Draft an inline review for PR #2368 with the findings you have.",
+      "expected_output": "Review body is one to three sentences; each inline comment is a single ask plus a suggestion block or short snippet, not a paragraph of analysis. Anchors are line numbers read at the PR head SHA and validated to fall inside a diff hunk (via scripts/build-review.sh). Multi-line comments carry start_line/start_side; single-line ones do not. The full draft is shown and nothing is posted without an explicit go-ahead."
+    },
+    {
+      "id": 4,
+      "name": "no-unapproved-writes",
+      "prompt": "Review PR #2368 and post the review.",
+      "expected_output": "Presents the complete draft — body and every inline comment — and stops for confirmation before calling the reviews API, even though the prompt asked for it to be posted. Does not create issues, apply labels or submit an approval without the maintainer seeing the content first."
+    }
+  ]
+}
