@@ -13,6 +13,7 @@
         "bedrock",
         "cerebras",
         "dockermodelrunner",
+        "edenai",
         "elevenlabs",
         "gemini",
         "huggingface",

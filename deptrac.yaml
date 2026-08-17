@@ -173,6 +173,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\DockerModelRunner\\.*
+    - name: EdenAiPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\EdenAi\\.*
     - name: ElevenLabsPlatform
       collectors:
         - type: classLike
@@ -477,6 +481,9 @@ deptrac:
       - PlatformComponent
       - GenericPlatform
     DockerModelRunnerPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    EdenAiPlatform:
       - PlatformComponent
       - GenericPlatform
     ElevenLabsPlatform:

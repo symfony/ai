@@ -42,6 +42,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/deepgram'))
                     ->append($import('platform/deepseek'))
                     ->append($import('platform/dockermodelrunner'))
+                    ->append($import('platform/edenai'))
                     ->append($import('platform/elevenlabs'))
                     ->append($import('platform/failover'))
                     ->append($import('platform/gemini'))

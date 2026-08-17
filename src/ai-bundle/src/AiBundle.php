@@ -67,6 +67,7 @@ use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
 use Symfony\AI\Platform\Bridge\Deepgram\Factory as DeepgramFactory;
 use Symfony\AI\Platform\Bridge\DeepSeek\Factory as DeepSeekFactory;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Factory as DockerModelRunnerFactory;
+use Symfony\AI\Platform\Bridge\EdenAi\Factory as EdenAiFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
@@ -893,6 +894,30 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'openrouter']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('edenai' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-eden-ai-platform', EdenAiFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Eden AI platform configuration requires "symfony/ai-eden-ai-platform" package. Try running "composer require symfony/ai-eden-ai-platform".');
+            }
+
+            $platformId = 'ai.platform.edenai';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(EdenAiFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.edenai'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'edenai']);
 
             $container->setDefinition($platformId, $definition);
 

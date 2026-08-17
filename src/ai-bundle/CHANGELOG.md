@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add `edenai` platform configuration for the Eden AI bridge
+
 0.11
 ----
 

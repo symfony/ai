@@ -31,6 +31,7 @@
         "symfony/ai-deepgram-platform": "^0.12",
         "symfony/ai-docker-model-runner-platform": "^0.12",
         "symfony/ai-doctrine-message-store": "^0.12",
+        "symfony/ai-eden-ai-platform": "^0.12",
         "symfony/ai-elasticsearch-store": "^0.12",
         "symfony/ai-eleven-labs-platform": "^0.12",
         "symfony/ai-failover-platform": "^0.12",
