@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Event\PostQueryEvent;
 use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -283,6 +284,187 @@ final class RetrieverTest extends TestCase
 
         $retriever = new Retriever($store, $vectorizer);
         $results = iterator_to_array($retriever->retrieve('test query', ['semanticRatio' => 0.7]));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrievePassesPlatformOptionsToVectorizer()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with('test query', ['input_type' => 'search_query'])
+            ->willReturn(new Vector([0.2, 0.3, 0.4]));
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, false],
+                [HybridQuery::class, false],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with($this->isInstanceOf(VectorQuery::class), ['maxItems' => 5])
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query', [
+            'maxItems' => 5,
+            'platform_options' => ['input_type' => 'search_query'],
+        ]));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrievePassesPlatformOptionsToVectorizerForHybridQuery()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with('test query', ['input_type' => 'search_query'])
+            ->willReturn(new Vector([0.2, 0.3, 0.4]));
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, true],
+                [HybridQuery::class, true],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->with($this->isInstanceOf(HybridQuery::class), ['semanticRatio' => 0.5])
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query', [
+            'semanticRatio' => 0.5,
+            'platform_options' => ['input_type' => 'search_query'],
+        ]));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveDoesNotPassStoreOptionsToVectorizer()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with('test query', [])
+            ->willReturn(new Vector([0.2, 0.3, 0.4]));
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, false],
+                [HybridQuery::class, false],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query', ['maxItems' => 5]));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveWithPreQueryEventCanSetPlatformOptions()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->expects($this->once())
+            ->method('vectorize')
+            ->with('test query', ['input_type' => 'search_query'])
+            ->willReturn(new Vector([0.2, 0.3, 0.4]));
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, false],
+                [HybridQuery::class, false],
+            ]);
+
+        $store->expects($this->once())
+            ->method('query')
+            ->willReturn([$document]);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')
+            ->willReturnCallback(static function (object $event) {
+                if ($event instanceof PreQueryEvent) {
+                    $event->setOptions(['platform_options' => ['input_type' => 'search_query']]);
+                }
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, $vectorizer, $eventDispatcher);
+        $results = iterator_to_array($retriever->retrieve('test query'));
+
+        $this->assertCount(1, $results);
+    }
+
+    public function testRetrieveDoesNotPassPlatformOptionsToStore()
+    {
+        $document = new VectorDocument(
+            Uuid::v4(),
+            new Vector([0.1, 0.2, 0.3]),
+            new Metadata(['title' => 'Test Document']),
+        );
+
+        $vectorizer = $this->createMock(VectorizerInterface::class);
+        $vectorizer->method('vectorize')
+            ->willReturn(new Vector([0.2, 0.3, 0.4]));
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('supports')
+            ->willReturnMap([
+                [VectorQuery::class, true],
+                [TextQuery::class, false],
+                [HybridQuery::class, false],
+            ]);
+
+        // Stores merging their options into the query payload (e.g. the MongoDB bridge)
+        // would send `platform_options` to the vector database.
+        $store->expects($this->once())
+            ->method('query')
+            ->with($this->isInstanceOf(VectorQuery::class), [])
+            ->willReturn([$document]);
+
+        $retriever = new Retriever($store, $vectorizer);
+        $results = iterator_to_array($retriever->retrieve('test query', [
+            'platform_options' => ['input_type' => 'search_query'],
+        ]));
 
         $this->assertCount(1, $results);
     }
