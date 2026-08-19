@@ -25,6 +25,8 @@ CHANGELOG
  * Allow Symfony profiler capabilities (`ProfilerResourceTemplate` and `ProfilerTool`) to be instantiated without a `ProfilerDataProvider`, throwing a clear `RuntimeException` when invoked in workspaces without profiler support
  * Add `--ignore-missing-file` option to the `discover` command that exits successfully without doing any work when `mate/extensions.php` does not exist (intended for unconditional invocation from Composer scripts wired by the Symfony Flex recipe)
  * Make `json-input` argument optional in `mcp:tools:call` command (defaults to `{}`)
+ * Add Agent Skills (`SKILL.md`) to the Symfony bridge — `symfony-profiler-debugging` and `symfony-container-introspection` — colocated with the tools they orchestrate, anticipating the MCP Skills extension (SEP-2640)
+ * Restructure the Symfony bridge `INSTRUCTIONS.md` into a thin tool overview that points to the new skills for the how-to
 
 0.7
 ---
