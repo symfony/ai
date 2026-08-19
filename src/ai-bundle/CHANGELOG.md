@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add support for model overrides per platform when using `Failover` platform
+
 0.11
 ----
 
