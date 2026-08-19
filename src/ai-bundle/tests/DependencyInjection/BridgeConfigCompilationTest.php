@@ -296,6 +296,8 @@ class BridgeConfigCompilationTest extends TestCase
      */
     public static function providePlatformConfigs(): iterable
     {
+        yield 'acp' => ['acp', ['command' => 'opencode acp'], 'ai.platform.acp'];
+        yield 'acp_socket' => ['acp', ['transport' => 'socket', 'host' => '127.0.0.1', 'port' => 3000], 'ai.platform.acp'];
         yield 'albert' => ['albert', ['api_key' => 'k', 'base_url' => 'https://albert.example.com'], 'ai.platform.albert'];
         yield 'amazeeai' => ['amazeeai', ['api_key' => 'k', 'base_url' => 'https://amazeeai.example.com'], 'ai.platform.amazeeai'];
         yield 'anthropic' => ['anthropic', ['api_key' => 'k'], 'ai.platform.anthropic'];

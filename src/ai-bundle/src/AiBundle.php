@@ -52,6 +52,7 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\Acp\Factory as AcpFactory;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
@@ -418,6 +419,37 @@ final class AiBundle extends AbstractBundle
      */
     private function processPlatformConfig(string $type, array $platform, ContainerBuilder $container): void
     {
+        if ('acp' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-acp-platform', AcpFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('ACP platform configuration requires "symfony/ai-acp-platform" package. Try running "composer require symfony/ai-acp-platform".');
+            }
+
+            $platformId = 'ai.platform.acp';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(AcpFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['name'],
+                    $platform['command'] ?? null,
+                    $platform['working_directory'] ?? null,
+                    $platform['environment'],
+                    new Reference(LoggerInterface::class, ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Definition('Symfony\\AI\\Platform\\Bridge\\Acp\\ModelCatalog'),
+                    null,
+                    new Reference('event_dispatcher'),
+                    null,
+                    $platform['transport'],
+                    $platform['host'] ?? null,
+                    $platform['port'] ?? null,
+                ])
+                ->addTag('ai.platform', ['name' => 'acp']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
         if ('albert' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-albert-platform', AlbertFactory::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Albert platform configuration requires "symfony/ai-albert-platform" package. Try running "composer require symfony/ai-albert-platform".');
