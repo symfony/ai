@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-08-18T06:41:13Z
+
+Thanks @wachterjohannes, especially for verifying the behaviour against the branch. You're right that the throw traded silent loss for a crash on live conversations, wrong trade. Pushed:
+
+- both assistant paths now delegate to `normalizeContentParts()`/`denormalizeContentParts()`, so the user and assistant handling can't drift apart again;
+- unknown types (`WebSearch`, `McpCall`, ...) are skipped like on `main` instead of throwing;
+- `Video::class` added to both shared helpers (nice catch);
+- new tests: a mixed `Text` + `Image` + `ToolCall` + `ImageUrl` ordering round-trip, and a `WebSearch` part being skipped while the surrounding texts survive.
+
+---------------------------------------------------------------------------
+
+by Amoifr at 2026-08-19T08:09:34Z
+
+Thanks @wachterjohannes for the thorough double-check, running the revision locally before approving is above and beyond. The delegation to shared helpers was your call and it made the fix better: one code path, no drift. Much appreciated!
