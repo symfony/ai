@@ -1,7 +1,7 @@
 # Posting an inline review
 
 Mechanics for turning drafted comments into a GitHub review with correctly
-anchored inline comments. This is the fiddly part — get the anchors wrong and
+anchored inline comments. This is the fiddly part, get the anchors wrong and
 the API answers `422 Unprocessable Entity` with little explanation.
 
 ## The anchoring rules
@@ -24,7 +24,7 @@ gh pr view <N> --json headRefOid --jq .headRefOid
 ```
 
 Use this same SHA as `commit_id` in the payload. If the author pushes between
-drafting and posting, re-resolve and re-check the anchors — line numbers move.
+drafting and posting, re-resolve and re-check the anchors, line numbers move.
 
 ## 2. Read line numbers at that SHA
 
@@ -33,7 +33,7 @@ gh api "repos/<owner>/<repo>/contents/<path>?ref=<sha>" --jq '.content' \
   | base64 -d | grep -n "" | sed -n '<from>,<to>p'
 ```
 
-Quote the URL — it contains `?`, and zsh will otherwise try to glob it and
+Quote the URL, it contains `?`, and zsh will otherwise try to glob it and
 fail with "no matches found".
 
 `grep -n ""` numbers every line including blanks, which is what you want;
@@ -56,7 +56,7 @@ payload with a bad anchor.
 ## 4. Assemble the payload
 
 Always build the JSON with `jq --rawfile` from markdown files on disk. Comment
-bodies contain backticks, newlines and fenced code — hand-escaping them into a
+bodies contain backticks, newlines and fenced code, hand-escaping them into a
 JSON string is how suggestion blocks get mangled.
 
 ```bash
@@ -73,11 +73,11 @@ jq -n \
   }' > review.json
 ```
 
-Single-line comments take `line` and `side` only — omit `start_line` and
+Single-line comments take `line` and `side` only, omit `start_line` and
 `start_side` entirely rather than setting them equal to `line`.
 
 `event` is one of `COMMENT`, `REQUEST_CHANGES`, `APPROVE`. Omitting it creates
-a *pending* review that is not visible until submitted separately — always set
+a *pending* review that is not visible until submitted separately, always set
 it explicitly.
 
 ## 5. Suggestion blocks
@@ -118,6 +118,6 @@ of the file, so confirm rather than assume.
 |---|---|
 | `line must be part of the diff` | Anchor outside every hunk, or file not in the diff |
 | `start_line must precede line` | Range inverted |
-| `commit_id is not a valid commit` | Stale SHA — author pushed since you drafted |
+| `commit_id is not a valid commit` | Stale SHA, author pushed since you drafted |
 | Comment lands at line 1 | Anchor was unplaceable and got relocated |
 | Suggestion renders as plain text | Body was hand-escaped into JSON and lost its newlines |

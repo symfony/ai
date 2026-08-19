@@ -72,7 +72,7 @@ hunk_ranges() {
 COMMENTS_JSON="[]"
 
 for anchor in "${ANCHORS[@]}"; do
-    # path:range:file — the path may not contain ':', the range is N or N-M
+    # path:range:file, the path may not contain ':', the range is N or N-M
     IFS=':' read -r path range cfile <<< "$anchor"
     [[ -n "$path" && -n "$range" && -n "$cfile" ]] \
         || die "malformed --comment (want path:line[-line]:file): $anchor"
