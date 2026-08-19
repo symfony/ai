@@ -41,6 +41,40 @@ AI Bundle
 Platform
 --------
 
+ * The MiniMax bridge no longer blocks inside its result converter while an asynchronous task runs.
+   Video generation and asynchronous speech synthesis (`async: true`) now return a `Result\JobResult`
+   carrying a serializable `Job\JobHandle`, and waiting for the job became explicit. Reading the
+   result directly through `asBinary()`/`asFile()` therefore throws an `UnexpectedResultTypeException`:
+
+   ```diff
+   +use Symfony\AI\Platform\Job\JobRunner;
+   +
+   -$result = $platform->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6]);
+   -$result->asFile('video.mp4');
+   +$provider = MiniMaxFactory::createProvider($apiKey);
+   +$handle = $provider->invoke('MiniMax-Hailuo-02', $prompt, ['duration' => 6])->asJob();
+   +
+   +$result = (new JobRunner())->wait($provider->getJobClient(), $handle);
+   +$result->asFile('video.mp4');
+   ```
+
+   The former budgets — 120 seconds for audio, 600 for video — are now stated on the handle rather
+   than baked into the bridge, so waiting for a job needs no knowledge of the provider's timings.
+   Pass `maxDuration` (in seconds) to `wait()` to bound a single call instead, for instance inside a
+   web request. A job that does not finish in time raises a `JobTimeoutException` that carries the
+   handle, so the job can be picked up later instead of being lost, including from another process:
+   the client resolving it comes from `ProviderInterface::getJobClient()`, or from
+   `Bridge\MiniMax\Factory::createJobClient()` in a worker that only resolves jobs.
+
+   Accordingly, `Bridge\MiniMax\MiniMaxResultConverter` no longer takes an HTTP client, API key,
+   endpoint or clock; polling moved to the new `Bridge\MiniMax\MiniMaxJobClient`. Code building the
+   bridge through `Bridge\MiniMax\Factory` is unaffected.
+
+   ```diff
+   -$converter = new MiniMaxResultConverter($httpClient, $apiKey, $endpoint, $clock);
+   +$converter = new MiniMaxResultConverter();
+   ```
+
  * `Result\Stream\ListenerInterface` gained an `onError()` method, dispatched with the new
    `Result\Stream\ErrorEvent`. Listeners not extending
    `AbstractStreamListener` must add the method:

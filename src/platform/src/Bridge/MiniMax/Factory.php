@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\MiniMax;
 
 use Symfony\AI\Platform\Bridge\MiniMax\Contract\MiniMaxContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Job\JobProviderInterface;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\Platform;
@@ -28,6 +29,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class Factory
 {
     /**
+     * The intersection is part of the contract: this bridge answers some invocations with a job, so
+     * the provider it builds always hands out the client resolving them.
+     *
      * @param non-empty-string $name
      */
     public static function createProvider(
@@ -38,17 +42,30 @@ final class Factory
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'minimax',
-    ): ProviderInterface {
+    ): ProviderInterface&JobProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Provider(
             $name,
             [new MiniMaxClient($httpClient, $apiKey, $endpoint)],
-            [new MiniMaxResultConverter($httpClient, $apiKey, $endpoint)],
+            [new MiniMaxResultConverter()],
             $modelCatalog,
             $contract ?? MiniMaxContract::create(),
             $eventDispatcher,
+            self::createJobClient($apiKey, $httpClient, $endpoint),
         );
+    }
+
+    /**
+     * The client resolving the jobs this bridge hands out, for a caller that holds a handle but not
+     * the provider that issued it - typically a worker picking up a stored handle.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        string $endpoint = 'https://api.minimax.io/v1',
+    ): MiniMaxJobClient {
+        return new MiniMaxJobClient($httpClient ?? new EventSourceHttpClient(), $apiKey, $endpoint);
     }
 
     /**
