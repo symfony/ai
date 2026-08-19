@@ -198,8 +198,16 @@ Then compress hard. The posted review is not the chat answer.
 - Put anything that has no anchor line (a request about a file not in the
   diff, a label question, a follow-up you'll open) in the **body**, as a short
   bullet.
-- Choose the event honestly: `COMMENT` for nits, `REQUEST_CHANGES` when
-  something would regress behaviour if merged, `APPROVE` when you mean it.
+- **Never `APPROVE` a review that asks for anything.** If any comment requests a
+  change, however small, the event is `COMMENT` for nits or `REQUEST_CHANGES`
+  when merging as-is would be wrong. `APPROVE` is only for a review with no
+  open ask. An approval plus a request tells the contributor both that the PR
+  is done and that it is not, and lets it merge with the ask unaddressed.
+- **No test counts.** Name the suites that ran and that they passed ("platform
+  and agent suites green, PHPStan clean"), never "824 tests, 1761 assertions".
+  The numbers are noise to the contributor and go stale immediately. Exact
+  counts belong in the chat answer, and a named failing test is fine when the
+  failure is itself the finding.
 
 Then build the payload with `scripts/build-review.sh`, which resolves the head
 SHA and refuses any anchor that does not sit inside a diff hunk:
