@@ -11,7 +11,7 @@
       "id": 1,
       "name": "complexity-diverges-from-size",
       "prompt": "Triage the open PRs. For each one you recommend, tell me how complex it is to review.",
-      "expected_output": "Complexity is rated Low/Medium/High with a one-line reason naming the dominant signal (blast radius, BC surface, semantic depth, verification cost, test signal) — not derived from diff size alone. A large docs/cookbook or generated model-catalog PR should be rated Low despite its line count; a small change to serialization, streaming or a cross-bridge contract should be rated Medium or High despite being small. Each recommendation carries a rough review-time estimate."
+      "expected_output": "Complexity is rated Low/Medium/High with a one-line reason naming the dominant signal (blast radius, BC surface, semantic depth, verification cost, test signal), not derived from diff size alone. A large docs/cookbook or generated model-catalog PR should be rated Low despite its line count; a small change to serialization, streaming or a cross-bridge contract should be rated Medium or High despite being small. Each recommendation carries a rough review-time estimate."
     },
     {
       "id": 2,

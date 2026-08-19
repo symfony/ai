@@ -1,7 +1,7 @@
 ---
 name: pr-review
 description: >
-  Reviews a pull request on the Symfony AI monorepo locally — reads the diff
+  Reviews a pull request on the Symfony AI monorepo locally, reads the diff
   in the context of the surrounding code, verifies behavioural findings by
   applying the patch and running it, checks the repo's CHANGELOG/UPGRADE/label
   conventions, then drafts a GitHub review with inline comments and (after
@@ -14,27 +14,29 @@ description: >
 # PR Review
 
 You review a pull request for a maintainer of the Symfony AI monorepo. The
-output is either a set of findings in chat, or a posted GitHub review — never
+output is either a set of findings in chat, or a posted GitHub review, never
 the second without the first.
 
-Four non-negotiable behaviors:
+Five non-negotiable behaviors:
 
-1. **Read beyond the diff.** Most real findings in this repo come from code
-   the diff does not touch. See [step 2](#2-read-around-the-diff).
-2. **Verify behavioural claims by running them.** If a finding is "this now
+1. **Read the existing discussion before you form an opinion.** It frequently
+   decides what the review should say. See [step 2](#2-read-what-has-already-been-said).
+2. **Read beyond the diff.** Most real findings in this repo come from code
+   the diff does not touch. See [step 3](#3-read-around-the-diff).
+3. **Verify behavioural claims by running them.** If a finding is "this now
    throws / drops data / changes behaviour", prove it before writing it down.
-   See [step 3](#3-verify-empirically).
-3. **Draft, show, then post.** Posting is outward-facing and happens under the
+   See [step 4](#4-verify-empirically).
+4. **Draft, show, then post.** Posting is outward-facing and happens under the
    maintainer's GitHub account. Always present the full draft and wait for an
    explicit go-ahead.
-4. **Keep comments brief and precise.** The analysis depth belongs in the chat
+5. **Keep comments brief and precise.** The analysis depth belongs in the chat
    answer; the posted comment is the ask plus the evidence, and nothing else.
 
 ## 1. Establish the target
 
 - **PR number given** (`/pr-review 2368`): work from `gh pr diff 2368` and
   `gh pr view 2368 --json headRefOid,baseRefName,author,labels,isDraft`.
-  Record the head SHA — you need it later for anchoring and it must match at
+  Record the head SHA, you need it later for anchoring and it must match at
   post time.
 - **No argument**: review the current branch against the merge-base with
   `main`.
@@ -42,12 +44,50 @@ Four non-negotiable behaviors:
 
 Save the diff to a scratch file. You will read it more than once.
 
-## 2. Read around the diff
+## 2. Read what has already been said
+
+Do this **before** forming any opinion, not after drafting one. A PR in this repo
+often carries months of discussion, and it routinely decides what the review
+should say:
+
+```bash
+gh api repos/<owner>/<repo>/pulls/<N>/reviews          # formal reviews
+gh api repos/<owner>/<repo>/pulls/<N>/comments         # inline review comments
+gh api repos/<owner>/<repo>/issues/<N>/comments        # the discussion thread
+gh pr view <N> --json body                             # the description and its template table
+```
+
+Note that the discussion thread is a separate endpoint from the reviews, and on
+older PRs it is usually where the substance lives. A PR can show zero reviews and
+still have a settled design decision in its comments.
+
+What to extract:
+
+- **Decisions already taken.** If maintainers and contributors agreed on an
+  approach, a finding that re-litigates it is noise. Something you were about to
+  call a blocker may already be an accepted trade-off with a documentation task
+  attached.
+- **Requests still outstanding.** An unanswered ask from another maintainer is
+  worth restating with your review; it carries more weight than a fresh one.
+- **Things already explained.** Contributors often diagnose their own CI failures
+  or justify a decision in a comment. Repeating the question wastes their time and
+  signals the review was not read.
+- **How long they have waited, and who they pinged.** If the ball sat with the
+  maintainers for months, say so first.
+- **The description's template table**, checked against what the diff actually
+  does (a `Bug fix? no` / `New feature? no` PR that edits a `CHANGELOG.md` is
+  inconsistent).
+
+Say explicitly in the review which existing points you are agreeing with,
+extending, or reversing. Reversing another maintainer's call is fine, but do it
+openly and give the reason.
+
+## 3. Read around the diff
 
 The diff tells you what changed; it rarely tells you whether it is right.
 Before forming any finding, pull the surrounding context:
 
-- **The whole file** the change lives in — not just the hunks. Imports,
+- **The whole file** the change lives in, not just the hunks. Imports,
   sibling methods and existing helpers routinely decide whether a change is
   correct or redundant.
 - **The sibling implementations.** Bridges and stores follow strong
@@ -74,12 +114,12 @@ Questions that reliably find something in this repo:
   it.
 - Is a new component-level capability reachable from the AI Bundle? A new
   constructor argument with no matching node in
-  `src/ai-bundle/config/**` is unreachable from YAML — usually a follow-up
+  `src/ai-bundle/config/**` is unreachable from YAML, usually a follow-up
   issue, not a blocker.
 - Is the URL/path/option handled the same way as its sibling consumers
   (trailing slashes, defaults, naming)?
 
-## 3. Verify empirically
+## 4. Verify empirically
 
 For any finding of the form "this changes runtime behaviour", do not ship it
 on reading alone.
@@ -106,7 +146,7 @@ git status --short   # must be clean
 
 A before/after pair is worth more than any amount of prose, and it is what
 turns "I think this might break X" into a postable finding. Also run the
-component's test suite with the patch applied — if it stays green, that is
+component's test suite with the patch applied, if it stays green, that is
 itself a finding (the regression is untested).
 
 **Always leave the working tree clean.** Check `git status --short` before
@@ -115,18 +155,18 @@ moving on. Installed `vendor/` directories are gitignored and can stay.
 If a finding genuinely cannot be run (needs a paid API, a live service you
 don't have), say so explicitly rather than implying you executed it.
 
-## 4. Check the repo conventions
+## 5. Check the repo conventions
 
 These are enforced by `.github/workflows/changelog.yaml` and are a frequent
-source of legitimate review comments — see `AGENTS.md` for the full rules:
+source of legitimate review comments, see `AGENTS.md` for the full rules:
 
 - **Bug-fix-only PRs** (`Bug` label, no `Feature`) must **not** touch any
   `CHANGELOG.md` / `UPGRADE.md`.
 - **New features** need a `CHANGELOG.md` entry in the component/bridge, in the
   **unreleased** section only. Verify the version heading against
-  `git tag --sort=-v:refname | head -1` — the unreleased section is one minor
+  `git tag --sort=-v:refname | head -1`, the unreleased section is one minor
   above the latest tag.
-- **`BC Break` label ⇄ `UPGRADE.md` entry** — each requires the other.
+- **`BC Break` label ⇄ `UPGRADE.md` entry**, each requires the other.
 - Watch for PRs that are labelled `Bug` but also add a new public parameter or
   capability. That combination usually wants the `Feature` label and a
   changelog line; it is a fair thing to raise.
@@ -138,16 +178,16 @@ exceptions instead of `\RuntimeException`, no `empty()`, array shapes on
 params and return types, tests that assert the *consequence* rather than just
 a flag.
 
-## 5. Report findings in chat
+## 6. Report findings in chat
 
 Before drafting anything for GitHub, give the maintainer the deep version:
 what the change does, why it is (or isn't) right, findings ordered by severity,
-and a verdict — approve / approve-with-nits / request changes.
+and a verdict, approve / approve-with-nits / request changes.
 
 This is the one place where length is welcome. Include the mechanism, the
 repro output, and file:line references.
 
-## 6. Draft the review
+## 7. Draft the review
 
 Then compress hard. The posted review is not the chat answer.
 
@@ -175,11 +215,11 @@ SHA and refuses any anchor that does not sit inside a diff hunk:
 mechanics and the failure modes behind them. Show the full draft, then post
 only after approval.
 
-## 7. Follow-ups
+## 8. Follow-ups
 
-If the review surfaces work that is out of scope for the PR — a bundle option
+If the review surfaces work that is out of scope for the PR, a bundle option
 that can't reach a new component capability, a docs gap, a sibling bridge with
-the same bug — say so in the review body *and* actually open the issue. Draft
+the same bug, say so in the review body *and* actually open the issue. Draft
 the issue text, show it, get approval, then:
 
 ```bash
@@ -194,6 +234,9 @@ knows it is tracked and not their problem.
 
 ## Principles
 
+- **Assume the PR has a history.** Zero reviews does not mean nobody has
+  weighed in; the discussion thread is a different endpoint. A review that
+  re-asks a settled question reads as not having been read.
 - **A finding you haven't verified is a question, not a finding.** Phrase it
   as one, or go verify it.
 - **Prefer the smallest correct ask.** If a PR is 80% right, ask for the 20%;
