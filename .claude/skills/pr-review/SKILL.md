@@ -191,7 +191,7 @@ repro output, and file:line references.
 
 Then compress hard. The posted review is not the chat answer.
 
-- **Review body: 1–3 sentences.** What the PR gets right, then "details
+- **Review body: 1 to 3 sentences.** What the PR gets right, then "details
   inline". Do not restate the diff back to the author.
 - **Inline comment: the ask plus its evidence.** A suggestion block or a short
   snippet beats a paragraph. One comment per distinct ask.
@@ -203,10 +203,10 @@ Then compress hard. The posted review is not the chat answer.
   when merging as-is would be wrong. `APPROVE` is only for a review with no
   open ask. An approval plus a request tells the contributor both that the PR
   is done and that it is not, and lets it merge with the ask unaddressed.
-- **No test counts.** Name the suites that ran and that they passed ("platform
-  and agent suites green, PHPStan clean"), never "824 tests, 1761 assertions".
-  The numbers are noise to the contributor and go stale immediately. Exact
-  counts belong in the chat answer, and a named failing test is fine when the
+- **Verification is one phrase: "Verified locally, all green."** No test or
+  assertion counts, and no inventory of what ran; even "platform and agent
+  suites, PHPStan, cs-fixer" is too much. What you ran is evidence for the chat
+  answer, not for the contributor. A named failing test is fine when the
   failure is itself the finding.
 
 Then build the payload with `scripts/build-review.sh`, which resolves the head
