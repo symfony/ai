@@ -41,7 +41,7 @@
       "id": 6,
       "name": "event-matches-the-asks",
       "prompt": "Review PR #2396 and draft the review.",
-      "expected_output": "Recognises that the PR completes the ToolCallStart contract and that the agent's own StreamListener stops at the first ToolCallComplete, so Gemini and VertexAI drop parallel calls today. Flags that the UPGRADE.md note is inaccurate for multi-candidate responses. Because that is an open ask, the event is COMMENT or REQUEST_CHANGES, never APPROVE. The posted review names the suites that passed rather than quoting test or assertion counts."
+      "expected_output": "Recognises that the PR completes the ToolCallStart contract and that the agent's own StreamListener stops at the first ToolCallComplete, so Gemini and VertexAI drop parallel calls today. Flags that the UPGRADE.md note is inaccurate for multi-candidate responses. Because that is an open ask, the event is COMMENT or REQUEST_CHANGES, never APPROVE. The posted review's verification line is just \"all green\", with no counts and no list of suites or tools."
     }
   ]
 }
