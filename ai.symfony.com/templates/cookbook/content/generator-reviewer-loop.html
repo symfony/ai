@@ -1,0 +1,684 @@
+<!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
+<div class="section">
+
+<p>A single agent asked to both produce work and judge it tends to over-report: it accepts its own
+speculative output. Giving the two jobs to separate agents curbs that — the reviewer judges each
+finding from a clean context and with its own skeptical instructions, instead of rubber-stamping
+what it just generated. In this guide you will build an adversarial loop where a <strong>generating</strong>
+agent proposes findings and a separate <strong>reviewing</strong> agent confirms or rejects each one, iterating a
+few times and feeding earlier verdicts back so the generator stops repeating itself.</p>
+<p>The running example is a security auditor — a generator that hunts for vulnerabilities in Symfony
+code and a reviewer that culls the false positives — but the same generator/reviewer pattern applies
+to any task where precision matters more than a single pass can deliver: drafting and fact-checking,
+code generation and critique, or extraction and validation.</p>
+<div class="section">
+<h2 id="prerequisites">
+    Prerequisites
+    
+</h2>
+<ul>
+    <li>Symfony AI Platform component</li>
+<li>Symfony AI Agent component</li>
+<li>A platform that supports <a href="https://symfony.com/doc/current/ai/components/platform.html" class="reference internal">structured output</a></li>
+<li>OpenAI API key (or any other supported platform)</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="step-1-install-packages">
+    Step 1: Install Packages
+    
+</h2>
+<p>Install the Platform and Agent components via Composer:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-2-model-the-findings">
+    Step 2: Model the Findings
+    
+</h2>
+<p>Both agents exchange typed data rather than free text, so the loop can filter and compare results
+in plain PHP. Structured output populates these classes directly from the model response:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Audit</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">enum</span> <span class="hljs-title">Severity</span>: <span class="hljs-title">string</span>
+</span>{
+    <span class="hljs-keyword">case</span> Low = <span class="hljs-string">'low'</span>;
+    <span class="hljs-keyword">case</span> Medium = <span class="hljs-string">'medium'</span>;
+    <span class="hljs-keyword">case</span> High = <span class="hljs-string">'high'</span>;
+    <span class="hljs-keyword">case</span> Critical = <span class="hljs-string">'critical'</span>;
+}
+
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Finding</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>title</span>,
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>location</span>,
+        <span class="hljs-keyword">public</span> Severity <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>severity</span>,
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>explanation</span>,
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">float</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confidence</span>,
+    )</span> </span>{
+    }
+}
+
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FindingList</span>
+</span>{
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@param</span> Finding[] $findings
+     */</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">array</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>findings</span>,
+    )</span> </span>{
+    }
+}
+
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Verdict</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">bool</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>,
+        <span class="hljs-keyword">public</span> <span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>reasoning</span>,
+    )</span> </span>{
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The generator returns a <code translate="no" class="notranslate">FindingList</code>; the reviewer returns one <code translate="no" class="notranslate">Verdict</code> per finding. The
+<code translate="no" class="notranslate">confidence</code> field lets the loop drop weak candidates before they ever reach the reviewer.</p>
+</div>
+<div class="section">
+<h2 id="step-3-create-the-generator-and-reviewer-agents">
+    Step 3: Create the Generator and Reviewer Agents
+    
+</h2>
+<p>Each role is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with a
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> that defines its job.
+Structured output is resolved by the <a href="https://github.com/symfony/ai/blob/main/src/platform/src/StructuredOutput/PlatformSubscriber.php" class="reference external" title="Symfony\AI\Platform\StructuredOutput\PlatformSubscriber" rel="external noopener noreferrer" target="_blank">PlatformSubscriber</a>,
+so register it on the platform's event dispatcher:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>\<span class="hljs-title">SystemPromptInputProcessor</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">OpenAi</span>\<span class="hljs-title">Factory</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">StructuredOutput</span>\<span class="hljs-title">PlatformSubscriber</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">EventDispatcher</span>\<span class="hljs-title">EventDispatcher</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">EventDispatcher</span>();
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>-&gt;<span class="hljs-title invoke__">addSubscriber</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">PlatformSubscriber</span>());
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span> = Factory::<span class="hljs-title invoke__">createPlatform</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>apiKey</span>, <span class="hljs-attr">eventDispatcher</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>);
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>generator</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-4o-mini'</span>,
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
+        <span class="hljs-string">'You are a security auditor for Symfony applications. Report concrete, '</span>
+        .<span class="hljs-string">'exploitable vulnerabilities. For each finding set a confidence between '</span>
+        .<span class="hljs-string">'0 and 1 reflecting how sure you are it is real.'</span>,
+    )],
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'generator'</span>,
+);
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>reviewer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
+    <span class="hljs-string">'gpt-4o-mini'</span>,
+    [<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SystemPromptInputProcessor</span>(
+        <span class="hljs-string">'You are a skeptical security reviewer. Decide whether a reported finding '</span>
+        .<span class="hljs-string">'is a true positive. Reject anything speculative, already mitigated, or not '</span>
+        .<span class="hljs-string">'actually reachable by an attacker, and explain your reasoning briefly.'</span>,
+    )],
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'reviewer'</span>,
+);</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="step-4-build-the-generate-review-loop">
+    Step 4: Build the Generate-Review Loop
+    
+</h2>
+<p>The loop is plain PHP around the two agents. Each iteration asks the generator for candidates,
+drops the ones below the confidence floor, and sends every new candidate to the reviewer. Confirmed
+findings — and the reviewer's reason for each rejection — are fed back into the next generator
+prompt, so the generator stops re-reporting settled findings and uses the rejection reasons to steer
+clear of similar false positives:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Audit</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">AgentInterface</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">Message</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageBag</span>;
+
+<span class="hljs-keyword">final</span> <span class="hljs-keyword">readonly</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ReviewLoop</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+        <span class="hljs-keyword">private</span> AgentInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>generator</span>,
+        <span class="hljs-keyword">private</span> AgentInterface <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>reviewer</span>,
+        <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>maxIterations</span> = <span class="hljs-number">3</span>,
+        <span class="hljs-keyword">private</span> <span class="hljs-keyword">float</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>minConfidence</span> = <span class="hljs-number">0.6</span>,
+    )</span> </span>{
+    }
+
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@return</span> list&lt;Finding&gt;
+     */</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">run</span><span class="hljs-params">(<span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>)</span>: <span class="hljs-title">array</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span> = [];
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejected</span> = [];
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejectionReasons</span> = [];
+
+        <span class="hljs-keyword">for</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>iteration</span> = <span class="hljs-number">1</span>; <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>iteration</span> &lt;= <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;maxIterations; ++<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>iteration</span>) {
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>newlyConfirmed</span> = <span class="hljs-number">0</span>;
+
+            <span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;<span class="hljs-title invoke__">generate</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejectionReasons</span>) <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>) {
+                <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;confidence &lt; <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;minConfidence) {
+                    <span class="hljs-keyword">continue</span>;
+                }
+
+                <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;<span class="hljs-title invoke__">isKnown</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>) || <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;<span class="hljs-title invoke__">isKnown</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejected</span>)) {
+                    <span class="hljs-keyword">continue</span>;
+                }
+
+                <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;<span class="hljs-title invoke__">review</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>);
+                <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span>-&gt;confirmed) {
+                    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>[] = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>;
+                    ++<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>newlyConfirmed</span>;
+                } <span class="hljs-keyword">else</span> {
+                    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejected</span>[] = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>;
+                    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejectionReasons</span>[] = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;title.<span class="hljs-string">' ('</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;location.<span class="hljs-string">'): '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span>-&gt;reasoning;
+                }
+            }
+
+            <span class="hljs-keyword">if</span> (<span class="hljs-number">0</span> === <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>newlyConfirmed</span>) {
+                <span class="hljs-keyword">break</span>;
+            }
+        }
+
+        <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>;
+    }
+
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@param</span> list&lt;Finding&gt; $confirmed
+     * <span class="hljs-doctag">@param</span> list&lt;string&gt;  $rejectionReasons
+     *
+     * <span class="hljs-doctag">@return</span> list&lt;Finding&gt;
+     */</span>
+    <span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">generate</span><span class="hljs-params">(<span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>, <span class="hljs-keyword">array</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>, <span class="hljs-keyword">array</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejectionReasons</span>)</span>: <span class="hljs-title">array</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span> = <span class="hljs-string">'Audit this Symfony code for security vulnerabilities:'</span>.\<span class="hljs-keyword">PHP_EOL</span>.\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>;
+
+        <span class="hljs-keyword">if</span> ([] !== <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>) {
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span> .= \<span class="hljs-keyword">PHP_EOL</span>.\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-string">'Already confirmed, do not report again:'</span>
+                .\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;<span class="hljs-title invoke__">summarize</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span>);
+        }
+
+        <span class="hljs-keyword">if</span> ([] !== <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejectionReasons</span>) {
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span> .= \<span class="hljs-keyword">PHP_EOL</span>.\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-string">'Already rejected as false positives, with the reason, do not report again:'</span>
+                .\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-string">'- '</span>.\<span class="hljs-title invoke__">implode</span>(\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-string">'- '</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>rejectionReasons</span>);
+        }
+
+        <span class="hljs-comment">/** <span class="hljs-doctag">@var</span> FindingList $list */</span>
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>list</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;generator
+            -&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span>)), [<span class="hljs-string">'response_format'</span> =&gt; FindingList::<span class="hljs-variable language_">class</span>])
+            -&gt;<span class="hljs-title invoke__">getContent</span>();
+
+        <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>list</span>-&gt;findings;
+    }
+
+    <span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">review</span><span class="hljs-params">(<span class="hljs-keyword">string</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>, Finding <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>)</span>: <span class="hljs-title">Verdict</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span> = <span class="hljs-string">'Is this reported finding a true positive?'</span>.\<span class="hljs-keyword">PHP_EOL</span>.\<span class="hljs-keyword">PHP_EOL</span>
+            .<span class="hljs-string">'Title: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;title.\<span class="hljs-keyword">PHP_EOL</span>
+            .<span class="hljs-string">'Location: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;location.\<span class="hljs-keyword">PHP_EOL</span>
+            .<span class="hljs-string">'Explanation: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;explanation.\<span class="hljs-keyword">PHP_EOL</span>.\<span class="hljs-keyword">PHP_EOL</span>
+            .<span class="hljs-string">'Code under audit:'</span>.\<span class="hljs-keyword">PHP_EOL</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>;
+
+        <span class="hljs-comment">/** <span class="hljs-doctag">@var</span> Verdict $verdict */</span>
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;reviewer
+            -&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>prompt</span>)), [<span class="hljs-string">'response_format'</span> =&gt; Verdict::<span class="hljs-variable language_">class</span>])
+            -&gt;<span class="hljs-title invoke__">getContent</span>();
+
+        <span class="hljs-keyword">return</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>verdict</span>;
+    }
+
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@param</span> list&lt;Finding&gt; $known
+     */</span>
+    <span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isKnown</span><span class="hljs-params">(Finding <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>, <span class="hljs-keyword">array</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>known</span>)</span>: <span class="hljs-title">bool</span>
+    </span>{
+        <span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>known</span> <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>seen</span>) {
+            <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>seen</span>-&gt;location === <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;location &amp;&amp; <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>seen</span>-&gt;title === <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;title) {
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;
+            }
+        }
+
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+    }
+
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@param</span> list&lt;Finding&gt; $findings
+     */</span>
+    <span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">summarize</span><span class="hljs-params">(<span class="hljs-keyword">array</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>findings</span>)</span>: <span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>lines</span> = [];
+        <span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>findings</span> <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>) {
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>lines</span>[] = <span class="hljs-string">'- '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;title.<span class="hljs-string">' ('</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;location.<span class="hljs-string">')'</span>;
+        }
+
+        <span class="hljs-keyword">return</span> \<span class="hljs-title invoke__">implode</span>(\<span class="hljs-keyword">PHP_EOL</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>lines</span>);
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Two knobs govern the loop, mirroring how an adversarial auditor is usually tuned: <code translate="no" class="notranslate">maxIterations</code>
+caps how many generate-review rounds run, and <code translate="no" class="notranslate">minConfidence</code> sets the floor a candidate must clear
+before it is worth a review call. The loop also stops early as soon as an iteration confirms nothing
+new, so an easy target does not pay for three full rounds.</p>
+</div>
+<div class="section">
+<h2 id="step-5-run-the-audit">
+    Step 5: Run the Audit
+    
+</h2>
+<p>Wire the two agents into the loop and run it against a file. Only reviewer-confirmed findings come
+back:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">App</span>\<span class="hljs-title">Audit</span>\<span class="hljs-title">ReviewLoop</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>loop</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">ReviewLoop</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>generator</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>reviewer</span>);
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span> = <span class="hljs-title invoke__">file_get_contents</span>(<span class="hljs-keyword">__DIR__</span>.<span class="hljs-string">'/src/Controller/CheckoutController.php'</span>);
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>loop</span>-&gt;<span class="hljs-title invoke__">run</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>code</span>);
+
+<span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>confirmed</span> <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>) {
+    <span class="hljs-title invoke__">printf</span>(<span class="hljs-string">'[%s] %s (%s)'</span>.\<span class="hljs-keyword">PHP_EOL</span>, <span class="hljs-title invoke__">strtoupper</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;severity-&gt;value), <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;title, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>finding</span>-&gt;location);
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="using-the-ai-bundle">
+    Using the AI Bundle?
+    
+</h2>
+<p>The AI Bundle registers the structured-output subscriber for you, so <code translate="no" class="notranslate">response_format</code> works out
+of the box. Declare the two agents in configuration:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/packages/ai.yaml</span>
+<span class="hljs-attr">ai:</span>
+    <span class="hljs-attr">platform:</span>
+        <span class="hljs-attr">openai:</span>
+            <span class="hljs-attr">api_key:</span> <span class="hljs-string">'%env(OPENAI_API_KEY)%'</span>
+    <span class="hljs-attr">agent:</span>
+        <span class="hljs-attr">generator:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span> <span class="hljs-string">'You are a security auditor for Symfony applications. ...'</span>
+        <span class="hljs-attr">reviewer:</span>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
+            <span class="hljs-attr">prompt:</span> <span class="hljs-string">'You are a skeptical security reviewer. ...'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Each agent is exposed as an <code translate="no" class="notranslate">ai.agent.&lt;name&gt;</code> service. Inject the two into the loop by id:</p>
+<div translate="no" class="highlight-yaml notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs yaml"><span class="hljs-comment"># config/services.yaml</span>
+<span class="hljs-attr">services:</span>
+    <span class="hljs-string">App\Audit\ReviewLoop:</span>
+        <span class="hljs-attr">arguments:</span>
+            <span class="hljs-string">$generator:</span> <span class="hljs-string">'@ai.agent.generator'</span>
+            <span class="hljs-string">$reviewer:</span> <span class="hljs-string">'@ai.agent.reviewer'</span></pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+<div class="section">
+<h2 id="best-practices">
+    Best Practices
+    
+</h2>
+<ul>
+    <li><strong>Separate the Roles</strong>: Run the reviewer as its own agent with its own prompt so each finding is
+judged from a clean context, instead of letting the generator ratify what it just produced</li>
+<li><strong>Give the Reviewer a Skeptical Prompt</strong>: Its value is rejecting weak findings, so instruct it to
+reject speculative or unreachable ones rather than to be helpful</li>
+<li><strong>Feed Verdicts Back</strong>: Passing confirmed findings and the reason for each rejection into the next
+generator prompt is what turns a loop into refinement instead of the same candidates re-scored
+every round</li>
+<li><strong>Filter Before Reviewing</strong>: A confidence floor keeps low-value candidates from spending a reviewer
+call — the review step is the expensive one</li>
+<li><strong>Use a Different Model to Review</strong>: A separate agent on the same model still shares its blind
+spots; pointing the reviewer at a different (and often smaller, cheaper) model adds genuinely
+independent judgment as well as saving cost</li>
+</ul>
+</div>
+<div class="section">
+<h2 id="learn-more">
+    Learn More
+    
+</h2>
+<ul>
+    <li><a href="/cookbook/multi-agent-orchestration" class="reference internal">Multi-Agent Orchestration</a> - Route questions to specialist agents instead of reviewing output</li>
+<li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Processors, memory, and advanced agent patterns</li>
+<li><a href="https://symfony.com/doc/current/ai/components/platform.html" class="reference internal">Symfony AI - Platform Component</a> - Structured output and platform configuration reference</li>
+</ul>
+</div>
+</div>
