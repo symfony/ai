@@ -64,7 +64,7 @@ final class ProfilerTool
 
         $profiles = $dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return ResponseEncoder::encode([
+        return ResponseEncoder::encodeUntrusted([
             'profiles' => array_values(array_map(
                 static fn (ProfileIndex $profile): array => $profile->toArray(),
                 $profiles,
@@ -101,7 +101,7 @@ final class ProfilerTool
             $data['context'] = $profileData->getContext();
         }
 
-        return ResponseEncoder::encode($data);
+        return ResponseEncoder::encodeUntrusted($data);
     }
 
     private function getDataProvider(): ProfilerDataProvider

@@ -74,7 +74,7 @@ final class LogSearchTool
             );
         }
 
-        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
+        return ResponseEncoder::encodeUntrusted(['entries' => $this->collectResults($criteria, $environment)]);
     }
 
     /**
@@ -99,7 +99,7 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return ResponseEncoder::encode(['entries' => $this->collectResults($criteria, $environment)]);
+        return ResponseEncoder::encodeUntrusted(['entries' => $this->collectResults($criteria, $environment)]);
     }
 
     /**
@@ -113,7 +113,7 @@ final class LogSearchTool
     {
         $entries = $this->reader->tail($lines, $level, $environment, $channel);
 
-        return ResponseEncoder::encode(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
+        return ResponseEncoder::encodeUntrusted(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
     }
 
     /**

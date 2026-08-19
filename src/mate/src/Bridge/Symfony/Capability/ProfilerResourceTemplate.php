@@ -83,7 +83,7 @@ final class ProfilerResourceTemplate
         return [
             'uri' => "symfony-profiler://profile/{$token}",
             'mimeType' => 'text/plain',
-            'text' => ResponseEncoder::encode($data),
+            'text' => ResponseEncoder::encodeUntrusted($data),
         ];
     }
 
@@ -103,7 +103,7 @@ final class ProfilerResourceTemplate
             return [
                 'uri' => "symfony-profiler://profile/{$token}/{$collector}",
                 'mimeType' => 'text/plain',
-                'text' => ResponseEncoder::encode($data),
+                'text' => ResponseEncoder::encodeUntrusted($data),
             ];
         } catch (\Throwable $e) {
             return [
