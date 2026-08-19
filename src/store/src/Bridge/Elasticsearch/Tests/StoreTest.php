@@ -21,6 +21,7 @@ use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -33,7 +34,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
         $store->setup();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -54,7 +55,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
         $store->setup();
 
         $this->assertSame(2, $httpClient->getRequestsCount());
@@ -75,7 +76,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
 
         $store->setup([
             'dimensions' => 768,
@@ -93,7 +94,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The index "foo" does not exist.');
@@ -114,7 +115,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
         $store->drop();
 
         $this->assertSame(2, $httpClient->getRequestsCount());
@@ -143,7 +144,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
         $store->add([new VectorDocument(Uuid::v7(), new Vector([0.1, 0.2, 0.3]))]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -190,7 +191,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store($httpClient, 'foo');
         $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(2, iterator_to_array($results));
@@ -216,7 +217,7 @@ final class StoreTest extends TestCase
             ]);
         });
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9200', 'foo');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9200/'), 'foo');
         $store->clear();
 
         $this->assertSame('POST', $requestedMethod);
@@ -225,39 +226,21 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testStoreNormalizesTrailingSlashOnEndpoint()
-    {
-        $requestedUrl = null;
-        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedUrl): JsonMockResponse {
-            $requestedUrl = $url;
-
-            return new JsonMockResponse('', [
-                'http_code' => 200,
-            ]);
-        });
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9200/', 'foo');
-        $store->setup();
-
-        $this->assertSame('http://127.0.0.1:9200/foo', $requestedUrl);
-        $this->assertSame(1, $httpClient->getRequestsCount());
-    }
-
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:9200', 'test-index');
+        $store = new Store(new MockHttpClient(), 'test-index');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:9200', 'test-index');
+        $store = new Store(new MockHttpClient(), 'test-index');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:9200', 'test-index');
+        $store = new Store(new MockHttpClient(), 'test-index');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 }
