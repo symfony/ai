@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.12
+----
+
+ * Add a Mistral audio normalizer so `Content\Audio` can be used as a chat message part (audio understanding) with Voxtral models such as `voxtral-small-latest`
+
 0.11
 ----
 

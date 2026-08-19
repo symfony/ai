@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
+use Symfony\AI\Platform\Bridge\Mistral\Contract\AudioNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentUrlNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\ImageUrlNormalizer;
@@ -55,6 +56,7 @@ final class Factory
                 new DocumentNormalizer(),
                 new DocumentUrlNormalizer(),
                 new ImageUrlNormalizer(),
+                new AudioNormalizer(),
             ]),
             $eventDispatcher,
         );
