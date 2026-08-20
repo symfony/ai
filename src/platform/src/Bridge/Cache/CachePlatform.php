@@ -81,6 +81,10 @@ final class CachePlatform implements PlatformInterface
             default => $this->generateInputCacheKey($input),
         };
 
+        if (isset($options['template_vars'])) {
+            $normalizedInput = hash('xxh128', $normalizedInput.serialize([$options['template_vars'], $options['template_options'] ?? []]));
+        }
+
         $cacheKey = (new UnicodeString())->join([
             $options['prompt_cache_key'] ?? $this->cacheKey,
             (new UnicodeString($modelName))->camel(),
