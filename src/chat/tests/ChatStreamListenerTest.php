@@ -17,9 +17,13 @@ use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\ToolCall;
 
 final class ChatStreamListenerTest extends TestCase
 {
@@ -47,6 +51,36 @@ final class ChatStreamListenerTest extends TestCase
         $assistantMessage = $stored->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
         $this->assertSame('I am doing well!', $assistantMessage->asText());
+    }
+
+    public function testItAccumulatesChunksOfAToolCallFollowUp()
+    {
+        $store = new InMemoryStore();
+        $messages = new MessageBag();
+        $messages->add(Message::ofUser('Hello'));
+
+        $generator = (static function () {
+            yield new ToolCallComplete([new ToolCall('id', 'some_tool')]);
+        })();
+
+        $stream = new StreamResult($generator);
+        $stream->addListener(new class extends AbstractStreamListener {
+            public function onDelta(DeltaEvent $event): void
+            {
+                $event->setDelta((static function (): \Generator {
+                    yield new TextDelta('The ');
+                    yield new TextDelta('answer.');
+                })());
+            }
+        });
+        $stream->addListener(new ChatStreamListener($messages, $store));
+
+        iterator_to_array($stream->getContent());
+
+        $stored = $store->load();
+        $assistantMessage = $stored->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
+        $this->assertSame('The answer.', $assistantMessage->asText());
     }
 
     public function testItIgnoresNonStringChunks()

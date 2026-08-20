@@ -70,6 +70,53 @@ final class StreamResultTest extends TestCase
         $this->assertSame('chunk2', $capturedDeltas[1]->getText());
     }
 
+    public function testListenersAreNotifiedAboutDeltasYieldedFromAnInjectedGenerator()
+    {
+        $result = new StreamResult((static function () {
+            yield new TextDelta('chunk1');
+        })());
+
+        $observer = new class extends AbstractStreamListener {
+            /** @var list<string> */
+            public array $texts = [];
+
+            public function onDelta(DeltaEvent $event): void
+            {
+                $delta = $event->getDelta();
+                if ($delta instanceof TextDelta) {
+                    $this->texts[] = $delta->getText();
+                }
+            }
+        };
+
+        $injector = new class extends AbstractStreamListener {
+            public int $calls = 0;
+
+            public function onDelta(DeltaEvent $event): void
+            {
+                ++$this->calls;
+
+                $event->setDelta((static function (): \Generator {
+                    yield new TextDelta('nested1');
+                    yield new TextDelta('nested2');
+                })());
+            }
+        };
+
+        $result->addListener($observer);
+        $result->addListener($injector);
+
+        $content = iterator_to_array($result->getContent());
+
+        $this->assertSame(['chunk1', 'nested1', 'nested2'], $observer->texts);
+        $this->assertSame(1, $injector->calls);
+        $this->assertCount(2, $content);
+        $this->assertInstanceOf(TextDelta::class, $content[0]);
+        $this->assertSame('nested1', $content[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $content[1]);
+        $this->assertSame('nested2', $content[1]->getText());
+    }
+
     public function testListenerCanAddMetadataDuringStreaming()
     {
         $result = new StreamResult((static function () {
