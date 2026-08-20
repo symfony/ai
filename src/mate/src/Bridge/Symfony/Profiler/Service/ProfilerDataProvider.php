@@ -36,6 +36,44 @@ use Symfony\Component\VarDumper\Cloner\Data;
 final class ProfilerDataProvider
 {
     /**
+     * Key-name substrings (case-insensitive) used to redact values in the raw
+     * fallback dump of collectors that have no dedicated formatter. Best-effort:
+     * a secret stored under a non-sensitive key name is only caught when the
+     * value is URL-shaped (see scrubUrlValue). Bare `AUTH` is excluded to avoid
+     * redacting diagnostic keys like `authenticated`/`author`.
+     *
+     * @var array<string>
+     */
+    private const SENSITIVE_RAW_KEY_PATTERNS = [
+        'PASSWORD',
+        'PASSWD',
+        'PASSPHRASE',
+        'PWD',
+        'SECRET',
+        'TOKEN',
+        'JWT',
+        'API_KEY',
+        'APIKEY',
+        'ACCESS_KEY',
+        'SIGNING_KEY',
+        'ENCRYPTION_KEY',
+        'OAUTH',
+        'AUTHORIZATION',
+        'AUTHENTICATION',
+        'CREDENTIAL',
+        'PRIVATE',
+        'BEARER',
+        'CSRF',
+        'XSRF',
+        'SESSION',
+        'SESSID',
+        'SIGNATURE',
+        'SALT',
+        'COOKIE',
+        'OTP',
+    ];
+
+    /**
      * @var array<string|int, FileProfilerStorage>
      */
     private readonly array $storages;
@@ -177,9 +215,13 @@ final class ProfilerDataProvider
         $formatter = $this->collectorRegistry->get($collectorName);
 
         if (null === $formatter) {
+            // No dedicated formatter: the raw collector internals are dumped
+            // verbatim, so apply best-effort key-based redaction to avoid
+            // leaking secrets from collectors such as security, form or
+            // http_client that nobody has distilled yet.
             return [
                 'name' => $collectorName,
-                'data' => ['raw' => $this->extractRawData($collectorData)],
+                'data' => ['raw' => $this->redactRawData($this->extractRawData($collectorData))],
                 'summary' => [],
             ];
         }
@@ -241,6 +283,62 @@ final class ProfilerDataProvider
         }
 
         return [];
+    }
+
+    /**
+     * Recursively redact values whose key matches a sensitive pattern, and scrub
+     * URL-shaped string values (e.g. the request URL the http_client collector
+     * stores under a non-sensitive `url` key) of their credentials and tokens.
+     *
+     * @param array<array-key, mixed> $data
+     *
+     * @return array<array-key, mixed>
+     */
+    private function redactRawData(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (\is_string($key) && $this->isSensitiveRawKey($key)) {
+                $data[$key] = '***REDACTED***';
+                continue;
+            }
+
+            if (\is_array($value)) {
+                $data[$key] = $this->redactRawData($value);
+            } elseif (\is_string($value) && 1 === preg_match('#^[a-z][a-z0-9+.\-]*://#i', $value)) {
+                $data[$key] = $this->scrubUrlValue($value);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Drop userinfo and redact the query string / fragment of a URL value, where
+     * credentials and tokens commonly live, keeping scheme, host and path.
+     */
+    private function scrubUrlValue(string $value): string
+    {
+        // Drop the whole userinfo segment (both `user:pass@` and a bare
+        // `token@` credential-as-username form).
+        $value = preg_replace('~(://)[^/@\s]*@~', '$1', $value) ?? $value;
+        $value = preg_replace('~\?[^#\s]*~', '?***REDACTED***', $value) ?? $value;
+        $value = preg_replace('~#[^\s]*~', '', $value) ?? $value;
+
+        return $value;
+    }
+
+    private function isSensitiveRawKey(string $key): bool
+    {
+        // Normalise hyphens to underscores so `api-key` / `x-api-key` match the
+        // underscore-style patterns too.
+        $upperKey = str_replace('-', '_', strtoupper($key));
+        foreach (self::SENSITIVE_RAW_KEY_PATTERNS as $pattern) {
+            if (str_contains($upperKey, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

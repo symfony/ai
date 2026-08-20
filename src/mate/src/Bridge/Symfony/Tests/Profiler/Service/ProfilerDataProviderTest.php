@@ -16,6 +16,8 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\InvalidCollectorException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollector;
+use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
@@ -157,6 +159,64 @@ final class ProfilerDataProviderTest extends TestCase
         $this->assertSame('/api/users', $data['data']['raw']['path']);
     }
 
+    public function testGetCollectorDataRedactsSensitiveKeysInRawFallback()
+    {
+        $dir = sys_get_temp_dir().'/mate_raw_redaction_'.uniqid();
+        mkdir($dir);
+
+        try {
+            $collector = new TestCollector('http_client', [
+                'method' => 'GET',
+                'api_key' => 'leaked-key',
+                'x-api-key' => 'leaked-hyphen-key',
+                'jwt' => 'leaked-jwt',
+                'url' => 'https://api.example.com/v1/resource?access_token=URLTOKEN&id=5',
+                'callback_url' => 'https://ghp_USERINFOTOKEN@github.com/owner/repo',
+                'request' => [
+                    'authorization' => 'Bearer leaked-token',
+                    'note' => 'visible',
+                ],
+            ]);
+
+            $profile = new Profile('rawtoken');
+            $profile->setMethod('GET');
+            $profile->setUrl('http://localhost/test');
+            $profile->setIp('127.0.0.1');
+            $profile->setStatusCode(200);
+            $profile->setCollectors([$collector]);
+
+            $storage = new FileProfilerStorage('file:'.$dir);
+            $storage->write($profile);
+
+            $provider = new ProfilerDataProvider($dir, new CollectorRegistry([]));
+            $data = $provider->getCollectorData('rawtoken', 'http_client');
+
+            $raw = $data['data']['raw'];
+            // Non-sensitive keys remain visible, nested or not.
+            $this->assertSame('GET', $raw['method']);
+            $this->assertSame('visible', $raw['request']['note']);
+            // Sensitive keys are redacted, including nested and hyphenated ones.
+            $this->assertSame('***REDACTED***', $raw['api_key']);
+            $this->assertSame('***REDACTED***', $raw['x-api-key']);
+            $this->assertSame('***REDACTED***', $raw['jwt']);
+            $this->assertSame('***REDACTED***', $raw['request']['authorization']);
+            // URL-shaped values under a non-sensitive key get their query and
+            // userinfo (incl. a bare token-as-username) stripped.
+            $this->assertSame('https://api.example.com/v1/resource?***REDACTED***', $raw['url']);
+            $this->assertSame('https://github.com/owner/repo', $raw['callback_url']);
+
+            $serialized = json_encode($data);
+            $this->assertStringNotContainsString('leaked-key', $serialized);
+            $this->assertStringNotContainsString('leaked-hyphen-key', $serialized);
+            $this->assertStringNotContainsString('leaked-jwt', $serialized);
+            $this->assertStringNotContainsString('leaked-token', $serialized);
+            $this->assertStringNotContainsString('URLTOKEN', $serialized);
+            $this->assertStringNotContainsString('USERINFOTOKEN', $serialized);
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
     public function testListAvailableCollectorsThrowsExceptionForNonExistentProfile()
     {
         $this->expectException(ProfileNotFoundException::class);
@@ -233,5 +293,27 @@ final class ProfilerDataProviderTest extends TestCase
 
         $this->assertCount(3, $profiles);
         $this->assertSame('context1', $profiles[0]->getContext());
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($items as $item) {
+            if ($item->isDir()) {
+                rmdir($item->getPathname());
+            } else {
+                unlink($item->getPathname());
+            }
+        }
+
+        rmdir($dir);
     }
 }
