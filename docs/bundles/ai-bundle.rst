@@ -1246,6 +1246,11 @@ The profiler panel provides insights into the agent's execution:
 .. image:: images/profiler-ai.png
    :alt: Profiler Panel
 
+Next to the platform calls, the registered tools and the tool calls, the panel lists the calls
+collected for agents, chats, message stores and stores, as well as every configured component
+with the service id it was registered under. Components without a configured instance are
+omitted from both the toolbar and the panel.
+
 Testing agents
 ~~~~~~~~~~~~~~
 

@@ -82,6 +82,28 @@ final class DebugCompilerPassTest extends TestCase
         $this->assertSame([['method' => 'reset']], $traceableStore->getTag('kernel.reset'));
     }
 
+    public function testTraceableDefinitionsCarryTheDecoratedServiceIdAsTagName()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', true);
+
+        $container->register('ai.platform.azure.eu', \stdClass::class)->addTag('ai.platform');
+        $container->register('ai.message_store.memory.main', \stdClass::class)->addTag('ai.message_store');
+        $container->register('ai.chat.main', \stdClass::class)->addTag('ai.chat');
+        $container->register('ai.toolbox.my_agent', \stdClass::class)->addTag('ai.toolbox');
+        $container->register('ai.agent.my_agent', \stdClass::class)->addTag('ai.agent');
+        $container->register('ai.store.store', \stdClass::class)->addTag('ai.store');
+
+        (new DebugCompilerPass())->process($container);
+
+        $this->assertSame([['name' => 'ai.platform.azure.eu']], $container->getDefinition('ai.traceable_platform.azure.eu')->getTag('ai.traceable_platform'));
+        $this->assertSame([['name' => 'ai.message_store.memory.main']], $container->getDefinition('ai.traceable_message_store.main')->getTag('ai.traceable_message_store'));
+        $this->assertSame([['name' => 'ai.chat.main']], $container->getDefinition('ai.traceable_chat.main')->getTag('ai.traceable_chat'));
+        $this->assertSame([['name' => 'ai.toolbox.my_agent']], $container->getDefinition('ai.traceable_toolbox.my_agent')->getTag('ai.traceable_toolbox'));
+        $this->assertSame([['name' => 'ai.agent.my_agent']], $container->getDefinition('ai.traceable_agent.my_agent')->getTag('ai.traceable_agent'));
+        $this->assertSame([['name' => 'ai.store.store']], $container->getDefinition('ai.traceable_store.store')->getTag('ai.traceable_store'));
+    }
+
     public function testProcessSkipsWhenDebugDisabled()
     {
         $container = new ContainerBuilder();

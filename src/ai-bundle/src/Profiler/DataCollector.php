@@ -45,6 +45,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *     metadata: Metadata,
  *     error?: array{class: class-string, message: string},
  * }
+ * @phpstan-type ConfiguredInstances array{count: int, names: string[]}
  */
 final class DataCollector extends AbstractDataCollector implements LateDataCollectorInterface
 {
@@ -110,13 +111,21 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function lateCollect(): void
     {
         $this->data = [
+            'instances' => [
+                'platform' => $this->describeInstances($this->platforms),
+                'toolbox' => $this->describeInstances($this->toolboxes),
+                'message_store' => $this->describeInstances($this->messageStores),
+                'chat' => $this->describeInstances($this->chats),
+                'agent' => $this->describeInstances($this->agents),
+                'store' => $this->describeInstances($this->stores),
+            ],
             'tools' => $this->getAllTools(),
-            'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
-            'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getCalls(), $this->toolboxes)),
-            'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->getCalls(), $this->messageStores)),
-            'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->getCalls(), $this->chats)),
-            'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->getCalls(), $this->agents)),
-            'stores' => array_merge(...array_map(static fn (TraceableStore $store): array => $store->getCalls(), $this->stores)),
+            'platform_calls' => array_merge(...array_values(array_map($this->awaitCallResults(...), $this->platforms))),
+            'tool_calls' => array_merge(...array_values(array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getCalls(), $this->toolboxes))),
+            'messages' => array_merge(...array_values(array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->getCalls(), $this->messageStores))),
+            'chats' => array_merge(...array_values(array_map(static fn (TraceableChat $chat): array => $chat->getCalls(), $this->chats))),
+            'agents' => array_merge(...array_values(array_map(static fn (TraceableAgent $agent): array => $agent->getCalls(), $this->agents))),
+            'stores' => array_merge(...array_values(array_map(static fn (TraceableStore $store): array => $store->getCalls(), $this->stores))),
         ];
     }
 
@@ -136,6 +145,67 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getPlatformCalls(): array
     {
         return $this->data['platform_calls'] ?? [];
+    }
+
+    /**
+     * Sum of every call recorded across all traced components, used as headline number of the toolbar.
+     */
+    public function getTotalCalls(): int
+    {
+        return \count($this->getPlatformCalls())
+            + \count($this->getToolCalls())
+            + \count($this->getAgents())
+            + \count($this->getChats())
+            + \count($this->getStores())
+            + \count($this->getMessages());
+    }
+
+    /**
+     * @return ConfiguredInstances
+     */
+    public function getConfiguredPlatforms(): array
+    {
+        return $this->data['instances']['platform'] ?? ['count' => 0, 'names' => []];
+    }
+
+    /**
+     * @return ConfiguredInstances
+     */
+    public function getConfiguredToolboxes(): array
+    {
+        return $this->data['instances']['toolbox'] ?? ['count' => 0, 'names' => []];
+    }
+
+    /**
+     * @return ConfiguredInstances
+     */
+    public function getConfiguredMessageStores(): array
+    {
+        return $this->data['instances']['message_store'] ?? ['count' => 0, 'names' => []];
+    }
+
+    /**
+     * @return ConfiguredInstances
+     */
+    public function getConfiguredChats(): array
+    {
+        return $this->data['instances']['chat'] ?? ['count' => 0, 'names' => []];
+    }
+
+    /**
+     * @return ConfiguredInstances
+     */
+    public function getConfiguredAgents(): array
+    {
+        return $this->data['instances']['agent'] ?? ['count' => 0, 'names' => []];
+    }
+
+    /**
+     * @return ConfiguredInstances
+     */
+    public function getConfiguredStores(): array
+    {
+        return $this->data['instances']['store'] ?? ['count' => 0, 'names' => []];
     }
 
     /**
@@ -184,6 +254,22 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getStores(): array
     {
         return $this->data['stores'] ?? [];
+    }
+
+    /**
+     * The traceable services are collected through indexed tagged iterators, so their keys carry
+     * the service id of the decorated instance. Plain lists stay supported and only expose a count.
+     *
+     * @param array<array-key, object> $instances
+     *
+     * @return ConfiguredInstances
+     */
+    private function describeInstances(array $instances): array
+    {
+        return [
+            'count' => \count($instances),
+            'names' => array_values(array_filter(array_keys($instances), \is_string(...))),
+        ];
     }
 
     /**

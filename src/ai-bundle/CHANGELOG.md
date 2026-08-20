@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Show the calls collected for agents, chats, message stores and stores in the profiler panel
+ * Show the configured platforms, toolboxes, agents, chats, message stores and stores with their service ids in the profiler panel
+
 0.11
 ----
 
