@@ -50,6 +50,8 @@ trait CompletionsConversionTrait
         $finishReason = null;
 
         foreach ($result->getDataStream() as $data) {
+            $data = $this->normalizeStreamChunk($data);
+
             if (isset($data['error'])) {
                 $message = \is_array($data['error']) ? ($data['error']['message'] ?? 'Unknown error') : (string) $data['error'];
                 $code = \is_array($data['error']) ? ($data['error']['code'] ?? null) : null;
@@ -122,6 +124,18 @@ trait CompletionsConversionTrait
         if (null !== $finishReason) {
             yield new MetadataDelta('finish_reason', $finishReason);
         }
+    }
+
+    /**
+     * Reshapes a stream chunk for bridges whose delta payload deviates from the OpenAI schema.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function normalizeStreamChunk(array $data): array
+    {
+        return $data;
     }
 
     /**
