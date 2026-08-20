@@ -231,4 +231,86 @@ final class LogSearchToolTest extends TestCase
         $this->assertArrayHasKey('source_file', $entry);
         $this->assertArrayHasKey('line_number', $entry);
     }
+
+    public function testSearchOmitsKernelContextForSingleLogDirectory()
+    {
+        $result = Toon::decode($this->tool->search('logged'));
+
+        $this->assertArrayNotHasKey('kernel_context', $result['entries'][0]);
+    }
+
+    public function testSearchStampsKernelContextForMultipleLogDirectories()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $result = Toon::decode($tool->search('logged'));
+
+        $this->assertNotEmpty($result['entries']);
+        $this->assertSame('website', $result['entries'][0]['kernel_context']);
+    }
+
+    public function testSearchFiltersByKernelContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $result = Toon::decode($tool->search('', level: 'ERROR', kernelContext: 'admin'));
+
+        $this->assertCount(1, $result['entries']);
+        $this->assertSame('admin', $result['entries'][0]['kernel_context']);
+        $this->assertStringContainsString('Critical system error', $result['entries'][0]['message']);
+    }
+
+    public function testSearchContextFiltersByKernelContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $result = Toon::decode($tool->searchContext('test', 'UserControllerTest', kernelContext: 'admin'));
+
+        $this->assertCount(2, $result['entries']);
+        foreach ($result['entries'] as $entry) {
+            $this->assertSame('admin', $entry['kernel_context']);
+        }
+    }
+
+    public function testListFilesIncludesKernelContextForMultipleLogDirectories()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $result = Toon::decode($tool->listFiles(kernelContext: 'admin'));
+
+        $this->assertCount(2, $result['files']);
+        foreach ($result['files'] as $file) {
+            $this->assertSame('admin', $file['kernel_context']);
+        }
+    }
+
+    public function testListChannelsFiltersByKernelContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $result = Toon::decode($tool->listChannels('admin'));
+
+        $this->assertContains('test', $result['channels']);
+        $this->assertNotContains('security', $result['channels']);
+    }
+
+    public function testTailFiltersByKernelContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $result = Toon::decode($tool->tail(10, kernelContext: 'admin'));
+
+        $this->assertCount(2, $result['entries']);
+        foreach ($result['entries'] as $entry) {
+            $this->assertSame('admin', $entry['kernel_context']);
+        }
+    }
+
+    private function createMultiKernelTool(): LogSearchTool
+    {
+        return new LogSearchTool(new LogReader(new LogParser(), [
+            'website' => $this->fixturesDir,
+            'admin' => $this->fixturesDir.'/logs',
+        ]));
+    }
 }

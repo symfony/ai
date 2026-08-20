@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Allow `ai_mate_symfony.cache_dir` to be a map of context name to cache directory, so a single Mate server can introspect the containers of multi-kernel (`APP_ID`) applications. `symfony-services` then returns the services grouped per context, `symfony-service-detail` reports the context a service was found in, and both accept an optional `context` filter parameter
+ * Allow `ai_mate_monolog.log_dir` to be a map of context name to log directory. Log entries and files then carry a `kernel_context` field, and `monolog-search`, `monolog-context-search`, `monolog-tail`, `monolog-list-files` and `monolog-list-channels` accept an optional `kernelContext` filter parameter
+
 0.12
 ----
 

@@ -13,3 +13,9 @@ Use MCP tools instead of CLI for log analysis:
 - Structured output with parsed log entries
 - Multi-file search across all logs at once
 - Filter by environment, level, or channel
+
+### Multi-kernel applications
+
+When several log directories are configured (one per kernel context, e.g. per `APP_ID`), every
+entry and file carries a `kernel_context` field, and all tools accept a `kernelContext` parameter
+to restrict the lookup to a single kernel.

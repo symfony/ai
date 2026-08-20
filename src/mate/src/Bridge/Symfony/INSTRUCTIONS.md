@@ -9,6 +9,9 @@
 - Direct access to compiled container
 - Environment-aware (auto-detects dev/test/prod)
 - Supports filtering by service ID or class name via query parameter
+- Multi-kernel aware: when several cache directories are configured (one per kernel context, e.g.
+  per `APP_ID`), `symfony-services` groups the services by context, `symfony-service-detail`
+  reports the context a service was found in, and both accept a `context` parameter
 
 ### Profiler Access
 

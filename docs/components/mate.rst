@@ -261,13 +261,27 @@ Container Introspection
 **MCP Tools:**
 
 * ``symfony-services`` - List Symfony services from the compiled container and optionally filter by service ID or class name using the ``query`` parameter
+* ``symfony-service-detail`` - Get full details of a single service by its exact ID
 
 **Configuration:**
 
-Configure the cache directory::
+Single cache directory (default)::
 
     $container->parameters()
         ->set('ai_mate_symfony.cache_dir', '%mate.root_dir%/var/cache');
+
+Multiple directories with contexts (e.g., for `multi-kernel applications`_ that split their
+cache per ``APP_ID``)::
+
+    $container->parameters()
+        ->set('ai_mate_symfony.cache_dir', [
+            'website' => '%mate.root_dir%/var/cache/website',
+            'admin' => '%mate.root_dir%/var/cache/admin',
+        ]);
+
+When using multiple directories, ``symfony-services`` returns the services grouped by context and
+``symfony-service-detail`` includes the ``context`` a service was found in. Both tools accept an
+optional ``context`` parameter to narrow the lookup to a single kernel.
 
 **Troubleshooting:**
 
@@ -315,7 +329,7 @@ Single profiler directory (default)::
     $container->parameters()
         ->set('ai_mate_symfony.profiler_dir', '%mate.root_dir%/var/cache/dev/profiler');
 
-Multiple directories with contexts (e.g., for multi-kernel applications)::
+Multiple directories with contexts (e.g., for `multi-kernel applications`_)::
 
     $container->parameters()
         ->set('ai_mate_symfony.profiler_dir', [
@@ -394,10 +408,24 @@ The Monolog bridge (``symfony/ai-monolog-mate-extension``) provides log search a
 * ``monolog-list-files`` - List available log files
 * ``monolog-list-channels`` - List all log channels
 
-Configure the log directory::
+Single log directory (default)::
 
     $container->parameters()
         ->set('ai_mate_monolog.log_dir', '%mate.root_dir%/var/log');
+
+Multiple directories with contexts (e.g., for `multi-kernel applications`_ that split their
+logs per ``APP_ID``)::
+
+    $container->parameters()
+        ->set('ai_mate_monolog.log_dir', [
+            'website' => '%mate.root_dir%/var/log/website',
+            'admin' => '%mate.root_dir%/var/log/admin',
+        ]);
+
+When using multiple directories, log entries and files carry a ``kernel_context`` field, and all
+Monolog tools accept an optional ``kernelContext`` parameter to restrict the lookup to a single
+kernel. The field is named ``kernel_context`` rather than ``context`` to keep it apart from the
+Monolog context of a log record.
 
 **Troubleshooting**
 
@@ -680,3 +708,4 @@ Further Reading
     mate/troubleshooting
 
 .. _`MCP SDK documentation`: https://github.com/modelcontextprotocol/php-sdk
+.. _`multi-kernel applications`: https://symfony.com/doc/current/configuration/multiple_kernels.html

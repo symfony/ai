@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\ServiceNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
@@ -276,6 +277,90 @@ final class ServiceToolTest extends TestCase
         $tool->getServiceDetail('cache.app');
     }
 
+    public function testSupportsMultipleCacheDirectories()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $services = Toon::decode($tool->getServices());
+
+        $this->assertArrayHasKey('website', $services);
+        $this->assertArrayHasKey('admin', $services);
+        $this->assertArrayHasKey('event_dispatcher', $services['website']);
+        $this->assertArrayHasKey('admin.dashboard', $services['admin']);
+        $this->assertArrayNotHasKey('event_dispatcher', $services['admin']);
+        $this->assertSame('Admin\Controller\DashboardController', $services['admin']['admin.dashboard']);
+    }
+
+    public function testGetServicesFiltersByContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $services = Toon::decode($tool->getServices(context: 'admin'));
+
+        $this->assertSame(['admin'], array_keys($services));
+        $this->assertArrayHasKey('admin.dashboard', $services['admin']);
+    }
+
+    public function testGetServicesAppliesFiltersPerContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $services = Toon::decode($tool->getServices(tag: 'cache.pool'));
+
+        $this->assertArrayNotHasKey('logger', $services['website']);
+        $this->assertSame(['cache.app'], array_keys($services['admin']));
+        $this->assertSame(FilesystemAdapter::class, $services['website']['cache.app']);
+        $this->assertSame(ArrayAdapter::class, $services['admin']['cache.app']);
+    }
+
+    public function testGetServiceDetailReturnsTheContextItWasFoundIn()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $detail = Toon::decode($tool->getServiceDetail('admin.dashboard'));
+
+        $this->assertSame('admin.dashboard', $detail['id']);
+        $this->assertSame('admin', $detail['context']);
+    }
+
+    public function testGetServiceDetailPrefersTheFirstMatchingContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $detail = Toon::decode($tool->getServiceDetail('cache.app'));
+
+        $this->assertSame(FilesystemAdapter::class, $detail['class']);
+        $this->assertSame('website', $detail['context']);
+    }
+
+    public function testGetServiceDetailFiltersByContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $detail = Toon::decode($tool->getServiceDetail('cache.app', 'admin'));
+
+        $this->assertSame(ArrayAdapter::class, $detail['class']);
+        $this->assertSame('admin', $detail['context']);
+    }
+
+    public function testGetServiceDetailThrowsForServiceMissingInTheGivenContext()
+    {
+        $tool = $this->createMultiKernelTool();
+
+        $this->expectException(ServiceNotFoundException::class);
+        $tool->getServiceDetail('event_dispatcher', 'admin');
+    }
+
+    public function testGetServiceDetailOmitsContextForSingleCacheDirectory()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = Toon::decode($tool->getServiceDetail('cache.app'));
+
+        $this->assertArrayNotHasKey('context', $detail);
+    }
+
     public function testGetServicesDetectsCustomKernelClassName()
     {
         $tempDir = sys_get_temp_dir().'/symfony_ai_mate_test_'.uniqid();
@@ -310,5 +395,13 @@ XML;
                 rmdir($tempDir);
             }
         }
+    }
+
+    private function createMultiKernelTool(): ServiceTool
+    {
+        return new ServiceTool([
+            'website' => $this->fixturesDir,
+            'admin' => $this->fixturesDir.'/admin',
+        ], new ContainerProvider());
     }
 }
