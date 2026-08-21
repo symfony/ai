@@ -127,20 +127,20 @@ Supported Models & Platforms
 ----------------------------
 
 * **Language Models**
-  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
-  * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
+  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_, `OpenRouter`_ and `Eden AI`_ as Platform
+  * `Anthropic's Claude`_ with `Anthropic`_, `AWS Bedrock`_ and `Eden AI`_ as Platform
   * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
-  * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
+  * `Gemini`_ with `Google`_, `Vertex AI`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
   * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
   * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
-  * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
+  * `Mistral's Mistral`_ with `Mistral`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
   * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
   * `Vertex AI Text Embeddings`_ with `Vertex AI`_
-  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
+  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Voyage's Embeddings`_ with `Voyage`_ as Platform
   * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Qwen`_ with `OpenRouter`_ as Platform
@@ -148,6 +148,7 @@ Supported Models & Platforms
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
+  * OCR and document parsing (invoices, resumes, identity documents) with `Eden AI`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
@@ -158,16 +159,18 @@ Supported Models & Platforms
   * `Cartesia STT`_ with `Cartesia`_ as Platform
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
+  * Multi-provider TTS and STT with `Eden AI`_ as Platform
 
   For complete Deepgram setup and usage guide (TTS + STT), see :doc:`platform/deepgram`.
 * **Image/Video Models**
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
+  * Image generation, object detection and explicit content detection with `Eden AI`_ as Platform
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
 
-Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multiple models from different providers.
+Platforms like `LiteLLM`_, `OpenRouter`_ or `Eden AI`_ provide a unified API to access multiple models from different providers.
 Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
 standard in the industry. Platforms using this de facto standard can be used with the generic bridge::
 
@@ -1084,11 +1087,120 @@ completions, it is invoked with a single document content object - a
 The result exposes every ``Page`` with its markdown, dimensions, extracted layout images
 (with bounding boxes) and optional annotations.
 
+Eden AI exposes OCR and document parsing (invoices, resumes, identity documents) from multiple
+providers through its ``/v3/universal-ai`` endpoint, using ``ocr/{subfeature}/{provider}`` model
+names. Models are invoked with a
+:class:`Symfony\\AI\\Platform\\Message\\Content\\DocumentUrl` or
+:class:`Symfony\\AI\\Platform\\Message\\Content\\ImageUrl`, or with a plain string holding a
+direct file URL or a file ID from Eden AI's upload API. Input parameters like ``language`` or
+``document_type`` are passed as options, or inline in the model name
+(``ocr/ocr/google?language=en``)::
+
+    use Symfony\AI\Platform\Bridge\EdenAi\DocumentParser\Result\DocumentParsingResult;
+    use Symfony\AI\Platform\Bridge\EdenAi\Factory;
+    use Symfony\AI\Platform\Bridge\EdenAi\Ocr\Result\OcrResult;
+    use Symfony\AI\Platform\Message\Content\DocumentUrl;
+    use Symfony\AI\Platform\Message\Content\ImageUrl;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    // OCR: extract raw text and bounding boxes
+    $result = $platform->invoke('ocr/ocr/google', new ImageUrl('https://example.com/scan.jpg'), [
+        'language' => 'en',
+    ]);
+
+    $ocr = $result->asObject();
+    \assert($ocr instanceof OcrResult);
+
+    echo $ocr->getText();
+
+    // Document parsing: extract structured data from an invoice
+    $result = $platform->invoke('ocr/financial_parser/affinda', new DocumentUrl('https://example.com/invoice.pdf'), [
+        'language' => 'en',
+        'document_type' => 'invoice',
+    ]);
+
+    $parsing = $result->asObject();
+    \assert($parsing instanceof DocumentParsingResult);
+
+    $extractedData = $parsing->getExtractedData();
+
 Code Examples
 ~~~~~~~~~~~~~
 
 * `OCR with Mistral (URL)`_
 * `OCR with Mistral (binary)`_
+* `OCR with Eden AI`_
+* `Invoice parsing with Eden AI`_
+* `Resume parsing with Eden AI`_
+
+Eden AI Expert Models
+---------------------
+
+Beyond OCR and document parsing, the Eden AI bridge exposes the other expert models of the
+``/v3/universal-ai`` endpoints: text-to-speech, speech-to-text, image analysis (object
+detection, explicit content, logo detection, face detection, AI detection and deepfake
+detection) and image generation. Binary content
+(:class:`Symfony\\AI\\Platform\\Message\\Content\\Audio`,
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Document` or
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Image`) is transparently uploaded through
+Eden AI's ``/v3/upload`` endpoint before the request::
+
+    use Symfony\AI\Platform\Bridge\EdenAi\Factory;
+    use Symfony\AI\Platform\Message\Content\Audio;
+    use Symfony\AI\Platform\Message\Content\ImageUrl;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    // Text-to-speech: returns the synthesized audio as binary data
+    $result = $platform->invoke('audio/tts/amazon/neural', 'Welcome to Symfony AI!');
+    $result->asFile('welcome.mp3');
+
+    // Speech-to-text: async jobs are polled transparently, diarization is exposed as metadata
+    $result = $platform->invoke('audio/speech_to_text_async/openai', 'https://example.com/audio.mp3');
+    echo $result->asText();
+
+    // Speech-to-text from a local file, uploaded automatically
+    $result = $platform->invoke('audio/speech_to_text_async/deepgram', Audio::fromFile('./audio.mp3'));
+
+    // Object detection
+    $analysis = $platform->invoke('image/object_detection/google', new ImageUrl('https://example.com/photo.jpg'))->asObject();
+    foreach ($analysis->getItems() as $item) {
+        echo $item['label'];
+    }
+
+    // Image generation: every generated image is returned, so requesting several yields a
+    // MultiPartResult instead of a single BinaryResult
+    $result = $platform->invoke('image/generation/stabilityai', 'A red apple on a white table');
+    $result->asFile('apple.png');
+
+Eden AI fronts more than a thousand models, and
+:class:`Symfony\\AI\\Platform\\Bridge\\EdenAi\\ModelCatalog` only curates a subset of them.
+Register any other one through its ``$additionalModels`` argument, or hand the factory a
+:class:`Symfony\\AI\\Platform\\Bridge\\EdenAi\\ModelApiCatalog`, which discovers everything
+Eden AI currently serves from its public ``/v3/models``, ``/v3/embeddings/models`` and
+``/v3/info`` endpoints::
+
+    use Symfony\AI\Platform\Bridge\EdenAi\Factory;
+    use Symfony\AI\Platform\Bridge\EdenAi\ModelApiCatalog;
+
+    $platform = Factory::createPlatform($apiKey, $httpClient, new ModelApiCatalog($httpClient));
+
+    // No catalog entry needed for this one
+    $result = $platform->invoke('audio/tts/elevenlabs/eleven_multilingual_v2', 'Welcome!');
+
+Expert subfeatures the bridge has no result converter for stay hidden from that catalog, so
+an unsupported model fails at lookup time rather than during conversion.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `TTS with Eden AI`_
+* `STT with Eden AI`_
+* `STT with Eden AI (file upload)`_
+* `Object detection with Eden AI`_
+* `Logo detection with Eden AI`_
+* `Image generation with Eden AI`_
 
 Embeddings
 ----------
@@ -1826,6 +1938,7 @@ Code Examples
 .. _`Vertex AI`: https://cloud.google.com/vertex-ai/generative-ai/docs
 .. _`Google`: https://ai.google.dev/
 .. _`OpenRouter`: https://www.openrouter.ai/
+.. _`Eden AI`: https://www.edenai.co/
 .. _`DeepSeek's R1`: https://www.deepseek.com/
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/
@@ -1857,6 +1970,15 @@ Code Examples
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
 .. _`OCR with Mistral (URL)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-url.php
 .. _`OCR with Mistral (binary)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-binary.php
+.. _`OCR with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/ocr.php
+.. _`Invoice parsing with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/financial-parser.php
+.. _`Resume parsing with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/resume-parser.php
+.. _`TTS with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/tts.php
+.. _`STT with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/speech-to-text.php
+.. _`STT with Eden AI (file upload)`: https://github.com/symfony/ai/blob/main/examples/edenai/speech-to-text-upload.php
+.. _`Object detection with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/object-detection.php
+.. _`Logo detection with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/logo-detection.php
+.. _`Image generation with Eden AI`: https://github.com/symfony/ai/blob/main/examples/edenai/image-generation.php
 .. _`Embeddings with OpenAI`: https://github.com/symfony/ai/blob/main/examples/openai/embeddings.php
 .. _`Embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/text-embeddings.php
 .. _`Multimodal embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/multimodal-embeddings.php

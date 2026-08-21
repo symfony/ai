@@ -39,6 +39,7 @@ use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
 use Symfony\AI\Platform\Bridge\Deepgram\Factory as DeepgramFactory;
+use Symfony\AI\Platform\Bridge\EdenAi\Factory as EdenAiFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
@@ -5256,6 +5257,46 @@ class AiBundleTest extends TestCase
         $this->assertSame('ai.platform.contract.perplexity', (string) $arguments[3]);
     }
 
+    public function testEdenAiPlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'edenai' => [
+                        'api_key' => 'edenai-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.edenai'));
+
+        $definition = $container->getDefinition('ai.platform.edenai');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame([
+            EdenAiFactory::class,
+            'createPlatform',
+        ], $definition->getFactory());
+
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(5, $arguments);
+        $this->assertSame('edenai-test-key', $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('http_client', (string) $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('ai.platform.model_catalog.edenai', (string) $arguments[2]);
+        $this->assertNull($arguments[3]);
+        $this->assertInstanceOf(Reference::class, $arguments[4]);
+        $this->assertSame('event_dispatcher', (string) $arguments[4]);
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'edenai']], $definition->getTag('ai.platform'));
+    }
+
     public function testDeepSeekPlatformConfiguration()
     {
         $container = $this->buildContainer([
@@ -9129,6 +9170,9 @@ class AiBundleTest extends TestCase
                     ],
                     'openrouter' => [
                         'api_key' => 'sk-openrouter_key_full',
+                    ],
+                    'edenai' => [
+                        'api_key' => 'edenai_key_full',
                     ],
                     'lmstudio' => [
                         'host_url' => 'http://127.0.0.1:1234',

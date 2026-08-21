@@ -48,7 +48,8 @@ class ResultConverter implements ResultConverterInterface
         $response = $result->getObject();
 
         if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Authentication failed.';
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['detail'] ?? 'Authentication failed.';
             throw new AuthenticationException($errorMessage);
         }
 
