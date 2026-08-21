@@ -1,0 +1,18 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-17T19:45:43Z
+
+Tracked the bundle side in #2418 — not blocking this PR.
+
+---------------------------------------------------------------------------
+
+by ousamabenyounes at 2026-08-20T01:23:20Z
+
+Thanks for the review @wachterjohannes — all four points are in, plus a rebase onto the current `main`:
+
+- **Comment wording**: applied your suggestion verbatim, the embedding happens client-side in `prepareEmbeddings()` and fatals before anything is sent.
+- **`IntegrationTest::testQueryDocumentsWithTextQuery()`**: dropped. `AbstractStoreIntegrationTestCase` carries the same "must not be skipped, dependents would be skipped too" guard keyed on `supports(TextQuery::class)`, so the override is redundant.
+- **Consequence test**: added `testQueryWithTextQueryThrowsWithoutEmbeddingFunction()` as you wrote it — `getOrCreateCollection()` is never reached and `UnsupportedQueryTypeException` is thrown.
+- **Changelog**: added a `0.13` entry to `src/store/src/Bridge/ChromaDb/CHANGELOG.md` and flipped `New feature?` to `yes` in the description so `validate-changelog-upgrade.php` accepts it. I can't set labels on this repo — could you add `Feature` when you get a chance?
+
+Validation: on `main` with only this PR's test files applied → `FAILURES! Tests: 35, Assertions: 220, Failures: 3` (RED); with the fix → `OK (35 tests, 233 assertions)`, and the whole Store component at `OK (417 tests, 1335 assertions)`. The ChromaDb integration group was run against a real `chromadb/chroma:0.6.3` container and stays at `OK (10 tests, 14 assertions)` after removing the override. PHPStan and PHP-CS-Fixer are clean on the bridge.
