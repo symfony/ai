@@ -23,7 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Display detailed information about a specific MCP tool.
+ * Display detailed information about a specific tool.
  *
  * @phpstan-import-type Capabilities from CapabilityCollector
  *
@@ -37,7 +37,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('mcp:tools:inspect', 'Display detailed information about a specific MCP tool')]
+#[AsCommand('tools:inspect', 'Display detailed information about a specific tool')]
 class ToolsInspectCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
@@ -60,12 +60,12 @@ class ToolsInspectCommand extends Command
 
     public static function getDefaultName(): string
     {
-        return 'mcp:tools:inspect';
+        return 'tools:inspect';
     }
 
     public static function getDefaultDescription(): string
     {
-        return 'Display detailed information about a specific MCP tool';
+        return 'Display detailed information about a specific tool';
     }
 
     protected function configure(): void
@@ -77,21 +77,21 @@ class ToolsInspectCommand extends Command
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
             ->setHelp(
                 <<<HELP
-The <info>%command.name%</info> command displays detailed information about a specific MCP tool including its full JSON schema.
+The <info>%command.name%</info> command displays detailed information about a specific tool including its full JSON input schema.
 
 <info>Usage Examples:</info>
 
   <comment># Inspect a tool</comment>
-  %command.full_name% php-version
+  %command.full_name% server-info
 
   <comment># JSON output for scripting</comment>
-  %command.full_name% php-version --format=json
+  %command.full_name% server-info --format=json
 
   <comment># Inspect extension tool</comment>
-  %command.full_name% search-logs
+  %command.full_name% monolog-search
 
   <comment># For a list of all available tools, use:</comment>
-  {$script} mcp:tools:list
+  {$script} tools:list
 HELP
             );
     }
@@ -120,7 +120,7 @@ HELP
 
         if (!isset($allTools[$toolName])) {
             $io->error(\sprintf('Tool "%s" not found', $toolName));
-            $io->note(\sprintf('Use "%s mcp:tools:list" to see all available tools', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate'));
+            $io->note(\sprintf('Use "%s tools:list" to see all available tools', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate'));
 
             return Command::FAILURE;
         }

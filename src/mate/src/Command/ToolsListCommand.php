@@ -24,7 +24,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Display available MCP tools with metadata.
+ * Display available tools with metadata.
  *
  * @phpstan-import-type Capabilities from CapabilityCollector
  *
@@ -38,7 +38,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('mcp:tools:list', 'Display available MCP tools with metadata')]
+#[AsCommand('tools:list', 'Display available tools with metadata')]
 class ToolsListCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
@@ -61,12 +61,12 @@ class ToolsListCommand extends Command
 
     public static function getDefaultName(): string
     {
-        return 'mcp:tools:list';
+        return 'tools:list';
     }
 
     public static function getDefaultDescription(): string
     {
-        return 'Display available MCP tools with metadata';
+        return 'Display available tools with metadata';
     }
 
     protected function configure(): void
@@ -79,7 +79,7 @@ class ToolsListCommand extends Command
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json, toon)', 'table')
             ->setHelp(
                 <<<HELP
-The <info>%command.name%</info> command displays all available MCP tools with their metadata.
+The <info>%command.name%</info> command displays all available tools with their metadata.
 
 <info>Usage Examples:</info>
 
@@ -100,7 +100,10 @@ The <info>%command.name%</info> command displays all available MCP tools with th
   %command.full_name% --extension=symfony/ai-monolog-mate-extension --filter="search*"
 
   <comment># For detailed tool information with schema, use:</comment>
-  {$script} mcp:tools:inspect <tool-name>
+  {$script} tools:inspect <tool-name>
+
+  <comment># To run a tool, use:</comment>
+  {$script} tools:call <tool-name> --<param>=<value>
 HELP
             );
     }
@@ -203,7 +206,7 @@ HELP
      */
     private function outputTable(array $tools, SymfonyStyle $io): void
     {
-        $io->title('MCP Tools');
+        $io->title('Available Tools');
 
         if ([] === $tools) {
             $io->warning('No tools found');

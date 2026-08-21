@@ -70,8 +70,8 @@ final class AgentInstructionsMaterializerTest extends TestCase
         $this->assertStringContainsString(AgentInstructionsMaterializer::AGENTS_START_MARKER, $agents);
         $this->assertStringContainsString(AgentInstructionsMaterializer::AGENTS_END_MARKER, $agents);
         $this->assertStringContainsString('AI Mate Summary:', $agents);
-        $this->assertStringContainsString('- Role: MCP-powered, project-aware coding guidance and tools.', $agents);
-        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.', $agents);
+        $this->assertStringContainsString('- Role: project-aware coding tools exposed through the `vendor/bin/mate` CLI.', $agents);
+        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over the equivalent raw shell commands whenever possible.', $agents);
         $this->assertStringContainsString('- Installed extensions: vendor/package-a.', $agents);
     }
 
@@ -110,10 +110,88 @@ MD
         $this->assertStringContainsString('Keep this line.', $agents);
         $this->assertStringContainsString('Footer line.', $agents);
         $this->assertStringContainsString('AI Mate Summary:', $agents);
-        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.', $agents);
+        $this->assertStringContainsString('- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over the equivalent raw shell commands whenever possible.', $agents);
         $this->assertStringContainsString('- Installed extensions: See `mate/extensions.php`.', $agents);
         $this->assertSame(1, substr_count($agents, AgentInstructionsMaterializer::AGENTS_START_MARKER));
         $this->assertSame(1, substr_count($agents, AgentInstructionsMaterializer::AGENTS_END_MARKER));
+    }
+
+    public function testMaterializeCreatesClaudeFileImportingAgentsFile()
+    {
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+        $this->assertFileExists($this->tempDir.'/CLAUDE.md');
+
+        $claude = file_get_contents($this->tempDir.'/CLAUDE.md');
+        $this->assertIsString($claude);
+        $this->assertStringContainsString('@AGENTS.md', $claude);
+        $this->assertStringContainsString(AgentInstructionsMaterializer::CLAUDE_START_MARKER, $claude);
+        $this->assertStringContainsString(AgentInstructionsMaterializer::CLAUDE_END_MARKER, $claude);
+    }
+
+    public function testMaterializeAppendsImportBlockToUnrelatedClaudeFile()
+    {
+        file_put_contents($this->tempDir.'/CLAUDE.md', "# CLAUDE.md\n\nKeep this line.\n");
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+
+        $claude = file_get_contents($this->tempDir.'/CLAUDE.md');
+        $this->assertIsString($claude);
+        $this->assertStringContainsString('Keep this line.', $claude);
+        $this->assertStringContainsString('@AGENTS.md', $claude);
+        $this->assertSame(1, substr_count($claude, AgentInstructionsMaterializer::CLAUDE_START_MARKER));
+    }
+
+    public function testMaterializeLeavesClaudeFileUntouchedWhenItAlreadyReferencesAgentsFile()
+    {
+        $existing = "# CLAUDE.md\n\nSee AGENTS.md for the project rules.\n";
+        file_put_contents($this->tempDir.'/CLAUDE.md', $existing);
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+        $this->assertSame($existing, file_get_contents($this->tempDir.'/CLAUDE.md'));
+    }
+
+    public function testMaterializeIsIdempotentForClaudeFile()
+    {
+        $materializer = $this->createMaterializer();
+
+        $materializer->synchronizeFromCurrentInstructionsFile();
+        $afterFirstRun = file_get_contents($this->tempDir.'/CLAUDE.md');
+
+        $materializer->synchronizeFromCurrentInstructionsFile();
+        $afterSecondRun = file_get_contents($this->tempDir.'/CLAUDE.md');
+
+        $this->assertIsString($afterFirstRun);
+        $this->assertSame($afterFirstRun, $afterSecondRun);
+        $this->assertSame(1, substr_count($afterFirstRun, '@AGENTS.md'));
+    }
+
+    public function testMaterializeReportsFailureWhenClaudeFileIsNotWritable()
+    {
+        $path = $this->tempDir.'/CLAUDE.md';
+        file_put_contents($path, "# CLAUDE.md\n");
+        chmod($path, 0444);
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertFalse($result['claude_file_updated']);
+        $this->assertSame("# CLAUDE.md\n", file_get_contents($path));
+    }
+
+    private function createMaterializer(): AgentInstructionsMaterializer
+    {
+        $logger = new NullLogger();
+
+        return new AgentInstructionsMaterializer(
+            $this->tempDir,
+            new AgentInstructionsAggregator($this->tempDir, [], $logger),
+            $logger,
+        );
     }
 
     private function removeDirectory(string $dir): void

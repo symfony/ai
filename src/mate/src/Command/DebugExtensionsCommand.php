@@ -22,7 +22,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Display detailed information about discovered and loaded MCP extensions.
+ * Display detailed information about discovered and loaded Mate extensions.
  *
  * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
  *
@@ -46,7 +46,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('debug:extensions', 'Display detailed information about discovered and loaded MCP extensions')]
+#[AsCommand('debug:extensions', 'Display detailed information about discovered and loaded Mate extensions')]
 class DebugExtensionsCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
@@ -95,7 +95,7 @@ class DebugExtensionsCommand extends Command
 
     public static function getDefaultDescription(): string
     {
-        return 'Display detailed information about discovered and loaded MCP extensions';
+        return 'Display detailed information about discovered and loaded Mate extensions';
     }
 
     protected function configure(): void
@@ -105,7 +105,7 @@ class DebugExtensionsCommand extends Command
             ->addOption('show-all', null, InputOption::VALUE_NONE, 'Show all discovered extensions including disabled ones')
             ->setHelp(
                 <<<'HELP'
-The <info>%command.name%</info> command displays detailed information about MCP extension
+The <info>%command.name%</info> command displays detailed information about Mate extension
 discovery and loading.
 
 <info>Usage Examples:</info>
@@ -161,7 +161,7 @@ HELP
 
     private function outputText(bool $showAll, SymfonyStyle $io): void
     {
-        $io->title('MCP Extension Discovery');
+        $io->title('Extension Discovery');
 
         $io->section('Root Project');
         $this->displayExtensionDetails($io, '_custom', $this->rootProjectConfig, true, true);

@@ -11,12 +11,9 @@
 
 namespace Symfony\AI\Mate\Discovery;
 
-use Mcp\Capability\Registry\PromptReference;
-use Mcp\Capability\Registry\ResourceTemplateReference;
-use Mcp\Capability\Registry\ToolReference;
-
 /**
- * Collects MCP capabilities from discovered extensions.
+ * Collects capabilities from a discovered extension and flattens them into plain arrays
+ * for the listing/inspection commands.
  *
  * @phpstan-type Capabilities array{
  *     tools: array<string, array{
@@ -48,10 +45,10 @@ use Mcp\Capability\Registry\ToolReference;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-class CapabilityCollector
+final class CapabilityCollector
 {
     public function __construct(
-        private FilteredDiscoveryLoader $loader,
+        private CapabilityRegistry $registry,
     ) {
     }
 
@@ -62,112 +59,44 @@ class CapabilityCollector
      */
     public function collectCapabilities(string $extensionName, array $extension): array
     {
-        $state = $this->loader->loadByExtension($extensionName, $extension);
+        $capabilities = $this->registry->capabilitiesForExtension($extensionName, $extension);
+
+        $tools = [];
+        foreach ($capabilities->getTools() as $name => $tool) {
+            $tools[$name] = [
+                'name' => $tool->name,
+                'description' => $tool->description,
+                'handler' => $tool->handlerLabel(),
+                'input_schema' => $tool->inputSchema,
+            ];
+        }
+
+        $resources = [];
+        foreach ($capabilities->getResources() as $uri => $resource) {
+            $resources[$uri] = [
+                'uri' => $resource->uri,
+                'name' => $resource->name,
+                'description' => $resource->description,
+                'handler' => $resource->handlerLabel(),
+                'mime_type' => $resource->mimeType,
+            ];
+        }
+
+        $resourceTemplates = [];
+        foreach ($capabilities->getResourceTemplates() as $uriTemplate => $template) {
+            $resourceTemplates[$uriTemplate] = [
+                'uri_template' => $template->uriTemplate,
+                'name' => $template->name,
+                'description' => $template->description,
+                'handler' => $template->handlerLabel(),
+            ];
+        }
 
         return [
-            'tools' => $this->formatTools($state->getTools()),
-            'resources' => $this->formatResources($state->getResources()),
-            'prompts' => $this->formatPrompts($state->getPrompts()),
-            'resource_templates' => $this->formatResourceTemplates($state->getResourceTemplates()),
+            'tools' => $tools,
+            'resources' => $resources,
+            'prompts' => [],
+            'resource_templates' => $resourceTemplates,
         ];
-    }
-
-    private function getHandlerInfo(mixed $handler): string
-    {
-        if (\is_array($handler)) {
-            [$classOrInstance, $method] = $handler;
-            $className = \is_object($classOrInstance)
-                ? $classOrInstance::class
-                : $classOrInstance;
-
-            return "{$className}::{$method}";
-        }
-
-        if (\is_string($handler) && class_exists($handler)) {
-            return $handler;
-        }
-
-        return 'Closure';
-    }
-
-    /**
-     * @param array<string, ToolReference> $tools
-     *
-     * @return array<string, array{name: string, description: string|null, handler: string, input_schema: array<string, mixed>|null}>
-     */
-    private function formatTools(array $tools): array
-    {
-        $formatted = [];
-        foreach ($tools as $name => $toolRef) {
-            $formatted[$name] = [
-                'name' => $name,
-                'description' => $toolRef->tool->description,
-                'handler' => $this->getHandlerInfo($toolRef->handler),
-                'input_schema' => $toolRef->tool->inputSchema,
-            ];
-        }
-
-        return $formatted;
-    }
-
-    /**
-     * @param array<string, \Mcp\Capability\Registry\ResourceReference> $resources
-     *
-     * @return array<string, array{uri: string, name: string|null, description: string|null, handler: string, mime_type: string|null}>
-     */
-    private function formatResources(array $resources): array
-    {
-        $formatted = [];
-        foreach ($resources as $uri => $resourceRef) {
-            $formatted[$uri] = [
-                'uri' => $uri,
-                'name' => $resourceRef->resource->name,
-                'description' => $resourceRef->resource->description,
-                'handler' => $this->getHandlerInfo($resourceRef->handler),
-                'mime_type' => $resourceRef->resource->mimeType,
-            ];
-        }
-
-        return $formatted;
-    }
-
-    /**
-     * @param array<string, PromptReference> $prompts
-     *
-     * @return array<string, array{name: string, description: string|null, handler: string, arguments: array<mixed>|null}>
-     */
-    private function formatPrompts(array $prompts): array
-    {
-        $formatted = [];
-        foreach ($prompts as $name => $promptRef) {
-            $formatted[$name] = [
-                'name' => $name,
-                'description' => $promptRef->prompt->description,
-                'handler' => $this->getHandlerInfo($promptRef->handler),
-                'arguments' => $promptRef->prompt->arguments,
-            ];
-        }
-
-        return $formatted;
-    }
-
-    /**
-     * @param array<string, ResourceTemplateReference> $templates
-     *
-     * @return array<string, array{uri_template: string, name: string|null, description: string|null, handler: string}>
-     */
-    private function formatResourceTemplates(array $templates): array
-    {
-        $formatted = [];
-        foreach ($templates as $uriTemplate => $templateRef) {
-            $formatted[$uriTemplate] = [
-                'uri_template' => $uriTemplate,
-                'name' => $templateRef->resourceTemplate->name,
-                'description' => $templateRef->resourceTemplate->description,
-                'handler' => $this->getHandlerInfo($templateRef->handler),
-            ];
-        }
-
-        return $formatted;
     }
 }

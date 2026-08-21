@@ -38,6 +38,56 @@ AI Bundle
 
    The default (`false`, tool messages are preserved) is unchanged.
 
+Mate
+----
+
+ * Mate no longer runs an MCP server; it is now a plain CLI that coding agents invoke directly.
+   The `mcp/sdk` dependency, the `serve`/`stop` commands and the whole MCP server runtime have
+   been removed. Remove any `mate serve`/`mate stop` usage and delete the generated `mcp.json`
+   and `.mcp.json` from your project — agents should run the `mate` commands instead.
+
+ * `mate init` no longer generates `mcp.json`, `.mcp.json` or the Codex wrappers (`bin/codex`,
+   `bin/codex.bat`). It now writes CLI-oriented agent instructions (`mate/AGENT_INSTRUCTIONS.md`
+   and the managed block in `AGENTS.md`). Point your coding agent at those instructions instead
+   of an MCP server configuration.
+
+ * The tool/resource commands were renamed:
+
+   ```diff
+   -vendor/bin/mate mcp:tools:list
+   -vendor/bin/mate mcp:tools:inspect <tool>
+   -vendor/bin/mate mcp:tools:call <tool> '{"limit": 1}'
+   -vendor/bin/mate mcp:resources:read <uri>
+   +vendor/bin/mate tools:list
+   +vendor/bin/mate tools:inspect <tool>
+   +vendor/bin/mate tools:call <tool> --limit=1
+   +vendor/bin/mate resources:read <uri>
+   ```
+
+   `tools:call` now takes tool parameters as long options instead of a positional JSON object.
+   Use `--<param>=<value>` (booleans may be passed as a bare `--<flag>`), or pass a full JSON
+   object via `--json='{...}'` for complex/array-valued parameters.
+
+ * Custom tools, resources and resource templates now use native Mate attributes instead of the
+   `mcp/sdk` ones. Replace the attribute imports on your `mate/src/` classes:
+
+   ```diff
+   -use Mcp\Capability\Attribute\McpTool;
+   -use Mcp\Capability\Attribute\McpResource;
+   -use Mcp\Capability\Attribute\McpResourceTemplate;
+   +use Symfony\AI\Mate\Attribute\AsTool;
+   +use Symfony\AI\Mate\Attribute\AsResource;
+   +use Symfony\AI\Mate\Attribute\AsResourceTemplate;
+
+   -#[McpTool(name: 'my-tool', description: '...')]
+   +#[AsTool(name: 'my-tool', description: '...')]
+    public function myTool(int $limit = 10): string { /* ... */ }
+   ```
+
+   The attribute shapes are otherwise the same (`name`, `title`, `description` for tools;
+   `uri`/`uriTemplate`, `name`, `title`, `description`, `mimeType` for resources), and input
+   schemas are still derived from the method signature plus `@param` PHPDoc.
+
 Platform
 --------
 
@@ -81,7 +131,6 @@ Platform
    +    }
     }
    ```
-
 UPGRADE FROM 0.11 to 0.12
 =========================
 

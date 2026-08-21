@@ -9,8 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Mcp\Capability\Discovery\Discoverer;
-use Mcp\Capability\Discovery\DiscovererInterface;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
 use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
@@ -20,18 +19,21 @@ use Symfony\AI\Mate\Command\DebugExtensionsCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
-use Symfony\AI\Mate\Command\ServeCommand;
 use Symfony\AI\Mate\Command\SkillsInstallCommand;
-use Symfony\AI\Mate\Command\StopCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
 use Symfony\AI\Mate\Command\ToolsListCommand;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\DocBlockParser;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
+use Symfony\AI\Mate\Discovery\SchemaGenerator;
+use Symfony\AI\Mate\Invocation\ArgumentCaster;
+use Symfony\AI\Mate\Invocation\ResourceReader;
+use Symfony\AI\Mate\Invocation\ToolInvoker;
 use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\AI\Mate\Service\Logger;
-use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\AI\Mate\Service\SkillsInstaller;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -55,7 +57,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('mate.debug_log_file', $debugLogFile)
         ->set('mate.debug_file_enabled', $debugFileEnabled)
         ->set('mate.debug_enabled', $debugEnabled)
-        ->set('mate.mcp_protocol_version', '2025-03-26')
     ;
 
     $container->services()
@@ -68,7 +69,6 @@ return static function (ContainerConfigurator $container): void {
             ->bind('$extensions', '%mate.extensions%')
             ->bind('$disabledFeatures', '%mate.disabled_features%')
             ->bind('$enabledExtensions', '%mate.enabled_extensions%')
-            ->bind('$mcpProtocolVersion', '%mate.mcp_protocol_version%')
             ->bind('$skillsDir', '%mate.skills_dir%')
             ->bind('$skillMirrors', '%mate.skill_mirrors%')
 
@@ -85,20 +85,23 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$debugEnabled', '%mate.debug_enabled%')
             ->alias(Logger::class, LoggerInterface::class)
 
-        // Container service for commands that need it
+        // Container services for handlers that need to be resolved at runtime
         ->alias(ContainerInterface::class, 'service_container')
-
-        // Register discovery services
-        ->set(Discoverer::class)
-            ->alias(DiscovererInterface::class, Discoverer::class)
+        ->alias(PsrContainerInterface::class, 'service_container')
 
         ->set(ComposerExtensionDiscovery::class)
 
-        ->set(FilteredDiscoveryLoader::class)
-
-        ->set(RegistryProvider::class)
-
+        // Native discovery pipeline (attribute + reflection based)
+        ->set(DocBlockParser::class)
+        ->set(SchemaGenerator::class)
+        ->set(ReflectionDiscoverer::class)
+        ->set(CapabilityRegistry::class)
         ->set(CapabilityCollector::class)
+
+        // Tool/resource invocation
+        ->set(ArgumentCaster::class)
+        ->set(ToolInvoker::class)
+        ->set(ResourceReader::class)
 
         ->set(AgentInstructionsAggregator::class)
         ->set(AgentInstructionsMaterializer::class)
@@ -111,13 +114,7 @@ return static function (ContainerConfigurator $container): void {
         ->set(InitCommand::class)
             ->public()
 
-        ->set(ServeCommand::class)
-            ->public()
-
         ->set(DiscoverCommand::class)
-            ->public()
-
-        ->set(StopCommand::class)
             ->public()
 
         ->set(DebugCapabilitiesCommand::class)

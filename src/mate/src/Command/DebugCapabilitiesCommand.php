@@ -23,7 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Display all MCP capabilities grouped by extension.
+ * Display all capabilities grouped by extension.
  *
  * @phpstan-import-type Capabilities from CapabilityCollector
  * @phpstan-import-type ExtensionData from DebugExtensionsCommand
@@ -42,7 +42,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('debug:capabilities', 'Display all MCP capabilities grouped by extension')]
+#[AsCommand('debug:capabilities', 'Display all capabilities grouped by extension')]
 class DebugCapabilitiesCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
@@ -70,7 +70,7 @@ class DebugCapabilitiesCommand extends Command
 
     public static function getDefaultDescription(): string
     {
-        return 'Display all MCP capabilities grouped by extension';
+        return 'Display all capabilities grouped by extension';
     }
 
     protected function configure(): void
@@ -81,7 +81,7 @@ class DebugCapabilitiesCommand extends Command
             ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Filter by type (tool, resource, prompt, template)')
             ->setHelp(
                 <<<'HELP'
-The <info>%command.name%</info> command displays all discovered MCP capabilities
+The <info>%command.name%</info> command displays all discovered capabilities
 grouped by their providing extension/package.
 
 <info>Usage Examples:</info>
@@ -195,7 +195,7 @@ HELP
      */
     private function outputText(array $capabilitiesByExtension, SymfonyStyle $io): void
     {
-        $io->title('Mate MCP Capabilities');
+        $io->title('Mate Capabilities');
 
         $totalTools = 0;
         $totalResources = 0;

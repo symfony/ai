@@ -11,11 +11,11 @@
 
 namespace Symfony\AI\Mate\Tests\Discovery;
 
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -173,9 +173,9 @@ final class CapabilityCollectorTest extends TestCase
     private function createCollector(string $rootDir, array $extensions = [], array $disabledFeatures = []): CapabilityCollector
     {
         $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
 
-        return new CapabilityCollector($loader);
+        return new CapabilityCollector($registry);
     }
 }

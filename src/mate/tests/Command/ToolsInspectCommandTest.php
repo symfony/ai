@@ -12,12 +12,12 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use HelgeSverre\Toon\Toon;
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -112,7 +112,7 @@ final class ToolsInspectCommandTest extends TestCase
         $this->assertSame(Command::FAILURE, $tester->getStatusCode());
         $output = $tester->getDisplay();
         $this->assertStringContainsString('Tool "non-existent-tool" not found', $output);
-        $this->assertStringContainsString('mcp:tools:list', $output);
+        $this->assertStringContainsString('tools:list', $output);
     }
 
     public function testTextOutputFormatDisplaysFullInformation()
@@ -166,9 +166,9 @@ final class ToolsInspectCommandTest extends TestCase
     private function createCommand(string $rootDir, array $extensions, array $disabledFeatures = []): ToolsInspectCommand
     {
         $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
-        $collector = new CapabilityCollector($loader);
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+        $collector = new CapabilityCollector($registry);
 
         return new class($extensions, $collector) extends ToolsInspectCommand {
             protected function isToonFormatAvailable(): bool

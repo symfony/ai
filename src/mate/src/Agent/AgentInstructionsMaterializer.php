@@ -22,6 +22,7 @@ use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
  * @phpstan-type MaterializationResult array{
  *     instructions_file_updated: bool,
  *     agents_file_updated: bool,
+ *     claude_file_updated: bool,
  * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -30,6 +31,8 @@ final class AgentInstructionsMaterializer
 {
     public const AGENTS_START_MARKER = '<!-- BEGIN AI_MATE_INSTRUCTIONS -->';
     public const AGENTS_END_MARKER = '<!-- END AI_MATE_INSTRUCTIONS -->';
+    public const CLAUDE_START_MARKER = '<!-- BEGIN AI_MATE_AGENTS_IMPORT -->';
+    public const CLAUDE_END_MARKER = '<!-- END AI_MATE_AGENTS_IMPORT -->';
 
     public function __construct(
         private string $rootDir,
@@ -52,10 +55,12 @@ final class AgentInstructionsMaterializer
 
         $instructionsFileUpdated = $this->writeInstructionsFile($instructions);
         $agentsFileUpdated = $this->writeAgentsFile($extensions);
+        $claudeFileUpdated = $this->writeClaudeFile();
 
         return [
             'instructions_file_updated' => $instructionsFileUpdated,
             'agents_file_updated' => $agentsFileUpdated,
+            'claude_file_updated' => $claudeFileUpdated,
         ];
     }
 
@@ -65,10 +70,12 @@ final class AgentInstructionsMaterializer
     public function synchronizeFromCurrentInstructionsFile(): array
     {
         $agentsFileUpdated = $this->writeAgentsFile();
+        $claudeFileUpdated = $this->writeClaudeFile();
 
         return [
             'instructions_file_updated' => true,
             'agents_file_updated' => $agentsFileUpdated,
+            'claude_file_updated' => $claudeFileUpdated,
         ];
     }
 
@@ -80,6 +87,11 @@ final class AgentInstructionsMaterializer
     private function getAgentsFilePath(): string
     {
         return $this->rootDir.'/AGENTS.md';
+    }
+
+    private function getClaudeFilePath(): string
+    {
+        return $this->rootDir.'/CLAUDE.md';
     }
 
     private function writeInstructionsFile(string $instructions): bool
@@ -145,6 +157,78 @@ final class AgentInstructionsMaterializer
         return true;
     }
 
+    /**
+     * Claude Code only reads `CLAUDE.md`, so the AGENTS.md instructions stay invisible to it
+     * unless that file imports them.
+     */
+    private function writeClaudeFile(): bool
+    {
+        $path = $this->getClaudeFilePath();
+
+        if (!file_exists($path)) {
+            $written = @file_put_contents($path, $this->normalizeContent($this->buildClaudeFile()));
+            if (false === $written) {
+                $this->logger->warning('Failed to create CLAUDE.md file', [
+                    'path' => $path,
+                ]);
+
+                return false;
+            }
+
+            return true;
+        }
+
+        $content = @file_get_contents($path);
+        if (false === $content) {
+            $this->logger->warning('Failed to read CLAUDE.md file', [
+                'path' => $path,
+            ]);
+
+            return false;
+        }
+
+        if (str_contains($content, 'AGENTS.md')) {
+            return true;
+        }
+
+        $trimmedContent = trim($content);
+        $updatedContent = $this->buildClaudeImportBlock();
+        if ('' !== $trimmedContent) {
+            $updatedContent = $trimmedContent."\n\n".$updatedContent;
+        }
+
+        $written = @file_put_contents($path, $this->normalizeContent($updatedContent));
+        if (false === $written) {
+            $this->logger->warning('Failed to update CLAUDE.md file', [
+                'path' => $path,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function buildClaudeFile(): string
+    {
+        return implode("\n", [
+            '# CLAUDE.md',
+            '',
+            'This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.',
+            '',
+            $this->buildClaudeImportBlock(),
+        ]);
+    }
+
+    private function buildClaudeImportBlock(): string
+    {
+        return implode("\n", [
+            self::CLAUDE_START_MARKER,
+            '@AGENTS.md',
+            self::CLAUDE_END_MARKER,
+        ]);
+    }
+
     private function replaceManagedBlock(string $content, string $managedBlock): string
     {
         $startPos = strpos($content, self::AGENTS_START_MARKER);
@@ -184,8 +268,8 @@ final class AgentInstructionsMaterializer
         return implode("\n", [
             self::AGENTS_START_MARKER,
             'AI Mate Summary:',
-            '- Role: MCP-powered, project-aware coding guidance and tools.',
-            '- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer MCP tools over raw CLI commands whenever possible.',
+            '- Role: project-aware coding tools exposed through the `vendor/bin/mate` CLI.',
+            '- Required action: Read and follow `mate/AGENT_INSTRUCTIONS.md` before taking any action in this project, and prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over the equivalent raw shell commands whenever possible.',
             '- Installed extensions: '.$this->buildInstalledExtensionsText($extensions),
             self::AGENTS_END_MARKER,
         ]);
@@ -230,7 +314,7 @@ final class AgentInstructionsMaterializer
 
 No extension-specific instructions are currently available.
 Run `vendor/bin/mate discover` to refresh discovered extensions and instructions.
-Prefer MCP tools over equivalent shell commands when possible.
+Prefer `vendor/bin/mate` tools (`tools:list`, `tools:inspect`, `tools:call`) over equivalent shell commands when possible.
 TEXT;
     }
 }

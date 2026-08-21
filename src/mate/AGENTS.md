@@ -4,21 +4,37 @@ AI agent guidance for the Mate component.
 
 ## Component Overview
 
-Standalone MCP (Model Context Protocol) server enabling AI assistants to interact with Symfony applications. Does not integrate with the AI Bundle.
+Standalone command-line assistant (`vendor/bin/mate`) that exposes project-aware development
+tools to coding agents and developers. Tools are plain PHP methods annotated with the native
+`#[AsTool]` attribute (resources/resource templates use `#[AsResource]` /
+`#[AsResourceTemplate]`); Mate discovers them by reflection and runs them from the CLI. Does
+not use MCP and does not integrate with the AI Bundle.
 
 ## Architecture
 
 ### Core Classes
 - **App**: Console application builder
 - **ContainerFactory**: DI container management with extension discovery
-- **ComposerExtensionDiscovery**: Discovers MCP extensions via `extra.ai-mate` in composer.json
-- **FilteredDiscoveryLoader**: Loads MCP capabilities with feature filtering
+- **ComposerExtensionDiscovery**: Discovers extensions via `extra.ai-mate` in composer.json
+- **ReflectionDiscoverer**: Scans directories for `#[AsTool]`/`#[AsResource]`/`#[AsResourceTemplate]` methods
+- **SchemaGenerator** / **DocBlockParser**: Build a JSON input schema from a method signature + `@param` PHPDoc
+- **CapabilityRegistry**: Feature-filtered lookup of discovered tools/resources
+- **ToolInvoker** / **ResourceReader**: Resolve the handler from the DI container and invoke it
+
+### Attributes
+- `Symfony\AI\Mate\Attribute\AsTool` — marks a method as a CLI tool (params `name`, `title`, `description`)
+- `Symfony\AI\Mate\Attribute\AsResource` — marks a method as a static resource
+- `Symfony\AI\Mate\Attribute\AsResourceTemplate` — marks a method as a templated resource
+
+Note: this `#[AsTool]` is standalone and unrelated to the Agent component's
+`Symfony\AI\Agent\Toolbox\Attribute\AsTool`.
 
 ### Key Directories
-- `src/Command/`: CLI commands (serve, init, discover, clear-cache, debug:*, mcp:*)
+- `src/Command/`: CLI commands (init, discover, clear-cache, debug:*, tools:*, resources:read)
 - `src/Container/`: DI container management
-- `src/Discovery/`: Extension discovery system
-- `src/Capability/`: Built-in MCP tools
+- `src/Discovery/`: Reflection-based discovery + schema generation
+- `src/Invocation/`: Tool/resource invocation and argument casting
+- `src/Capability/`: Built-in tools
 - `src/Bridge/`: Embedded bridge packages (Symfony, Monolog)
 
 ### Bridges
@@ -31,42 +47,44 @@ Standalone MCP (Model Context Protocol) server enabling AI assistants to interac
 ```bash
 vendor/bin/phpunit
 vendor/bin/phpunit tests/Command/InitCommandTest.php
-vendor/bin/phpunit src/Bridge/Symfony/Tests/
 ```
 
 ### Code Quality
 ```bash
-vendor/bin/phpstan analyse
+vendor/bin/phpstan analyse --no-progress --debug
 cd ../../.. && vendor/bin/php-cs-fixer fix src/mate/
 ```
 
-### Running the Server
+### Running the CLI
 ```bash
-bin/mate init                               # Initialize configuration
-bin/mate discover                           # Discover extensions (also installs extension skills)
-bin/mate skills:install                     # Install extension skills
-bin/mate serve                              # Start MCP server
-bin/mate clear-cache                        # Clear cache
+bin/mate init                                   # Initialize configuration
+bin/mate discover                               # Discover extensions (also installs extension skills)
+bin/mate skills:install                         # Install extension skills
+bin/mate clear-cache                            # Clear cache
 
-bin/mate debug:capabilities                 # Show all MCP capabilities
-bin/mate debug:extensions                   # Show extension discovery status
+bin/mate debug:capabilities                     # Show all capabilities
+bin/mate debug:extensions                       # Show extension discovery status
 
-bin/mate mcp:tools:list                     # List MCP tools
-bin/mate mcp:tools:inspect server-info      # Inspect tool with schema
-bin/mate mcp:tools:call server-info '{}'    # Execute tool
-bin/mate mcp:resources:read <uri>           # Read a resource by URI
+bin/mate tools:list                             # List tools
+bin/mate tools:inspect server-info              # Inspect a tool with its schema
+bin/mate tools:call server-info                 # Execute a tool
+bin/mate tools:call symfony-profiler-list --limit=1   # ... with parameters as options
+bin/mate resources:read <uri>                   # Read a resource by URI
 ```
+
+Every command accepts `--format=json` (also `toon` when `helgesverre/toon` is installed) for
+machine-readable output.
 
 ## Agent Instructions Materialization
 
-Running `bin/mate discover` generates `mate/AGENT_INSTRUCTIONS.md` with extension-specific instructions and maintains a managed block in `AGENTS.md` with a summary of installed extensions. AI agents should read these files to learn about available MCP tools rather than relying on hardcoded tool lists.
+Running `bin/mate discover` generates `mate/AGENT_INSTRUCTIONS.md` with extension-specific instructions and maintains a managed block in `AGENTS.md` with a summary of installed extensions. AI agents should read these files to learn about the available `mate` tools rather than relying on hardcoded tool lists.
 
 ## Configuration
 
 - `mate/extensions.php`: Enable/disable extensions
 - `mate/config.php`: Custom service configuration
 - `mate/.env`: Environment variables for mate configuration
-- `mate/src/`: Directory for user-defined MCP tools
+- `mate/src/`: Directory for user-defined tools (public methods with `#[AsTool]`)
 
 ## Skills
 
@@ -86,7 +104,7 @@ By default, `mate init` sets `extension: false` in `composer.json` so vendor pac
 - Fixtures for discovery tests in `tests/Discovery/Fixtures/`
 - Follow Symfony coding standards
 
-## MCP Tool & Resource Design Principles
+## Tool & Resource Design Principles
 
 Every tool and resource in Mate serves one purpose: giving an AI assistant exactly the context
 it needs to act — no more, no less. The data sources Mate taps into (profiler, container,

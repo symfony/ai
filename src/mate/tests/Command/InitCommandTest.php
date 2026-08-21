@@ -47,22 +47,31 @@ final class InitCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertDirectoryExists($this->tempDir.'/mate');
+        $this->assertDirectoryExists($this->tempDir.'/mate/src');
         $this->assertFileExists($this->tempDir.'/mate/extensions.php');
         $this->assertFileExists($this->tempDir.'/mate/config.php');
         $this->assertFileExists($this->tempDir.'/mate/.env');
         $this->assertFileExists($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md');
-        $this->assertFileExists($this->tempDir.'/mcp.json');
-        $this->assertFileExists($this->tempDir.'/bin/codex');
-        $this->assertFileExists($this->tempDir.'/bin/codex.bat');
-        $this->assertTrue(is_executable($this->tempDir.'/bin/codex'));
-        $this->assertTrue(is_link($this->tempDir.'/.mcp.json'));
-        $this->assertSame('mcp.json', readlink($this->tempDir.'/.mcp.json'));
         $this->assertFileExists($this->tempDir.'/AGENTS.md');
 
         $content = file_get_contents($this->tempDir.'/mate/extensions.php');
         $this->assertIsString($content);
         $this->assertStringContainsString('mate discover', $content);
         $this->assertStringContainsString('enabled', $content);
+    }
+
+    public function testDoesNotGenerateMcpArtifacts()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertFileDoesNotExist($this->tempDir.'/mcp.json');
+        $this->assertFileDoesNotExist($this->tempDir.'/.mcp.json');
+        $this->assertFileDoesNotExist($this->tempDir.'/bin/codex');
+        $this->assertFileDoesNotExist($this->tempDir.'/bin/codex.bat');
     }
 
     public function testDisplaysSuccessMessage()
@@ -77,7 +86,7 @@ final class InitCommandTest extends TestCase
         $this->assertStringContainsString('extensions.php', $output);
         $this->assertStringContainsString('config.php', $output);
         $this->assertStringContainsString('composer dump-autoload', $output);
-        $this->assertStringContainsString('./bin/codex', $output);
+        $this->assertStringContainsString('tools:call', $output);
         $this->assertStringContainsString('Summary', $output);
         $this->assertStringContainsString('Created', $output);
     }
@@ -91,8 +100,8 @@ final class InitCommandTest extends TestCase
         mkdir($this->tempDir.'/mate', 0755, true);
         file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return ["test" => "value"];');
 
-        // Execute with 'no' response (twice for both files)
-        $tester->setInputs(['no', 'no']);
+        // Decline overwriting the existing extensions.php.
+        $tester->setInputs(['no']);
         $tester->execute([]);
 
         // File should still contain original content
@@ -111,8 +120,8 @@ final class InitCommandTest extends TestCase
         mkdir($this->tempDir.'/mate', 0755, true);
         file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return ["test" => "value"];');
 
-        // Execute with 'yes' response (twice for both files)
-        $tester->setInputs(['yes', 'yes']);
+        // Confirm overwriting the existing extensions.php.
+        $tester->setInputs(['yes']);
         $tester->execute([]);
 
         // File should be overwritten with template content
@@ -137,92 +146,6 @@ final class InitCommandTest extends TestCase
         $this->assertDirectoryExists($this->tempDir.'/mate');
         $this->assertFileExists($this->tempDir.'/mate/extensions.php');
         $this->assertFileExists($this->tempDir.'/mate/config.php');
-    }
-
-    public function testMcpJsonUsesPhpBinaryByDefault()
-    {
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $mcpJson = $this->readMcpJson();
-        $this->assertSame('php', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
-        $this->assertSame(
-            ['./vendor/bin/mate', 'serve', '--force-keep-alive'],
-            $mcpJson['mcpServers']['symfony-ai-mate']['args']
-        );
-    }
-
-    public function testMcpJsonDefaultsToDdevWrapperWhenDdevDetected()
-    {
-        mkdir($this->tempDir.'/.ddev', 0755, true);
-
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        // Accept the detected default by submitting an empty answer.
-        $tester->setInputs(['']);
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $mcpJson = $this->readMcpJson();
-        $this->assertSame('ddev', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
-        $this->assertSame(
-            ['exec', 'php', './vendor/bin/mate', 'serve', '--force-keep-alive'],
-            $mcpJson['mcpServers']['symfony-ai-mate']['args']
-        );
-    }
-
-    public function testMcpJsonUsesProvidedPhpBinary()
-    {
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        $tester->setInputs(['docker compose exec php php']);
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $mcpJson = $this->readMcpJson();
-        $this->assertSame('docker', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
-        $this->assertSame(
-            ['compose', 'exec', 'php', 'php', './vendor/bin/mate', 'serve', '--force-keep-alive'],
-            $mcpJson['mcpServers']['symfony-ai-mate']['args']
-        );
-    }
-
-    public function testKeepsExistingMcpJsonUntouchedWhenOverwriteDeclined()
-    {
-        $existing = <<<'JSON'
-            {
-                "mcpServers": {
-                    "symfony-ai-mate": {
-                        "command": "my-custom-php",
-                        "args": ["./vendor/bin/mate", "serve"]
-                    }
-                }
-            }
-            JSON;
-        file_put_contents($this->tempDir.'/mcp.json', $existing);
-
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        // Decline overwriting the existing mcp.json; no PHP binary prompt should follow.
-        $tester->setInputs(['no']);
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        // The user's file is left exactly as-is, with no placeholder resolution.
-        $this->assertSame($existing, file_get_contents($this->tempDir.'/mcp.json'));
-        // And the command neither prompts for a binary nor claims it configured one.
-        $display = $tester->getDisplay();
-        $this->assertStringNotContainsString('PHP binary to run Mate', $display);
-        $this->assertStringNotContainsString('Configured', $display);
     }
 
     public function testSetsExtensionFalseByDefault()
@@ -272,20 +195,6 @@ final class InitCommandTest extends TestCase
         $materializer = new AgentInstructionsMaterializer($this->tempDir, $aggregator, $logger);
 
         return new InitCommand($this->tempDir, $materializer);
-    }
-
-    /**
-     * @return array{mcpServers: array{symfony-ai-mate: array{command: string, args: list<string>}}}
-     */
-    private function readMcpJson(): array
-    {
-        $content = file_get_contents($this->tempDir.'/mcp.json');
-        $this->assertIsString($content);
-
-        $decoded = json_decode($content, true);
-        $this->assertIsArray($decoded);
-
-        return $decoded;
     }
 
     private function removeDirectory(string $dir): void

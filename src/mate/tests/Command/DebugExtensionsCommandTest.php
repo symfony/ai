@@ -48,7 +48,7 @@ final class DebugExtensionsCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('MCP Extension Discovery', $output);
+        $this->assertStringContainsString('Extension Discovery', $output);
         $this->assertStringContainsString('Root Project', $output);
         $this->assertStringContainsString('vendor/package-a', $output);
         $this->assertStringContainsString('vendor/package-b', $output);

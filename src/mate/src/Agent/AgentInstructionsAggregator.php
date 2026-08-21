@@ -19,11 +19,10 @@ use Symfony\AI\Mate\Discovery\PathGuard;
  * Aggregates agent instructions from all installed extensions.
  *
  * Each extension can provide an INSTRUCTIONS.md file with instructions for AI agents,
- * typically documenting CLI → MCP tool mappings, benefits, and usage modes.
+ * typically documenting which `mate` CLI tools to prefer over raw shell commands.
  *
- * These instructions are injected via the MCP protocol's `instructions` field
- * during the server handshake, allowing agents to understand how to best use
- * the available MCP tools.
+ * The aggregated instructions are materialized into `mate/AGENT_INSTRUCTIONS.md` so coding
+ * agents can read them and learn how to best use the available tools.
  *
  * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
  *
@@ -172,9 +171,12 @@ final class AgentInstructionsAggregator
         return <<<'MD'
             ## AI Mate Agent Instructions
 
-            This MCP server provides specialized tools for PHP development.
-            The following extensions are installed and provide MCP tools that you should
-            prefer over running CLI commands directly.
+            AI Mate provides specialized tools for PHP development through the `vendor/bin/mate` CLI.
+            Discover them with `vendor/bin/mate tools:list`, inspect a tool's parameters with
+            `vendor/bin/mate tools:inspect <tool>`, and run one with
+            `vendor/bin/mate tools:call <tool> --<param>=<value>` (add `--format=json` for
+            machine-readable output). The following extensions are installed and provide tools you
+            should prefer over the equivalent raw shell commands.
             MD;
     }
 

@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
-use Mcp\Capability\Attribute\McpTool;
+use Symfony\AI\Mate\Attribute\AsTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
@@ -19,7 +19,7 @@ use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
- * MCP tools for accessing Symfony profiler data.
+ * tools for accessing Symfony profiler data.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -40,7 +40,7 @@ final class ProfilerTool
      * @param string|null $from       Start date filter for profile creation time
      * @param string|null $to         End date filter for profile creation time
      */
-    #[McpTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
+    #[AsTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
     public function listProfiles(
         int $limit = 20,
         ?string $method = null,
@@ -75,7 +75,7 @@ final class ProfilerTool
     /**
      * @param string $token The unique profiler token identifying the profile
      */
-    #[McpTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
+    #[AsTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
     public function getProfile(string $token): string
     {
         $profileData = $this->getDataProvider()->findProfile($token);

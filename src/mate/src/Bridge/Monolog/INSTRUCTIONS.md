@@ -1,6 +1,6 @@
 ## Monolog Bridge
 
-Use MCP tools instead of CLI for log analysis:
+Use these Mate tools (via `vendor/bin/mate tools:call ...`) instead of raw shell commands for log analysis:
 
 | Instead of...                     | Use                                              |
 |-----------------------------------|--------------------------------------------------|
