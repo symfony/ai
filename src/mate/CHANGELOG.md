@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Change skill installation to copy skills into `.agents/skills/mate-<name>/` (rewriting the frontmatter name to the installed name) with relative `.claude/skills/` mirror symlinks, instead of symlinking into `vendor/`; the mirror falls back to a copy where symlinks are unavailable
+ * Change `skills:install` into an idempotent reconciler that rebuilds both generated folders from source or user override on every run and prunes skills of removed or disabled extensions; `discover` runs it automatically
+ * Add all per-skill state to `mate/extensions.php`: the user-editable `enabled` and `mode` (`managed`|`override`) plus the machine-managed `state`, `source`, `source_hash`, `hash` and `targets`
+ * Add `skills:list` command: a read-only diagnostic listing declared and installed skills with their enabled/mode/state/status (including stale and broken detection)
+ * Add `skills:validate` command: checks the generated folders against the recorded state and fails on hand-edited content, missing folders or a mispointed mirror (`--strict` also fails on warnings)
+ * Add `skills:prune` command: removes generated `mate-*` folders that no longer belong to any skill (`--dry-run` to preview)
+
 0.12
 ----
 

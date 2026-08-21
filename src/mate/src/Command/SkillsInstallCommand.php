@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\Mate\Command;
 
-use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
-use Symfony\AI\Mate\Service\SkillsInstaller;
+use Symfony\AI\Mate\Skill\Model\SkillInstallResult;
+use Symfony\AI\Mate\Skill\SkillManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,22 +20,20 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Install extension-provided Agent Skills onto the filesystem so coding agents can use them.
+ * Reconcile the generated skill folders from source + intent.
  *
- * @phpstan-import-type ExtensionData from ComposerExtensionDiscovery
+ * This is the one idempotent reconciler: it rebuilds .agents/skills/ and .claude/skills/ from the
+ * vendor sources (or user overrides in mate/skills/), prunes skills of disabled or removed
+ * extensions, and records what it did back into mate/extensions.php. It never writes into
+ * mate/skills/ (user-owned overrides).
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('skills:install', 'Install extension skills so coding agents can use them')]
+#[AsCommand('skills:install', 'Install and reconcile Mate skills into the generated agent folders')]
 class SkillsInstallCommand extends Command
 {
-    /**
-     * @param string[] $enabledExtensions
-     */
     public function __construct(
-        private array $enabledExtensions,
-        private ComposerExtensionDiscovery $extensionDiscovery,
-        private SkillsInstaller $installer,
+        private SkillManager $manager,
     ) {
         parent::__construct(self::getDefaultName());
     }
@@ -47,62 +45,60 @@ class SkillsInstallCommand extends Command
 
     public static function getDefaultDescription(): string
     {
-        return 'Install extension skills so coding agents can use them';
+        return 'Install and reconcile Mate skills into the generated agent folders';
     }
 
     protected function configure(): void
     {
-        $this
-            ->setHelp(
-                <<<'HELP'
-The <info>%command.name%</info> command installs Agent Skills shipped by your installed
-Mate extensions so your coding agent (Claude Code, Codex, OpenCode, Copilot, …) can use them.
+        $this->setHelp(
+            <<<'HELP'
+The <info>%command.name%</info> command rebuilds the generated skill folders
+(<comment>.agents/skills/</comment> and <comment>.claude/skills/</comment>) from the skills declared
+by installed Mate extensions and the root project.
 
-Each skill is symlinked under a <comment>mate-</comment> prefixed directory into a shared
-location (<comment>.agents/skills</comment>, read by Codex, OpenCode and Copilot) and into
-<comment>.claude/skills</comment> for Claude Code, so they auto-update with the package (the
-link points into the gitignored vendor/ and needs symlink privileges on Windows).
-
-This runs automatically as part of <info>mate discover</info>; use this command for an explicit
-re-sync.
-
-  <comment># Install all skills from enabled extensions</comment>
-  %command.full_name%
+Both the intent it reads (<comment>enabled</comment>, <comment>mode</comment>) and the facts it
+records (<comment>state</comment>, <comment>source</comment>, hashes, targets) live in
+<comment>mate/extensions.php</comment>. The command is idempotent: running it repeatedly converges on
+the same result and never touches your overrides in <comment>mate/skills/</comment>.
 HELP
-            );
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Mate Skills');
 
-        $result = $this->installer->install($this->collectExtensions());
-
-        if ([] === $result['installed']) {
-            $io->note('No new skills to install.');
-
-            return Command::SUCCESS;
-        }
-
-        $io->success(\sprintf('Installed %d skill(s): %s', \count($result['installed']), implode(', ', $result['installed'])));
+        $this->render($io, $this->manager->reinstall());
 
         return Command::SUCCESS;
     }
 
-    /**
-     * @return array<string, ExtensionData>
-     */
-    private function collectExtensions(): array
+    private function render(SymfonyStyle $io, SkillInstallResult $result): void
     {
-        $extensions = [
-            '_custom' => $this->extensionDiscovery->discoverRootProject(),
-        ];
+        $io->title('Skill Installation');
 
-        foreach ($this->extensionDiscovery->discover($this->enabledExtensions) as $packageName => $data) {
-            $extensions[$packageName] = $data;
+        if ([] !== $result->installed) {
+            $io->success(\sprintf('Installed %d new skill%s: %s', \count($result->installed), 1 === \count($result->installed) ? '' : 's', implode(', ', $result->installed)));
         }
 
-        return $extensions;
+        if ([] !== $result->removed) {
+            $io->text(\sprintf('Removed %d skill%s: %s', \count($result->removed), 1 === \count($result->removed) ? '' : 's', implode(', ', $result->removed)));
+        }
+
+        foreach ($result->skipped as $name => $reason) {
+            $io->warning(\sprintf('Skipped %s: %s', $name, $reason));
+        }
+
+        foreach ($result->notices as $notice) {
+            $io->note($notice);
+        }
+
+        if ([] === $result->active) {
+            $io->text('No skills are currently installed.');
+
+            return;
+        }
+
+        $io->text(\sprintf('%d skill%s installed: %s', \count($result->active), 1 === \count($result->active) ? '' : 's', implode(', ', $result->active)));
     }
 }
