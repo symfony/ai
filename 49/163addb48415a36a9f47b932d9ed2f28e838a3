@@ -1,0 +1,49 @@
+---------------------------------------------------------------------------
+
+by benoitbauchet at 2026-08-20T14:48:03Z
+
+Status: Needs Review
+
+cc @chr-hertel @OskarStark
+
+Tested against the live Mistral API with `mistral-medium-2604` and
+`reasoning_effort: 'high'`: `main` throws `TextDelta … array given`, this branch
+streams the thinking trace and answer with no error.
+
+<details>
+<summary>examples/mistral/chat-stream-reasoning.php -vvv</summary>
+
+​```
+[info] Request: "POST https://api.mistral.ai/v1/chat/completions"
+[info] Response: "200 https://api.mistral.ai/v1/chat/completions" 0.320707 seconds
+  {"http_code":200,"url":"https://api.mistral.ai/v1/chat/completions","total_time":0.320707}
+
+\<thinking\>
+Okay, the user is asking for the multiplication of 23 and 17. Let me think about how to approach this. I remember that multiplying two numbers can be done using the standard method or maybe breaking it down. Let me try the standard multiplication first.
+
+23 times 17. So, 23 multiplied by 10 is 230, and 23 multiplied by 7 is 161. Then adding those together: 230 + 161 = 391. That seems straightforward. Alternatively, maybe using the distributive property. 23*17 is the same as (20+3)*17 = 20*17 + 3*17. 20*17 is 340, and 3*17 is 51. Adding those gives 340 + 51 = 391. Both methods give the same result. So I think the answer is 391.
+\</thinking\>
+
+23 multiplied by 17 equals **391**.
+​```
+
+</details>
+
+---------------------------------------------------------------------------
+
+by benoitbauchet at 2026-08-21T07:15:20Z
+
+> Thanks @benoitbauchet, and a good first contribution: found, diagnosed down to the schema mismatch in the shared trait, fixed, tested, and verified against the live API.
+>
+> I captured the raw payload with a real key and replayed it through this branch. It handles the tricky chunk correctly, the one where the thinking block closes and the text starts in the same delta with an empty thinking array. Details in #2422. Verified locally, all green.
+>
+> Walking the chunks in order is the part I would keep: it preserves the provider's ordering rather than collapsing all thinking and all text per chunk, which matters if Mistral ever interleaves them differently.
+>
+> One question inline.
+>
+> @lazerg opened #2424 for the same bug seven minutes after this one. Same behaviour on the captured payload, so I am going with this one; more on that over there.
+
+Thanks for the thorough review !
+
+Addressed the seam question: `yieldContentDeltas()` no longer takes the reasoning
+accumulator by reference.
