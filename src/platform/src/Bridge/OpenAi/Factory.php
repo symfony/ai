@@ -53,6 +53,7 @@ final class Factory
                 new Image\ModelClient($httpClient, $apiKey, $region),
                 new TextToSpeech\ModelClient($httpClient, $apiKey, $region),
                 new Whisper\ModelClient($httpClient, $apiKey, $region),
+                new Realtime\ModelClient($httpClient, $apiKey, $region),
             ],
             [
                 new Gpt\ResultConverter(),
@@ -60,6 +61,7 @@ final class Factory
                 new Image\ResultConverter(),
                 new TextToSpeech\ResultConverter(),
                 new Whisper\ResultConverter(),
+                new Realtime\ResultConverter(),
             ],
             $modelCatalog,
             $contract ?? OpenAiContract::create(),
