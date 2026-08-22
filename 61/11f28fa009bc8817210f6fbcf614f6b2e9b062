@@ -1,0 +1,103 @@
+---------------------------------------------------------------------------
+
+by Toflar at 2026-08-20T15:52:21Z
+
+Thanks for the work @chr-hertel! ❤️ Just my 2c: Maybe instead of class filtering for tools, it would be better to do that on some tool tagging? So one would do
+
+```php
+#[McpTool(name: 'current-time', tags: ['foo', 'bar'])]
+```
+
+```yaml
+mcp:
+    servers:
+        public:
+            http: { path: /mcp }
+            tools: ['foo']
+```
+
+This would allow grouping tools coming from different PHP vendor namespaces (think extensibility) and also, devs could add a tag to a tool via compiler pass etc. 😊
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-08-21T07:10:22Z
+
+I like the idea, but no one guarantees they are unique from a vendor. I think we could do a follow up PR in this case. I would like to test this in a real world project with the current status quo
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-21T17:57:50Z
+
+Agreed with @OskarStark, and the current config shape backs it up: `tools:` is already a heterogeneous scalar list taking service ids, FQCNs, namespace prefixes and `*`. A tag form can be added later purely additively, say `#foo` or `tag:foo`, without changing what any existing value means and without a second BC break. So deferring costs nothing and locks nothing in.
+
+The uniqueness point is the substantive one. DI tags are global strings, so `foo` from two vendors collide, while FQCN and namespace-prefix filtering is unambiguous by construction. That is exactly why a tag design needs a naming convention of its own, and why it should not be bolted onto a 45-file PR that already carries a BC break.
+
+@Toflar the grouping-across-vendors use case is real though, worth an issue so it does not get lost.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-21T17:59:59Z
+
+Tracked as #2426 so it does not get lost.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-22T01:08:36Z
+
+@Toflar that's not that straight forward unfortunately since we're using the `mcp/sdk`'s attributes here - which still makes sense to me, especially when mounting non-symfony mcp server packages into a kernel/container. there is a concept of a flexible `meta` collection - that's something we could think of reusing here. but def a follow up - this thing is too big anyways :D
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-22T01:18:00Z
+
+Tested again, even with the latest spec version, and it looks good. the only thing i'm a bit annoyed about is this duplication:
+
+<img width="572" height="152" alt="image" src="https://github.com/user-attachments/assets/00fb2f8c-8192-4c6c-a816-8ec18460b01e" />
+
+i currently lean to simplifying this to:
+```yaml
+    registry: ['App\Mcp\']
+```
+
+opinions?
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-08-22T05:32:19Z
+
+Would be good if we can use the simple way you proposed @chr-hertel
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-22T07:00:35Z
+
+@chr-hertel easier is always better :) would be it be instead or additionally?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-22T08:36:25Z
+
+> @chr-hertel easier is always better :) would be it be instead or additionally?
+
+It's both with a nested syntax:
+```yaml
+mcp:
+    servers:
+        public:
+            http: { path: /mcp }
+            registry:
+                tools: ['App\Mcp\Public\']
+                resources: ['*']
+        editors:
+            http: { path: /mcp/editors }
+            registry: '*'
+        reporting:
+            http: { path: /mcp/reporting }
+            registry: ['App\Mcp\Reporting\']
+```
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-22T09:02:44Z
+
+@chr-hertel thats awesome! lets do it like that
