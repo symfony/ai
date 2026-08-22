@@ -122,6 +122,87 @@ final class ModelClientTest extends TestCase
         $this->assertArrayNotHasKey('cache_control', $capturedBody['tools'][0]);
     }
 
+    public function testServerToolsAreAppendedToTools()
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$capturedBody) {
+            $capturedBody = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode([
+                'type' => 'message',
+                'content' => [['type' => 'text', 'text' => 'Hello']],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 5],
+            ]));
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key', 'none');
+
+        $payload = [
+            'model' => Claude::SONNET_4,
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ];
+
+        $serverTool = ['type' => 'web_search_20250305', 'name' => 'web_search', 'max_uses' => 3];
+
+        $client->request(new Claude(Claude::SONNET_4), $payload, ['server_tools' => [$serverTool]]);
+
+        $this->assertNotNull($capturedBody);
+
+        // Server tool appended verbatim
+        $this->assertSame([$serverTool], $capturedBody['tools']);
+
+        // tool_choice defaults to auto once any tool is present
+        $this->assertSame(['type' => 'auto'], $capturedBody['tool_choice']);
+
+        // server_tools key should not leak into the API body
+        $this->assertArrayNotHasKey('server_tools', $capturedBody);
+    }
+
+    public function testServerToolsAreAppendedAfterFunctionTools()
+    {
+        $capturedBody = null;
+
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) use (&$capturedBody) {
+            $capturedBody = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode([
+                'type' => 'message',
+                'content' => [['type' => 'text', 'text' => 'Hello']],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 5],
+            ]));
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key', 'short');
+
+        $functionTool = ['name' => 'tool_a', 'description' => 'First tool', 'input_schema' => ['type' => 'object']];
+        $serverTool = ['type' => 'web_search_20250305', 'name' => 'web_search', 'max_uses' => 3];
+
+        $payload = [
+            'model' => Claude::SONNET_4,
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ];
+
+        $client->request(new Claude(Claude::SONNET_4), $payload, [
+            'tools' => [$functionTool],
+            'server_tools' => [$serverTool],
+        ]);
+
+        $this->assertNotNull($capturedBody);
+
+        // Function tool first, server tool appended after
+        $this->assertSame('tool_a', $capturedBody['tools'][0]['name']);
+        $this->assertSame('web_search', $capturedBody['tools'][1]['name']);
+        $this->assertSame('web_search_20250305', $capturedBody['tools'][1]['type']);
+
+        // Last tool should have cache_control
+        $this->assertArrayHasKey('cache_control', $capturedBody['tools'][1]);
+        // First tool should NOT have cache_control
+        $this->assertArrayNotHasKey('cache_control', $capturedBody['tools'][0]);
+
+        $this->assertArrayNotHasKey('server_tools', $capturedBody);
+    }
+
     public function testSystemCacheControlIsInjectedWithShortRetention()
     {
         $capturedBody = null;
