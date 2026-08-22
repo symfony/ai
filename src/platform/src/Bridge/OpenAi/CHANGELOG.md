@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add `Realtime` model, `Realtime\ModelClient`, `Realtime\ResultConverter`, and catalog entries (`gpt-4o-realtime-preview`, `gpt-4o-mini-realtime-preview`) for `POST /v1/realtime/client_secrets`
+
 0.11
 ----
 
