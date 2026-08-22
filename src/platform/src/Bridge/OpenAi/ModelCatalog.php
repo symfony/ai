@@ -180,6 +180,18 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
+            'gpt-4o-realtime-preview' => [
+                'class' => Realtime::class,
+                'capabilities' => [
+                    Capability::REALTIME_SESSION,
+                ],
+            ],
+            'gpt-4o-mini-realtime-preview' => [
+                'class' => Realtime::class,
+                'capabilities' => [
+                    Capability::REALTIME_SESSION,
+                ],
+            ],
             'gpt-4o-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
