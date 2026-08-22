@@ -34,6 +34,7 @@ use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -1315,11 +1316,11 @@ final class AiBundle extends AbstractBundle
             // Create prompt from file if configured, otherwise use text
             if (isset($config['prompt']['file'])) {
                 $filePath = $config['prompt']['file'];
-                // File::fromFile() handles validation before the prompt is stored as a template.
+                // Keep the file path as a container argument so the prompt is read when the service is created.
                 $promptId = 'ai.agent.prompt.'.$name;
                 $templateDefinition = (new Definition(Template::class))
-                    ->setFactory([Template::class, 'string'])
-                    ->setArguments([File::fromFile($filePath)->asBinary()]);
+                    ->setFactory([FilePromptTemplateFactory::class, 'create'])
+                    ->setArguments([$filePath]);
 
                 $container->setDefinition($promptId, $templateDefinition);
                 $prompt = new Reference($promptId);

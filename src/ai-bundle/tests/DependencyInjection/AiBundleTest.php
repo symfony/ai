@@ -32,6 +32,7 @@ use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
@@ -5470,8 +5471,14 @@ class AiBundleTest extends TestCase
             $this->assertEquals(new Reference('ai.agent.prompt.test_agent'), $prompt);
 
             $promptDefinition = $container->getDefinition('ai.agent.prompt.test_agent');
-            $this->assertSame([Template::class, 'string'], $promptDefinition->getFactory());
-            $this->assertSame('Hello {name}!', $promptDefinition->getArgument(0));
+            $this->assertSame(Template::class, $promptDefinition->getClass());
+            $this->assertSame([FilePromptTemplateFactory::class, 'create'], $promptDefinition->getFactory());
+            $this->assertSame($promptFile, $promptDefinition->getArgument(0));
+
+            file_put_contents($promptFile, 'Updated {name}!');
+            $template = $promptDefinition->getFactory()[0]::create($promptDefinition->getArgument(0));
+            $this->assertInstanceOf(Template::class, $template);
+            $this->assertSame('Updated {name}!', $template->getTemplate());
         } finally {
             unlink($promptFile);
         }
