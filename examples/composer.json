@@ -11,6 +11,7 @@
         "symfony/ai-anthropic-platform": "^0.12",
         "symfony/ai-azure-platform": "^0.12",
         "symfony/ai-azure-search-store": "^0.12",
+        "symfony/ai-bedrock-mantle-platform": "dev-main",
         "symfony/ai-bedrock-platform": "^0.12",
         "symfony/ai-brave-tool": "^0.12",
         "symfony/ai-cache-message-store": "^0.12",
@@ -95,6 +96,12 @@
         "phpstan/phpstan-strict-rules": "^2.0"
     },
     "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/platform/src/Bridge/BedrockMantle"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\Fixtures\\": "../fixtures/"
