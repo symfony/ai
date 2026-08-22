@@ -42,6 +42,12 @@
       "name": "event-matches-the-asks",
       "prompt": "Review PR #2396 and draft the review.",
       "expected_output": "Recognises that the PR completes the ToolCallStart contract and that the agent's own StreamListener stops at the first ToolCallComplete, so Gemini and VertexAI drop parallel calls today. Flags that the UPGRADE.md note is inaccurate for multi-candidate responses. Because that is an open ask, the event is COMMENT or REQUEST_CHANGES, never APPROVE. The posted review's verification line is just \"all green\", with no counts and no list of suites or tools."
+    },
+    {
+      "id": 7,
+      "name": "detects-author-response-after-review",
+      "prompt": "Has anything happened on PR #2425 since my review?",
+      "expected_output": "Checks the head SHA and commit list, the pull-request review comments endpoint and the reviews endpoint, not only the issue-comment thread. A push leaves no issue comment and a reply to an inline comment is on a different endpoint, so checking only issue comments would wrongly report no activity. If the head moved, diffs the reviewed SHA against the new one and re-verifies before reporting."
     }
   ]
 }

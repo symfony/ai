@@ -78,6 +78,23 @@ What to extract:
   does (a `Bug fix? no` / `New feature? no` PR that edits a `CHANGELOG.md` is
   inconsistent).
 
+### Re-checking a PR you already reviewed
+
+"Has the author responded?" is not the same query. Four signals, three of which
+are invisible in the issue-comment thread:
+
+```bash
+gh pr view <N> --json headRefOid,commits    # a push leaves no comment at all
+gh api repos/<owner>/<repo>/pulls/<N>/comments   # replies to inline comments live here
+gh api repos/<owner>/<repo>/pulls/<N>/reviews    # another maintainer weighing in
+gh api repos/<owner>/<repo>/issues/<N>/comments  # the thread
+```
+
+Checking only the last one reports "no activity" for a PR whose author pushed a
+fix and replied inline. Compare the head SHA against the one your review was
+pinned to: if it moved, re-verify before saying anything, and diff the two SHAs
+rather than re-reading the whole PR.
+
 Say explicitly in the review which existing points you are agreeing with,
 extending, or reversing. Reversing another maintainer's call is fine, but do it
 openly and give the reason.

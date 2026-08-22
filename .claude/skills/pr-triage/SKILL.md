@@ -55,7 +55,7 @@ Classify every PR into exactly one bucket, in this order (first match wins):
 | Bucket | Test | Why it's out |
 |---|---|---|
 | **Draft** | `isDraft` | Author isn't asking yet |
-| **Changes requested** | `reviewDecision == "CHANGES_REQUESTED"` | Ball is with the author |
+| **Changes requested** | `reviewDecision == "CHANGES_REQUESTED"` and the head has not moved since | Ball is with the author |
 | **Approved** | `reviewDecision == "APPROVED"` | Needs a merge decision, not a review |
 | **Needs rebase** | `mergeable == "CONFLICTING"` | Reviewing a conflicted diff wastes effort |
 | **Yours** | author is the maintainer | Can't self-review |
@@ -64,6 +64,19 @@ Classify every PR into exactly one bucket, in this order (first match wins):
 Report the bucket sizes as a short table. The `CONFLICTING` count is usually
 the headline number and worth calling out explicitly, it is normally over
 half the backlog.
+
+`CHANGES_REQUESTED` does not stay true. GitHub keeps the decision until someone
+submits a new review, so a PR where the author already pushed a fix still looks
+blocked. That PR is actionable and belongs in the queue, not in the excluded
+bucket. Compare the head SHA against the commit the last review was pinned to:
+
+```bash
+gh pr view <N> --json headRefOid,reviews --jq \
+  "{head: .headRefOid, lastReviewedAt: (.reviews[-1].submittedAt // null)}"
+```
+
+If the head moved after that review, surface it as "changes requested, author
+has responded" and rank it high: the expensive reading is already done.
 
 `mergeable` is computed lazily by GitHub and can come back `UNKNOWN` on a PR
 that was just pushed to. Treat `UNKNOWN` as reviewable rather than dropping it,
