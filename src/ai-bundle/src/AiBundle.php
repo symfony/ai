@@ -93,6 +93,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
@@ -1314,11 +1315,8 @@ final class AiBundle extends AbstractBundle
             // Create prompt from file if configured, otherwise use text
             if (isset($config['prompt']['file'])) {
                 $filePath = $config['prompt']['file'];
-                // File::fromFile() handles validation, so no need to check here
-                // Use Definition with factory method because File objects cannot be serialized during container compilation
-                $prompt = (new Definition(File::class))
-                    ->setFactory([File::class, 'fromFile'])
-                    ->setArguments([$filePath]);
+                // File::fromFile() handles validation before the prompt is stored as a template.
+                $prompt = Template::string(File::fromFile($filePath)->asBinary());
             } elseif (isset($config['prompt']['text'])) {
                 $promptText = $config['prompt']['text'];
 

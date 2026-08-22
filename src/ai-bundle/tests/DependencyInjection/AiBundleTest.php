@@ -5446,6 +5446,33 @@ class AiBundleTest extends TestCase
         $this->assertNull($arguments[1]); // include_tools defaults to false
     }
 
+    public function testSystemPromptFileIsConfiguredAsTemplate()
+    {
+        $promptFile = tempnam(sys_get_temp_dir(), 'prompt_');
+        file_put_contents($promptFile, 'Hello {name}!');
+
+        try {
+            $container = $this->buildContainer([
+                'ai' => [
+                    'agent' => [
+                        'test_agent' => [
+                            'model' => 'gpt-4',
+                            'prompt' => ['file' => $promptFile],
+                        ],
+                    ],
+                ],
+            ]);
+
+            $definition = $container->getDefinition('ai.agent.test_agent.system_prompt_processor');
+            $prompt = $definition->getArgument(0);
+
+            $this->assertInstanceOf(\Symfony\AI\Platform\Message\Template::class, $prompt);
+            $this->assertSame('Hello {name}!', $prompt->getTemplate());
+        } finally {
+            unlink($promptFile);
+        }
+    }
+
     #[TestDox('Agent without system prompt does not create processor')]
     public function testAgentWithoutSystemPrompt()
     {
