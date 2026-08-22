@@ -46,25 +46,33 @@ final class ModelClientTest extends TestCase
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
             self::assertSame('POST', $method);
-            self::assertSame('https://api.openai.com/v1/realtime/sessions', $url);
+            self::assertSame('https://api.openai.com/v1/realtime/client_secrets', $url);
             self::assertSame('Authorization: Bearer sk-test-key', $options['normalized_headers']['authorization'][0]);
 
             $body = json_decode($options['body'], true);
-            self::assertSame('gpt-4o-realtime-preview', $body['model']);
-            self::assertSame('You are a helpful customer service voice assistant.', $body['instructions']);
-            self::assertSame('alloy', $body['voice']);
-            self::assertSame(['text', 'audio'], $body['modalities']);
+            $session = $body['session'] ?? [];
+
+            self::assertSame('realtime', $session['type']);
+            self::assertSame('gpt-4o-realtime-preview', $session['model']);
+            self::assertSame('You are a helpful customer service voice assistant.', $session['instructions']);
+            self::assertSame('alloy', $session['audio']['output']['voice']);
+            self::assertSame(['text', 'audio'], $session['modalities']);
 
             return new MockResponse(json_encode([
                 'id' => 'sess_12345',
-                'object' => 'realtime.session',
-                'model' => 'gpt-4o-realtime-preview',
-                'modalities' => ['text', 'audio'],
-                'instructions' => 'You are a helpful customer service voice assistant.',
-                'voice' => 'alloy',
-                'client_secret' => [
-                    'value' => 'ek_secret_123',
-                    'expires_at' => 1790000000,
+                'object' => 'realtime.client_secret',
+                'value' => 'ek_secret_123',
+                'expires_at' => 1790000000,
+                'session' => [
+                    'type' => 'realtime',
+                    'model' => 'gpt-4o-realtime-preview',
+                    'modalities' => ['text', 'audio'],
+                    'instructions' => 'You are a helpful customer service voice assistant.',
+                    'audio' => [
+                        'output' => [
+                            'voice' => 'alloy',
+                        ],
+                    ],
                 ],
             ]));
         };
