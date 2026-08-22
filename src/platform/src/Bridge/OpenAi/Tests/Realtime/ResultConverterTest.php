@@ -26,7 +26,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class ResultConverterTest extends TestCase
 {
-    public function testSupportsRealtimeModel(): void
+    public function testSupportsRealtimeModel()
     {
         $converter = new ResultConverter();
         $model = new Realtime('gpt-4o-realtime-preview');
@@ -34,7 +34,7 @@ final class ResultConverterTest extends TestCase
         $this->assertTrue($converter->supports($model));
     }
 
-    public function testDoesNotSupportOtherModels(): void
+    public function testDoesNotSupportOtherModels()
     {
         $converter = new ResultConverter();
         $model = new Model('other-model');
@@ -42,7 +42,7 @@ final class ResultConverterTest extends TestCase
         $this->assertFalse($converter->supports($model));
     }
 
-    public function testThrowsOnAuthenticationError(): void
+    public function testThrowsOnAuthenticationError()
     {
         $this->expectException(AuthenticationException::class);
         $this->expectExceptionMessage('Unauthorized');
@@ -54,7 +54,7 @@ final class ResultConverterTest extends TestCase
         (new ResultConverter())->convert(new RawHttpResult($response));
     }
 
-    public function testThrowsOnUnexpectedStatusCode(): void
+    public function testThrowsOnUnexpectedStatusCode()
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The OpenAI Realtime API returned an error: "Unexpected"');
@@ -66,7 +66,7 @@ final class ResultConverterTest extends TestCase
         (new ResultConverter())->convert(new RawHttpResult($response));
     }
 
-    public function testConvertsRealtimeSessionResponse(): void
+    public function testConvertsRealtimeSessionResponse()
     {
         $mockData = [
             'id' => 'sess_test_999',

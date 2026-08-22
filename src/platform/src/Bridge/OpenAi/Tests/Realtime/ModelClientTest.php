@@ -24,7 +24,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
  */
 final class ModelClientTest extends TestCase
 {
-    public function testSupportsRealtimeModel(): void
+    public function testSupportsRealtimeModel()
     {
         $httpClient = new MockHttpClient();
         $modelClient = new ModelClient($httpClient, 'sk-test-key');
@@ -33,7 +33,7 @@ final class ModelClientTest extends TestCase
         $this->assertTrue($modelClient->supports($model));
     }
 
-    public function testDoesNotSupportOtherModels(): void
+    public function testDoesNotSupportOtherModels()
     {
         $httpClient = new MockHttpClient();
         $modelClient = new ModelClient($httpClient, 'sk-test-key');
@@ -42,7 +42,7 @@ final class ModelClientTest extends TestCase
         $this->assertFalse($modelClient->supports($model));
     }
 
-    public function testRealtimeSessionRequest(): void
+    public function testRealtimeSessionRequest()
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
             self::assertSame('POST', $method);
