@@ -1316,7 +1316,13 @@ final class AiBundle extends AbstractBundle
             if (isset($config['prompt']['file'])) {
                 $filePath = $config['prompt']['file'];
                 // File::fromFile() handles validation before the prompt is stored as a template.
-                $prompt = Template::string(File::fromFile($filePath)->asBinary());
+                $promptId = 'ai.agent.prompt.'.$name;
+                $templateDefinition = (new Definition(Template::class))
+                    ->setFactory([Template::class, 'string'])
+                    ->setArguments([File::fromFile($filePath)->asBinary()]);
+
+                $container->setDefinition($promptId, $templateDefinition);
+                $prompt = new Reference($promptId);
             } elseif (isset($config['prompt']['text'])) {
                 $promptText = $config['prompt']['text'];
 

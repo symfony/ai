@@ -5466,8 +5466,11 @@ class AiBundleTest extends TestCase
             $definition = $container->getDefinition('ai.agent.test_agent.system_prompt_processor');
             $prompt = $definition->getArgument(0);
 
-            $this->assertInstanceOf(\Symfony\AI\Platform\Message\Template::class, $prompt);
-            $this->assertSame('Hello {name}!', $prompt->getTemplate());
+            $this->assertEquals(new Reference('ai.agent.prompt.test_agent'), $prompt);
+
+            $promptDefinition = $container->getDefinition('ai.agent.prompt.test_agent');
+            $this->assertSame([Template::class, 'string'], $promptDefinition->getFactory());
+            $this->assertSame('Hello {name}!', $promptDefinition->getArgument(0));
         } finally {
             unlink($promptFile);
         }
