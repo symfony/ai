@@ -714,6 +714,28 @@ the application is not expected to answer it::
     Like the other built-in server-side tool results, ``custom_tool_call`` items are only
     available on non-streamed responses.
 
+Citations
+~~~~~~~~~
+
+Bridges whose provider grounds an answer in web sources expose the URLs as ``citations``
+result metadata, a deduplicated list of strings::
+
+    $result = $platform->invoke($model, $messages);
+
+    foreach ($result->getMetadata()->get('citations') ?? [] as $url) {
+        // ...
+    }
+
+.. note::
+
+    The metadata is only set when the provider reports citations for the response, so
+    guard against ``null``.
+
+The Perplexity bridge always reports its own ``citations`` response field this way. The
+OpenResponses bridge reports it too, extracted from ``url_citation`` annotations on the
+assistant message -- for example when a model uses a citation-grounded built-in tool such
+as xAI's ``x_search``.
+
 Streaming in a Symfony Controller
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

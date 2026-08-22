@@ -8,6 +8,7 @@ CHANGELOG
  * Preserve reasoning items as thinking signatures and replay them on subsequent requests
  * Add `ToolCallStart` and `ToolInputDelta` deltas to streaming responses
  * Add `CustomToolCallResult` for `custom_tool_call` output items, produced by remote tools like `x_search` in xAI
+ * Add `citations` metadata entry to `TextResult`, extracted from `url_citation` annotations on `output_text` content
 
 0.12
 ----

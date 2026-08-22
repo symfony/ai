@@ -83,6 +83,79 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Hello world', $result->getContent());
     }
 
+    public function testConvertTextResultWithUrlCitations()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'Sentiment is bearish.',
+                        'annotations' => [
+                            [
+                                'type' => 'url_citation',
+                                'url' => 'https://x.com/i/status/1',
+                                'title' => 'https://x.com/i/status/1',
+                                'start_index' => 0,
+                                'end_index' => 0,
+                            ],
+                            [
+                                'type' => 'url_citation',
+                                'url' => 'https://x.com/i/status/2',
+                                'title' => 'https://x.com/i/status/2',
+                                'start_index' => 0,
+                                'end_index' => 0,
+                            ],
+                            [
+                                'type' => 'url_citation',
+                                'url' => 'https://x.com/i/status/1',
+                                'title' => 'https://x.com/i/status/1',
+                                'start_index' => 0,
+                                'end_index' => 0,
+                            ],
+                        ],
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Sentiment is bearish.', $result->getContent());
+        $this->assertSame(
+            ['https://x.com/i/status/1', 'https://x.com/i/status/2'],
+            $result->getMetadata()->get('citations')
+        );
+    }
+
+    public function testConvertTextResultWithoutAnnotationsHasNoCitationsMetadata()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [[
+                        'type' => 'output_text',
+                        'text' => 'Hello world',
+                    ]],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertFalse($result->getMetadata()->has('citations'));
+    }
+
     public function testConvertToolCallResult()
     {
         $converter = new ResultConverter();
