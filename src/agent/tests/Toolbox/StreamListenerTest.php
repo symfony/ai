@@ -14,8 +14,11 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\StreamListener;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
+use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -106,7 +109,83 @@ final class StreamListenerTest extends TestCase
         $this->assertInstanceOf(TextDelta::class, $result[0]);
         $this->assertSame('Immediate tool response', $result[0]->getText());
         $this->assertTrue($callbackCalled);
-        $this->assertNull($capturedAssistantMessage);
+        $this->assertInstanceOf(AssistantMessage::class, $capturedAssistantMessage);
+        $this->assertTrue($capturedAssistantMessage->hasToolCalls());
+        $this->assertNull($capturedAssistantMessage->asText());
+    }
+
+    public function testEmptyTextAndStartOnlyThinkingAreNotReplayed()
+    {
+        $toolCall = new ToolCall('test-id', 'test_tool');
+        $streamResult = new StreamResult((static function () use ($toolCall): \Generator {
+            yield new TextDelta('');
+            yield new ThinkingStart();
+            yield new ToolCallComplete([$toolCall]);
+        })());
+
+        $capturedAssistantMessage = null;
+        $streamResult->addListener(new StreamListener(static function (ToolCallResult $result, AssistantMessage $message) use (&$capturedAssistantMessage): TextResult {
+            $capturedAssistantMessage = $message;
+
+            return new TextResult('Tool response');
+        }));
+        iterator_to_array($streamResult->getContent());
+
+        $this->assertInstanceOf(AssistantMessage::class, $capturedAssistantMessage);
+        $this->assertSame([$toolCall], $capturedAssistantMessage->getContent());
+    }
+
+    public function testConsecutiveSignatureOnlyThinkingBlocksRemainSeparate()
+    {
+        $toolCall = new ToolCall('test-id', 'test_tool');
+        $streamResult = new StreamResult((static function () use ($toolCall): \Generator {
+            yield new ThinkingSignature('first-signature');
+            yield new ThinkingSignature('second-signature');
+            yield new ToolCallComplete([$toolCall]);
+        })());
+
+        $capturedAssistantMessage = null;
+        $streamResult->addListener(new StreamListener(static function (ToolCallResult $result, AssistantMessage $message) use (&$capturedAssistantMessage): TextResult {
+            $capturedAssistantMessage = $message;
+
+            return new TextResult('Tool response');
+        }));
+        iterator_to_array($streamResult->getContent());
+
+        $this->assertInstanceOf(AssistantMessage::class, $capturedAssistantMessage);
+        $content = $capturedAssistantMessage->getContent();
+        $this->assertCount(3, $content);
+        $this->assertInstanceOf(Thinking::class, $content[0]);
+        $this->assertSame('first-signature', $content[0]->getSignature());
+        $this->assertInstanceOf(Thinking::class, $content[1]);
+        $this->assertSame('second-signature', $content[1]->getSignature());
+        $this->assertSame($toolCall, $content[2]);
+    }
+
+    public function testSignatureChunksForOpenThinkingAreCombined()
+    {
+        $toolCall = new ToolCall('test-id', 'test_tool');
+        $streamResult = new StreamResult((static function () use ($toolCall): \Generator {
+            yield new ThinkingStart();
+            yield new ThinkingSignature('first-');
+            yield new ThinkingSignature('second');
+            yield new ToolCallComplete([$toolCall]);
+        })());
+
+        $capturedAssistantMessage = null;
+        $streamResult->addListener(new StreamListener(static function (ToolCallResult $result, AssistantMessage $message) use (&$capturedAssistantMessage): TextResult {
+            $capturedAssistantMessage = $message;
+
+            return new TextResult('Tool response');
+        }));
+        iterator_to_array($streamResult->getContent());
+
+        $this->assertInstanceOf(AssistantMessage::class, $capturedAssistantMessage);
+        $content = $capturedAssistantMessage->getContent();
+        $this->assertCount(2, $content);
+        $this->assertInstanceOf(Thinking::class, $content[0]);
+        $this->assertSame('first-second', $content[0]->getSignature());
+        $this->assertSame($toolCall, $content[1]);
     }
 
     public function testGetContentWithToolCallCompleteReturningGenerator()

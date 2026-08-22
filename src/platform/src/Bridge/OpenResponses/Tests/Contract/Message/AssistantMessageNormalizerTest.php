@@ -65,6 +65,20 @@ class AssistantMessageNormalizerTest extends TestCase
             ],
         ];
 
+        yield 'text is preserved around tool calls' => [
+            Message::ofAssistant(new Text('Before'), $toolCall, new Text('After')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'Before'],
+                [
+                    'arguments' => json_encode($toolCall->getArguments()),
+                    'call_id' => $toolCall->getId(),
+                    'name' => $toolCall->getName(),
+                    'type' => 'function_call',
+                ],
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'After'],
+            ],
+        ];
+
         $reasoningItem = [
             'type' => 'reasoning',
             'id' => 'rs_1',
@@ -81,6 +95,30 @@ class AssistantMessageNormalizerTest extends TestCase
                     'name' => $toolCall->getName(),
                     'type' => 'function_call',
                 ],
+            ],
+        ];
+
+        $secondReasoningItem = [
+            'type' => 'reasoning',
+            'id' => 'rs_2',
+            'summary' => [['type' => 'summary_text', 'text' => 'More pondering.']],
+            'encrypted_content' => 'gAAAAA-more-encrypted',
+        ];
+        yield 'reasoning items keep their order around tool calls' => [
+            Message::ofAssistant(
+                new Thinking('Pondering.', json_encode($reasoningItem)),
+                $toolCall,
+                new Thinking('More pondering.', json_encode($secondReasoningItem)),
+            ),
+            [
+                $reasoningItem,
+                [
+                    'arguments' => json_encode($toolCall->getArguments()),
+                    'call_id' => $toolCall->getId(),
+                    'name' => $toolCall->getName(),
+                    'type' => 'function_call',
+                ],
+                $secondReasoningItem,
             ],
         ];
 
