@@ -183,6 +183,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-4o-mini' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::BATCH,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
