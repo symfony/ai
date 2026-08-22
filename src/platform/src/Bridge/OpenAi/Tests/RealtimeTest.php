@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Capability;
  */
 final class RealtimeTest extends TestCase
 {
-    public function testRealtimeModelDefaults(): void
+    public function testRealtimeModelDefaults()
     {
         $model = new Realtime('gpt-4o-realtime-preview');
 
