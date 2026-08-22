@@ -46,16 +46,19 @@ final class ResultConverter implements ResultConverterInterface
 
         $data = $response->toArray();
 
-        $clientSecret = $data['client_secret']['value'] ?? ($data['client_secret'] ?? '');
-        $expiresAt = (int) ($data['client_secret']['expires_at'] ?? ($data['expires_at'] ?? 0));
+        $clientSecret = $data['value'] ?? ($data['client_secret']['value'] ?? ($data['client_secret'] ?? ''));
+        $expiresAt = (int) ($data['expires_at'] ?? ($data['client_secret']['expires_at'] ?? 0));
+        $model = $data['session']['model'] ?? ($data['model'] ?? '');
+        $voice = $data['session']['audio']['output']['voice'] ?? ($data['session']['voice'] ?? ($data['voice'] ?? null));
+        $modalities = $data['session']['modalities'] ?? ($data['modalities'] ?? ['text', 'audio']);
 
         return new RealtimeSessionResult(
             id: $data['id'] ?? '',
             clientSecret: $clientSecret,
             expiresAt: $expiresAt,
-            model: $data['model'] ?? '',
-            voice: $data['voice'] ?? null,
-            modalities: $data['modalities'] ?? ['text', 'audio'],
+            model: $model,
+            voice: $voice,
+            modalities: $modalities,
             raw: $data,
         );
     }

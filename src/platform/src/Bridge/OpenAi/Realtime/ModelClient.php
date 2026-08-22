@@ -38,27 +38,34 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
 
     public function request(Model $model, array|string|object $payload, array $options = []): RawHttpResult
     {
-        $body = array_merge($model->getOptions(), $options);
-        $body['model'] = $model->getName();
+        $session = array_merge($model->getOptions(), $options);
+        $session['model'] = $model->getName();
 
         if (\is_array($payload)) {
-            $body = array_merge($body, $payload);
+            $session = array_merge($session, $payload);
         } elseif (\is_string($payload) && '' !== trim($payload)) {
-            $body['instructions'] = $payload;
+            $session['instructions'] = $payload;
         }
 
-        if (!isset($body['modalities'])) {
-            $body['modalities'] = ['text', 'audio'];
+        if (!isset($session['type'])) {
+            $session['type'] = 'realtime';
         }
 
-        if (!isset($body['voice'])) {
-            $body['voice'] = 'alloy';
+        if (!isset($session['modalities'])) {
+            $session['modalities'] = ['text', 'audio'];
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/realtime/sessions', self::getBaseUrl($this->region)), [
+        if (isset($session['voice'])) {
+            $session['audio']['output']['voice'] = $session['voice'];
+            unset($session['voice']);
+        } elseif (!isset($session['audio']['output']['voice'])) {
+            $session['audio']['output']['voice'] = 'alloy';
+        }
+
+        return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/realtime/client_secrets', self::getBaseUrl($this->region)), [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'json' => $body,
+            'json' => ['session' => $session],
         ]));
     }
 }

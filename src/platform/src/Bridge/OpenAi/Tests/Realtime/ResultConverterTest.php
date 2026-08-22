@@ -70,14 +70,19 @@ final class ResultConverterTest extends TestCase
     {
         $mockData = [
             'id' => 'sess_test_999',
-            'object' => 'realtime.session',
-            'model' => 'gpt-4o-realtime-preview',
-            'modalities' => ['text', 'audio'],
-            'instructions' => 'Speak clearly',
-            'voice' => 'alloy',
-            'client_secret' => [
-                'value' => 'ek_secret_token_abc',
-                'expires_at' => 1795000000,
+            'object' => 'realtime.client_secret',
+            'value' => 'ek_secret_token_abc',
+            'expires_at' => 1795000000,
+            'session' => [
+                'type' => 'realtime',
+                'model' => 'gpt-4o-realtime-preview',
+                'modalities' => ['text', 'audio'],
+                'instructions' => 'Speak clearly',
+                'audio' => [
+                    'output' => [
+                        'voice' => 'alloy',
+                    ],
+                ],
             ],
         ];
 

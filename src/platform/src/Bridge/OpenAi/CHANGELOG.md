@@ -4,6 +4,7 @@ CHANGELOG
 0.11
 ----
 
+ * Add `Realtime` model, `Realtime\ModelClient`, `Realtime\ResultConverter`, and catalog entries (`gpt-4o-realtime-preview`, `gpt-4o-mini-realtime-preview`) for `POST /v1/realtime/sessions`
  * Throw `ServerException` on server errors (HTTP 5xx) instead of a generic `RuntimeException`
  * Throw typed exceptions on rate limit and server error events mid-stream
  * Raise a `RuntimeException` on unhandled HTTP error statuses before streaming, instead of returning an empty stream
