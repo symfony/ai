@@ -189,9 +189,26 @@ final class McpPass implements CompilerPassInterface
         /** @var array<string, array<string, array{template: string, meta: array<string, mixed>|null}>> $appTemplates */
         $appTemplates = $container->hasParameter('mcp.servers.app_tool_templates') ? $container->getParameter('mcp.servers.app_tool_templates') : [];
 
+        // Resolved by class name at request time, so every server needs all of them.
+        $completionProviders = [];
+        foreach ($container->findTaggedServiceIds('mcp.completion_provider') as $serviceId => $tags) {
+            $definition = $container->getDefinition($serviceId);
+            if ($definition->isAbstract()) {
+                continue;
+            }
+
+            $class = $container->getParameterBag()->resolveValue($definition->getClass() ?? $serviceId);
+            $completionProviders[$class] = new Reference($serviceId);
+            $completionProviders[$serviceId] ??= new Reference($serviceId);
+        }
+
         foreach (array_keys($servers) as $server) {
             foreach ($appHandlers[$server] ?? [] as $key => $id) {
                 $serviceReferences[$server][$key] ??= new Reference($id);
+            }
+
+            foreach ($completionProviders as $key => $reference) {
+                $serviceReferences[$server][$key] ??= $reference;
             }
 
             if ([] === ($serviceReferences[$server] ?? [])) {

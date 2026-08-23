@@ -15,6 +15,7 @@ use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Completion\ProviderInterface as CompletionProviderInterface;
 use Mcp\Capability\Registry;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Client as McpSdkClient;
@@ -91,6 +92,11 @@ final class McpBundle extends AbstractBundle
 
         $builder->registerForAutoconfiguration(LoaderInterface::class)
             ->addTag('mcp.loader');
+
+        // Resolved from the server's container at request time, so a provider can
+        // have constructor dependencies like any other service.
+        $builder->registerForAutoconfiguration(CompletionProviderInterface::class)
+            ->addTag('mcp.completion_provider');
 
         $builder->registerForAutoconfiguration(RequestHandlerInterface::class)
             ->addTag('mcp.request_handler');
