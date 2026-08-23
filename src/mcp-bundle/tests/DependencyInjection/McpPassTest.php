@@ -457,13 +457,22 @@ class UserTemplate
 
 class CityCompletionProvider implements CompletionProviderInterface
 {
-    public function __construct(private readonly string $unresolvable = 'needs the container')
+    /**
+     * A constructor argument is the whole point of the fixture: instantiated
+     * with `new`, this provider cannot be built at all.
+     *
+     * @param list<string> $cities
+     */
+    public function __construct(private readonly array $cities = ['berlin', 'brussels'])
     {
     }
 
     public function getCompletions(string $currentValue): array
     {
-        return ['berlin', 'brussels'];
+        return array_values(array_filter(
+            $this->cities,
+            static fn (string $city): bool => str_starts_with($city, $currentValue),
+        ));
     }
 }
 
