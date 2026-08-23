@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by kbond at 2026-07-29T12:35:03Z
+
+I've added the BC Break label.
+
+~To clarify, symlinking to the vendor dir is no longer an option, they're always copied now?~ I just read the UPGRADE. I think this is the right move - now it's closer to a Flex recipe and `mate/extensions.php` is like `symfony.lock`
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-23T18:17:36Z
+
+@chr-hertel Thanks, all pushed.
+
+Filesystem component: yes. SkillInstaller now uses mirror(), remove(), mkdir() and dumpFile(), about 90 lines lighter. One caveat worth knowing: mirror() recreates symlinks it finds inside a skill folder, so it gets an iterator that filters those out.
+
+Mispointed mirror: good catch. isUpToDate() accepted any resolvable symlink, so skills:install never repaired what skills:validate kept reporting. There is now a shared mirrorState() that both use, plus two regression tests.
+
+Feature depth / skills:prune: kept for now, because prune is the only remedy for the stray folder warning skills:validate raises, so dropping the command means dropping that check too. And there will be more commands to manage the state of the skills in the nearer future
+
+Docs: agreed, one pass after the remaining PRs and the MCP removal beats tuning them per PR. This one only flips the config section to lead with the commands instead of the file.
+
+Also rebased onto main, the UPGRADE.md conflict is gone.
