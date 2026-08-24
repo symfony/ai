@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Result\RealtimeSessionResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,6 +24,8 @@ $result = $platform->invoke('gpt-4o-realtime-preview', 'You are a friendly assis
 ]);
 
 $session = $result->getResult();
+
+assert($session instanceof RealtimeSessionResult);
 
 output()->writeln(sprintf('Session:    %s', $session->getId()));
 output()->writeln(sprintf('Model:      %s', $session->getModel()));
