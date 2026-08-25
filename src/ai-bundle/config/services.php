@@ -30,6 +30,7 @@ use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Messages\ModelCatalog as BedrockMantleMessagesModelCatalog;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\ModelCatalog as BedrockMantleModelCatalog;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\ModelCatalog as BedrockMantleResponsesModelCatalog;
 use Symfony\AI\Platform\Bridge\Bedrock\ModelCatalog as BedrockModelCatalog;
@@ -122,6 +123,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.azure.openai', AzureOpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.bedrock', BedrockModelCatalog::class)
         ->set('ai.platform.model_catalog.bedrockmantle', BedrockMantleModelCatalog::class)
+        ->set('ai.platform.model_catalog.bedrockmantle.messages', BedrockMantleMessagesModelCatalog::class)
         ->set('ai.platform.model_catalog.bedrockmantle.responses', BedrockMantleResponsesModelCatalog::class)
         ->set('ai.platform.model_catalog.cartesia', CartesiaModelCatalog::class)
         ->set('ai.platform.model_catalog.cerebras', CerebrasModelCatalog::class)

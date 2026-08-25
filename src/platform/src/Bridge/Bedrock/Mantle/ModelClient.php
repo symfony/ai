@@ -11,16 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Mantle;
 
-use AsyncAws\Core\Configuration;
 use AsyncAws\Core\Credentials\ChainProvider;
 use AsyncAws\Core\Credentials\CredentialProvider;
-use AsyncAws\Core\Credentials\Credentials;
-use AsyncAws\Core\Request;
-use AsyncAws\Core\RequestContext;
-use AsyncAws\Core\Signer\SignerV4;
-use AsyncAws\Core\Stream\StringStream;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -39,31 +32,25 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
-    private const SERVICE = 'bedrock';
-
     private readonly EventSourceHttpClient $httpClient;
-
-    /**
-     * The credential provider used for SigV4 signing. Only resolved when no API key is used.
-     */
-    private readonly ?CredentialProvider $credentialProvider;
+    private readonly ?SigV4RequestSigner $requestSigner;
 
     public function __construct(
         HttpClientInterface $httpClient,
         private readonly string $baseUrl,
-        private readonly string $region,
+        string $region,
         #[\SensitiveParameter] private readonly ?string $apiKey = null,
         ?CredentialProvider $credentialProvider = null,
         private readonly string $path = '/v1/chat/completions',
         private readonly string $supportedModel = CompletionsModel::class,
     ) {
-        $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-
         if (null === $apiKey) {
-            $this->credentialProvider = $credentialProvider ?? ChainProvider::createDefaultChain($this->httpClient);
+            $this->requestSigner = new SigV4RequestSigner($region, $credentialProvider ?? ChainProvider::createDefaultChain($httpClient));
         } else {
-            $this->credentialProvider = null;
+            $this->requestSigner = null;
         }
+
+        $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
     }
 
     public function supports(Model $model): bool
@@ -86,28 +73,8 @@ final class ModelClient implements ModelClientInterface
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
-            'headers' => $this->sign($url, $body),
+            'headers' => $this->requestSigner?->sign($url, $this->path, $body),
             'body' => $body,
         ]));
-    }
-
-    /**
-     * Signs the request with AWS SigV4 and returns the resulting headers.
-     *
-     * @return array<string, string>
-     */
-    private function sign(string $url, string $body): array
-    {
-        $credentials = $this->credentialProvider?->getCredentials(Configuration::create(['region' => $this->region]));
-        if (!$credentials instanceof Credentials) {
-            throw new RuntimeException('Unable to resolve AWS credentials for Bedrock Mantle SigV4 authentication.');
-        }
-
-        $request = new Request('POST', $this->path, [], ['content-type' => 'application/json'], StringStream::create($body));
-        $request->setEndpoint($url);
-
-        (new SignerV4(self::SERVICE, $this->region))->sign($request, $credentials, new RequestContext());
-
-        return $request->getHeaders();
     }
 }

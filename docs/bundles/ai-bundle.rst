@@ -65,6 +65,12 @@ Advanced Example with Multiple Agents
                     # without an api_key, requests are signed with AWS SigV4
                     api: responses
                     region: '%env(AWS_DEFAULT_REGION)%'
+                claude:
+                    api: messages
+                    api_key: '%env(AWS_BEARER_TOKEN_BEDROCK)%'
+                    region: '%env(AWS_DEFAULT_REGION)%'
+                    cache_retention: long
+                    # workspace: 'proj_example'
             deepgram:
                 api_key: '%env(DEEPGRAM_API_KEY)%'
             elevenlabs:

@@ -4,7 +4,7 @@ CHANGELOG
 0.13
 ----
 
- * Add support for the Bedrock Mantle Chat Completions and Responses APIs
+ * Add support for the Bedrock Mantle Chat Completions, Responses, and Anthropic Messages APIs
 
 0.10
 ----

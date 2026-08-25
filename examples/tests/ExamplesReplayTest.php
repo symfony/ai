@@ -81,6 +81,9 @@ final class ExamplesReplayTest extends TestCase
 
     private function normalize(string $output): string
     {
-        return rtrim(str_replace("\r\n", "\n", $output))."\n";
+        $lines = explode("\n", str_replace("\r\n", "\n", $output));
+        $output = implode("\n", array_map(static fn (string $line): string => rtrim($line, " \t"), $lines));
+
+        return rtrim($output)."\n";
     }
 }

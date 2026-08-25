@@ -1,0 +1,33 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.us-east-1.api.aws/anthropic/v1/messages",
+                "signature": "f357edb7d60889954fa2a3095b1c204e",
+                "headers": {
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-api-key": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"model\":\"anthropic.claude-haiku-4-5\",\"messages\":[{\"role\":\"user\",\"content\":\"Greet the world.\"}],\"max_tokens\":1000}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"msg_mantle_text\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"anthropic.claude-haiku-4-5\",\"content\":[{\"type\":\"text\",\"text\":\"Hello from Bedrock Mantle.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"output_tokens\":7}}"
+            }
+        }
+    ]
+}

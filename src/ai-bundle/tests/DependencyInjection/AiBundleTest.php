@@ -37,6 +37,7 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Messages\Factory as BedrockMantleMessagesFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory as BedrockMantleResponsesFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
@@ -4509,6 +4510,42 @@ class AiBundleTest extends TestCase
         $this->assertSame('us-west-2', $definition->getArgument(1));
         $this->assertSame('ai.platform.model_catalog.bedrockmantle.responses', (string) $definition->getArgument(4));
         $this->assertSame([['name' => 'bedrockmantle.gemma']], $definition->getTag('ai.platform'));
+    }
+
+    public function testBedrockMantlePlatformCanTargetAnthropicMessagesRoute()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'bedrockmantle' => [
+                        'claude' => [
+                            'api' => 'messages',
+                            'api_key' => 'bedrock_api_key',
+                            'region' => 'us-east-1',
+                            'cache_retention' => 'long',
+                            'workspace' => 'proj_example',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.bedrockmantle.claude'));
+        $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.bedrockmantle.messages'));
+
+        $definition = $container->getDefinition('ai.platform.bedrockmantle.claude');
+
+        $this->assertSame([
+            BedrockMantleMessagesFactory::class,
+            'createPlatform',
+        ], $definition->getFactory());
+        $this->assertCount(9, $definition->getArguments());
+        $this->assertSame('bedrock_api_key', $definition->getArgument(0));
+        $this->assertSame('us-east-1', $definition->getArgument(1));
+        $this->assertSame('ai.platform.model_catalog.bedrockmantle.messages', (string) $definition->getArgument(4));
+        $this->assertSame('long', $definition->getArgument(7));
+        $this->assertSame('proj_example', $definition->getArgument(8));
+        $this->assertSame([['name' => 'bedrockmantle.claude']], $definition->getTag('ai.platform'));
     }
 
     public function testOllamaCanBeConfigured()

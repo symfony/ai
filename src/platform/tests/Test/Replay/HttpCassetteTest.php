@@ -51,6 +51,9 @@ final class HttpCassetteTest extends TestCase
                 'headers' => [
                     'Authorization' => 'Bearer sk-secret',
                     'X-Subscription-Token' => 'sk-secret',
+                    'X-Amz-Security-Token' => 'session-secret',
+                    'X-Amz-Sso_Bearer_Token' => 'sso-secret',
+                    'Anthropic-Workspace' => 'workspace-secret',
                     'Content-Type' => 'application/json',
                 ],
                 'json' => ['model' => 'mistral-large-latest'],
@@ -66,12 +69,18 @@ final class HttpCassetteTest extends TestCase
         $this->assertSame('POST', $request['method']);
         $this->assertSame(['[redacted]'], $request['headers']['authorization']);
         $this->assertSame(['[redacted]'], $request['headers']['x-subscription-token']);
+        $this->assertSame(['[redacted]'], $request['headers']['x-amz-security-token']);
+        $this->assertSame(['[redacted]'], $request['headers']['x-amz-sso_bearer_token']);
+        $this->assertSame(['[redacted]'], $request['headers']['anthropic-workspace']);
         $this->assertSame(['application/json'], $request['headers']['content-type']);
         $this->assertSame(['model' => 'mistral-large-latest'], $request['body']);
         $this->assertArrayHasKey('signature', $request);
 
         $serialized = (string) file_get_contents($this->path);
         $this->assertStringNotContainsString('sk-secret', $serialized);
+        $this->assertStringNotContainsString('session-secret', $serialized);
+        $this->assertStringNotContainsString('sso-secret', $serialized);
+        $this->assertStringNotContainsString('workspace-secret', $serialized);
     }
 
     public function testRecordRedactsSecretsPassedAsHeaderLinesAndResponseHeaders()

@@ -1957,6 +1957,9 @@ Code Examples
 * `Bedrock Mantle Tool Calling`_
 * `Bedrock Mantle Responses`_
 * `Bedrock Mantle Responses Streaming`_
+* `Bedrock Mantle Anthropic Messages`_
+* `Bedrock Mantle Anthropic Messages Streaming`_
+* `Bedrock Mantle Anthropic Messages Tool Calling`_
 
 .. note::
 
@@ -1973,6 +1976,9 @@ Code Examples
 .. _`Bedrock Mantle Chat with SigV4`: https://github.com/symfony/ai/blob/main/examples/bedrock/chat-mantle-sigv4.php
 .. _`Bedrock Mantle Responses`: https://github.com/symfony/ai/blob/main/examples/bedrock/responses-mantle.php
 .. _`Bedrock Mantle Responses Streaming`: https://github.com/symfony/ai/blob/main/examples/bedrock/responses-stream-mantle.php
+.. _`Bedrock Mantle Anthropic Messages`: https://github.com/symfony/ai/blob/main/examples/bedrock/messages-mantle.php
+.. _`Bedrock Mantle Anthropic Messages Streaming`: https://github.com/symfony/ai/blob/main/examples/bedrock/messages-stream-mantle.php
+.. _`Bedrock Mantle Anthropic Messages Tool Calling`: https://github.com/symfony/ai/blob/main/examples/bedrock/messages-toolcall-mantle.php
 .. _`Bedrock Mantle Streaming`: https://github.com/symfony/ai/blob/main/examples/bedrock/stream-mantle.php
 .. _`Bedrock Mantle Tool Calling`: https://github.com/symfony/ai/blob/main/examples/bedrock/toolcall-mantle.php
 .. _`LiteLLM`: https://docs.litellm.ai/docs/

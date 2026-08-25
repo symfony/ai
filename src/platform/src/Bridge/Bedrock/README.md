@@ -12,6 +12,7 @@ Bedrock Documentation
  * [Meta Llama parameters](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-meta.html)
  * [Amazon Nova request schema](https://docs.aws.amazon.com/nova/latest/userguide/complete-request-schema.html)
  * [Bedrock Mantle](https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-mantle.html)
+ * [Anthropic Messages API on Bedrock Mantle](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-messages-api.html)
 
 Resources
 ---------

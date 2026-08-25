@@ -5,7 +5,7 @@ CHANGELOG
 ----
 
  * Add an `embedding_function` option to the `chromadb` store, referencing a service implementing `Codewithkyrian\ChromaDB\Embeddings\EmbeddingFunction`, so a bundle-configured store can serve a `TextQuery`
- * Add `bedrockmantle` platform configuration for the Bedrock Mantle bridge, with an `api` option selecting the Chat Completions or Responses route
+ * Add `bedrockmantle` platform configuration for the Bedrock Mantle bridge, with an `api` option selecting the Chat Completions, Responses, or Anthropic Messages route
 
 0.11
 ----
