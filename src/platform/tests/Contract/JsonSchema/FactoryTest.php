@@ -576,7 +576,7 @@ final class FactoryTest extends TestCase
     public function testBuildPropertiesRejectsCollidingRenames()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Class "%s" maps both $first and $second to the JSON key "same"', CollidingRenames::class));
+        $this->expectExceptionMessage(\sprintf('Class "%s" maps both "$first" and "$second" to the JSON key "same"', CollidingRenames::class));
 
         $this->factory->buildProperties(CollidingRenames::class);
     }

@@ -64,7 +64,7 @@ final class SchemaNameResolverTest extends TestCase
     public function testForClassRejectsRenameCollidingWithAnotherProperty()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Class "%s" maps both $title and $label to the JSON key "label"', CollidingRenameWithProperty::class));
+        $this->expectExceptionMessage(\sprintf('Class "%s" maps both "$title" and "$label" to the JSON key "label"', CollidingRenameWithProperty::class));
 
         SchemaNameResolver::forClass(CollidingRenameWithProperty::class);
     }
@@ -72,7 +72,7 @@ final class SchemaNameResolverTest extends TestCase
     public function testForClassRejectsTwoPropertiesRenamedToTheSameKey()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Class "%s" maps both $first and $second to the JSON key "same"', CollidingRenames::class));
+        $this->expectExceptionMessage(\sprintf('Class "%s" maps both "$first" and "$second" to the JSON key "same"', CollidingRenames::class));
 
         SchemaNameResolver::forClass(CollidingRenames::class);
     }
@@ -80,7 +80,7 @@ final class SchemaNameResolverTest extends TestCase
     public function testForClassRejectsContradictingRenamesOfTheSameProperty()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Property "title" of class "%s" is renamed twice, $title declares the JSON key "from_property" while __construct($title) declares "from_parameter".', ContradictingRenames::class));
+        $this->expectExceptionMessage(\sprintf('Property "title" of class "%s" is renamed twice, "$title" declares the JSON key "from_property" while "__construct($title)" declares "from_parameter".', ContradictingRenames::class));
 
         SchemaNameResolver::forClass(ContradictingRenames::class);
     }

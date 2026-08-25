@@ -93,7 +93,7 @@ final class SchemaNameResolver
             $owner = $renames[$propertyName]['member'] ?? $member;
 
             if (isset($owners[$name])) {
-                throw new InvalidArgumentException(\sprintf('Class "%s" maps both %s and %s to the JSON key "%s", every "#[Schema(name: ...)]" must resolve to a key that is not used by another property.', $class, $owners[$name], $owner, $name));
+                throw new InvalidArgumentException(\sprintf('Class "%s" maps both "%s" and "%s" to the JSON key "%s", every "#[Schema(name: ...)]" must resolve to a key that is not used by another property.', $class, $owners[$name], $owner, $name));
             }
 
             $owners[$name] = $owner;
@@ -147,7 +147,7 @@ final class SchemaNameResolver
             return;
         }
 
-        throw new InvalidArgumentException(\sprintf('Property "%s" of class "%s" is renamed twice, %s declares the JSON key "%s" while %s declares "%s".', $propertyName, $class, $renames[$propertyName]['member'], $renames[$propertyName]['name'], $member, $name));
+        throw new InvalidArgumentException(\sprintf('Property "%s" of class "%s" is renamed twice, "%s" declares the JSON key "%s" while "%s" declares "%s".', $propertyName, $class, $renames[$propertyName]['member'], $renames[$propertyName]['name'], $member, $name));
     }
 
     /**

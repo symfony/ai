@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `name` argument to `#[Schema]` to use a different JSON key than the PHP property or parameter name, e.g. `#[Schema(name: 'rest_between_rounds')]` on `$restBetweenRounds`; schema generation and structured output hydration stay in sync, while serializer metadata like `#[SerializedName]` stays ignored; conflicting keys within a class are rejected
+
 0.13
 ----
 
@@ -14,7 +19,6 @@ CHANGELOG
  * Add `Result\Stream\AssistantMessageStreamListener`, which rebuilds the assistant turn - text, thinking blocks with their signatures, tool calls, in provider order - from a streamed response
  * Accept a `StreamResult` in `Message::ofAssistant()` and add `StreamResult::getAssistantMessage()`, so a streamed turn is replayed like a buffered one, draining the stream if the caller has not read it
  * Add `Result\CustomToolCallResult` for `custom_tool_call` output items reported by provider-specific server-side tools (e.g. xAI's `x_search`), converted the same way as the other built-in tool call results instead of being surfaced as a `ToolCall` the application is expected to execute
- * Add `name` argument to `#[Schema]` to use a different JSON key than the PHP property or parameter name, e.g. `#[Schema(name: 'rest_between_rounds')]` on `$restBetweenRounds`; schema generation and structured output hydration stay in sync, while serializer metadata like `#[SerializedName]` stays ignored; conflicting keys within a class are rejected
 
 0.12
 ----
