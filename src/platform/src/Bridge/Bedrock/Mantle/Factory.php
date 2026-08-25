@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock\Mantle;
 
 use AsyncAws\Core\Credentials\CredentialProvider;
-use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter;
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;

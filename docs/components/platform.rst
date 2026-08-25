@@ -203,7 +203,7 @@ AWS Bedrock Mantle
 Next to the SigV4/SDK-based `AWS Bedrock`_ bridge for Nova, Claude and Llama, AWS exposes the
 open-weight models of Bedrock through the `Bedrock Mantle`_ endpoint, which speaks the
 OpenAI-compatible Chat Completions and Responses protocols. The Bedrock bridge exposes Mantle
-through an explicit ``Bedrock\\Mantle\\Factory`` path, derives the base URL from the AWS region and
+through an explicit ``Bedrock\Mantle\Factory`` path, derives the base URL from the AWS region and
 authenticates with a Bedrock API key sent as a bearer token::
 
     use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory;
