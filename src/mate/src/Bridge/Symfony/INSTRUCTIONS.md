@@ -1,26 +1,25 @@
 ## Symfony Bridge
 
-### Container Introspection
+Prefer these MCP tools over running `bin/console` directly: they read the compiled
+container and stored profiles, are environment-aware, and redact sensitive data.
 
-| Instead of...                  | Use                |
-|--------------------------------|--------------------|
-| `bin/console debug:container`  | `symfony-services` |
+| Tool / resource | Use for |
+|---|---|
+| `symfony-services`, `symfony-service-detail` | Container introspection (replaces `debug:container`). |
+| `symfony-profiler-list`, `symfony-profiler-get` | Finding and resolving profiler profiles. |
+| `symfony-profiler://profile/{token}` | Profile triage: metadata + available collectors. |
+| `symfony-profiler://profile/{token}/{collector}` | One collector's data (`db`, `time`, `exception`, …). |
 
-- Direct access to compiled container
-- Environment-aware (auto-detects dev/test/prod)
-- Supports filtering by service ID or class name via query parameter
+Profiler tools require `symfony/http-kernel`. Cookies, session data, auth headers,
+and sensitive env vars are redacted automatically.
 
-### Profiler Access
+### Skills — read these for the *how*, before using the tools
 
-When `symfony/http-kernel` is installed, profiler tools become available:
+The tables above say *what* exists; the skills below say *how to orchestrate* them.
+When a task matches one, read its `SKILL.md` first and follow it — it will tell you
+which tool and which collector to reach for, in order.
 
-| Tool                        | Description                                             |
-|-----------------------------|---------------------------------------------------------|
-| `symfony-profiler-list`     | List and filter profiles by method, URL, IP, status, date range |
-| `symfony-profiler-get`      | Get profile by token                                    |
-
-**Resources:**
-- `symfony-profiler://profile/{token}` - Full profile with collector list
-- `symfony-profiler://profile/{token}/{collector}` - Collector-specific data
-
-**Security:** Cookies, session data, auth headers, and sensitive env vars are automatically redacted.
+| Skill | Read when |
+|---|---|
+| [`skill://symfony-profiler-debugging/SKILL.md`](skills/symfony-profiler-debugging/SKILL.md) | A request is slow, 500s, has an N+1, or behaves unexpectedly — debugging via the profiler. |
+| [`skill://symfony-container-introspection/SKILL.md`](skills/symfony-container-introspection/SKILL.md) | A `ServiceNotFoundException`/autowiring failure, or any "is X registered / how is it built / what carries tag Y" question. |
