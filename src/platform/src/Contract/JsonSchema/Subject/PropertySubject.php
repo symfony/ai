@@ -38,19 +38,15 @@ final class PropertySubject
      */
     public function getSchemaName(): string
     {
-        $name = SchemaNameResolver::forReflector($this->reflector, $this->name);
-        if ($name !== $this->name) {
-            return $name;
-        }
-
         // The same property is described by several reflectors (the property itself, the constructor
-        // parameter writing it), and the attribute sits on only one of them.
+        // parameter writing it), and the attribute sits on only one of them, so the class-wide map
+        // takes precedence: it is the one that also detects colliding keys.
         $class = $this->getPropertyClass();
-        if (null === $class) {
-            return $this->name;
+        if (null !== $class && isset(SchemaNameResolver::forClass($class)[$this->name])) {
+            return SchemaNameResolver::forClass($class)[$this->name];
         }
 
-        return SchemaNameResolver::forClass($class)[$this->name] ?? $this->name;
+        return SchemaNameResolver::forReflector($this->reflector, $this->name);
     }
 
     public function getReflector(): \ReflectionParameter|\ReflectionMethod|\ReflectionProperty

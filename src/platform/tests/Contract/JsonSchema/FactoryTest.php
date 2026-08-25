@@ -20,6 +20,8 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithRenamedParameter;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\CollidingRenames;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
@@ -569,5 +571,13 @@ final class FactoryTest extends TestCase
         $actual = $this->factory->buildParameters(ToolWithRenamedParameter::class, '__invoke');
 
         $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesRejectsCollidingRenames()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('Class "%s" maps both $first and $second to the JSON key "same"', CollidingRenames::class));
+
+        $this->factory->buildProperties(CollidingRenames::class);
     }
 }

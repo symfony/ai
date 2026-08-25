@@ -1230,6 +1230,9 @@ The JSON keys of the generated schema are the PHP property names. Use the ``name
 e.g. ``#[Schema(name: 'rest_between_rounds')]`` on a ``$restBetweenRounds`` property. Schema generation
 and hydration always use the same key, see :doc:`the Agent component documentation <agent>` for details.
 
+Every key has to be unique within a class: renaming a property onto a key another property already uses,
+or declaring two different keys for the same property, throws an ``InvalidArgumentException``.
+
 Array Structures as Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

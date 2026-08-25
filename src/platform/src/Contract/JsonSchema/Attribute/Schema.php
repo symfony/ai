@@ -68,10 +68,8 @@ final class Schema
         // the key in the generated schema
         public readonly ?string $name = null,
     ) {
-        if (\is_string($name)) {
-            if ('' === trim($name)) {
-                throw new InvalidArgumentException('Name string must not be empty.');
-            }
+        if (null !== $name && '' === trim($name)) {
+            throw new InvalidArgumentException('Name string must not be empty.');
         }
 
         if ($this->ref) {
