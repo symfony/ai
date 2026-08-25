@@ -34,6 +34,7 @@
             "prefixes": [{ "from": "src/mate", "to": "", "excludes": ["src/Bridge", "composer-plugin"] }]
         },
         "ai-mate-composer-plugin": "src/mate/composer-plugin",
+        "ai-knowledge-mate-extension": "src/mate/src/Bridge/Knowledge",
         "ai-monolog-mate-extension": "src/mate/src/Bridge/Monolog",
         "ai-symfony-mate-extension": "src/mate/src/Bridge/Symfony",
         "mcp-bundle": "src/mcp-bundle",
