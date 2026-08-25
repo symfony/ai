@@ -58,8 +58,8 @@ use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatal
 use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory as AzureOpenAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
-use Symfony\AI\Platform\Bridge\BedrockMantle\Factory as BedrockMantleFactory;
-use Symfony\AI\Platform\Bridge\BedrockMantle\Responses\Factory as BedrockMantleResponsesFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory as BedrockMantleResponsesFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\Factory as CartesiaFactory;
@@ -563,8 +563,8 @@ final class AiBundle extends AbstractBundle
                 $isResponses = 'responses' === $config['api'];
                 $factory = $isResponses ? BedrockMantleResponsesFactory::class : BedrockMantleFactory::class;
 
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-mantle-platform', $factory, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('Bedrock Mantle platform configuration requires "symfony/ai-bedrock-mantle-platform" package. Try running "composer require symfony/ai-bedrock-mantle-platform".');
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', $factory, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Bedrock Mantle platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
                 }
 
                 $defaultModelCatalog = $isResponses ? 'ai.platform.model_catalog.bedrockmantle.responses' : 'ai.platform.model_catalog.bedrockmantle';

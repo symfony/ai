@@ -32,11 +32,21 @@
         "symfony/ai-platform": "^0.12"
     },
     "require-dev": {
+        "async-aws/sso": "^1.0",
+        "async-aws/sso-oidc": "^1.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "symfony/ai-generic-platform": "^0.12",
+        "symfony/ai-open-responses-platform": "^0.12",
         "symfony/console": "^7.3|^8.0"
+    },
+    "suggest": {
+        "async-aws/sso": "Required to authenticate Bedrock Mantle with an AWS SSO profile.",
+        "async-aws/sso-oidc": "Required to authenticate Bedrock Mantle with a modern AWS SSO session.",
+        "symfony/ai-generic-platform": "Required to use the Bedrock Mantle Chat Completions API.",
+        "symfony/ai-open-responses-platform": "Required to use the Bedrock Mantle Responses API."
     },
     "minimum-stability": "dev",
     "autoload": {

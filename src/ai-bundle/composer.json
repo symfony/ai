@@ -41,7 +41,6 @@
         "symfony/ai-anthropic-platform": "^0.12",
         "symfony/ai-azure-platform": "^0.12",
         "symfony/ai-azure-search-store": "^0.12",
-        "symfony/ai-bedrock-mantle-platform": "dev-main",
         "symfony/ai-bedrock-platform": "^0.12",
         "symfony/ai-cache-message-store": "^0.12",
         "symfony/ai-cache-platform": "^0.12",
@@ -111,12 +110,6 @@
         "symfony/validator": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../platform/src/Bridge/BedrockMantle"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\AiBundle\\": "src/"

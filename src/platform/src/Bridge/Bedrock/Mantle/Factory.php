@@ -9,15 +9,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\BedrockMantle\Responses;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Mantle;
 
 use AsyncAws\Core\Credentials\CredentialProvider;
-use Symfony\AI\Platform\Bridge\BedrockMantle\ModelClient;
-use Symfony\AI\Platform\Bridge\OpenResponses\Contract\OpenResponsesContract;
-use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
-use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter;
+use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
@@ -29,13 +28,13 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Bridge for the AWS Bedrock "Mantle" Responses endpoint, the OpenAI-compatible Responses API
- * that AWS recommends for new applications.
+ * Bridge for the AWS Bedrock "Mantle" endpoint, which exposes OpenAI-compatible APIs.
  *
- * It reuses the {@see \Symfony\AI\Platform\Bridge\OpenResponses} wire protocol (contract + result
- * conversion) on top of the Mantle {@see ModelClient}, which authenticates with a Bedrock API key
- * (bearer token, recommended) or, when no API key is given, with AWS SigV4 signing. The base URL
- * is derived from the AWS region: "https://bedrock-mantle.<region>.api.aws".
+ * Unlike the InvokeModel API exposed by {@see \Symfony\AI\Platform\Bridge\Bedrock\Factory}, Mantle
+ * endpoint speaks the plain OpenAI wire protocol. It can be authenticated with a Bedrock API key
+ * sent as a bearer token (recommended) or, when no API key is given, with AWS SigV4 signing using
+ * the standard credential chain. The base URL is derived from the AWS region:
+ * "https://bedrock-mantle.<region>.api.aws".
  *
  * @see https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-mantle.html
  *
@@ -54,9 +53,16 @@ final class Factory
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
-        string $path = '/openai/v1/responses',
-        string $name = 'bedrock-mantle-responses',
+        string $name = 'bedrock-mantle',
     ): ProviderInterface {
+        if (!class_exists(CompletionsModel::class)) {
+            throw new RuntimeException('For using the Bedrock Mantle Chat Completions API, the symfony/ai-generic-platform package is required. Try running "composer require symfony/ai-generic-platform".');
+        }
+
+        if (!class_exists(ResultConverter::class)) {
+            throw new RuntimeException('For using the Bedrock Mantle Chat Completions API, the symfony/ai-generic-platform package is required. Try running "composer require symfony/ai-generic-platform".');
+        }
+
         if ('' === $apiKey) {
             throw new InvalidArgumentException('The Bedrock API key must not be empty.');
         }
@@ -69,10 +75,10 @@ final class Factory
 
         return new Provider(
             $name,
-            [new ModelClient($httpClient, \sprintf('https://bedrock-mantle.%s.api.aws', $region), $region, $apiKey, $credentialProvider, $path, ResponsesModel::class)],
+            [new ModelClient($httpClient, \sprintf('https://bedrock-mantle.%s.api.aws', $region), $region, $apiKey, $credentialProvider)],
             [new ResultConverter()],
             $modelCatalog,
-            $contract ?? OpenResponsesContract::create(),
+            $contract,
             $eventDispatcher,
         );
     }
@@ -88,12 +94,11 @@ final class Factory
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
-        string $path = '/openai/v1/responses',
-        string $name = 'bedrock-mantle-responses',
+        string $name = 'bedrock-mantle',
         ?ModelRouterInterface $modelRouter = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($apiKey, $region, $credentialProvider, $httpClient, $modelCatalog, $contract, $eventDispatcher, $path, $name)],
+            [self::createProvider($apiKey, $region, $credentialProvider, $httpClient, $modelCatalog, $contract, $eventDispatcher, $name)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );

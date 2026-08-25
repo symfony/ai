@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\BedrockMantle\Responses;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses;
 
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Capability;

@@ -9,17 +9,17 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\BedrockMantle\Responses\Factory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // The Bedrock Mantle Responses endpoint is the OpenAI-compatible Responses API that AWS recommends
-// for new applications. It is authenticated with a Bedrock API key sent as a bearer token; see
-// examples/bedrock/chat-mantle-sigv4.php for the AWS SigV4 alternative.
+// for new applications. A Bedrock API key takes precedence when configured; otherwise requests are
+// authenticated with AWS SigV4.
 $platform = Factory::createPlatform(
-    apiKey: env('AWS_BEARER_TOKEN_BEDROCK'),
+    apiKey: optional_env('AWS_BEARER_TOKEN_BEDROCK'),
     region: env('AWS_DEFAULT_REGION'),
     httpClient: http_client(),
 );

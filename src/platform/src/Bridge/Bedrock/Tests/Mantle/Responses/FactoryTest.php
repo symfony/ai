@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\BedrockMantle\Tests;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Mantle\Responses;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\BedrockMantle\Factory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -64,25 +64,28 @@ final class FactoryTest extends TestCase
         Factory::createPlatform('bedrock-api-key', '');
     }
 
-    public function testItSendsRequestToTheMantleEndpointForTheGivenRegion()
+    public function testItSendsRequestToTheMantleResponsesEndpointForTheGivenRegion()
     {
-        $responseCallback = static function (string $method, string $url, array $options): HttpResponse {
-            self::assertSame('POST', $method);
-            self::assertSame('https://bedrock-mantle.eu-central-1.api.aws/v1/chat/completions', $url);
-            self::assertSame('Authorization: Bearer bedrock-api-key', $options['normalized_headers']['authorization'][0]);
-            self::assertStringContainsString('"model":"openai.gpt-oss-120b"', $options['body']);
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://bedrock-mantle.eu-central-1.api.aws/openai/v1/responses', $url);
+            $this->assertSame('Authorization: Bearer bedrock-api-key', $options['normalized_headers']['authorization'][0]);
+            $this->assertStringContainsString('"model":"google.gemma-4-31b"', $options['body']);
 
             return new MockResponse(json_encode([
-                'choices' => [[
-                    'index' => 0,
-                    'message' => ['role' => 'assistant', 'content' => 'Hello!'],
-                    'finish_reason' => 'stop',
+                'output' => [[
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => 'Hello!']],
                 ]],
             ]));
         };
 
         $platform = Factory::createPlatform('bedrock-api-key', 'eu-central-1', httpClient: new MockHttpClient($responseCallback));
 
-        $platform->invoke('openai.gpt-oss-120b', new MessageBag(Message::ofUser('Hello')))->getResult();
+        $result = $platform->invoke('google.gemma-4-31b', new MessageBag(Message::ofUser('Hello')))->getResult();
+
+        $this->assertSame('Hello!', $result->getContent());
     }
 }

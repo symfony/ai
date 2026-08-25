@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\BedrockMantle\Tests\Responses;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Mantle\Responses;
 
-use Symfony\AI\Platform\Bridge\BedrockMantle\Responses\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\ModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;

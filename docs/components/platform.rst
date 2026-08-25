@@ -202,10 +202,11 @@ AWS Bedrock Mantle
 
 Next to the SigV4/SDK-based `AWS Bedrock`_ bridge for Nova, Claude and Llama, AWS exposes the
 open-weight models of Bedrock through the `Bedrock Mantle`_ endpoint, which speaks the
-OpenAI-compatible Chat Completions and Responses protocols. The dedicated bridge derives the base
-URL from the AWS region and authenticates with a Bedrock API key sent as a bearer token::
+OpenAI-compatible Chat Completions and Responses protocols. The Bedrock bridge exposes Mantle
+through an explicit ``Bedrock\\Mantle\\Factory`` path, derives the base URL from the AWS region and
+authenticates with a Bedrock API key sent as a bearer token::
 
-    use Symfony\AI\Platform\Bridge\BedrockMantle\Factory;
+    use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory;
     use Symfony\AI\Platform\Message\Message;
     use Symfony\AI\Platform\Message\MessageBag;
 
@@ -225,15 +226,19 @@ or profiles apply. A custom ``AsyncAws\Core\Credentials\CredentialProvider`` can
 
     $platform = Factory::createPlatform(region: 'us-west-2');
 
+The Chat Completions route requires the optional ``symfony/ai-generic-platform`` package.
+
 Models served through the Responses API - which AWS recommends for new applications - are reached
 through the dedicated ``Responses\Factory`` instead, which reuses the wire protocol of the
 ``symfony/ai-open-responses-platform`` bridge::
 
-    use Symfony\AI\Platform\Bridge\BedrockMantle\Responses\Factory;
+    use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory;
 
     $platform = Factory::createPlatform(apiKey: 'ABSK...', region: 'us-west-2');
 
     $result = $platform->invoke('google.gemma-4-31b', $messages);
+
+The ``symfony/ai-open-responses-platform`` package is only required when using this route.
 
 Both routes ship a model catalog with the models verified against the endpoint. Additional models
 can be registered by passing them to the catalog constructor, see

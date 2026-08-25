@@ -47,6 +47,19 @@ function env(string $var): string
     exit(1);
 }
 
+function optional_env(string $var): ?string
+{
+    if (isset($_SERVER[$var]) && '' !== $_SERVER[$var]) {
+        return $_SERVER[$var];
+    }
+
+    if (is_replay()) {
+        return env($var);
+    }
+
+    return null;
+}
+
 function is_replay(): bool
 {
     return 'replay' === ($_SERVER['CASSETTE'] ?? '');

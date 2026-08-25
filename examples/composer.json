@@ -4,6 +4,8 @@
     "license": "MIT",
     "type": "project",
     "require": {
+        "async-aws/sso": "^1.0",
+        "async-aws/sso-oidc": "^1.0",
         "php": ">=8.2",
         "symfony/ai-agent": "^0.12",
         "symfony/ai-ai-ml-api-platform": "^0.12",
@@ -11,7 +13,6 @@
         "symfony/ai-anthropic-platform": "^0.12",
         "symfony/ai-azure-platform": "^0.12",
         "symfony/ai-azure-search-store": "^0.12",
-        "symfony/ai-bedrock-mantle-platform": "dev-main",
         "symfony/ai-bedrock-platform": "^0.12",
         "symfony/ai-brave-tool": "^0.12",
         "symfony/ai-cache-message-store": "^0.12",
@@ -98,12 +99,6 @@
         "symfony/process": "^7.4|^8.0"
     },
     "minimum-stability": "dev",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../src/platform/src/Bridge/BedrockMantle"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Symfony\\AI\\Fixtures\\": "../fixtures/"

@@ -12,14 +12,14 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\BedrockMantle\Factory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(
-    apiKey: env('AWS_BEARER_TOKEN_BEDROCK'),
+    apiKey: optional_env('AWS_BEARER_TOKEN_BEDROCK'),
     region: env('AWS_DEFAULT_REGION'),
     httpClient: http_client(),
 );

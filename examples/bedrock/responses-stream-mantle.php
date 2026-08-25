@@ -9,14 +9,14 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\BedrockMantle\Responses\Factory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(
-    apiKey: env('AWS_BEARER_TOKEN_BEDROCK'),
+    apiKey: optional_env('AWS_BEARER_TOKEN_BEDROCK'),
     region: env('AWS_DEFAULT_REGION'),
     httpClient: http_client(),
 );

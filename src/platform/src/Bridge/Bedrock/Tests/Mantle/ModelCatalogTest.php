@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\BedrockMantle\Tests;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Mantle;
 
-use Symfony\AI\Platform\Bridge\BedrockMantle\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;

@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\BedrockMantle\Tests;
+namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Mantle;
 
 use AsyncAws\Core\Configuration;
 use AsyncAws\Core\Credentials\CredentialProvider;
 use AsyncAws\Core\Credentials\Credentials;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\BedrockMantle\ModelClient;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\ModelClient;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -35,11 +35,11 @@ final class ModelClientTest extends TestCase
 
     public function testItAuthenticatesWithBearerTokenWhenApiKeyIsProvided()
     {
-        $responseCallback = static function (string $method, string $url, array $options): HttpResponse {
-            self::assertSame('POST', $method);
-            self::assertSame('https://bedrock-mantle.us-west-2.api.aws/v1/chat/completions', $url);
-            self::assertSame('Authorization: Bearer bedrock-api-key', $options['normalized_headers']['authorization'][0]);
-            self::assertSame('{"model":"openai.gpt-oss-120b","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://bedrock-mantle.us-west-2.api.aws/v1/chat/completions', $url);
+            $this->assertSame('Authorization: Bearer bedrock-api-key', $options['normalized_headers']['authorization'][0]);
+            $this->assertSame('{"model":"openai.gpt-oss-120b","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
 
             return new MockResponse();
         };
@@ -50,19 +50,19 @@ final class ModelClientTest extends TestCase
 
     public function testItSignsRequestWithSigV4WhenNoApiKeyIsProvided()
     {
-        $responseCallback = static function (string $method, string $url, array $options): HttpResponse {
-            self::assertSame('POST', $method);
-            self::assertSame('https://bedrock-mantle.eu-central-1.api.aws/v1/chat/completions', $url);
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://bedrock-mantle.eu-central-1.api.aws/v1/chat/completions', $url);
 
             // Header names are case-insensitive and their casing varies across async-aws versions,
             // so assert on the values only (the normalized_headers keys are already lower-cased).
             $authorization = $options['normalized_headers']['authorization'][0];
-            self::assertStringContainsString('AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/', $authorization);
-            self::assertStringContainsString('/eu-central-1/bedrock/aws4_request', $authorization);
-            self::assertStringContainsString('SignedHeaders=', $authorization);
-            self::assertStringContainsString('Signature=', $authorization);
-            self::assertArrayHasKey('x-amz-date', $options['normalized_headers']);
-            self::assertStringEndsWith(': bedrock-mantle.eu-central-1.api.aws', $options['normalized_headers']['host'][0]);
+            $this->assertStringContainsString('AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/', $authorization);
+            $this->assertStringContainsString('/eu-central-1/bedrock/aws4_request', $authorization);
+            $this->assertStringContainsString('SignedHeaders=', $authorization);
+            $this->assertStringContainsString('Signature=', $authorization);
+            $this->assertArrayHasKey('x-amz-date', $options['normalized_headers']);
+            $this->assertStringEndsWith(': bedrock-mantle.eu-central-1.api.aws', $options['normalized_headers']['host'][0]);
 
             return new MockResponse();
         };
@@ -79,9 +79,9 @@ final class ModelClientTest extends TestCase
 
     public function testItIncludesSessionTokenHeaderWhenUsingTemporaryCredentials()
     {
-        $responseCallback = static function (string $method, string $url, array $options): HttpResponse {
-            self::assertArrayHasKey('x-amz-security-token', $options['normalized_headers']);
-            self::assertStringEndsWith(': session-token', $options['normalized_headers']['x-amz-security-token'][0]);
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertArrayHasKey('x-amz-security-token', $options['normalized_headers']);
+            $this->assertStringEndsWith(': session-token', $options['normalized_headers']['x-amz-security-token'][0]);
 
             return new MockResponse();
         };
