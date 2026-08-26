@@ -14,8 +14,6 @@ namespace App\Blog\Command;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -42,14 +40,10 @@ final readonly class StreamCommand
         $messages = new MessageBag(Message::ofUser($question));
 
         $io->section('Agent Response:');
-        $result = $this->blog->call($messages, ['stream' => true]);
+        $execution = $this->blog->call($messages, ['stream' => true]);
 
-        \assert($result instanceof StreamResult);
-
-        foreach ($result->getContent() as $delta) {
-            if ($delta instanceof TextDelta) {
-                $io->write((string) $delta);
-            }
+        foreach ($execution->asTextStream() as $delta) {
+            $io->write($delta);
         }
 
         $io->newLine(2);

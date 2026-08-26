@@ -14,11 +14,15 @@ namespace Symfony\AI\Agent;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\OutOfBoundsException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
 
 /**
  * A test-friendly agent implementation that doesn't make actual AI calls.
@@ -57,7 +61,7 @@ final class MockAgent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
         $messages = InputNormalizer::toMessageBag($input);
         $content = $this->extractText($messages);
@@ -93,7 +97,28 @@ final class MockAgent implements AgentInterface
             'response' => $responseText,
         ];
 
-        return $result;
+        if ($result instanceof StreamResult) {
+            // mirror a streamed agent call: every delta is reported as an update, the answer is assembled from the text deltas
+            return new Execution(static function () use ($result): \Generator {
+                $text = '';
+                foreach ($result->getContent() as $delta) {
+                    if ($delta instanceof TextDelta) {
+                        $text .= $delta->getText();
+                    }
+
+                    yield new Progress('delta', 'Received a streamed delta.', $delta);
+                }
+
+                $final = new TextResult($text);
+                $final->getMetadata()->merge($result->getMetadata());
+
+                yield new ResultUpdate($final);
+            }, true);
+        }
+
+        return new Execution(static function () use ($result): \Generator {
+            yield new ResultUpdate($result);
+        });
     }
 
     /**

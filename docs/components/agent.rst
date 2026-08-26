@@ -58,6 +58,96 @@ Options
 As with the Platform component, you can pass options to the agent when running it. These options configure the agent's
 behavior, for example available tools to execute, or are forwarded to the underlying platform and model.
 
+Execution
+---------
+
+:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\Execution`. The
+execution *is* the result it produces, so the simplest usage reads the answer straight off it - the example at the
+top of this page does exactly that. Beyond that, the same object reports every step the agent takes - each model
+request, each tool call, and each streamed delta - as an update when you iterate it, which is what you need to show
+progress to a user while the agent is still working::
+
+    use Symfony\AI\Agent\Execution\Update\Progress;
+    use Symfony\AI\Agent\Execution\Update\Result;
+
+    foreach ($agent->call('What time is it?') as $update) {
+        if ($update instanceof Progress) {
+            echo $update->getMessage().\PHP_EOL; // "Invoking model.", 'Executing tool "clock".', ...
+        }
+
+        if ($update instanceof Result) {
+            echo $update->getResult()->getContent().\PHP_EOL;
+        }
+    }
+
+The same execution can be consumed with callbacks, and ``getResult()`` drives it to completion and returns the final
+result::
+
+    $result = $agent->call('What time is it?')
+        ->onProgress(fn (Progress $progress) => $logger->info($progress->getMessage()))
+        ->getResult();
+
+The callbacks are invoked however the execution is consumed - iterated, streamed or read as a result - so they are a
+way to observe a run whose result is handled elsewhere.
+
+Like the platform's ``DeferredResult``, the execution offers typed accessors that narrow the result to what you
+expect - ``asText()``, ``asObject()``, ``asBinary()``, ``asFile()``, ``asDataUri()`` and ``asToolCalls()`` - and throw
+when the agent produced something else. A multi-part result containing a single part of the expected type, e.g. a reasoning part
+next to the answer, is narrowed to that part::
+
+    $answer = $agent->call('What time is it?')->asText();
+
+Reading the result (``getContent()``, ``getResult()``, ``asText()``, ...) is idempotent, but an execution runs the agent
+including its side effects, so it can only be *iterated* once. Call ``call()`` again for a new execution.
+
+Iterating fits when you drive the loop yourself, e.g. to stream updates to a client, while callbacks fit when you
+would read the result anyway and just want to observe the run on the side. See the
+`execution-iterable.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-iterable.php>`_ and
+`execution-callbacks.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-callbacks.php>`_
+examples for both.
+
+.. note::
+
+    The tool-calling loop is part of a single execution: the agent keeps invoking the model and executing the tools
+    it requests until the model answers without asking for further tools.
+
+Streaming
+~~~~~~~~~
+
+With the ``stream`` option, the model's answer arrives token by token. ``getContent()`` then yields the platform's
+deltas instead of the assembled answer::
+
+    use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+
+    $result = $agent->call('Tell me a story.', ['stream' => true]);
+
+    foreach ($result->getContent() as $delta) {
+        echo $delta->getText();
+    }
+
+The typed stream accessors save you the filtering: ``asStream()`` yields every delta, ``asTextStream()`` only the
+text deltas and ``asStreamedObject()`` the progressively populated object of a streamed structured output::
+
+    foreach ($agent->call('Tell me a story.', ['stream' => true])->asTextStream() as $delta) {
+        echo $delta->getText();
+    }
+
+Once the stream is drained, the execution resolves to the assembled answer like a non-streamed one: ``getResult()``
+returns the final result, and a streamed structured output ends with the object, so ``asObject()`` works on it as
+well.
+
+Iterating the execution instead reports each delta as a ``Progress`` update of the ``delta`` stage, next to the
+model-request and tool-call updates::
+
+    foreach ($agent->call('Tell me a story.', ['stream' => true]) as $update) {
+        if ($update instanceof Progress && 'delta' === $update->getStage() && $update->getPayload() instanceof TextDelta) {
+            echo $update->getPayload()->getText();
+        }
+    }
+
+Streaming and tool calling compose: when the model streams a tool call, the agent executes it and streams the next
+round into the very same execution.
+
 Tools
 -----
 

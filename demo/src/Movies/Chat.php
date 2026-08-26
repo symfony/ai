@@ -15,7 +15,6 @@ use App\Movies\Data\MovieAnswer;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -48,14 +47,11 @@ final class Chat
         $messages = $this->loadMessages();
         $messages->add(Message::ofUser($message));
 
-        $result = $this->agent->call($messages, ['response_format' => MovieAnswer::class]);
-        \assert($result instanceof ObjectResult);
+        $result = $this->agent->call($messages, ['response_format' => MovieAnswer::class])->asObject();
+        \assert($result instanceof MovieAnswer);
 
-        $answer = $result->getContent();
-        \assert($answer instanceof MovieAnswer);
-
-        $assistantMessage = Message::ofAssistant($answer->answer);
-        $assistantMessage->getMetadata()->add('movies', $answer->movies);
+        $assistantMessage = Message::ofAssistant($result->answer);
+        $assistantMessage->getMetadata()->add('movies', $result->movies);
         $messages->add($assistantMessage);
 
         $this->saveMessages($messages);

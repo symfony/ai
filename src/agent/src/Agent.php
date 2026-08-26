@@ -13,7 +13,9 @@ namespace Symfony\AI\Agent;
 
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Runner;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
@@ -77,46 +79,67 @@ final class Agent implements AgentInterface
     }
 
     /**
+     * Starts the agent and returns a lazy {@see Execution} that is also the result it produces.
+     *
+     * Read it eagerly with `->getContent()`/`->getResult()`, iterate it to observe every model request, tool call
+     * and streamed delta as an update, or register callbacks via `->onProgress(...)`. With the "stream" option
+     * set, `->getContent()` yields the answer's deltas.
+     *
      * @param array<string, mixed> $options
      *
      * @throws InvalidArgumentException When the platform returns a client error (4xx) indicating invalid request parameters
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        $input = new Input($this->getModel(), InputNormalizer::toMessageBag($input), $options);
-        foreach ($this->inputProcessors as $inputProcessor) {
-            if (!$inputProcessor instanceof InputProcessorInterface) {
-                throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
+        $factory = function () use ($input, $options): \Generator {
+            $request = new Input($this->getModel(), InputNormalizer::toMessageBag($input), $options);
+            foreach ($this->inputProcessors as $inputProcessor) {
+                if (!$inputProcessor instanceof InputProcessorInterface) {
+                    throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
+                }
+
+                if ($inputProcessor instanceof AgentAwareInterface) {
+                    $inputProcessor->setAgent($this);
+                }
+
+                $inputProcessor->processInput($request);
             }
 
-            if ($inputProcessor instanceof AgentAwareInterface) {
-                $inputProcessor->setAgent($this);
+            $model = $request->getModel();
+            $messages = $request->getMessageBag();
+            $processedOptions = $request->getOptions();
+
+            $result = null;
+            foreach ($this->runner->run($model, $messages, $processedOptions) as $update) {
+                if ($update instanceof ResultUpdate) {
+                    $result = $update->getResult();
+
+                    continue;
+                }
+
+                yield $update;
             }
 
-            $inputProcessor->processInput($input);
-        }
+            \assert($result instanceof ResultInterface);
 
-        $model = $input->getModel();
-        $messages = $input->getMessageBag();
-        $options = $input->getOptions();
+            $output = new Output($model, $result, $messages, $processedOptions);
+            foreach ($this->outputProcessors as $outputProcessor) {
+                if (!$outputProcessor instanceof OutputProcessorInterface) {
+                    throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));
+                }
 
-        $result = $this->runner->run($this, $model, $messages, $options);
+                if ($outputProcessor instanceof AgentAwareInterface) {
+                    $outputProcessor->setAgent($this);
+                }
 
-        $output = new Output($model, $result, $messages, $options);
-        foreach ($this->outputProcessors as $outputProcessor) {
-            if (!$outputProcessor instanceof OutputProcessorInterface) {
-                throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));
+                $outputProcessor->processOutput($output);
             }
 
-            if ($outputProcessor instanceof AgentAwareInterface) {
-                $outputProcessor->setAgent($this);
-            }
+            yield new ResultUpdate($output->getResult());
+        };
 
-            $outputProcessor->processOutput($output);
-        }
-
-        return $output->getResult();
+        return new Execution($factory, true === ($options['stream'] ?? false));
     }
 }

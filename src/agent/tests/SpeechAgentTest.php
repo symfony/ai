@@ -13,6 +13,8 @@ namespace Symfony\AI\Agent\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -26,6 +28,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 
 final class SpeechAgentTest extends TestCase
@@ -37,14 +40,14 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn($expectedResult);
+            ->willReturn($this->execution($expectedResult));
 
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->never())->method('invoke');
 
         $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(), $platform, $platform);
 
-        $result = $agent->call(new MessageBag(Message::ofUser('Hello')));
+        $result = $agent->call(new MessageBag(Message::ofUser('Hello')))->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -64,7 +67,7 @@ final class SpeechAgentTest extends TestCase
 
                 return [new Text('transcribed text')] == $latestUser->getContent();
             }))
-            ->willReturn(new TextResult('response'));
+            ->willReturn($this->execution(new TextResult('response')));
 
         $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
 
@@ -86,7 +89,7 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn(new TextResult('response'));
+            ->willReturn($this->execution(new TextResult('response')));
 
         $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
 
@@ -104,7 +107,7 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn(new TextResult('response'));
+            ->willReturn($this->execution(new TextResult('response')));
 
         $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
 
@@ -124,12 +127,12 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn(new TextResult('hello'));
+            ->willReturn($this->execution(new TextResult('hello')));
 
         $configuration = new SpeechConfiguration(ttsModel: 'eleven_multilingual_v2');
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
-        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')));
+        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult();
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-binary', $result->getContent());
@@ -144,10 +147,10 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn(new TextResult('hello'));
+            ->willReturn($this->execution(new TextResult('hello')));
 
         $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(), $platform, $platform);
-        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')));
+        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult();
 
         $this->assertInstanceOf(TextResult::class, $result);
     }
@@ -165,7 +168,7 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn(new TextResult('LLM response'));
+            ->willReturn($this->execution(new TextResult('LLM response')));
 
         $configuration = new SpeechConfiguration(
             ttsModel: 'eleven_multilingual_v2',
@@ -177,7 +180,7 @@ final class SpeechAgentTest extends TestCase
         );
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
-        $result = $agent->call($messageBag);
+        $result = $agent->call($messageBag)->getResult();
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-binary', $result->getContent());
@@ -194,7 +197,7 @@ final class SpeechAgentTest extends TestCase
         $innerAgent = $this->createMock(AgentInterface::class);
         $innerAgent->expects($this->once())
             ->method('call')
-            ->willReturn(new TextResult('hello'));
+            ->willReturn($this->execution(new TextResult('hello')));
 
         $configuration = new SpeechConfiguration(ttsModel: 'eleven_multilingual_v2');
 
@@ -203,7 +206,7 @@ final class SpeechAgentTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('TTS service unavailable.');
         $this->expectExceptionCode(0);
-        $agent->call(new MessageBag(Message::ofUser('Say hello')));
+        $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult();
     }
 
     public function testCallWithMultipleMessagesWorksCorrectly()
@@ -229,7 +232,7 @@ final class SpeechAgentTest extends TestCase
 
                 return [new Text('what is the weather?')] == $latestUser->getContent();
             }))
-            ->willReturn(new TextResult('It is sunny'));
+            ->willReturn($this->execution(new TextResult('It is sunny')));
 
         $configuration = new SpeechConfiguration(
             ttsModel: 'tts-1',
@@ -243,7 +246,7 @@ final class SpeechAgentTest extends TestCase
         );
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
-        $result = $agent->call($messageBag);
+        $result = $agent->call($messageBag)->getResult();
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-response', $result->getContent());
@@ -262,5 +265,12 @@ final class SpeechAgentTest extends TestCase
         $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(), $platform, $platform);
 
         $this->assertSame('my-agent', $agent->getName());
+    }
+
+    private function execution(ResultInterface $result): Execution
+    {
+        return new Execution(static function () use ($result): \Generator {
+            yield new ResultUpdate($result);
+        });
     }
 }

@@ -18,6 +18,52 @@ Agent
    `Toolbox\ToolExecutorInterface` (default: `SequentialToolExecutor`), so a custom execution strategy can be
    plugged in via the `toolExecutor` argument.
 
+ * `AgentInterface::call()` now returns a lazy `Execution` instead of a `ResultInterface`. The execution *is* the
+   result it produces, so reading it eagerly is unchanged — `$agent->call($input)->getContent()` still works — but
+   the returned object is now also iterable and observable:
+
+   ```php
+   // eager, unchanged
+   $text = $agent->call('Hello')->getContent();
+
+   // observe the run, or resolve the result explicitly
+   foreach ($agent->call('Hello') as $update) { /* Progress / Result updates */ }
+   $result = $agent->call('Hello')->onProgress($cb)->getResult();
+   ```
+
+   Custom `AgentInterface` implementations and decorators must change their `call()` return type to `Execution`
+   and wrap their result:
+
+   ```php
+   public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+   {
+       return new Execution(function (): \Generator {
+           yield new Result($someResult);
+       });
+   }
+   ```
+
+   Two consequences of the laziness: the agent no longer runs until the execution is consumed — side effects and
+   exceptions now surface on `getContent()`/`getResult()`/iteration rather than on the `call()` line — and code that
+   type-checks the result (`$agent->call(...) instanceof TextResult`) must `getResult()` first. Because the loop is
+   also no longer recursing through `call()`, output processors see the final, fully assembled result and input
+   processors run once per agent call instead of once per tool-calling round.
+
+ * `Toolbox\StreamListener` has been removed, and `call()` with the `stream` option no longer returns a
+   `StreamResult`. Iterating the returned execution's `getContent()` still yields the platform's deltas, so the
+   common streaming loop is unchanged:
+
+   ```php
+   $result = $agent->call($messages, ['stream' => true]);
+   foreach ($result->getContent() as $delta) { /* ... */ } // unchanged
+
+   // or observe the whole execution
+   foreach ($agent->call($messages, ['stream' => true]) as $update) { /* ... */ }
+   ```
+
+   Code relying on the `StreamResult` type specifically — `instanceof StreamResult`, `addListener()` — must be
+   reworked to consume the execution instead (as the `Chat` component's `stream()` now does).
+
 AI Bundle
 ---------
 

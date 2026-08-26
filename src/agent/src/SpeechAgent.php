@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -19,7 +21,6 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -34,33 +35,33 @@ final class SpeechAgent implements AgentInterface
     ) {
     }
 
-    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        $messages = InputNormalizer::toMessageBag($input);
+        return new Execution(function () use ($input, $options): \Generator {
+            $messages = InputNormalizer::toMessageBag($input);
 
-        if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
-            $messages = $this->transcribe($messages, $options);
-        }
+            if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
+                $messages = $this->transcribe($messages, $options);
+            }
 
-        $result = $this->agent->call($messages, $options);
+            $result = $this->agent->call($messages, $options)->getResult();
 
-        if (!$this->textToSpeechPlatform instanceof PlatformInterface) {
-            return $result;
-        }
+            if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
+                yield new ResultUpdate($result);
 
-        if (!$this->configuration->supportsTextToSpeech()) {
-            return $result;
-        }
+                return;
+            }
 
-        $speechResult = $this->textToSpeechPlatform->invoke(
-            $this->configuration->getTextToSpeechModel(),
-            $result->getContent(),
-            $this->configuration->getTextToSpeechOptions(),
-        );
+            $speechResult = $this->textToSpeechPlatform->invoke(
+                $this->configuration->getTextToSpeechModel(),
+                $result->getContent(),
+                $this->configuration->getTextToSpeechOptions(),
+            );
 
-        $speechResult->getMetadata()->add('text', $result->getContent());
+            $speechResult->getMetadata()->add('text', $result->getContent());
 
-        return $speechResult->getResult();
+            yield new ResultUpdate($speechResult->getResult());
+        });
     }
 
     public function getName(): string

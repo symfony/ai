@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\BinaryResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -35,12 +34,10 @@ $speechAgent = new SpeechAgent($agent, new SpeechConfiguration(
     ],
 ), textToSpeechPlatform: $elevenLabsPlatform);
 
-$answer = $speechAgent->call(new MessageBag(
+$result = $speechAgent->call(new MessageBag(
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 ));
 
-assert($answer instanceof BinaryResult);
-
-echo $answer->getMetadata()->get('text').\PHP_EOL;
-$answer->asFile('/tmp/speech.mp3');
+echo $result->getMetadata()->get('text').\PHP_EOL;
+$result->asFile('/tmp/speech.mp3');
 output()->writeln('Audio content saved to <comment>/tmp/speech.mp3</comment>');

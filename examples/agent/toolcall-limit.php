@@ -43,7 +43,7 @@ $messages = new MessageBag(
 );
 
 try {
-    $result = $agent->call($messages);
+    $result = $agent->call($messages)->getResult();
 } catch (MaxIterationsExceededException $e) {
     echo $e->getMessage().\PHP_EOL;
 

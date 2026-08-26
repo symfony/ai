@@ -11,27 +11,36 @@
 
 namespace Symfony\AI\Agent\Execution;
 
-use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
+use Symfony\AI\Agent\Execution\Update\Progress;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
-use Symfony\AI\Agent\Toolbox\StreamListener;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
-use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Drives a single agent invocation: it exposes the agent's tools to the model, invokes the model and
- * runs the tool-calling loop until the model returns a final result.
+ * Drives a single agent invocation, producing the generator of updates an {@see Execution} wraps.
+ *
+ * The tool-calling loop is iterative: every round invokes the model, executes the tool calls it requested
+ * and feeds the results back, until the model answers without asking for further tools. Streamed rounds
+ * are consumed here as well, so a streamed tool call is just another round of that same loop.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
@@ -39,22 +48,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class Runner
 {
-    /**
-     * Sources get collected during tool calls on class level to be able to handle consecutive tool calls.
-     * They get added to the result metadata and reset when the outermost agent call is finished via nesting level.
-     */
-    private SourceCollection $sources;
-
-    /**
-     * Tracks the nesting level of agent calls.
-     */
-    private int $nestingLevel = 0;
-
-    /**
-     * Budget of the agent call currently driving the tool calling loop, shared with its nested calls.
-     */
-    private ToolCallBudget $budget;
-
     public function __construct(
         private readonly PlatformInterface $platform,
         private readonly ?ToolboxInterface $toolbox = null,
@@ -65,47 +58,132 @@ final class Runner
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly ToolResultConverter $resultConverter = new ToolResultConverter(),
     ) {
-        $this->sources = new SourceCollection();
-        $this->budget = new ToolCallBudget($maxToolCalls);
     }
 
     /**
      * @param array<string, mixed> $options
+     *
+     * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    public function run(AgentInterface $agent, string $model, MessageBag $messages, array $options): ResultInterface
+    public function run(string $model, MessageBag $messages, array $options): \Generator
     {
-        // nested calls continue the tool calling loop of the outermost call and share its budget
-        if (0 === $this->nestingLevel) {
-            $this->budget = new ToolCallBudget($this->maxToolCalls);
-        }
-
-        // the streaming loop starts when the result is consumed, which can be after another call
-        // already replaced the current budget, so it is captured here and passed along explicitly
-        $budget = $this->budget;
-
         $options = $this->exposeTools($options);
+        $messages = $this->excludeToolMessages ? clone $messages : $messages;
 
-        $result = $this->platform->invoke($model, $messages, $options)->getResult();
+        $sources = new SourceCollection();
+        $metadata = new Metadata();
+        $iterations = 0;
 
-        if (null === $this->toolExecutor) {
-            return $result;
+        while (true) {
+            yield new Progress('model_request', 'Invoking model.', $model);
+
+            $result = $this->platform->invoke($model, $messages, $options)->getResult();
+
+            $streamedText = '';
+            if ($result instanceof StreamResult) {
+                [$result, $streamedText] = yield from $this->consumeStream($result);
+            }
+
+            $toolCallResult = $this->extractToolCallResult($result);
+            if (null === $toolCallResult || null === $this->toolExecutor) {
+                break;
+            }
+
+            // $metadata aggregates the tool calling rounds, the final result carries its own
+            $metadata->merge($result->getMetadata());
+
+            if (null !== $this->maxToolCalls && ++$iterations > $this->maxToolCalls) {
+                throw new MaxIterationsExceededException($this->maxToolCalls);
+            }
+
+            if ('' !== $streamedText) {
+                $messages->add(Message::ofAssistant($streamedText));
+            }
+
+            $toolCalls = array_values($toolCallResult->getContent());
+            $toolResults = yield from $this->toolExecutor->execute($toolCalls);
+
+            $messages->add(Message::ofAssistant(...$toolCalls));
+            foreach ($toolResults as $i => $toolResult) {
+                $messages->add(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult)));
+
+                if (null !== $toolResult->getSources()) {
+                    $sources = $sources->merge($toolResult->getSources());
+                }
+            }
+
+            $event = new ToolCallsExecuted($toolResults);
+            $this->eventDispatcher?->dispatch($event);
+
+            if ($event->hasResult()) {
+                $result = $event->getResult();
+
+                break;
+            }
         }
 
-        if ($result instanceof StreamResult) {
-            $result->addListener(new StreamListener(
-                fn (ToolCallResult $toolCallResult, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface => $this->handleToolCalls($budget, $agent, $messages, $options, $toolCallResult, $streamedAssistantResponse),
-            ));
+        $result->getMetadata()->merge($metadata);
 
-            return $result;
+        if ($this->includeSources) {
+            $result->getMetadata()->add('sources', $sources);
         }
 
-        $toolCallResult = $result instanceof MultiPartResult ? $result->asToolCallResult() : $result;
+        yield new ResultUpdate($result);
+    }
 
-        if (!$toolCallResult instanceof ToolCallResult) {
-            return $result;
+    /**
+     * Consumes a streamed round, forwarding every delta as a progress update.
+     *
+     * The stream is drained completely even after a tool call was seen, since its metadata (e.g. token
+     * usage) is only complete once the underlying generator is exhausted.
+     *
+     * @return \Generator<int, UpdateInterface, mixed, array{ResultInterface, string}>
+     */
+    private function consumeStream(StreamResult $stream): \Generator
+    {
+        $text = '';
+        $toolCalls = [];
+
+        foreach ($stream->getContent() as $delta) {
+            if ($delta instanceof ToolCallComplete) {
+                $toolCalls = [...$toolCalls, ...$delta->getToolCalls()];
+
+                continue;
+            }
+
+            if ([] !== $toolCalls) {
+                // the model asked for tools, the remaining deltas of this round are not part of the answer
+                continue;
+            }
+
+            if ($delta instanceof TextDelta) {
+                $text .= $delta->getText();
+            }
+
+            yield new Progress('delta', 'Received a streamed delta.', $delta);
         }
 
-        return $this->handleToolCalls($budget, $agent, $messages, $options, $toolCallResult);
+        if ([] !== $toolCalls) {
+            $result = new ToolCallResult($toolCalls);
+        } else {
+            // a streamed structured output round ends with the object assembled by the platform's listener
+            $result = $this->streamedObjectResult($stream) ?? new TextResult($text);
+        }
+
+        $result->getMetadata()->merge($stream->getMetadata());
+
+        return [$result, $text];
+    }
+
+    private function streamedObjectResult(StreamResult $stream): ?ObjectResult
+    {
+        foreach ($stream->getListeners() as $listener) {
+            if ($listener instanceof PartialObjectStreamListener) {
+                return $listener->getFinalObjectResult();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -142,64 +220,16 @@ final class Runner
         return array_reduce($tools, static fn (bool $carry, mixed $item): bool => $carry && \is_string($item), true);
     }
 
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function handleToolCalls(ToolCallBudget $budget, AgentInterface $agent, MessageBag $messages, array $options, ToolCallResult $result, ?AssistantMessage $streamedAssistantResponse = null): ResultInterface
+    private function extractToolCallResult(ResultInterface $result): ?ToolCallResult
     {
-        \assert($this->toolExecutor instanceof ToolExecutorInterface);
-
-        // nested agent calls have to continue on the budget of the call this loop belongs to.
-        // Safe because this loop runs to completion with no suspension point, so no other call
-        // can install its budget in between; making this method lazy would break that.
-        $previousBudget = $this->budget;
-        $this->budget = $budget;
-        ++$this->nestingLevel;
-        $messages = $this->excludeToolMessages ? clone $messages : $messages;
-
-        if (null !== $streamedAssistantResponse && [] !== $streamedAssistantResponse->getContent()) {
-            $messages->add($streamedAssistantResponse);
+        if ($result instanceof ToolCallResult) {
+            return $result;
         }
 
-        try {
-            do {
-                $budget->consume();
-
-                $toolCalls = array_values($result->getContent());
-                $toolResults = $this->toolExecutor->execute($toolCalls);
-
-                $messages->add(Message::ofAssistant(...$toolCalls));
-                foreach ($toolResults as $i => $toolResult) {
-                    $messages->add(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult)));
-                }
-
-                if ($this->includeSources) {
-                    foreach ($toolResults as $toolResult) {
-                        if (null !== $toolResult->getSources()) {
-                            $this->sources = $this->sources->merge($toolResult->getSources());
-                        }
-                    }
-                }
-
-                $event = new ToolCallsExecuted($toolResults);
-                $this->eventDispatcher?->dispatch($event);
-
-                $result = $event->hasResult() ? $event->getResult() : $agent->call($messages, $options);
-            } while ($result instanceof ToolCallResult);
-        } finally {
-            --$this->nestingLevel;
-            $this->budget = $previousBudget;
-
-            if ($this->includeSources && 0 === $this->nestingLevel && $result instanceof ToolCallResult) {
-                $this->sources = new SourceCollection();
-            }
+        if ($result instanceof MultiPartResult) {
+            return $result->asToolCallResult();
         }
 
-        if ($this->includeSources && 0 === $this->nestingLevel) {
-            $result->getMetadata()->add('sources', $this->sources);
-            $this->sources = new SourceCollection();
-        }
-
-        return $result;
+        return null;
     }
 }

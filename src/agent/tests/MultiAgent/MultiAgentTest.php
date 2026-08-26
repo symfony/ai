@@ -16,6 +16,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
@@ -79,7 +81,7 @@ class MultiAgentTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('No user message found in conversation.');
 
-        $multiAgent->call($messages);
+        $multiAgent->call($messages)->getResult();
     }
 
     public function testCallDelegatesToSelectedAgent()
@@ -92,12 +94,12 @@ class MultiAgentTest extends TestCase
 
         $orchestrator = $this->createMock(AgentInterface::class);
         $orchestrator->method('getName')->willReturn('orchestrator');
-        $orchestrator->method('call')->willReturn($orchestratorResult);
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
 
         $expectedResult = new TextResult('Technical response');
         $technicalAgent = $this->createMock(AgentInterface::class);
         $technicalAgent->method('getName')->willReturn('technical');
-        $technicalAgent->method('call')->willReturn($expectedResult);
+        $technicalAgent->method('call')->willReturn($this->execution($expectedResult));
 
         $fallback = new MockAgent(name: 'fallback');
         $handoff = new Handoff($technicalAgent, ['technical', 'coding']);
@@ -106,7 +108,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('How do I implement a function?'));
 
-        $result = $multiAgent->call($messages);
+        $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -122,8 +124,8 @@ class MultiAgentTest extends TestCase
         $orchestrator->method('getName')->willReturn('orchestrator');
         $orchestrator->method('call')
             ->willReturnOnConsecutiveCalls(
-                $firstResult,
-                $expectedResult
+                $this->execution($firstResult),
+                $this->execution($expectedResult),
             );
 
         $fallback = new MockAgent(name: 'fallback');
@@ -133,7 +135,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Hello'));
 
-        $result = $multiAgent->call($messages);
+        $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -148,12 +150,12 @@ class MultiAgentTest extends TestCase
 
         $orchestrator = $this->createMock(AgentInterface::class);
         $orchestrator->method('getName')->willReturn('orchestrator');
-        $orchestrator->method('call')->willReturn($orchestratorResult);
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
 
         $expectedResult = new TextResult('Fallback response');
         $fallback = $this->createMock(AgentInterface::class);
         $fallback->method('getName')->willReturn('fallback');
-        $fallback->method('call')->willReturn($expectedResult);
+        $fallback->method('call')->willReturn($this->execution($expectedResult));
 
         $handoff = new Handoff(new MockAgent(name: 'technical'), ['technical']);
 
@@ -161,7 +163,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('General question'));
 
-        $result = $multiAgent->call($messages);
+        $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -176,12 +178,12 @@ class MultiAgentTest extends TestCase
 
         $orchestrator = $this->createMock(AgentInterface::class);
         $orchestrator->method('getName')->willReturn('orchestrator');
-        $orchestrator->method('call')->willReturn($orchestratorResult);
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
 
         $expectedResult = new TextResult('Fallback response');
         $fallback = $this->createMock(AgentInterface::class);
         $fallback->method('getName')->willReturn('fallback');
-        $fallback->method('call')->willReturn($expectedResult);
+        $fallback->method('call')->willReturn($this->execution($expectedResult));
 
         $handoff = new Handoff(new MockAgent(name: 'technical'), ['technical']);
 
@@ -189,7 +191,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Question'));
 
-        $result = $multiAgent->call($messages);
+        $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -204,13 +206,13 @@ class MultiAgentTest extends TestCase
 
         $orchestrator = $this->createMock(AgentInterface::class);
         $orchestrator->method('getName')->willReturn('orchestrator');
-        $orchestrator->method('call')->willReturn($orchestratorResult);
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
 
         $technicalAgent = new MockAgent(name: 'technical');
         $expectedResult = new TextResult('Creative response');
         $creativeAgent = $this->createMock(AgentInterface::class);
         $creativeAgent->method('getName')->willReturn('creative');
-        $creativeAgent->method('call')->willReturn($expectedResult);
+        $creativeAgent->method('call')->willReturn($this->execution($expectedResult));
 
         $fallback = new MockAgent(name: 'fallback');
 
@@ -223,7 +225,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Write a poem'));
 
-        $result = $multiAgent->call($messages);
+        $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -250,7 +252,7 @@ class MultiAgentTest extends TestCase
                     && isset($opts['response_format']) && Decision::class === $opts['response_format']
                 )
             )
-            ->willReturn($orchestratorResult);
+            ->willReturn($this->execution($orchestratorResult));
 
         $technicalAgent = $this->createMock(AgentInterface::class);
         $technicalAgent->method('getName')->willReturn('technical');
@@ -260,7 +262,7 @@ class MultiAgentTest extends TestCase
                 $this->isInstanceOf(MessageBag::class),
                 $options
             )
-            ->willReturn(new TextResult('Response'));
+            ->willReturn($this->execution(new TextResult('Response')));
 
         $fallback = new MockAgent(name: 'fallback');
         $handoff = new Handoff($technicalAgent, ['technical']);
@@ -269,7 +271,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Technical question'));
 
-        $multiAgent->call($messages, $options);
+        $multiAgent->call($messages, $options)->getResult();
     }
 
     public function testCallWithLogging()
@@ -288,11 +290,11 @@ class MultiAgentTest extends TestCase
 
         $orchestrator = $this->createMock(AgentInterface::class);
         $orchestrator->method('getName')->willReturn('orchestrator');
-        $orchestrator->method('call')->willReturn($orchestratorResult);
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
 
         $technicalAgent = $this->createMock(AgentInterface::class);
         $technicalAgent->method('getName')->willReturn('technical');
-        $technicalAgent->method('call')->willReturn(new TextResult('Response'));
+        $technicalAgent->method('call')->willReturn($this->execution(new TextResult('Response')));
 
         $fallback = new MockAgent(name: 'fallback');
         $handoff = new Handoff($technicalAgent, ['technical']);
@@ -301,7 +303,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Technical question'));
 
-        $multiAgent->call($messages);
+        $multiAgent->call($messages)->getResult();
     }
 
     public function testCallExtractsTextFromComplexUserMessage()
@@ -314,12 +316,12 @@ class MultiAgentTest extends TestCase
 
         $orchestrator = $this->createMock(AgentInterface::class);
         $orchestrator->method('getName')->willReturn('orchestrator');
-        $orchestrator->method('call')->willReturn($orchestratorResult);
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
 
         $expectedResult = new TextResult('Technical response');
         $technicalAgent = $this->createMock(AgentInterface::class);
         $technicalAgent->method('getName')->willReturn('technical');
-        $technicalAgent->method('call')->willReturn($expectedResult);
+        $technicalAgent->method('call')->willReturn($this->execution($expectedResult));
 
         $fallback = new MockAgent(name: 'fallback');
         $handoff = new Handoff($technicalAgent, ['technical']);
@@ -334,7 +336,7 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag($userMessage);
 
-        $result = $multiAgent->call($messages);
+        $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
     }
@@ -360,11 +362,11 @@ class MultiAgentTest extends TestCase
                 }),
                 $this->anything()
             )
-            ->willReturn($orchestratorResult);
+            ->willReturn($this->execution($orchestratorResult));
 
         $fallback = $this->createMock(AgentInterface::class);
         $fallback->method('getName')->willReturn('general-fallback');
-        $fallback->method('call')->willReturn(new TextResult('Fallback response'));
+        $fallback->method('call')->willReturn($this->execution(new TextResult('Fallback response')));
 
         $handoff = new Handoff(new MockAgent(name: 'technical'), ['technical']);
 
@@ -372,6 +374,13 @@ class MultiAgentTest extends TestCase
 
         $messages = new MessageBag(Message::ofUser('Question'));
 
-        $multiAgent->call($messages);
+        $multiAgent->call($messages)->getResult();
+    }
+
+    private function execution(ResultInterface $result): Execution
+    {
+        return new Execution(static function () use ($result): \Generator {
+            yield new ResultUpdate($result);
+        });
     }
 }

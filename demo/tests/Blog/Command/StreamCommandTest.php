@@ -14,10 +14,11 @@ namespace App\Tests\Blog\Command;
 use App\Blog\Command\StreamCommand;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Platform\Metadata\Metadata;
-use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
+use Symfony\AI\Agent\Execution\Update\Result;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -29,29 +30,13 @@ class StreamCommandTest extends TestCase
         $mockAgent = $this->createStub(AgentInterface::class);
         $mockAgent
             ->method('call')
-            ->willReturn(new class implements ResultInterface {
-                public function getContent(): iterable
-                {
-                    yield new TextDelta('Hello');
-                    yield new TextDelta(' ');
-                    yield new TextDelta('world');
-                    yield new TextDelta('!');
-                }
-
-                public function getMetadata(): Metadata
-                {
-                    return new Metadata();
-                }
-
-                public function getRawResult(): ?RawResultInterface
-                {
-                    return null;
-                }
-
-                public function setRawResult(RawResultInterface $rawResult): void
-                {
-                }
-            });
+            ->willReturn(new Execution(static function (): \Generator {
+                yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Hello'));
+                yield new Progress('delta', 'Received a streamed delta.', new TextDelta(' '));
+                yield new Progress('delta', 'Received a streamed delta.', new TextDelta('world'));
+                yield new Progress('delta', 'Received a streamed delta.', new TextDelta('!'));
+                yield new Result(new TextResult('Hello world!'));
+            }, streamed: true));
 
         $input = new ArrayInput([]);
         $input->setInteractive(false);

@@ -17,12 +17,13 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\InputNormalizer;
 use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * A multi-agent system that coordinates multiple specialized agents.
@@ -64,68 +65,76 @@ final class MultiAgent implements AgentInterface
     /**
      * @throws ExceptionInterface When the agent encounters an error during orchestration or handoffs
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        $messages = InputNormalizer::toMessageBag($input);
-        $userMessages = $messages->withoutSystemMessage();
+        return new Execution(function () use ($input, $options): \Generator {
+            $messages = InputNormalizer::toMessageBag($input);
+            $userMessages = $messages->withoutSystemMessage();
 
-        $userMessage = $userMessages->getUserMessage();
-        if (null === $userMessage) {
-            throw new RuntimeException('No user message found in conversation.');
-        }
-        $userText = $userMessage->asText();
-        $this->logger->debug('MultiAgent: Processing user message', ['user_text' => $userText]);
-
-        $this->logger->debug('MultiAgent: Available agents for routing', ['agents' => array_map(static fn ($handoff) => [
-            'to' => $handoff->getTo()->getName(),
-            'when' => $handoff->getWhen(),
-        ], $this->handoffs)]);
-
-        $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
-
-        $decision = $this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
-            'response_format' => Decision::class,
-        ]))->getContent();
-
-        if (!$decision instanceof Decision) {
-            $this->logger->debug('MultiAgent: Failed to get decision, falling back to orchestrator');
-
-            return $this->orchestrator->call($messages, $options);
-        }
-
-        $this->logger->debug('MultiAgent: Agent selection completed', [
-            'selected_agent' => $decision->getAgentName(),
-            'reasoning' => $decision->getReasoning(),
-        ]);
-
-        if (!$decision->hasAgent()) {
-            $this->logger->debug('MultiAgent: Using fallback agent', ['reason' => 'no_agent_selected']);
-
-            return $this->fallback->call($messages, $options);
-        }
-
-        // Find the target agent by name
-        $targetAgent = null;
-        foreach ($this->handoffs as $handoff) {
-            if ($handoff->getTo()->getName() === $decision->getAgentName()) {
-                $targetAgent = $handoff->getTo();
-                break;
+            $userMessage = $userMessages->getUserMessage();
+            if (null === $userMessage) {
+                throw new RuntimeException('No user message found in conversation.');
             }
-        }
+            $userText = $userMessage->asText();
+            $this->logger->debug('MultiAgent: Processing user message', ['user_text' => $userText]);
 
-        if (!$targetAgent) {
-            $this->logger->debug('MultiAgent: Target agent not found, using fallback agent', [
-                'requested_agent' => $decision->getAgentName(),
-                'reason' => 'agent_not_found',
+            $this->logger->debug('MultiAgent: Available agents for routing', ['agents' => array_map(static fn ($handoff) => [
+                'to' => $handoff->getTo()->getName(),
+                'when' => $handoff->getWhen(),
+            ], $this->handoffs)]);
+
+            $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
+
+            $decision = $this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
+                'response_format' => Decision::class,
+            ]))->getContent();
+
+            if (!$decision instanceof Decision) {
+                $this->logger->debug('MultiAgent: Failed to get decision, falling back to orchestrator');
+
+                yield new ResultUpdate($this->orchestrator->call($messages, $options)->getResult());
+
+                return;
+            }
+
+            $this->logger->debug('MultiAgent: Agent selection completed', [
+                'selected_agent' => $decision->getAgentName(),
+                'reasoning' => $decision->getReasoning(),
             ]);
 
-            return $this->fallback->call($messages, $options);
-        }
+            if (!$decision->hasAgent()) {
+                $this->logger->debug('MultiAgent: Using fallback agent', ['reason' => 'no_agent_selected']);
 
-        $this->logger->debug('MultiAgent: Delegating to agent', ['agent_name' => $decision->getAgentName()]);
+                yield new ResultUpdate($this->fallback->call($messages, $options)->getResult());
 
-        // Call the selected agent with the original user question
-        return $targetAgent->call(new MessageBag($userMessage), $options);
+                return;
+            }
+
+            // Find the target agent by name
+            $targetAgent = null;
+            foreach ($this->handoffs as $handoff) {
+                if ($handoff->getTo()->getName() === $decision->getAgentName()) {
+                    $targetAgent = $handoff->getTo();
+                    break;
+                }
+            }
+
+            if (!$targetAgent) {
+                $this->logger->debug('MultiAgent: Target agent not found, using fallback agent', [
+                    'requested_agent' => $decision->getAgentName(),
+                    'reason' => 'agent_not_found',
+                ]);
+
+                yield new ResultUpdate($this->fallback->call($messages, $options)->getResult());
+
+                return;
+            }
+
+            $this->logger->debug('MultiAgent: Delegating to agent', ['agent_name' => $decision->getAgentName()]);
+
+            // Call the selected agent with the original user question
+            yield new ResultUpdate($targetAgent->call(new MessageBag($userMessage), $options)->getResult());
+        });
     }
 
     private function buildAgentSelectionPrompt(string $userQuestion): string
