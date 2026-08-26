@@ -27,6 +27,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke('openai.gpt-oss-120b', $messages);
+$result = $platform->invoke('google.gemma-4-31b', $messages);
 
 echo $result->asText().\PHP_EOL;

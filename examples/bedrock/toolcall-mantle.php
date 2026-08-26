@@ -26,7 +26,7 @@ $platform = Factory::createPlatform(
 
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia], logger: logger());
-$agent = new Agent($platform, 'openai.gpt-oss-120b', toolbox: $toolbox);
+$agent = new Agent($platform, 'google.gemma-4-31b', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);

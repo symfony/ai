@@ -85,4 +85,25 @@ final class FactoryTest extends TestCase
 
         $platform->invoke('openai.gpt-oss-120b', new MessageBag(Message::ofUser('Hello')))->getResult();
     }
+
+    public function testItSendsRequestToTheModelSpecificPath()
+    {
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://bedrock-mantle.us-east-1.api.aws/openai/v1/chat/completions', $url);
+            $this->assertStringContainsString('"model":"google.gemma-4-31b"', $options['body']);
+
+            return new MockResponse(json_encode([
+                'choices' => [[
+                    'index' => 0,
+                    'message' => ['role' => 'assistant', 'content' => 'Hello!'],
+                    'finish_reason' => 'stop',
+                ]],
+            ]));
+        };
+
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', httpClient: new MockHttpClient($responseCallback));
+
+        $platform->invoke('google.gemma-4-31b', new MessageBag(Message::ofUser('Hello')))->getResult();
+    }
 }

@@ -29,7 +29,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant?'),
 );
-$result = $platform->invoke('openai.gpt-oss-120b', $messages, ['stream' => true]);
+$result = $platform->invoke('google.gemma-4-31b', $messages, ['stream' => true]);
 
 foreach ($result->asStream() as $delta) {
     if ($delta instanceof ThinkingStart) {

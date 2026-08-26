@@ -32,6 +32,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class ModelClient implements ModelClientInterface
 {
+    private const MODEL_PATHS = [
+        'google.gemma-4-31b' => '/openai/v1/chat/completions',
+    ];
+
     private readonly EventSourceHttpClient $httpClient;
     private readonly ?SigV4RequestSigner $requestSigner;
 
@@ -62,7 +66,11 @@ final class ModelClient implements ModelClientInterface
     {
         $data = \is_array($payload) ? array_merge($options, ['model' => $model->getName()], $payload) : $payload;
         $body = \is_string($data) ? $data : json_encode($data, \JSON_THROW_ON_ERROR);
-        $url = $this->baseUrl.$this->path;
+        $path = $this->path;
+        if ('/v1/chat/completions' === $path && isset(self::MODEL_PATHS[$model->getName()])) {
+            $path = self::MODEL_PATHS[$model->getName()];
+        }
+        $url = $this->baseUrl.$path;
 
         if (null !== $this->apiKey) {
             return new RawHttpResult($this->httpClient->request('POST', $url, [
@@ -73,7 +81,7 @@ final class ModelClient implements ModelClientInterface
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
-            'headers' => $this->requestSigner?->sign($url, $this->path, $body),
+            'headers' => $this->requestSigner?->sign($url, $path, $body),
             'body' => $body,
         ]));
     }

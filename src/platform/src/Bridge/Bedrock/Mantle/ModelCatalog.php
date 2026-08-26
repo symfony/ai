@@ -34,9 +34,9 @@ final class ModelCatalog extends AbstractModelCatalog
             Capability::TOOL_CALLING,
         ];
 
-        // Open-weight models served through the Mantle Chat Completions route. The Gemma 4 family is
-        // reached through the Responses route instead, see Responses\ModelCatalog.
+        // Open-weight models served through the Mantle Chat Completions route.
         $models = [
+            'google.gemma-4-31b',
             'openai.gpt-oss-120b',
             'openai.gpt-oss-20b',
             'qwen.qwen3-235b-a22b-2507',

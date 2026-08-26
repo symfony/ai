@@ -26,6 +26,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
     {
         $capabilities = [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING];
 
+        yield 'google.gemma-4-31b' => ['google.gemma-4-31b', CompletionsModel::class, $capabilities];
         yield 'openai.gpt-oss-120b' => ['openai.gpt-oss-120b', CompletionsModel::class, $capabilities];
         yield 'openai.gpt-oss-20b' => ['openai.gpt-oss-20b', CompletionsModel::class, $capabilities];
         yield 'qwen.qwen3-235b-a22b-2507' => ['qwen.qwen3-235b-a22b-2507', CompletionsModel::class, $capabilities];
