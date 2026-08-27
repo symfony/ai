@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by mikemikimike at 2026-08-27T14:09:02Z
+
+Implemented the remaining documentation update in b893a9b5fb. The File-Based Prompts section now documents {placeholder} markers and call-time substitution through 	emplate_vars; the PR table is updated to Docs? yes. git diff --check passes. No additional test was run because this commit changes documentation only.
