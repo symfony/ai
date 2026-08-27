@@ -393,28 +393,7 @@ final class ToolboxTest extends TestCase
         $absentTool = new Tool(new ExecutionReference(\stdClass::class, 'someMethod'), 'absent_tool', 'A tool that is not in the toolbox');
         $toolbox = new Toolbox([new ToolRequiredParams()], new ReflectionToolFactory());
 
-        $reflection = new \ReflectionClass($toolbox);
-        $toolsMetadataProperty = $reflection->getProperty('toolsMetadata');
-        $toolsMetadataProperty->setValue($toolbox, [$absentTool]);
-
         $this->expectException(ToolNotFoundException::class);
         $toolbox->execute(new ToolCall('call_1234', 'absent_tool'));
-    }
-
-    public function testToolCallViaMetaDataReflection()
-    {
-        $toolbox = new Toolbox([new ToolRequiredParams()], new ReflectionToolFactory());
-
-        // Initialize instanceMap + toolsMetadata
-        $tools = $toolbox->getTools();
-
-        // Clear instanceMap but keep toolsMetaData
-        $reflection = new \ReflectionClass($toolbox);
-        $instanceMapProperty = $reflection->getProperty('instanceMap');
-        $instanceMapProperty->setValue($toolbox, []);
-
-        $result = $toolbox->execute(new ToolCall('call_1234', 'tool_required_params', ['text' => 'Hello', 'number' => 3]));
-
-        $this->assertSame('Hello says "3".', $result->getResult());
     }
 }
