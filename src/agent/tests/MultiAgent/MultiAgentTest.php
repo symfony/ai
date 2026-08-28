@@ -17,6 +17,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MultiAgent\Handoff;
@@ -111,6 +112,39 @@ class MultiAgentTest extends TestCase
         $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
+    }
+
+    public function testCallForwardsProgressAndEmitsHandoff()
+    {
+        $decision = new Decision('technical', 'This is a technical question');
+        $orchestratorProgress = new Progress('model_request', 'Invoking model.');
+        $agentProgress = new Progress('tool_call', 'Calling a tool.');
+
+        $orchestratorResult = $this->createMock(ResultInterface::class);
+        $orchestratorResult->method('getContent')->willReturn($decision);
+
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->method('getName')->willReturn('orchestrator');
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult, $orchestratorProgress));
+
+        $technicalAgent = $this->createMock(AgentInterface::class);
+        $technicalAgent->method('getName')->willReturn('technical');
+        $technicalAgent->method('call')->willReturn($this->execution(new TextResult('Technical response'), $agentProgress));
+
+        $multiAgent = new MultiAgent(
+            $orchestrator,
+            [new Handoff($technicalAgent, ['technical'])],
+            new MockAgent(name: 'fallback'),
+        );
+
+        $updates = iterator_to_array($multiAgent->call(new MessageBag(Message::ofUser('How do I code this?'))));
+
+        $this->assertSame($orchestratorProgress, $updates[0]);
+        $this->assertInstanceOf(Progress::class, $updates[1]);
+        $this->assertSame('handoff', $updates[1]->getStage());
+        $this->assertSame('technical', $updates[1]->getPayload());
+        $this->assertSame($agentProgress, $updates[2]);
+        $this->assertInstanceOf(ResultUpdate::class, $updates[3]);
     }
 
     public function testCallUsesOrchestratorWhenDecisionIsNotReturned()
@@ -377,9 +411,10 @@ class MultiAgentTest extends TestCase
         $multiAgent->call($messages)->getResult();
     }
 
-    private function execution(ResultInterface $result): Execution
+    private function execution(ResultInterface $result, Progress ...$progress): Execution
     {
-        return new Execution(static function () use ($result): \Generator {
+        return new Execution(static function () use ($result, $progress): \Generator {
+            yield from $progress;
             yield new ResultUpdate($result);
         });
     }

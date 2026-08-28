@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
@@ -137,6 +138,20 @@ final class SpeechAgentTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-binary', $result->getContent());
         $this->assertSame('hello', $result->getMetadata()->get('text'));
+    }
+
+    public function testCallForwardsInnerProgress()
+    {
+        $progress = new Progress('tool_call', 'Calling a tool.');
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->method('call')->willReturn($this->execution(new TextResult('hello'), $progress));
+
+        $agent = new SpeechAgent($innerAgent, new SpeechConfiguration());
+        $updates = iterator_to_array($agent->call(new MessageBag(Message::ofUser('Say hello'))));
+
+        $this->assertSame($progress, $updates[0]);
+        $this->assertInstanceOf(ResultUpdate::class, $updates[1]);
+        $this->assertSame('hello', $updates[1]->getResult()->getContent());
     }
 
     public function testCallReturnsPlainResultWhenTtsNotConfigured()
@@ -267,9 +282,10 @@ final class SpeechAgentTest extends TestCase
         $this->assertSame('my-agent', $agent->getName());
     }
 
-    private function execution(ResultInterface $result): Execution
+    private function execution(ResultInterface $result, Progress ...$progress): Execution
     {
-        return new Execution(static function () use ($result): \Generator {
+        return new Execution(static function () use ($result, $progress): \Generator {
+            yield from $progress;
             yield new ResultUpdate($result);
         });
     }

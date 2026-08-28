@@ -44,7 +44,14 @@ final class SpeechAgent implements AgentInterface
                 $messages = $this->transcribe($messages, $options);
             }
 
-            $result = $this->agent->call($messages, $options)->getResult();
+            $execution = $this->agent->call($messages, $options);
+            foreach ($execution as $update) {
+                if (!$update instanceof ResultUpdate) {
+                    yield $update;
+                }
+            }
+
+            $result = $execution->getResult();
 
             if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
                 yield new ResultUpdate($result);
