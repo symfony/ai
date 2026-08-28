@@ -32,6 +32,7 @@ use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
@@ -49,6 +50,7 @@ use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
 use Symfony\AI\Platform\EventListener\TemplateRendererListener;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
@@ -5444,6 +5446,42 @@ class AiBundleTest extends TestCase
 
         $this->assertSame('You are a helpful assistant.', $arguments[0]);
         $this->assertNull($arguments[1]); // include_tools defaults to false
+    }
+
+    public function testSystemPromptFileIsConfiguredAsTemplate()
+    {
+        $promptFile = tempnam(sys_get_temp_dir(), 'prompt_');
+        file_put_contents($promptFile, 'Hello {name}!');
+
+        try {
+            $container = $this->buildContainer([
+                'ai' => [
+                    'agent' => [
+                        'test_agent' => [
+                            'model' => 'gpt-4',
+                            'prompt' => ['file' => $promptFile],
+                        ],
+                    ],
+                ],
+            ]);
+
+            $definition = $container->getDefinition('ai.agent.test_agent.system_prompt_processor');
+            $prompt = $definition->getArgument(0);
+
+            $this->assertEquals(new Reference('ai.agent.prompt.test_agent'), $prompt);
+
+            $promptDefinition = $container->getDefinition('ai.agent.prompt.test_agent');
+            $this->assertSame(Template::class, $promptDefinition->getClass());
+            $this->assertSame([FilePromptTemplateFactory::class, 'create'], $promptDefinition->getFactory());
+            $this->assertSame($promptFile, $promptDefinition->getArgument(0));
+
+            file_put_contents($promptFile, 'Updated {name}!');
+            $template = $promptDefinition->getFactory()[0]::create($promptDefinition->getArgument(0));
+            $this->assertInstanceOf(Template::class, $template);
+            $this->assertSame('Updated {name}!', $template->getTemplate());
+        } finally {
+            unlink($promptFile);
+        }
     }
 
     #[TestDox('Agent without system prompt does not create processor')]

@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -58,6 +59,71 @@ final class SystemPromptInputProcessorTest extends TestCase
         $this->assertInstanceOf(SystemMessage::class, $messages[0]);
         $this->assertInstanceOf(UserMessage::class, $messages[1]);
         $this->assertSame('This is a system prompt', $messages[0]->getContent());
+    }
+
+    public function testProcessInputPreservesTemplatePrompt()
+    {
+        $processor = new SystemPromptInputProcessor(Template::string('Hello {name}!'));
+
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
+        $processor->processInput($input);
+
+        $systemMessage = $input->getMessageBag()->getSystemMessage();
+        $this->assertInstanceOf(Template::class, $systemMessage?->getContent());
+        $this->assertSame('Hello {name}!', $systemMessage->getContent()->getTemplate());
+    }
+
+    public function testProcessInputPreservesTemplatePromptWithTools()
+    {
+        $processor = new SystemPromptInputProcessor(Template::string('Hello {name}!'), new class implements ToolboxInterface {
+            public function getTools(): array
+            {
+                return [new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'A tool', null)];
+            }
+
+            public function execute(ToolCall $toolCall): ToolResult
+            {
+                return new ToolResult($toolCall, null);
+            }
+        });
+
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
+        $processor->processInput($input);
+
+        $content = $input->getMessageBag()->getSystemMessage()?->getContent();
+        $this->assertInstanceOf(Template::class, $content);
+        $this->assertStringContainsString('Hello {name}!', $content->getTemplate());
+        $this->assertStringContainsString('# Tools', $content->getTemplate());
+    }
+
+    public function testProcessInputPreservesExpressionTemplatePromptWithTools()
+    {
+        $processor = new SystemPromptInputProcessor(Template::expression('admin ? "ADMIN" : "USER"'), new class implements ToolboxInterface {
+            public function getTools(): array
+            {
+                return [new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'A "helpful" tool', null)];
+            }
+
+            public function execute(ToolCall $toolCall): ToolResult
+            {
+                return new ToolResult($toolCall, null);
+            }
+        });
+
+        $input = new Input('gpt-4o', new MessageBag(Message::ofUser('This is a user message')));
+        $processor->processInput($input);
+
+        $content = $input->getMessageBag()->getSystemMessage()?->getContent();
+        $this->assertInstanceOf(Template::class, $content);
+
+        $expression = $content->getTemplate();
+        $prefix = '(admin ? "ADMIN" : "USER") ~ ';
+        $this->assertStringStartsWith($prefix, $expression);
+
+        $toolsPrompt = json_decode(substr($expression, \strlen($prefix)), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsString($toolsPrompt);
+        $this->assertStringContainsString('# Tools', $toolsPrompt);
+        $this->assertStringContainsString('A "helpful" tool', $toolsPrompt);
     }
 
     public function testProcessInputMutatesTheCallerMessageBagInPlace()

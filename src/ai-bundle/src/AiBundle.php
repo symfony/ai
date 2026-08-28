@@ -34,6 +34,7 @@ use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
@@ -93,6 +94,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\File;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
@@ -1314,11 +1316,14 @@ final class AiBundle extends AbstractBundle
             // Create prompt from file if configured, otherwise use text
             if (isset($config['prompt']['file'])) {
                 $filePath = $config['prompt']['file'];
-                // File::fromFile() handles validation, so no need to check here
-                // Use Definition with factory method because File objects cannot be serialized during container compilation
-                $prompt = (new Definition(File::class))
-                    ->setFactory([File::class, 'fromFile'])
+                // Keep the file path as a container argument so the prompt is read when the service is created.
+                $promptId = 'ai.agent.prompt.'.$name;
+                $templateDefinition = (new Definition(Template::class))
+                    ->setFactory([FilePromptTemplateFactory::class, 'create'])
                     ->setArguments([$filePath]);
+
+                $container->setDefinition($promptId, $templateDefinition);
+                $prompt = new Reference($promptId);
             } elseif (isset($config['prompt']['text'])) {
                 $promptText = $config['prompt']['text'];
 

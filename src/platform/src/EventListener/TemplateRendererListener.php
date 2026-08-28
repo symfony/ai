@@ -42,11 +42,8 @@ final class TemplateRendererListener implements EventSubscriberInterface
     public function __invoke(InvocationEvent $event): void
     {
         $options = $event->getOptions();
-        if (!isset($options['template_vars'])) {
-            return;
-        }
-
-        if (!\is_array($options['template_vars'])) {
+        $hasTemplateVars = isset($options['template_vars']);
+        if ($hasTemplateVars && !\is_array($options['template_vars'])) {
             throw new InvalidArgumentException('The "template_vars" option must be an array.');
         }
 
@@ -65,7 +62,7 @@ final class TemplateRendererListener implements EventSubscriberInterface
             throw new InvalidArgumentException('The "normalizer_context" option must be an array.');
         }
 
-        $templateVars = $this->normalizeTemplateVars($options['template_vars'], $normalizerContext);
+        $templateVars = $this->normalizeTemplateVars($options['template_vars'] ?? [], $normalizerContext);
         $renderedMessages = [];
 
         foreach ($input->getMessages() as $message) {
@@ -74,7 +71,9 @@ final class TemplateRendererListener implements EventSubscriberInterface
 
         $event->setInput(new MessageBag(...$renderedMessages));
 
-        unset($options['template_vars'], $options['template_options']);
+        if ($hasTemplateVars) {
+            unset($options['template_vars'], $options['template_options']);
+        }
         $event->setOptions($options);
     }
 

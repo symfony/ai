@@ -75,7 +75,7 @@ final class TemplateRendererListenerTest extends TestCase
         $this->assertArrayHasKey('other_option', $options);
     }
 
-    public function testDoesNothingWhenTemplateVarsNotProvided()
+    public function testRendersTemplateWithEmptyVarsWhenTemplateVarsNotProvided()
     {
         $template = Template::string('Hello {name}!');
         $messageBag = new MessageBag(Message::forSystem($template));
@@ -88,7 +88,7 @@ final class TemplateRendererListenerTest extends TestCase
         $this->assertInstanceOf(MessageBag::class, $input);
         $messages = $input->getMessages();
         $this->assertCount(1, $messages);
-        $this->assertInstanceOf(Template::class, $messages[0]->getContent());
+        $this->assertSame('Hello {name}!', $messages[0]->getContent());
     }
 
     public function testThrowsExceptionWhenTemplateVarsIsNotArray()

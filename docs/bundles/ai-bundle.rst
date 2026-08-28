@@ -471,7 +471,7 @@ Configure the prompt with a file path:
                 prompt:
                     file: '%kernel.project_dir%/prompts/assistant.txt'
 
-The file can be in any text format (.txt, .json, .md, etc.). The entire content of the file will be used as the system prompt text.
+The file can be in any text format (.txt, .json, .md, etc.). The entire content of the file will be used as the system prompt text. The file may contain ``{placeholder}`` markers, which are replaced at call time when matching ``template_vars`` are provided in the agent input.
 
 Example Text File
 .................
