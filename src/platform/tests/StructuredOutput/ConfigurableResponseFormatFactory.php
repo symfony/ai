@@ -23,7 +23,7 @@ final readonly class ConfigurableResponseFormatFactory implements ResponseFormat
     ) {
     }
 
-    public function create(string $responseClass): array
+    public function create(string|object $response): array
     {
         return $this->responseFormat;
     }

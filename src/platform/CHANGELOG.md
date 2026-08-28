@@ -4,6 +4,7 @@ CHANGELOG
 0.13
 ----
 
+ * [BC BREAK] Widen `StructuredOutput\ResponseFormatFactoryInterface::create()` to accept `class-string|object`, so a factory receives the very instance passed as `response_format` and can derive a schema from its runtime state instead of only from its class
  * [BC BREAK] Add `ListenerInterface::onError()` and `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws, so a listener can finalize on a failed stream where `onComplete()` never fires; `AbstractStreamListener` provides a no-op default
  * Add `Test\Replay\CassetteHttpClient` and `Test\Replay\HttpCassette` to record real HTTP responses (when the cassette file is missing) and replay them offline through the real bridge pipeline (Contract, `ModelClient`, `ResultConverter`) in tests, including raw Server-Sent Event streams; binary response bodies (images, audio, ...) are elided to a metadata stub (content type, byte size) and replayed as a small placeholder body
  * `TemplateRendererListener` now renders templates without `template_vars`; consequently, an expression referencing an absent variable now throws instead of reaching the normalizer as an empty object

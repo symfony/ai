@@ -179,6 +179,27 @@ Mate
 Platform
 --------
 
+ * `StructuredOutput\ResponseFormatFactoryInterface::create()` now receives `class-string|object` instead of
+   `class-string`. When `response_format` is an existing object instance, the factory is handed that very
+   instance, so the schema can be derived from its runtime state and not only from its class. Implementations
+   must widen the parameter type:
+
+   ```diff
+    final class MyResponseFormatFactory implements ResponseFormatFactoryInterface
+    {
+   -    public function create(string $responseClass): array
+   +    public function create(string|object $response): array
+        {
+   +        $responseClass = \is_object($response) ? $response::class : $response;
+   +
+            // ...
+        }
+    }
+   ```
+
+   The shipped `StructuredOutput\ResponseFormatFactory` is unchanged in behavior: it still describes
+   `$response::class` when given an object.
+
  * The Gemini and VertexAI bridges now yield a single `ToolCallComplete` delta at the end of a stream,
    carrying all function calls of the response, instead of one `ToolCallComplete` per streamed
    `functionCall` part. Consumers collecting tool calls across several deltas can rely on the single

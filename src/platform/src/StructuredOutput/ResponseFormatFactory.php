@@ -25,8 +25,10 @@ final class ResponseFormatFactory implements ResponseFormatFactoryInterface
     ) {
     }
 
-    public function create(string $responseClass): array
+    public function create(string|object $response): array
     {
+        $responseClass = \is_object($response) ? $response::class : $response;
+
         return [
             'type' => 'json_schema',
             'json_schema' => [

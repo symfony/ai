@@ -1283,6 +1283,48 @@ serialization groups::
         'response_format' => $product,
     ]);
 
+By default the schema sent to the model is derived from the class of the instance,
+so it describes every property the class allows. When the schema should depend on
+what the instance currently holds, implement
+:class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactoryInterface`:
+``create()`` receives the very same instance that is passed as ``response_format``,
+and a class-string when there is none::
+
+    use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+    use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
+
+    final class MissingPropertiesResponseFormatFactory implements ResponseFormatFactoryInterface
+    {
+        public function __construct(
+            private readonly Factory $schemaFactory = new Factory(),
+        ) {
+        }
+
+        public function create(string|object $response): array
+        {
+            $responseClass = \is_object($response) ? $response::class : $response;
+            $schema = $this->schemaFactory->buildProperties($responseClass);
+
+            // Ask only for what this very instance is still missing
+            if (\is_object($response)) {
+                foreach (array_keys($schema['properties']) as $property) {
+                    if (null !== $response->{$property}) {
+                        unset($schema['properties'][$property]);
+                    }
+                }
+
+                $schema['required'] = array_keys($schema['properties']);
+            }
+
+            return [
+                'type' => 'json_schema',
+                'json_schema' => ['name' => 'city', 'schema' => $schema, 'strict' => true],
+            ];
+        }
+    }
+
+    $dispatcher->addSubscriber(new PlatformSubscriber(new MissingPropertiesResponseFormatFactory()));
+
 Scoping the Schema to Serializer Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

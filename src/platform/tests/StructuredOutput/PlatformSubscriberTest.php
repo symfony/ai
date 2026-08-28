@@ -298,6 +298,45 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame(['response_format' => ['some' => 'format']], $event->getOptions());
     }
 
+    public function testResponseFormatFactoryReceivesTheInstanceToPopulate()
+    {
+        $processor = new PlatformSubscriber(new MissingPropertiesResponseFormatFactory());
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $berlin = new City(name: 'Berlin', country: 'Germany');
+        $event = new InvocationEvent($model, new MessageBag(), ['response_format' => $berlin]);
+        $processor->processInput($event);
+
+        $paris = new City(name: 'Paris');
+        $secondEvent = new InvocationEvent($model, new MessageBag(), ['response_format' => $paris]);
+        $processor->processInput($secondEvent);
+
+        // Both instances are of the same class, but only the properties they are still missing are described
+        $this->assertSame(
+            ['population', 'mayor'],
+            $event->getOptions()['response_format']['json_schema']['schema']['required'],
+        );
+        $this->assertSame(
+            ['population', 'country', 'mayor'],
+            $secondEvent->getOptions()['response_format']['json_schema']['schema']['required'],
+        );
+    }
+
+    public function testResponseFormatFactoryReceivesTheClassNameWithoutInstance()
+    {
+        $processor = new PlatformSubscriber(new MissingPropertiesResponseFormatFactory());
+        $event = new InvocationEvent(new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]), new MessageBag(), [
+            'response_format' => City::class,
+        ]);
+
+        $processor->processInput($event);
+
+        $this->assertSame(
+            ['name', 'population', 'country', 'mayor'],
+            $event->getOptions()['response_format']['json_schema']['schema']['required'],
+        );
+    }
+
     public function testProcessOutputWithObjectInstance()
     {
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
