@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox\ToolFactory;
 
+use Symfony\AI\Agent\Approval\Attribute\RequiresApproval;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
@@ -46,16 +47,32 @@ final class ReflectionToolFactory implements ToolFactoryInterface
             throw ToolException::missingAttribute($className);
         }
 
+        $classApprovalAttributes = $reflectionClass->getAttributes(RequiresApproval::class);
+
         foreach ($attributes as $attribute) {
             $asTool = $attribute->newInstance();
 
             try {
+                $metadata = $asTool->metadata;
+
+                $approvalAttributes = $classApprovalAttributes;
+                if ($reflectionClass->hasMethod($asTool->method)) {
+                    $methodApprovalAttributes = $reflectionClass->getMethod($asTool->method)->getAttributes(RequiresApproval::class);
+                    if ([] !== $methodApprovalAttributes) {
+                        $approvalAttributes = $methodApprovalAttributes;
+                    }
+                }
+
+                if ([] !== $approvalAttributes && !isset($metadata['requires_approval'])) {
+                    $metadata['requires_approval'] = $approvalAttributes[0]->newInstance();
+                }
+
                 yield new Tool(
                     new ExecutionReference($className, $asTool->method),
                     $asTool->name,
                     $asTool->description,
                     $this->factory->buildParameters($className, $asTool->method),
-                    $asTool->metadata,
+                    $metadata,
                 );
             } catch (\ReflectionException $e) {
                 throw ToolConfigurationException::invalidMethod($className, $asTool->method, $e);

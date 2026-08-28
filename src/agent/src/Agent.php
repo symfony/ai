@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Approval\ApprovalDecision;
+use Symfony\AI\Agent\Approval\ApprovalManagerInterface;
+use Symfony\AI\Agent\Approval\Checkpoint\ExecutionCheckpoint;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
@@ -28,6 +31,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Saiful Islam <saif012@gmail.com>
  */
 final class Agent implements AgentInterface
 {
@@ -52,6 +56,7 @@ final class Agent implements AgentInterface
         bool $excludeToolMessages = false,
         bool $includeSources = false,
         ?EventDispatcherInterface $eventDispatcher = null,
+        ?ApprovalManagerInterface $approvalManager = null,
     ) {
         if (null === $toolExecutor && $toolbox instanceof ToolboxInterface) {
             $toolExecutor = new SequentialToolExecutor($toolbox);
@@ -65,6 +70,7 @@ final class Agent implements AgentInterface
             $excludeToolMessages,
             $includeSources,
             $eventDispatcher,
+            approvalManager: $approvalManager,
         );
     }
 
@@ -141,5 +147,28 @@ final class Agent implements AgentInterface
         };
 
         return new Execution($factory, true === ($options['stream'] ?? false));
+    }
+
+    public function resume(ExecutionCheckpoint|string $checkpoint, ApprovalDecision $decision): ResultInterface
+    {
+        $result = $this->runner->resume($this, $checkpoint, $decision);
+
+        $messages = $checkpoint instanceof ExecutionCheckpoint ? $checkpoint->getMessages() : new MessageBag();
+        $options = $checkpoint instanceof ExecutionCheckpoint ? $checkpoint->getOptions() : [];
+
+        $output = new Output($this->getModel(), $result, $messages, $options);
+        foreach ($this->outputProcessors as $outputProcessor) {
+            if (!$outputProcessor instanceof OutputProcessorInterface) {
+                throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));
+            }
+
+            if ($outputProcessor instanceof AgentAwareInterface) {
+                $outputProcessor->setAgent($this);
+            }
+
+            $outputProcessor->processOutput($output);
+        }
+
+        return $output->getResult();
     }
 }

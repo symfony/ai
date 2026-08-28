@@ -664,6 +664,51 @@ The sources can be fetched from the metadata of the result after the agent execu
 
 See `Anthropic Toolbox Example`_ for a complete example using sources with Wikipedia tool.
 
+Human-in-the-Loop (HITL) & Tool Approval
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For sensitive operations (such as executing payments, modifying database records, or sending emails), you can require human confirmation before a tool is executed using the :class:`Symfony\\AI\\Agent\\Approval\\Attribute\\RequiresApproval` attribute::
+
+    use Symfony\AI\Agent\Approval\Attribute\RequiresApproval;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+
+    #[AsTool('transfer_funds', 'Transfers money from user account to recipient')]
+    #[RequiresApproval(prompt: 'Confirm transfer of ${amount} to account #{toAccount}', roles: ['ROLE_FINANCE_ADMIN'])]
+    final class PaymentTool
+    {
+        public function __invoke(string $toAccount, float $amount): string
+        {
+            // Execute transfer
+            return sprintf('Transferred $%0.2f to %s', $amount, $toAccount);
+        }
+    }
+
+When an agent encounters a tool that requires approval, execution is suspended and returns an instance of :class:`Symfony\\AI\\Agent\\Approval\\ApprovalPendingResult`::
+
+    use Symfony\AI\Agent\Approval\ApprovalDecision;
+    use Symfony\AI\Agent\Approval\ApprovalManager;
+    use Symfony\AI\Agent\Approval\ApprovalPendingResult;
+    use Symfony\AI\Agent\Approval\Checkpoint\CheckpointSigner;
+    use Symfony\AI\Agent\Approval\Checkpoint\InMemoryCheckpointStore;
+
+    $store = new InMemoryCheckpointStore();
+    $signer = new CheckpointSigner($secret);
+    $approvalManager = new ApprovalManager([], $store, $signer);
+
+    $agent = new Agent($platform, $model, toolbox: $toolbox, approvalManager: $approvalManager);
+
+    $result = $agent->call('Transfer $500 to ACC-99')->getResult();
+
+    if ($result instanceof ApprovalPendingResult) {
+        $checkpoint = $result->getCheckpoint();
+        $token = $result->getToken(); // Secure, cryptographically signed token
+
+        // Later (e.g. from an HTTP Controller, webhook, or CLI command):
+        $finalResult = $agent->resume($token, ApprovalDecision::approve());
+        // Or reject with feedback:
+        // $finalResult = $agent->resume($token, ApprovalDecision::reject('Payment limit exceeded'));
+    }
+
 Tool Filtering
 ~~~~~~~~~~~~~~
 

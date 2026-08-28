@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Approval\ApprovalDecision;
+use Symfony\AI\Agent\Approval\ApprovalPendingResult;
+use Symfony\AI\Agent\Approval\Checkpoint\ExecutionCheckpoint;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -21,9 +24,11 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
+ * @author Saiful Islam <saif012@gmail.com>
  */
 final class SpeechAgent implements AgentInterface
 {
@@ -62,6 +67,33 @@ final class SpeechAgent implements AgentInterface
 
             yield new ResultUpdate($speechResult->getResult());
         });
+    }
+
+    public function resume(ExecutionCheckpoint|string $checkpoint, ApprovalDecision $decision): ResultInterface
+    {
+        $result = $this->agent->resume($checkpoint, $decision);
+
+        if (!$this->textToSpeechPlatform instanceof PlatformInterface) {
+            return $result;
+        }
+
+        if (!$this->configuration->supportsTextToSpeech()) {
+            return $result;
+        }
+
+        if ($result instanceof ApprovalPendingResult) {
+            return $result;
+        }
+
+        $speechResult = $this->textToSpeechPlatform->invoke(
+            $this->configuration->getTextToSpeechModel(),
+            $result->getContent(),
+            $this->configuration->getTextToSpeechOptions(),
+        );
+
+        $speechResult->getMetadata()->add('text', $result->getContent());
+
+        return $speechResult->getResult();
     }
 
     public function getName(): string

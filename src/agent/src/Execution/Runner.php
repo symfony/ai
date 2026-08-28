@@ -11,6 +11,16 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Approval\ApprovalDecision;
+use Symfony\AI\Agent\Approval\ApprovalManagerInterface;
+use Symfony\AI\Agent\Approval\ApprovalPendingResult;
+use Symfony\AI\Agent\Approval\Checkpoint\ExecutionCheckpoint;
+use Symfony\AI\Agent\Approval\Event\ToolApprovalRequestedEvent;
+use Symfony\AI\Agent\Approval\Event\ToolApprovalResolvedEvent;
+use Symfony\AI\Agent\Approval\Exception\CheckpointExpiredException;
+use Symfony\AI\Agent\Approval\Exception\InvalidCheckpointException;
+use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
@@ -18,6 +28,7 @@ use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -34,9 +45,11 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -47,6 +60,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * are consumed here as well, so a streamed tool call is just another round of that same loop.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ * @author Saiful Islam <saif012@gmail.com>
  *
  * @internal
  */
@@ -61,6 +75,7 @@ final class Runner
         private readonly bool $includeSources = false,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly ToolResultConverter $resultConverter = new ToolResultConverter(),
+        private readonly ?ApprovalManagerInterface $approvalManager = null,
     ) {
     }
 
@@ -101,7 +116,59 @@ final class Runner
             }
 
             $toolCalls = array_values($toolCallResult->getContent());
-            $toolResults = yield from $this->toolExecutor->execute($toolCalls);
+
+            if (null !== $this->approvalManager && null !== $this->toolbox) {
+                $toolDefinitions = $this->toolbox->getTools();
+                $toolMap = [];
+                foreach ($toolDefinitions as $def) {
+                    $toolMap[$def->getName()] = $def;
+                }
+
+                $toolResults = [];
+                foreach ($toolCalls as $index => $toolCall) {
+                    $toolDef = $toolMap[$toolCall->getName()] ?? null;
+                    if (null !== $toolDef && $this->approvalManager->requiresApproval($toolDef, $toolCall)) {
+                        $checkpoint = new ExecutionCheckpoint(
+                            id: (string) Uuid::v7(),
+                            agentName: $options['agent_name'] ?? 'agent',
+                            model: $model,
+                            messages: $messages,
+                            options: $options,
+                            pendingToolCalls: array_values(\array_slice($toolCalls, $index)),
+                            completedToolResults: $toolResults,
+                            iterations: $iterations,
+                            sources: $this->includeSources ? $sources : null,
+                        );
+
+                        $prompt = $this->approvalManager->formatPrompt($toolDef, $toolCall);
+                        $roles = $this->approvalManager->getApprovalRequirement($toolDef)->roles ?? [];
+
+                        $approvalEvent = new ToolApprovalRequestedEvent($checkpoint, $toolCall, $toolDef, null, $prompt, $roles);
+                        $this->eventDispatcher?->dispatch($approvalEvent);
+
+                        if ($approvalEvent->hasDecision()) {
+                            $decision = $approvalEvent->getDecision();
+                            $toolResults[] = $this->executeDecision($toolCall, $decision);
+                            continue;
+                        }
+
+                        $this->approvalManager->getCheckpointStore()?->save($checkpoint);
+                        $token = $this->approvalManager->getSigner()?->encode($checkpoint);
+
+                        $pendingResult = new ApprovalPendingResult($checkpoint, $toolCall, $toolDef, $token, $prompt, $roles);
+                        yield new ResultUpdate($pendingResult);
+
+                        return;
+                    }
+
+                    $results = yield from $this->toolExecutor->execute([$toolCall]);
+                    foreach ($results as $res) {
+                        $toolResults[] = $res;
+                    }
+                }
+            } else {
+                $toolResults = yield from $this->toolExecutor->execute($toolCalls);
+            }
 
             $messages->add($assistantMessage ?? Message::ofAssistant($result));
             foreach ($toolResults as $i => $toolResult) {
@@ -129,6 +196,114 @@ final class Runner
         }
 
         yield new ResultUpdate($result);
+    }
+
+    /**
+     * Resumes execution of a previously suspended agent call after receiving an approval decision.
+     */
+    public function resume(
+        AgentInterface $agent,
+        ExecutionCheckpoint|string $checkpoint,
+        ApprovalDecision $decision,
+    ): ResultInterface {
+        if (\is_string($checkpoint)) {
+            $checkpoint = $this->resolveCheckpoint($checkpoint);
+        }
+
+        if ($checkpoint->isExpired()) {
+            throw CheckpointExpiredException::forCheckpoint($checkpoint->getId());
+        }
+
+        $pendingToolCalls = $checkpoint->getPendingToolCalls();
+        if ([] === $pendingToolCalls) {
+            return $agent->call($checkpoint->getMessages(), $checkpoint->getOptions())->getResult();
+        }
+
+        $currentToolCall = array_shift($pendingToolCalls);
+        $toolDef = null;
+        if (null !== $this->toolbox) {
+            foreach ($this->toolbox->getTools() as $def) {
+                if ($def->getName() === $currentToolCall->getName()) {
+                    $toolDef = $def;
+                    break;
+                }
+            }
+        }
+
+        if (null !== $toolDef) {
+            $this->eventDispatcher?->dispatch(new ToolApprovalResolvedEvent($checkpoint, $currentToolCall, $toolDef, $agent, $decision));
+        }
+
+        $toolResult = $this->executeDecision($currentToolCall, $decision);
+        $toolResults = [...$checkpoint->getCompletedToolResults(), $toolResult];
+
+        $messages = $checkpoint->getMessages();
+        $options = $checkpoint->getOptions();
+
+        // Check if more pending tool calls exist in this turn
+        if ([] !== $pendingToolCalls && null !== $this->approvalManager && null !== $this->toolbox) {
+            $toolDefinitions = $this->toolbox->getTools();
+            $toolMap = [];
+            foreach ($toolDefinitions as $def) {
+                $toolMap[$def->getName()] = $def;
+            }
+
+            foreach ($pendingToolCalls as $index => $toolCall) {
+                $pendingToolDef = $toolMap[$toolCall->getName()] ?? null;
+                if (null !== $pendingToolDef && $this->approvalManager->requiresApproval($pendingToolDef, $toolCall, $agent)) {
+                    $nextCheckpoint = new ExecutionCheckpoint(
+                        id: (string) Uuid::v7(),
+                        agentName: $checkpoint->getAgentName(),
+                        model: $checkpoint->getModel(),
+                        messages: $messages,
+                        options: $options,
+                        pendingToolCalls: array_values(\array_slice($pendingToolCalls, $index)),
+                        completedToolResults: $toolResults,
+                        iterations: $checkpoint->getIterations(),
+                        sources: $checkpoint->getSources(),
+                    );
+
+                    $prompt = $this->approvalManager->formatPrompt($pendingToolDef, $toolCall);
+                    $roles = $this->approvalManager->getApprovalRequirement($pendingToolDef)->roles ?? [];
+
+                    $approvalEvent = new ToolApprovalRequestedEvent($nextCheckpoint, $toolCall, $pendingToolDef, $agent, $prompt, $roles);
+                    $this->eventDispatcher?->dispatch($approvalEvent);
+
+                    if ($approvalEvent->hasDecision()) {
+                        $nextDecision = $approvalEvent->getDecision();
+                        $toolResults[] = $this->executeDecision($toolCall, $nextDecision);
+                        continue;
+                    }
+
+                    $this->approvalManager->getCheckpointStore()?->save($nextCheckpoint);
+                    $this->approvalManager->getCheckpointStore()?->remove($checkpoint->getId());
+
+                    $token = $this->approvalManager->getSigner()?->encode($nextCheckpoint);
+
+                    return new ApprovalPendingResult($nextCheckpoint, $toolCall, $pendingToolDef, $token, $prompt, $roles);
+                }
+
+                $toolResults[] = $this->toolbox->execute($toolCall);
+            }
+        }
+
+        // All tool calls for this turn are resolved
+        $allToolCalls = [];
+        foreach ($toolResults as $res) {
+            $allToolCalls[] = $res->getToolCall();
+        }
+
+        $messages->add(Message::ofAssistant(...$allToolCalls));
+        foreach ($toolResults as $res) {
+            $messages->add(Message::ofToolCall($res->getToolCall(), $this->resultConverter->convert($res)));
+        }
+
+        $this->approvalManager?->getCheckpointStore()?->remove($checkpoint->getId());
+
+        $event = new ToolCallsExecuted($toolResults);
+        $this->eventDispatcher?->dispatch($event);
+
+        return $event->hasResult() ? $event->getResult() : $agent->call($messages, $options)->getResult();
     }
 
     /**
@@ -261,5 +436,44 @@ final class Runner
         }
 
         return null;
+    }
+
+    private function executeDecision(ToolCall $toolCall, ApprovalDecision $decision): ToolResult
+    {
+        if ($decision->isRejected()) {
+            $feedback = $decision->getFeedback() ?? 'Tool execution was denied by human reviewer.';
+
+            return new ToolResult($toolCall, $feedback);
+        }
+
+        if ($decision->isModified() && null !== $decision->getModifiedArguments()) {
+            $toolCall = new ToolCall($toolCall->getId(), $toolCall->getName(), $decision->getModifiedArguments());
+        }
+
+        if (null === $this->toolbox) {
+            throw new LogicException('Cannot execute tool call without a configured toolbox.');
+        }
+
+        return $this->toolbox->execute($toolCall);
+    }
+
+    private function resolveCheckpoint(string $checkpoint): ExecutionCheckpoint
+    {
+        if (null !== $this->approvalManager?->getSigner()) {
+            try {
+                return $this->approvalManager->getSigner()->decode($checkpoint);
+            } catch (\Throwable) {
+                // Fallback to store lookup if token decoding failed
+            }
+        }
+
+        if (null !== $this->approvalManager?->getCheckpointStore()) {
+            $found = $this->approvalManager->getCheckpointStore()->get($checkpoint);
+            if (null !== $found) {
+                return $found;
+            }
+        }
+
+        throw InvalidCheckpointException::unreadable(\sprintf('Checkpoint "%s" could not be resolved from token or store.', $checkpoint));
     }
 }

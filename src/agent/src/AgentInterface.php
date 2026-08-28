@@ -11,13 +11,17 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Approval\ApprovalDecision;
+use Symfony\AI\Agent\Approval\Checkpoint\ExecutionCheckpoint;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Denis Zunke <denis.zunke@gmail.com>
+ * @author Saiful Islam <saif012@gmail.com>
  */
 interface AgentInterface
 {
@@ -33,6 +37,15 @@ interface AgentInterface
      * @throws ExceptionInterface When the agent encounters an error (e.g., unsupported model capabilities, invalid arguments, network failures, or processor errors)
      */
     public function call(string|MessageBag|UserMessage $input, array $options = []): Execution;
+
+    /**
+     * Resumes an agent run that was suspended pending human tool approval.
+     *
+     * @param ExecutionCheckpoint|string $checkpoint Checkpoint object, ID, or cryptographically signed token
+     *
+     * @throws ExceptionInterface When resumption fails, checkpoint is invalid, or checkpoint has expired
+     */
+    public function resume(ExecutionCheckpoint|string $checkpoint, ApprovalDecision $decision): ResultInterface;
 
     /**
      * Get the agent's name, which can be used for debugging or multi-agent configuration.
