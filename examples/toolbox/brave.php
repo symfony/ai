@@ -17,7 +17,6 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\Component\Clock\Clock as SymfonyClock;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -38,8 +37,7 @@ $prompt = <<<PROMPT
 
 $result = $agent->call(new MessageBag(Message::ofUser($prompt)));
 
-// Reasoning models answer with a MultiPartResult (reasoning + message parts).
-$content = $result instanceof MultiPartResult ? $result->asText() : $result->getContent();
-echo $content.\PHP_EOL.\PHP_EOL;
+// asText() narrows the answer of reasoning models, a MultiPartResult of reasoning and message parts, to its text
+echo $result->asText().\PHP_EOL.\PHP_EOL;
 
 print_sources($result->getMetadata()->get('sources'));

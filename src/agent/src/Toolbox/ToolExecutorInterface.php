@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
+use Symfony\AI\Agent\Execution\UpdateInterface;
 use Symfony\AI\Platform\Result\ToolCall;
 
 /**
@@ -19,6 +20,9 @@ use Symfony\AI\Platform\Result\ToolCall;
  * Turning the results into conversation messages is the caller's responsibility, so an executor only
  * decides how the calls are run (sequentially, concurrently, remotely, ...).
  *
+ * The returned generator yields {@see UpdateInterface} updates while the tool calls are executed and
+ * returns the resulting {@see ToolResult} list.
+ *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 interface ToolExecutorInterface
@@ -26,7 +30,7 @@ interface ToolExecutorInterface
     /**
      * @param ToolCall[] $toolCalls
      *
-     * @return ToolResult[] one result per tool call, in the same order as the given calls
+     * @return \Generator<int, UpdateInterface, mixed, ToolResult[]> one result per tool call, in the same order as the given calls
      */
-    public function execute(array $toolCalls): array;
+    public function execute(array $toolCalls): \Generator;
 }

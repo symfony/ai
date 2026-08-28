@@ -56,16 +56,15 @@ final class Chat
         // Step 2 — have the chat agent read the extracted text and open with a
         // meaningful summary. This is the orchestration on display: one capability
         // (OCR transcription) feeds another (the reasoning agent).
-        $summary = $this->agent->call(new MessageBag(
+        $execution = $this->agent->call(new MessageBag(
             Message::forSystem($system),
             Message::ofUser($this->summaryPrompt),
         ));
-        \assert($summary instanceof TextResult);
 
         $messages = new MessageBag(
             Message::forSystem($system),
             Message::ofUser($url),
-            Message::ofAssistant($summary->getContent()),
+            Message::ofAssistant($execution->asText()),
         );
 
         $this->reset();
@@ -77,7 +76,7 @@ final class Chat
         $messages = $this->loadMessages();
 
         $messages->add(Message::ofUser($message));
-        $result = $this->agent->call($messages);
+        $result = $this->agent->call($messages)->getResult();
 
         \assert($result instanceof TextResult);
 

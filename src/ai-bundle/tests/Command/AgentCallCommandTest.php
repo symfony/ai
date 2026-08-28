@@ -17,10 +17,13 @@ namespace Symfony\AI\AiBundle\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -60,7 +63,7 @@ final class AgentCallCommandTest extends TestCase
 
         $agent->expects($this->once())
             ->method('call')
-            ->willReturn($result);
+            ->willReturn($this->execution($result));
 
         $agents = [
             'test' => $agent,
@@ -153,7 +156,7 @@ final class AgentCallCommandTest extends TestCase
 
         $agent2->expects($this->once())
             ->method('call')
-            ->willReturn($result);
+            ->willReturn($this->execution($result));
 
         $agents = [
             'first' => $agent1,
@@ -191,7 +194,9 @@ final class AgentCallCommandTest extends TestCase
                     $messages->withSystemMessage(Message::forSystem('System prompt'));
                 }
 
-                return $result;
+                return new Execution(static function () use ($result): \Generator {
+                    yield new ResultUpdate($result);
+                });
             });
 
         $agents = [
@@ -249,5 +254,12 @@ final class AgentCallCommandTest extends TestCase
         $application->addCommands([$command]);
 
         return $application;
+    }
+
+    private function execution(ResultInterface $result): Execution
+    {
+        return new Execution(static function () use ($result): \Generator {
+            yield new ResultUpdate($result);
+        });
     }
 }
