@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-07-15T19:32:28Z
+
+uh another weird new combination - one model + two endpoints = different capabilities :joy:
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-07-15T20:25:07Z
+
+> uh another weird new combination - one model + two endpoints = different capabilities :joy:
+
+yeah its so fucking uncosistent all the times 😅
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-25T20:48:06Z
+
+@chr-hertel could you take a look? `voxtral-mini-latest` is both a chat model and a transcription model at Mistral, so the catalog keeps it as the chat `Mistral` model and transcription is opt-in via an explicit `SpeechToText` instance. I verified both paths reach the right endpoint and the chat one is untouched.
+
+One thing i'd rather decide with you: the converter returns `null` from `getTokenUsageExtractor()` and puts the raw provider array into the metadata instead, so the same model name yields `token_usage` on the chat path and a plain `usage` array on the transcription path. `Embeddings` and `Llm` both have an extractor, `Ocr` has none. Wire one up here too, or drop the metadata line and stay with the Cohere sibling, which has neither?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-27T17:56:03Z
+
+@chr-hertel updated, ready for another look.
