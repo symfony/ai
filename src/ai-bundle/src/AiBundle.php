@@ -129,6 +129,8 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory as ClickHouseStoreFactory;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
+use Symfony\AI\Store\Bridge\Doctrine\Distance as DoctrineDistance;
+use Symfony\AI\Store\Bridge\Doctrine\Store as DoctrineStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
@@ -2206,6 +2208,34 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+            }
+        }
+
+        if ('doctrine' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-doctrine-store', DoctrineStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Doctrine store configuration requires "symfony/ai-doctrine-store" package. Try running "composer require symfony/ai-doctrine-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = (new Definition(DoctrineStore::class))
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($store['entity_manager']),
+                        $store['entity'],
+                        $store['vector_field'],
+                        DoctrineDistance::from($store['distance']),
+                        null,
+                        $store['index_name'],
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+
+                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 

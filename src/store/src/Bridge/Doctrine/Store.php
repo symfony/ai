@@ -1,0 +1,345 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Store\Bridge\Doctrine;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
+use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformFactory;
+use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformInterface;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\ManagedStoreInterface;
+use Symfony\AI\Store\Query\QueryInterface;
+use Symfony\AI\Store\Query\VectorQuery;
+use Symfony\AI\Store\StoreInterface;
+
+/**
+ * Stores vectors in a column of the table an entity already lives in, instead of in a table of its own.
+ *
+ * Every other store owns its storage: it creates a table of ids, metadata and vectors, and a hit has
+ * to be resolved back to the domain object it stands for. Here the row *is* the domain object, so an
+ * embedding is just another field of an entity, kept consistent by the same transaction that writes
+ * the rest of it, and a query hands back entities.
+ *
+ * The column itself is declared on the entity and owned by the regular schema tooling:
+ *
+ *     #[ORM\Column(type: 'vector', nullable: true)]
+ *     private ?VectorInterface $embedding = null;
+ *
+ * Its size is applied by `setup()` or by a migration rather than by the mapping - see `Type\VectorType`.
+ *
+ * @author Christopher Hertel <mail@christopher-hertel.de>
+ */
+final class Store implements ManagedStoreInterface, StoreInterface
+{
+    private ?VectorPlatformInterface $resolvedVectorPlatform = null;
+
+    /**
+     * @param class-string $entityClass The entity holding the vectors
+     * @param string       $vectorField The entity field the vectors are stored in
+     * @param string|null  $indexName   The name of the vector index, defaults to "<table>_<column>_idx"
+     */
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly string $entityClass,
+        private readonly string $vectorField = 'embedding',
+        private readonly Distance $distance = Distance::Cosine,
+        private readonly ?VectorPlatformInterface $vectorPlatform = null,
+        private readonly ?string $indexName = null,
+    ) {
+    }
+
+    /**
+     * Adds the vector column and its index to the entity's table.
+     *
+     * Applications that keep their schema in migrations do not need this - declaring the field on
+     * the entity is enough for the regular Doctrine tooling to pick the column up.
+     *
+     * @param array{dimensions?: positive-int} $options
+     */
+    public function setup(array $options = []): void
+    {
+        $connection = $this->entityManager->getConnection();
+
+        foreach ($this->vectorPlatform()->getSetupSql($this->tableName(), $this->vectorColumn(), $this->indexName(), $options['dimensions'] ?? 1536, $this->distance) as $sql) {
+            $connection->executeStatement($sql);
+        }
+    }
+
+    public function drop(array $options = []): void
+    {
+        $connection = $this->entityManager->getConnection();
+
+        foreach ($this->vectorPlatform()->getDropSql($this->tableName(), $this->vectorColumn(), $this->indexName()) as $sql) {
+            $connection->executeStatement($sql);
+        }
+    }
+
+    /**
+     * Writes the vectors onto the rows of the entities they belong to.
+     *
+     * This updates the rows directly rather than through the unit of work: indexing walks over far
+     * more entities than a request usually touches, and only ever writes this one column. Entities
+     * already managed by the passed entity manager keep the vector they were loaded with until they
+     * are refreshed.
+     */
+    public function add(VectorDocumentInterface|array $documents): void
+    {
+        if ($documents instanceof VectorDocumentInterface) {
+            $documents = [$documents];
+        }
+
+        if ([] === $documents) {
+            return;
+        }
+
+        $vectorPlatform = $this->vectorPlatform();
+        $sql = \sprintf(
+            'UPDATE %s SET %s = %s WHERE %s = :id',
+            $this->tableName(),
+            $this->vectorColumn(),
+            $vectorPlatform->getVectorParameterSql(':vector'),
+            $this->identifierColumn(),
+        );
+
+        $connection = $this->entityManager->getConnection();
+        $identifierType = $this->identifierType();
+
+        $connection->transactional(static function () use ($documents, $sql, $connection, $vectorPlatform, $identifierType): void {
+            foreach ($documents as $document) {
+                $connection->executeStatement(
+                    $sql,
+                    ['vector' => $vectorPlatform->toDatabaseValue($document->getVector()), 'id' => $document->getId()],
+                    ['id' => $identifierType],
+                );
+            }
+        });
+    }
+
+    /**
+     * Clears the vectors of the given entities, leaving the entities themselves untouched.
+     */
+    public function remove(string|array $ids, array $options = []): void
+    {
+        if (\is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $sql = \sprintf(
+            'UPDATE %s SET %s = NULL WHERE %s = :id',
+            $this->tableName(),
+            $this->vectorColumn(),
+            $this->identifierColumn(),
+        );
+
+        $connection = $this->entityManager->getConnection();
+        $identifierType = $this->identifierType();
+
+        $connection->transactional(static function () use ($ids, $sql, $connection, $identifierType): void {
+            foreach ($ids as $id) {
+                $connection->executeStatement($sql, ['id' => $id], ['id' => $identifierType]);
+            }
+        });
+    }
+
+    /**
+     * Clears the vectors of every entity, leaving the entities themselves untouched.
+     */
+    public function clear(array $options = []): void
+    {
+        $this->entityManager->getConnection()->executeStatement(
+            \sprintf('UPDATE %s SET %s = NULL', $this->tableName(), $this->vectorColumn()),
+        );
+    }
+
+    /**
+     * Counts the entities that carry a vector.
+     */
+    public function count(): int
+    {
+        return max(0, (int) $this->entityManager->getConnection()->fetchOne(
+            \sprintf('SELECT COUNT(*) FROM %s WHERE %s IS NOT NULL', $this->tableName(), $this->vectorColumn()),
+        ));
+    }
+
+    public function supports(string $queryClass): bool
+    {
+        return VectorQuery::class === $queryClass;
+    }
+
+    /**
+     * @param array{limit?: positive-int, maxScore?: float, where?: string, params?: array<string, mixed>, types?: array<string, mixed>} $options
+     *
+     * @return iterable<EntityVectorDocument>
+     */
+    public function query(QueryInterface $query, array $options = []): iterable
+    {
+        if (!$query instanceof VectorQuery) {
+            throw new UnsupportedQueryTypeException($query::class, $this);
+        }
+
+        $vectorPlatform = $this->vectorPlatform();
+        $vectorColumn = $this->vectorColumn();
+        $distanceSql = $vectorPlatform->getDistanceSql($vectorColumn, $vectorPlatform->getVectorParameterSql(':vector'), $this->distance);
+
+        $whereClauses = [\sprintf('%s IS NOT NULL', $vectorColumn)];
+        $params = ['vector' => $vectorPlatform->toDatabaseValue($query->getVector())];
+        $types = [];
+
+        if (isset($options['maxScore'])) {
+            $whereClauses[] = \sprintf('%s <= :maxScore', $distanceSql);
+            $params['maxScore'] = $options['maxScore'];
+        }
+
+        // An arbitrary SQL fragment on the entity's own columns, e.g. to exclude the entity a
+        // "more like this" query started from, or to hide unpublished rows.
+        if (isset($options['where'])) {
+            $whereClauses[] = \sprintf('(%s)', $options['where']);
+            $params += $options['params'] ?? [];
+            $types += $options['types'] ?? [];
+        }
+
+        $sql = \sprintf(
+            'SELECT %s AS id, %s AS vector, %s AS score FROM %s WHERE %s ORDER BY score ASC LIMIT %d',
+            $this->identifierColumn(),
+            $vectorPlatform->getVectorSelectSql($vectorColumn),
+            $distanceSql,
+            $this->tableName(),
+            implode(' AND ', $whereClauses),
+            $options['limit'] ?? 5,
+        );
+
+        $rows = $this->entityManager->getConnection()->executeQuery($sql, $params, $types)->fetchAllAssociative();
+
+        if ([] === $rows) {
+            return [];
+        }
+
+        return $this->hydrate($rows, $vectorPlatform);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rows
+     *
+     * @return list<EntityVectorDocument>
+     */
+    private function hydrate(array $rows, VectorPlatformInterface $vectorPlatform): array
+    {
+        $metadata = $this->classMetadata();
+        $identifierField = $metadata->getSingleIdentifierFieldName();
+        $connection = $this->entityManager->getConnection();
+        $identifierType = $this->identifierType();
+
+        $identifiers = [];
+        foreach ($rows as $row) {
+            $identifiers[] = $connection->convertToPHPValue($row['id'], $identifierType);
+        }
+
+        $entitiesById = [];
+        foreach ($this->entityManager->getRepository($this->entityClass)->findBy([$identifierField => $identifiers]) as $entity) {
+            $entitiesById[$this->identifierAsString($metadata->getIdentifierValues($entity)[$identifierField])] = $entity;
+        }
+
+        $documents = [];
+        foreach ($rows as $row) {
+            $entity = $entitiesById[$this->identifierAsString($row['id'])] ?? null;
+
+            // A row can disappear between the similarity query and the hydration of its entity.
+            if (null === $entity) {
+                continue;
+            }
+
+            $documents[] = new EntityVectorDocument(
+                entity: $entity,
+                id: $this->identifierAsString($row['id']),
+                vector: $vectorPlatform->toVector((string) $row['vector']),
+                score: (float) $row['score'],
+            );
+        }
+
+        return $documents;
+    }
+
+    private function identifierAsString(mixed $identifier): string
+    {
+        if ($identifier instanceof \Stringable || \is_scalar($identifier)) {
+            return (string) $identifier;
+        }
+
+        throw new InvalidArgumentException(\sprintf('Cannot use a "%s" identifier as a document id, it is neither scalar nor stringable.', get_debug_type($identifier)));
+    }
+
+    /**
+     * @return ClassMetadata<object>
+     */
+    private function classMetadata(): ClassMetadata
+    {
+        return $this->entityManager->getClassMetadata($this->entityClass);
+    }
+
+    private function tableName(): string
+    {
+        return $this->entityManager->getConfiguration()->getQuoteStrategy()->getTableName(
+            $this->classMetadata(),
+            $this->entityManager->getConnection()->getDatabasePlatform(),
+        );
+    }
+
+    private function identifierColumn(): string
+    {
+        $metadata = $this->classMetadata();
+
+        return $this->entityManager->getConfiguration()->getQuoteStrategy()->getColumnName(
+            $metadata->getSingleIdentifierFieldName(),
+            $metadata,
+            $this->entityManager->getConnection()->getDatabasePlatform(),
+        );
+    }
+
+    private function identifierType(): string
+    {
+        $metadata = $this->classMetadata();
+
+        return $metadata->getTypeOfField($metadata->getSingleIdentifierFieldName()) ?? 'string';
+    }
+
+    private function vectorColumn(): string
+    {
+        $metadata = $this->classMetadata();
+
+        if (!$metadata->hasField($this->vectorField)) {
+            throw new InvalidArgumentException(\sprintf('Entity "%s" has no field "%s" to store vectors in.', $this->entityClass, $this->vectorField));
+        }
+
+        return $this->entityManager->getConfiguration()->getQuoteStrategy()->getColumnName(
+            $this->vectorField,
+            $metadata,
+            $this->entityManager->getConnection()->getDatabasePlatform(),
+        );
+    }
+
+    private function indexName(): string
+    {
+        return $this->indexName ?? \sprintf('%s_%s_idx', $this->classMetadata()->getTableName(), $this->classMetadata()->getColumnName($this->vectorField));
+    }
+
+    private function vectorPlatform(): VectorPlatformInterface
+    {
+        return $this->resolvedVectorPlatform ??= $this->vectorPlatform
+            ?? VectorPlatformFactory::create($this->entityManager->getConnection()->getDatabasePlatform());
+    }
+}

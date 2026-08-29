@@ -11,6 +11,7 @@ CHANGELOG
  * Add `dimensions` and `similarity` configuration for MongoDB store, used by `ai:store:setup` to create the vector index
  * Add `setup_options` configuration for Pinecone store to set the `dimension`, `metric`, `cloud` and `region` used by `ai:store:setup`
  * Add `setup_options.force_database_creation` configuration for SurrealDB store to create the namespace and database in `ai:store:setup`
+ * Add a `doctrine` store, keeping vectors in a column of the table a Doctrine entity already lives in
 
 0.14
 ----

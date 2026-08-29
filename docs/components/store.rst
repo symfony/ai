@@ -128,6 +128,7 @@ See :doc:`store/bridges` for installation and configuration details for all supp
 * `ChromaDB`_ (requires ``codewithkyrian/chromadb-php``)
 * `ClickHouse`_
 * `Cloudflare Vectorize`_
+* `Doctrine`_ (requires ``doctrine/orm``)
 * `Elasticsearch`_
 * InMemory & Symfony Cache (for development and testing)
 * `ManticoreSearch`_
@@ -398,6 +399,7 @@ does not include documents added moments ago::
 .. _`ChromaDB`: https://www.trychroma.com/
 .. _`ClickHouse`: https://clickhouse.com/
 .. _`Cloudflare Vectorize`: https://developers.cloudflare.com/vectorize/
+.. _`Doctrine`: https://github.com/symfony/ai/tree/main/src/store/src/Bridge/Doctrine
 .. _`Elasticsearch`: https://www.elastic.co/elasticsearch
 .. _`ManticoreSearch`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
