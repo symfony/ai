@@ -1,0 +1,70 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-07T22:00:19Z
+
+what I'm missing here, and what should go to docs, if it still holds: why do we keep the concepts of tools, resources and resource templates over "just exposing commands" via skills. i know it's exactly what we discussed as next step - no worries - we move in iterations here anyways.
+
+but maybe that's a bit why i'm slow with feedback here: i'm still flip flopping in my head - i'm still in on the idea of demoting MCP in favor of skills and a better agent support on CLI level.
+i wonder tho, if we do want to focus more on skill management and think of adopting other - - already existing - symfony commands.
+
+my argument would be: models partially tend already to call some debug commands due to pre/post training - or is that rather my anecdotal experience?
+
+for example, we could have an agent detector in bin/console application or for some debug commands - but this should block this effort here . just ideas :D
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-08T03:22:13Z
+
+@chr-hertel i will be on vacation next week! let us talk afterwards about this.
+
+---------------------------------------------------------------------------
+
+by lunetics at 2026-08-19T09:27:27Z
+
+Looked into this as well, and I land on the same side: skills plus materialized instructions feel like the better direction than MCP here. I tested the generated instruction files against a range of models (Claude, gpt-5.6 via codex, grok, deepseek, kimi, a couple of local qwens): without the files the CLI stays practically invisible to every model, and rewording them took invocation from hit-or-miss to nearly every run. Full run matrix and details are in wachterjohannes/symfony-ai#81.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-23T19:36:16Z
+
+Answering the three parts separately.
+
+**Why tools, resources and resource templates.** Tools carry an input schema generated from the signature plus `@param`. That is what `tools:inspect` prints, and the same reflection drives the argument casting, so a wrong type fails with a message instead of reaching your code. A skill pointing at a bare command has none of that. Resources exist for a different reason, navigation: `symfony-profiler://profile/{token}` returns the collectors that profile actually has, and only then do you read one of them. Without that shape you either push a whole profile into the context window or invent one command per collector.
+
+**Why not adopt `bin/console debug:*`.** Mate never boots the kernel, it parses the compiled `*DebugContainer.xml` and reads the profiler storage from disk. So it still answers when the application does not boot, which is exactly the situation you are debugging in. And the output is shaped for an agent (summary vs data, duplicate queries grouped, secrets redacted, `--format=json|toon`) where `debug:*` prints tables for humans.
+
+**On models calling debug commands on their own.** Not just anecdotal, I see it too. The materialized agent instructions and the skills steer it toward Mate instead, and that part works really well in practice. Bringing the two together stays open: Mate could wrap the debug commands, or the debug commands could point at Mate when it is installed. Both are worth looking at later.
+
+You are right that this rationale is missing from the docs. It goes into the docs pass.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-23T19:59:26Z
+
+One more thing, from a side discussion with @chr-hertel that belongs here.
+
+The fair version of his question is: would we ever have arrived at tools/resources/templates if we had not come through MCP first? Probably not. But the split turns out to earn its keep on its own terms, not just as an MCP leftover:
+
+- It is a concept the models already know, so the interface needs no explaining.
+- It keeps us free on the output side. Format is a property of the call (`--format=json|toon`), not baked into each command.
+- The DX is good, and the surface an LLM has to hold in its head stays small: list, inspect, call, read.
+
+On the debug commands: yes, they boot the kernel, and no, that is not a law of nature. It is on the lab list to test whether Mate can lean on them, or they on Mate, once this lands.
+
+This is the sensible next step, definitely not the last one.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-08-27T12:56:01Z
+
+One known gap, so it does not read as an oversight: the installed skills do not carry
+`mate.invocation`. 11 snippets across 4 of the 6 shipped `SKILL.md` files still say
+`vendor/bin/mate`, so in a containerized project an agent following a skill runs the host binary.
+The interpreter guard catches that whenever the host PHP version differs, but not when it happens
+to match. Tracked in #2445, together with the freshness-check detail that fix has to handle.
+
+Rebased onto current main. The one real conflict was `ServiceTool`: #2406 restructured it for
+multi-kernel contexts while this branch adds a result cap and a hard failure when no container has
+been dumped. Resolved so the cap applies per context, each context carrying its own `services`,
+`count` and `truncated`. That also removes the case where a missing container was reported as a
+missing service.
