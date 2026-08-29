@@ -24,6 +24,12 @@
       "name": "read-only",
       "prompt": "Triage the open PRs and get the easy ones moving.",
       "expected_output": "Produces the triage output only. Does not post comments, apply labels, close, merge or open a review on any PR. May recommend which PRs to act on and offer to hand off to pr-review, but takes no write action."
+    },
+    {
+      "id": 4,
+      "name": "stale-changes-requested-is-actionable",
+      "prompt": "Triage the open PRs, I want to know what is actually waiting on me.",
+      "expected_output": "Does not treat every CHANGES_REQUESTED PR as blocked on the author. GitHub keeps that decision until a new review is submitted, so a PR whose head moved after the last review has already been responded to. Those are surfaced as actionable and ranked high, since the reading is already done, rather than being dropped into the excluded bucket."
     }
   ]
 }

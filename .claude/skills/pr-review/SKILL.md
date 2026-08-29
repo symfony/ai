@@ -77,10 +77,51 @@ What to extract:
 - **The description's template table**, checked against what the diff actually
   does (a `Bug fix? no` / `New feature? no` PR that edits a `CHANGELOG.md` is
   inconsistent).
+- **The description's prose, not only its table.** Symfony's merge workflow
+  embeds the PR body verbatim as the `Discussion` section of the merge commit,
+  so a wrong justification becomes permanent history. When the body explains
+  *why* a change was needed ("this used to emit a warning", "the counter was
+  reset every round"), reproduce that claim before accepting it. Twice it has
+  described behaviour that no longer existed, or never did, while the change
+  itself was fine. The finding is then "the change is right, the stated reason
+  is not", which is a one-line reword, not a code change.
+
+### Re-checking a PR you already reviewed
+
+"Has the author responded?" is not the same query. Four signals, three of which
+are invisible in the issue-comment thread:
+
+```bash
+gh pr view <N> --json headRefOid,commits    # a push leaves no comment at all
+gh api repos/<owner>/<repo>/pulls/<N>/comments   # replies to inline comments live here
+gh api repos/<owner>/<repo>/pulls/<N>/reviews    # another maintainer weighing in
+gh api repos/<owner>/<repo>/issues/<N>/comments  # the thread
+```
+
+Checking only the last one reports "no activity" for a PR whose author pushed a
+fix and replied inline. Compare the head SHA against the one your review was
+pinned to: if it moved, re-verify before saying anything, and diff the two SHAs
+rather than re-reading the whole PR.
+
+Checking only GitHub also misses a fifth signal: **what you already did in this
+session.** Before proposing an action, confirm it is not one you have taken
+already. Suggesting a reminder for a review you posted hours earlier reads as
+not having followed your own thread.
 
 Say explicitly in the review which existing points you are agreeing with,
 extending, or reversing. Reversing another maintainer's call is fine, but do it
 openly and give the reason.
+
+### When the author reports a fix
+
+A reply saying "fixed in <sha>" is a claim, not a result. Re-verify it rather
+than reading the diff and agreeing, especially when the author says they could
+not run the suite locally, or when the fix was suggested by you: a correctly
+applied suggestion can still be wrong in a way neither of you looked at.
+
+Check that the new test actually guards the fix by breaking the fix and watching
+it fail. A test asserting the shape of a string can pass while the behaviour it
+describes is broken.
 
 ## 3. Read around the diff
 
@@ -178,6 +219,41 @@ exceptions instead of `\RuntimeException`, no `empty()`, array shapes on
 params and return types, tests that assert the *consequence* rather than just
 a flag.
 
+### Read the nearest AGENTS.md
+
+`AGENTS.md` exists per component as well as at the root, and the component one
+carries the conventions that actually matter for the code under review. For
+`src/platform` that includes the record-and-replay scaffolding: a PR adding or
+changing a result converter should bring a cassette so `ExamplesReplayTest`
+pins it against the provider's real shapes. That test iterates over the
+cassettes rather than the examples, so a bridge without one is silently
+uncovered and the suite still goes green.
+
+When raising something from there, give the reason rather than citing the file.
+"This is the direction we want bridges to go, and here is why" lands; "AGENTS.md
+requires it" reads as bureaucracy to a contributor who has never opened it.
+
+### Rule out the false positives first
+
+Most things that look wrong in an unfamiliar bridge or component are not. Each
+of these has produced a wrong finding at least once:
+
+- **Artefacts your own commands created.** `composer.lock`, `.phpunit.result.cache`
+  and `vendor/` appear after you run anything. Check `git ls-files <path>` before
+  reporting a file as committed.
+- **`self::assert*` inside a static closure**, where `$this` is not bound. That
+  is required, not a convention breach.
+- **Ordering in a file that is not ordered.** Confirm the surrounding list is
+  alphabetical before calling an insertion misplaced.
+- **A missing option in the bundle config.** Compare against the siblings: if
+  every comparable bridge omits it too, the omission is the convention.
+- **A dependency that looks unused.** Grep the whole package, including traits
+  and factories, before calling it unjustified.
+- **A local install that will not resolve.** A brand-new bridge is not on
+  Packagist yet; `php .github/build-packages.php` is what CI uses to wire the
+  path repositories, and without it `composer install` fails for reasons that
+  have nothing to do with the PR.
+
 ## 6. Report findings in chat
 
 Before drafting anything for GitHub, give the maintainer the deep version:
@@ -256,5 +332,9 @@ knows it is tracked and not their problem.
 - **Leave the tree clean.** Every local experiment gets reverted.
 - **Don't moralise about process.** Label and changelog asks are one bullet,
   not a paragraph.
+- **Say what you did not review.** On a large PR, or a new bridge, separate the
+  structural verdict you can give from the scope decision you cannot. Naming
+  who should weigh in is more useful than an opinion you are not in a position
+  to hold.
 - **Hand off integration checking.** Once the change itself looks right,
   `run-examples` is the phase-two check.
