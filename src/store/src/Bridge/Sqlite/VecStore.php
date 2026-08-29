@@ -15,6 +15,7 @@ use Doctrine\DBAL\Connection;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -106,9 +107,9 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
@@ -235,7 +236,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      * @param array{
      *     maxItems?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -251,10 +252,10 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function queryVector(VectorQuery $query, array $options): iterable
     {
@@ -305,10 +306,10 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function queryText(TextQuery $query, array $options): iterable
     {
@@ -378,10 +379,10 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      * @param array{
      *     maxItems?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
@@ -407,7 +408,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $subOptions,
         ));
 
-        /** @var array<string, array{doc: VectorDocument, score: float}> $scores */
+        /** @var array<string, array{doc: VectorDocumentInterface, score: float}> $scores */
         $scores = [];
 
         foreach ($vectorResults as $rank => $doc) {

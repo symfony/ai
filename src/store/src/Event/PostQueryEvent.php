@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Event;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -24,8 +24,8 @@ use Symfony\Contracts\EventDispatcher\Event;
 final class PostQueryEvent extends Event
 {
     /**
-     * @param iterable<VectorDocument> $documents
-     * @param array<string, mixed>     $options
+     * @param iterable<VectorDocumentInterface> $documents
+     * @param array<string, mixed>              $options
      */
     public function __construct(
         private readonly string $query,
@@ -40,7 +40,7 @@ final class PostQueryEvent extends Event
     }
 
     /**
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     public function getDocuments(): iterable
     {
@@ -48,7 +48,7 @@ final class PostQueryEvent extends Event
     }
 
     /**
-     * @param iterable<VectorDocument> $documents
+     * @param iterable<VectorDocumentInterface> $documents
      */
     public function setDocuments(iterable $documents): void
     {

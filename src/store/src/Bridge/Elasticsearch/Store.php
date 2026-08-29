@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
@@ -75,20 +76,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('DELETE', $this->indexName);
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
-        $documentToIndex = fn (VectorDocument $document): array => [
+        $documentToIndex = fn (VectorDocumentInterface $document): array => [
             'index' => [
                 '_index' => $this->indexName,
                 '_id' => $document->getId(),
             ],
         ];
 
-        $documentToPayload = fn (VectorDocument $document): array => [
+        $documentToPayload = fn (VectorDocumentInterface $document): array => [
             $this->vectorsField => $document->getVector()->getData(),
             'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
         ];
@@ -203,7 +204,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *     '_score': float,
      * } $document
      */
-    private function convertToVectorDocument(array $document): VectorDocument
+    private function convertToVectorDocument(array $document): VectorDocumentInterface
     {
         $id = $document['_id'] ?? throw new InvalidArgumentException('Missing "_id" field in the document data.');
 

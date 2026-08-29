@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Reranker;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 
 /**
  * Reranks a list of retrieved documents using a cross-encoder model.
@@ -23,9 +23,9 @@ interface RerankerInterface
     /**
      * Rerank documents for the given query.
      *
-     * @param list<VectorDocument> $documents
+     * @param list<VectorDocumentInterface> $documents
      *
-     * @return list<VectorDocument> Reranked documents with updated scores, limited to $topK
+     * @return list<VectorDocumentInterface> Reranked documents with updated scores, limited to $topK
      */
     public function rerank(string $query, array $documents, int $topK = 5): array;
 }

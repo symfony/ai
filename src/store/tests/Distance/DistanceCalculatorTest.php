@@ -19,6 +19,7 @@ use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\Component\Uid\Uuid;
 
 final class DistanceCalculatorTest extends TestCase
@@ -321,8 +322,8 @@ final class DistanceCalculatorTest extends TestCase
         $fullResult = $fullCalculator->calculate($documents, $queryVector, 3);
         $batchedResult = $batchedCalculator->calculate($documents, $queryVector, 3);
 
-        $fullIds = array_map(static fn (VectorDocument $doc): string => $doc->getMetadata()['id'], $fullResult);
-        $batchedIds = array_map(static fn (VectorDocument $doc): string => $doc->getMetadata()['id'], $batchedResult);
+        $fullIds = array_map(static fn (VectorDocumentInterface $doc): string => $doc->getMetadata()['id'], $fullResult);
+        $batchedIds = array_map(static fn (VectorDocumentInterface $doc): string => $doc->getMetadata()['id'], $batchedResult);
 
         $this->assertSame($fullIds, $batchedIds);
         $this->assertCount(3, $batchedResult);
@@ -347,7 +348,7 @@ final class DistanceCalculatorTest extends TestCase
 
         $this->assertCount(2, $result);
 
-        $ids = array_map(static fn (VectorDocument $doc): string => $doc->getMetadata()['id'], $result);
+        $ids = array_map(static fn (VectorDocumentInterface $doc): string => $doc->getMetadata()['id'], $result);
         $this->assertSame(['0', '1'], $ids);
     }
 

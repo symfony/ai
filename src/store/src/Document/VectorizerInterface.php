@@ -26,15 +26,15 @@ interface VectorizerInterface
      * @param string|\Stringable|EmbeddableDocumentInterface|array<string|\Stringable>|array<EmbeddableDocumentInterface> $values  The values to vectorize
      * @param array<string, mixed>                                                                                        $options Options to pass to the underlying platform
      *
-     * @return Vector|VectorDocument|array<Vector>|array<VectorDocument>
+     * @return Vector|VectorDocumentInterface|array<Vector>|array<VectorDocumentInterface>
      *
      * @phpstan-return (
      *     $values is string|\Stringable ? Vector : (
-     *         $values is EmbeddableDocumentInterface ? VectorDocument : (
-     *             $values is array<string|\Stringable> ? array<Vector> : array<VectorDocument>
+     *         $values is EmbeddableDocumentInterface ? VectorDocumentInterface : (
+     *             $values is array<string|\Stringable> ? array<Vector> : array<VectorDocumentInterface>
      *         )
      *     )
      * )
      */
-    public function vectorize(string|\Stringable|EmbeddableDocumentInterface|array $values, array $options = []): Vector|VectorDocument|array;
+    public function vectorize(string|\Stringable|EmbeddableDocumentInterface|array $values, array $options = []): Vector|VectorDocumentInterface|array;
 }

@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Distance;
 
 use Symfony\AI\Platform\Vector\VectorInterface;
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -29,10 +29,10 @@ final class DistanceCalculator
     }
 
     /**
-     * @param VectorDocument[] $documents
-     * @param ?int             $maxItems  If maxItems is provided, only the top N results will be returned
+     * @param VectorDocumentInterface[] $documents
+     * @param ?int                      $maxItems  If maxItems is provided, only the top N results will be returned
      *
-     * @return VectorDocument[]
+     * @return VectorDocumentInterface[]
      */
     public function calculate(array $documents, VectorInterface $vector, ?int $maxItems = null): array
     {
@@ -44,16 +44,16 @@ final class DistanceCalculator
     }
 
     /**
-     * @param VectorDocument[] $documents
+     * @param VectorDocumentInterface[] $documents
      *
-     * @return VectorDocument[]
+     * @return VectorDocumentInterface[]
      */
     private function calculateAgainstAll(array $documents, VectorInterface $vector, ?int $maxItems): array
     {
         $strategy = $this->resolveStrategy();
 
         $currentEmbeddings = array_map(
-            static fn (VectorDocument $vectorDocument): array => [
+            static fn (VectorDocumentInterface $vectorDocument): array => [
                 'distance' => $strategy($vectorDocument, $vector),
                 'document' => $vectorDocument,
             ],
@@ -70,7 +70,7 @@ final class DistanceCalculator
         }
 
         return array_map(
-            static fn (array $embedding): VectorDocument => $embedding['document']->withScore($embedding['distance']),
+            static fn (array $embedding): VectorDocumentInterface => $embedding['document']->withScore($embedding['distance']),
             $currentEmbeddings,
         );
     }
@@ -78,21 +78,21 @@ final class DistanceCalculator
     /**
      * Processes documents in chunks of {@see self::$batchSize}, keeping only the top $maxItems candidates after each chunk.
      *
-     * @param VectorDocument[] $documents
-     * @param positive-int     $maxItems
+     * @param VectorDocumentInterface[] $documents
+     * @param positive-int              $maxItems
      *
-     * @return VectorDocument[]
+     * @return VectorDocumentInterface[]
      */
     private function calculateBatched(array $documents, VectorInterface $vector, int $maxItems): array
     {
         $strategy = $this->resolveStrategy();
 
-        /** @var array<int, array{distance: float, document: VectorDocument}> $candidates */
+        /** @var array<int, array{distance: float, document: VectorDocumentInterface}> $candidates */
         $candidates = [];
 
         foreach (array_chunk($documents, $this->batchSize) as $batch) {
             $batchResults = array_map(
-                static fn (VectorDocument $vectorDocument): array => [
+                static fn (VectorDocumentInterface $vectorDocument): array => [
                     'distance' => $strategy($vectorDocument, $vector),
                     'document' => $vectorDocument,
                 ],
@@ -115,13 +115,13 @@ final class DistanceCalculator
         }
 
         return array_map(
-            static fn (array $embedding): VectorDocument => $embedding['document']->withScore($embedding['distance']),
+            static fn (array $embedding): VectorDocumentInterface => $embedding['document']->withScore($embedding['distance']),
             $candidates,
         );
     }
 
     /**
-     * @return \Closure(VectorDocument, VectorInterface): float
+     * @return \Closure(VectorDocumentInterface, VectorInterface): float
      */
     private function resolveStrategy(): \Closure
     {
@@ -134,12 +134,12 @@ final class DistanceCalculator
         };
     }
 
-    private function cosineDistance(VectorDocument $embedding, VectorInterface $against): float
+    private function cosineDistance(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
         return 1 - $this->cosineSimilarity($embedding, $against);
     }
 
-    private function cosineSimilarity(VectorDocument $embedding, VectorInterface $against): float
+    private function cosineSimilarity(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
         $currentEmbeddingVectors = $embedding->getVector()->getData();
 
@@ -162,14 +162,14 @@ final class DistanceCalculator
         return fdiv($dotProduct, $currentEmbeddingLength * $againstLength);
     }
 
-    private function angularDistance(VectorDocument $embedding, VectorInterface $against): float
+    private function angularDistance(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
         $cosineSimilarity = $this->cosineSimilarity($embedding, $against);
 
         return fdiv(acos($cosineSimilarity), \M_PI);
     }
 
-    private function euclideanDistance(VectorDocument $embedding, VectorInterface $against): float
+    private function euclideanDistance(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
         return sqrt(array_sum(array_map(
             static fn (float $a, float $b): float => ($a - $b) ** 2,
@@ -178,7 +178,7 @@ final class DistanceCalculator
         )));
     }
 
-    private function manhattanDistance(VectorDocument $embedding, VectorInterface $against): float
+    private function manhattanDistance(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
         return array_sum(array_map(
             static fn (float $a, float $b): float => abs($a - $b),
@@ -187,7 +187,7 @@ final class DistanceCalculator
         ));
     }
 
-    private function chebyshevDistance(VectorDocument $embedding, VectorInterface $against): float
+    private function chebyshevDistance(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
         $embeddingsAsPower = array_map(
             static fn (float $currentValue, float $againstValue): float => abs($currentValue - $againstValue),
