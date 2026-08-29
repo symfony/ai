@@ -41,6 +41,11 @@ Store
    options (`chunk_size`, `platform_options`, and whatever else the caller passed). Loaders ignoring
    unknown options - which the interface asks for - are unaffected.
 
+ * `Query\VectorQuery` and `Query\HybridQuery` accept and return `Platform\Vector\VectorInterface`
+   instead of the final `Platform\Vector\Vector` class. Passing a `Vector` is unchanged. This is what
+   makes a "more like this" query possible without a cast: the vector of a document returned by a store
+   can now be fed straight back into a query.
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 
