@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `Document\VectorDocumentFactoryInterface`, letting an embeddable document decide which vector document it turns into
+
 0.14
 ----
 
