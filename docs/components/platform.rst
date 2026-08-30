@@ -605,6 +605,8 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallStart` -- signals the start of a tool call
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolInputDelta` -- a chunk of tool call input data
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete` -- signals all tool calls are complete and ready for execution
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\WebSearchComplete` --
+  signals provider-hosted web search output is ready for replay
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\MetadataDelta` -- metadata associated with the stream
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ChoiceDelta` -- a choice delta (e.g. multiple completions)
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` -- a chunk of binary data

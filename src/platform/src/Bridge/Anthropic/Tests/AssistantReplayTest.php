@@ -16,12 +16,15 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * End-to-end replay test: feed a fixture provider response into ResultConverter,
@@ -52,6 +55,133 @@ final class AssistantReplayTest extends TestCase
         $payload = AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), $bag);
 
         $this->assertEquals($expectedReplayPayload, $payload);
+    }
+
+    public function testRejectsWebSearchCallerReferencingUnsupportedCodeExecution()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse(['content' => [[
+            'type' => 'server_tool_use',
+            'id' => 'srvtoolu_web_1',
+            'name' => 'web_search',
+            'input' => ['query' => 'Symfony AI'],
+            'caller' => ['type' => 'code_execution_20260120', 'tool_id' => 'srvtoolu_code_1'],
+        ]]]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('surrounding code execution blocks are not supported');
+
+        AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), new MessageBag(
+            Message::ofAssistant($result),
+        ));
+    }
+
+    public function testStreamedWebSearchRoundTripPreservesAssistantBlockOrder()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $result = (new ResultConverter())->convert(new InMemoryRawResult(dataStream: [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'thinking', 'thinking' => '']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'thinking_delta', 'thinking' => 'I should search the web.']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'signature_delta', 'signature' => 'sig_web']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'content_block_start', 'index' => 1, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_web_1',
+                'name' => 'web_search',
+                'input' => [],
+                'caller' => ['type' => 'direct'],
+            ]],
+            ['type' => 'content_block_delta', 'index' => 1, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"query":"Symfony AI"}']],
+            ['type' => 'content_block_stop', 'index' => 1],
+            ['type' => 'content_block_start', 'index' => 2, 'content_block' => [
+                'type' => 'web_search_tool_result',
+                'tool_use_id' => 'srvtoolu_web_1',
+                'content' => [],
+                'caller' => ['type' => 'direct'],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 2],
+            ['type' => 'content_block_start', 'index' => 3, 'content_block' => ['type' => 'text', 'text' => '']],
+            ['type' => 'content_block_delta', 'index' => 3, 'delta' => ['type' => 'text_delta', 'text' => 'Symfony AI integrates AI capabilities.']],
+            ['type' => 'content_block_stop', 'index' => 3],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn']],
+            ['type' => 'message_stop'],
+        ], object: $response), ['stream' => true]);
+
+        $payload = AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), new MessageBag(
+            Message::ofUser('What is Symfony AI?'),
+            Message::ofAssistant($result),
+            Message::ofUser('Tell me more.'),
+        ));
+
+        $this->assertEquals([
+            'messages' => [
+                ['role' => 'user', 'content' => 'What is Symfony AI?'],
+                [
+                    'role' => 'assistant',
+                    'content' => [
+                        ['type' => 'thinking', 'thinking' => 'I should search the web.', 'signature' => 'sig_web'],
+                        [
+                            'type' => 'server_tool_use',
+                            'name' => 'web_search',
+                            'input' => ['query' => 'Symfony AI'],
+                            'id' => 'srvtoolu_web_1',
+                            'caller' => ['type' => 'direct'],
+                        ],
+                        [
+                            'type' => 'web_search_tool_result',
+                            'tool_use_id' => 'srvtoolu_web_1',
+                            'content' => [],
+                            'caller' => ['type' => 'direct'],
+                        ],
+                        ['type' => 'text', 'text' => 'Symfony AI integrates AI capabilities.'],
+                    ],
+                ],
+                ['role' => 'user', 'content' => 'Tell me more.'],
+            ],
+            'model' => 'claude-sonnet-4-0',
+        ], $payload);
+    }
+
+    public function testStreamedPausedWebSearchRoundTripPreservesServerToolBlock()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $result = (new ResultConverter())->convert(new InMemoryRawResult(dataStream: [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_web_1',
+                'name' => 'web_search',
+                'input' => [],
+            ]],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"query":"Symfony AI"}']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'pause_turn']],
+            ['type' => 'message_stop'],
+        ], object: $response), ['stream' => true]);
+
+        $payload = AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), new MessageBag(
+            Message::ofUser('What is Symfony AI?'),
+            Message::ofAssistant($result),
+        ));
+
+        $this->assertEquals([
+            'messages' => [
+                ['role' => 'user', 'content' => 'What is Symfony AI?'],
+                ['role' => 'assistant', 'content' => [[
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_web_1',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'Symfony AI'],
+                ]]],
+            ],
+            'model' => 'claude-sonnet-4-0',
+        ], $payload);
     }
 
     /**
@@ -179,6 +309,84 @@ final class AssistantReplayTest extends TestCase
                             ],
                         ],
                     ],
+                ],
+                'model' => 'claude-sonnet-4-0',
+            ],
+        ];
+
+        yield 'thinking, web search and text replay in provider order' => [
+            [
+                'content' => [
+                    [
+                        'type' => 'thinking',
+                        'thinking' => 'I should search the web.',
+                        'signature' => 'sig_web',
+                    ],
+                    [
+                        'type' => 'server_tool_use',
+                        'id' => 'srvtoolu_web_1',
+                        'name' => 'web_search',
+                        'input' => ['query' => 'Symfony AI'],
+                        'caller' => ['type' => 'direct'],
+                    ],
+                    [
+                        'type' => 'web_search_tool_result',
+                        'tool_use_id' => 'srvtoolu_web_1',
+                        'content' => [[
+                            'type' => 'web_search_result',
+                            'url' => 'https://symfony.com/ai',
+                            'title' => 'Symfony AI',
+                            'snippet' => 'Symfony AI integrates AI capabilities.',
+                            'favicon' => 'https://symfony.com/favicon.ico',
+                            'encrypted_content' => 'encrypted-result',
+                            'page_age' => 'August 30, 2026',
+                        ]],
+                        'caller' => ['type' => 'direct'],
+                    ],
+                    ['type' => 'text', 'text' => 'Symfony AI integrates AI capabilities.'],
+                ],
+            ],
+            static fn ($result) => new MessageBag(
+                Message::ofUser('What is Symfony AI?'),
+                Message::ofAssistant($result),
+                Message::ofUser('Tell me more.'),
+            ),
+            [
+                'messages' => [
+                    ['role' => 'user', 'content' => 'What is Symfony AI?'],
+                    [
+                        'role' => 'assistant',
+                        'content' => [
+                            [
+                                'type' => 'thinking',
+                                'thinking' => 'I should search the web.',
+                                'signature' => 'sig_web',
+                            ],
+                            [
+                                'type' => 'server_tool_use',
+                                'name' => 'web_search',
+                                'input' => ['query' => 'Symfony AI'],
+                                'id' => 'srvtoolu_web_1',
+                                'caller' => ['type' => 'direct'],
+                            ],
+                            [
+                                'type' => 'web_search_tool_result',
+                                'tool_use_id' => 'srvtoolu_web_1',
+                                'content' => [[
+                                    'type' => 'web_search_result',
+                                    'url' => 'https://symfony.com/ai',
+                                    'title' => 'Symfony AI',
+                                    'snippet' => 'Symfony AI integrates AI capabilities.',
+                                    'favicon' => 'https://symfony.com/favicon.ico',
+                                    'encrypted_content' => 'encrypted-result',
+                                    'page_age' => 'August 30, 2026',
+                                ]],
+                                'caller' => ['type' => 'direct'],
+                            ],
+                            ['type' => 'text', 'text' => 'Symfony AI integrates AI capabilities.'],
+                        ],
+                    ],
+                    ['role' => 'user', 'content' => 'Tell me more.'],
                 ],
                 'model' => 'claude-sonnet-4-0',
             ],
