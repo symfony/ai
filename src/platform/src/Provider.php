@@ -118,13 +118,13 @@ final class Provider implements ProviderInterface
 
         if (null !== $this->eventDispatcher) {
             $deferredResult->onConvert(function (ResultInterface $result) use ($model, $options, $input): ResultInterface {
-                $event = new ResultConvertedEvent($model, $result, $options, $input);
+                $event = new ResultConvertedEvent($model, $result, $options, $input, $this);
                 $this->eventDispatcher->dispatch($event);
 
                 return $event->getResult();
             });
             $deferredResult->onError(function (\Throwable $error) use ($model, $options, $input): void {
-                $this->eventDispatcher->dispatch(new ResultErrorEvent($model, $error, $options, $input));
+                $this->eventDispatcher->dispatch(new ResultErrorEvent($model, $error, $options, $input, $this));
             });
         }
 

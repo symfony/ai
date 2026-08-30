@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Event;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -34,7 +35,13 @@ final class ResultErrorEvent extends Event
         private readonly \Throwable $error,
         private readonly array $options = [],
         private readonly array|string|object $input = [],
+        private readonly ?ProviderInterface $provider = null,
     ) {
+    }
+
+    public function getProvider(): ?ProviderInterface
+    {
+        return $this->provider;
     }
 
     public function getModel(): Model
