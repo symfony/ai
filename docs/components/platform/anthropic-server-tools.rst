@@ -38,6 +38,17 @@ The individual parts can be any `ResultInterface` instances, but in practice the
 - :class:`Symfony\\AI\\Platform\\Result\\TextResult` - Normal text response.
 - :class:`Symfony\\AI\\Platform\\Result\\ExecutableCodeResult` - The code the model intended to run.
 - :class:`Symfony\\AI\\Platform\\Result\\CodeExecutionResult` - The output of the executed code (stdout/stderr).
+- :class:`Symfony\\AI\\Platform\\Result\\WebSearchResult` -
+  A web search performed by the model.
+
+Passing the result to ``Message::ofAssistant()`` preserves direct web search
+blocks when that assistant turn is sent back to Anthropic, for buffered and
+streamed results.
+
+.. note::
+
+    Web searches initiated from Anthropic code execution cannot be replayed
+    because the surrounding code execution blocks are not supported yet.
 
 Example
 -------

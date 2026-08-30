@@ -18,10 +18,12 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * Asserts the shape of the request sent back on turn 2, which normalizing each message in
@@ -46,6 +48,44 @@ final class AssistantReplayTest extends TestCase
         $payload = OpenResponsesContract::create()->createRequestPayload(new ResponsesModel('gpt-5'), $bag);
 
         $this->assertEquals($expectedReplayPayload, $payload);
+    }
+
+    public function testStreamedWebSearchRoundTripPreservesAssistantItemOrder()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+
+        $result = (new ResultConverter())->convert(new InMemoryRawResult(dataStream: [
+            [
+                'type' => 'response.output_item.done',
+                'item' => [
+                    'type' => 'web_search_call',
+                    'id' => 'ws_1',
+                    'status' => 'completed',
+                    'action' => ['type' => 'open_page', 'url' => 'https://symfony.com/ai'],
+                ],
+            ],
+            ['type' => 'response.output_text.delta', 'delta' => 'Symfony AI integrates AI capabilities.'],
+            ['type' => 'response.completed', 'response' => ['output' => []]],
+        ], object: $response), ['stream' => true]);
+
+        $payload = OpenResponsesContract::create()->createRequestPayload(new ResponsesModel('gpt-5'), new MessageBag(
+            Message::ofUser('What is Symfony AI?'),
+            Message::ofAssistant($result),
+            Message::ofUser('Tell me more.'),
+        ));
+
+        $this->assertEquals(['input' => [
+            ['role' => 'user', 'content' => 'What is Symfony AI?'],
+            [
+                'type' => 'web_search_call',
+                'action' => ['type' => 'open_page', 'url' => 'https://symfony.com/ai'],
+                'id' => 'ws_1',
+                'status' => 'completed',
+            ],
+            ['role' => 'assistant', 'type' => 'message', 'content' => 'Symfony AI integrates AI capabilities.'],
+            ['role' => 'user', 'content' => 'Tell me more.'],
+        ]], $payload);
     }
 
     /**
@@ -105,6 +145,43 @@ final class AssistantReplayTest extends TestCase
                 $reasoningItem,
                 ['role' => 'assistant', 'type' => 'message', 'content' => 'It is 10:00 AM.'],
                 ['role' => 'user', 'content' => 'And in Paris?'],
+            ]],
+        ];
+
+        yield 'reasoning, web search and text replay in provider order' => [
+            [
+                'output' => [
+                    $reasoningItem,
+                    [
+                        'type' => 'web_search_call',
+                        'id' => 'ws_1',
+                        'status' => 'completed',
+                        'action' => ['type' => 'open_page', 'url' => 'https://symfony.com/ai'],
+                    ],
+                    [
+                        'type' => 'message',
+                        'id' => 'msg_1',
+                        'role' => 'assistant',
+                        'content' => [['type' => 'output_text', 'text' => 'Symfony AI integrates AI capabilities.']],
+                    ],
+                ],
+            ],
+            static fn ($result) => new MessageBag(
+                Message::ofUser('What is Symfony AI?'),
+                Message::ofAssistant($result),
+                Message::ofUser('Tell me more.'),
+            ),
+            ['input' => [
+                ['role' => 'user', 'content' => 'What is Symfony AI?'],
+                $reasoningItem,
+                [
+                    'type' => 'web_search_call',
+                    'action' => ['type' => 'open_page', 'url' => 'https://symfony.com/ai'],
+                    'id' => 'ws_1',
+                    'status' => 'completed',
+                ],
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'Symfony AI integrates AI capabilities.'],
+                ['role' => 'user', 'content' => 'Tell me more.'],
             ]],
         ];
 

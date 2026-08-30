@@ -37,11 +37,13 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
@@ -130,7 +132,22 @@ class ResultConverter implements ResultConverterInterface
                     $results[] = new ExecutableCodeResult($content['input']['command'], 'bash', $content['id']);
                 } elseif ('text_editor_code_execution' === $content['name']) {
                     $results[] = new ExecutableCodeResult($content['input']['file_text'] ?? $content['input']['command'], null, $content['id']);
+                } elseif ('web_search' === $content['name']) {
+                    $query = \is_string($content['input']['query'] ?? null) ? $content['input']['query'] : null;
+                    $id = \is_string($content['id'] ?? null) ? $content['id'] : null;
+                    $results[] = new WebSearchResult(
+                        $query,
+                        $id,
+                        queries: null === $query ? [] : [$query],
+                        signature: json_encode($content, \JSON_THROW_ON_ERROR),
+                    );
                 }
+            } elseif ('web_search_tool_result' === $content['type']) {
+                $id = \is_string($content['tool_use_id'] ?? null) ? $content['tool_use_id'] : null;
+                $results[] = new WebSearchResult(
+                    id: $id,
+                    signature: json_encode($content, \JSON_THROW_ON_ERROR),
+                );
             } elseif ('bash_code_execution_tool_result' === $content['type']) {
                 $results[] = new CodeExecutionResult(
                     0 === ($content['content']['return_code'] ?? 0),
@@ -164,6 +181,9 @@ class ResultConverter implements ResultConverterInterface
         $toolCalls = [];
         $currentToolCall = null;
         $currentToolCallJson = '';
+        /** @var array{id: string|null, block: array<string, mixed>}|null $currentWebSearch */
+        $currentWebSearch = null;
+        $currentWebSearchJson = '';
         $currentThinking = null;
         $currentThinkingSignature = null;
         $inMessage = false;
@@ -255,6 +275,32 @@ class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
+            // Handle provider-hosted web search content block start
+            if ('content_block_start' === $type
+                && 'server_tool_use' === ($data['content_block']['type'] ?? null)
+                && 'web_search' === ($data['content_block']['name'] ?? null)
+            ) {
+                $id = \is_string($data['content_block']['id'] ?? null) ? $data['content_block']['id'] : null;
+                $currentWebSearch = [
+                    'id' => $id,
+                    'block' => $data['content_block'],
+                ];
+                $currentWebSearchJson = '';
+                continue;
+            }
+
+            if ('content_block_start' === $type
+                && 'web_search_tool_result' === ($data['content_block']['type'] ?? null)
+            ) {
+                $id = \is_string($data['content_block']['tool_use_id'] ?? null) ? $data['content_block']['tool_use_id'] : null;
+
+                yield new WebSearchComplete(new WebSearchResult(
+                    id: $id,
+                    signature: json_encode($data['content_block'], \JSON_THROW_ON_ERROR),
+                ));
+                continue;
+            }
+
             // Handle tool_use content block start
             if ('content_block_start' === $type
                 && isset($data['content_block']['type'])
@@ -275,9 +321,11 @@ class ResultConverter implements ResultConverterInterface
                 && 'input_json_delta' === $data['delta']['type']
             ) {
                 $partialJson = $data['delta']['partial_json'] ?? '';
-                $currentToolCallJson .= $partialJson;
                 if (null !== $currentToolCall) {
+                    $currentToolCallJson .= $partialJson;
                     yield new ToolInputDelta($currentToolCall['id'], $currentToolCall['name'], $partialJson);
+                } elseif (null !== $currentWebSearch) {
+                    $currentWebSearchJson .= $partialJson;
                 }
                 continue;
             }
@@ -307,6 +355,29 @@ class ResultConverter implements ResultConverterInterface
                     );
                     $currentToolCall = null;
                     $currentToolCallJson = '';
+                    continue;
+                }
+
+                if (null !== $currentWebSearch) {
+                    $input = \is_array($currentWebSearch['block']['input'] ?? null) ? $currentWebSearch['block']['input'] : [];
+                    if ('' !== $currentWebSearchJson) {
+                        try {
+                            $input = json_decode($currentWebSearchJson, true, flags: \JSON_THROW_ON_ERROR);
+                        } catch (\JsonException $e) {
+                            throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "web_search" tool: "%s"', $e->getMessage()), 0, $e);
+                        }
+                    }
+                    $query = \is_string($input['query'] ?? null) ? $input['query'] : null;
+                    $currentWebSearch['block']['input'] = $input;
+
+                    yield new WebSearchComplete(new WebSearchResult(
+                        $query,
+                        $currentWebSearch['id'],
+                        queries: null === $query ? [] : [$query],
+                        signature: json_encode($currentWebSearch['block'], \JSON_THROW_ON_ERROR),
+                    ));
+                    $currentWebSearch = null;
+                    $currentWebSearchJson = '';
                     continue;
                 }
             }

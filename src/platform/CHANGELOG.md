@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add provider-hosted web searches to buffered and streamed assistant replay through `WebSearchComplete`
+
 0.13
 ----
 

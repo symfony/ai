@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Preserve direct hosted web search blocks when replaying buffered and streamed assistant turns
+
 0.12
 ----
 

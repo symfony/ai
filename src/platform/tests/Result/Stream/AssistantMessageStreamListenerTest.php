@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\AssistantMessageStreamListener;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
@@ -27,9 +28,11 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\WebSearchResult;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -130,6 +133,19 @@ final class AssistantMessageStreamListenerTest extends TestCase
         yield 'unannounced tool calls are appended rather than dropped' => [
             [new TextDelta('Checking.'), new ToolCallComplete([$toolCall])],
             [new Text('Checking.'), $toolCall],
+        ];
+
+        yield 'completed web searches keep their replay signature' => [
+            [
+                new WebSearchComplete(new WebSearchResult(
+                    'Symfony AI',
+                    'ws_1',
+                    'completed',
+                    ['Symfony AI'],
+                    'provider-signature',
+                )),
+            ],
+            [new WebSearch('Symfony AI', 'ws_1', 'completed', ['Symfony AI'], 'provider-signature')],
         ];
 
         yield 'a mix of announced and unannounced calls keeps both' => [

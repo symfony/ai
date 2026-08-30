@@ -13,11 +13,13 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 
@@ -32,15 +34,16 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
      * @return array{
      *     role: 'assistant',
      *     content: string|list<array{
-     *         type: 'thinking'|'text'|'tool_use'|'server_tool_use'|'bash_code_execution_tool_result'|'text_editor_code_execution_tool_result',
+     *         type: 'thinking'|'text'|'tool_use'|'server_tool_use'|'web_search_tool_result'|'bash_code_execution_tool_result'|'text_editor_code_execution_tool_result',
      *         id?: string,
      *         tool_use_id?: string,
      *         name?: string,
      *         input?: array<string, mixed>,
-     *         content?: array<string, mixed>,
+     *         content?: array<mixed>,
      *         text?: string,
      *         thinking?: string,
-     *         signature?: string
+     *         signature?: string,
+     *         ...
      *     }>
      * }
      */
@@ -89,6 +92,16 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
                     'name' => $part->getName(),
                     'input' => [] !== $part->getArguments() ? $part->getArguments() : new \stdClass(),
                 ];
+                continue;
+            }
+
+            if ($part instanceof WebSearch) {
+                $webSearchBlock = self::toWebSearchBlock($part);
+
+                if (null !== $webSearchBlock) {
+                    $blocks[] = $webSearchBlock;
+                }
+
                 continue;
             }
 
@@ -141,5 +154,43 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Claude;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function toWebSearchBlock(WebSearch $webSearch): ?array
+    {
+        $signature = $webSearch->getSignature();
+
+        if (null === $signature) {
+            return null;
+        }
+
+        try {
+            $block = json_decode($signature, true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        if (!\is_array($block)) {
+            return null;
+        }
+
+        if (\is_string($block['caller']['tool_id'] ?? null)) {
+            throw new InvalidArgumentException('Cannot replay an Anthropic web search initiated by code execution because its surrounding code execution blocks are not supported.');
+        }
+
+        if ('server_tool_use' === ($block['type'] ?? null) && 'web_search' === ($block['name'] ?? null)) {
+            /* @var array<string, mixed> $block */
+            return $block;
+        }
+
+        if ('web_search_tool_result' === ($block['type'] ?? null)) {
+            /* @var array<string, mixed> $block */
+            return $block;
+        }
+
+        return null;
     }
 }

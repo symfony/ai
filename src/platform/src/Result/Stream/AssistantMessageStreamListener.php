@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -23,6 +24,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 
 /**
  * Rebuilds the assistant message a provider would have returned unstreamed, from its deltas.
@@ -123,6 +125,20 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
 
         if ($delta instanceof ThinkingSignature) {
             $this->applySignature($delta->getSignature());
+
+            return;
+        }
+
+        if ($delta instanceof WebSearchComplete) {
+            $webSearch = $delta->getWebSearch();
+            $this->content[] = new WebSearch(
+                $webSearch->getQuery(),
+                $webSearch->getId(),
+                $webSearch->getStatus(),
+                $webSearch->getQueries(),
+                $webSearch->getSignature(),
+            );
+            $this->openThinking = null;
 
             return;
         }
