@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -37,14 +38,16 @@ final class SpeechAgent implements AgentInterface
 
     public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        return new Execution(function () use ($input, $options): \Generator {
+        $cancellation = new Cancellation();
+
+        return new Execution(function () use ($input, $options, $cancellation): \Generator {
             $messages = InputNormalizer::toMessageBag($input);
 
             if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
-                $messages = $this->transcribe($messages, $options);
+                $messages = $this->transcribe($messages, $options, $cancellation);
             }
 
-            $result = $this->agent->call($messages, $options)->getResult();
+            $result = $cancellation->forward($this->agent->call($messages, $options))->getResult();
 
             if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
                 yield new ResultUpdate($result);
@@ -57,11 +60,12 @@ final class SpeechAgent implements AgentInterface
                 $result->getContent(),
                 $this->configuration->getTextToSpeechOptions(),
             );
+            $cancellation->activate($speechResult->getRawResult());
 
             $speechResult->getMetadata()->add('text', $result->getContent());
 
             yield new ResultUpdate($speechResult->getResult());
-        });
+        }, cancellation: $cancellation);
     }
 
     public function getName(): string
@@ -72,7 +76,7 @@ final class SpeechAgent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    private function transcribe(MessageBag $messages, array $options): MessageBag
+    private function transcribe(MessageBag $messages, array $options, Cancellation $cancellation): MessageBag
     {
         try {
             $latestUserMessage = $messages->latestAs(Role::User);
@@ -98,6 +102,7 @@ final class SpeechAgent implements AgentInterface
                 ...$options,
             ],
         );
+        $cancellation->activate($result->getRawResult());
 
         $text = new Text($result->asText());
         $messages->replace($latestUserMessage->getId(), Message::ofUser($text));

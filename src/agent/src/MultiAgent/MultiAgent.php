@@ -17,6 +17,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\InputNormalizer;
@@ -67,7 +68,9 @@ final class MultiAgent implements AgentInterface
      */
     public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        return new Execution(function () use ($input, $options): \Generator {
+        $cancellation = new Cancellation();
+
+        return new Execution(function () use ($input, $options, $cancellation): \Generator {
             $messages = InputNormalizer::toMessageBag($input);
             $userMessages = $messages->withoutSystemMessage();
 
@@ -85,14 +88,14 @@ final class MultiAgent implements AgentInterface
 
             $agentSelectionPrompt = $this->buildAgentSelectionPrompt($userText);
 
-            $decision = $this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
+            $decision = $cancellation->forward($this->orchestrator->call(new MessageBag(Message::ofUser($agentSelectionPrompt)), array_merge($options, [
                 'response_format' => Decision::class,
-            ]))->getContent();
+            ])))->getContent();
 
             if (!$decision instanceof Decision) {
                 $this->logger->debug('MultiAgent: Failed to get decision, falling back to orchestrator');
 
-                yield new ResultUpdate($this->orchestrator->call($messages, $options)->getResult());
+                yield new ResultUpdate($cancellation->forward($this->orchestrator->call($messages, $options))->getResult());
 
                 return;
             }
@@ -105,7 +108,7 @@ final class MultiAgent implements AgentInterface
             if (!$decision->hasAgent()) {
                 $this->logger->debug('MultiAgent: Using fallback agent', ['reason' => 'no_agent_selected']);
 
-                yield new ResultUpdate($this->fallback->call($messages, $options)->getResult());
+                yield new ResultUpdate($cancellation->forward($this->fallback->call($messages, $options))->getResult());
 
                 return;
             }
@@ -125,7 +128,7 @@ final class MultiAgent implements AgentInterface
                     'reason' => 'agent_not_found',
                 ]);
 
-                yield new ResultUpdate($this->fallback->call($messages, $options)->getResult());
+                yield new ResultUpdate($cancellation->forward($this->fallback->call($messages, $options))->getResult());
 
                 return;
             }
@@ -133,8 +136,8 @@ final class MultiAgent implements AgentInterface
             $this->logger->debug('MultiAgent: Delegating to agent', ['agent_name' => $decision->getAgentName()]);
 
             // Call the selected agent with the original user question
-            yield new ResultUpdate($targetAgent->call(new MessageBag($userMessage), $options)->getResult());
-        });
+            yield new ResultUpdate($cancellation->forward($targetAgent->call(new MessageBag($userMessage), $options))->getResult());
+        }, cancellation: $cancellation);
     }
 
     private function buildAgentSelectionPrompt(string $userQuestion): string
