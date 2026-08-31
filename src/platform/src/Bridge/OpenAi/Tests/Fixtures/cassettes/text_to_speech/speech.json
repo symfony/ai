@@ -4,7 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/audio/speech",
-                "signature": "16f1a46beca1270822d2f5e6d9af8e03",
+                "signature": "ec4a86b0d7257d12c66466cfffc42025",
+                "signature_v2": "8ca5c58b3717bdf58d5e347121f4702c",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -13,7 +14,11 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"model\":\"gpt-4o-mini-tts\",\"input\":\"Today is a wonderful day to build something people love!\",\"voice\":\"coral\",\"response_format\":\"mp3\"}"
+                "body": {
+                    "voice": "coral",
+                    "model": "gpt-4o-mini-tts",
+                    "input": "Today is a wonderful day to build something people love!"
+                }
             },
             "response": {
                 "status": 200,

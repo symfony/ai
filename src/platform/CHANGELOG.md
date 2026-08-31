@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Verify a replayed HTTP cassette request signature before serving the recorded response
+
 0.13
 ----
 

@@ -19,6 +19,8 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -37,11 +39,12 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
 
         $result = $platform->invoke(
             'claude-sonnet-4-5-20250929',
-            new MessageBag(Message::ofUser('What time is it right now?')),
+            new MessageBag(Message::forSystem('You are a helpful assistant.'), Message::ofUser('What time is it right now?')),
             [
                 'stream' => true,
                 'max_tokens' => 4000,
                 'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+                'tools' => [new Tool(new ExecutionReference(self::class), 'clock', 'Provides the current date and time.')],
             ],
         )->getResult();
 
