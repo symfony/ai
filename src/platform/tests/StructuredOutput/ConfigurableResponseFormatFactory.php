@@ -13,13 +13,13 @@ namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 
-final readonly class ConfigurableResponseFormatFactory implements ResponseFormatFactoryInterface
+final class ConfigurableResponseFormatFactory implements ResponseFormatFactoryInterface
 {
     /**
      * @param array<mixed> $responseFormat
      */
     public function __construct(
-        private array $responseFormat = [],
+        private readonly array $responseFormat = [],
     ) {
     }
 

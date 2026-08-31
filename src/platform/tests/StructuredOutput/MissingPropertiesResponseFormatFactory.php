@@ -18,7 +18,7 @@ use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
  * only the properties still holding null are described, so two instances of the same class with
  * different values filled in produce different schemas.
  */
-final readonly class MissingPropertiesResponseFormatFactory implements ResponseFormatFactoryInterface
+final class MissingPropertiesResponseFormatFactory implements ResponseFormatFactoryInterface
 {
     public function create(string|object $response): array
     {
