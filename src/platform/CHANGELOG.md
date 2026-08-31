@@ -1,10 +1,14 @@
 CHANGELOG
 =========
 
-0.13
+0.14
 ----
 
  * Add `Capability::REALTIME_SESSION` and `Result\RealtimeSessionResult` for long-lived realtime sessions (ephemeral client credentials for WebRTC/WebSocket voice agents)
+
+0.13
+----
+
  * [BC BREAK] Add `ListenerInterface::onError()` and `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws, so a listener can finalize on a failed stream where `onComplete()` never fires; `AbstractStreamListener` provides a no-op default
  * Add `Test\Replay\CassetteHttpClient` and `Test\Replay\HttpCassette` to record real HTTP responses (when the cassette file is missing) and replay them offline through the real bridge pipeline (Contract, `ModelClient`, `ResultConverter`) in tests, including raw Server-Sent Event streams; binary response bodies (images, audio, ...) are elided to a metadata stub (content type, byte size) and replayed as a small placeholder body
  * `TemplateRendererListener` now renders templates without `template_vars`; consequently, an expression referencing an absent variable now throws instead of reaching the normalizer as an empty object
