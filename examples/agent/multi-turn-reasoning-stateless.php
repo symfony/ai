@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\Bridge\Clock\Clock;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
@@ -22,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // only if the whole assistant turn comes back, carried as the signature of a Thinking part.
 $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
-$toolbox = new Toolbox([new Clock()], logger: logger());
+$toolbox = new Toolbox([clock_tool()], logger: logger());
 $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 
 $options = [

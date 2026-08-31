@@ -25,6 +25,20 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class CassetteHttpClientTest extends TestCase
 {
+    private const CONTENT_TYPE_HEADER = 'content-type';
+    private const GET_METHOD = 'GET';
+    private const INPUT_KEY = 'input';
+    private const INPUT_VALUE = 'Hello';
+    private const JSON_CONTENT_TYPE = 'application/json';
+    private const QUERY_MODEL_KEY = 'model';
+    private const TEMPERATURE_KEY = 'temperature';
+    private const RECORDED_MODEL = 'recorded-model';
+    private const REPLAYED_MODEL = 'replayed-model';
+    private const REPLAY_RESPONSE = '{"ok":true}';
+    private const RECORDED_TEMPERATURE = 1.0;
+    private const REPLAYED_TEMPERATURE = 1;
+    private const REQUEST_URL = 'https://example.com/chat';
+
     private string $path;
 
     protected function setUp(): void
@@ -98,6 +112,123 @@ final class CassetteHttpClientTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $client->request('GET', 'https://example.com')->getContent();
+    }
+
+    public function testReplayThrowsWhenRequestSignatureDiffers()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => ['model' => self::RECORDED_MODEL]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not match the recorded request signature');
+
+        $client->request('POST', self::REQUEST_URL, ['json' => ['model' => self::REPLAYED_MODEL]])->getContent();
+    }
+
+    public function testReplayThrowsWhenQuerySignatureDiffers()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            self::GET_METHOD,
+            self::REQUEST_URL,
+            ['query' => [self::QUERY_MODEL_KEY => self::RECORDED_MODEL]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not match the recorded request signature');
+
+        $client->request(self::GET_METHOD, self::REQUEST_URL, ['query' => [self::QUERY_MODEL_KEY => self::REPLAYED_MODEL]])->getContent();
+    }
+
+    public function testReplayThrowsWhenJsonFloatSignatureDiffersFromInteger()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => [self::TEMPERATURE_KEY => self::RECORDED_TEMPERATURE]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not match the recorded request signature');
+
+        $client->request('POST', self::REQUEST_URL, ['json' => [self::TEMPERATURE_KEY => self::REPLAYED_TEMPERATURE]])->getContent();
+    }
+
+    public function testReplaysCassetteWithLegacyRequestSignature()
+    {
+        file_put_contents($this->path, json_encode([
+            'interactions' => [
+                [
+                    'request' => [
+                        'method' => self::GET_METHOD,
+                        'url' => self::REQUEST_URL,
+                        'signature' => hash('xxh128', self::GET_METHOD.'|'.self::REQUEST_URL.'|'.json_encode(null)),
+                    ],
+                    'response' => [
+                        'status' => 200,
+                        'headers' => [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+                        'body_format' => 'json',
+                        'body' => self::REPLAY_RESPONSE,
+                    ],
+                ],
+            ],
+        ], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->assertSame(['ok' => true], $client->request(self::GET_METHOD, self::REQUEST_URL)->toArray());
+    }
+
+    public function testReplaysLegacyCassetteWhenJsonBodyOrderDiffers()
+    {
+        $recordedBody = json_encode([self::QUERY_MODEL_KEY => self::RECORDED_MODEL, self::INPUT_KEY => self::INPUT_VALUE], \JSON_THROW_ON_ERROR);
+        file_put_contents($this->path, json_encode([
+            'interactions' => [
+                [
+                    'request' => [
+                        'method' => 'POST',
+                        'url' => self::REQUEST_URL,
+                        'signature' => hash('xxh128', 'POST|'.self::REQUEST_URL.'|'.json_encode($recordedBody)),
+                        'body' => $recordedBody,
+                    ],
+                    'response' => [
+                        'status' => 200,
+                        'headers' => [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+                        'body_format' => 'json',
+                        'body' => self::REPLAY_RESPONSE,
+                    ],
+                ],
+            ],
+        ], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->assertSame(
+            ['ok' => true],
+            $client->request('POST', self::REQUEST_URL, [
+                'body' => json_encode([self::INPUT_KEY => self::INPUT_VALUE, self::QUERY_MODEL_KEY => self::RECORDED_MODEL], \JSON_THROW_ON_ERROR),
+            ])->toArray(),
+        );
     }
 
     public function testRecordRequiresRealClient()
