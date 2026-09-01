@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\Bridge\Clock\Clock;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Message;
@@ -22,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // `reasoning_content` of the OpenAI-compatible convention with a 422.
 $platform = Factory::createPlatform(env('MISTRAL_API_KEY'), http_client());
 
-$toolbox = new Toolbox([new Clock()], logger: logger());
+$toolbox = new Toolbox([clock_tool()], logger: logger());
 $agent = new Agent($platform, 'mistral-medium-2604', toolbox: $toolbox);
 
 $options = ['reasoning_effort' => 'high'];

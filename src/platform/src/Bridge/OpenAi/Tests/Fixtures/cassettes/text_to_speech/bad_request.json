@@ -4,7 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/audio/speech",
-                "signature": "e53163d576cef909071ce7e42e59ee0b",
+                "signature": "95bc3b5ab8c1c85f1980206c8f8aac20",
+                "signature_v2": "e5a6ea3ed37935c87a6dca7b3262512d",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -13,7 +14,11 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"model\":\"gpt-4o-mini-tts\",\"input\":\"Hello\",\"voice\":\"nope\",\"response_format\":\"mp3\"}"
+                "body": {
+                    "voice": "nope",
+                    "model": "gpt-4o-mini-tts",
+                    "input": "Hello"
+                }
             },
             "response": {
                 "status": 400,

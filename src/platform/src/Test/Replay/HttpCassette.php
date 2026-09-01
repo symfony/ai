@@ -81,6 +81,8 @@ final class HttpCassette
     ];
 
     private const REDACTED = '[redacted]';
+    private const REQUEST_SIGNATURE = 'signature';
+    private const REQUEST_SIGNATURE_V2 = 'signature_v2';
 
     /**
      * @var list<Interaction>
@@ -137,13 +139,26 @@ final class HttpCassette
      */
     public function next(): array
     {
-        $this->load();
+        $interaction = $this->currentInteraction();
+        ++$this->cursor;
 
-        if (!isset($this->interactions[$this->cursor])) {
-            throw new RuntimeException(\sprintf('Cassette "%s" is exhausted after %d interaction(s); delete it to re-record.', $this->path, \count($this->interactions)));
-        }
+        return $interaction['response'];
+    }
 
-        return $this->interactions[$this->cursor++]['response'];
+    /**
+     * Returns the next unused recorded response after verifying the outgoing request.
+     *
+     * @param array<string, mixed> $options the Symfony HttpClient request options
+     *
+     * @return RecordedResponse
+     */
+    public function nextFor(string $method, string $url, array $options = []): array
+    {
+        $interaction = $this->currentInteraction();
+        self::assertRequestSignatureMatches($interaction['request'] ?? null, $method, $url, $options, $this->path, $this->cursor);
+        ++$this->cursor;
+
+        return $interaction['response'];
     }
 
     /**
@@ -157,8 +172,10 @@ final class HttpCassette
 
         $request = ['method' => $method, 'url' => $url];
 
+        $query = $options['query'] ?? null;
         $body = $options['json'] ?? $options['body'] ?? null;
-        $request['signature'] = self::signature($method, $url, $body);
+        $request[self::REQUEST_SIGNATURE] = self::legacySignature($method, $url, $body);
+        $request[self::REQUEST_SIGNATURE_V2] = self::signature($method, $url, $query, $body);
 
         if ([] !== $headers) {
             $request['headers'] = $headers;
@@ -232,7 +249,73 @@ final class HttpCassette
         return $headers;
     }
 
-    private static function signature(string $method, string $url, mixed $body): string
+    private static function signature(string $method, string $url, mixed $query, mixed $body): string
+    {
+        $normalized = [
+            'query' => $query,
+            'body' => $body,
+        ];
+
+        if (\is_array($normalized['query'])) {
+            self::ksortRecursive($normalized['query']);
+        }
+
+        if (\is_array($normalized['body'])) {
+            self::ksortRecursive($normalized['body']);
+        }
+
+        return hash('xxh128', $method.'|'.$url.'|'.json_encode($normalized, \JSON_PRESERVE_ZERO_FRACTION));
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function assertRequestSignatureMatches(mixed $recordedRequest, string $method, string $url, array $options, string $path, int $cursor): void
+    {
+        if (!\is_array($recordedRequest)) {
+            return;
+        }
+
+        $body = $options['json'] ?? $options['body'] ?? null;
+        if (isset($recordedRequest[self::REQUEST_SIGNATURE_V2]) && \is_string($recordedRequest[self::REQUEST_SIGNATURE_V2])) {
+            $signature = self::signature($method, $url, $options['query'] ?? null, $body);
+            if ($recordedRequest[self::REQUEST_SIGNATURE_V2] === $signature) {
+                return;
+            }
+
+            throw new RuntimeException(\sprintf('Outgoing request #%d does not match the recorded request signature in cassette "%s"; delete it to re-record.', $cursor + 1, $path));
+        }
+
+        if (!isset($recordedRequest[self::REQUEST_SIGNATURE]) || !\is_string($recordedRequest[self::REQUEST_SIGNATURE])) {
+            return;
+        }
+
+        if ($recordedRequest[self::REQUEST_SIGNATURE] === self::legacySignature($method, $url, $body)) {
+            return;
+        }
+
+        if (self::legacyRecordedRequestMatches($recordedRequest, $method, $url, $body)) {
+            return;
+        }
+
+        throw new RuntimeException(\sprintf('Outgoing request #%d does not match the recorded request signature in cassette "%s"; delete it to re-record.', $cursor + 1, $path));
+    }
+
+    /**
+     * @return Interaction
+     */
+    private function currentInteraction(): array
+    {
+        $this->load();
+
+        if (!isset($this->interactions[$this->cursor])) {
+            throw new RuntimeException(\sprintf('Cassette "%s" is exhausted after %d interaction(s); delete it to re-record.', $this->path, \count($this->interactions)));
+        }
+
+        return $this->interactions[$this->cursor];
+    }
+
+    private static function legacySignature(string $method, string $url, mixed $body): string
     {
         $normalized = $body;
         if (\is_array($normalized)) {
@@ -240,6 +323,52 @@ final class HttpCassette
         }
 
         return hash('xxh128', $method.'|'.$url.'|'.json_encode($normalized));
+    }
+
+    /**
+     * @param array<string, mixed> $recordedRequest
+     */
+    private static function legacyRecordedRequestMatches(array $recordedRequest, string $method, string $url, mixed $body): bool
+    {
+        if (($recordedRequest['method'] ?? null) !== $method || ($recordedRequest['url'] ?? null) !== $url) {
+            return false;
+        }
+
+        if (!\array_key_exists('body', $recordedRequest)) {
+            return null === $body;
+        }
+
+        $recordedBody = self::normalizeJsonBody($recordedRequest['body']);
+        $requestBody = self::normalizeJsonBody($body);
+
+        if (null === $recordedBody || null === $requestBody) {
+            return $recordedRequest['body'] === $body;
+        }
+
+        return $recordedBody === $requestBody;
+    }
+
+    /**
+     * @return array<string|int, mixed>|null
+     */
+    private static function normalizeJsonBody(mixed $body): ?array
+    {
+        if (\is_string($body)) {
+            $decoded = json_decode($body, true);
+            if (!\is_array($decoded)) {
+                return null;
+            }
+
+            $body = $decoded;
+        }
+
+        if (!\is_array($body)) {
+            return null;
+        }
+
+        self::ksortRecursive($body);
+
+        return $body;
     }
 
     /**

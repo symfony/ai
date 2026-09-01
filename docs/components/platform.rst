@@ -1876,18 +1876,20 @@ generated cassette, and replay it in CI::
     echo $result->asText(); // produced by the real converter from the recorded bytes
 
 Recorded interactions replay first-in-first-out (like ``MockHttpClient`` with an array of responses).
-A streamed response is stored with its raw Server-Sent Event body, so the bridge's stream parser frames
-it on replay exactly as it would on the wire, while headers describing the live transfer
-(``content-length``, ``content-encoding``, ...) are dropped because they would contradict the replayed
-body. Credentials (``Authorization``, ``x-api-key``, ``x-goog-api-key``, the ``auth_bearer`` shorthand,
-cookies and provider account identifiers) are replaced with ``[redacted]`` in both request and response
-headers before the cassette is written, so a cassette is safe to commit. Per-request trace headers
-(``date``, ``cf-ray``, correlation and request ids, proxy latencies) are dropped on write, so that
-re-recording a cassette produces a diff of what the provider actually changed instead of noise;
-rate limiting headers are kept, because the converters read them. Binary response bodies (generated
-images, audio, ...) are not stored byte-for-byte: the cassette keeps a metadata stub (status, headers,
-byte size) and replay serves a small placeholder body, so the real converter still runs without
-committing opaque bytes.
+Each replayed request is checked against the method, URL, query options and body signature stored in
+the cassette, so a bridge payload regression fails before the recorded response is served. A streamed
+response is stored with its raw Server-Sent Event body, so the bridge's stream parser frames it on
+replay exactly as it would on the wire, while headers describing the live transfer (``content-length``,
+``content-encoding``, ...) are dropped because they would contradict the replayed body. Credentials
+(``Authorization``, ``x-api-key``, ``x-goog-api-key``, the ``auth_bearer`` shorthand, cookies and
+provider account identifiers) are replaced with ``[redacted]`` in both request and response headers
+before the cassette is written, so a cassette is safe to commit. Per-request trace headers (``date``,
+``cf-ray``, correlation and request ids, proxy latencies) are dropped on write, so that re-recording
+a cassette produces a diff of what the provider actually changed instead of noise; rate limiting
+headers are kept, because the converters read them. Binary response bodies (generated images, audio,
+...) are not stored byte-for-byte: the cassette keeps a metadata stub (status, headers, byte size)
+and replay serves a small placeholder body, so the real converter still runs without committing
+opaque bytes.
 
 For a bridge test suite with several recorded scenarios, extend
 :class:`Symfony\\AI\\Platform\\Test\\Replay\\AbstractBridgeReplayTestCase`: implement
