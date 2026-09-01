@@ -17,6 +17,7 @@ use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Tool\Tool;
@@ -41,7 +42,7 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *     input: array<mixed>|string|object,
  *     options: array<string, mixed>,
  *     result: string|iterable<mixed>|object|null,
- *     result_type: 'tool_calls'|'vectors'|'text'|'error',
+ *     result_type: 'tool_calls'|'vectors'|'job'|'text'|'error',
  *     metadata: Metadata,
  *     error?: array{class: class-string, message: string},
  * }
@@ -222,11 +223,15 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
                     $call['result'] = $resultCache[$result];
                     $call['result_type'] = 'text';
                 } else {
-                    $content = $result->getContent();
+                    // A job has not produced anything yet, so there is no payload to show - what is
+                    // worth showing is the handle needed to follow it up.
+                    $content = $result instanceof JobResult ? $result->getContent()->toArray() : $result->getContent();
+
                     $call['result'] = $content instanceof \Generator ? null : $content;
                     $call['result_type'] = match (true) {
                         $result instanceof ToolCallResult => 'tool_calls',
                         $result instanceof VectorResult => 'vectors',
+                        $result instanceof JobResult => 'job',
                         default => 'text',
                     };
                 }

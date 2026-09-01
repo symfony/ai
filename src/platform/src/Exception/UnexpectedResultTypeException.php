@@ -13,12 +13,16 @@ namespace Symfony\AI\Platform\Exception;
 
 class UnexpectedResultTypeException extends RuntimeException
 {
-    public function __construct(string $expectedType, string $actualType)
+    /**
+     * @param string|null $hint what the caller can do about it, when the mismatch has a known remedy
+     */
+    public function __construct(string $expectedType, string $actualType, ?string $hint = null)
     {
         parent::__construct(\sprintf(
-            'Unexpected response type: expected "%s", got "%s".',
+            'Unexpected response type: expected "%s", got "%s".%s',
             $expectedType,
-            $actualType
+            $actualType,
+            null !== $hint ? ' '.$hint : '',
         ));
     }
 }

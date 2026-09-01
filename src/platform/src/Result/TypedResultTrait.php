@@ -224,6 +224,12 @@ trait TypedResultTrait
         }
 
         if (!$result instanceof $type) {
+            // Landing here with a job is the common mistake of reaching for the payload accessor on
+            // a provider that answers asynchronously, so say what to do instead of only what broke.
+            if ($result instanceof JobResult) {
+                throw new UnexpectedResultTypeException($type, $result::class, 'The provider started a job instead of answering directly: read the handle with asJob() and resolve it through Platform::getJobClient(), or wait for it with a Job\\JobRunner.');
+            }
+
             throw new UnexpectedResultTypeException($type, $result::class);
         }
 

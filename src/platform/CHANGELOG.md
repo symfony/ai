@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add asynchronous job support: providers that answer a request with a job identifier instead of a result now return a `Result\JobResult`, whose `Job\JobHandle` is serializable and can be resolved in another process through the job client of the provider that issued it. Adds `Job\JobClientInterface`, `Job\JobProviderInterface`, `Job\JobStatus`/`Job\JobStateCase`, `Job\JobRunner` (the only polling loop in the component), `Exception\JobFailedException`, `Exception\JobTimeoutException`, `DeferredResult::asJob()` and `JobHandle::toString()`/`fromString()`; `Provider` takes an optional `JobClientInterface` as its last constructor argument
+
 0.13
 ----
 

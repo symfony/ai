@@ -1039,6 +1039,131 @@ Code Examples
 * `PDF Input with GPT`_
 * `PDF Input with Claude`_
 
+Asynchronous Jobs
+-----------------
+
+Some work cannot be answered in the same request it was asked for: video generation runs for minutes,
+and several providers offer asynchronous or batch endpoints that accept a request now and produce the
+result later. Those providers answer the invocation with a job identifier, so ``invoke()`` returns a
+:class:`Symfony\\AI\\Platform\\Result\\JobResult` whose content is a
+:class:`Symfony\\AI\\Platform\\Job\\JobHandle`::
+
+    $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano'), [
+        'duration' => 6,
+    ])->asJob();
+
+The handle holds no connection and no client, only what is needed to ask the provider about that job
+again, so it can be stored and picked up somewhere else entirely::
+
+    // in the process that started the job
+    $repository->save($handle->getId(), $handle->toString());
+
+    // in a worker, possibly much later
+    $handle = JobHandle::fromString($repository->load($id));
+
+    if ($jobClient->getStatus($handle)->is(JobStateCase::SUCCEEDED)) {
+        $result = $jobClient->getResult($handle);
+    }
+
+:method:`Symfony\\AI\\Platform\\Job\\JobHandle::toString` and its ``fromString`` counterpart cover
+storage that holds a single column; ``toArray()``/``fromArray()`` cover the structured case, and the
+handle is ``JsonSerializable`` so it also drops straight into a Messenger message. Note that the job
+identifier is the provider's, so an application storing handles of several providers keys them by
+provider and id rather than by id alone.
+
+The client resolving a job belongs to the provider that issued it, so a provider hands it out through
+:method:`Symfony\\AI\\Platform\\Job\\JobProviderInterface::getJobClient`, and a bridge builds one
+directly for a process that only resolves jobs and never invokes anything::
+
+    $jobClient = $provider->getJobClient();                 // the provider that started the job
+    $jobClient = MiniMaxFactory::createJobClient($apiKey);  // or straight from the bridge, in a worker
+
+:method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` performs exactly one request and
+never sleeps. To simply block until the job is done, hand it to a
+:class:`Symfony\\AI\\Platform\\Job\\JobRunner`, which owns the polling loop::
+
+    use Symfony\AI\Platform\Job\JobRunner;
+
+    $result = (new JobRunner())->wait($jobClient, $handle);
+
+    $result->asFile('video.mp4');
+
+What the runner hands back is a :class:`Symfony\\AI\\Platform\\Result\\DeferredResult`, the same
+thing ``invoke()`` returns, so finishing a job reads like any other invocation instead of leaving
+you to narrow a bare ``ResultInterface`` yourself.
+
+How long the work takes and how long you are willing to wait for it are two different questions. The
+first is the provider's: a bridge that knows its timings (MiniMax video generation runs for minutes
+where speech synthesis takes seconds) states it on the handle, and the runner honours it, so a
+caller who knows nothing about the provider still waits the right amount.
+
+The second is yours, and it usually belongs to the call rather than to the runner: the same job may
+be given ten minutes in a worker and five seconds inside a web request. Say so per call, in seconds::
+
+    $result = $runner->wait($jobClient, $handle, maxDuration: 5);
+
+A budget passed to the runner's constructor applies to every job it waits for and sits between the
+two: it overrules what a job asks for, and a single call overrules it in turn.
+
+In a Symfony application a runner using the application clock is available as
+``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It
+carries no budget of its own, so the same shared service serves a job finishing in seconds and one
+running for minutes. Each job-capable platform also registers its client as
+``ai.platform.job_client.<name>``, autowired by argument name::
+
+    public function __construct(
+        private JobRunner $jobRunner,
+        private JobClientInterface $minimaxJobClient,
+    ) {
+    }
+
+    public function __invoke(JobHandle $handle): void
+    {
+        // trust the job
+        $this->jobRunner->wait($this->minimaxJobClient, $handle);
+
+        // or bound it to what a request can afford
+        $this->jobRunner->wait($this->minimaxJobClient, $handle, maxDuration: 5);
+    }
+
+An application holding handles of several providers picks the client by the name the handle carries,
+from a locator over the ``ai.platform.job_client`` tag::
+
+    public function __construct(
+        #[AutowireLocator('ai.platform.job_client', indexAttribute: 'key')]
+        private ContainerInterface $jobClients,
+        private JobRunner $jobRunner,
+    ) {
+    }
+
+    public function __invoke(JobHandle $handle): void
+    {
+        $this->jobRunner->wait($this->jobClients->get($handle->getProvider()), $handle);
+    }
+
+The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
+ends the job without a result, and a :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException`
+when the budget runs out while the job is still going. The latter carries the handle, so the job can
+be handed on rather than lost.
+
+Providers spell their states differently, so a bridge maps them onto a
+:class:`Symfony\\AI\\Platform\\Job\\JobStateCase` while
+:method:`Symfony\\AI\\Platform\\Job\\JobStatus::getRaw` keeps the provider's own wording — the same
+split as ``FinishReason``. A state no bridge knows about is reported as ``UNKNOWN`` and treated as
+non-terminal, so a provider adding a state does not abort a running job.
+
+.. note::
+
+    Only bridges whose provider works this way return a ``JobResult``; everything else answers
+    synchronously as before. Currently this is the MiniMax bridge, for video generation and
+    asynchronous speech synthesis.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `Asynchronous Video Generation with MiniMax`_
+* `Resuming a MiniMax Video Job`_
+
 Audio Processing
 ----------------
 
@@ -1988,6 +2113,8 @@ Code Examples
 .. _`Binary Image Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-binary.php
 .. _`Image URL Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/image-input-url.php
 .. _`Audio Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-input.php
+.. _`Asynchronous Video Generation with MiniMax`: https://github.com/symfony/ai/blob/main/examples/minimax/text-to-video.php
+.. _`Resuming a MiniMax Video Job`: https://github.com/symfony/ai/blob/main/examples/minimax/video-job-resume.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php

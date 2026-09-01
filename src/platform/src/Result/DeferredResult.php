@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Result;
 
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
+use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Metadata\StreamListener as MetaDataStreamListener;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -149,6 +150,20 @@ final class DeferredResult
     public function getRawResult(): RawResultInterface
     {
         return $this->rawResult;
+    }
+
+    /**
+     * Returns the handle of the asynchronous job the provider started for this invocation.
+     *
+     * Does not wait for the job: the handle is a reference that can be stored and resolved later,
+     * possibly in another process, via `Platform::getJobClient()`. To block until the job finishes,
+     * hand the handle to a {@see \Symfony\AI\Platform\Job\JobRunner}.
+     *
+     * @throws ExceptionInterface when the provider answered with a result instead of a job
+     */
+    public function asJob(): JobHandle
+    {
+        return $this->as(JobResult::class)->getContent();
     }
 
     /**
