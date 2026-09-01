@@ -16,7 +16,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('black-forest-labs/FLUX.1-schnell', 'Astronaut riding a horse', [
+$result = $platform->invoke('stabilityai/stable-diffusion-3-medium-diffusers', 'Astronaut riding a horse', [
     'task' => Task::TEXT_TO_IMAGE,
 ]);
 
