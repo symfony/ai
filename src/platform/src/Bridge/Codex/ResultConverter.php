@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
@@ -91,6 +92,14 @@ final class ResultConverter implements ResultConverterInterface
                 && isset($data['item']['text'])
             ) {
                 yield new TextDelta($data['item']['text']);
+            }
+
+            if ('turn.completed' === $type && isset($data['usage'])) {
+                yield new TokenUsage(
+                    promptTokens: $data['usage']['input_tokens'] ?? null,
+                    completionTokens: $data['usage']['output_tokens'] ?? null,
+                    cachedTokens: $data['usage']['cached_input_tokens'] ?? null,
+                );
             }
         }
     }
