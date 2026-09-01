@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -41,5 +42,18 @@ final class TraceablePlatformTest extends TestCase
         $this->assertCount(0, $traceablePlatform->getCalls());
         $this->assertNotSame($oldCache, $traceablePlatform->getResultCache());
         $this->assertInstanceOf(\WeakMap::class, $traceablePlatform->getResultCache());
+    }
+
+    public function testInvokeWithModelInstanceRecordsModelName()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $result = new TextResult('Assistant response');
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $this->createStub(RawResultInterface::class)));
+
+        $traceablePlatform->invoke(new Model('gpt-4o'), 'Hello');
+
+        $this->assertSame('gpt-4o', $traceablePlatform->getCalls()[0]['model']);
     }
 }
