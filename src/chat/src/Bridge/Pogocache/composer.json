@@ -28,6 +28,7 @@
         "php": ">=8.2",
         "symfony/ai-chat": "^0.13",
         "symfony/http-client": "^7.3|^8.0",
+        "symfony/polyfill-php83": "^1.32",
         "symfony/serializer": "^7.3|^8.0"
     },
     "require-dev": {
