@@ -18,8 +18,8 @@ $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_cli
 
 $result = $platform->invoke('facebook/mbart-large-50-many-to-many-mmt', 'Меня зовут Вольфганг и я живу в Берлине', [
     'task' => Task::TRANSLATION,
-    'src_lang' => 'ru',
-    'tgt_lang' => 'en',
+    'src_lang' => 'ru_RU',
+    'tgt_lang' => 'en_XX',
 ]);
 
 echo $result->asText().\PHP_EOL;
