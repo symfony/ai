@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Resolve tool call arguments by the JSON key of the generated schema, so a parameter renamed with `#[Schema(name: '...')]` is passed to the original PHP parameter
+
 0.13
 ----
 

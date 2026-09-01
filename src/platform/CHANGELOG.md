@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `name` argument to `#[Schema]` to use a different JSON key than the PHP property or parameter name, e.g. `#[Schema(name: 'rest_between_rounds')]` on `$restBetweenRounds`; schema generation and structured output hydration stay in sync, while serializer metadata like `#[SerializedName]` stays ignored; conflicting keys within a class are rejected
+
 0.13
 ----
 

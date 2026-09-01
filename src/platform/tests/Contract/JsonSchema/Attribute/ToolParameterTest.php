@@ -219,4 +219,31 @@ final class ToolParameterTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         new Schema(minLength: -1, maxLength: -2);
     }
+
+    public function testValidName()
+    {
+        $schema = new Schema(name: 'rest_between_rounds');
+
+        $this->assertSame('rest_between_rounds', $schema->name);
+    }
+
+    public function testNameDefaultsToNull()
+    {
+        $schema = new Schema(description: 'A description');
+
+        $this->assertNull($schema->name);
+    }
+
+    public function testInvalidNameEmptyString()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        new Schema(name: '   ');
+    }
+
+    public function testNameIsAllowedNextToRef()
+    {
+        $schema = new Schema(ref: __DIR__.'/../../../Fixtures/json_schema_ref.json', name: 'renamed');
+
+        $this->assertSame('renamed', $schema->name);
+    }
 }

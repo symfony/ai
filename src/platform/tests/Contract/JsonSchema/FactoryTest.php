@@ -17,16 +17,21 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithRenamedParameter;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\CollidingRenames;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SchemaAttributeValuesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\TrainingSessionWithAccessors;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\WorkoutPlan;
 
 final class FactoryTest extends TestCase
 {
@@ -499,5 +504,80 @@ final class FactoryTest extends TestCase
         $actual = $this->factory->buildProperties(GroupedDto::class, ['serializer_groups' => ['read', 'write']]);
 
         $this->assertSame(['name', 'age', 'slug'], array_keys($actual['properties']));
+    }
+
+    public function testBuildPropertiesWithRenamedProperties()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'plan_title' => ['type' => 'string'],
+                'circuits' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'rest_between_rounds' => [
+                                'type' => 'integer',
+                                'description' => 'Rest between rounds in seconds',
+                                'minimum' => 0,
+                            ],
+                            'rounds' => ['type' => 'integer'],
+                        ],
+                        'required' => ['rest_between_rounds', 'rounds'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+            ],
+            'required' => ['plan_title', 'circuits'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(WorkoutPlan::class);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesWithRenamedPropertyDeclaredOnSetter()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'rest_between_rounds' => ['type' => 'integer'],
+            ],
+            'required' => ['rest_between_rounds'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildProperties(TrainingSessionWithAccessors::class);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildParametersWithRenamedParameter()
+    {
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'search_term' => [
+                    'type' => 'string',
+                    'description' => 'The term to search for',
+                ],
+            ],
+            'required' => ['search_term'],
+            'additionalProperties' => false,
+        ];
+
+        $actual = $this->factory->buildParameters(ToolWithRenamedParameter::class, '__invoke');
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testBuildPropertiesRejectsCollidingRenames()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('Class "%s" maps both "$first" and "$second" to the JSON key "same"', CollidingRenames::class));
+
+        $this->factory->buildProperties(CollidingRenames::class);
     }
 }
