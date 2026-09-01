@@ -44,6 +44,7 @@ enum Capability: string
     case TEXT_TO_SPEECH = 'text-to-speech';
     case TEXT_TO_SPEECH_ASYNC = 'text-to-speech-async';
     case SPEECH_TO_TEXT = 'speech-to-text';
+    case REALTIME_SESSION = 'realtime-session';
 
     // IMAGE
     case TEXT_TO_IMAGE = 'text-to-image';

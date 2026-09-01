@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `Capability::REALTIME_SESSION` and `Result\RealtimeSessionResult` for long-lived realtime sessions (ephemeral client credentials for WebRTC/WebSocket voice agents)
+
 0.13
 ----
 
