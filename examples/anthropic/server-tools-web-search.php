@@ -13,7 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -22,16 +22,18 @@ $platform = Factory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_c
 $agent = new Agent($platform, 'claude-sonnet-4-5-20250929');
 
 $messages = new MessageBag(
-    Message::ofUser('Calculate total cost of a mortgage with 1% interest on 100k€ principal with 25 year maturity'),
+    Message::ofUser('What is the current 12 month Euribor rate?'),
 );
 
 $result = $agent->call($messages, [
-    'server_tools' => ['code_execution' => true],
+    'server_tools' => [
+        'web_search' => ['max_uses' => 3],
+    ],
 ]);
 
 foreach ($result->asMultiPart() as $part) {
     echo match (true) {
-        $part instanceof ExecutableCodeResult => "<code>\n".$part->getContent()."\n</code>\n\n",
+        $part instanceof WebSearchResult => "<search query=\"{$part->getQuery()}\" status=\"{$part->getStatus()}\">\n",
         default => $part->getContent()."\n",
     };
 }

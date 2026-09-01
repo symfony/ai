@@ -42,6 +42,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
@@ -117,6 +118,7 @@ class ResultConverter implements ResultConverterInterface
         }
 
         $results = [];
+        $webSearchIndexes = [];
         foreach ($data['content'] as $content) {
             if ('tool_use' === $content['type']) {
                 $results[] = new ToolCallResult([new ToolCall($content['id'], $content['name'], $content['input'])]);
@@ -130,6 +132,9 @@ class ResultConverter implements ResultConverterInterface
                     $results[] = new ExecutableCodeResult($content['input']['command'], 'bash', $content['id']);
                 } elseif ('text_editor_code_execution' === $content['name']) {
                     $results[] = new ExecutableCodeResult($content['input']['file_text'] ?? $content['input']['command'], null, $content['id']);
+                } elseif ('web_search' === $content['name']) {
+                    $webSearchIndexes[$content['id']] = \count($results);
+                    $results[] = new WebSearchResult($content['input']['query'] ?? null, $content['id']);
                 }
             } elseif ('bash_code_execution_tool_result' === $content['type']) {
                 $results[] = new CodeExecutionResult(
@@ -139,6 +144,21 @@ class ResultConverter implements ResultConverterInterface
                 );
             } elseif ('text_editor_code_execution_tool_result' === $content['type']) {
                 $results[] = new CodeExecutionResult(true, null, $content['tool_use_id']);
+            } elseif ('web_search_tool_result' === $content['type']) {
+                // Success carries a list of `web_search_result` blocks; an error is a single
+                // `web_search_tool_result_error` object instead. Neither result type reports the
+                // individual hits, so only the status survives the conversion.
+                $status = 'web_search_tool_result_error' === ($content['content']['type'] ?? null)
+                    ? $content['content']['error_code'] ?? null
+                    : 'completed';
+
+                $index = $webSearchIndexes[$content['tool_use_id']] ?? null;
+                if (null !== $index) {
+                    $call = $results[$index];
+                    $results[$index] = new WebSearchResult($call->getQuery(), $call->getId(), $status);
+                } else {
+                    $results[] = new WebSearchResult(id: $content['tool_use_id'], status: $status);
+                }
             } elseif ('thinking' === $content['type']) {
                 $results[] = new ThinkingResult($content['thinking'], $content['signature'] ?? null);
             }

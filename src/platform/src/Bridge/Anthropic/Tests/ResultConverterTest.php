@@ -42,6 +42,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\TokenUsage\StreamListener as TokenUsageStreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -815,6 +816,253 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('finish_reason', $metadataDelta->getKey());
         $this->assertTrue($metadataDelta->getValue()->is(FinishReasonCase::STOP));
         $this->assertSame('end_turn', $metadataDelta->getValue()->getRaw());
+    }
+
+    public function testConvertServerToolUseWebSearchAloneIntoWebSearchResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('claude shannon birth date', $result->getQuery());
+        $this->assertSame('srvtoolu_01WYG3ziw53XMcoyKL4XcZmE', $result->getId());
+        $this->assertNull($result->getStatus());
+    }
+
+    public function testConvertWebSearchCallAndSuccessResultMergeIntoOneWebSearchResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                            'encrypted_content' => 'EqgfCioIARgBIiQ3YTAwMjY1Mi1mZjM5LTQ1NGUtODgxNC1kNjNjNTk1ZWI3Y...',
+                            'page_age' => 'April 30, 2025',
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('claude shannon birth date', $result->getQuery());
+        $this->assertSame('srvtoolu_01WYG3ziw53XMcoyKL4XcZmE', $result->getId());
+        $this->assertSame('completed', $result->getStatus());
+    }
+
+    public function testConvertWebSearchCallAndErrorResultMergeIntoOneWebSearchResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_a93jad',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_a93jad',
+                    'content' => [
+                        'type' => 'web_search_tool_result_error',
+                        'error_code' => 'max_uses_exceeded',
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('claude shannon birth date', $result->getQuery());
+        $this->assertSame('srvtoolu_a93jad', $result->getId());
+        $this->assertSame('max_uses_exceeded', $result->getStatus());
+    }
+
+    public function testConvertOrphanWebSearchToolResultIntoWebSearchResultWithoutQuery()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_a93jad',
+                    'content' => [
+                        'type' => 'web_search_tool_result_error',
+                        'error_code' => 'max_uses_exceeded',
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertNull($result->getQuery());
+        $this->assertSame('srvtoolu_a93jad', $result->getId());
+        $this->assertSame('max_uses_exceeded', $result->getStatus());
+    }
+
+    public function testConvertResponseWithOnlyWebSearchBlocksDoesNotThrow()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                            'encrypted_content' => 'EqgfCioIARgBIiQ3YTAwMjY1Mi1mZjM5LTQ1NGUtODgxNC1kNjNjNTk1ZWI3Y...',
+                            'page_age' => 'April 30, 2025',
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('completed', $result->getStatus());
+    }
+
+    public function testConvertTwoDistinctWebSearchesYieldTwoWebSearchResults()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_first',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_first',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                        ],
+                    ],
+                ],
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_second',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'alan turing birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_second',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Alan_Turing',
+                            'title' => 'Alan Turing - Wikipedia',
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(WebSearchResult::class, $parts[0]);
+        $this->assertSame('claude shannon birth date', $parts[0]->getQuery());
+        $this->assertSame('srvtoolu_first', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+
+        $this->assertInstanceOf(WebSearchResult::class, $parts[1]);
+        $this->assertSame('alan turing birth date', $parts[1]->getQuery());
+        $this->assertSame('srvtoolu_second', $parts[1]->getId());
+        $this->assertSame('completed', $parts[1]->getStatus());
+    }
+
+    public function testConvertWebSearchMergedWithTextBlockKeepsWireOrder()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                        ],
+                    ],
+                ],
+                [
+                    'type' => 'text',
+                    'text' => 'Claude Shannon was born on April 30, 1916.',
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(WebSearchResult::class, $parts[0]);
+        $this->assertSame('claude shannon birth date', $parts[0]->getQuery());
+        $this->assertSame('srvtoolu_01WYG3ziw53XMcoyKL4XcZmE', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('Claude Shannon was born on April 30, 1916.', $parts[1]->getContent());
     }
 
     /**
