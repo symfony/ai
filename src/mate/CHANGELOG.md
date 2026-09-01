@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add a per-skill status table to `skills:install` output (same columns as `skills:list`, plus an `action` column showing installed/rebuilt/skipped/unchanged), and `--format=json`/`--format=toon` support, matching `skills:list`
+
 0.13
 ----
 
