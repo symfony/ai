@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add `Execution::cancel()` to stop an active execution and cancel its active HTTP response
+ * `MultiAgent` and `SpeechAgent` now forward the `Progress` updates of the executions they delegate to, and `MultiAgent` reports its routing as a `Progress` update of the `handoff` stage carrying the orchestrator's `MultiAgent\Handoff\Decision` as payload
 
 0.13
 ----

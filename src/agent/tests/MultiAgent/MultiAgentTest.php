@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Tests\MultiAgent;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
@@ -18,6 +19,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MultiAgent\Handoff;
@@ -33,6 +35,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -406,6 +409,143 @@ class MultiAgentTest extends TestCase
         $this->expectExceptionMessage('The agent execution was canceled.');
 
         $fiber->resume();
+    }
+
+    public function testCallForwardsProgressUpdatesAndEmitsHandoff()
+    {
+        $decision = new Decision('technical', 'This is a technical question');
+
+        $orchestratorResult = $this->createMock(ResultInterface::class);
+        $orchestratorResult->method('getContent')->willReturn($decision);
+
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->method('getName')->willReturn('orchestrator');
+        $orchestrator->method('call')->willReturn(new Execution(static function () use ($orchestratorResult): \Generator {
+            yield new Progress('model_request', 'Invoking orchestrator model.');
+            yield new ResultUpdate($orchestratorResult);
+        }));
+
+        $technicalAgent = $this->createMock(AgentInterface::class);
+        $technicalAgent->method('getName')->willReturn('technical');
+        $technicalAgent->method('call')->willReturn(new Execution(static function (): \Generator {
+            yield new Progress('tool_call', 'Executing tool.');
+            yield new Progress('delta', 'Streaming answer.');
+            yield new ResultUpdate(new TextResult('Technical response'));
+        }));
+
+        $fallback = $this->createMock(AgentInterface::class);
+        $fallback->method('getName')->willReturn('fallback');
+
+        $handoff = new Handoff($technicalAgent, ['technical']);
+        $multiAgent = new MultiAgent($orchestrator, [$handoff], $fallback);
+
+        $updates = iterator_to_array($multiAgent->call(new MessageBag(Message::ofUser('Help with code'))));
+
+        $this->assertCount(5, $updates);
+
+        // 1. Orchestrator progress
+        $this->assertInstanceOf(Progress::class, $updates[0]);
+        $this->assertSame('model_request', $updates[0]->getStage());
+        $this->assertSame('Invoking orchestrator model.', $updates[0]->getMessage());
+
+        // 2. MultiAgent handoff progress
+        $this->assertInstanceOf(Progress::class, $updates[1]);
+        $this->assertSame('handoff', $updates[1]->getStage());
+        $this->assertSame('Routing to agent "technical".', $updates[1]->getMessage());
+        $this->assertSame($decision, $updates[1]->getPayload());
+
+        // 3. Technical agent tool call progress
+        $this->assertInstanceOf(Progress::class, $updates[2]);
+        $this->assertSame('tool_call', $updates[2]->getStage());
+
+        // 4. Technical agent delta progress
+        $this->assertInstanceOf(Progress::class, $updates[3]);
+        $this->assertSame('delta', $updates[3]->getStage());
+
+        // 5. Final result update
+        $this->assertInstanceOf(ResultUpdate::class, $updates[4]);
+        $this->assertSame('Technical response', $updates[4]->getResult()->getContent());
+    }
+
+    public function testCallDropsTheOrchestratorDeltasButForwardsTheAnsweringOnes()
+    {
+        $decision = new Decision('technical', 'This is a technical question');
+
+        $orchestratorResult = $this->createMock(ResultInterface::class);
+        $orchestratorResult->method('getContent')->willReturn($decision);
+
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->method('getName')->willReturn('orchestrator');
+        $orchestrator->method('call')->willReturn(new Execution(static function () use ($orchestratorResult): \Generator {
+            yield new Progress('model_request', 'Invoking orchestrator model.');
+            // the routing round spells out the Decision, which is no part of the answer
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('{"agentName":"tech'));
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('nical"}'));
+            yield new ResultUpdate($orchestratorResult);
+        }));
+
+        $technicalAgent = $this->createMock(AgentInterface::class);
+        $technicalAgent->method('getName')->willReturn('technical');
+        $technicalAgent->method('call')->willReturn(new Execution(static function (): \Generator {
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Hello '));
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('world'));
+            yield new ResultUpdate(new TextResult('Hello world'));
+        }));
+
+        $fallback = $this->createMock(AgentInterface::class);
+        $fallback->method('getName')->willReturn('fallback');
+
+        $handoff = new Handoff($technicalAgent, ['technical']);
+        $multiAgent = new MultiAgent($orchestrator, [$handoff], $fallback);
+
+        $answer = '';
+        foreach ($multiAgent->call(new MessageBag(Message::ofUser('Help with code')), ['stream' => true]) as $update) {
+            if ($update instanceof Progress && 'delta' === $update->getStage() && $update->getPayload() instanceof TextDelta) {
+                $answer .= $update->getPayload()->getText();
+            }
+        }
+
+        $this->assertSame('Hello world', $answer);
+    }
+
+    #[DataProvider('provideFallbackDecisions')]
+    public function testCallEmitsHandoffCarryingTheDecisionWhenFallingBack(Decision $decision)
+    {
+        $orchestratorResult = $this->createMock(ResultInterface::class);
+        $orchestratorResult->method('getContent')->willReturn($decision);
+
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->method('getName')->willReturn('orchestrator');
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
+
+        $fallback = $this->createMock(AgentInterface::class);
+        $fallback->method('getName')->willReturn('fallback');
+        $fallback->method('call')->willReturn($this->execution(new TextResult('Fallback response')));
+
+        $handoff = new Handoff(new MockAgent(name: 'technical'), ['technical']);
+        $multiAgent = new MultiAgent($orchestrator, [$handoff], $fallback);
+
+        $updates = iterator_to_array($multiAgent->call(new MessageBag(Message::ofUser('Question'))));
+
+        $this->assertCount(2, $updates);
+
+        // The handoff names the agent that actually runs, while its payload carries the orchestrator's decision
+        $this->assertInstanceOf(Progress::class, $updates[0]);
+        $this->assertSame('handoff', $updates[0]->getStage());
+        $this->assertSame('Routing to fallback agent "fallback".', $updates[0]->getMessage());
+        $this->assertSame($decision, $updates[0]->getPayload());
+
+        $this->assertInstanceOf(ResultUpdate::class, $updates[1]);
+        $this->assertSame('Fallback response', $updates[1]->getResult()->getContent());
+    }
+
+    /**
+     * @return iterable<string, array{Decision}>
+     */
+    public static function provideFallbackDecisions(): iterable
+    {
+        yield 'no agent selected' => [new Decision('', 'No specific agent matches')];
+        yield 'agent not found' => [new Decision('nonexistent', 'Selected non-existent agent')];
     }
 
     private function execution(ResultInterface $result): Execution
