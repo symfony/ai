@@ -135,6 +135,10 @@ jobs:
     # all constraints and pick the highest of every package's floor, never exercising the lowest
     # bound a single package declares. So each package is installed on its own -- but grouped a few
     # per job and run in parallel by .github/run-lowest.sh, instead of one job per package.
+    #
+    # For the same reason this job sets no SYMFONY_REQUIRE. Packages declare "^7.3|^8.0", so pinning
+    # it to >=7.4 here left the 7.3 floor untested while we kept advertising it. Do not re-add it
+    # without raising those constraints first.
     lowest:
         name: Unit / Lowest / ${{ matrix.shard.name }}
         runs-on: ubuntu-latest
@@ -156,7 +160,6 @@ jobs:
                         find: "find src/mate/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
 
         env:
-            SYMFONY_REQUIRE: '>=7.4'
             SYMFONY_DEPRECATIONS_HELPER: weak
 
         steps:
