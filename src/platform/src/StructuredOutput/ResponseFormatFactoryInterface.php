@@ -17,7 +17,8 @@ namespace Symfony\AI\Platform\StructuredOutput;
 interface ResponseFormatFactoryInterface
 {
     /**
-     * @param class-string $responseClass
+     * @param class-string|object $response The class to describe, or the very same instance the result will be
+     *                                      populated on, allowing the schema to depend on its runtime state
      *
      * @return array{
      *     type: 'json_schema',
@@ -28,5 +29,5 @@ interface ResponseFormatFactoryInterface
      *     }
      * }
      */
-    public function create(string $responseClass): array;
+    public function create(string|object $response): array;
 }

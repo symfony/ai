@@ -84,7 +84,8 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
         $this->outputType = $className;
 
-        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className);
+        // Pass the instance itself when there is one, so a factory can derive a schema from its runtime state
+        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($responseFormat);
 
         $event->setOptions($options);
     }

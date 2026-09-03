@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * [BC BREAK] Widen `StructuredOutput\ResponseFormatFactoryInterface::create()` to accept `class-string|object`, so a factory receives the very instance passed as `response_format` and can derive a schema from its runtime state instead of only from its class
+
 0.13
 ----
 

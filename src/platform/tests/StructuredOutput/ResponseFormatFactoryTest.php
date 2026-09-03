@@ -51,4 +51,11 @@ final class ResponseFormatFactoryTest extends TestCase
             ],
         ], (new ResponseFormatFactory())->create($class));
     }
+
+    public function testCreateWithObjectFallsBackToItsClass()
+    {
+        $factory = new ResponseFormatFactory();
+
+        $this->assertSame($factory->create(User::class), $factory->create(new User()));
+    }
 }
