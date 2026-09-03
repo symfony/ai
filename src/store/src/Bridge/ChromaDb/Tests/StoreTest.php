@@ -31,6 +31,9 @@ use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
 {
+    private const DEFAULT_QUERY_LIMIT = 10;
+    private const CUSTOM_QUERY_LIMIT = 6;
+
     /**
      * @param array<VectorDocument>       $documents
      * @param array<string>               $expectedIds
@@ -166,7 +169,7 @@ final class StoreTest extends TestCase
             ->with(
                 [[0.15, 0.25, 0.35]],  // queryEmbeddings
                 null,                  // queryTexts
-                4,                     // nResults
+                self::DEFAULT_QUERY_LIMIT, // nResults
                 null,                  // where
                 null,                  // whereDocument
                 null                   // include
@@ -180,6 +183,46 @@ final class StoreTest extends TestCase
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
         $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
         $this->assertSame(['title' => 'Doc 1'], $documents[0]->getMetadata()->getArrayCopy());
+    }
+
+    public function testQueryWithConfiguredLimitOption()
+    {
+        $queryVector = new Vector([0.15, 0.25, 0.35]);
+        $queryResponse = new QueryItemsResponse(
+            ids: [['01234567-89ab-cdef-0123-456789abcdef']],
+            embeddings: [[[0.1, 0.2, 0.3]]],
+            metadatas: [[['title' => 'Doc 1']]],
+            documents: null,
+            data: null,
+            uris: null,
+            distances: null
+        );
+
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->with(
+                [[0.15, 0.25, 0.35]],  // queryEmbeddings
+                null,                  // queryTexts
+                self::CUSTOM_QUERY_LIMIT, // nResults
+                null,                  // where
+                null,                  // whereDocument
+                null                   // include
+            )
+            ->willReturn($queryResponse);
+
+        $store = StoreFactory::create($client, 'test-collection');
+        $documents = iterator_to_array($store->query(new VectorQuery($queryVector), ['limit' => self::CUSTOM_QUERY_LIMIT]));
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
     }
 
     public function testQueryWithWhereFilter()
@@ -210,7 +253,7 @@ final class StoreTest extends TestCase
             ->with(
                 [[0.15, 0.25, 0.35]],  // queryEmbeddings
                 null,                  // queryTexts
-                4,                     // nResults
+                self::DEFAULT_QUERY_LIMIT, // nResults
                 ['category' => 'technology'],  // where
                 null,                  // whereDocument
                 null                   // include
@@ -253,7 +296,7 @@ final class StoreTest extends TestCase
             ->with(
                 [[0.15, 0.25, 0.35]],  // queryEmbeddings
                 null,                  // queryTexts
-                4,                     // nResults
+                self::DEFAULT_QUERY_LIMIT, // nResults
                 null,                  // where
                 ['$contains' => 'machine learning'],  // whereDocument
                 null                   // include
@@ -297,7 +340,7 @@ final class StoreTest extends TestCase
             ->with(
                 [[0.15, 0.25, 0.35]],  // queryEmbeddings
                 null,                  // queryTexts
-                4,                     // nResults
+                self::DEFAULT_QUERY_LIMIT, // nResults
                 ['category' => 'AI', 'status' => 'published'],  // where
                 ['$contains' => 'neural networks'],  // whereDocument
                 null                   // include
@@ -343,7 +386,7 @@ final class StoreTest extends TestCase
             ->with(
                 [[0.15, 0.25, 0.35]],  // queryEmbeddings
                 null,                  // queryTexts
-                4,                     // nResults
+                self::DEFAULT_QUERY_LIMIT, // nResults
                 ['category' => 'nonexistent'],  // where
                 null,                  // whereDocument
                 null                   // include
@@ -457,7 +500,7 @@ final class StoreTest extends TestCase
             ->with(
                 [[0.1, 0.2, 0.3]],     // queryEmbeddings
                 null,                  // queryTexts
-                4,                     // nResults
+                self::DEFAULT_QUERY_LIMIT, // nResults
                 $expectedWhere,        // where
                 $expectedWhereDocument,// whereDocument
                 null                   // include
@@ -842,7 +885,7 @@ final class StoreTest extends TestCase
             ->with(
                 null,                          // queryEmbeddings
                 ['search for this text'],      // queryTexts
-                4,                             // nResults
+                self::DEFAULT_QUERY_LIMIT,     // nResults
                 null,                          // where
                 null,                          // whereDocument
                 null                           // include

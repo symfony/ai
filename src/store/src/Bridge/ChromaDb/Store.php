@@ -33,6 +33,7 @@ use Symfony\AI\Store\StoreInterface;
 final class Store implements ManagedStoreInterface, StoreInterface
 {
     private const BATCH_SIZE = 1000;
+    private const DEFAULT_QUERY_LIMIT = 10;
 
     public function __construct(
         private readonly Client $client,
@@ -180,7 +181,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $collection = $this->client->getOrCreateCollection($this->collectionName);
         $queryResponse = $collection->query(
             queryEmbeddings: [$query->getVector()->getData()],
-            nResults: $options['limit'] ?? 4,
+            nResults: $options['limit'] ?? self::DEFAULT_QUERY_LIMIT,
             where: $options['where'] ?? null,
             whereDocument: $options['whereDocument'] ?? null,
             include: $include,
@@ -201,7 +202,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $collection = $this->client->getOrCreateCollection($this->collectionName, embeddingFunction: $this->embeddingFunction);
         $queryResponse = $collection->query(
             queryTexts: $query->getTexts(),
-            nResults: $options['limit'] ?? 4,
+            nResults: $options['limit'] ?? self::DEFAULT_QUERY_LIMIT,
             where: $options['where'] ?? null,
             whereDocument: $options['whereDocument'] ?? null,
             include: $include,
