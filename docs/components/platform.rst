@@ -1932,7 +1932,7 @@ replay exactly as it would on the wire, while headers describing the live transf
 (``Authorization``, ``x-api-key``, ``x-goog-api-key``, the ``auth_bearer`` shorthand, cookies and
 provider account identifiers) are replaced with ``[redacted]`` in both request and response headers,
 as are credentials sent as body or query parameters (``api_key``, ``access_token``), before the
-cassette is written, so a cassette is safe to commit. Values that only the recording environment
+cassette is written. Values that only the recording environment
 knows, like a real endpoint or key, can be passed as ``$replacements`` to ``HttpCassette``: they are
 swapped for their placeholders everywhere in the recorded requests and responses, so a replay run
 using the placeholders matches the recording. Per-request trace headers (``date``,
@@ -1942,6 +1942,40 @@ headers are kept, because the converters read them. Binary response bodies (gene
 ...) are not stored byte-for-byte: the cassette keeps a metadata stub (status, headers, byte size)
 and replay serves a small placeholder body, so the real converter still runs without committing
 opaque bytes.
+
+Request bodies are redacted too, since a recorded prompt carries whatever the user sent: an address
+typed into a chat, a phone number quoted back from a ticket, occasionally an API key pasted by
+mistake. Credentials are always replaced. Personal data is replaced by default and can be kept when
+it is the subject of the test, and extra patterns cover identifiers that only exist in one codebase::
+
+    use Symfony\AI\Platform\Test\Replay\BodyRedactor;
+    use Symfony\AI\Platform\Test\Replay\HttpCassette;
+
+    // default: credentials and personal data
+    $cassette = new HttpCassette(__DIR__.'/fixtures/mistral_chat.json');
+
+    // keep personal data, still redact credentials
+    $cassette = new HttpCassette(
+        __DIR__.'/fixtures/mistral_chat.json',
+        redactor: BodyRedactor::credentialsOnly(),
+    );
+
+    // add patterns for identifiers specific to your domain
+    $cassette = new HttpCassette(
+        __DIR__.'/fixtures/mistral_chat.json',
+        redactor: new BodyRedactor(extraPatterns: ['/\bCUST-\d{5}\b/' => '[redacted-customer]']),
+    );
+
+Both stored signatures are computed over the redacted body, so a committed cassette stays
+reproducible from what it actually contains. The default patterns are deliberately conservative: an
+over-eager rule that swallowed timestamps or identifiers out of a payload would corrupt the very
+recording it is meant to protect.
+
+Replay verification accounts for this: the outgoing body is checked as sent first, and only retried
+against its redacted form when that does not match, so a cassette recorded before redaction cannot
+start failing. The trade-off is that verification is exact only on the parts redaction leaves alone
+- two bodies differing solely in a redacted value are indistinguishable to the check, because the
+cassette no longer holds what would tell them apart.
 
 Verification is unconditional: it is what turns a replay test from a fixed-response stub into a
 check of the payload the bridge actually builds, so there is no flag to switch it off. The
