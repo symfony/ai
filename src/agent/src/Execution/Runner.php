@@ -232,22 +232,21 @@ final class Runner
             return $options;
         }
 
-        // only filter tool map if a list of strings is provided as option
-        if (isset($options['tools']) && \is_array($options['tools']) && $this->isFlatStringArray($options['tools'])) {
-            $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool): bool => \in_array($tool->getName(), $options['tools'], true)));
+        $serverTools = [];
+
+        if (isset($options['tools']) && \is_array($options['tools'])) {
+            $names = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_string($tool)));
+            $serverTools = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_array($tool)));
+
+            // only filter tool map if tool names are provided as option, an empty option exposes no tool at all
+            if ([] !== $names || [] === $options['tools']) {
+                $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool): bool => \in_array($tool->getName(), $names, true)));
+            }
         }
 
-        $options['tools'] = $toolMap;
+        $options['tools'] = [...$toolMap, ...$serverTools];
 
         return $options;
-    }
-
-    /**
-     * @param array<mixed> $tools
-     */
-    private function isFlatStringArray(array $tools): bool
-    {
-        return array_reduce($tools, static fn (bool $carry, mixed $item): bool => $carry && \is_string($item), true);
     }
 
     private function extractToolCallResult(ResultInterface $result): ?ToolCallResult
