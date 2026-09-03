@@ -171,6 +171,21 @@ final class DoctrineDbalMessageStoreTest extends TestCase
         $this->assertCount(1, $messages);
     }
 
+    public function testSaveOverwritesPreviousMessages()
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+
+        $messageStore = new DoctrineDbalMessageStore('foo', $connection);
+        $messageStore->setup();
+
+        $messageStore->save(new MessageBag(Message::ofUser('First message')));
+        $messageStore->save(new MessageBag(Message::ofUser('Second message')));
+
+        $messages = $messageStore->load();
+        $this->assertCount(1, $messages);
+        $this->assertSame('Second message', $messages->getUserMessage()->asText());
+    }
+
     public function testMessageBagCanBeLoaded()
     {
         $serializer = new Serializer([
