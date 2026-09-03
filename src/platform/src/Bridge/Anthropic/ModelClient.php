@@ -28,6 +28,18 @@ final class ModelClient implements ModelClientInterface
     use JsonSchemaSanitizerTrait;
     use PromptCachingTrait;
 
+    /**
+     * Anthropic requires a versioned `type` per server tool, so only tools whose
+     * result blocks the converter can round-trip are mapped here. Anything else
+     * stays reachable through the raw `tools` option.
+     *
+     * @var array<string, array{type: string, name: string}>
+     */
+    private const SERVER_TOOLS = [
+        'web_search' => ['type' => 'web_search_20250305', 'name' => 'web_search'],
+        'code_execution' => ['type' => 'code_execution_20250825', 'name' => 'code_execution'],
+    ];
+
     private readonly EventSourceHttpClient $httpClient;
     private readonly string $baseUrl;
 
@@ -78,6 +90,16 @@ final class ModelClient implements ModelClientInterface
             $options['tools'] = $this->injectToolsCacheControl($options['tools'], $cacheControl);
         }
 
+        if (isset($options['server_tools'])) {
+            $serverTools = $this->mapServerTools($options['server_tools']);
+            unset($options['server_tools']);
+
+            if ([] !== $serverTools) {
+                $options['tools'] = array_merge($options['tools'] ?? [], $serverTools);
+                $options['tool_choice'] ??= ['type' => 'auto'];
+            }
+        }
+
         // Adaptive thinking enables interleaved thinking on its own; the beta
         // header is only needed for the legacy enabled/budget_tokens format.
         if ('enabled' === ($options['thinking']['type'] ?? null)) {
@@ -102,5 +124,29 @@ final class ModelClient implements ModelClientInterface
             'headers' => $headers,
             'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
+    }
+
+    /**
+     * @param array<string, array<string, mixed>|bool|null> $serverTools Name => params, `true` for "enabled, no params", falsy to skip
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function mapServerTools(array $serverTools): array
+    {
+        $tools = [];
+
+        foreach ($serverTools as $tool => $params) {
+            if (!$params) {
+                continue;
+            }
+
+            if (!isset(self::SERVER_TOOLS[$tool])) {
+                throw new InvalidArgumentException(\sprintf('Unsupported Anthropic server tool "%s". Supported server tools are "%s". Use the "tools" option to pass an unmapped tool through verbatim.', $tool, implode('", "', array_keys(self::SERVER_TOOLS))));
+            }
+
+            $tools[] = \is_array($params) ? array_merge(self::SERVER_TOOLS[$tool], $params) : self::SERVER_TOOLS[$tool];
+        }
+
+        return $tools;
     }
 }

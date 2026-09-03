@@ -23,15 +23,13 @@ $platform = Factory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_c
 
 $agent = new Agent($platform, 'claude-sonnet-4-5-20250929');
 
-$tools = [
-    ['type' => 'code_execution_20250825', 'name' => 'code_execution'],
-];
+$serverTools = ['code_execution' => true];
 
 $messages = new MessageBag(
     Message::ofUser('Compute the 10th Fibonacci number using a short Python snippet.'),
 );
 
-$execution = $agent->call($messages, ['tools' => $tools]);
+$execution = $agent->call($messages, ['server_tools' => $serverTools]);
 $messages->add($assistant = Message::ofAssistant($execution->getResult()));
 
 output()->writeln('<info>====== Turn 1 ======</info>');
@@ -49,5 +47,5 @@ echo \PHP_EOL;
 
 output()->writeln('<info>====== Turn 2 ======</info>');
 $messages->add(Message::ofUser('What number did your snippet print? Answer with the number only.'));
-$execution = $agent->call($messages, ['tools' => $tools]);
+$execution = $agent->call($messages, ['server_tools' => $serverTools]);
 output()->writeln('<comment>Assistant:</comment> '.$execution->asText());

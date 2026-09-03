@@ -258,6 +258,125 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    public function testToolChoiceDefaultsToAutoWithOnlyServerTools()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertSame(['type' => 'auto'], $body['tool_choice']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['server_tools' => ['code_execution' => true]];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testServerToolWebSearchMapsToVersionedTypeAndMergesParams()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertSame([
+                'type' => 'web_search_20250305',
+                'name' => 'web_search',
+                'max_uses' => 3,
+            ], $body['tools'][0]);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['server_tools' => ['web_search' => ['max_uses' => 3]]];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testServerToolCodeExecutionMapsWithoutParams()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertSame([
+                'type' => 'code_execution_20250825',
+                'name' => 'code_execution',
+            ], $body['tools'][0]);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['server_tools' => ['code_execution' => true]];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testServerToolsSkipFalsyParams()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertArrayNotHasKey('tools', $body);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['server_tools' => ['web_search' => false, 'code_execution' => null]];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testServerToolsUnknownNameThrows()
+    {
+        $this->modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported Anthropic server tool "web_fetch". Supported server tools are "web_search", "code_execution". Use the "tools" option to pass an unmapped tool through verbatim.');
+
+        $this->modelClient->request($this->model, ['message' => 'test'], [
+            'server_tools' => ['web_fetch' => true],
+        ]);
+    }
+
+    public function testServerToolsAreAppendedAfterFunctionToolsCacheControl()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertCount(2, $body['tools']);
+            $this->assertSame('tool_a', $body['tools'][0]['name']);
+            $this->assertSame('web_search', $body['tools'][1]['name']);
+
+            // Regression guard: cache_control must stay on the last function tool, never migrate to a server tool
+            $this->assertArrayHasKey('cache_control', $body['tools'][0]);
+            $this->assertArrayNotHasKey('cache_control', $body['tools'][1]);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key', 'short');
+
+        $options = [
+            'tools' => [['name' => 'tool_a', 'description' => 'First tool', 'input_schema' => ['type' => 'object']]],
+            'server_tools' => ['web_search' => true],
+        ];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testServerToolsKeyNeverReachesRequestBody()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertArrayNotHasKey('server_tools', $body);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['server_tools' => ['code_execution' => true]];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
     public function testStringPayloadThrowsException()
     {
         $this->modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
