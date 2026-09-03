@@ -1,0 +1,42 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "5a586fbe75587b27b2d71002b35b18ad",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "ocr/ocr/google",
+                    "input": {
+                        "language": "en",
+                        "file": "https://raw.githubusercontent.com/symfony/ai/main/fixtures/image.jpg"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "427"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.001500000\",\"provider\":\"google\",\"feature\":\"ocr\",\"subfeature\":\"ocr\",\"output\":{\"text\":\"2 JOHO\",\"bounding_boxes\":[{\"text\":\"2\",\"left\":0.1674491392801252,\"top\":0.7587822014051522,\"width\":0.017214397496087636,\"height\":0.03278688524590164},{\"text\":\"JOHO\",\"left\":0.20031298904538342,\"top\":0.765807962529274,\"width\":0.025039123630672927,\"height\":0.01639344262295082}]},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}

@@ -1,0 +1,42 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai/async",
+                "signature": "d547961a5b2012bb714fd2796cc0684a",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "audio/speech_to_text_async/openai",
+                    "input": {
+                        "language": "en",
+                        "file": "https://raw.githubusercontent.com/symfony/ai/main/fixtures/audio.mp3"
+                    }
+                }
+            },
+            "response": {
+                "status": 202,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "456"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.0002638367000000000077604422887844748402130790054798126220703125\",\"provider\":\"openai\",\"feature\":\"audio\",\"subfeature\":\"speech_to_text_async\",\"output\":{\"text\":\"Wishing you a Merry Christmas and a Happy New Year.\",\"diarization\":{\"total_speakers\":0,\"entries\":[],\"error_message\":null}},\"error\":null,\"original_response\":null,\"public_id\":\"822436ad-3730-4149-a2c5-c7bdc4e3d9a9\",\"model\":null,\"created_at\":\"2026-09-01T15:31:22.072758Z\"}"
+            }
+        }
+    ]
+}

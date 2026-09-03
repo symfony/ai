@@ -1,0 +1,41 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "67205ed84ed309821fc6fef4bf3e10aa",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "image/object_detection/google",
+                    "input": {
+                        "file": "https://raw.githubusercontent.com/symfony/ai/main/fixtures/accordion.jpg"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "1293"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.002250000\",\"provider\":\"google\",\"feature\":\"image\",\"subfeature\":\"object_detection\",\"output\":{\"items\":[{\"label\":\"Person\",\"confidence\":0.927727,\"x_min\":0.16699219,\"x_max\":0.5703125,\"y_min\":0.11816406,\"y_max\":1.0},{\"label\":\"Accordion\",\"confidence\":0.9004929,\"x_min\":0.2421875,\"x_max\":0.5625,\"y_min\":0.3125,\"y_max\":0.86328125},{\"label\":\"Fedora\",\"confidence\":0.848797,\"x_min\":0.265625,\"x_max\":0.421875,\"y_min\":0.10546875,\"y_max\":0.23730469},{\"label\":\"Pants\",\"confidence\":0.7904516,\"x_min\":0.16503906,\"x_max\":0.5546875,\"y_min\":0.69921875,\"y_max\":1.0},{\"label\":\"Chair\",\"confidence\":0.7898734,\"x_min\":0.0016098022,\"x_max\":0.14355469,\"y_min\":0.46289062,\"y_max\":1.0},{\"label\":\"Clothing\",\"confidence\":0.7569897,\"x_min\":0.16503906,\"x_max\":0.5546875,\"y_min\":0.69921875,\"y_max\":1.0},{\"label\":\"Hat\",\"confidence\":0.7269021,\"x_min\":0.265625,\"x_max\":0.421875,\"y_min\":0.10546875,\"y_max\":0.23730469},{\"label\":\"Glasses\",\"confidence\":0.68306917,\"x_min\":0.30078125,\"x_max\":0.40039062,\"y_min\":0.203125,\"y_max\":0.24511719},{\"label\":\"Sun hat\",\"confidence\":0.6515981,\"x_min\":0.265625,\"x_max\":0.421875,\"y_min\":0.10546875,\"y_max\":0.23730469},{\"label\":\"Clothing\",\"confidence\":0.5782511,\"x_min\":0.16699219,\"x_max\":0.5703125,\"y_min\":0.11816406,\"y_max\":1.0}]},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}

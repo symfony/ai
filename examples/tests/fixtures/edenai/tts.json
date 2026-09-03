@@ -1,0 +1,95 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "a518983d3795c81dccec5f39773ec5a1",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "audio/tts/amazon/neural",
+                    "input": {
+                        "text": "Welcome to Symfony AI, the PHP framework for building AI applications."
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "651"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.001120000\",\"provider\":\"amazon\",\"feature\":\"audio\",\"subfeature\":\"tts\",\"output\":{\"audio_resource_url\":\"https://d14uq1pz7dzsdq.cloudfront.net/77438c0e-48a4-43ed-8023-a23111caf552_.mp3?Expires=1788881479&Signature=nE2Z-1tT7AEG4EnyGodLSIXR6gZuxsTJ3luElY4wwFRaAdmhNWhT8i7tFGFdtYPcPrZxLzdS5KeEA-6ky9dq7S~DFmc0Aicoe4UwSCsGrN5YmcgqYO9MyZQuHaJGnPJgZPFH3euj1j11TRk1KHm8nl8ThNagmcodmeaI~iiGPA0zk-xvg9U9SHAc2L~cMU~c9DqLGHCo6Bn8x9zTiwKXmpYSLIx3Ut~4USw-ShMy8PhVMzntDUNN4cSJsPbEjdoIx8sl3lJaGSfGzHMkFZ49I3hVML1Qf37zKoTfiWJG6jphqc55Ytjv-trGZYRdzZYfs4G~m9AhPVJHRwIhVJSQfA__&Key-Pair-Id=K1F55BTI9AHGIK\"},\"error\":null,\"original_response\":null}"
+            }
+        },
+        {
+            "request": {
+                "method": "GET",
+                "url": "https://d14uq1pz7dzsdq.cloudfront.net/77438c0e-48a4-43ed-8023-a23111caf552_.mp3?Expires=1788881479&Signature=nE2Z-1tT7AEG4EnyGodLSIXR6gZuxsTJ3luElY4wwFRaAdmhNWhT8i7tFGFdtYPcPrZxLzdS5KeEA-6ky9dq7S~DFmc0Aicoe4UwSCsGrN5YmcgqYO9MyZQuHaJGnPJgZPFH3euj1j11TRk1KHm8nl8ThNagmcodmeaI~iiGPA0zk-xvg9U9SHAc2L~cMU~c9DqLGHCo6Bn8x9zTiwKXmpYSLIx3Ut~4USw-ShMy8PhVMzntDUNN4cSJsPbEjdoIx8sl3lJaGSfGzHMkFZ49I3hVML1Qf37zKoTfiWJG6jphqc55Ytjv-trGZYRdzZYfs4G~m9AhPVJHRwIhVJSQfA__&Key-Pair-Id=K1F55BTI9AHGIK",
+                "signature": "e8decec822c68da8558888dff1b6f236"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "binary/octet-stream"
+                    ],
+                    "content-length": [
+                        "31436"
+                    ],
+                    "last-modified": [
+                        "Tue, 01 Sep 2026 15:31:20 GMT"
+                    ],
+                    "etag": [
+                        "\"8ebad59fe475c23c8df6244adcc44d75\""
+                    ],
+                    "x-amz-server-side-encryption": [
+                        "AES256"
+                    ],
+                    "x-amz-version-id": [
+                        "YRIzN2wMWC0s844RtjIQQdxgRJ3gg_zW"
+                    ],
+                    "accept-ranges": [
+                        "bytes"
+                    ],
+                    "server": [
+                        "AmazonS3"
+                    ],
+                    "x-cache": [
+                        "Miss from cloudfront"
+                    ],
+                    "via": [
+                        "1.1 cd3b42b97898ebdad92bdcee83d9a284.cloudfront.net (CloudFront)"
+                    ],
+                    "x-amz-cf-pop": [
+                        "CDG50-P5"
+                    ],
+                    "x-amz-cf-id": [
+                        "NLjOX6GSLdrZHlL8Nh6weoN7n0pVq4qqX1fhLAGbvdvj4q36osn4eQ=="
+                    ],
+                    "vary": [
+                        "Origin"
+                    ]
+                },
+                "body_format": "binary",
+                "body": null,
+                "body_size": 31436
+            }
+        }
+    ]
+}

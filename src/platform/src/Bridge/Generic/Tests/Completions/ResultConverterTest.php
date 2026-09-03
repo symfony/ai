@@ -286,6 +286,36 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    public function testThrowsAuthenticationExceptionOnDetailOnlyErrorPayload()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'detail' => 'User not found',
+        ]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('User not found');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testFallsBackToTheGenericMessageOnANonStringDetail()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = self::createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'detail' => [['loc' => ['header', 'authorization'], 'msg' => 'Field required', 'type' => 'missing']],
+        ]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Authentication failed.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testThrowsExceptionWhenNoChoices()
     {
         $converter = new ResultConverter();

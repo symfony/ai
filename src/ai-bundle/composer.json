@@ -17,6 +17,9 @@
             "homepage": "https://symfony.com/contributors"
         }
     ],
+    "repositories": [
+        {"type": "path", "url": "../platform/src/Bridge/EdenAi" }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-platform": "^0.13",
@@ -58,6 +61,7 @@
         "symfony/ai-deepgram-platform": "^0.13",
         "symfony/ai-docker-model-runner-platform": "^0.13",
         "symfony/ai-doctrine-message-store": "^0.13",
+        "symfony/ai-eden-ai-platform": "dev-main",
         "symfony/ai-elasticsearch-store": "^0.13",
         "symfony/ai-eleven-labs-platform": "^0.13",
         "symfony/ai-failover-platform": "^0.13",

@@ -1,0 +1,74 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/upload",
+                "signature": "fabb86f4b682649e0e8d8c5f030deba0",
+                "headers": {
+                    "content-type": [
+                        "multipart/form-data; boundary=NGOU5v2R"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {}
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "296"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"file_id\":\"5435eea0-d6ce-4c8a-87db-a4bd2021c2d6\",\"file_name\":\"audio.mp3\",\"file_size\":51019,\"file_mimetype\":\"audio/mpeg\",\"purpose\":\"general\",\"metadata\":{\"duration\":2.638367,\"frame_rate\":\"44100\",\"channels\":\"1\"},\"created_at\":\"2026-09-01T15:33:48.217754Z\",\"expires_at\":\"2026-10-01T15:33:48.217754Z\"}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai/async",
+                "signature": "60e602fc1e63fbcc2ec8ed6a2cd84cc3",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "audio/speech_to_text_async/deepgram",
+                    "input": {
+                        "language": "en",
+                        "file": "5435eea0-d6ce-4c8a-87db-a4bd2021c2d6"
+                    }
+                }
+            },
+            "response": {
+                "status": 202,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "1466"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.00083108560500000003799792036573990117176435887813568115234375\",\"provider\":\"deepgram\",\"feature\":\"audio\",\"subfeature\":\"speech_to_text_async\",\"output\":{\"text\":\"Wishing you a merry Christmas and a happy new year.\",\"diarization\":{\"total_speakers\":1,\"entries\":[{\"segment\":\"wishing\",\"start_time\":\"0.03998\",\"end_time\":\"0.31984\",\"speaker\":1,\"confidence\":0.9958496},{\"segment\":\"you\",\"start_time\":\"0.31984\",\"end_time\":\"0.47976002\",\"speaker\":1,\"confidence\":0.99902344},{\"segment\":\"a\",\"start_time\":\"0.47976002\",\"end_time\":\"0.55972004\",\"speaker\":1,\"confidence\":0.9946289},{\"segment\":\"merry\",\"start_time\":\"0.55972004\",\"end_time\":\"0.83958006\",\"speaker\":1,\"confidence\":0.9086914},{\"segment\":\"christmas\",\"start_time\":\"0.83958006\",\"end_time\":\"1.33958\",\"speaker\":1,\"confidence\":1.0},{\"segment\":\"and\",\"start_time\":\"1.43928\",\"end_time\":\"1.6391801\",\"speaker\":1,\"confidence\":0.9692383},{\"segment\":\"a\",\"start_time\":\"1.6391801\",\"end_time\":\"1.71914\",\"speaker\":1,\"confidence\":0.9863281},{\"segment\":\"happy\",\"start_time\":\"1.71914\",\"end_time\":\"2.03898\",\"speaker\":1,\"confidence\":0.9970703},{\"segment\":\"new\",\"start_time\":\"2.03898\",\"end_time\":\"2.2388802\",\"speaker\":1,\"confidence\":0.71435547},{\"segment\":\"year\",\"start_time\":\"2.2388802\",\"end_time\":\"2.638375\",\"speaker\":1,\"confidence\":0.97094727}],\"error_message\":null}},\"error\":null,\"original_response\":null,\"public_id\":\"a218e4ed-f72a-4a65-bbd1-0bb287bfc707\",\"model\":\"enhanced\",\"created_at\":\"2026-09-01T15:33:52.055951Z\"}"
+            }
+        }
+    ]
+}

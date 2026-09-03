@@ -1,0 +1,41 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "09cc5bbb9cbbf9dc6957e06097b538e8",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "ocr/resume_parser/openai/gpt-4o",
+                    "input": {
+                        "file": "https://upload.wikimedia.org/wikipedia/commons/9/96/ROC_civil_services_resume_%28general%29_filling_example_20130506.pdf"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "2604"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.640000000\",\"provider\":\"openai\",\"feature\":\"ocr\",\"subfeature\":\"resume_parser\",\"output\":{\"extracted_data\":{\"personal_infos\":{\"name\":{\"first_name\":\"大明\",\"last_name\":\"王\",\"raw_name\":\"王大明\",\"middle\":null,\"title\":null,\"prefix\":null,\"sufix\":null},\"address\":{\"formatted_location\":\"試院路○號, 文山區, 臺北市, 11603, 台灣\",\"postal_code\":\"11603\",\"region\":\"文山區\",\"country\":\"台灣\",\"country_code\":\"TW\",\"raw_input_location\":null,\"street\":\"試院路\",\"street_number\":\"○\",\"appartment_number\":null,\"city\":\"臺北市\"},\"self_summary\":null,\"objective\":null,\"date_of_birth\":\"1979-01-01\",\"place_of_birth\":null,\"phones\":[\"(02)82366666\",\"0900-111222\"],\"mails\":[\"daming@mocs.gov.tw\"],\"urls\":[],\"fax\":[],\"current_profession\":null,\"gender\":\"男\",\"nationality\":\"台灣\",\"martial_status\":null,\"current_salary\":null,\"availability\":null},\"education\":{\"total_years_education\":null,\"entries\":[{\"title\":null,\"start_date\":\"1997-09-01\",\"end_date\":\"2001-06-01\",\"location\":{\"formatted_location\":null,\"postal_code\":null,\"region\":null,\"country\":null,\"country_code\":null,\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":null},\"establishment\":\"○○大學\",\"description\":\"○○學院○○學系\",\"gpa\":null,\"accreditation\":null},{\"title\":null,\"start_date\":\"2001-09-01\",\"end_date\":\"2004-06-01\",\"location\":{\"formatted_location\":null,\"postal_code\":null,\"region\":null,\"country\":null,\"country_code\":null,\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":null},\"establishment\":\"○○大學\",\"description\":\"○○學院○○研究所\",\"gpa\":null,\"accreditation\":null}]},\"work_experience\":{\"total_years_experience\":null,\"entries\":[{\"title\":\"科員\",\"start_date\":\"2008-11-11\",\"end_date\":\"2009-02-11\",\"company\":\"○○○\",\"location\":{\"formatted_location\":null,\"postal_code\":null,\"region\":null,\"country\":null,\"country_code\":null,\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":null},\"description\":null,\"type\":\"薦任第6職等\",\"industry\":null},{\"title\":\"科員\",\"start_date\":\"2009-02-21\",\"end_date\":null,\"company\":\"○○○\",\"location\":{\"formatted_location\":null,\"postal_code\":null,\"region\":null,\"country\":null,\"country_code\":null,\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":null},\"description\":null,\"type\":\"薦任第7職等\",\"industry\":null}]},\"languages\":[{\"name\":\"英語\",\"code\":null}],\"skills\":[],\"certifications\":[],\"courses\":[],\"publications\":[],\"interests\":[]}},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}

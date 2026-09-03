@@ -308,6 +308,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'deepgram' => ['deepgram', ['api_key' => 'k'], 'ai.platform.deepgram'];
         yield 'deepseek' => ['deepseek', ['api_key' => 'k'], 'ai.platform.deepseek'];
         yield 'dockermodelrunner' => ['dockermodelrunner', ['host_url' => 'http://localhost:12434'], 'ai.platform.dockermodelrunner'];
+        yield 'edenai' => ['edenai', ['api_key' => 'k'], 'ai.platform.edenai'];
         yield 'elevenlabs' => ['elevenlabs', ['api_key' => 'k'], 'ai.platform.elevenlabs'];
         yield 'gemini' => ['gemini', ['api_key' => 'k'], 'ai.platform.gemini'];
         yield 'generic' => ['generic', ['inst' => ['base_url' => 'http://localhost:8080']], 'ai.platform.generic.inst'];

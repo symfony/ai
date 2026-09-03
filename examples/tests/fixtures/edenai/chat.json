@@ -1,0 +1,36 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/chat/completions",
+                "signature": "9bcef6606635148c37f0a9a8963e2886",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"messages\":[{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},{\"role\":\"user\",\"content\":\"Tina has one brother and one sister. How many sisters do Tina\\u0027s siblings have?\"}],\"model\":\"openai\\/gpt-4o-mini\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "1017"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"id\":\"chatcmpl-EJKkASWlnUb5MLA8ZZhRNZEHvpzJ4\",\"created\":1788276678,\"model\":\"gpt-4o-mini\",\"object\":\"chat.completion\",\"system_fingerprint\":\"fp_b70318dca3\",\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"Tina has one sister and one brother. \\n\\n- Tina's brother has one sister, which is Tina.\\n- Tina's sister also has one sister, which is herself.\\n\\nSo, to answer the question:\\n\\n- Tina's brother has 1 sister.\\n- Tina's sister has 1 sister.\\n\\nTherefore, both of Tina's siblings have 1 sister each.\",\"role\":\"assistant\",\"tool_calls\":null,\"function_call\":null,\"provider_specific_fields\":{\"refusal\":null},\"annotations\":[]},\"provider_specific_fields\":{}}],\"usage\":{\"completion_tokens\":73,\"prompt_tokens\":35,\"total_tokens\":108,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"audio_tokens\":0,\"reasoning_tokens\":0,\"rejected_prediction_tokens\":0},\"prompt_tokens_details\":{\"audio_tokens\":0,\"cached_tokens\":0}},\"service_tier\":\"default\",\"cost\":0.00004905,\"provider\":\"openai\"}"
+            }
+        }
+    ]
+}

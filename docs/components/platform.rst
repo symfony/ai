@@ -127,20 +127,20 @@ Supported Models & Platforms
 ----------------------------
 
 * **Language Models**
-  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
-  * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
+  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_, `OpenRouter`_ and `Eden AI`_ as Platform
+  * `Anthropic's Claude`_ with `Anthropic`_, `AWS Bedrock`_ and `Eden AI`_ as Platform
   * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
-  * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
+  * `Gemini`_ with `Google`_, `Vertex AI`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
   * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
   * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
-  * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
+  * `Mistral's Mistral`_ with `Mistral`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
   * `LiteLLM`_ as unified Platform
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
   * `Vertex AI Text Embeddings`_ with `Vertex AI`_
-  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
+  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Voyage's Embeddings`_ with `Voyage`_ as Platform
   * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
   * `Qwen`_ with `OpenRouter`_ as Platform
@@ -148,6 +148,7 @@ Supported Models & Platforms
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
+  * OCR and document parsing (invoices, resumes, identity documents) with `Eden AI`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
@@ -158,16 +159,20 @@ Supported Models & Platforms
   * `Cartesia STT`_ with `Cartesia`_ as Platform
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
+  * Multi-provider TTS and STT with `Eden AI`_ as Platform
 
   For complete Deepgram setup and usage guide (TTS + STT), see :doc:`platform/deepgram`.
 * **Image/Video Models**
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
+  * Image generation, object detection and explicit content detection with `Eden AI`_ as Platform
+
+  For complete Eden AI setup and usage guide, see :doc:`platform/edenai`.
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
 
-Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multiple models from different providers.
+Platforms like `LiteLLM`_, `OpenRouter`_ or `Eden AI`_ provide a unified API to access multiple models from different providers.
 Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
 standard in the industry. Platforms using this de facto standard can be used with the generic bridge::
 
@@ -1163,6 +1168,9 @@ completions, it is invoked with a single document content object - a
 The result exposes every ``Page`` with its markdown, dimensions, extracted layout images
 (with bounding boxes) and optional annotations.
 
+Eden AI also exposes OCR and document parsing (invoices, resumes, identity documents) from
+multiple providers. See :doc:`platform/edenai`.
+
 Code Examples
 ~~~~~~~~~~~~~
 
@@ -1963,6 +1971,7 @@ Code Examples
 .. _`Vertex AI`: https://cloud.google.com/vertex-ai/generative-ai/docs
 .. _`Google`: https://ai.google.dev/
 .. _`OpenRouter`: https://www.openrouter.ai/
+.. _`Eden AI`: https://www.edenai.co/
 .. _`DeepSeek's R1`: https://www.deepseek.com/
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/

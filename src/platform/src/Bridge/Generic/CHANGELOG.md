@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Read the `detail` key of an authentication error payload, so gateways not using the OpenAI error shape report their own message instead of the generic `Authentication failed.`
+
 0.12
 ----
 

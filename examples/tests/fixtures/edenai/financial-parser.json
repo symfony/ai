@@ -1,0 +1,43 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "f658a1f5781510c210022f83966c7bfe",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "ocr/financial_parser/openai/gpt-4o",
+                    "input": {
+                        "language": "en",
+                        "document_type": "invoice",
+                        "file": "https://slicedinvoices.com/pdf/wordpress-pdf-invoice-plugin-sample.pdf"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "2867"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.040000000\",\"provider\":\"openai\",\"feature\":\"ocr\",\"subfeature\":\"financial_parser\",\"output\":{\"extracted_data\":[{\"customer_information\":{\"name\":\"Test Business\",\"id_reference\":\"\",\"mailling_address\":null,\"billing_address\":\"123 Somewhere St, Melbourne, VIC 3000\",\"shipping_address\":null,\"service_address\":null,\"remittance_address\":null,\"email\":\"test@test.com\",\"phone\":null,\"vat_number\":null,\"abn_number\":null,\"gst_number\":null,\"pan_number\":null,\"business_number\":null,\"siret_number\":null,\"siren_number\":null,\"customer_number\":null,\"coc_number\":null,\"fiscal_number\":null,\"registration_number\":null,\"tax_id\":null,\"website\":null,\"remit_to_name\":null,\"city\":\"Melbourne\",\"country\":\"AU\",\"house_number\":\"123\",\"province\":\"VIC\",\"street_name\":\"Somewhere St\",\"zip_code\":\"3000\",\"municipality\":null},\"merchant_information\":{\"name\":\"DEMO - Sliced Invoices\",\"address\":\"Suite 5A-1204, 123 Somewhere Street, Your City AZ 12345\",\"phone\":null,\"tax_id\":null,\"id_reference\":\"\",\"vat_number\":null,\"abn_number\":null,\"gst_number\":null,\"business_number\":null,\"siret_number\":null,\"siren_number\":null,\"pan_number\":null,\"coc_number\":null,\"fiscal_number\":null,\"email\":\"admin@slicedinvoices.com\",\"fax\":null,\"website\":null,\"registration\":null,\"city\":\"Your City\",\"country\":\"US\",\"house_number\":\"123\",\"province\":\"AZ\",\"street_name\":\"Somewhere Street\",\"zip_code\":\"12345\",\"country_code\":null},\"payment_information\":{\"amount_due\":93.5,\"amount_tip\":0.0,\"amount_shipping\":null,\"amount_change\":0.0,\"amount_paid\":null,\"total\":93.5,\"subtotal\":85.0,\"total_tax\":8.5,\"tax_rate\":null,\"discount\":null,\"gratuity\":null,\"service_charge\":null,\"previous_unpaid_balance\":null,\"prior_balance\":null,\"payment_terms\":\"Net 30\",\"payment_method\":null,\"payment_card_number\":\"\",\"payment_auth_code\":\"\",\"shipping_handling_charge\":null,\"transaction_number\":null,\"transaction_reference\":null},\"financial_document_information\":{\"invoice_receipt_id\":\"INV-3337\",\"purchase_order\":\"12345\",\"invoice_date\":\"2016-01-25T00:00:00\",\"time\":null,\"invoice_due_date\":\"2016-01-31\",\"service_start_date\":null,\"service_end_date\":null,\"reference\":null,\"biller_code\":null,\"order_date\":null,\"tracking_number\":null,\"barcodes\":[]},\"local\":{\"currency\":\"USD\",\"currency_code\":\"USD\",\"currency_exchange_rate\":null,\"country\":\"AU\",\"language\":\"EN\"},\"bank\":{\"iban\":null,\"swift\":null,\"bsb\":\"4321 432\",\"sort_code\":null,\"account_number\":\"1234 1234\",\"routing_number\":null,\"bic\":null},\"item_lines\":[{\"tax\":8.5,\"amount_line\":85.0,\"description\":\"Web Design\",\"quantity\":1.0,\"unit_price\":85.0,\"unit_type\":null,\"date\":null,\"product_code\":\"\",\"purchase_order\":\"12345\",\"tax_rate\":null,\"base_total\":null,\"sub_total\":null,\"discount_amount\":null,\"discount_rate\":null,\"discount_code\":null,\"order_number\":null,\"title\":null}],\"document_metadata\":{\"document_index\":null,\"document_page_number\":null,\"document_type\":\"invoice\"}}]},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}
