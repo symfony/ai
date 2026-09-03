@@ -1,0 +1,82 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-19T22:17:42Z
+
+Hey @soyuka, thanks for that - let's use to sort the situation a bit - thinking out loud here:
+
+* with #1937 we brought in an example and docs for folding those server tools for anthropic into the existing `tools` option - what you under the hood do here as well
+* with [Gemini/Vertex Server Tools](https://symfony.com/doc/current/ai/components/platform/gemini-server-tools.html) we use the `server_tools` option
+
+on the one hand i feel like adopting `server_tools` feels more consistent and i bet every dev also differentiates between local and server tools - but on the other hand, if it ends up in the same option - a bit weird :thinking:
+
+i think i would appreciate to streamline docs for promoting `server_tools` - we don't need to block the usage via `tools`
+
+cc @valtzu
+
+---------------------------------------------------------------------------
+
+by soyuka at 2026-06-22T13:12:53Z
+
+I can document that if needed lmk.
+
+---------------------------------------------------------------------------
+
+by valtzu at 2026-06-22T15:30:10Z
+
+It would be nice to have some abstraction so that the same would work for any platform that supports the feature. Then it would be very similar to capabilities, or maybe we could even use capabilities?
+
+E.g. a model would have `Capability::WebSearchServerTool`
+
+Then you'd have
+```yaml
+ai:
+  platform:
+    antropic:
+      # ..
+      server_tools:
+        web_search: true
+    gemini:
+      # ..
+      server_tools:
+        web_search: true
+    failover:
+      anthropic_to_gemini:
+        platforms:
+          - 'ai.platform.anthorpic'
+          - 'ai.platform.gemini'
+```
+
+and then do the routing & constructing the request instead of current pass-through as-is.
+
+For simple things like web search and code execution having the platform-specific config in yaml is not an issue, but some server tools take input (e.g. location-based ones) so for those its usually not feasible to have them within platform config, and by putting them into code you make the code platform-specific, which may be unacceptable in failover setups.
+
+And of course it must still be possible to define platform-specific tools (in a pass-thru manner), not to handcuff people from using the latest features that have not yet landed on `symfony/ai`.
+
+---
+
+I understand this may be a stretch.
+
+---------------------------------------------------------------------------
+
+by soyuka at 2026-09-01T08:21:30Z
+
+Thanks @wachterjohannes - you were right on both counts, and I've reworked this rather than defend the original shape.
+
+@chr-hertel you asked the shape question back in June and it's been open since; rather than leave it sitting I've gone with the Gemini/VertexAI map shape, since that's where both of you leaned. Happy to revisit if you'd rather have pass-through plus docs.
+
+What changed:
+
+- `server_tools` is now a `name => params` map, mapping to Anthropic's versioned `type`, matching Gemini/VertexAI. Raw `tools` stays the escape hatch for unmapped tools and is now documented as such - including for `web_fetch`, which isn't mapped because its results aren't converted yet.
+- `web_search` results are wired up. You were right that `ResultConverter` had no `web_search_tool_result` branch - a search was silently dropped, or threw when the reply had no text block. Both are now covered by tests. The call and result blocks merge into one `WebSearchResult` (query + id + status), matching how OpenResponses represents a search.
+- On `cache_control`: good catch, and I didn't verify it against the live API either - so I removed the question instead of answering it. Server tools are appended after cache-control injection, so it always lands on the last function tool. There's a regression test asserting it is *not* on the server tool.
+- CHANGELOG entry moved to `0.13`.
+- Docs rewritten, `examples/anthropic/server-tools-web-search.php` added, and the two code-execution examples migrated to `server_tools` so they match the docs.
+- Rebased fresh onto main.
+
+One limitation I want to flag rather than bury: `WebSearchResult` has no field for individual search hits, and carrying them means changing a Platform-wide class OpenResponses also populates. Same for streaming - `convertStream()` handles text, thinking and tool calls only, so server tool blocks don't surface there. Both are noted in the RST, with follow-ups for search hits, `citations`, `encrypted_content` round-tripping, and the missing `Content\WebSearch` branch in `AssistantMessageNormalizer`.
+
+The two red `Unit / Store / S3Vectors` checks are a pre-existing async-aws pagination failure, unrelated to this branch.
+
+---
+
+*This comment was drafted by Claude Code (AI) and reviewed by me before posting.*
