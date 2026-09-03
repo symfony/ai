@@ -14,6 +14,6 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class ContentFilterException extends InvalidArgumentException
+class ContentFilterException extends UnrecoverableRuntimeException
 {
 }

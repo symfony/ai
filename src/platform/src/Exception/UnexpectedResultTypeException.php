@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Platform\Exception;
 
-class UnexpectedResultTypeException extends RuntimeException
+class UnexpectedResultTypeException extends UnrecoverableRuntimeException
 {
     public function __construct(string $expectedType, string $actualType)
     {
