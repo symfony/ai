@@ -85,6 +85,46 @@ final class RunnerTest extends TestCase
         $this->assertSame(['tools' => [$tool2]], $options);
     }
 
+    public function testAnEmptyToolsOptionExposesNoRegisteredTool()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+
+        $options = $this->captureOptions($toolbox, ['tools' => []]);
+
+        $this->assertSame(['tools' => []], $options);
+    }
+
+    public function testServerToolsInTheToolsOptionAreKeptNextToRegisteredTools()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+
+        $serverTool = ['type' => 'web_fetch_20260318', 'name' => 'web_fetch'];
+
+        $options = $this->captureOptions($toolbox, ['tools' => [$serverTool]]);
+
+        $this->assertSame(['tools' => [$tool1, $tool2, $serverTool]], $options);
+    }
+
+    public function testServerToolsAreKeptWhileRegisteredToolsGetFilteredByName()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+
+        $serverTool = ['type' => 'web_fetch_20260318', 'name' => 'web_fetch'];
+
+        $options = $this->captureOptions($toolbox, ['tools' => ['tool2', $serverTool]]);
+
+        $this->assertSame(['tools' => [$tool2, $serverTool]], $options);
+    }
+
     public function testToolCallMessagesEndUpInTheCallersMessageBag()
     {
         $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
