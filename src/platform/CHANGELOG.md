@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add `Test\Replay\BodyRedactor` and redact recorded request bodies in `HttpCassette` by default
  * Add a `server_tools` option to the Anthropic `ModelClient`, mapping `web_search` and `code_execution` to their versioned Anthropic tool spec, mirroring the Gemini and Vertex AI bridges' name-to-params map shape; unmapped tool names throw instead of being silently forwarded, and the raw `tools` option remains the escape hatch for anything not mapped. The Anthropic `ResultConverter` now merges the `server_tool_use`/`web_search_tool_result` pair of a web search into a single `Result\WebSearchResult` carrying query, id and status, instead of dropping the blocks (or throwing when a response carries only web-search blocks)
 
 0.13
