@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Contract\Normalizer\Message\SystemMessageNormalizer;
 use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\Template;
 
 final class SystemMessageNormalizerTest extends TestCase
 {
@@ -42,6 +43,18 @@ final class SystemMessageNormalizerTest extends TestCase
         $expected = [
             'role' => 'system',
             'content' => 'You are a helpful assistant',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeTemplateContentReachedWithoutVariables()
+    {
+        $message = new SystemMessage(Template::string('You are a {role} assistant'));
+
+        $expected = [
+            'role' => 'system',
+            'content' => 'You are a {role} assistant',
         ];
 
         $this->assertSame($expected, $this->normalizer->normalize($message));

@@ -19,6 +19,10 @@ CHANGELOG
  * Add `Result\Stream\AssistantMessageStreamListener`, which rebuilds the assistant turn - text, thinking blocks with their signatures, tool calls, in provider order - from a streamed response
  * Accept a `StreamResult` in `Message::ofAssistant()` and add `StreamResult::getAssistantMessage()`, so a streamed turn is replayed like a buffered one, draining the stream if the caller has not read it
  * Add `Result\CustomToolCallResult` for `custom_tool_call` output items reported by provider-specific server-side tools (e.g. xAI's `x_search`), converted the same way as the other built-in tool call results instead of being surfaced as a `ToolCall` the application is expected to execute
+ * Add base `Contract` normalizers for `DocumentUrl`, `File` (covering `Video` and `Document`), `Collection`, `Template`, `Thinking`, `ExecutableCode` and `CodeExecution`, so these content types can be normalized through the base contract instead of making the serializer throw
+ * Add `Contract::normalize()` to normalize an input through the contract serializer without binding a model to the context, producing a provider agnostic representation instead of a provider request payload
+ * Stop dropping provider specific parts (web search, MCP call, code execution, ...) in `AssistantMessageNormalizer` when no model is bound to the context: they are delegated to the serializer and emitted under a `content_parts` key, while a provider request payload keeps ignoring them
+ * Fix `SystemMessageNormalizer` to stringify a `Template` content, so a system prompt built from a template without variables serializes to its raw string instead of an empty object
 
 0.12
 ----

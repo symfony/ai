@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Contract\Normalizer\Message;
 
+use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
@@ -39,15 +40,22 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
     }
 
     /**
+     * Provider specific parts - a web search, an MCP call, a code execution, ... - are dropped when
+     * a model is bound to the context, since the payload is then a provider request the part does
+     * not belong to. Without a model, the payload is a provider agnostic representation of the
+     * message (used e.g. to derive a cache key), so the parts are delegated to the serializer and
+     * emitted under "content_parts" rather than being silently lost.
+     *
      * @param AssistantMessage $data
      *
-     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>, reasoning_content?: string}
+     * @return array{role: 'assistant', content: string|null, tool_calls?: array<array<string, mixed>>, reasoning_content?: string, content_parts?: array<array<string, mixed>>}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $text = '';
         $reasoning = '';
         $toolCalls = [];
+        $additional = [];
 
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
@@ -56,6 +64,8 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
                 $reasoning .= $part->getContent();
             } elseif ($part instanceof ToolCall) {
                 $toolCalls[] = $part;
+            } elseif (!isset($context[Contract::CONTEXT_MODEL])) {
+                $additional[] = $this->normalizer->normalize($part, $format, $context);
             }
         }
 
@@ -70,6 +80,10 @@ final class AssistantMessageNormalizer implements NormalizerInterface, Normalize
 
         if ('' !== $reasoning) {
             $array['reasoning_content'] = $reasoning;
+        }
+
+        if ([] !== $additional) {
+            $array['content_parts'] = $additional;
         }
 
         return $array;

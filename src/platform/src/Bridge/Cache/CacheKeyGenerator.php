@@ -32,6 +32,11 @@ interface CacheKeyGenerator
      * The value is used verbatim as part of a cache key, so it must not contain
      * the PSR-6 reserved characters ("{}()/\@:"). Hash any value that might
      * (e.g. a URL or raw bytes).
+     *
+     * @throws UncacheableInputException When the input is supported but no deterministic
+     *                                   identifier can be derived from it, so that
+     *                                   {@see CachePlatform} serves the request live
+     *                                   instead of breaking it
      */
     public function generate(object $input): string;
 }

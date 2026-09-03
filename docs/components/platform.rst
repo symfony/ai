@@ -1510,7 +1510,7 @@ Thanks to Symfony's Cache component, platform calls can be cached to reduce call
     use Symfony\Component\HttpClient\HttpClient;
 
     $platform = Factory::createPlatform($apiKey, HttpClient::create());
-    $cachePlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+    $cachePlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()), cacheKey: 'capitals');
 
     $firstResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
@@ -1519,6 +1519,35 @@ Thanks to Symfony's Cache component, platform calls can be cached to reduce call
     $secondResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
     echo $secondResult->getContent().\PHP_EOL;
+
+The cache key is built from the namespace, the model name, a hash of the input content and a hash of the invocation
+options, so the two calls above share the same entry even though each one builds its own ``MessageBag`` instance,
+while the same input sent with a different temperature, tool set or response format is a distinct entry. Caching
+engages as soon as a namespace is available, either through the ``cacheKey`` constructor argument or through the
+``prompt_cache_key`` invocation option, which also allows partitioning the entries per call::
+
+    $result = $cachePlatform->invoke('gpt-4o-mini', $messages, [
+        'prompt_cache_key' => 'capitals',
+        'prompt_cache_ttl' => 3600,
+    ]);
+
+Passing an empty ``prompt_cache_key`` opts a single call out of caching, and a streamed call is never cached as
+reading the stream would consume it.
+
+A namespace holding one of the PSR-6 reserved characters ``{}()/\@:`` cannot be turned into a cache key and raises
+an exception.
+
+Every entry is tagged with the camelized model name and with ``namespace.<cache key>``, so a model or a whole
+namespace can be dropped at once::
+
+    $cachePlatform->invalidateTags(['gpt4OMini']);
+    $cachePlatform->invalidateTags(['namespace.capitals']);
+
+Inputs that are not a string, an array or a message are keyed by a
+:class:`Symfony\\AI\\Platform\\Bridge\\Cache\\CacheKeyGenerator`: the bridge ships generators for ``MessageBag``,
+``MessageInterface``, ``DocumentUrl``, ``ImageUrl`` and ``File`` (including ``Audio``, ``Image``, ``Video`` and
+``Document``), and additional input types can be supported by passing extra generators to the
+``cacheKeyGenerators`` constructor argument.
 
 High Availability
 -----------------
