@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Approval\ApprovalDecision;
+use Symfony\AI\Agent\Approval\Checkpoint\ExecutionCheckpoint;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\OutOfBoundsException;
 use Symfony\AI\Agent\Exception\RuntimeException;
@@ -20,6 +22,7 @@ use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -267,6 +270,14 @@ final class MockAgent implements AgentInterface
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function resume(ExecutionCheckpoint|string $checkpoint, ApprovalDecision $decision): ResultInterface
+    {
+        $messages = $checkpoint instanceof ExecutionCheckpoint ? $checkpoint->getMessages() : new MessageBag();
+        $options = $checkpoint instanceof ExecutionCheckpoint ? $checkpoint->getOptions() : [];
+
+        return $this->call($messages, $options);
     }
 
     private function extractText(MessageBag $messages): string

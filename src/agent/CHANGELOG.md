@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `#[RequiresApproval]` attribute, `ApprovalManager`, `ApprovalPolicyInterface`, and `ApprovalPendingResult` for Human-in-the-Loop (HITL) tool execution
+ * Add `ExecutionCheckpoint`, `CheckpointStoreInterface`, `InMemoryCheckpointStore`, `CheckpointSignerInterface`, and `CheckpointSigner` for state suspension and durable resumption
+ * Add `AgentInterface::resume()` and `Agent::resume()` to resume suspended agent runs with `ApprovalDecision` (approve, reject, modify)
+ * Add `ToolApprovalRequestedEvent` and `ToolApprovalResolvedEvent`
+
 0.13
 ----
 

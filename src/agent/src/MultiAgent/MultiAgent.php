@@ -14,6 +14,8 @@ namespace Symfony\AI\Agent\MultiAgent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Approval\ApprovalDecision;
+use Symfony\AI\Agent\Approval\Checkpoint\ExecutionCheckpoint;
 use Symfony\AI\Agent\Exception\ExceptionInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
@@ -24,6 +26,7 @@ use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * A multi-agent system that coordinates multiple specialized agents.
@@ -135,6 +138,23 @@ final class MultiAgent implements AgentInterface
             // Call the selected agent with the original user question
             yield new ResultUpdate($targetAgent->call(new MessageBag($userMessage), $options)->getResult());
         });
+    }
+
+    public function resume(ExecutionCheckpoint|string $checkpoint, ApprovalDecision $decision): ResultInterface
+    {
+        if ($checkpoint instanceof ExecutionCheckpoint) {
+            foreach ($this->handoffs as $handoff) {
+                if ($handoff->getTo()->getName() === $checkpoint->getAgentName()) {
+                    return $handoff->getTo()->resume($checkpoint, $decision);
+                }
+            }
+
+            if ($this->fallback->getName() === $checkpoint->getAgentName()) {
+                return $this->fallback->resume($checkpoint, $decision);
+            }
+        }
+
+        return $this->orchestrator->resume($checkpoint, $decision);
     }
 
     private function buildAgentSelectionPrompt(string $userQuestion): string
