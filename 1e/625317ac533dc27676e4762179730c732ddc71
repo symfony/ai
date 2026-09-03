@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-03T20:30:02Z
+
+Follow-up: got the bridge's dev dependency installed after all (a stale local lock file was the blocker, not a real conflict) and ran the suite directly. Verified locally, all green.
