@@ -104,15 +104,21 @@ final class HttpCassette
 
     private int $cursor = 0;
 
+    private readonly BodyRedactor $redactor;
+
     /**
      * @param array<string, string> $replacements values replaced in every recorded request and response, for
      *                                            example a real endpoint or credential mapped to the placeholder
      *                                            a replay run sends instead
+     * @param BodyRedactor|null     $redactor     replaces secrets and personal data in recorded request
+     *                                            bodies; defaults to the built-in rule set
      */
     public function __construct(
         private readonly string $path,
         private readonly array $replacements = [],
+        ?BodyRedactor $redactor = null,
     ) {
+        $this->redactor = $redactor ?? new BodyRedactor();
     }
 
     public function exists(): bool
@@ -144,7 +150,7 @@ final class HttpCassette
         }
 
         $this->interactions[] = [
-            'request' => self::redactRequest($method, $url, $options),
+            'request' => $this->redactRequest($method, $url, $options),
             'response' => $response,
         ];
 
@@ -221,14 +227,20 @@ final class HttpCassette
      *
      * @return array<string, mixed>
      */
-    private static function redactRequest(string $method, string $url, array $options): array
+    private function redactRequest(string $method, string $url, array $options): array
     {
         $headers = self::sanitizeHeaders(self::normalizeRequestHeaders($options));
 
         $request = ['method' => $method, 'url' => $url];
 
         $query = self::requestQuery($options);
-        $body = self::requestBody($options);
+
+        // Redact before signing: a committed cassette has to stay reproducible from what it
+        // actually contains, and hashing the raw body would describe something the file no
+        // longer holds. Both signatures are computed from the same redacted body, so a freshly
+        // written cassette verifies against itself through either path.
+        $body = $this->redactor->redact(self::requestBody($options));
+
         $request[self::REQUEST_SIGNATURE] = self::legacySignature($method, $url, $body);
         $request[self::REQUEST_SIGNATURE_V2] = self::signature($method, $url, $query, $body);
 
