@@ -147,7 +147,9 @@ the stream without producing a final result::
 
 Cancellation is idempotent, propagates to the agents a ``MultiAgent`` or ``SpeechAgent`` delegates to, and makes
 ``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\RuntimeException` instead of returning a partial
-answer.
+answer. See the
+`execution-cancellation.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-cancellation.php>`_
+example.
 
 Once the stream is drained, the execution resolves to the assembled answer like a non-streamed one: ``getResult()``
 returns the final result, and a streamed structured output ends with the object, so ``asObject()`` works on it as
