@@ -24,7 +24,7 @@ final class Progress implements UpdateInterface
     /**
      * @param non-empty-string $stage   machine-readable stage, e.g. "model_request", "tool_call", "delta"
      * @param string           $message human-readable description
-     * @param mixed            $payload stage-specific payload (e.g. the ToolCall, a streamed delta, ...)
+     * @param mixed            $payload stage-specific payload (e.g. the ToolCall, a streamed delta, the handoff Decision, ...)
      */
     public function __construct(
         private readonly string $stage,

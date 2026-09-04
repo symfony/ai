@@ -11,8 +11,10 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -22,6 +24,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -47,7 +50,26 @@ final class SpeechAgent implements AgentInterface
                 $messages = $this->transcribe($messages, $options, $cancellation);
             }
 
-            $result = $cancellation->forward($this->agent->call($messages, $options))->getResult();
+            $result = null;
+            foreach ($cancellation->forward($this->agent->call($messages, $options)) as $update) {
+                if ($update instanceof ResultUpdate) {
+                    $result = $update->getResult();
+
+                    continue;
+                }
+
+                if ($update instanceof Progress) {
+                    yield $update;
+                }
+            }
+
+            if ($cancellation->isRequested()) {
+                return;
+            }
+
+            if (!$result instanceof ResultInterface) {
+                throw new RuntimeException(\sprintf('The agent "%s" finished without producing a result.', $this->agent->getName()));
+            }
 
             if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
                 yield new ResultUpdate($result);
