@@ -174,6 +174,16 @@ HELP
 
         try {
             $result = $this->invoker->invoke($tool, $params);
+        } catch (InvalidArgumentException $e) {
+            // A wrong or missing parameter name is a guess the caller can correct right away;
+            // point at the command that shows the full schema instead of leaving it a guess.
+            $io->error(\sprintf('Error: %s', $e->getMessage()));
+            $io->note(\sprintf('Use "%s tools:inspect %s" to see this tool\'s parameters.', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate', $toolName));
+            if ($verbose) {
+                $io->text($e->getTraceAsString());
+            }
+
+            return Command::FAILURE;
         } catch (\Throwable $e) {
             $io->error(\sprintf('Error: %s', $e->getMessage()));
             if ($verbose) {

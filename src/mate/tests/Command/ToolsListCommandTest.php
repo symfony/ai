@@ -162,6 +162,24 @@ final class ToolsListCommandTest extends TestCase
         $this->assertStringContainsString('Extension', $output);
     }
 
+    public function testTableOutputShowsRequiredAndOptionalArguments()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['tests/Command/Fixtures'], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--filter' => 'sample-add', '--format' => 'table']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Arguments', $output);
+        $this->assertStringContainsString('a, b?, negate?', $output);
+    }
+
     public function testExecuteWithToonFormatFailsWhenToonIsNotAvailable()
     {
         $rootDir = __DIR__.'/../..';

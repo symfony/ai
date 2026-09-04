@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add an `Arguments` column to `tools:list`'s table output, and stop truncating tool descriptions to 50 characters, so a tool's parameters and full description are visible without a separate `tools:inspect` call
+ * Add a `tools:inspect <tool-name>` hint to `tools:call`'s error output when a parameter name is unknown or a required one is missing
+
 0.13
 ----
 
