@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `total_matched` and `truncated` fields to `monolog-search`, `monolog-context-search`, and `monolog-tail`'s response, so an agent reads a count instead of counting `entries` by hand: for `monolog-search` and `monolog-context-search`, `total_matched` is the size of the returned page (not an exact total beyond `limit`) and `truncated` is true when the page filled up, a signal that more matches may exist; `monolog-tail`'s `total_matched` is an exact count within the file(s) it actually reads (the newest file per kernel context), not the whole log directory
+
 0.13
 ----
 

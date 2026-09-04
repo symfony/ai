@@ -88,6 +88,42 @@ final class LogSearchToolTest extends TestCase
         $this->assertLessThanOrEqual(2, \count($result['entries']));
     }
 
+    public function testSearchReportsExactTotalWhenNotTruncated()
+    {
+        $result = $this->decodeUntrusted($this->tool->search('', level: 'ERROR'));
+
+        // sample.log + sample.json.log carry exactly 2 ERROR entries (see testReadAllWithLevelFilter)
+        $this->assertCount(2, $result['entries']);
+        $this->assertSame(2, $result['total_matched']);
+        $this->assertFalse($result['truncated']);
+    }
+
+    public function testSearchSignalsTruncationWhenPageFillsAtLimit()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-search-tool-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $lines = [];
+        for ($i = 1; $i <= 150; ++$i) {
+            $lines[] = \sprintf('[2024-01-01 00:%02d:%02d] app.ERROR: Error number %d [] []', intdiv($i, 60), $i % 60, $i);
+        }
+        file_put_contents($tempDir.'/app.log', implode("\n", $lines)."\n");
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $tempDir));
+
+            // default limit is 100, the file carries 150 matching entries: reading still
+            // stops at limit, total_matched does not reach past it
+            $result = $this->decodeUntrusted($tool->search('', level: 'ERROR'));
+
+            $this->assertCount(100, $result['entries']);
+            $this->assertSame(100, $result['total_matched'], 'total_matched is the size of the returned page, not an exact total beyond limit');
+            $this->assertTrue($result['truncated'], 'truncated signals the page filled up, i.e. more matches may exist');
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
     public function testSearchRegex()
     {
         $result = $this->decodeUntrusted($this->tool->search('Database.*failed', regex: true));
@@ -145,11 +181,42 @@ final class LogSearchToolTest extends TestCase
 
     public function testTail()
     {
+        // A checkout gives both fixtures the same mtime, so which one is "newest" would
+        // otherwise depend on LogReader's tie-break rule rather than this test's intent.
+        touch($this->fixturesDir.'/sample.json.log', time() + 60);
+
         $result = $this->decodeUntrusted($this->tool->tail(10));
 
+        // tail() reads only the newest file of the context (sample.json.log, 5 entries).
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
         $this->assertLessThanOrEqual(10, \count($result['entries']));
+        $this->assertSame(5, $result['total_matched']);
+        $this->assertFalse($result['truncated']);
+    }
+
+    public function testTailReportsTruncationWhenMatchesExceedLimit()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-search-tool-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $lines = [];
+        for ($i = 1; $i <= 30; ++$i) {
+            $lines[] = \sprintf('[2024-01-01 00:%02d:00] app.ERROR: Error number %d [] []', $i, $i);
+        }
+        file_put_contents($tempDir.'/app.log', implode("\n", $lines)."\n");
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $tempDir));
+
+            $result = $this->decodeUntrusted($tool->tail(10, level: 'ERROR'));
+
+            $this->assertCount(10, $result['entries']);
+            $this->assertSame(30, $result['total_matched']);
+            $this->assertTrue($result['truncated']);
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
     }
 
     public function testTailWithLevel()
@@ -375,6 +442,20 @@ final class LogSearchToolTest extends TestCase
     private function createTermOptionalTool(): LogSearchTool
     {
         return new LogSearchTool(new LogReader(new LogParser(), $this->fixturesDir.'/term-optional'));
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir.'/'.$file;
+            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
+        }
+        rmdir($dir);
     }
 
     /**

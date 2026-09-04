@@ -98,18 +98,50 @@ final class LogReaderTest extends TestCase
 
     public function testTail()
     {
-        $entries = $this->reader->tail(3);
+        // A checkout gives both fixtures the same mtime, so which one is "newest" would
+        // otherwise depend on LogReader's tie-break rule rather than this test's intent.
+        touch($this->fixturesDir.'/sample.json.log', time() + 60);
 
-        $this->assertCount(3, $entries);
+        $result = $this->reader->tail(3);
+
+        // tail() reads only the newest file of the context (sample.json.log, 5 entries),
+        // not every file readAll() would merge.
+        $this->assertCount(3, $result['entries']);
+        $this->assertSame(5, $result['total_matched']);
+        $this->assertTrue($result['truncated']);
     }
 
     public function testTailWithLevel()
     {
-        $entries = $this->reader->tail(10, 'ERROR');
+        $entries = $this->reader->tail(10, 'ERROR')['entries'];
 
         // Only ERROR entries should be returned
         foreach ($entries as $entry) {
             $this->assertSame('ERROR', $entry->getLevel());
+        }
+    }
+
+    public function testTailReportsTruncationWhenMatchesExceedLimit()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-reader-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $lines = [];
+        for ($i = 1; $i <= 30; ++$i) {
+            $lines[] = \sprintf('[2024-01-01 00:%02d:00] app.ERROR: Error number %d [] []', $i, $i);
+        }
+        file_put_contents($tempDir.'/app.log', implode("\n", $lines)."\n");
+
+        try {
+            $reader = new LogReader(new LogParser(), $tempDir);
+
+            $result = $reader->tail(10, 'ERROR');
+
+            $this->assertCount(10, $result['entries']);
+            $this->assertSame(30, $result['total_matched']);
+            $this->assertTrue($result['truncated']);
+        } finally {
+            $this->removeDirectory($tempDir);
         }
     }
 
@@ -215,7 +247,7 @@ final class LogReaderTest extends TestCase
     {
         $reader = $this->createMultiKernelReader();
 
-        $entries = $reader->tail(3);
+        $entries = $reader->tail(3)['entries'];
 
         // Both contexts are tailed, merged and sorted by time: the admin fixtures are the most recent ones
         $this->assertCount(3, $entries);
@@ -228,7 +260,7 @@ final class LogReaderTest extends TestCase
     {
         $reader = $this->createMultiKernelReader();
 
-        $entries = $reader->tail(10, kernelContext: 'admin');
+        $entries = $reader->tail(10, kernelContext: 'admin')['entries'];
 
         $this->assertCount(2, $entries);
         foreach ($entries as $entry) {
@@ -255,11 +287,14 @@ final class LogReaderTest extends TestCase
 
             // A raw-line window of 2*limit=100 lines, counted from the end of the file,
             // never reaches the 20 ERROR lines that sit behind 500 later INFO lines.
-            $entries = $reader->tail(50, 'ERROR');
+            $result = $reader->tail(50, 'ERROR');
+            $entries = $result['entries'];
 
             $this->assertCount(20, $entries, 'all 20 ERROR entries must be found even though 500 INFO lines follow them');
             $this->assertSame('Error number 1', $entries[0]->getMessage());
             $this->assertSame('Error number 20', $entries[19]->getMessage());
+            $this->assertSame(20, $result['total_matched']);
+            $this->assertFalse($result['truncated']);
         } finally {
             $this->removeDirectory($tempDir);
         }
@@ -279,7 +314,7 @@ final class LogReaderTest extends TestCase
         try {
             $reader = new LogReader(new LogParser(), $tempDir);
 
-            $entries = $reader->tail(10, 'ERROR');
+            $entries = $reader->tail(10, 'ERROR')['entries'];
 
             $this->assertCount(10, $entries);
             $this->assertSame('Error number 21', $entries[0]->getMessage());
