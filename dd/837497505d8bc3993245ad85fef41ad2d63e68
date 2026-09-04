@@ -1,0 +1,51 @@
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-07T20:01:09Z
+
+@copilot can you update the examples
+
+---------------------------------------------------------------------------
+
+by Copilot at 2026-02-07T20:06:33Z
+
+> @copilot can you update the examples
+
+Updated the examples to display the model property in the token usage output. The `print_token_usage` function in `examples/bootstrap.php` now shows the model as the first row in the token usage table. (13ba1a7)
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-07T21:59:42Z
+
+Add changelog entries to components @copilot
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-07T22:12:22Z
+
+@copilot it's for 0.4 for all components
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-08T10:26:45Z
+
+@copilot
+
+$tokenUsage = $response->getMetadata()->get('token_usage');
+
+returns a TokenUsageAggregation object, which contains a private array of TokenUsage objects.
+
+Each TokenUsage object should have a model property.
+
+There is also an issue with iterating over the TokenUsage objects, since the array is private.
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-02-21T07:17:28Z
+
+@copilot rebase and make changes if needed
+
+---------------------------------------------------------------------------
+
+by RVXD at 2026-03-13T13:47:44Z
+
+When will this feature be available? Need token_usage stats.
