@@ -80,6 +80,8 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertTextToObject(TextResult $textResult, RawResultInterface $result): ObjectResult
     {
+        $content = $this->unwrapCodeFence($textResult->getContent());
+
         try {
             $context = [];
             if (null !== $this->objectToPopulate) {
@@ -87,9 +89,9 @@ final class ResultConverter implements ResultConverterInterface
             }
 
             $structure = null === $this->outputType
-                ? json_decode($textResult->getContent(), true, flags: \JSON_THROW_ON_ERROR)
+                ? json_decode($content, true, flags: \JSON_THROW_ON_ERROR)
                 : $this->serializer->deserialize(
-                    $textResult->getContent(),
+                    $content,
                     $this->outputType,
                     'json',
                     $context
@@ -111,6 +113,22 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return $objectResult;
+    }
+
+    /**
+     * Models without native structured output often answer with their JSON inside a Markdown code
+     * fence. Unwrapping is limited to a fence whose body parses as JSON, so a text answer that
+     * merely contains a fence is handed to the decoder unchanged and still fails as before.
+     */
+    private function unwrapCodeFence(string $content): string
+    {
+        if (1 !== preg_match('/^\s*```(?:json)?\s*(.*?)\s*```\s*$/is', $content, $matches)) {
+            return $content;
+        }
+
+        json_decode($matches[1]);
+
+        return \JSON_ERROR_NONE === json_last_error() ? $matches[1] : $content;
     }
 
     private function convertMultiPart(MultiPartResult $multiPart, RawResultInterface $result): MultiPartResult
