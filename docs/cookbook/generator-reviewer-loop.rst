@@ -333,6 +333,7 @@ Best Practices
 Learn More
 ----------
 
+* `Reviewer Loop Example <https://github.com/symfony/ai/blob/main/examples/agent/reviewer-loop.php>`_ - A runnable copywriter and art director loop in a single file
 * :doc:`multi-agent-orchestration` - Route questions to specialist agents instead of reviewing output
 * :doc:`../components/agent` - Processors, memory, and advanced agent patterns
 * :doc:`../components/platform` - Structured output and platform configuration reference
