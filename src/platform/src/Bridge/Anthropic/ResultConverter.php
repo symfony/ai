@@ -189,6 +189,8 @@ class ResultConverter implements ResultConverterInterface
         $inMessage = false;
         $stopReason = null;
         $outputTokens = null;
+        // Only message_start names the model; carry it so the message_delta usage reports it too.
+        $model = null;
 
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
@@ -209,6 +211,7 @@ class ResultConverter implements ResultConverterInterface
 
             if ('message_start' === $type) {
                 $inMessage = true;
+                $model = $data['message']['model'] ?? null;
             }
 
             // Anthropic reports usage in both message_start and message_delta:
@@ -222,7 +225,7 @@ class ResultConverter implements ResultConverterInterface
             if ('message_start' === $type && isset($data['message']['usage'])) {
                 $usage = $data['message']['usage'];
                 unset($usage['output_tokens']);
-                yield $this->getTokenUsageExtractor()->extractFromArray($usage);
+                yield $this->getTokenUsageExtractor()->extractFromArray($usage, $model);
             }
 
             if ('message_delta' === $type) {
@@ -232,7 +235,7 @@ class ResultConverter implements ResultConverterInterface
                     $outputTokens = $data['usage']['output_tokens'] ?? $outputTokens;
                     yield $this->getTokenUsageExtractor()->extractFromArray([
                         'output_tokens' => $outputTokens ?? 0,
-                    ]);
+                    ], $model);
                 }
             }
 

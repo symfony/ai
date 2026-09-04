@@ -261,6 +261,7 @@ final class ResultSerializer
                 'remaining_tokens_minute' => $value->getRemainingTokensMinute(),
                 'remaining_tokens_month' => $value->getRemainingTokensMonth(),
                 'total_tokens' => $value->getTotalTokens(),
+                'model' => $value->getModel(),
             ];
         }
 
@@ -310,6 +311,7 @@ final class ResultSerializer
                 remainingTokensMinute: self::envelopeInt($key, $value, 'remaining_tokens_minute'),
                 remainingTokensMonth: self::envelopeInt($key, $value, 'remaining_tokens_month'),
                 totalTokens: self::envelopeInt($key, $value, 'total_tokens'),
+                model: self::envelopeNullableString($key, $value, 'model'),
             ),
             self::TYPE_TOKEN_USAGE_AGGREGATION => new TokenUsageAggregation(array_map(
                 static fn (mixed $usage): TokenUsageInterface => self::aggregatedUsageFromArray($key, $usage),
@@ -361,6 +363,24 @@ final class ResultSerializer
 
         if (!\is_string($value)) {
             throw new InvalidArgumentException(\sprintf('Cannot rebuild result metadata "%s": field "%s" must be a string, got "%s".', $key, $field, get_debug_type($value)));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $envelope
+     */
+    private static function envelopeNullableString(string $key, array $envelope, string $field): ?string
+    {
+        $value = $envelope[$field] ?? null;
+
+        if (null === $value) {
+            return null;
+        }
+
+        if (!\is_string($value)) {
+            throw new InvalidArgumentException(\sprintf('Cannot rebuild result metadata "%s": field "%s" must be a string or null, got "%s".', $key, $field, get_debug_type($value)));
         }
 
         return $value;

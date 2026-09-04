@@ -38,6 +38,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'mistral-large-latest',
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
@@ -54,6 +55,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(30, $tokenUsage->getTotalTokens());
         $this->assertNull($tokenUsage->getCachedTokens());
+        $this->assertSame('mistral-large-latest', $tokenUsage->getModel());
     }
 
     public function testItExtractsCachedTokens()
@@ -75,6 +77,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(128, $tokenUsage->getPromptTokens());
         $this->assertSame(64, $tokenUsage->getCachedTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()

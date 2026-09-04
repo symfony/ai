@@ -46,7 +46,7 @@ class TokenUsageExtractor implements TokenUsageExtractorInterface
      *         reasoning_tokens?: int,
      *     },
      *     total_tokens?: int,
-     * }} $data
+     * }, model?: string} $data
      */
     public function fromDataArray(array $data, ?int $remainingTokens = null): TokenUsage
     {
@@ -57,6 +57,7 @@ class TokenUsageExtractor implements TokenUsageExtractorInterface
             cachedTokens: $data['usage']['input_tokens_details']['cached_tokens'] ?? null,
             remainingTokens: $remainingTokens,
             totalTokens: $data['usage']['total_tokens'] ?? null,
+            model: $data['model'] ?? null,
         );
     }
 

@@ -29,6 +29,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'text-embedding-3-small',
             'usage' => [
                 'prompt_tokens' => 15,
                 'total_tokens' => 15,
@@ -41,6 +42,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(15, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertSame(15, $tokenUsage->getTotalTokens());
+        $this->assertSame('text-embedding-3-small', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -57,5 +59,6 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 }

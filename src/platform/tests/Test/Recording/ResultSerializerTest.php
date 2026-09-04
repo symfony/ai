@@ -138,6 +138,7 @@ final class ResultSerializerTest extends TestCase
             completionTokens: 34,
             cachedTokens: 5,
             totalTokens: 46,
+            model: 'gpt-4o-2024-08-06',
         ));
 
         $usage = ResultSerializer::fromArray(ResultSerializer::toArray($source))->getMetadata()->get('token_usage');
@@ -148,6 +149,36 @@ final class ResultSerializerTest extends TestCase
         $this->assertSame(5, $usage->getCachedTokens());
         $this->assertSame(46, $usage->getTotalTokens());
         $this->assertNull($usage->getThinkingTokens());
+        $this->assertSame('gpt-4o-2024-08-06', $usage->getModel());
+    }
+
+    public function testRoundTripPreservesTokenUsageWithoutModel()
+    {
+        $source = new TextResult('Hello');
+        $source->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 12, totalTokens: 12));
+
+        $usage = ResultSerializer::fromArray(ResultSerializer::toArray($source))->getMetadata()->get('token_usage');
+
+        $this->assertInstanceOf(TokenUsage::class, $usage);
+        $this->assertNull($usage->getModel());
+    }
+
+    public function testRoundTripOfCassetteRecordedBeforeTheModelFieldExisted()
+    {
+        // A cassette written before token usage carried a model has no "model" key at all;
+        // it must still replay rather than trip the envelope type check.
+        $recorded = ResultSerializer::toArray(new TextResult('Hello'));
+        $recorded['metadata']['token_usage'] = [
+            '#type' => 'token_usage',
+            'prompt_tokens' => 12,
+            'total_tokens' => 12,
+        ];
+
+        $usage = ResultSerializer::fromArray($recorded)->getMetadata()->get('token_usage');
+
+        $this->assertInstanceOf(TokenUsage::class, $usage);
+        $this->assertSame(12, $usage->getPromptTokens());
+        $this->assertNull($usage->getModel());
     }
 
     public function testRoundTripPreservesTokenUsageAggregation()

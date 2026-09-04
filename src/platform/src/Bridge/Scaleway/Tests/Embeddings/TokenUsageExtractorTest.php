@@ -29,6 +29,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'bge-multilingual-gemma2',
             'usage' => [
                 'prompt_tokens' => 25,
                 'total_tokens' => 25,
@@ -41,6 +42,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(25, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertSame(25, $tokenUsage->getTotalTokens());
+        $this->assertSame('bge-multilingual-gemma2', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -57,5 +59,6 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(8, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 }

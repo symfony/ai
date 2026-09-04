@@ -78,7 +78,7 @@ trait CompletionsConversionTrait
             }
 
             if (isset($data['usage'])) {
-                yield $this->convertStreamUsage($data['usage']);
+                yield $this->convertStreamUsage($data['usage'], $data['model'] ?? null);
             }
 
             if ($this->streamIsToolCall($data)) {
@@ -137,9 +137,9 @@ trait CompletionsConversionTrait
     /**
      * @param array<string, mixed> $usage
      */
-    protected function convertStreamUsage(array $usage): TokenUsage
+    protected function convertStreamUsage(array $usage, ?string $model = null): TokenUsage
     {
-        return (new TokenUsageExtractor())->extractFromArray($usage);
+        return (new TokenUsageExtractor())->extractFromArray($usage, $model);
     }
 
     /**

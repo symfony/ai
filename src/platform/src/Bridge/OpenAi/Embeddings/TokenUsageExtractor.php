@@ -32,6 +32,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
         return new TokenUsage(
             promptTokens: $content['usage']['prompt_tokens'] ?? null,
             totalTokens: $content['usage']['total_tokens'] ?? null,
+            model: $content['model'] ?? null,
         );
     }
 }
