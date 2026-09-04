@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent;
 
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
@@ -93,7 +94,8 @@ final class Agent implements AgentInterface
      */
     public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        $factory = function () use ($input, $options): \Generator {
+        $cancellation = new Cancellation();
+        $factory = function () use ($input, $options, $cancellation): \Generator {
             $request = new Input($this->getModel(), InputNormalizer::toMessageBag($input), $options);
             foreach ($this->inputProcessors as $inputProcessor) {
                 if (!$inputProcessor instanceof InputProcessorInterface) {
@@ -112,7 +114,7 @@ final class Agent implements AgentInterface
             $processedOptions = $request->getOptions();
 
             $result = null;
-            foreach ($this->runner->run($model, $messages, $processedOptions) as $update) {
+            foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
 
@@ -120,6 +122,10 @@ final class Agent implements AgentInterface
                 }
 
                 yield $update;
+            }
+
+            if ($cancellation->isRequested()) {
+                return;
             }
 
             \assert($result instanceof ResultInterface);
@@ -140,6 +146,6 @@ final class Agent implements AgentInterface
             yield new ResultUpdate($output->getResult());
         };
 
-        return new Execution($factory, true === ($options['stream'] ?? false));
+        return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);
     }
 }

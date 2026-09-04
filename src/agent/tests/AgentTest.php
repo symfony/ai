@@ -17,6 +17,7 @@ use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
+use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
@@ -33,13 +34,17 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class AgentTest extends TestCase
 {
@@ -261,6 +266,42 @@ final class AgentTest extends TestCase
         $actualResult = $agent->call($messages, $options)->getResult();
 
         $this->assertSame($result, $actualResult);
+    }
+
+    public function testCancelStopsTheActiveStreamAndCancelsItsHttpResponse()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())->method('cancel');
+
+        $stream = new StreamResult((static function (): \Generator {
+            yield new TextDelta('First');
+            yield new TextDelta('Second');
+        })());
+
+        $platform = $this->createStub(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(
+            new PlainConverter($stream),
+            new RawHttpResult($response),
+            ['stream' => true],
+        ));
+
+        $execution = (new Agent($platform, 'gpt-4'))->call('Hello', ['stream' => true]);
+        $deltas = [];
+
+        foreach ($execution->asStream() as $delta) {
+            $this->assertInstanceOf(TextDelta::class, $delta);
+            $deltas[] = $delta->getText();
+            $execution->cancel();
+            $execution->cancel();
+        }
+
+        $execution->cancel();
+
+        $this->assertSame(['First'], $deltas);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled.');
+
+        $execution->getResult();
     }
 
     public function testConstructorAcceptsTraversableProcessors()

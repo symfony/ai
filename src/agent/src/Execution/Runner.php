@@ -69,7 +69,7 @@ final class Runner
      *
      * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    public function run(string $model, MessageBag $messages, array $options): \Generator
+    public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null): \Generator
     {
         $options = $this->exposeTools($options);
         $messages = $this->excludeToolMessages ? clone $messages : $messages;
@@ -81,11 +81,31 @@ final class Runner
         while (true) {
             yield new Progress('model_request', 'Invoking model.', $model);
 
-            $result = $this->platform->invoke($model, $messages, $options)->getResult();
+            $deferredResult = $this->platform->invoke($model, $messages, $options);
+            $cancellation?->activate($deferredResult->getRawResult());
 
-            $assistantMessage = null;
-            if ($result instanceof StreamResult) {
-                [$result, $assistantMessage] = yield from $this->consumeStream($result);
+            try {
+                if ($cancellation?->isRequested()) {
+                    return;
+                }
+
+                $result = $deferredResult->getResult();
+
+                $assistantMessage = null;
+                if ($result instanceof StreamResult) {
+                    $streamedResult = yield from $this->consumeStream($result, $cancellation);
+                    if (null === $streamedResult) {
+                        return;
+                    }
+
+                    [$result, $assistantMessage] = $streamedResult;
+                }
+            } finally {
+                $cancellation?->deactivate();
+            }
+
+            if ($cancellation?->isRequested()) {
+                return;
             }
 
             $toolCallResult = $this->extractToolCallResult($result);
@@ -137,9 +157,9 @@ final class Runner
      * The stream is drained completely even after a tool call was seen, since its metadata (e.g. token
      * usage) is only complete once the underlying generator is exhausted.
      *
-     * @return \Generator<int, UpdateInterface, mixed, array{ResultInterface, AssistantMessage}>
+     * @return \Generator<int, UpdateInterface, mixed, array{ResultInterface, AssistantMessage}|null>
      */
-    private function consumeStream(StreamResult $stream): \Generator
+    private function consumeStream(StreamResult $stream, ?Cancellation $cancellation): \Generator
     {
         $text = '';
         $toolCalls = [];
@@ -161,6 +181,14 @@ final class Runner
             }
 
             yield new Progress('delta', 'Received a streamed delta.', $delta);
+
+            if ($cancellation?->isRequested()) {
+                return null;
+            }
+        }
+
+        if ($cancellation?->isRequested()) {
+            return null;
         }
 
         $turn = $stream->getAssistantMessage();

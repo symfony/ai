@@ -59,9 +59,15 @@ final class Execution implements \IteratorAggregate, ResultInterface
 
     private bool $consumed = false;
 
+    private bool $canceled = false;
+
+    private bool $finished = false;
+
     private ?ResultInterface $result = null;
 
     private readonly Metadata $metadata;
+
+    private readonly Cancellation $cancellation;
 
     /**
      * @param \Closure(): \Generator<int, UpdateInterface, mixed, void> $factory
@@ -70,8 +76,10 @@ final class Execution implements \IteratorAggregate, ResultInterface
     public function __construct(
         private readonly \Closure $factory,
         private readonly bool $streamed = false,
+        ?Cancellation $cancellation = null,
     ) {
         $this->metadata = new Metadata();
+        $this->cancellation = $cancellation ?? new Cancellation();
     }
 
     /**
@@ -103,6 +111,19 @@ final class Execution implements \IteratorAggregate, ResultInterface
     }
 
     /**
+     * Cancels the execution and its active HTTP response.
+     */
+    public function cancel(): void
+    {
+        if ($this->canceled || $this->finished || null !== $this->result) {
+            return;
+        }
+
+        $this->canceled = true;
+        $this->cancellation->request();
+    }
+
+    /**
      * Drives the execution to completion and returns the final result.
      */
     public function getResult(): ResultInterface
@@ -111,10 +132,18 @@ final class Execution implements \IteratorAggregate, ResultInterface
             return $this->result;
         }
 
+        if ($this->consumed && $this->canceled) {
+            throw new RuntimeException('The agent execution was canceled.');
+        }
+
         foreach ($this->consume() as $update) {
             if ($update instanceof Result) {
                 return $update->getResult();
             }
+        }
+
+        if ($this->canceled) {
+            throw new RuntimeException('The agent execution was canceled.');
         }
 
         throw new RuntimeException('The agent execution finished without producing a result.');
@@ -186,24 +215,47 @@ final class Execution implements \IteratorAggregate, ResultInterface
 
         $this->consumed = true;
 
-        foreach (($this->factory)() as $update) {
-            if ($update instanceof Result) {
-                // the final result carries the metadata aggregated over all rounds, e.g. token usage
-                $this->result = $update->getResult();
-                $this->metadata->merge($update->getResult()->getMetadata());
+        if ($this->canceled) {
+            $this->finished = true;
 
-                foreach ($this->resultCallbacks as $callback) {
-                    $callback($update);
+            return;
+        }
+
+        try {
+            foreach (($this->factory)() as $update) {
+                if ($this->canceled) {
+                    break;
+                }
+
+                if ($update instanceof Result) {
+                    // the final result carries the metadata aggregated over all rounds, e.g. token usage
+                    $this->result = $update->getResult();
+                    $this->metadata->merge($update->getResult()->getMetadata());
+
+                    foreach ($this->resultCallbacks as $callback) {
+                        $callback($update);
+                    }
+                }
+
+                if ($update instanceof Progress) {
+                    foreach ($this->progressCallbacks as $callback) {
+                        $callback($update);
+                    }
+                }
+
+                yield $update;
+
+                // @phpstan-ignore if.alwaysFalse (cancellation can happen while the generator is suspended)
+                if ($this->canceled) {
+                    break;
                 }
             }
-
-            if ($update instanceof Progress) {
-                foreach ($this->progressCallbacks as $callback) {
-                    $callback($update);
-                }
+        } catch (\Throwable $exception) {
+            if (!$this->canceled) {
+                throw $exception;
             }
-
-            yield $update;
+        } finally {
+            $this->finished = true;
         }
     }
 }

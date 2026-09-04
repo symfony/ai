@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `Execution::cancel()` to stop an active execution and cancel its active HTTP response
+
 0.13
 ----
 

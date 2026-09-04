@@ -12,11 +12,14 @@
 namespace Symfony\AI\Agent\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\Exception\RuntimeException as AgentRuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
+use Symfony\AI\Agent\Tests\Fixtures\SuspendingConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -28,8 +31,10 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class SpeechAgentTest extends TestCase
 {
@@ -265,6 +270,28 @@ final class SpeechAgentTest extends TestCase
         $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(), $platform, $platform);
 
         $this->assertSame('my-agent', $agent->getName());
+    }
+
+    public function testCancelPropagatesToTheDelegatedAgentExecution()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())->method('cancel');
+
+        $platform = $this->createStub(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(new SuspendingConverter(), new RawHttpResult($response)));
+
+        $agent = new SpeechAgent(new Agent($platform, 'gpt-4'), new SpeechConfiguration());
+        $execution = $agent->call(new MessageBag(Message::ofUser('Hello')));
+
+        $fiber = new \Fiber(static fn (): ResultInterface => $execution->getResult());
+        $fiber->start();
+
+        $execution->cancel();
+
+        $this->expectException(AgentRuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled.');
+
+        $fiber->resume();
     }
 
     private function execution(ResultInterface $result): Execution

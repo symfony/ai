@@ -132,6 +132,23 @@ text deltas and ``asStreamedObject()`` the progressively populated object of a s
         echo $delta->getText();
     }
 
+A running execution can be canceled, for example from a signal handler when the user aborts a console command, or
+when a chat user hits "stop". Canceling aborts the active HTTP response, so the model stops generating, and ends
+the stream without producing a final result::
+
+    $execution = $agent->call('Tell me a story.', ['stream' => true]);
+
+    pcntl_async_signals(true);
+    pcntl_signal(\SIGINT, static fn () => $execution->cancel());
+
+    foreach ($execution->asTextStream() as $delta) {
+        echo $delta->getText();
+    }
+
+Cancellation is idempotent, propagates to the agents a ``MultiAgent`` or ``SpeechAgent`` delegates to, and makes
+``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\RuntimeException` instead of returning a partial
+answer.
+
 Once the stream is drained, the execution resolves to the assembled answer like a non-streamed one: ``getResult()``
 returns the final result, and a streamed structured output ends with the object, so ``asObject()`` works on it as
 well.

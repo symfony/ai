@@ -151,6 +151,63 @@ final class ExecutionTest extends TestCase
         iterator_to_array($execution);
     }
 
+    public function testItCanBeCanceledBeforeConsumption()
+    {
+        $runs = 0;
+        $execution = new Execution(static function () use (&$runs): \Generator {
+            ++$runs;
+
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel();
+        $execution->cancel();
+
+        $this->assertSame([], iterator_to_array($execution, false));
+        $this->assertSame(0, $runs);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled.');
+
+        $execution->getResult();
+    }
+
+    public function testCancellationStopsAnActiveStreamWithoutProducingAResult()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('First'));
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Second'));
+            yield new ResultUpdate(new TextResult('FirstSecond'));
+        }, streamed: true);
+
+        $deltas = [];
+        foreach ($execution->asStream() as $delta) {
+            $this->assertInstanceOf(TextDelta::class, $delta);
+            $deltas[] = $delta->getText();
+            $execution->cancel();
+        }
+
+        $this->assertSame(['First'], $deltas);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled.');
+
+        $execution->getResult();
+    }
+
+    public function testCancelAfterCompletionKeepsTheResult()
+    {
+        $result = new TextResult('Done');
+        $execution = new Execution(static function () use ($result): \Generator {
+            yield new ResultUpdate($result);
+        });
+
+        $this->assertSame($result, $execution->getResult());
+
+        $execution->cancel();
+        $execution->cancel();
+
+        $this->assertSame($result, $execution->getResult());
+    }
+
     public function testItActsAsTheResultItProduces()
     {
         $execution = new Execution(static function (): \Generator {

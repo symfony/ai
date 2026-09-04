@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Tests\MultiAgent;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
@@ -22,13 +23,18 @@ use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
+use Symfony\AI\Agent\Tests\Fixtures\SuspendingConverter;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -375,6 +381,31 @@ class MultiAgentTest extends TestCase
         $messages = new MessageBag(Message::ofUser('Question'));
 
         $multiAgent->call($messages)->getResult();
+    }
+
+    public function testCancelPropagatesToTheOrchestratorExecution()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())->method('cancel');
+
+        $platform = $this->createStub(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(new SuspendingConverter(), new RawHttpResult($response)));
+
+        $orchestrator = new Agent($platform, 'gpt-4');
+        $handoff = new Handoff(new MockAgent(name: 'technical'), ['technical']);
+
+        $multiAgent = new MultiAgent($orchestrator, [$handoff], new MockAgent(name: 'fallback'));
+        $execution = $multiAgent->call(new MessageBag(Message::ofUser('Question')));
+
+        $fiber = new \Fiber(static fn (): ResultInterface => $execution->getResult());
+        $fiber->start();
+
+        $execution->cancel();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled.');
+
+        $fiber->resume();
     }
 
     private function execution(ResultInterface $result): Execution
