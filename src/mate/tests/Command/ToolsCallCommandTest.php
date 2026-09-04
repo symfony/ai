@@ -191,6 +191,25 @@ final class ToolsCallCommandTest extends TestCase
     }
 
     /**
+     * A wrong or missing parameter name is a guess the caller can correct right away, if it
+     * knows where the schema is; point at tools:inspect instead of leaving it a guess.
+     */
+    public function testUnknownParameterPointsAtToolsInspect()
+    {
+        $output = $this->runViaArgv(['sample-add', '--a=1', '--nope=2', '--format=json']);
+
+        $this->assertStringContainsString('tools:inspect sample-add', $output);
+    }
+
+    public function testMissingRequiredParameterPointsAtToolsInspect()
+    {
+        $output = $this->runViaArgv(['sample-add', '--format=json']);
+
+        $this->assertStringContainsString('Missing required argument "a"', $output);
+        $this->assertStringContainsString('tools:inspect sample-add', $output);
+    }
+
+    /**
      * `--silent` suppresses all output, so treating it as a tool parameter turned a rejected
      * unknown argument into a run that printed nothing and failed.
      */

@@ -215,12 +215,13 @@ HELP
         }
 
         $table = new Table($io);
-        $table->setHeaders(['Tool Name', 'Description', 'Handler', 'Extension']);
+        $table->setHeaders(['Tool Name', 'Description', 'Arguments', 'Handler', 'Extension']);
 
         foreach ($tools as $toolName => $toolData) {
             $table->addRow([
                 $toolName,
-                $this->truncate($toolData['description'] ?? '', 50),
+                $toolData['description'] ?? '',
+                $this->formatArguments($toolData['input_schema']),
                 $toolData['handler'],
                 $toolData['extension'],
             ]);
@@ -250,12 +251,40 @@ HELP
         ];
     }
 
-    private function truncate(string $text, int $length): string
+    /**
+     * Renders the schema's parameter names as a compact summary, required ones first and
+     * unmarked, optional ones trailing with a `?` (e.g. `query, path?, limit?`), so the
+     * table conveys the call shape without forcing a separate `tools:inspect`.
+     *
+     * @param array<string, mixed>|null $inputSchema
+     */
+    private function formatArguments(?array $inputSchema): string
     {
-        if (\strlen($text) <= $length) {
-            return $text;
+        if (null === $inputSchema) {
+            return '';
         }
 
-        return substr($text, 0, $length - 3).'...';
+        $properties = $inputSchema['properties'] ?? [];
+        if (!\is_array($properties) || [] === $properties) {
+            return '';
+        }
+
+        $required = $inputSchema['required'] ?? [];
+        \assert(\is_array($required));
+
+        $required = array_flip($required);
+        $optional = [];
+        $names = [];
+
+        foreach (array_keys($properties) as $name) {
+            \assert(\is_string($name));
+            if (isset($required[$name])) {
+                $names[] = $name;
+            } else {
+                $optional[] = $name.'?';
+            }
+        }
+
+        return implode(', ', [...$names, ...$optional]);
     }
 }
