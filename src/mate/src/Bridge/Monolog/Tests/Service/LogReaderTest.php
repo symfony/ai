@@ -235,6 +235,59 @@ final class LogReaderTest extends TestCase
         }
     }
 
+    public function testTailFindsMatchesEarlierInTheFileThanTheRawLineWindow()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-reader-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $lines = [];
+        for ($i = 1; $i <= 20; ++$i) {
+            $lines[] = \sprintf('[2024-01-01 00:%02d:00] app.ERROR: Error number %d [] []', $i, $i);
+        }
+        for ($i = 1; $i <= 500; ++$i) {
+            $lines[] = \sprintf('[2024-01-01 01:%02d:%02d] app.INFO: Info number %d [] []', intdiv($i, 60), $i % 60, $i);
+        }
+        file_put_contents($tempDir.'/app.log', implode("\n", $lines)."\n");
+
+        try {
+            $reader = new LogReader(new LogParser(), $tempDir);
+
+            // A raw-line window of 2*limit=100 lines, counted from the end of the file,
+            // never reaches the 20 ERROR lines that sit behind 500 later INFO lines.
+            $entries = $reader->tail(50, 'ERROR');
+
+            $this->assertCount(20, $entries, 'all 20 ERROR entries must be found even though 500 INFO lines follow them');
+            $this->assertSame('Error number 1', $entries[0]->getMessage());
+            $this->assertSame('Error number 20', $entries[19]->getMessage());
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testTailKeepsTheMostRecentMatchesWhenMatchesExceedLimit()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-reader-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        $lines = [];
+        for ($i = 1; $i <= 30; ++$i) {
+            $lines[] = \sprintf('[2024-01-01 00:%02d:00] app.ERROR: Error number %d [] []', $i, $i);
+        }
+        file_put_contents($tempDir.'/app.log', implode("\n", $lines)."\n");
+
+        try {
+            $reader = new LogReader(new LogParser(), $tempDir);
+
+            $entries = $reader->tail(10, 'ERROR');
+
+            $this->assertCount(10, $entries);
+            $this->assertSame('Error number 21', $entries[0]->getMessage());
+            $this->assertSame('Error number 30', $entries[9]->getMessage());
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
     public function testGetKernelContextDoesNotMatchSiblingDirectoryWithSharedPrefix()
     {
         $tempDir = sys_get_temp_dir().'/mate-log-reader-test-'.uniqid();
