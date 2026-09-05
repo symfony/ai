@@ -1927,13 +1927,41 @@ it on replay exactly as it would on the wire, while headers describing the live 
 (``content-length``, ``content-encoding``, ...) are dropped because they would contradict the replayed
 body. Credentials (``Authorization``, ``x-api-key``, ``x-goog-api-key``, the ``auth_bearer`` shorthand,
 cookies and provider account identifiers) are replaced with ``[redacted]`` in both request and response
-headers before the cassette is written, so a cassette is safe to commit. Per-request trace headers
+headers before the cassette is written. Per-request trace headers
 (``date``, ``cf-ray``, correlation and request ids, proxy latencies) are dropped on write, so that
 re-recording a cassette produces a diff of what the provider actually changed instead of noise;
 rate limiting headers are kept, because the converters read them. Binary response bodies (generated
 images, audio, ...) are not stored byte-for-byte: the cassette keeps a metadata stub (status, headers,
 byte size) and replay serves a small placeholder body, so the real converter still runs without
 committing opaque bytes.
+
+Request bodies are redacted too, since a recorded prompt carries whatever the user sent: an address
+typed into a chat, a phone number quoted back from a ticket, occasionally an API key pasted by
+mistake. Credentials are always replaced. Personal data is replaced by default and can be kept when
+it is the subject of the test, and extra patterns cover identifiers that only exist in one codebase::
+
+    use Symfony\AI\Platform\Test\Replay\BodyRedactor;
+    use Symfony\AI\Platform\Test\Replay\HttpCassette;
+
+    // default: credentials and personal data
+    $cassette = new HttpCassette(__DIR__.'/fixtures/mistral_chat.json');
+
+    // keep personal data, still redact credentials
+    $cassette = new HttpCassette(
+        __DIR__.'/fixtures/mistral_chat.json',
+        BodyRedactor::credentialsOnly(),
+    );
+
+    // add patterns for identifiers specific to your domain
+    $cassette = new HttpCassette(
+        __DIR__.'/fixtures/mistral_chat.json',
+        new BodyRedactor(extraPatterns: ['/\bCUST-\d{5}\b/' => '[redacted-customer]']),
+    );
+
+The stored request signature is computed over the redacted body, so a committed cassette stays
+reproducible from what it actually contains. The default patterns are deliberately conservative:
+an over-eager rule that swallowed timestamps or identifiers out of a payload would corrupt the very
+recording it is meant to protect.
 
 For a bridge test suite with several recorded scenarios, extend
 :class:`Symfony\\AI\\Platform\\Test\\Replay\\AbstractBridgeReplayTestCase`: implement

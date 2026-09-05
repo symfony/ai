@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add `Test\Replay\BodyRedactor` and redact recorded request bodies in `HttpCassette` by default
  * Add a `server_tools` option to the Anthropic `ModelClient`, mapping `web_search` and `code_execution` to their versioned Anthropic tool spec, mirroring the Gemini and Vertex AI bridges' name-to-params map shape; unmapped tool names throw instead of being silently forwarded, and the raw `tools` option remains the escape hatch for anything not mapped. The Anthropic `ResultConverter` now merges the `server_tool_use`/`web_search_tool_result` pair of a web search into a single `Result\WebSearchResult` carrying query, id and status, instead of dropping the blocks (or throwing when a response carries only web-search blocks)
  * [BC BREAK] Add `TokenUsage\TokenUsageInterface::getModel()`, reporting the model a provider says consumed the tokens, so a run mixing models (a chat model and an embeddings one, say) can be priced per call; `TokenUsageAggregation::getModel()` answers only when every usage it sums up agrees on a model, and `null` otherwise. `Test\Recording\ResultSerializer` records and replays it alongside the token counts, and a cassette recorded before the field existed still replays
 
