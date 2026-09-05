@@ -137,7 +137,9 @@ Example
 -------
 
 See `examples/anthropic/server-tools-code-execution.php`_ and `examples/anthropic/server-tools-web-search.php`_ for
-complete working examples.
+complete working examples, and `examples/anthropic/server-tools-web-search-roundtrip.php`_ for a two-turn
+conversation continuing after a search.
 
 .. _`examples/anthropic/server-tools-code-execution.php`: https://github.com/symfony/ai/blob/main/examples/anthropic/server-tools-code-execution.php
 .. _`examples/anthropic/server-tools-web-search.php`: https://github.com/symfony/ai/blob/main/examples/anthropic/server-tools-web-search.php
+.. _`examples/anthropic/server-tools-web-search-roundtrip.php`: https://github.com/symfony/ai/blob/main/examples/anthropic/server-tools-web-search-roundtrip.php
