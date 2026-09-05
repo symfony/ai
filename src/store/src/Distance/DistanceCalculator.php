@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Distance;
 
-use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\VectorDocument;
 
 /**
@@ -34,7 +34,7 @@ final class DistanceCalculator
      *
      * @return VectorDocument[]
      */
-    public function calculate(array $documents, Vector $vector, ?int $maxItems = null): array
+    public function calculate(array $documents, VectorInterface $vector, ?int $maxItems = null): array
     {
         if (null !== $maxItems && $this->batchSize <= \count($documents)) {
             return $this->calculateBatched($documents, $vector, $maxItems);
@@ -48,7 +48,7 @@ final class DistanceCalculator
      *
      * @return VectorDocument[]
      */
-    private function calculateAgainstAll(array $documents, Vector $vector, ?int $maxItems): array
+    private function calculateAgainstAll(array $documents, VectorInterface $vector, ?int $maxItems): array
     {
         $strategy = $this->resolveStrategy();
 
@@ -83,7 +83,7 @@ final class DistanceCalculator
      *
      * @return VectorDocument[]
      */
-    private function calculateBatched(array $documents, Vector $vector, int $maxItems): array
+    private function calculateBatched(array $documents, VectorInterface $vector, int $maxItems): array
     {
         $strategy = $this->resolveStrategy();
 
@@ -121,7 +121,7 @@ final class DistanceCalculator
     }
 
     /**
-     * @return \Closure(VectorDocument, Vector): float
+     * @return \Closure(VectorDocument, VectorInterface): float
      */
     private function resolveStrategy(): \Closure
     {
@@ -134,12 +134,12 @@ final class DistanceCalculator
         };
     }
 
-    private function cosineDistance(VectorDocument $embedding, Vector $against): float
+    private function cosineDistance(VectorDocument $embedding, VectorInterface $against): float
     {
         return 1 - $this->cosineSimilarity($embedding, $against);
     }
 
-    private function cosineSimilarity(VectorDocument $embedding, Vector $against): float
+    private function cosineSimilarity(VectorDocument $embedding, VectorInterface $against): float
     {
         $currentEmbeddingVectors = $embedding->getVector()->getData();
 
@@ -162,14 +162,14 @@ final class DistanceCalculator
         return fdiv($dotProduct, $currentEmbeddingLength * $againstLength);
     }
 
-    private function angularDistance(VectorDocument $embedding, Vector $against): float
+    private function angularDistance(VectorDocument $embedding, VectorInterface $against): float
     {
         $cosineSimilarity = $this->cosineSimilarity($embedding, $against);
 
         return fdiv(acos($cosineSimilarity), \M_PI);
     }
 
-    private function euclideanDistance(VectorDocument $embedding, Vector $against): float
+    private function euclideanDistance(VectorDocument $embedding, VectorInterface $against): float
     {
         return sqrt(array_sum(array_map(
             static fn (float $a, float $b): float => ($a - $b) ** 2,
@@ -178,7 +178,7 @@ final class DistanceCalculator
         )));
     }
 
-    private function manhattanDistance(VectorDocument $embedding, Vector $against): float
+    private function manhattanDistance(VectorDocument $embedding, VectorInterface $against): float
     {
         return array_sum(array_map(
             static fn (float $a, float $b): float => abs($a - $b),
@@ -187,7 +187,7 @@ final class DistanceCalculator
         ));
     }
 
-    private function chebyshevDistance(VectorDocument $embedding, Vector $against): float
+    private function chebyshevDistance(VectorDocument $embedding, VectorInterface $against): float
     {
         $embeddingsAsPower = array_map(
             static fn (float $currentValue, float $againstValue): float => abs($currentValue - $againstValue),
