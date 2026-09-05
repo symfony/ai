@@ -189,7 +189,7 @@ vendor/bin/php-cs-fixer fix
 ```
 
 Pull requests are additionally checked with PHPStan, which each package
-configures for itself, and with Deptrac, which treats every component and
+configures for itself, and with StructArmed, which treats every component and
 bridge as a layer and enforces which of them may depend on which.
 
 * [Coding Standards][7]

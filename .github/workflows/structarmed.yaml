@@ -1,0 +1,34 @@
+name: Dependency Analysis
+
+on:
+    pull_request:
+        paths-ignore:
+            - 'src/*/doc/**'
+            - 'src/**/*.md'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
+jobs:
+    structarmed:
+        name: structarmed
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Configure environment
+              run: echo COLUMNS=120 >> $GITHUB_ENV
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.5'
+                  coverage: none
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v4
+
+            - name: Run boundwize/structarmed
+              run: vendor/bin/structarmed analyse
