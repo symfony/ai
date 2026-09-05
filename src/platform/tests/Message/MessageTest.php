@@ -175,7 +175,7 @@ final class MessageTest extends TestCase
     public function testCreateAssistantMessageMapsServerToolResultTypes()
     {
         $result = new MultiPartResult([
-            new WebSearchResult('latest AI news', 'ws_1', 'completed', ['latest AI news', 'OpenAI recent announcements']),
+            new WebSearchResult('latest AI news', 'ws_1', 'completed', ['latest AI news', 'OpenAI recent announcements'], 'provider-signature'),
             new FileSearchResult(['q'], [['file_id' => 'file-1']], 'fs_1', 'completed'),
             new McpCallResult('deepwiki', 'ask', '{"q":1}', 'out', null, 'mcp_1', 'completed'),
             new McpListToolsResult('deepwiki', [['name' => 'ask']], 'mcpl_1'),
@@ -194,6 +194,7 @@ final class MessageTest extends TestCase
         $this->assertInstanceOf(WebSearch::class, $parts[0]);
         $this->assertSame('latest AI news', $parts[0]->getQuery());
         $this->assertSame(['latest AI news', 'OpenAI recent announcements'], $parts[0]->getQueries());
+        $this->assertSame('provider-signature', $parts[0]->getSignature());
 
         $this->assertInstanceOf(FileSearch::class, $parts[1]);
         $this->assertSame(['q'], $parts[1]->getQueries());

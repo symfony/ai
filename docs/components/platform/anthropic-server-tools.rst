@@ -106,28 +106,40 @@ The individual parts can be any `ResultInterface` instances, but in practice the
   the ``server_tool_use`` call and its matching ``web_search_tool_result`` into a single part carrying the query,
   id, and status together.
 
+Passing the result to ``Message::ofAssistant()`` replays the search on the next turn, for buffered and streamed
+results alike: Anthropic rejects either of the two blocks without the other, so both are kept and re-sent as a
+pair. A search whose blocks came from another provider is dropped rather than re-sent, so an assistant turn
+moving between bridges keeps its text.
+
 .. note::
 
-    Server tool results are only converted for non-streaming requests. With ``stream: true`` the Anthropic
-    ``ResultConverter`` handles text, thinking and regular tool calls only, so server tool blocks are silently
-    dropped from the stream.
+    Streaming reports a completed web search as a
+    :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\WebSearchComplete` delta, one per search, once its
+    result block arrives. The remaining server tool blocks are still dropped from streams; they are converted
+    for non-streaming requests only.
+
+.. caution::
+
+    Web searches initiated from Anthropic code execution cannot be replayed, because the surrounding code
+    execution blocks are not converted. Replaying such a turn throws
+    :class:`Symfony\\AI\\Platform\\Exception\\InvalidArgumentException` rather than sending Anthropic a search
+    it will reject.
 
 .. caution::
 
     :class:`Symfony\\AI\\Platform\\Result\\WebSearchResult` has no field for individual search hits (URL, title,
     page age). Anthropic reports those on the ``web_search_tool_result`` block, but carrying them would require
     changing a Platform-wide class the OpenResponses bridge also populates, so today the query, id and status
-    round-trip but the individual hits do not. Carrying search hits, handling ``citations`` on text blocks,
-    ``encrypted_content`` round-tripping, and adding a :class:`Symfony\\AI\\Platform\\Message\\Content\\WebSearch`
-    branch to ``Contract\AssistantMessageNormalizer`` (without it, a web search is dropped when re-serializing an
-    assistant turn, so multi-turn continuation after a search does not carry the search blocks) are open
-    follow-ups.
+    round-trip on the result itself while the hits survive only inside the replay payload. Surfacing search hits
+    and handling ``citations`` on text blocks are open follow-ups.
 
 Example
 -------
 
 See `examples/anthropic/server-tools-code-execution.php`_ and `examples/anthropic/server-tools-web-search.php`_ for
-complete working examples.
+complete working examples, and `examples/anthropic/server-tools-web-search-roundtrip.php`_ for a two-turn
+conversation continuing after a search.
 
 .. _`examples/anthropic/server-tools-code-execution.php`: https://github.com/symfony/ai/blob/main/examples/anthropic/server-tools-code-execution.php
 .. _`examples/anthropic/server-tools-web-search.php`: https://github.com/symfony/ai/blob/main/examples/anthropic/server-tools-web-search.php
+.. _`examples/anthropic/server-tools-web-search-roundtrip.php`: https://github.com/symfony/ai/blob/main/examples/anthropic/server-tools-web-search-roundtrip.php

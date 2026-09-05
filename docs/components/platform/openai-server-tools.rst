@@ -19,8 +19,9 @@ When a built-in tool runs, the model reports it as a dedicated output item next 
 assistant message. Each item is converted into a typed result (see `Result Types`_), so a
 response that searched the web before answering returns a
 ``Result\MultiPartResult`` containing a ``Result\WebSearchResult`` and the
-``Result\TextResult`` with the answer. ``$result->asText()`` still returns just the
-answer text.
+``Result\TextResult`` with the answer. ``$result->asText()`` returns only the
+answer text. Passing that result to ``Message::ofAssistant()`` preserves the
+web search call when the assistant turn is sent back to the provider.
 
 Available Server Tools
 ----------------------
@@ -140,7 +141,8 @@ Limitations
 
 - Not every model supports every built-in tool; check the OpenAI documentation
 - Built-in tools may have usage quotas and additional billing
-- Streaming surfaces only text, reasoning, and (custom) tool-call deltas; built-in tool results are available on non-streamed responses
+- Streaming emits completed web searches as ``WebSearchComplete`` deltas;
+  other built-in tool results are available on non-streamed responses
 
 .. _`examples/openai/web-search.php`: https://github.com/symfony/ai/blob/main/examples/openai/web-search.php
 .. _`examples/openai/file-search.php`: https://github.com/symfony/ai/blob/main/examples/openai/file-search.php

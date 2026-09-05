@@ -16,9 +16,11 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\ToolCall;
 
 final class AssistantMessageNormalizerTest extends TestCase
@@ -38,6 +40,67 @@ final class AssistantMessageNormalizerTest extends TestCase
         $normalizer = new AssistantMessageNormalizer();
 
         $this->assertSame([AssistantMessage::class => true], $normalizer->getSupportedTypes(null));
+    }
+
+    public function testNormalizeReplaysBothBlocksOfAWebSearch()
+    {
+        $call = ['type' => 'server_tool_use', 'id' => 'srvtoolu_1', 'name' => 'web_search', 'input' => ['query' => 'Symfony AI']];
+        $result = ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_1', 'content' => []];
+
+        $normalized = (new AssistantMessageNormalizer())->normalize(new AssistantMessage(
+            new WebSearch('Symfony AI', 'srvtoolu_1', 'completed', ['Symfony AI'], json_encode([$call, $result])),
+            new Text('Symfony AI integrates AI capabilities.'),
+        ));
+
+        // One search, but Anthropic rejects either block without the other, so both are re-sent.
+        $this->assertSame([
+            'role' => 'assistant',
+            'content' => [$call, $result, ['type' => 'text', 'text' => 'Symfony AI integrates AI capabilities.']],
+        ], $normalized);
+    }
+
+    /**
+     * @return iterable<string, array{0: string|null}>
+     */
+    public static function unreplayableWebSearchProvider(): iterable
+    {
+        yield 'no signature at all' => [null];
+        yield 'a signature that is not JSON' => ['not json'];
+        yield 'a signature that is not a list of blocks' => ['"a string"'];
+        yield 'a block type Anthropic does not take back' => ['[{"type":"web_fetch_tool_result"}]'];
+        yield 'an item belonging to another provider' => ['{"type":"web_search_call","id":"ws_1","status":"completed"}'];
+    }
+
+    #[DataProvider('unreplayableWebSearchProvider')]
+    public function testNormalizeDropsAWebSearchItCannotReplay(?string $signature)
+    {
+        $normalized = (new AssistantMessageNormalizer())->normalize(new AssistantMessage(
+            new WebSearch('Symfony AI', 'ws_1', 'completed', ['Symfony AI'], $signature),
+            new Text('Symfony AI integrates AI capabilities.'),
+        ));
+
+        // Dropping the search keeps the turn replayable; sending Claude a block it did not
+        // produce would fail the request instead.
+        $this->assertSame([
+            'role' => 'assistant',
+            'content' => [['type' => 'text', 'text' => 'Symfony AI integrates AI capabilities.']],
+        ], $normalized);
+    }
+
+    public function testNormalizeRejectsAWebSearchInitiatedByCodeExecution()
+    {
+        $message = new AssistantMessage(new WebSearch('Symfony AI', 'srvtoolu_1', 'completed', ['Symfony AI'], json_encode([[
+            'type' => 'server_tool_use',
+            'id' => 'srvtoolu_1',
+            'name' => 'web_search',
+            'input' => ['query' => 'Symfony AI'],
+            'caller' => ['type' => 'code_execution_20260120', 'tool_id' => 'srvtoolu_code_1'],
+        ]])));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('surrounding code execution blocks are not supported');
+
+        (new AssistantMessageNormalizer())->normalize($message);
     }
 
     /**

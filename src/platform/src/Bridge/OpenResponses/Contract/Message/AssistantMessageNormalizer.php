@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
@@ -29,8 +30,8 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     use NormalizerAwareTrait;
 
     /**
-     * Responses input is a flat list of output items, so text is buffered until a reasoning item or
-     * a tool call fixes the next position in that list.
+     * Responses input is a flat list of output items, so text is buffered until a structured item
+     * fixes the next position in that list.
      *
      * @param AssistantMessage $data
      *
@@ -50,6 +51,19 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
 
             if ($part instanceof Thinking) {
                 $item = $this->toReasoningItem($part);
+
+                if (null === $item) {
+                    continue;
+                }
+
+                $this->flushText($items, $text, $data);
+                $items[] = $item;
+
+                continue;
+            }
+
+            if ($part instanceof WebSearch) {
+                $item = self::toWebSearchItem($part);
 
                 if (null === $item) {
                     continue;
@@ -111,6 +125,31 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         if (!\is_array($item) || 'reasoning' !== ($item['type'] ?? null)) {
+            return null;
+        }
+
+        /* @var array<string, mixed> $item */
+        return $item;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function toWebSearchItem(WebSearch $webSearch): ?array
+    {
+        $signature = $webSearch->getSignature();
+
+        if (null === $signature) {
+            return null;
+        }
+
+        try {
+            $item = json_decode($signature, true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        if (!\is_array($item) || 'web_search_call' !== ($item['type'] ?? null)) {
             return null;
         }
 

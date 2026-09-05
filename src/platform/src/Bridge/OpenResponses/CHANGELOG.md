@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add model information to token usage extraction
+ * Replay hosted `web_search_call` items on the next turn, for buffered and streamed results
 
 0.13
 ----
