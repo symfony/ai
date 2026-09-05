@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Loader\InMemoryLoader;
+use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -117,6 +118,44 @@ final class SourceIndexerTest extends TestCase
         $this->assertCount(4, $store->documents);
     }
 
+    public function testIndexPassesOptionsToTheLoader()
+    {
+        $loader = new OptionRecordingLoader();
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), 'text-embedding-3-small');
+        $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, new TestStore()));
+
+        $indexer->index('source', ['criteria' => ['published' => true]]);
+
+        // The loader is what turns a source into documents, so narrowing which documents an
+        // indexing run covers has to reach it, not only the processor behind it.
+        $this->assertSame([['source', ['criteria' => ['published' => true]]]], $loader->calls);
+    }
+
+    public function testIndexPassesOptionsToASourceIndependentLoader()
+    {
+        $loader = new OptionRecordingLoader();
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), 'text-embedding-3-small');
+        $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, new TestStore()));
+
+        $indexer->index(null, ['criteria' => ['published' => true]]);
+
+        $this->assertSame([[null, ['criteria' => ['published' => true]]]], $loader->calls);
+    }
+
+    public function testIndexPassesOptionsToEverySourceOfABatch()
+    {
+        $loader = new OptionRecordingLoader();
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(), 'text-embedding-3-small');
+        $indexer = new SourceIndexer($loader, new DocumentProcessor($vectorizer, new TestStore()));
+
+        $indexer->index(['first', 'second'], ['criteria' => ['published' => true]]);
+
+        $this->assertSame([
+            ['first', ['criteria' => ['published' => true]]],
+            ['second', ['criteria' => ['published' => true]]],
+        ], $loader->calls);
+    }
+
     public function testIndexThrowsExceptionForObjectInput()
     {
         $loader = new InMemoryLoader([]);
@@ -143,5 +182,23 @@ final class SourceIndexerTest extends TestCase
         $this->expectExceptionMessage('SourceIndexer expects sources to be strings');
 
         $indexer->index([new TextDocument(Uuid::v4()->toString(), 'Test content')]); /* @phpstan-ignore argument.type */
+    }
+}
+
+/**
+ * Records how it was called, so the options an indexer hands down can be asserted on.
+ */
+final class OptionRecordingLoader implements LoaderInterface
+{
+    /**
+     * @var list<array{string|null, array<string, mixed>}>
+     */
+    public array $calls = [];
+
+    public function load(?string $source = null, array $options = []): iterable
+    {
+        $this->calls[] = [$source, $options];
+
+        return [];
     }
 }

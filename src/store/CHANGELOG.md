@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * `Indexer\SourceIndexer` now passes its options to the loader as well as to the document processor
+
 0.11
 ----
 

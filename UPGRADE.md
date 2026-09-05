@@ -32,6 +32,15 @@ Platform
    +protected function convertStreamUsage(array $usage, ?string $model = null): TokenUsage
    ```
 
+Store
+-----
+
+ * `Indexer\SourceIndexer` passes its options on to the loader, not only to the document processor,
+   so that a source can be narrowed at runtime. A `Document\LoaderInterface` implementation that
+   previously only ever saw options passed to `load()` directly now also receives the indexing
+   options (`chunk_size`, `platform_options`, and whatever else the caller passed). Loaders ignoring
+   unknown options - which the interface asks for - are unaffected.
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 
