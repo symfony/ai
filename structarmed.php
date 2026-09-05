@@ -10,9 +10,11 @@
  */
 
 use Boundwize\StructArmed\Architecture;
+use Boundwize\StructArmed\Preset\Preset;
 
 return Architecture::define()
     ->layer('Source', 'src/')
+    ->withPresets(Preset::PSR4(), Preset::CODEQUALITY())
     ->skipPaths([
         '*/tests/*',
         '*/Tests/*',

@@ -23,7 +23,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
-    $import = fn (string $resource): ArrayNodeDefinition => require __DIR__.'/'.$resource.'.php';
+    $import = static fn (string $resource): ArrayNodeDefinition => require __DIR__.'/'.$resource.'.php';
 
     $configurator->rootNode()
         ->children()
