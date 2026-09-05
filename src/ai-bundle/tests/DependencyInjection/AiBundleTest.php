@@ -30,6 +30,7 @@ use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
+use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
@@ -4757,6 +4758,98 @@ class AiBundleTest extends TestCase
         // When using the default toolbox, it is passed to the agent as the toolbox argument
         $this->assertTrue($container->hasDefinition('ai.toolbox.agent_with_tools'));
         $this->assertSame('ai.toolbox.agent_with_tools', (string) $container->getDefinition($agentId)->getArgument('$toolbox'));
+    }
+
+    #[TestDox('Tool execution strategy defaults to the sequential executor provided by the agent itself')]
+    public function testToolExecutionStrategyDefaultsToSequential()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        // Without an execution strategy the agent does not receive a tool executor and falls back
+        // to its built-in SequentialToolExecutor, so no dedicated executor service is registered.
+        $this->assertFalse($container->hasDefinition('ai.tool_executor.my_agent'));
+        $this->assertArrayNotHasKey('$toolExecutor', $container->getDefinition('ai.agent.my_agent')->getArguments());
+    }
+
+    #[TestDox('Tool execution strategy "sequential" keeps the agent default without a dedicated executor')]
+    public function testToolExecutionStrategyCanBeSetToSequentialExplicitly()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            'enabled' => true,
+                            'execution_strategy' => 'sequential',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.tool_executor.my_agent'));
+        $this->assertArrayNotHasKey('$toolExecutor', $container->getDefinition('ai.agent.my_agent')->getArguments());
+    }
+
+    #[TestDox('Tool execution strategy "fiber" wires a FiberToolExecutor around the agent toolbox')]
+    public function testToolExecutionStrategyCanBeSetToFiber()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            'enabled' => true,
+                            'execution_strategy' => 'fiber',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.tool_executor.my_agent'));
+        $executorDefinition = $container->getDefinition('ai.tool_executor.my_agent');
+        $this->assertSame(FiberToolExecutor::class, $executorDefinition->getClass());
+        $this->assertInstanceOf(Reference::class, $toolboxArg = $executorDefinition->getArgument(0));
+        $this->assertSame('ai.toolbox.my_agent', (string) $toolboxArg);
+
+        $strategyArg = $container->getDefinition('ai.agent.my_agent')->getArgument('$toolExecutor');
+        $this->assertInstanceOf(Reference::class, $strategyArg);
+        $this->assertSame('ai.tool_executor.my_agent', (string) $strategyArg);
+    }
+
+    #[TestDox('Tool execution strategy accepts a custom service ID')]
+    public function testToolExecutionStrategyCanBeSetToCustomServiceId()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            'enabled' => true,
+                            'execution_strategy' => 'app.my_custom_executor',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.tool_executor.my_agent'));
+        $strategyArg = $container->getDefinition('ai.agent.my_agent')->getArgument('$toolExecutor');
+        $this->assertInstanceOf(Reference::class, $strategyArg);
+        $this->assertSame('app.my_custom_executor', (string) $strategyArg);
     }
 
     public function testAgentWithoutToolsConfigDoesNotRegisterToolbox()

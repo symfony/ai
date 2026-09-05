@@ -30,6 +30,7 @@ use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
+use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
@@ -1302,6 +1303,18 @@ final class AiBundle extends AbstractBundle
                 }
 
                 $toolboxDefinition->replaceArgument(0, $tools);
+            }
+
+            // Wire a non-default tool executor when an execution strategy is configured.
+            $executionStrategy = $config['tools']['execution_strategy'];
+            if (null !== $executionStrategy && 'sequential' !== $executionStrategy) {
+                if ('fiber' === $executionStrategy) {
+                    $executorDefinition = new Definition(FiberToolExecutor::class, [new Reference('ai.toolbox.'.$name)]);
+                    $container->setDefinition('ai.tool_executor.'.$name, $executorDefinition);
+                    $agentDefinition->setArgument('$toolExecutor', new Reference('ai.tool_executor.'.$name));
+                } else {
+                    $agentDefinition->setArgument('$toolExecutor', new Reference($executionStrategy));
+                }
             }
         }
 
