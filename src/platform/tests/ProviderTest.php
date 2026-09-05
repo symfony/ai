@@ -253,6 +253,7 @@ final class ProviderTest extends TestCase
         $this->assertCount(3, $dispatchedEvents);
         $this->assertInstanceOf(ResultConvertedEvent::class, $dispatchedEvents[2]);
         $this->assertSame($textResult, $dispatchedEvents[2]->getResult());
+        $this->assertSame($provider, $dispatchedEvents[2]->getProvider());
     }
 
     public function testInvokeDispatchesResultErrorEventOnConversionFailure()
@@ -293,6 +294,7 @@ final class ProviderTest extends TestCase
 
         $this->assertInstanceOf(ResultErrorEvent::class, $dispatchedEvents[2]);
         $this->assertSame($exception, $dispatchedEvents[2]->getError());
+        $this->assertSame($provider, $dispatchedEvents[2]->getProvider());
     }
 
     public function testGetModelCatalog()
