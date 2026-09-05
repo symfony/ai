@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -35,7 +35,7 @@ final class CombinedStore implements StoreInterface
     ) {
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
         $this->vectorStore->add($documents);
 
@@ -93,7 +93,7 @@ final class CombinedStore implements StoreInterface
     /**
      * @param array<string, mixed> $options
      *
-     * @return list<VectorDocument>
+     * @return list<VectorDocumentInterface>
      */
     private function hybridQuery(HybridQuery $query, array $options): array
     {
@@ -109,17 +109,17 @@ final class CombinedStore implements StoreInterface
     }
 
     /**
-     * @param list<VectorDocument> $list1
-     * @param list<VectorDocument> $list2
+     * @param list<VectorDocumentInterface> $list1
+     * @param list<VectorDocumentInterface> $list2
      *
-     * @return list<VectorDocument>
+     * @return list<VectorDocumentInterface>
      */
     private function reciprocalRankFusion(array $list1, array $list2): array
     {
         /** @var array<string, float> $scores */
         $scores = [];
 
-        /** @var array<string, VectorDocument> $documentsById */
+        /** @var array<string, VectorDocumentInterface> $documentsById */
         $documentsById = [];
 
         foreach ($list1 as $rank => $document) {

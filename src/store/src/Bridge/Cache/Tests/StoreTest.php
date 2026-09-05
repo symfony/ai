@@ -18,6 +18,7 @@ use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -180,7 +181,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc): bool => 'products' === $doc->getMetadata()['category'],
+            'filter' => static fn (VectorDocumentInterface $doc): bool => 'products' === $doc->getMetadata()['category'],
         ]));
 
         $this->assertCount(2, $result);
@@ -199,7 +200,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc): bool => 'products' === $doc->getMetadata()['category'],
+            'filter' => static fn (VectorDocumentInterface $doc): bool => 'products' === $doc->getMetadata()['category'],
             'maxItems' => 2,
         ]));
 
@@ -218,7 +219,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc): bool => $doc->getMetadata()['price'] <= 150 && $doc->getMetadata()['stock'] > 0,
+            'filter' => static fn (VectorDocumentInterface $doc): bool => $doc->getMetadata()['price'] <= 150 && $doc->getMetadata()['stock'] > 0,
         ]));
 
         $this->assertCount(2, $result);
@@ -234,7 +235,7 @@ final class StoreTest extends TestCase
         ]);
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc): bool => 'S' === $doc->getMetadata()['options']['size'],
+            'filter' => static fn (VectorDocumentInterface $doc): bool => 'S' === $doc->getMetadata()['options']['size'],
         ]));
 
         $this->assertCount(2, $result);
@@ -253,7 +254,7 @@ final class StoreTest extends TestCase
 
         $allowedBrands = ['Nike', 'Adidas', 'Puma'];
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
-            'filter' => static fn (VectorDocument $doc): bool => \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
+            'filter' => static fn (VectorDocumentInterface $doc): bool => \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
         ]));
 
         $this->assertCount(2, $result);
@@ -282,7 +283,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6]))));
         $this->assertCount(2, $result);
 
-        $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->getId(), $result);
+        $remainingIds = array_map(static fn (VectorDocumentInterface $doc) => $doc->getId(), $result);
         $this->assertNotContains($id2->toRfc4122(), $remainingIds);
         $this->assertContains($id1->toRfc4122(), $remainingIds);
         $this->assertContains($id3->toRfc4122(), $remainingIds);
@@ -313,7 +314,7 @@ final class StoreTest extends TestCase
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6]))));
         $this->assertCount(2, $result);
 
-        $remainingIds = array_map(static fn (VectorDocument $doc) => $doc->getId(), $result);
+        $remainingIds = array_map(static fn (VectorDocumentInterface $doc) => $doc->getId(), $result);
         $this->assertNotContains($id2->toRfc4122(), $remainingIds);
         $this->assertNotContains($id4->toRfc4122(), $remainingIds);
         $this->assertContains($id1->toRfc4122(), $remainingIds);
@@ -468,7 +469,7 @@ final class StoreTest extends TestCase
         $this->assertGreaterThanOrEqual(2, \count($result));
 
         // Check that space-related documents are in results
-        $texts = array_map(static fn (VectorDocument $doc) => $doc->getMetadata()->getText(), $result);
+        $texts = array_map(static fn (VectorDocumentInterface $doc) => $doc->getMetadata()->getText(), $result);
         $this->assertContains('deep space mission', $texts);
     }
 

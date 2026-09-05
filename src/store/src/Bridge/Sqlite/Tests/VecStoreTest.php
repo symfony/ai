@@ -18,6 +18,7 @@ use Symfony\AI\Store\Bridge\Sqlite\Distance;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -270,7 +271,7 @@ final class VecStoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new VectorQuery(new Vector([1.0, 0.0, 0.0])),
-            ['filter' => static fn (VectorDocument $doc): bool => 'a' === $doc->getMetadata()['category']],
+            ['filter' => static fn (VectorDocumentInterface $doc): bool => 'a' === $doc->getMetadata()['category']],
         ));
 
         $this->assertCount(2, $results);
@@ -360,7 +361,7 @@ final class VecStoreTest extends TestCase
 
         $this->assertNotEmpty($results);
 
-        $foundIds = array_map(static fn (VectorDocument $doc): string|int => $doc->getId(), $results);
+        $foundIds = array_map(static fn (VectorDocumentInterface $doc): string|int => $doc->getId(), $results);
 
         $this->assertContains('doc-1', $foundIds, 'RRF should include the top vector match');
         $this->assertContains('doc-3', $foundIds, 'RRF should include the top text match');
@@ -372,7 +373,7 @@ final class VecStoreTest extends TestCase
         }
 
         // Results should be sorted by RRF score descending
-        $scores = array_map(static fn (VectorDocument $doc): float => $doc->getScore(), $results);
+        $scores = array_map(static fn (VectorDocumentInterface $doc): float => $doc->getScore(), $results);
         $sortedScores = $scores;
         rsort($sortedScores);
         $this->assertSame($sortedScores, $scores, 'Results should be sorted by RRF score descending');
@@ -438,7 +439,7 @@ final class VecStoreTest extends TestCase
 
         $this->assertCount(2, $results);
 
-        $ids = array_map(static fn (VectorDocument $doc): string|int => $doc->getId(), $results);
+        $ids = array_map(static fn (VectorDocumentInterface $doc): string|int => $doc->getId(), $results);
         $this->assertContains('doc-vector', $ids);
         $this->assertContains('doc-text', $ids);
 

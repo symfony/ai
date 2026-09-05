@@ -241,13 +241,13 @@ for adding, removing and querying vectorized documents in the store.
 
 This leads to a store implementing the following methods::
 
-    use Symfony\AI\Store\Document\VectorDocument;
+    use Symfony\AI\Store\Document\VectorDocumentInterface;
     use Symfony\AI\Store\Query\QueryInterface;
     use Symfony\AI\Store\StoreInterface;
 
     class MyStore implements StoreInterface
     {
-        public function add(VectorDocument|array $documents): void
+        public function add(VectorDocumentInterface|array $documents): void
         {
             // Implementation to add a document to the store
         }

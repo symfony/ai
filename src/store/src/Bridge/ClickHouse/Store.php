@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -55,9 +56,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->execute('POST', 'DROP TABLE IF EXISTS {{ table }}');
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
@@ -141,7 +142,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @return array<string, mixed>
      */
-    protected function formatVectorDocument(VectorDocument $document): array
+    protected function formatVectorDocument(VectorDocumentInterface $document): array
     {
         return [
             'id' => $document->getId(),

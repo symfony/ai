@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 
 /**
  * Retrieves documents from a vector store based on a query string.
@@ -29,7 +29,7 @@ interface RetrieverInterface
      * @param string               $query   The search query to vectorize and use for similarity search
      * @param array<string, mixed> $options Options to pass to the store query (e.g., limit, filters)
      *
-     * @return iterable<VectorDocument> The retrieved documents with similarity scores
+     * @return iterable<VectorDocumentInterface> The retrieved documents with similarity scores
      */
     public function retrieve(string $query, array $options = []): iterable;
 }

@@ -13,7 +13,7 @@ namespace Symfony\AI\Store;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Event\PostQueryEvent;
 use Symfony\AI\Store\Event\PreQueryEvent;
@@ -39,7 +39,7 @@ final class Retriever implements RetrieverInterface
     /**
      * @param array<string, mixed> $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     public function retrieve(string $query, array $options = []): iterable
     {
@@ -63,9 +63,9 @@ final class Retriever implements RetrieverInterface
     }
 
     /**
-     * @param iterable<VectorDocument> $documents
+     * @param iterable<VectorDocumentInterface> $documents
      *
-     * @return \Generator<VectorDocument>
+     * @return \Generator<VectorDocumentInterface>
      */
     private function yieldDocuments(iterable $documents): \Generator
     {
@@ -92,10 +92,10 @@ final class Retriever implements RetrieverInterface
     }
 
     /**
-     * @param iterable<VectorDocument> $documents
-     * @param array<string, mixed>     $options
+     * @param iterable<VectorDocumentInterface> $documents
+     * @param array<string, mixed>              $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function dispatchPostQuery(string $query, iterable $documents, array $options): iterable
     {

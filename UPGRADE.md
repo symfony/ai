@@ -1,6 +1,13 @@
 UPGRADE FROM 0.13 to 0.14
 =========================
 
+Agent
+-----
+
+ * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns
+   `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the
+   retriever it reads from. Code narrowing the returned documents to the concrete class has to widen.
+
 Platform
 --------
 
@@ -45,6 +52,26 @@ Store
    instead of the final `Platform\Vector\Vector` class. Passing a `Vector` is unchanged. This is what
    makes a "more like this" query possible without a cast: the vector of a document returned by a store
    can now be fed straight back into a query.
+
+ * Stores are now typed against `Document\VectorDocumentInterface` rather than the final
+   `Document\VectorDocument` class, so that a store can hand back a document carrying more than an
+   id, a vector and metadata - the entity it was built from, for instance. `VectorDocument` implements
+   the new interface, so passing one is unchanged, but a custom store has to widen its signature:
+
+   ```diff
+   -public function add(VectorDocument|array $documents): void
+   +public function add(VectorDocumentInterface|array $documents): void
+    {
+   -    if ($documents instanceof VectorDocument) {
+   +    if ($documents instanceof VectorDocumentInterface) {
+            $documents = [$documents];
+        }
+        // ...
+    }
+   ```
+
+   The same applies to anything typed on the documents a store returns: `RetrieverInterface`,
+   `Reranker\RerankerInterface` and `VectorizerInterface` now speak in terms of the interface too.
 
 UPGRADE FROM 0.12 to 0.13
 =========================
