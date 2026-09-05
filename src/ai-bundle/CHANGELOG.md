@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add an `ai.agent.<name>.tools.mcp_servers` option exposing the tools of a remote MCP server to an agent, referencing a connection configured under `mcp.clients`
+
 0.13
 ----
 
