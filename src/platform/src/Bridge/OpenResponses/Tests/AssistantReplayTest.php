@@ -78,7 +78,7 @@ final class AssistantReplayTest extends TestCase
             ),
             ['input' => [
                 ['role' => 'user', 'content' => 'Hello'],
-                ['role' => 'assistant', 'type' => 'message', 'content' => 'Hi there!'],
+                self::messageItem('Hi there!'),
                 ['role' => 'user', 'content' => 'Tell me more.'],
             ]],
         ];
@@ -103,7 +103,7 @@ final class AssistantReplayTest extends TestCase
             ['input' => [
                 ['role' => 'user', 'content' => 'What time is it?'],
                 $reasoningItem,
-                ['role' => 'assistant', 'type' => 'message', 'content' => 'It is 10:00 AM.'],
+                self::messageItem('It is 10:00 AM.'),
                 ['role' => 'user', 'content' => 'And in Paris?'],
             ]],
         ];
@@ -135,7 +135,7 @@ final class AssistantReplayTest extends TestCase
             ['input' => [
                 ['role' => 'user', 'content' => 'What time is it?'],
                 $reasoningItem,
-                ['role' => 'assistant', 'type' => 'message', 'content' => 'Let me check the clock.'],
+                self::messageItem('Let me check the clock.'),
                 [
                     'type' => 'function_call',
                     'call_id' => 'call_1',
@@ -180,9 +180,23 @@ final class AssistantReplayTest extends TestCase
                     'summary' => [],
                     'encrypted_content' => 'gAAAAA-opaque',
                 ],
-                ['role' => 'assistant', 'type' => 'message', 'content' => 'Done.'],
+                self::messageItem('Done.'),
                 ['role' => 'user', 'content' => 'Again.'],
             ]],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function messageItem(string $text): array
+    {
+        return [
+            'role' => 'assistant',
+            'type' => 'message',
+            'id' => 'msg_1',
+            'status' => 'completed',
+            'content' => [['type' => 'output_text', 'text' => $text, 'annotations' => []]],
         ];
     }
 }

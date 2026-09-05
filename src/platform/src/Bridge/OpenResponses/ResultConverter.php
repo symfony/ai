@@ -640,14 +640,18 @@ class ResultConverter implements ResultConverterInterface
             return;
         }
 
+        // Keep the provider's own item id so the message can be replayed under it on the next
+        // turn, the way reasoning items are replayed through their signature.
+        $signature = isset($output['id']) ? json_encode(['type' => 'message', 'id' => $output['id']]) : null;
+
         $content = array_pop($content);
         if ('refusal' === $content['type']) {
-            yield new TextResult(\sprintf('Model refused to generate output: %s', $content['refusal']));
+            yield new TextResult(\sprintf('Model refused to generate output: %s', $content['refusal']), $signature);
 
             return;
         }
 
-        $result = new TextResult($content['text']);
+        $result = new TextResult($content['text'], $signature);
 
         $citations = $this->extractCitations($content['annotations'] ?? []);
         if ([] !== $citations) {
