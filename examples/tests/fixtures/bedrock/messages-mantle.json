@@ -1,0 +1,54 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.eu-west-1.api.aws/anthropic/v1/messages",
+                "signature": "cd53641a60370a3be9978dd2f4185c9c",
+                "headers": {
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "host": [
+                        "bedrock-mantle.eu-west-1.api.aws"
+                    ],
+                    "x-amz-security-token": [
+                        "[redacted]"
+                    ],
+                    "x-amz-date": [
+                        "20260825T143237Z"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"max_tokens\":1000,\"model\":\"anthropic.claude-haiku-4-5\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Explain the Symfony framework in one sentence.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a concise and helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "600"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "x-amzn-requestid,x-request-id,date,x-amzn-usage-reservation-quota,x-amzn-usage-reservation-remaining-quota,x-amzn-usage-reservation-spillover"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_bdrk_4ejyb4vi5bprt4llnwxntay4wsfmcev4odocjg5plwc4fuk3hygq\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Symfony is a PHP web framework that provides reusable components and a structured architecture for building robust, scalable web applications.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":26,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":29,\"service_tier\":\"standard\"}}"
+            }
+        }
+    ]
+}

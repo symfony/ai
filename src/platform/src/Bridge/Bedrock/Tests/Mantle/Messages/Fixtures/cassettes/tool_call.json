@@ -1,0 +1,33 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.us-east-1.api.aws/anthropic/v1/messages",
+                "signature": "673e0a492be1009a9319847592518266",
+                "headers": {
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-api-key": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"model\":\"anthropic.claude-haiku-4-5\",\"messages\":[{\"role\":\"user\",\"content\":\"What is the weather in Paris?\"}],\"max_tokens\":1000}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"msg_mantle_tool\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"anthropic.claude-haiku-4-5\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_mantle_01\",\"name\":\"get_weather\",\"input\":{\"city\":\"Paris\"}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":24,\"output_tokens\":15}}"
+            }
+        }
+    ]
+}

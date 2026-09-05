@@ -65,6 +65,27 @@ final class CassetteHttpClientTest extends TestCase
         $this->assertFileExists($this->path);
     }
 
+    public function testAwsCredentialRequestsBypassRecording()
+    {
+        $realClient = new MockHttpClient([
+            new JsonMockResponse(['roleCredentials' => ['accessKeyId' => 'AKIDEXAMPLE', 'secretAccessKey' => 'secret']]),
+            new JsonMockResponse(['answer' => 'recorded']),
+        ]);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+
+        $credentials = $client->request('GET', 'https://portal.sso.eu-central-1.amazonaws.com/federation/credentials')->toArray();
+        $response = $client->request('POST', 'https://bedrock-mantle.eu-central-1.api.aws/anthropic/v1/messages')->toArray();
+
+        $this->assertSame('AKIDEXAMPLE', $credentials['roleCredentials']['accessKeyId']);
+        $this->assertSame(['answer' => 'recorded'], $response);
+
+        $data = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertCount(1, $data['interactions']);
+        $this->assertSame('https://bedrock-mantle.eu-central-1.api.aws/anthropic/v1/messages', $data['interactions'][0]['request']['url']);
+        $this->assertStringNotContainsString('AKIDEXAMPLE', (string) file_get_contents($this->path));
+        $this->assertStringNotContainsString('secret', (string) file_get_contents($this->path));
+    }
+
     public function testReplaysAutomaticallyWhenCassetteExists()
     {
         $recorder = new HttpCassette($this->path);

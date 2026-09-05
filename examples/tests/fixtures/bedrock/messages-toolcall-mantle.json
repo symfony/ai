@@ -1,0 +1,104 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.eu-west-1.api.aws/anthropic/v1/messages",
+                "signature": "a2718210a2d06ce84222a17aade98450",
+                "headers": {
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "host": [
+                        "bedrock-mantle.eu-west-1.api.aws"
+                    ],
+                    "x-amz-security-token": [
+                        "[redacted]"
+                    ],
+                    "x-amz-date": [
+                        "20260825T143237Z"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"multiply\",\"description\":\"Multiply two integers.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"left\":{\"type\":\"integer\"},\"right\":{\"type\":\"integer\"}},\"required\":[\"left\",\"right\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"model\":\"anthropic.claude-haiku-4-5\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is 6 multiplied by 7?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "543"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "x-amzn-requestid,x-request-id,date,x-amzn-usage-reservation-quota,x-amzn-usage-reservation-remaining-quota,x-amzn-usage-reservation-spillover"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_bdrk_s2jpx3edh47kerhwdo2ciapp74tl3tmjuenwngeok4iwfnwzkd7q\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_bdrk_014NFbuCeDmXnkP3gzS9fWCs\",\"name\":\"multiply\",\"input\":{\"left\":6,\"right\":7}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":584,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":69,\"service_tier\":\"standard\"}}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.eu-west-1.api.aws/anthropic/v1/messages",
+                "signature": "e2c344fe5b964802e707cf4330553eed",
+                "headers": {
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "host": [
+                        "bedrock-mantle.eu-west-1.api.aws"
+                    ],
+                    "x-amz-security-token": [
+                        "[redacted]"
+                    ],
+                    "x-amz-date": [
+                        "20260825T143238Z"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"multiply\",\"description\":\"Multiply two integers.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"left\":{\"type\":\"integer\"},\"right\":{\"type\":\"integer\"}},\"required\":[\"left\",\"right\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"model\":\"anthropic.claude-haiku-4-5\",\"messages\":[{\"role\":\"user\",\"content\":\"What is 6 multiplied by 7?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_bdrk_014NFbuCeDmXnkP3gzS9fWCs\",\"name\":\"multiply\",\"input\":{\"left\":6,\"right\":7}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_bdrk_014NFbuCeDmXnkP3gzS9fWCs\",\"content\":\"42\",\"cache_control\":{\"type\":\"ephemeral\"}}]}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "487"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "x-amzn-requestid,x-request-id,date,x-amzn-usage-reservation-quota,x-amzn-usage-reservation-remaining-quota,x-amzn-usage-reservation-spillover"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_bdrk_lhnn4aeutso5fk4f6t5yiz4ulozjs5tjnane2v3hguu5rf67l34a\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"6 multiplied by 7 is **42**.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":666,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":15,\"service_tier\":\"standard\"}}"
+            }
+        }
+    ]
+}
