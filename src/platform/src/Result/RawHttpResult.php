@@ -26,6 +26,17 @@ final class RawHttpResult implements RawResultInterface
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            "\0".self::class."\0response" => \sprintf('%s (hidden from dumps to avoid consuming the underlying HTTP stream)', $this->response::class),
+            "\0".self::class."\0httpStream" => $this->httpStream,
+        ];
+    }
+
     public function getData(): array
     {
         return $this->response->toArray(false);
