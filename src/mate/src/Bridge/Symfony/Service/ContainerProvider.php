@@ -21,10 +21,39 @@ use Symfony\AI\Mate\Bridge\Symfony\Model\ServiceTag;
 /**
  * This will parse an App_KernelDevDebugContainer.xml and return value objects.
  *
+ * @phpstan-import-type ParsedArgument from ServiceDefinition
+ *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
 class ContainerProvider
 {
+    /**
+     * @var list<string>
+     */
+    private const SERVICE_ARGUMENT_TYPES = ['service', 'service_closure'];
+
+    /**
+     * Carry nested `<argument>` children instead of a value (a messenger bus keeps its
+     * middleware in an `iterator`).
+     *
+     * @var list<string>
+     */
+    private const COLLECTION_ARGUMENT_TYPES = ['collection', 'iterator', 'service_locator'];
+
+    /**
+     * Hold no value, only a tag name: "every service carrying this tag".
+     *
+     * @var list<string>
+     */
+    private const TAGGED_ARGUMENT_TYPES = ['tagged_iterator', 'tagged_locator'];
+
+    /**
+     * Must not be coerced back into a bool, null or number.
+     *
+     * @var list<string>
+     */
+    private const STRING_ARGUMENT_TYPES = ['string', 'binary', 'constant', 'expression', 'abstract', 'env_closure'];
+
     /**
      * @var array<string, Container>
      */
@@ -95,6 +124,7 @@ class ContainerProvider
                     $calls,
                     $serviceTags,
                     $constructor,
+                    $this->parseArguments($def),
                 );
 
                 if (null === $service->getAlias()) {
@@ -118,10 +148,107 @@ class ContainerProvider
                 $services[$alias]->getCalls(),
                 $services[$alias]->getTags(),
                 $services[$alias]->getConstructor(),
+                $services[$alias]->getArguments(),
             );
         }
 
         return new Container($services);
+    }
+
+    /**
+     * Reads the direct `<argument>` children of a node.
+     *
+     * @return list<ParsedArgument>
+     */
+    private function parseArguments(\SimpleXMLElement $node): array
+    {
+        $arguments = [];
+
+        foreach ($node->argument as $argument) {
+            /** @var \SimpleXMLElement $attrs */
+            $attrs = $argument->attributes();
+            $type = isset($attrs->type) ? (string) $attrs->type : null;
+            $key = isset($attrs->key) ? (string) $attrs->key : null;
+
+            if (null !== $type && \in_array($type, self::SERVICE_ARGUMENT_TYPES, true)) {
+                $arguments[] = [
+                    'key' => $key,
+                    'type' => 'service',
+                    'value' => $this->referencedService($argument, $attrs),
+                    'literal' => false,
+                ];
+
+                continue;
+            }
+
+            if (null !== $type && \in_array($type, self::COLLECTION_ARGUMENT_TYPES, true)) {
+                $arguments[] = [
+                    'key' => $key,
+                    'type' => 'collection',
+                    'value' => $this->parseArguments($argument),
+                    'literal' => false,
+                ];
+
+                continue;
+            }
+
+            if (null !== $type && \in_array($type, self::TAGGED_ARGUMENT_TYPES, true)) {
+                $arguments[] = [
+                    'key' => $key,
+                    'type' => 'scalar',
+                    'value' => \sprintf('all services tagged "%s"', isset($attrs->tag) ? (string) $attrs->tag : ''),
+                    'literal' => false,
+                ];
+
+                continue;
+            }
+
+            $arguments[] = [
+                'key' => $key,
+                'type' => 'scalar',
+                'value' => $this->castScalar((string) $argument, $type),
+                'literal' => true,
+            ];
+        }
+
+        return $arguments;
+    }
+
+    /**
+     * An inline (anonymous) definition has no id, so its class is the only identity there is.
+     */
+    private function referencedService(\SimpleXMLElement $argument, \SimpleXMLElement $attrs): ?string
+    {
+        if (isset($attrs->id)) {
+            return self::cleanServiceId((string) $attrs->id);
+        }
+
+        if (isset($argument->service)) {
+            $inline = $argument->service->attributes();
+            if (isset($inline->class)) {
+                return (string) $inline->class;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The dumper marks a string that only looks like a bool/null/number with `type="string"`,
+     * so the original type is still recoverable here.
+     */
+    private function castScalar(string $text, ?string $type): mixed
+    {
+        if (null !== $type && \in_array($type, self::STRING_ARGUMENT_TYPES, true)) {
+            return $text;
+        }
+
+        return match ($text) {
+            'true' => true,
+            'false' => false,
+            'null' => null,
+            default => is_numeric($text) ? $text + 0 : $text,
+        };
     }
 
     private function cleanServiceId(string $id): string

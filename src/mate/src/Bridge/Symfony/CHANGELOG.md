@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add constructor arguments to `symfony-service-detail`: the compiled container dump carries them but they were never read, so the services wired into a definition, such as the middleware list of a messenger bus, were invisible. Parameter names come from reflecting the constructor or factory method; scalar values are redacted when the name looks like a secret, including a DSN or URL, and also when the parameter cannot be identified at all
+
 0.13
 ----
 
