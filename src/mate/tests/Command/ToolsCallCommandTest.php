@@ -24,7 +24,9 @@ use Symfony\AI\Mate\Invocation\ToolInvoker;
 use Symfony\AI\Mate\Tests\Command\Fixtures\SampleTool;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -44,6 +46,55 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringContainsString('Executing Tool: server-info', $output);
         $this->assertStringContainsString('Result', $output);
         $this->assertStringContainsString(\PHP_VERSION, $output);
+    }
+
+    public function testPrettyFormatDoesNotPadShortValuesToTheWidestColumn()
+    {
+        $tester = new CommandTester($this->createServerInfoCommand());
+
+        $tester->execute(['tool-name' => 'server-info']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $this->assertMatchesRegularExpression('/^ php_version: '.preg_quote(\PHP_VERSION, '/').'$/m', $output);
+        $this->assertDoesNotMatchRegularExpression('/ {5,}/', $output, 'Values must not be padded to a shared column width.');
+    }
+
+    public function testExplicitPrettyFormatStillRendersLeanKeyValueLines()
+    {
+        $tester = new CommandTester($this->createServerInfoCommand());
+
+        $tester->execute(['tool-name' => 'server-info', '--format' => 'pretty']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+
+        $this->assertStringContainsString('php_version: '.\PHP_VERSION, $output);
+        $this->assertDoesNotMatchRegularExpression('/ {5,}/', $output);
+    }
+
+    public function testPrettyFormatIsSignificantlySmallerThanTheOldDefinitionListRendering()
+    {
+        $jsonTester = new CommandTester($this->createServerInfoCommand());
+        $jsonTester->execute(['tool-name' => 'server-info', '--format' => 'json']);
+        $result = json_decode($jsonTester->getDisplay(), true);
+        $this->assertIsArray($result);
+
+        $prettyTester = new CommandTester($this->createServerInfoCommand());
+        $prettyTester->execute(['tool-name' => 'server-info']);
+        $prettyBytes = \strlen($prettyTester->getDisplay());
+
+        $definitionListOutput = new BufferedOutput();
+        $io = new SymfonyStyle(new ArrayInput([]), $definitionListOutput);
+        $io->definitionList(...array_map(
+            static fn ($key, $value) => [$key => \is_array($value) ? json_encode($value, \JSON_UNESCAPED_SLASHES) : (string) $value],
+            array_keys($result),
+            $result,
+        ));
+        $definitionListBytes = \strlen($definitionListOutput->fetch());
+
+        $this->assertLessThan($definitionListBytes / 2, $prettyBytes);
     }
 
     public function testExecuteWithJsonFormat()
