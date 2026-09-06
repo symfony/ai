@@ -58,7 +58,7 @@ final class MatePlugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostInstallOrUpdate(Event $event): void
     {
-        $rootDir = getcwd();
+        $rootDir = \dirname($event->getComposer()->getConfig()->get('vendor-dir'));
         $extensionsFile = $rootDir.'/mate/extensions.php';
 
         if (!file_exists($extensionsFile)) {
