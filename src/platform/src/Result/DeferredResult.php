@@ -58,6 +58,27 @@ final class DeferredResult
     }
 
     /**
+     * Adds an at-a-glance conversion-state summary to dumps, on top of the normal properties.
+     *
+     * The underlying HTTP response is not read here, directly or indirectly: $isConverted and
+     * $conversionFailure are plain, always-initialized properties, so computing "state" cannot trigger a
+     * conversion or otherwise touch $rawResult. That property is already safe to dump on its own, see
+     * {@see RawHttpResult::__debugInfo()}, which is what keeps a plain dump() or dd() of a DeferredResult safe.
+     *
+     * @return array<string, mixed>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'state' => match (true) {
+                null !== $this->conversionFailure => 'failed',
+                $this->isConverted => 'converted',
+                default => 'pending',
+            },
+        ];
+    }
+
+    /**
      * Registers a callback invoked with the converted result once conversion succeeds.
      *
      * The callback may return a replacement result, which is then used as the converted result

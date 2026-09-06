@@ -469,6 +469,48 @@ final class DeferredResultTest extends TestCase
         $this->assertSame(3500000, $city->population);
     }
 
+    public function testDebugInfoReportsPendingStateWithoutConverting()
+    {
+        $resultConverter = $this->createMock(ResultConverterInterface::class);
+        $resultConverter->expects($this->never())->method('convert');
+
+        $deferredResult = new DeferredResult($resultConverter, new InMemoryRawResult());
+
+        $debugInfo = $deferredResult->__debugInfo();
+
+        $this->assertSame('pending', $debugInfo['state']);
+    }
+
+    public function testDebugInfoReportsConvertedStateAfterGetResult()
+    {
+        $deferredResult = new DeferredResult(new PlainConverter(new TextResult('hi')), new InMemoryRawResult());
+        $deferredResult->getResult();
+
+        $debugInfo = $deferredResult->__debugInfo();
+
+        $this->assertSame('converted', $debugInfo['state']);
+    }
+
+    public function testDebugInfoReportsFailedStateAfterConversionFailure()
+    {
+        $rawHttpResult = new RawHttpResult($this->createStub(SymfonyHttpResponse::class));
+
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+        $resultConverter->method('convert')->willThrowException(new RateLimitExceededException());
+
+        $deferredResult = new DeferredResult($resultConverter, $rawHttpResult);
+
+        try {
+            $deferredResult->getResult();
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException) {
+        }
+
+        $debugInfo = $deferredResult->__debugInfo();
+
+        $this->assertSame('failed', $debugInfo['state']);
+    }
+
     public function testAsObjectFinishesStreamAfterExceptionDuringIteration()
     {
         $stream = new StreamResult((static function () {
