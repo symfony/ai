@@ -14,6 +14,8 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Model;
 /**
  * @internal
  *
+ * @phpstan-type ParsedArgument array{key: string|null, type: 'service'|'collection'|'scalar', value: mixed, literal: bool}
+ *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
 class ServiceDefinition
@@ -24,6 +26,8 @@ class ServiceDefinition
      * @param string[]                         $calls
      * @param ServiceTag[]                     $tags
      * @param array{0: string|null, 1: string} $constructor
+     * @param list<ParsedArgument>             $arguments   positional constructor/factory arguments, still unnamed and
+     *                                                      unredacted; ServiceArgumentResolver turns them into output
      */
     public function __construct(
         private readonly string $id,
@@ -32,6 +36,7 @@ class ServiceDefinition
         private readonly array $calls,
         private readonly array $tags,
         private readonly array $constructor,
+        private readonly array $arguments = [],
     ) {
     }
 
@@ -75,5 +80,18 @@ class ServiceDefinition
     public function getConstructor(): array
     {
         return $this->constructor;
+    }
+
+    /**
+     * The arguments as the container dump carries them: positional, in declaration order,
+     * with no parameter names — the XML does not record those. Pass them through
+     * {@see \Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver} before
+     * showing them to anyone; scalars here are raw.
+     *
+     * @return list<ParsedArgument>
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments;
     }
 }

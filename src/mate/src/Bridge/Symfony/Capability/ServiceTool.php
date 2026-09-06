@@ -16,6 +16,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Exception\ContainerNotDumpedException;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\ServiceNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Model\Container;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
+use Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
@@ -38,6 +39,8 @@ class ServiceTool
 
     private readonly bool $hasContexts;
 
+    private readonly ServiceArgumentResolver $argumentResolver;
+
     /**
      * @param string|array<string, string> $cacheDir A single cache directory, or a map of context name to cache
      *                                               directory for multi-kernel (APP_ID) applications
@@ -45,9 +48,11 @@ class ServiceTool
     public function __construct(
         string|array $cacheDir,
         private ContainerProvider $provider,
+        ?ServiceArgumentResolver $argumentResolver = null,
     ) {
         $this->hasContexts = \is_array($cacheDir);
         $this->cacheDirs = \is_string($cacheDir) ? [0 => $cacheDir] : $cacheDir;
+        $this->argumentResolver = $argumentResolver ?? new ServiceArgumentResolver();
     }
 
     /**
@@ -77,7 +82,7 @@ class ServiceTool
      * @param string      $id      The exact service ID to retrieve details for
      * @param string|null $context Filter by Symfony kernel context, only relevant when multiple cache directories are configured
      */
-    #[MateTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, and constructor/factory information. When multiple kernel contexts are configured, the containers are searched in order and the result carries the context it was found in.')]
+    #[MateTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, constructor arguments and factory information. Constructor arguments show which services are wired in — including the entries of a collection, such as the middleware list of a messenger bus. Scalar values are redacted when their parameter name looks like a secret, or when the parameter cannot be identified. When multiple kernel contexts are configured, the containers are searched in order and the result carries the context it was found in.')]
     public function getServiceDetail(string $id, ?string $context = null): string
     {
         $containers = $this->readContainers($context);
@@ -110,6 +115,7 @@ class ServiceTool
                 'class' => $service->getClass(),
                 'tags' => $tags,
                 'calls' => $service->getCalls(),
+                'arguments' => $this->argumentResolver->resolve($service->getConstructor(), $service->getArguments()),
             ];
 
             if (null !== $constructor) {

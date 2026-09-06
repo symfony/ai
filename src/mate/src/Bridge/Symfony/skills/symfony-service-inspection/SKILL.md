@@ -8,7 +8,7 @@ description: Diagnose a Symfony dependency-injection or wiring problem, service 
 Reads the compiled DI container through Mate's CLI, from the dumped `*DebugContainer.xml`. Two tools:
 
 - `symfony-services` (opt `query`, `tag`, `limit`): `query` is a case-insensitive partial match on service id OR class; `tag` is an exact tag name. Returns `{services: {id => class}, count, truncated}`. `count` is the number of matches before the cut, `truncated` says whether `limit` (default 100) hid some. Narrow the filter rather than raising `limit`.
-- `symfony-service-detail --id=<exact id>`: full detail for one service, `{id, class, tags, calls, factory?}`. The id must be exact.
+- `symfony-service-detail --id=<exact id>`: full detail for one service, `{id, class, tags, calls, arguments, factory?}`. The id must be exact.
 
 Both commands accept `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. The service map can be large, so filter it rather than dumping it wide.
 
@@ -26,9 +26,16 @@ Both commands accept `--format`: `json` to parse the result, `toon` (when `helge
 - **Wrong implementation injected:** query the interface. Every id mapping to a class is a candidate. The one wired in is usually the alias whose id equals the interface FQCN. Aliases are resolved for you: asking for the alias id returns the target's class, tags, and calls, so `detail` on the interface id shows the concrete class that actually gets injected.
 - **Tag not applied (listener/subscriber/extension silent):** `detail` the service and check `tags`. If the expected tag is absent, autoconfiguration did not fire, usually because the class does not implement the expected interface/attribute, or `autoconfigure` is off. Each tag entry carries its attributes (`event`, `priority`, `method`, ...); a listener bound to the wrong `event` or `priority` is a common cause.
 - **Constructor/factory surprise:** `factory` (present only when set) is `Class::method`, telling you the object is built by a factory, not `new`. `calls` lists setter-injection method names invoked after construction. A dependency that is null at runtime is often a missing setter call here.
+- **What is actually wired in:** `arguments` is the constructor argument list in declaration order, each `{name, type, value}`.
+  - `type: service` — `value` is the referenced service id. Feed it straight back into `--id=` to walk one level deeper.
+  - `type: collection` — `value` is a nested list of the same shape. This is where a list of collaborators lives, and it is usually the answer to "which of these is registered": **the middleware on a messenger bus**, the handlers on a chain, the wrapped services of a decorator.
+  - `type: scalar` — a literal, or a description like `all services tagged "app.plugin"` for a tagged iterator.
+  - `name` comes from the constructor (or factory method) signature. A name like `#3` means the position could not be matched to a parameter — the class is not loadable, or it is built by a factory service that records no class.
+  - `value: ***REDACTED***` means the parameter name looked like a secret (`key`, `password`, `token`, `secret`, `auth`, …) **or** the parameter could not be identified. Service ids and collections are never redacted, so wiring stays readable either way. If you need the literal, read the config that sets it, not this tool.
 
 ## Failure paths
 
 - `symfony-service-detail` errors "Service ... not found": the id is not exact. Ids are case-sensitive and a leading dot is stripped (`.inner` is stored as `inner`). Re-run `symfony-services` with a fragment to copy the real id. Note a service can exist yet be private; it still appears here.
 - Either tool errors "No compiled container found": the dump only exists after the container is compiled. Warm it (`bin/console cache:warmup`, or just boot the app once) in the environment you are inspecting, then retry. An empty `services` map with `count: 0` is a different answer and means the filter matched nothing. If a warm cache still yields nothing, the parse itself may be failing because the runtime lacks `simplexml`; confirm the environment with php environment check.
+- `arguments` is empty for a service that takes none, and for a synthetic or synthesized one there is nothing to read. It is also empty for anything injected by a setter instead — check `calls`.
 - Reads the first of dev/test/prod it finds. If you are chasing an env-specific binding, make sure that environment's container has been compiled, otherwise you are reading dev.

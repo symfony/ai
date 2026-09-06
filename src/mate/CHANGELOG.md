@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add an `Arguments` column to `tools:list`'s table output, and stop truncating tool descriptions to 50 characters, so a tool's parameters and full description are visible without a separate `tools:inspect` call
  * Add a `tools:inspect <tool-name>` hint to `tools:call`'s error output when a parameter name is unknown or a required one is missing
+ * Add constructor arguments to `symfony-service-detail`: the compiled container dump carries them but they were never read, so the services wired into a definition — the middleware list of a messenger bus, for one — were invisible. Parameter names come from reflecting the constructor or factory method; scalar values are redacted when the name looks like a secret, and also when the parameter cannot be identified at all
 
 0.13
 ----

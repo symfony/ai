@@ -5,6 +5,7 @@
 | Instead of...                  | Use                |
 |--------------------------------|--------------------|
 | `bin/console debug:container`  | `symfony-services` |
+| `bin/console debug:container <id>` | `symfony-service-detail` |
 
 - Direct access to compiled container
 - Environment-aware (auto-detects dev/test/prod)
@@ -12,6 +13,11 @@
 - Multi-kernel aware: when several cache directories are configured (one per kernel context, e.g.
   per `APP_ID`), `symfony-services` groups the services by context, `symfony-service-detail`
   reports the context a service was found in, and both accept a `context` parameter
+- `symfony-service-detail` returns constructor arguments, so the services wired into a
+  definition are visible — including the entries of a collection, such as the middleware
+  list of a messenger bus
+- Scalar arguments are redacted when the parameter name looks like a secret, and when the
+  parameter cannot be identified; service references and collections never are
 
 ### Profiler Access
 
