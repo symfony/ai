@@ -7,6 +7,7 @@ CHANGELOG
  * Add an `Arguments` column to `tools:list`'s table output, and stop truncating tool descriptions to 50 characters, so a tool's parameters and full description are visible without a separate `tools:inspect` call
  * Add a `tools:inspect <tool-name>` hint to `tools:call`'s error output when a parameter name is unknown or a required one is missing
  * Add a per-skill status table to `skills:install` output (same columns as `skills:list`, plus an `action` column showing installed/rebuilt/skipped/unchanged), and `--format=json`/`--format=toon` support, matching `skills:list`
+ * Add a size-based auto-fallback to `tools:call`: when the effective format is `pretty` (the default, or explicitly requested) and the result's compact JSON encoding exceeds 8 KB, render it as `json` instead and print a note explaining why, since `renderPretty()` folds a large nested value onto a single unreadable line; `--format=json`/`--format=toon` are unaffected
 
 0.13
 ----
