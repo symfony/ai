@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\ComposerPlugin;
 
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\InstalledVersions;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
@@ -58,7 +59,12 @@ final class MatePlugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostInstallOrUpdate(Event $event): void
     {
-        $rootDir = \dirname($event->getComposer()->getConfig()->get('vendor-dir'));
+        // The root package's own install path, not derived from "vendor-dir": that config
+        // value is not guaranteed to sit directly under the project root (it may point
+        // outside the project entirely), while InstalledVersions always resolves to where
+        // the root composer.json actually lives.
+        $rootPackagePath = InstalledVersions::getRootPackage()['install_path'];
+        $rootDir = realpath($rootPackagePath) ?: $rootPackagePath;
         $extensionsFile = $rootDir.'/mate/extensions.php';
 
         if (!file_exists($extensionsFile)) {
