@@ -47,7 +47,7 @@ final class AppTest extends TestCase
         @rmdir($this->projectDir);
     }
 
-    public function testTheBatchCommandIsReachableByName(): void
+    public function testTheBatchCommandIsReachableByName()
     {
         $application = App::build((new ContainerFactory($this->projectDir))->create());
 
@@ -61,7 +61,7 @@ final class AppTest extends TestCase
      * The general form of the same bug. Any command added to default.config.php
      * and forgotten in App::build() fails here rather than silently at runtime.
      */
-    public function testEveryRegisteredCommandReachesTheConsole(): void
+    public function testEveryRegisteredCommandReachesTheConsole()
     {
         $application = App::build((new ContainerFactory($this->projectDir))->create());
 
