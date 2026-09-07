@@ -10,6 +10,7 @@ CHANGELOG
  * Add a size-based auto-fallback to `tools:call`: when the effective format is `pretty` (the default, or explicitly requested) and the result's compact JSON encoding exceeds 8 KB, render it as `json` instead and print a note explaining why, since `renderPretty()` folds a large nested value onto a single unreadable line; `--format=json`/`--format=toon` are unaffected
  * Change `tools:call`'s `--format=pretty` rendering to print one unpadded `key: value` line per result field instead of `SymfonyStyle::definitionList()`, which padded every value to the width of the widest one in the list, inflating small/medium results with whitespace alone (a representative real result rendered ~5x smaller after this change, with no information loss)
  * Add `tools:call-batch` command: executes several tools in one command call from a `--json` array of `{"tool": "...", "params": {...}}` objects, saving the round-trips an agent would otherwise pay calling `tools:call` once per tool for a single investigation. Calls run sequentially and one failing call does not abort the others; a tool whose name looks mutating (contains `-apply`, `-fix`, `-install`, `-enable`, `-disable`, `-override`, `-reset` or `-prune`) is rejected from the batch. Its `pretty` output shares `tools:call`'s rendering, including the automatic JSON fallback for results above 8 KB
+ * Surface `tools:call-batch` in `tools:list` and in the instructions `discover` writes into `AGENTS.md`, so it is discoverable without loading a skill that happens to mention it
 
 0.13
 ----

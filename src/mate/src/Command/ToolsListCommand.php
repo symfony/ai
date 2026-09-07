@@ -231,6 +231,11 @@ HELP
 
         $io->newLine();
         $io->text(\sprintf('Total: <info>%d</info> tool(s)', \count($tools)));
+        // A pointer rather than a row: tools:call-batch is a command, not a
+        // #[MateTool], and listing it among the tools would invite
+        // `tools:call tools:call-batch`. Without a mention here its only
+        // discovery surface is whichever skills happen to name it.
+        $io->text('Need several of these for one question? Run them in a single call with <info>tools:call-batch</info>.');
     }
 
     /**
@@ -247,6 +252,9 @@ HELP
             'tools' => $tools,
             'summary' => [
                 'total' => \count($tools),
+                // The table footer says this too. An agent reading the JSON
+                // would otherwise never learn the batch form exists.
+                'batch_hint' => 'Several tools needed for one question can be run in a single call with tools:call-batch.',
             ],
         ];
     }
