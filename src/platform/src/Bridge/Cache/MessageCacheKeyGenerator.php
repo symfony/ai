@@ -12,17 +12,15 @@
 namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
 
 /**
- * Keys a {@see MessageBag} on a hash of its content - every message of the bag, the system prompt
- * and the prior turns included - so that two bags carrying the same conversation resolve to the
- * same key even when they are separate instances.
+ * Keys a bare {@see MessageInterface} input - a message handed to the platform without being
+ * wrapped into a {@see \Symfony\AI\Platform\Message\MessageBag} - on a hash of its content.
  *
- * @author Tac Tacelosky <tacman@gmail.com>
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class MessageBagCacheKeyGenerator implements CacheKeyGenerator
+final class MessageCacheKeyGenerator implements CacheKeyGenerator
 {
     public function __construct(
         private readonly InputHasher $inputHasher = new InputHasher(),
@@ -31,13 +29,13 @@ final class MessageBagCacheKeyGenerator implements CacheKeyGenerator
 
     public function supports(object $input): bool
     {
-        return $input instanceof MessageBag;
+        return $input instanceof MessageInterface;
     }
 
     public function generate(object $input): string
     {
-        if (!$input instanceof MessageBag) {
-            throw new InvalidArgumentException(\sprintf('"%s" only supports "%s" inputs, "%s" given.', self::class, MessageBag::class, get_debug_type($input)));
+        if (!$input instanceof MessageInterface) {
+            throw new InvalidArgumentException(\sprintf('"%s" only supports "%s" inputs, "%s" given.', self::class, MessageInterface::class, get_debug_type($input)));
         }
 
         return $this->inputHasher->hash($input);

@@ -14,7 +14,6 @@ namespace Symfony\AI\Platform\Bridge\Cache\Tests;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
-use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -38,10 +37,10 @@ final class ResultNormalizerTest extends TestCase
 
     protected function setUp(): void
     {
-        $resultNormalizer = new ResultNormalizer(new ObjectNormalizer());
-        $toolCallNormalizer = new ToolCallNormalizer();
-
-        $this->normalizer = new Serializer([$toolCallNormalizer, $resultNormalizer]);
+        // Mirrors the default serializer shipped with {@see CachePlatform}: only the result
+        // normalizer is registered, so tool calls must be handled inline rather than delegated to
+        // a dedicated normalizer.
+        $this->normalizer = new Serializer([new ResultNormalizer(new ObjectNormalizer())]);
     }
 
     public function testNormalizerSupport()
@@ -115,11 +114,11 @@ final class ResultNormalizerTest extends TestCase
                 'payload' => [
                     [
                         'class' => TextResult::class,
-                        'payload' => 'foo',
+                        'payload' => ['content' => 'foo', 'signature' => null],
                     ],
                     [
                         'class' => TextResult::class,
-                        'payload' => 'bar',
+                        'payload' => ['content' => 'bar', 'signature' => null],
                     ],
                 ],
             ],
@@ -138,7 +137,7 @@ final class ResultNormalizerTest extends TestCase
                     ],
                     [
                         'class' => TextResult::class,
-                        'payload' => 'answer',
+                        'payload' => ['content' => 'answer', 'signature' => null],
                     ],
                 ],
             ],
@@ -178,7 +177,14 @@ final class ResultNormalizerTest extends TestCase
             new TextResult('foo'),
             [
                 'class' => TextResult::class,
-                'payload' => 'foo',
+                'payload' => ['content' => 'foo', 'signature' => null],
+            ],
+        ];
+        yield TextResult::class.'-signed' => [
+            new TextResult('foo', 'sig_abc'),
+            [
+                'class' => TextResult::class,
+                'payload' => ['content' => 'foo', 'signature' => 'sig_abc'],
             ],
         ];
         yield ToolCallResult::class => [
@@ -190,11 +196,25 @@ final class ResultNormalizerTest extends TestCase
                 'payload' => [
                     [
                         'id' => 'call-1',
-                        'type' => 'function',
-                        'function' => [
-                            'name' => 'get_weather',
-                            'arguments' => '{"city":"Paris"}',
-                        ],
+                        'name' => 'get_weather',
+                        'arguments' => ['city' => 'Paris'],
+                        'signature' => null,
+                    ],
+                ],
+            ],
+        ];
+        yield ToolCallResult::class.'-signed' => [
+            new ToolCallResult([
+                new ToolCall('call-2', 'search', ['q' => 'symfony'], 'sig_def'),
+            ]),
+            [
+                'class' => ToolCallResult::class,
+                'payload' => [
+                    [
+                        'id' => 'call-2',
+                        'name' => 'search',
+                        'arguments' => ['q' => 'symfony'],
+                        'signature' => 'sig_def',
                     ],
                 ],
             ],

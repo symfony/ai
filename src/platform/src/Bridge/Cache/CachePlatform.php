@@ -44,6 +44,18 @@ use Symfony\Contracts\Cache\ItemInterface;
 final class CachePlatform implements PlatformInterface
 {
     /**
+     * Invocation option holding the cache namespace of the call, it defaults to the constructor
+     * level cache key and opts the call out of caching when set to an empty string.
+     */
+    public const OPTION_CACHE_KEY = 'prompt_cache_key';
+
+    /**
+     * Invocation option holding the lifetime (in seconds) of the cached entry, it defaults to the
+     * constructor level TTL.
+     */
+    public const OPTION_CACHE_TTL = 'prompt_cache_ttl';
+
+    /**
      * @param iterable<CacheKeyGenerator> $cacheKeyGenerators Tried in order to key non-scalar inputs (objects)
      */
     public function __construct(
@@ -60,39 +72,65 @@ final class CachePlatform implements PlatformInterface
         private readonly ?int $cacheTtl = null,
         private iterable $cacheKeyGenerators = [
             new MessageBagCacheKeyGenerator(),
+            new MessageCacheKeyGenerator(),
             new DocumentUrlCacheKeyGenerator(),
             new ImageUrlCacheKeyGenerator(),
             new FileCacheKeyGenerator(),
         ],
+        private readonly InputHasher $inputHasher = new InputHasher(),
     ) {
     }
 
     public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
-        if (null === $this->cache || !\array_key_exists('prompt_cache_key', $options) || '' === $options['prompt_cache_key']) {
+        $namespace = $options[self::OPTION_CACHE_KEY] ?? $this->cacheKey;
+        $ttl = $options[self::OPTION_CACHE_TTL] ?? $this->cacheTtl;
+
+        // The decorator consumes its own options: they must not reach the decorated platform, whether
+        // the call is cached or bypasses the cache.
+        unset($options[self::OPTION_CACHE_KEY], $options[self::OPTION_CACHE_TTL]);
+
+        if (null === $this->cache || null === $namespace || '' === $namespace) {
+            return $this->platform->invoke($model, $input, $options);
+        }
+
+        if (false !== strpbrk($namespace, '{}()/\\@:')) {
+            throw new InvalidArgumentException(\sprintf('The cache namespace "%s" contains reserved characters ("{}()/\@:") and cannot be used to build a cache key.', $namespace));
+        }
+
+        // A stream is consumed while it is read, caching it would drain it before the caller sees it.
+        if (true === ($options['stream'] ?? false)) {
             return $this->platform->invoke($model, $input, $options);
         }
 
         $modelName = $model instanceof Model ? $model->getName() : $model;
 
-        $normalizedInput = match (true) {
-            \is_string($input) => md5($input),
-            \is_array($input) => json_encode($input),
-            default => $this->generateInputCacheKey($input),
-        };
+        try {
+            $normalizedInput = $this->generateInputCacheKey($input);
+            $normalizedOptions = $this->inputHasher->hash($options);
+        } catch (UncacheableInputException) {
+            // Fail open: an input or an option set that cannot be keyed deterministically is served live.
+            return $this->platform->invoke($model, $input, $options);
+        }
 
-        $cacheKey = (new UnicodeString())->join([
-            $options['prompt_cache_key'] ?? $this->cacheKey,
+        // "." separates the segments: ":" and "/" are reserved by PSR-6 and a delimiter avoids
+        // boundary collisions (namespace "sy" + model "m" versus namespace "s" + model "ym"). The
+        // options are part of the key: the same input answered with a different temperature, tool set
+        // or response format is a different request.
+        $cacheKey = (new UnicodeString('.'))->join([
+            $namespace,
             (new UnicodeString($modelName))->camel(),
             $normalizedInput,
+            $normalizedOptions,
         ]);
 
-        $ttl = $options['prompt_cache_ttl'] ?? $this->cacheTtl;
+        $uncacheableResult = null;
 
-        unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
-
-        $cached = $this->cache->get($cacheKey, function (ItemInterface $item) use ($model, $modelName, $input, $options, $cacheKey, $ttl): array {
-            $item->tag((new UnicodeString($modelName))->camel());
+        $cached = $this->cache->get($cacheKey, function (ItemInterface $item, bool &$save) use ($model, $modelName, $input, $options, $cacheKey, $namespace, $ttl, &$uncacheableResult): array {
+            $item->tag([
+                (new UnicodeString($modelName))->camel(),
+                'namespace.'.$namespace,
+            ]);
 
             if (null !== $ttl) {
                 $item->expiresAfter($ttl);
@@ -102,8 +140,18 @@ final class CachePlatform implements PlatformInterface
 
             $result = $deferredResult->getResult();
 
+            try {
+                $normalizedResult = $this->serializer->normalize($result);
+            } catch (\Throwable) {
+                // Fail open: a result the serializer cannot handle is served live and not stored.
+                $save = false;
+                $uncacheableResult = $deferredResult;
+
+                return [];
+            }
+
             return [
-                'result' => $this->serializer->normalize($result),
+                'result' => $normalizedResult,
                 'raw_data' => $deferredResult->getRawResult()->getData(),
                 'metadata' => $result->getMetadata()->all(),
                 'cached_at' => $this->clock->now()->getTimestamp(),
@@ -111,7 +159,18 @@ final class CachePlatform implements PlatformInterface
             ];
         });
 
-        $restoredResult = $this->serializer->denormalize($cached['result'], ResultInterface::class);
+        if (null !== $uncacheableResult) {
+            return $uncacheableResult;
+        }
+
+        try {
+            $restoredResult = $this->serializer->denormalize($cached['result'], ResultInterface::class);
+        } catch (\Throwable) {
+            // Fail open: a stale or corrupted entry is dropped and the result is fetched again.
+            $this->cache->delete((string) $cacheKey);
+
+            return $this->platform->invoke($model, $input, $options);
+        }
 
         $restoredResult->getMetadata()->set([
             ...$cached['metadata'],
@@ -136,8 +195,39 @@ final class CachePlatform implements PlatformInterface
         return $this->platform->getModelCatalog();
     }
 
-    private function generateInputCacheKey(object $input): string
+    /**
+     * Drops every cached entry tagged with one of the given tags.
+     *
+     * Entries are tagged with the camelized model name and "namespace.<cache key>" (the per-call
+     * key, or the constructor level one when the call does not provide any), so a model or a whole
+     * namespace can be invalidated.
+     *
+     * @param list<string> $tags
+     */
+    public function invalidateTags(array $tags): bool
     {
+        if (null === $this->cache) {
+            return false;
+        }
+
+        return $this->cache->invalidateTags($tags);
+    }
+
+    /**
+     * @param array<mixed>|string|object $input
+     *
+     * @throws UncacheableInputException When no deterministic key can be derived from the input
+     */
+    private function generateInputCacheKey(array|string|object $input): string
+    {
+        if (\is_string($input)) {
+            return md5($input);
+        }
+
+        if (\is_array($input)) {
+            return $this->inputHasher->hash($input);
+        }
+
         foreach ($this->cacheKeyGenerators as $generator) {
             if ($generator->supports($input)) {
                 return $generator->generate($input);
