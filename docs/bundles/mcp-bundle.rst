@@ -243,6 +243,43 @@ Access control is plain Symfony security — the routes have distinct, stable pa
         access_control:
             - { path: ^/mcp/editors, roles: ROLE_EDITOR }
 
+When clients on the same server have different permissions, a filter can hide tools they cannot use
+from ``tools/list``. The filter runs for every list request, so it can consult the current security
+context::
+
+    use Mcp\Schema\Tool;
+    use Symfony\AI\McpBundle\Server\ToolListFilterInterface;
+    use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+
+    final class ToolListFilter implements ToolListFilterInterface
+    {
+        public function __construct(
+            private AuthorizationCheckerInterface $authorizationChecker,
+        ) {
+        }
+
+        public function isVisible(Tool $tool): bool
+        {
+            return $this->authorizationChecker->isGranted('MCP_TOOL_VIEW', $tool);
+        }
+    }
+
+Point the server at the filter service:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            default:
+                tool_list_filter: 'App\Mcp\ToolListFilter'
+
+.. caution::
+
+    Filtering ``tools/list`` controls discovery only. Clients can still call a hidden tool by name, so
+    enforce the same authorization when handling tool calls. Keep caller-specific list responses on the
+    default ``private`` cache scope.
+
 Each server gets its own registry, session store and HTTP route (named ``_mcp_endpoint_<name>``), and its
 own services under ``mcp.server.<name>.*``. Autowire a specific server with ``Mcp\Server $editorsServer``.
 
@@ -929,6 +966,7 @@ Configuration
                       sizes: ['64x64'] # Sizes of the icon
                 website_url: 'https://example.com' # Website URL advertised to clients
                 pagination_limit: 50 # Maximum number of items returned per list request (default: 50)
+                tool_list_filter: 'App\Mcp\ToolListFilter' # Optional ToolListFilterInterface service
                 instructions: | # Instructions describing server purpose and usage context (for LLMs)
                     This server provides time management capabilities for developers.
 
