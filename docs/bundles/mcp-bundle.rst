@@ -699,7 +699,7 @@ Request Context
 MCP tools can inject ``Mcp\Server\RequestContext`` to access information
 about the current request, session, client, or protocol version.
 
-.. code-block:: php
+::
 
     namespace App\Mcp;
 
@@ -732,7 +732,7 @@ It provides access to request-specific information through methods such as:
 
 For example, a tool can inspect the client's capabilities:
 
-.. code-block:: php
+::
 
     #[McpTool(name: 'client-capabilities')]
     public function getClientCapabilities(RequestContext $context): array
