@@ -4,6 +4,7 @@ CHANGELOG
 0.15
 ----
 
+ * Add `servers.<name>.tool_list_filter` for request-time filtering of tools advertised by `tools/list`
  * Add `getServerCapabilities()` on `ServerConnectionInterface`, returning what the remote server declared
  * Add `servers.<name>.session.lock` to handle the concurrent requests of one session one after the other,
    with a file lock next to the `file` store or a `LockFactory` service for any store
