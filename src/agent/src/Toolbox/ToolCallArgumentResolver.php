@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerException;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -63,11 +64,24 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
     /**
      * @return array<string, mixed>
      *
-     * @throws ToolException When a mandatory tool parameter is missing from the tool call arguments
+     * @throws ToolException When a mandatory tool parameter is missing or mapped DTO denormalization fails
      */
     public function resolveArguments(Tool $metadata, ToolCall $toolCall): array
     {
-        $method = new \ReflectionMethod($metadata->getReference()->getClass(), $metadata->getReference()->getMethod());
+        $reference = $metadata->getReference();
+        $method = new \ReflectionMethod($reference->getClass(), $reference->getMethod());
+        $mapped = MappedToolArgument::forMethod($method);
+        if (null !== $mapped) {
+            try {
+                $argument = $this->denormalizer->denormalize($toolCall->getArguments(), $mapped->className, 'json');
+            } catch (SerializerException $e) {
+                throw new ToolException(\sprintf('Cannot map arguments for tool "%s": "%s".', $toolCall->getName(), $e->getMessage()), previous: $e);
+            }
+
+            return [
+                $mapped->parameter->getName() => $argument,
+            ];
+        }
 
         /** @var array<string, \ReflectionParameter> $parameters */
         $parameters = array_column($method->getParameters(), null, 'name');
