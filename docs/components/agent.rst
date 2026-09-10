@@ -487,6 +487,59 @@ If you have `symfony/validator` installed, you can also use validation constrain
 
 This replaces the need to manually define the schema using ``#[Schema(...)]``, though it's possible to use both if needed.
 
+Mapping a Flat Payload onto a DTO
+.................................
+
+By default a DTO method parameter becomes a nested object in the tool schema and in the tool-call
+payload. To expose the DTO properties at the schema root and map the entire flat payload into that
+parameter, mark it with :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\MapToolArguments`::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\Attribute\MapToolArguments;
+    use Symfony\Component\Validator\Constraints as Assert;
+
+    final class Person
+    {
+        public function __construct(
+            #[Assert\Length(max: 255)]
+            public string $name,
+            #[Assert\Range(min: 18)]
+            public int $age,
+        ) {
+        }
+    }
+
+    #[AsTool('my_person_lookup_tool', 'Example tool to lookup a person.')]
+    final class MyTool
+    {
+        public function __invoke(
+            #[MapToolArguments]
+            Person $person,
+        ): string {
+            // do the lookup ...
+        }
+    }
+
+The model then sees a flat schema with ``name`` and ``age`` at the root, and Symfony AI denormalizes
+the whole tool-call object into ``Person`` before invoking the tool. ``ToolCallArgumentsResolved`` still
+receives the resolved parameter map, so :class:`Symfony\\AI\\Agent\\Toolbox\\EventListener\\ValidateToolCallArgumentsListener`
+validates the DTO as usual.
+
+``#[MapToolArguments]`` is opt-in and only valid on a method with exactly one non-nullable concrete
+class parameter. Scalar, raw-array, multi-parameter, and unmapped DTO tools keep their existing nested
+or flat parameter shapes. Schema generation still uses the existing JSON Schema facilities, so
+Validator constraints, ``#[Schema]`` attributes, and runtime ``#[Schema(provider: ...)]`` providers on
+DTO properties continue to apply.
+
+Naming conversion follows the Serializer instance passed to
+:class:`Symfony\\AI\\Agent\\Toolbox\\ToolCallArgumentResolver`. The default resolver does not enable
+``MetadataAwareNameConverter``, so payload keys match PHP property names. Inject a configured
+Serializer if you need ``#[SerializedName]`` aliases at runtime. Generated schemas currently keep PHP
+property names even when Serializer metadata renames keys.
+
+DTO constructor defaults still appear in ``required`` today. That is existing JSON Schema behavior for
+DTO properties, not specific to ``#[MapToolArguments]``.
+
 To validate tool call arguments before invoking the actual tool, add the built-in :class:`Symfony\\AI\\Agent\\Toolbox\\EventListener\\ValidateToolCallArgumentsListener`
 to the event dispatcher that is passed to :class:`Symfony\\AI\\Agent\\Toolbox\\Toolbox`::
 

@@ -67,7 +67,14 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
      */
     public function resolveArguments(Tool $metadata, ToolCall $toolCall): array
     {
-        $method = new \ReflectionMethod($metadata->getReference()->getClass(), $metadata->getReference()->getMethod());
+        $reference = $metadata->getReference();
+        $method = new \ReflectionMethod($reference->getClass(), $reference->getMethod());
+        $mapped = MappedToolArgument::forMethod($method);
+        if (null !== $mapped) {
+            return [
+                $mapped->parameter->getName() => $this->denormalizer->denormalize($toolCall->getArguments(), $mapped->className, 'json'),
+            ];
+        }
 
         /** @var array<string, \ReflectionParameter> $parameters */
         $parameters = array_column($method->getParameters(), null, 'name');

@@ -22,4 +22,9 @@ final class ToolConfigurationException extends InvalidArgumentException implemen
     {
         return new self(\sprintf('Method "%s" not found in tool "%s".', $methodName, $toolClass), previous: $previous);
     }
+
+    public static function invalidMapToolArguments(string $toolClass, string $methodName, string $reason): self
+    {
+        return new self(\sprintf('Invalid #[MapToolArguments] usage on "%s::%s": %s', $toolClass, $methodName, $reason));
+    }
 }
