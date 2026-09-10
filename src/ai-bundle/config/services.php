@@ -13,6 +13,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
+use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -235,9 +236,13 @@ return static function (ContainerConfigurator $container): void {
                 service('logger')->ignoreOnInvalid(),
                 service('event_dispatcher')->nullOnInvalid(),
             ])
+        ->set('ai.toolbox.json_schema.describer', MapToolArgumentsDescriber::class)
+            ->args([service('ai.platform.json_schema.describer')])
+        ->set('ai.toolbox.json_schema_factory', SchemaFactory::class)
+            ->args([service('ai.toolbox.json_schema.describer')])
         ->set('ai.tool_factory', ReflectionToolFactory::class)
             ->args([
-                service('ai.platform.json_schema_factory'),
+                service('ai.toolbox.json_schema_factory'),
             ])
         ->set('ai.tool_result_converter', ToolResultConverter::class)
             ->args([
