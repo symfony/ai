@@ -10,7 +10,7 @@ Reads Monolog files through Mate's CLI. Entries come back as `{datetime, channel
 - `monolog-list-files` (opt `environment`): what log files exist, newest first.
 - `monolog-list-channels`: distinct channel names (`app`, `security`, `doctrine`, ...). Reads every file, so it is the slow one; skip it if you already know the channel.
 - `monolog-tail` (`limit`, `level`, `environment`, `channel`): most recent entries. Reads ONLY the single newest file.
-- `monolog-search` (`term`, `regex`, `level`, `channel`, `environment`, `from`, `to`, `limit`): searches across all files. Empty `term` with filters set = filter-only.
+- `monolog-search` (`term`, `regex`, `level`, `channel`, `environment`, `from`, `to`, `limit`): searches across all files. `term` is optional; omit it (or pass an empty string) to filter by `level`/`channel`/`from`/`to` only, e.g. "just show me the errors".
 - `monolog-context-search` (`key`, `value`, `level`, `environment`, `limit`): matches a structured context field. No channel or date filter here.
 
 These commands accept `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. A wide search returns many entries, so narrow with filters and a `limit` before widening the output format.

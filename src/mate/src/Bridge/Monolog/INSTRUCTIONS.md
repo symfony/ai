@@ -7,6 +7,7 @@ Use these Mate tools (via `vendor/bin/mate tools:call ...`) instead of raw shell
 | `tail -f var/log/dev.log`         | `monolog-tail`                                   |
 | `grep "error" var/log/*.log`      | `monolog-search` with term "error"               |
 | `grep -E "pattern" var/log/*.log` | `monolog-search` with term "pattern", regex: true |
+| `grep -l ERROR var/log/*.log`     | `monolog-search` with level: "ERROR" and no term |
 
 ### Benefits
 
