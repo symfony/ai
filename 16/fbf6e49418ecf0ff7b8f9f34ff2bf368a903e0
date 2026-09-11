@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by marco-jouwweb at 2026-08-31T12:24:06Z
+
+Seems like I cannot add the BC tag, so CI keeps failing.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-11T20:29:19Z
+
+not considering this a BC break, but only a bugfix.
