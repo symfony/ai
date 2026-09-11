@@ -21,8 +21,8 @@ happen to be calling tools in sequence for unrelated reasons.
 - Running a combined lint pass across independent read-only checks.
 
 Do not reach for it for a single tool call (`tools:call` is simpler) or when later calls in the
-sequence depend on the result of an earlier one (e.g. reading a profiler token you don't have yet)
-— those cannot be expressed as one JSON array up front and must stay separate `tools:call` calls.
+sequence depend on the result of an earlier one (e.g. reading a profiler token you don't have yet):
+those cannot be expressed as one JSON array up front and must stay separate `tools:call` calls.
 
 ## Usage
 
