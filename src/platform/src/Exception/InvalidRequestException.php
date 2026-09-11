@@ -11,6 +11,6 @@
 
 namespace Symfony\AI\Platform\Exception;
 
-class InvalidRequestException extends InvalidArgumentException
+class InvalidRequestException extends UnrecoverableRuntimeException
 {
 }

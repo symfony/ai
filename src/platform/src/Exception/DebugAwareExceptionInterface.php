@@ -12,8 +12,11 @@
 namespace Symfony\AI\Platform\Exception;
 
 /**
- * @author Mathieu Santostefano <msantostefano@proton.me>
+ * @author Dezső Biczó <mxr576@gmail.com>
  */
-class ExceedContextSizeException extends UnrecoverableRuntimeException
+interface DebugAwareExceptionInterface extends ExceptionInterface
 {
+    public function getDebug(): string;
+
+    public function appendDebug(string $debug): void;
 }
