@@ -39,7 +39,7 @@ Branch on the symptom.
 
 **Tie a log line to the request:** `logger` has `error_count` / `warning_count` / `deprecation_count` and the per-request `logs` (message, level, `channel`, context; capped at 100). Use it to see what the code logged during exactly this request, which the global log files cannot pin to one request.
 
-Need more than `logger` captured — a wider time window, a channel outside this request, or entries from before it started? Fetch the profile and search the logs together in one call instead of two separate `tools:call` round-trips (see the `tools-call-batch` skill):
+Need more than `logger` captured: a wider time window, a channel outside this request, or entries from before it started? Fetch the profile and search the logs together in one call instead of two separate `tools:call` round-trips (see the `tools-call-batch` skill):
 
 ```bash
 vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-get", "params": {"token": "<t>"}}, {"tool": "monolog-search", "params": {"level": "ERROR", "from": "-5 minutes"}}]'
