@@ -84,7 +84,7 @@ class ServiceDefinition
 
     /**
      * The arguments as the container dump carries them: positional, in declaration order,
-     * with no parameter names — the XML does not record those. Pass them through
+     * with no parameter names (the XML does not record those). Pass them through
      * {@see \Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver} before
      * showing them to anyone; scalars here are raw.
      *

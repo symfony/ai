@@ -14,7 +14,7 @@
   per `APP_ID`), `symfony-services` groups the services by context, `symfony-service-detail`
   reports the context a service was found in, and both accept a `context` parameter
 - `symfony-service-detail` returns constructor arguments, so the services wired into a
-  definition are visible — including the entries of a collection, such as the middleware
+  definition are visible, including the entries of a collection, such as the middleware
   list of a messenger bus
 - Scalar arguments are redacted when the parameter name looks like a secret, and when the
   parameter cannot be identified; service references and collections never are

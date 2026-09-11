@@ -39,7 +39,7 @@ final class ServiceToolArgumentsTest extends TestCase
      *
      * Asking which middleware a messenger bus runs used to be unanswerable through Mate:
      * `symfony-service-detail` returned id, class, tags and calls, and the middleware is in
-     * none of those — it is a constructor argument, which the tool did not read. Finding
+     * none of those. It is a constructor argument, which the tool did not read. Finding
      * `doctrine_transaction` on the default bus meant leaving the tool and opening the
      * dumped XML by hand.
      */
@@ -116,7 +116,7 @@ final class ServiceToolArgumentsTest extends TestCase
 
     /**
      * A service built by a factory service has no class in the dump to reflect, so nothing
-     * can be named — and an unnamed scalar is treated as a secret.
+     * can be named, and an unnamed scalar is treated as a secret.
      */
     public function testAnUnreflectableServiceStillHidesItsScalars()
     {

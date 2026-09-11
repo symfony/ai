@@ -88,7 +88,7 @@ final class ContainerProviderArgumentsTest extends TestCase
     }
 
     /**
-     * A tagged iterator has no value of its own, only the tag it collects — which is wiring,
+     * A tagged iterator has no value of its own, only the tag it collects, which is wiring,
      * so it is marked non-literal and never redacted later.
      */
     public function testParsesATaggedIterator()

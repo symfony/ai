@@ -125,7 +125,7 @@ final class ServiceArgumentResolverTest extends TestCase
     }
 
     /**
-     * A collection sitting under a sensitive parameter has to go entirely, keys or not —
+     * A collection sitting under a sensitive parameter has to go entirely, keys or not:
      * otherwise `$credentials = ['user' => ..., 'pass' => ...]` leaks through the entry
      * whose own key looks innocent.
      */
@@ -188,7 +188,7 @@ final class ServiceArgumentResolverTest extends TestCase
     }
 
     /**
-     * More arguments than parameters means the extras are unidentified — unless the
+     * More arguments than parameters means the extras are unidentified, unless the
      * signature ends in a variadic, which owns all of them.
      */
     public function testRedactsArgumentsBeyondTheEndOfTheSignature()

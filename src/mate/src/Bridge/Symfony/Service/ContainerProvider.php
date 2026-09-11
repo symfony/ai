@@ -163,7 +163,7 @@ class ContainerProvider
      *
      * Symfony's XmlDumper writes constructor arguments here
      * (`convertParameters($definition->getArguments(), 'argument')`), so the wiring is in
-     * the dump already — it was simply never read.
+     * the dump already: it was simply never read.
      *
      * @return list<ParsedArgument>
      */
@@ -244,9 +244,9 @@ class ContainerProvider
 
     /**
      * The dumper writes `true`, `false`, `null` and numbers as bare text and marks anything
-     * that only looks like one with `type="string"`, so the original type is recoverable —
-     * and worth recovering, because `\"30\"` and `30` read differently to whoever is
-     * diagnosing the wiring.
+     * that only looks like one with `type="string"`, so the original type is recoverable,
+     * and worth recovering: `\"30\"` and `30` read differently to whoever is diagnosing
+     * the wiring.
      */
     private function castScalar(string $text, ?string $type): mixed
     {

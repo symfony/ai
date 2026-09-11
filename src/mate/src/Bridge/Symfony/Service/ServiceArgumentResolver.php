@@ -17,15 +17,12 @@ use Symfony\AI\Mate\Bridge\Symfony\Model\ServiceDefinition;
  * Puts parameter names on the container's positional arguments, and redacts the scalars
  * whose name says they carry a secret.
  *
- * The dump records positions, not names — `convertParameters()` never had them to write.
- * The names live on the constructor (or factory method) signature, so they come from
- * reflection, and a class that cannot be reflected leaves the position unidentified.
- *
- * When a position is unidentified, its scalar is redacted. That is the deliberate direction
- * to fail in: a service ID is wiring and useless to an attacker, but a literal could be an
- * API key, and "we could not tell" has to read as "do not show it". Structural arguments —
- * service references, collections of them, tagged iterators — are never redacted, because
- * they are the wiring the tool exists to reveal.
+ * The dump records positions, not names: `convertParameters()` never had them to write. The
+ * names come from reflecting the constructor (or factory method) signature, and a class that
+ * cannot be reflected leaves the position unidentified, which is redacted deliberately: "we
+ * could not tell" has to read as "do not show it". Structural arguments (service references,
+ * collections, tagged iterators) are never redacted, since they are the wiring the tool
+ * exists to reveal.
  *
  * @phpstan-import-type ParsedArgument from ServiceDefinition
  *
