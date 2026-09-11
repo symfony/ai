@@ -45,11 +45,8 @@ class ToolsCallBatchCommand extends Command
     use RendersToolResultTrait;
 
     /**
-     * Substrings that mark a tool name as mutating (writes files, changes state). There is
-     * no `#[MateTool]` metadata distinguishing read-only tools from mutating ones yet, so a
-     * batch (dispatched sequentially, but still driven by one JSON blob a caller might build
-     * carelessly) rejects anything that looks like it changes state rather than trying to
-     * detect safety at run time.
+     * Substrings marking a tool name as mutating. There is no `#[MateTool]` metadata yet
+     * to distinguish read-only tools from mutating ones, so name matching stands in.
      *
      * @var list<string>
      */
