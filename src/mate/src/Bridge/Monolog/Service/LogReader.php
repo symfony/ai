@@ -356,11 +356,9 @@ final class LogReader
                 return $result;
             }
 
-            // filemtime() only has 1-second resolution, so rotated log files created within the
-            // same second tie here. Break the tie by basename instead of leaving it to glob()'s
-            // incidental filesystem order: Monolog's own rotation naming (app.log, app.1.log,
-            // app-2024-01-01.log, ...) keeps the unsuffixed/current file lexically greatest, so
-            // sorting descending by basename keeps that file first.
+            // filemtime() only has 1-second resolution, so same-second rotated files tie
+            // here. Break by basename descending: Monolog's rotation naming keeps the
+            // unsuffixed/current file lexically greatest, so it still sorts first.
             return basename($b) <=> basename($a);
         });
 
