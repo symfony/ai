@@ -15,10 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 
 /**
- * The fixture container this reads is not hand-written: it was produced by Symfony's own
- * XmlDumper (see the class docblock of ServiceArgumentResolver for why that matters). If
- * the dumper ever changes the shape of an `<argument>` node, these tests fail against the
- * real format rather than against an assumption about it.
+ * Reads a fixture container produced by Symfony's own XmlDumper, not hand-written.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -107,9 +104,7 @@ final class ContainerProviderArgumentsTest extends TestCase
 
     public function testNestedArgumentsAreNotCountedAtTheServiceLevel()
     {
-        // The six middleware references are children of the iterator, not arguments of the
-        // bus, and SimpleXML would happily conflate the two if the parser asked for them
-        // recursively.
+        // The six middleware references are children of the iterator, not of the bus.
         $this->assertCount(1, $this->argumentsOf('messenger.bus.default'));
     }
 

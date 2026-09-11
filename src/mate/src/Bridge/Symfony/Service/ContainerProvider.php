@@ -28,35 +28,32 @@ use Symfony\AI\Mate\Bridge\Symfony\Model\ServiceTag;
 class ContainerProvider
 {
     /**
-     * Argument node types the dumper writes for a reference to another service.
-     *
      * @var list<string>
      */
     private const SERVICE_ARGUMENT_TYPES = ['service', 'service_closure'];
 
     /**
-     * Argument node types that carry nested `<argument>` children rather than a value. A
-     * messenger bus keeps its middleware in an `iterator`, which is why this matters.
+     * Carry nested `<argument>` children instead of a value (a messenger bus keeps its
+     * middleware in an `iterator`).
      *
      * @var list<string>
      */
     private const COLLECTION_ARGUMENT_TYPES = ['collection', 'iterator', 'service_locator'];
 
     /**
-     * Argument node types that stand for "every service carrying this tag". They hold no
-     * value, only the tag name, and that name is wiring rather than data.
+     * Hold no value, only a tag name: "every service carrying this tag".
      *
      * @var list<string>
      */
     private const TAGGED_ARGUMENT_TYPES = ['tagged_iterator', 'tagged_locator'];
 
     /**
-     * Argument node types whose text content is meant to stay a string, so it must not be
-     * coerced back into a bool, null or number.
+     * Must not be coerced back into a bool, null or number.
      *
      * @var list<string>
      */
     private const STRING_ARGUMENT_TYPES = ['string', 'binary', 'constant', 'expression', 'abstract', 'env_closure'];
+
     /**
      * @var array<string, Container>
      */
@@ -161,10 +158,6 @@ class ContainerProvider
     /**
      * Reads the direct `<argument>` children of a node.
      *
-     * Symfony's XmlDumper writes constructor arguments here
-     * (`convertParameters($definition->getArguments(), 'argument')`), so the wiring is in
-     * the dump already: it was simply never read.
-     *
      * @return list<ParsedArgument>
      */
     private function parseArguments(\SimpleXMLElement $node): array
@@ -222,9 +215,7 @@ class ContainerProvider
     }
 
     /**
-     * A service argument normally carries the referenced id. An inline (anonymous)
-     * definition has no id, and then the nested `<service>` node's class is the only
-     * identity there is.
+     * An inline (anonymous) definition has no id, so its class is the only identity there is.
      */
     private function referencedService(\SimpleXMLElement $argument, \SimpleXMLElement $attrs): ?string
     {
@@ -243,10 +234,8 @@ class ContainerProvider
     }
 
     /**
-     * The dumper writes `true`, `false`, `null` and numbers as bare text and marks anything
-     * that only looks like one with `type="string"`, so the original type is recoverable,
-     * and worth recovering: `\"30\"` and `30` read differently to whoever is diagnosing
-     * the wiring.
+     * The dumper marks a string that only looks like a bool/null/number with `type="string"`,
+     * so the original type is still recoverable here.
      */
     private function castScalar(string $text, ?string $type): mixed
     {

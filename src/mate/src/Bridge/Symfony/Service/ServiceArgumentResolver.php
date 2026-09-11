@@ -14,15 +14,10 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Service;
 use Symfony\AI\Mate\Bridge\Symfony\Model\ServiceDefinition;
 
 /**
- * Puts parameter names on the container's positional arguments, and redacts the scalars
- * whose name says they carry a secret.
- *
- * The dump records positions, not names: `convertParameters()` never had them to write. The
- * names come from reflecting the constructor (or factory method) signature, and a class that
- * cannot be reflected leaves the position unidentified, which is redacted deliberately: "we
- * could not tell" has to read as "do not show it". Structural arguments (service references,
- * collections, tagged iterators) are never redacted, since they are the wiring the tool
- * exists to reveal.
+ * Puts parameter names on the container's positional arguments (read from the dump by
+ * position only), and redacts scalars whose name looks like a secret or whose position
+ * could not be identified. Service references, collections and tagged iterators are never
+ * redacted: they are the wiring the tool exists to reveal.
  *
  * @phpstan-import-type ParsedArgument from ServiceDefinition
  *
@@ -33,9 +28,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Model\ServiceDefinition;
 class ServiceArgumentResolver
 {
     /**
-     * Case-insensitive substring match against the parameter name. Kept local on purpose:
-     * every formatter in this bridge carries its own list, and hoisting them into a shared
-     * utility is a separate change from this one.
+     * Case-insensitive substring match against the parameter name.
      *
      * @var list<string>
      */
@@ -96,8 +89,7 @@ class ServiceArgumentResolver
             ];
         }
 
-        // Only literals can leak. A service id, or the tag a tagged iterator collects, is
-        // exactly the information this tool exists to surface.
+        // Only literals can leak; a service id is wiring, not a secret.
         if ('scalar' === $argument['type'] && true === $argument['literal'] && $sensitive) {
             return ['name' => $name, 'type' => 'scalar', 'value' => self::REDACTED];
         }
@@ -106,9 +98,8 @@ class ServiceArgumentResolver
     }
 
     /**
-     * Nested entries inherit the sensitivity of the parameter they sit under: once the
-     * enclosing parameter is a secret (or could not be identified), nothing inside it can
-     * be shown either. A keyed entry can additionally be sensitive on its own name.
+     * A nested entry inherits its enclosing parameter's sensitivity, and can additionally
+     * be sensitive on its own key.
      *
      * @param list<ParsedArgument> $children
      *
@@ -133,14 +124,13 @@ class ServiceArgumentResolver
     /**
      * @param array{0: string|null, 1: string} $constructor
      *
-     * @return list<string>|null null when the signature cannot be read at all, which makes every position unidentified
+     * @return list<string>|null null means every position is unidentified
      */
     private function parameterNames(array $constructor, int $argumentCount): ?array
     {
         [$class, $method] = $constructor;
 
-        // A factory declared as `<factory service="..." method="..."/>` carries no class, so
-        // there is nothing to reflect and every argument stays unidentified.
+        // A factory service (vs. a factory class) carries no class to reflect.
         if (null === $class || '' === $class) {
             return null;
         }
@@ -161,8 +151,6 @@ class ServiceArgumentResolver
 
             $parameters = $function->getParameters();
         } catch (\Throwable) {
-            // A class that exists but cannot be reflected (unloadable parent, broken
-            // autoloader) is the same situation as one that does not exist.
             return null;
         }
 

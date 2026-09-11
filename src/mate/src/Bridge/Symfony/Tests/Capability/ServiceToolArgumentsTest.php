@@ -34,15 +34,6 @@ final class ServiceToolArgumentsTest extends TestCase
         );
     }
 
-    /**
-     * The case this whole change exists for.
-     *
-     * Asking which middleware a messenger bus runs used to be unanswerable through Mate:
-     * `symfony-service-detail` returned id, class, tags and calls, and the middleware is in
-     * none of those. It is a constructor argument, which the tool did not read. Finding
-     * `doctrine_transaction` on the default bus meant leaving the tool and opening the
-     * dumped XML by hand.
-     */
     public function testTheMiddlewareOfAMessengerBusIsVisible()
     {
         $detail = $this->decodeUntrusted($this->tool->getServiceDetail('messenger.bus.default'));
