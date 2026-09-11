@@ -349,7 +349,18 @@ final class LogReader
             }
         }
 
-        usort($allFiles, static fn (string $a, string $b) => filemtime($b) <=> filemtime($a));
+        usort($allFiles, static function (string $a, string $b): int {
+            $result = filemtime($b) <=> filemtime($a);
+
+            if (0 !== $result) {
+                return $result;
+            }
+
+            // filemtime() only has 1-second resolution, so same-second rotated files tie
+            // here. Break by basename descending: Monolog's rotation naming keeps the
+            // unsuffixed/current file lexically greatest, so it still sorts first.
+            return basename($b) <=> basename($a);
+        });
 
         return $allFiles;
     }

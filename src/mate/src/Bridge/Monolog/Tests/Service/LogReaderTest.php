@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Monolog\Tests\Service;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogParser;
@@ -252,6 +253,36 @@ final class LogReaderTest extends TestCase
             $this->assertCount(1, $entries);
             $this->assertNull($entries[0]->getKernelContext());
             $this->assertSame('dev.log', $entries[0]->getSourceFile());
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideMtimeTieCreationOrders(): iterable
+    {
+        yield 'current file created first' => ['app.log', 'app.1.log'];
+        yield 'rotated file created first' => ['app.1.log', 'app.log'];
+    }
+
+    #[DataProvider('provideMtimeTieCreationOrders')]
+    public function testGetLogFilesIsDeterministicOnMtimeTie(string $firstCreated, string $secondCreated)
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-reader-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+
+        try {
+            $tie = time();
+
+            touch($tempDir.'/'.$firstCreated, $tie);
+            touch($tempDir.'/'.$secondCreated, $tie);
+
+            $reader = new LogReader(new LogParser(), $tempDir);
+
+            // Regardless of creation/glob order, the unsuffixed "current" file must win the tie.
+            $this->assertSame($tempDir.'/app.log', $reader->getLogFiles()[0]);
         } finally {
             $this->removeDirectory($tempDir);
         }
