@@ -411,15 +411,9 @@ class SymfonyAiFeaturesTool
     }
 
     /**
-     * Measures whether an `api_key` config value genuinely resolves to a non-empty
-     * secret, instead of merely being set in the YAML config.
-     *
-     * A configured `api_key` is typically an `%env(NAME)%` placeholder rather than
-     * the resolved value, so `isset()` on the raw config value is true even when the
-     * underlying environment variable is unset or empty. This reads the real
-     * environment variable Mate is running under (falling back to treating the
-     * config value as a literal secret when it is not a placeholder) and reports
-     * only whether it is non-empty; the value itself is never returned.
+     * A configured `api_key` is typically an `%env(NAME)%` placeholder, not the
+     * resolved value, so `isset()` on the raw config value is true even when the
+     * real environment variable is unset or empty.
      */
     private function isApiKeyValuePresent(string $apiKey): bool
     {
