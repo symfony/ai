@@ -95,4 +95,67 @@ final class RawHttpResultTest extends TestCase
 
         $this->assertSame([], $results);
     }
+
+    public function testDebugInfoDoesNotCallAnyMethodOnTheResponse()
+    {
+        $response = new class implements ResponseInterface {
+            public function getStatusCode(): int
+            {
+                throw new \LogicException(__METHOD__.'() must not be called when dumping.');
+            }
+
+            /**
+             * @return array<string, list<string>>
+             */
+            public function getHeaders(bool $throw = true): array
+            {
+                throw new \LogicException(__METHOD__.'() must not be called when dumping.');
+            }
+
+            public function getContent(bool $throw = true): string
+            {
+                throw new \LogicException(__METHOD__.'() must not be called when dumping.');
+            }
+
+            /**
+             * @return array<string, mixed>
+             */
+            public function toArray(bool $throw = true): array
+            {
+                throw new \LogicException(__METHOD__.'() must not be called when dumping.');
+            }
+
+            public function cancel(): void
+            {
+                throw new \LogicException(__METHOD__.'() must not be called when dumping.');
+            }
+
+            public function getInfo(?string $type = null): mixed
+            {
+                throw new \LogicException(__METHOD__.'() must not be called when dumping.');
+            }
+        };
+
+        $rawResult = new RawHttpResult($response);
+
+        // Would throw if __debugInfo() called any method on the still-live, not-yet-consumed response.
+        $debugInfo = $rawResult->__debugInfo();
+
+        $this->assertIsString($debugInfo["\0Symfony\\AI\\Platform\\Result\\RawHttpResult\0response"]);
+        $this->assertStringContainsString($response::class, $debugInfo["\0Symfony\\AI\\Platform\\Result\\RawHttpResult\0response"]);
+    }
+
+    public function testDebugInfoKeepsHttpStreamVisible()
+    {
+        $response = new MockResponse('{}');
+        $httpClient = new MockHttpClient([$response]);
+        $actualResponse = $httpClient->request('GET', 'https://example.com');
+        $httpStream = new SseStream();
+
+        $rawResult = new RawHttpResult($actualResponse, $httpStream);
+
+        $debugInfo = $rawResult->__debugInfo();
+
+        $this->assertSame($httpStream, $debugInfo["\0Symfony\\AI\\Platform\\Result\\RawHttpResult\0httpStream"]);
+    }
 }
