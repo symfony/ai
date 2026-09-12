@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Test\Replay;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Test\Replay\HttpCassette;
@@ -197,5 +198,37 @@ final class HttpCassetteTest extends TestCase
             fclose($handle);
             $this->assertSame($recorded, file_get_contents($this->path));
         }
+    }
+
+    #[DataProvider('committedExampleCassettes')]
+    public function testCommittedCassettesReproduceTheirOwnRequestSignature(string $cassettePath)
+    {
+        // A cassette that cannot reproduce its own signature no longer describes the bytes that
+        // were sent: the body was rewritten after the signature was computed. The legacy path is
+        // lenient enough to replay it anyway (it decodes and ksorts both sides), so this is the
+        // only thing standing between a retyped payload and a green suite.
+        $cassette = json_decode(file_get_contents($cassettePath), true);
+        $this->assertIsArray($cassette, $cassettePath);
+
+        $redact = new \ReflectionMethod(HttpCassette::class, 'redactRequest');
+        $redact->setAccessible(true);
+
+        foreach ($cassette['interactions'] as $index => $interaction) {
+            $request = $interaction['request'];
+            $options = \array_key_exists('body', $request) ? ['body' => $request['body']] : [];
+
+            $recomputed = $redact->invoke(null, $request['method'], $request['url'], $options);
+
+            $this->assertSame(
+                $request['signature'],
+                $recomputed['signature'],
+                \sprintf('%s interaction #%d: the stored signature does not match its own body.', basename($cassettePath), $index),
+            );
+        }
+    }
+
+    public static function committedExampleCassettes(): iterable
+    {
+        yield 'agent/multi-turn-thinking-stream' => [\dirname(__DIR__, 3).'/../../examples/tests/fixtures/agent/multi-turn-thinking-stream.json'];
     }
 }
