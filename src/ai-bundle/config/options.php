@@ -289,9 +289,18 @@ return static function (DefinitionConfigurator $configurator): void {
                                         ->children()
                                             ->stringNode('service')->cannotBeEmpty()->end()
                                             ->stringNode('agent')->cannotBeEmpty()->end()
+                                            ->stringNode('mcp_server')
+                                                ->info('A remote MCP server whose tools are exposed to this agent, as "<client>.<server>" referencing a connection configured under "mcp.clients".')
+                                                ->example('research.filesystem')
+                                                ->cannotBeEmpty()
+                                            ->end()
                                             ->stringNode('name')->end()
                                             ->stringNode('description')->end()
                                             ->stringNode('method')->end()
+                                            ->stringNode('prefix')
+                                                ->info('Only with "mcp_server": prefix put in front of every remote tool name. Defaults to "<server>_".')
+                                                ->cannotBeEmpty()
+                                            ->end()
                                         ->end()
                                         ->beforeNormalization()
                                             ->ifString()
@@ -301,12 +310,36 @@ return static function (DefinitionConfigurator $configurator): void {
                                         ->end()
                                         ->validate()
                                             ->ifTrue(static function ($v) {
-                                                $hasAgent = isset($v['agent']) && '' !== $v['agent'];
-                                                $hasService = isset($v['service']) && '' !== $v['service'];
+                                                $configured = 0;
+                                                foreach (['service', 'agent', 'mcp_server'] as $key) {
+                                                    if (isset($v[$key]) && '' !== $v[$key]) {
+                                                        ++$configured;
+                                                    }
+                                                }
 
-                                                return !($hasAgent xor $hasService);
+                                                return 1 !== $configured;
                                             })
-                                            ->thenInvalid('Either "agent" or "service" must be configured, and never both.')
+                                            ->thenInvalid('Exactly one of "service", "agent" or "mcp_server" must be configured.')
+                                        ->end()
+                                        ->validate()
+                                            ->ifTrue(static function ($v) {
+                                                if (!isset($v['prefix'])) {
+                                                    return false;
+                                                }
+
+                                                return !isset($v['mcp_server']);
+                                            })
+                                            ->thenInvalid('The "prefix" option is only supported together with "mcp_server".')
+                                        ->end()
+                                        ->validate()
+                                            ->ifTrue(static function ($v) {
+                                                if (!isset($v['mcp_server'])) {
+                                                    return false;
+                                                }
+
+                                                return !str_contains($v['mcp_server'], '.');
+                                            })
+                                            ->thenInvalid('Invalid MCP server reference, expected the "<client>.<server>" format.')
                                         ->end()
                                     ->end()
                                 ->end()

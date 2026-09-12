@@ -1,0 +1,33 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - ../../../../../.phpstan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - .
+        - Tests/
+    excludePaths:
+        - vendor/
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        -
+            message: "#^Method .*::test.*\\(\\) has no return type specified\\.$#"
+        -
+            message: '#^Call to( static)? method PHPUnit\\Framework\\Assert::.* will always evaluate to true\.$#'
+            reportUnmatched: false
+        -
+            identifier: 'symfonyAi.forbidNativeException'
+            path: Tests/*
+            reportUnmatched: false
+        -
+            # Tool::$parameters describes the schema the local reflection factory produces;
+            # a server returns generic JSON Schema, structurally compatible at runtime.
+            identifier: argument.type
+            path: McpToolbox.php
+
+services:
+    - # Conditionally enabled by bleeding edge in phpstan/phpstan-phpunit 2.x
+        class: PHPStan\Type\PHPUnit\DataProviderReturnTypeIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension

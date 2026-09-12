@@ -7,6 +7,8 @@ CHANGELOG
  * Add `Execution::cancel()` to stop an active execution and cancel its active HTTP response
  * `MultiAgent` and `SpeechAgent` now forward the `Progress` updates of the executions they delegate to, and `MultiAgent` reports its routing as a `Progress` update of the `handoff` stage carrying the orchestrator's `MultiAgent\Handoff\Decision` as payload
  * [BC BREAK] `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the retriever it reads from
+ * Add `Toolbox\AbstractToolbox` holding the shared part of executing a tool call - looking the tool up, the tool call events and the error handling - so a toolbox in front of a remote tool protocol only implements how a call is turned into a value
+ * Add `Toolbox\ChainToolbox` offering the tools of several toolboxes to one agent
 
 0.13
 ----

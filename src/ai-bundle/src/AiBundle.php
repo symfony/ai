@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
@@ -29,6 +30,7 @@ use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\ChainToolbox;
 use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
@@ -38,6 +40,8 @@ use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
+use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
+use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
 use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
@@ -53,6 +57,7 @@ use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
@@ -156,6 +161,7 @@ use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -1257,15 +1263,44 @@ final class AiBundle extends AbstractBundle
                 new Reference('ai.platform.json_schema_factory'),
             ]);
             $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
+
             $chainFactoryDefinition = new Definition(ChainFactory::class, [
                 [new Reference('ai.toolbox.'.$name.'.memory_factory'), new Reference('ai.tool_factory')],
             ]);
             $container->setDefinition('ai.toolbox.'.$name.'.chain_factory', $chainFactoryDefinition);
 
+            // An MCP server is a toolbox of its own, not a tool, so it sits next to the local one.
+            $mcpServers = [];
+            $services = [];
+            foreach ($config['tools']['services'] as $tool) {
+                if (isset($tool['mcp_server'])) {
+                    $mcpServers[] = $tool;
+                } else {
+                    $services[] = $tool;
+                }
+            }
+
             $toolboxDefinition = (new ChildDefinition('ai.toolbox.abstract'))
-                ->replaceArgument(1, new Reference('ai.toolbox.'.$name.'.chain_factory'))
-                ->addTag('ai.toolbox', ['name' => $name]);
-            $container->setDefinition('ai.toolbox.'.$name, $toolboxDefinition);
+                ->replaceArgument(1, new Reference('ai.toolbox.'.$name.'.chain_factory'));
+
+            if ([] === $mcpServers) {
+                // "ai.profiler_toolbox" is what the profiler builds its tool table from.
+                $toolboxDefinition->addTag('ai.toolbox', ['name' => $name])
+                    ->addTag('ai.profiler_toolbox');
+                $container->setDefinition('ai.toolbox.'.$name, $toolboxDefinition);
+            } else {
+                $toolboxDefinition->addTag('ai.profiler_toolbox');
+                $container->setDefinition('ai.toolbox.'.$name.'.local', $toolboxDefinition);
+
+                $toolboxes = [new Reference('ai.toolbox.'.$name.'.local')];
+                foreach ($this->registerMcpServers($name, $mcpServers, $container) as $reference) {
+                    $toolboxes[] = $reference;
+                }
+
+                // Not the chain: asking it for its tools would connect to every server behind it.
+                $container->setDefinition('ai.toolbox.'.$name, new Definition(ChainToolbox::class, [new IteratorArgument($toolboxes)]))
+                    ->addTag('ai.toolbox', ['name' => $name]);
+            }
 
             if ($config['fault_tolerant_toolbox']) {
                 $container->setDefinition('ai.fault_tolerant_toolbox.'.$name, new Definition(FaultTolerantToolbox::class))
@@ -1281,9 +1316,9 @@ final class AiBundle extends AbstractBundle
                 ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
             // Define specific list of tools if are explicitly defined
-            if ([] !== $config['tools']['services']) {
+            if ([] !== $services) {
                 $tools = [];
-                foreach ($config['tools']['services'] as $tool) {
+                foreach ($services as $tool) {
                     if (isset($tool['agent'])) {
                         $tool['name'] ??= $tool['agent'];
                         $tool['service'] = \sprintf('ai.agent.%s', $tool['agent']);
@@ -1409,6 +1444,54 @@ final class AiBundle extends AbstractBundle
                 ])
                 ->setDecoratedService($agentId, priority: -1024);
         }
+    }
+
+    /**
+     * One toolset and toolbox per configured MCP server, on top of the bundle's own connection.
+     *
+     * @param list<array{mcp_server: string, prefix?: string}> $servers
+     *
+     * @return list<Reference>
+     */
+    private function registerMcpServers(string $agentName, array $servers, ContainerBuilder $container): array
+    {
+        if (!ContainerBuilder::willBeAvailable('symfony/ai-mcp-tool', McpToolbox::class, ['symfony/ai-bundle'])) {
+            throw new RuntimeException('The "mcp_server" tool configuration requires "symfony/ai-mcp-tool" package. Try running "composer require symfony/ai-mcp-tool".');
+        }
+
+        if (!ContainerBuilder::willBeAvailable('symfony/mcp-bundle', ServerConnectionInterface::class, ['symfony/ai-bundle'])) {
+            throw new RuntimeException('The "mcp_server" tool configuration requires "symfony/mcp-bundle" package. Try running "composer require symfony/mcp-bundle".');
+        }
+
+        $references = [];
+
+        foreach ($servers as $server) {
+            [$client, $remoteServer] = explode('.', $server['mcp_server'], 2);
+            $suffix = $client.'.'.$remoteServer;
+
+            $toolsetId = 'ai.toolbox.'.$agentName.'.mcp_toolset.'.$suffix;
+            $container->setDefinition($toolsetId, new Definition(ConnectionToolset::class, [
+                new Reference(\sprintf('mcp.client.%s.server.%s', $client, $remoteServer)),
+            ]));
+
+            $toolboxId = 'ai.toolbox.'.$agentName.'.mcp.'.$suffix;
+            $container->setDefinition($toolboxId, new Definition(McpToolbox::class, [
+                new Reference($toolsetId),
+                $server['prefix'] ?? '',
+                new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+                new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+            ]));
+
+            // The agent reaches the server through this, so the profiler reads the same instance.
+            $deferredId = $toolboxId.'.deferred';
+            $container->setDefinition($deferredId, new Definition(DeferredToolbox::class, [new Reference($toolboxId)]))
+                ->addTag('ai.profiler_toolbox')
+                ->addTag('kernel.reset', ['method' => 'reset']);
+
+            $references[] = new Reference($deferredId);
+        }
+
+        return $references;
     }
 
     /**

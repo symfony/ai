@@ -9,6 +9,7 @@
         "ai-filesystem-tool": "src/agent/src/Bridge/Filesystem",
         "ai-firecrawl-tool": "src/agent/src/Bridge/Firecrawl",
         "ai-mapbox-tool": "src/agent/src/Bridge/Mapbox",
+        "ai-mcp-tool": "src/agent/src/Bridge/Mcp",
         "ai-ollama-tool": "src/agent/src/Bridge/Ollama",
         "ai-open-meteo-tool": "src/agent/src/Bridge/OpenMeteo",
         "ai-scraper-tool": "src/agent/src/Bridge/Scraper",

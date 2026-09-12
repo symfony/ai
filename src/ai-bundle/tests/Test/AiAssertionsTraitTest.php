@@ -174,7 +174,7 @@ final class AiAssertionsTraitTest extends WebTestCase
             $traceableToolbox->execute(new ToolCall('call_'.$index, $tool));
         }
 
-        self::$collector = new DataCollector([$traceablePlatform], [$traceableToolbox], [], [], [], []);
+        self::$collector = new DataCollector([$traceablePlatform], [$traceableToolbox], [$traceableToolbox], [], [], [], []);
         self::$collector->lateCollect();
     }
 }
