@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add the environmental footprint Albert reports next to the token usage as `carbon` result metadata,
+   on buffered and streamed results alike
+
 0.12
 ----
 

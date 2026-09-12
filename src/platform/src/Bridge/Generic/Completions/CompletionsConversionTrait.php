@@ -81,6 +81,8 @@ trait CompletionsConversionTrait
                 yield $this->convertStreamUsage($data['usage'], $data['model'] ?? null);
             }
 
+            yield from $this->yieldChunkMetadata($data);
+
             if ($this->streamIsToolCall($data)) {
                 yield from $this->yieldToolCallDeltas($toolCalls, $data);
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
@@ -132,6 +134,22 @@ trait CompletionsConversionTrait
         }
 
         return $reasoning;
+    }
+
+    /**
+     * Extension point for the provider-specific payload a stream chunk carries beyond the
+     * OpenAI-compatible schema, e.g. Albert reporting the carbon footprint of the call.
+     *
+     * What is yielded here is promoted to result metadata and skipped from the visible stream
+     * by {@see \Symfony\AI\Platform\Metadata\StreamListener}.
+     *
+     * @param array<string, mixed> $data The decoded chunk
+     *
+     * @return \Generator<MetadataDelta>
+     */
+    protected function yieldChunkMetadata(array $data): \Generator
+    {
+        yield from [];
     }
 
     /**

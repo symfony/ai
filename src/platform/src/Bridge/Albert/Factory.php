@@ -11,12 +11,15 @@
 
 namespace Symfony\AI\Platform\Bridge\Albert;
 
-use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
+use Symfony\AI\Platform\Bridge\Albert\Completions\ResultConverter;
+use Symfony\AI\Platform\Bridge\Generic\Completions as GenericCompletions;
+use Symfony\AI\Platform\Bridge\Generic\Embeddings as GenericEmbeddings;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -47,13 +50,20 @@ final class Factory
 
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return GenericFactory::createProvider(
-            baseUrl: $baseUrl,
-            apiKey: $apiKey,
-            httpClient: $httpClient,
-            modelCatalog: $modelCatalog,
+        // The completions result converter is Albert's own, to expose the carbon footprint it
+        // reports alongside the token usage; everything else follows the OpenAI-compatible schema.
+        return new Provider(
+            $name,
+            [
+                new GenericCompletions\ModelClient($httpClient, $baseUrl, $apiKey),
+                new GenericEmbeddings\ModelClient($httpClient, $baseUrl, $apiKey),
+            ],
+            [
+                new ResultConverter(),
+                new GenericEmbeddings\ResultConverter(),
+            ],
+            $modelCatalog,
             eventDispatcher: $eventDispatcher,
-            name: $name,
         );
     }
 

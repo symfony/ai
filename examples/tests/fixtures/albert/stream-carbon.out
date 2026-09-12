@@ -1,0 +1,18 @@
+La **French Public Administration** exploitation sa propre passerelle (ou plateforme) d’IA comme **Gaïa** (ou d’autres initiatives comme celles de **FranceNum**, **Datapublica** ou **INSEE Data Lab**) afin de **standardiser, sécuriser et accélérer l’accès aux technologies d’IA pour ses services** tout en garantissant la conformité avec le **RGPD**, les normes ouvertes (*open data/gouvernemental*) et une souveraineté numérique adaptée aux besoins spécifiques de l’administration française (ex : exploits publics, service public digital comme [FranceConnect](https://www.service-public.fr/professionnels-et-entreprises/vosdroits/F23599), ou partages inter-établissements).
+
++-------------------------+ Token Usage ---------------------------+
+| Model                   | mistralai/Ministral-3-8B-Instruct-2512 |
+| Prompt tokens           | 28                                     |
+| Completion tokens       | 186                                    |
+| Thinking tokens         | n/a                                    |
+| Tool tokens             | n/a                                    |
+| Cached tokens           | n/a                                    |
+| Remaining tokens minute | n/a                                    |
+| Remaining tokens month  | n/a                                    |
+| Remaining tokens        | n/a                                    |
+| Total tokens            | 214                                    |
++-------------------------+----------------------------------------+
+
+Carbon footprint
+  Energy:    1.200e-5 - 1.200e-5 kWh
+  Emission:  6.088e-7 - 6.088e-7 kgCO2eq
