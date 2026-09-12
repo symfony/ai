@@ -18,3 +18,23 @@ mcp:
                 store: file
 
             registry: '*'
+
+    clients:
+        remotes:
+            client_info:
+                name: symfony-ai-demo
+                version: 0.0.1
+            servers:
+                # Only speaks the legacy HTTP+SSE transport, so "mcp-remote" bridges it to
+                # stdio. Needs Node.js.
+                livescore:
+                    transport: stdio
+                    command: ['npx', '-y', 'mcp-remote', 'https://livescoremcp.com/sse']
+                # Real-time NYC subway arrivals.
+                transit:
+                    transport: http
+                    url: 'https://metro-mcp.anuragd.me/mcp'
+                # Weather worldwide, with a rain radar drawn as text characters.
+                weather:
+                    transport: http
+                    url: 'https://echorune.net/mcp'

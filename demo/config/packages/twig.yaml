@@ -44,6 +44,16 @@ twig:
                 gradient: 'linear-gradient(180deg, #1CA574, #56AB48)'
                 source: 'src/Wikipedia/Chat.php'
                 line: 21
+            mcp:
+                label: 'MCP'
+                name: 'MCP Client Bot'
+                tag: 'MCP Client'
+                description: 'An agent without tools of its own, using those of three remote MCP servers: football, subway and weather.'
+                model: 'gpt-5-mini'
+                icon: 'mcp'
+                gradient: 'linear-gradient(180deg, #1F2937, #4B5563)'
+                source: 'src/Mcp/Chat.php'
+                line: 22
             blog:
                 label: 'Symfony Blog'
                 name: 'Symfony Blog Bot'

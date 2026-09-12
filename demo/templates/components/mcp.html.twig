@@ -1,0 +1,38 @@
+{% import '_message.html.twig' as msg %}
+{% set messages = this.messages %}
+
+<section class="chat" {{ attributes.defaults(stimulus_controller('mcp')) }}>
+    {{ include('_chat_header.html.twig', { demo: demos.mcp }) }}
+    <div id="chat-body" class="chat-body">
+        {% for message in messages %}
+            {% include '_message.html.twig' with { message, latest: loop.last } %}
+        {% else %}
+            <div id="welcome" class="message message-bot">
+                <span class="bot avatar">{{ ux_icon('bot') }}</span>
+                <div class="welcome-content">
+                    <h4>Remote MCP Servers</h4>
+                    <p>I have no tools of my own - I borrow them from three remote MCP servers.</p>
+                    <div class="mcp-servers">
+                        {% for server in this.servers %}
+                            <span class="mcp-server">{{ ux_icon('mcp') }}{{ server }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        <div id="loading-message" class="d-none">
+            {{ msg.user([{text:''}]) }}
+            {{ msg.bot('The MCP Bot is asking its servers ...', true) }}
+        </div>
+    </div>
+    <div class="chat-composer" data-controller="chat-prompt">
+        {% if messages is empty %}
+            {{ include('_chat_prompts.html.twig', { prompts: ['Which subway trains leave Times Square right now?', 'What is the weather in Berlin right now?', 'Which football matches are live right now?'] }) }}
+        {% endif %}
+        <form class="chat-form" {{ live_action('submit:prevent') }}>
+            <input autofocus id="chat-message" data-model="norender|message" type="text" class="chat-input" placeholder="Ask about football, the subway or the weather ..." autocomplete="off">
+            <span class="chat-hint">↵ send</span>
+            <button class="chat-send" aria-label="Send">{{ ux_icon('send') }}</button>
+        </form>
+    </div>
+</section>
