@@ -23,6 +23,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TimeCollectorForma
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
+use Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 
@@ -38,11 +39,13 @@ return static function (ContainerConfigurator $configurator) {
 
     // Container introspection services (always available)
     $services->set(ContainerProvider::class);
+    $services->set(ServiceArgumentResolver::class);
 
     $services->set(ServiceTool::class)
         ->args([
             '%ai_mate_symfony.cache_dir%',
             service(ContainerProvider::class),
+            service(ServiceArgumentResolver::class),
         ]);
 
     // Profiler services (optional - only if profiler classes are available)
