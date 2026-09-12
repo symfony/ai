@@ -110,6 +110,10 @@ return static function (DefinitionConfigurator $configurator): void {
                         ->end()
                         ->stringNode('website_url')->defaultNull()->end()
                         ->integerNode('pagination_limit')->min(1)->defaultValue(50)->end()
+                        ->stringNode('tool_list_filter')
+                            ->defaultNull()
+                            ->info('Service implementing ToolListFilterInterface to control tools/list visibility. Tool calls must be authorized separately.')
+                        ->end()
                         ->stringNode('instructions')->defaultNull()->end()
 
                         ->arrayNode('transports')
