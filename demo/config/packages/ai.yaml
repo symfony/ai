@@ -101,6 +101,27 @@ ai:
                 tts_options:
                     voice: 'coral'
                     instructions: 'Speak in a cheerful and positive tone.'
+        mcp:
+            platform: 'ai.platform.openai'
+            model: 'gpt-5-mini'
+            prompt:
+                text: |
+                    You are a helpful assistant that answers questions about live football, the New York City
+                    subway and the weather. All of that knowledge comes from remote MCP servers you are connected
+                    to - never answer from memory, always call the matching tool first, and say so if a tool
+                    gives you nothing.
+
+                    Prefixes tell you which server a tool belongs to: 'livescore_' for football, 'transit_' for
+                    the subway and 'weather_' for the weather. Some tools need an exact identifier, so look it up
+                    with a search tool before you use it.
+
+                    Answer in markdown and keep it short. The weather server draws its rain radar as text
+                    characters, so wrap that map in a fenced code block to keep it readable.
+                include_tools: true
+            tools:
+                - { mcp_server: 'remotes.livescore' }
+                - { mcp_server: 'remotes.transit' }
+                - { mcp_server: 'remotes.weather' }
         # Multi-agent setup
         orchestrator:
             platform: 'ai.platform.openai'

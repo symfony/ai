@@ -16,6 +16,8 @@ What you need to run this demo:
 * [Docker](https://www.docker.com/) with [Docker Compose Plugin](https://docs.docker.com/compose/)
 * Your Favorite IDE or Editor
 * An [OpenAI API Key](https://platform.openai.com/docs/api-reference/create-and-export-an-api-key)
+* [Node.js](https://nodejs.org/) - only for the MCP example: one of its three servers speaks the
+  legacy HTTP+SSE transport and is reached through `npx mcp-remote`
 
 ## Technology
 

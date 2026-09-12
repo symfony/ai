@@ -17,6 +17,7 @@ ux_icons:
         turbo: mdi:car-turbocharger
         document: mdi:file-document
         movie: mdi:movie-open
+        mcp: tabler:plug-connected
         github: mdi:github
 
         # UI icons
