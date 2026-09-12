@@ -335,4 +335,173 @@ final class CassetteHttpClientTest extends TestCase
         $this->assertInstanceOf(CassetteHttpClient::class, $client);
         $this->assertSame(['ok' => true], $client->request('GET', 'https://example.com')->toArray());
     }
+
+    public function testMismatchMessageNamesTheDivergentBody()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => ['model' => self::RECORDED_MODEL]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('body differs');
+
+        $client->request('POST', self::REQUEST_URL, ['json' => ['model' => self::REPLAYED_MODEL]])->getContent();
+    }
+
+    public function testMismatchMessageNamesTheDivergentUrl()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            self::GET_METHOD,
+            self::REQUEST_URL,
+            [],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('url differs');
+
+        $client->request(self::GET_METHOD, 'https://example.com/other', [])->getContent();
+    }
+
+    public function testMismatchMessageNamesTheDivergentMethod()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            self::GET_METHOD,
+            self::REQUEST_URL,
+            [],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('method differs');
+
+        $client->request('POST', self::REQUEST_URL, [])->getContent();
+    }
+
+    public function testMismatchMessageNamesTheDivergentQuery()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            self::GET_METHOD,
+            self::REQUEST_URL,
+            ['query' => [self::QUERY_MODEL_KEY => self::RECORDED_MODEL]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('query differs');
+
+        $client->request(self::GET_METHOD, self::REQUEST_URL, ['query' => [self::QUERY_MODEL_KEY => self::REPLAYED_MODEL]])->getContent();
+    }
+
+    public function testMismatchMessageBlamesTheBodyNotTheQueryWhenAFloatBecomesAnInteger()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => [self::TEMPERATURE_KEY => self::RECORDED_TEMPERATURE]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        try {
+            $client->request('POST', self::REQUEST_URL, ['json' => [self::TEMPERATURE_KEY => self::REPLAYED_TEMPERATURE]])->getContent();
+            $this->fail('Expected a signature mismatch.');
+        } catch (RuntimeException $e) {
+            // The request carries no query at all, so naming one would send a reader looking in
+            // the wrong place: `save()` preserving the zero fraction is what keeps the recorded
+            // body able to prove it is the part that changed.
+            $this->assertStringContainsString('body differs', $e->getMessage());
+            $this->assertStringNotContainsString('query', $e->getMessage());
+        }
+    }
+
+    public function testRecordedZeroFractionSurvivesTheCassetteRoundTrip()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => [self::TEMPERATURE_KEY => self::RECORDED_TEMPERATURE]],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $this->assertStringContainsString('1.0', file_get_contents($this->path));
+
+        // Replaying the very request that was recorded must match its own stored signature.
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $this->assertSame(self::REPLAY_RESPONSE, $client->request('POST', self::REQUEST_URL, ['json' => [self::TEMPERATURE_KEY => self::RECORDED_TEMPERATURE]])->getContent());
+    }
+
+    public function testMismatchMessageNamesTheBodyWhenTheRecordedRequestHadNone()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            self::GET_METHOD,
+            self::REQUEST_URL,
+            [],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        // A cassette stores no `body` key when none was sent, so an added body is still a body
+        // difference rather than an unknown one.
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('body differs');
+
+        $client->request(self::GET_METHOD, self::REQUEST_URL, ['json' => ['model' => self::REPLAYED_MODEL]])->getContent();
+    }
+
+    public function testMismatchMessageNamesTheBodyWhenTheRecordedBodyIsZero()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => 0],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        // `json_encode(0)` is the falsy string "0"; treating that as an encoding failure would
+        // clear the body and let the elimination branch blame a query this request never had.
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('body differs');
+
+        $client->request('POST', self::REQUEST_URL, ['json' => 1])->getContent();
+    }
 }

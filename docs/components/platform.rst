@@ -1939,6 +1939,19 @@ headers are kept, because the converters read them. Binary response bodies (gene
 and replay serves a small placeholder body, so the real converter still runs without committing
 opaque bytes.
 
+Verification is unconditional: it is what turns a replay test from a fixed-response stub into a
+check of the payload the bridge actually builds, so there is no flag to switch it off. The
+consequence is that anything non-deterministic in a request body invalidates the signature on the
+next run. A tool returning the current time is the common case: record the timestamp once and
+replay it, rather than letting the tool produce a new value on every run. ``examples/bootstrap.php``
+ships ``clock_tool()`` for exactly this, reading the recorded timestamp back out of the cassette::
+
+    // examples/agent/multi-turn-thinking.php
+    $toolbox = new Toolbox([clock_tool()], logger: logger());
+
+An example whose tool output cannot be pinned this way does not belong in the replayed harness;
+a signature mismatch there means the request genuinely changed, which is the point.
+
 For a bridge test suite with several recorded scenarios, extend
 :class:`Symfony\\AI\\Platform\\Test\\Replay\\AbstractBridgeReplayTestCase`: implement
 ``createPlatform()`` to build the bridge's platform around the injected replay client and

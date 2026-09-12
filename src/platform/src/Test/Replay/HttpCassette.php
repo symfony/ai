@@ -283,7 +283,7 @@ final class HttpCassette
                 return;
             }
 
-            throw new RuntimeException(\sprintf('Outgoing request #%d does not match the recorded request signature in cassette "%s"; delete it to re-record.', $cursor + 1, $path));
+            throw new RuntimeException(self::mismatchMessage($recordedRequest, $method, $url, $options, $body, $path, $cursor));
         }
 
         if (!isset($recordedRequest[self::REQUEST_SIGNATURE]) || !\is_string($recordedRequest[self::REQUEST_SIGNATURE])) {
@@ -298,7 +298,104 @@ final class HttpCassette
             return;
         }
 
-        throw new RuntimeException(\sprintf('Outgoing request #%d does not match the recorded request signature in cassette "%s"; delete it to re-record.', $cursor + 1, $path));
+        throw new RuntimeException(self::mismatchMessage($recordedRequest, $method, $url, $options, $body, $path, $cursor));
+    }
+
+    /**
+     * Names the request parts that diverged, so a mismatch is actionable without diffing the
+     * cassette JSON by hand. The signature is a hash and cannot say what changed, but `method`,
+     * `url` and the `body` are stored alongside it, so they can be compared directly.
+     * Values are never interpolated: a cassette body can hold request data. The recorded query
+     * is not stored separately, so `query` is only named by elimination, and only when the body
+     * could be compared -- otherwise the culprit is unknown and the message stays generic.
+     *
+     * @param array<string, mixed> $recordedRequest
+     * @param array<string, mixed> $options
+     */
+    private static function mismatchMessage(array $recordedRequest, string $method, string $url, array $options, mixed $body, string $path, int $cursor): string
+    {
+        $differing = [];
+
+        if (isset($recordedRequest['method']) && \is_string($recordedRequest['method']) && $recordedRequest['method'] !== $method) {
+            $differing[] = 'method';
+        }
+
+        if (isset($recordedRequest['url']) && \is_string($recordedRequest['url']) && $recordedRequest['url'] !== $url) {
+            $differing[] = 'url';
+        }
+
+        // Compared through the same encoding the signature uses, so this can never disagree with
+        // the hash: `1.0` and `1`, or a raw JSON string and its decoded array, are distinct to
+        // `signature()` and must stay distinct here. A looser comparison would clear the body and
+        // let the elimination branch below blame the query for a body change.
+        // A cassette omits `body` entirely when the recorded request had none, so an absent
+        // recorded body is only comparable against an absent live one -- or against a live body,
+        // which can only mean the body was added. It is NOT comparable when a recorded body may
+        // have been elided on write (a binary stub keeps no body), so that case stays unnamed.
+        $recordedBody = $recordedRequest['body'] ?? null;
+        $encodedRecorded = self::encodedForComparison($recordedBody);
+        $encodedLive = self::encodedForComparison($body);
+        $bodyComparable = null !== $encodedRecorded && null !== $encodedLive
+            && (null !== $recordedBody || null === $body || !self::bodyMayHaveBeenElided($recordedRequest));
+        if ($bodyComparable && $encodedRecorded !== $encodedLive) {
+            $differing[] = 'body';
+        }
+
+        // The recorded query is folded into the signature rather than stored, so it can only be
+        // named by elimination: every comparable part matches, yet the signature does not. This
+        // holds only because the body above is compared through the signature's own encoding and
+        // `save()` preserves zero fractions; a looser comparison would let a body change hide here
+        // and be reported as a query change. Legacy cassettes never signed the query, so they are
+        // excluded and fall through to the generic wording.
+        if ([] === $differing && $bodyComparable
+            && isset($recordedRequest[self::REQUEST_SIGNATURE_V2])
+            && \is_string($recordedRequest[self::REQUEST_SIGNATURE_V2])
+        ) {
+            $differing[] = 'query';
+        }
+
+        return \sprintf(
+            'Outgoing request #%d does not match the recorded request signature in cassette "%s" (%s); delete it to re-record.',
+            $cursor + 1,
+            $path,
+            [] === $differing ? 'request differs' : implode(', ', array_map(static fn (string $part): string => $part.' differs', $differing)),
+        );
+    }
+
+    /**
+     * Whether a recorded request could have carried a body that was not written to the cassette.
+     * `redactRequest()` only stores `body` when one was sent, so its absence normally means there
+     * was none -- but a request recorded by an older writer, or one whose body was elided, would
+     * look the same. Only the presence of the v2 signature proves the writer stored what it signed.
+     *
+     * @param array<string, mixed> $recordedRequest
+     */
+    private static function bodyMayHaveBeenElided(array $recordedRequest): bool
+    {
+        return !isset($recordedRequest[self::REQUEST_SIGNATURE_V2])
+            || !\is_string($recordedRequest[self::REQUEST_SIGNATURE_V2]);
+    }
+
+    /**
+     * Encodes a body exactly as `signature()` does, so comparing two encodings answers the same
+     * question the hash answered. Key order is normalised (it is not a change), but types are
+     * not: `JSON_PRESERVE_ZERO_FRACTION` keeps `1.0` distinct from `1`, matching the signature.
+     *
+     * Returns null when the value cannot be encoded (a resource body, NAN, invalid UTF-8). Null
+     * is never equal to another null here by design: an unencodable body proves nothing about
+     * what changed, so the caller must treat it as not comparable rather than as a match. A
+     * falsy-coalescing fallback would be wrong twice over -- json_encode(0) returns the falsy
+     * string "0", which is a perfectly valid encoding.
+     */
+    private static function encodedForComparison(mixed $body): ?string
+    {
+        if (\is_array($body)) {
+            self::ksortRecursive($body);
+        }
+
+        $encoded = json_encode($body, \JSON_PRESERVE_ZERO_FRACTION);
+
+        return false === $encoded ? null : $encoded;
     }
 
     /**
@@ -412,6 +509,22 @@ final class HttpCassette
             mkdir($directory, 0777, true);
         }
 
-        file_put_contents($this->path, json_encode(['interactions' => $this->interactions], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
+        // JSON_THROW_ON_ERROR: without it an unencodable value (a `body` opened as a resource by
+        // the audio bridges, NAN, invalid UTF-8) makes json_encode() return false, and the file
+        // would be overwritten with a bare newline, destroying every interaction recorded so far.
+        // JSON_PRESERVE_ZERO_FRACTION: `signature()` hashes with it, so writing without it stores
+        // a recorded 1.0 as 1 -- the cassette would no longer reproduce its own signature and the
+        // stored body would silently retype the payload.
+        // Mirrors `Test/Recording/Cassette.php`.
+        try {
+            $json = json_encode(['interactions' => $this->interactions], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION | \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            throw new RuntimeException(\sprintf('Cannot encode cassette "%s"; the recorded interaction holds a value JSON cannot represent.', $this->path), previous: $exception);
+        }
+
+        $contents = $json."\n";
+        if (\strlen($contents) !== file_put_contents($this->path, $contents)) {
+            throw new RuntimeException(\sprintf('Cannot write cassette "%s".', $this->path));
+        }
     }
 }

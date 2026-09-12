@@ -177,4 +177,25 @@ final class HttpCassetteTest extends TestCase
         $this->expectExceptionMessage('is exhausted after 1 interaction(s); delete it to re-record.');
         $replay->next();
     }
+
+    public function testRecordKeepsTheCassetteWhenAnInteractionCannotBeEncoded()
+    {
+        $cassette = new HttpCassette($this->path);
+        $cassette->record('POST', 'https://example.com', ['json' => ['kept' => true]], 200, [], '{}');
+        $recorded = file_get_contents($this->path);
+
+        $handle = fopen('php://memory', 'r');
+
+        try {
+            // A resource body (the audio bridges upload one) cannot be encoded. Writing must fail
+            // loudly rather than truncate the file and destroy what was already recorded.
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Cannot encode cassette');
+
+            $cassette->record('POST', 'https://example.com', ['body' => $handle], 200, [], '{}');
+        } finally {
+            fclose($handle);
+            $this->assertSame($recorded, file_get_contents($this->path));
+        }
+    }
 }
