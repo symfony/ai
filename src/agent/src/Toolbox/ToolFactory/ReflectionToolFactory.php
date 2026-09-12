@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Toolbox\ToolFactory;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
+use Symfony\AI\Agent\Toolbox\MappedToolArgument;
 use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -54,7 +55,7 @@ final class ReflectionToolFactory implements ToolFactoryInterface
                     new ExecutionReference($className, $asTool->method),
                     $asTool->name,
                     $asTool->description,
-                    $this->factory->buildParameters($className, $asTool->method),
+                    MappedToolArgument::buildParameters($this->factory, $className, $asTool->method),
                     $asTool->metadata,
                 );
             } catch (\ReflectionException $e) {
