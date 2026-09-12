@@ -2,7 +2,8 @@ Built-in Tools
 ==============
 
 The Agent component ships with a collection of ready-made tool bridges that can be added to any agent.
-Each bridge is a separate Composer package and provides one or more tools registered via the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute.
+Each bridge is a separate Composer package and provides one or more tools registered via the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute -
+except for the MCP bridge, which discovers its tools from a remote server at runtime.
 
 .. tip::
 
@@ -162,6 +163,66 @@ Returns the current date and time. Compatible with `Symfony Clock`_. No API key 
 
 `Clock Example`_
 
+Model Context Protocol
+----------------------
+
+MCP
+~~~
+
+Exposes the tools advertised by a remote `Model Context Protocol`_ server, discovered from its
+``tools/list`` and called through ``tools/call``.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-mcp-tool
+
+Unlike the other bridges, this one has no fixed set of tools - the server decides what it offers.
+An agent is not an MCP client, though: it never asks a server for a prompt or reads one of its
+resources, it only draws tools from it, which is why the bridge models a *toolset* behind an MCP
+connection rather than the server itself. It asks the server what tools it has, hands the answer to
+the toolbox as ordinary tool definitions, and prefixes every name with the server's short name, so
+several servers can be attached to one agent without their tool names colliding::
+
+    use Mcp\Client;
+    use Mcp\Client\Transport\StdioTransport;
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Bridge\Mcp\ClientToolset;
+    use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
+
+    $toolset = new ClientToolset(
+        'filesystem',
+        Client::builder()->build(),
+        new StdioTransport('npx', ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']),
+    );
+
+    $agent = new Agent($platform, 'gpt-4o-mini', toolbox: new McpToolbox($toolset));
+
+A ``read_file`` tool of that server reaches the model as ``filesystem_read_file``; pass a second
+argument to :class:`Symfony\\AI\\Agent\\Bridge\\Mcp\\McpToolbox` to choose the prefix yourself.
+
+A server that answers ``tools/list`` and ``tools/call`` already is a toolbox, so it becomes one
+instead of a tool inside another - nothing reflects on its tool definitions, because the arguments
+follow a JSON schema the server publishes rather than a PHP method signature. To offer its tools
+next to local ``#[AsTool]`` services, put both toolboxes behind a
+:class:`Symfony\\AI\\Agent\\Toolbox\\ChainToolbox`::
+
+    use Symfony\AI\Agent\Toolbox\ChainToolbox;
+    use Symfony\AI\Agent\Toolbox\Toolbox;
+
+    $toolbox = new ChainToolbox([
+        new Toolbox([new Clock()]),
+        new McpToolbox($toolset),
+    ]);
+
+`MCP Example`_
+
+.. note::
+
+    In a Symfony application, configure the connection once with the MCP bundle's ``mcp.clients``
+    option and point an agent at it with the AI bundle's ``tools.mcp_server`` option - see
+    :doc:`/bundles/ai-bundle`. The bundles then share one connection instead of opening a second
+    one to the same server.
+
 Retrieval Augmented Generation
 ------------------------------
 
@@ -198,4 +259,6 @@ See :doc:`/components/agent` for a full RAG integration example.
 .. _`Ollama Web Search Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/ollama-web-search.php
 .. _`Ollama Webpage Fetch Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/ollama-webpage-fetch.php
 .. _`Clock Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/clock.php
+.. _`Model Context Protocol`: https://modelcontextprotocol.io
+.. _`MCP Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/mcp.php
 .. _`Symfony Clock`: https://symfony.com/doc/current/components/clock.html

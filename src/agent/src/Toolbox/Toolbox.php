@@ -14,11 +14,6 @@ namespace Symfony\AI\Agent\Toolbox;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
-use Symfony\AI\Agent\Toolbox\Event\ToolCallFailed;
-use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
-use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
-use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
-use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
@@ -30,7 +25,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class Toolbox implements ToolboxInterface
+final class Toolbox extends AbstractToolbox
 {
     /**
      * List of tool metadata objects.
@@ -53,9 +48,10 @@ final class Toolbox implements ToolboxInterface
         private readonly iterable $tools,
         private readonly ToolFactoryInterface $toolFactory = new ReflectionToolFactory(),
         private readonly ToolCallArgumentResolverInterface $argumentResolver = new ToolCallArgumentResolver(),
-        private readonly LoggerInterface $logger = new NullLogger(),
-        private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        LoggerInterface $logger = new NullLogger(),
+        ?EventDispatcherInterface $eventDispatcher = null,
     ) {
+        parent::__construct($logger, $eventDispatcher);
     }
 
     public function getTools(): array
@@ -75,67 +71,38 @@ final class Toolbox implements ToolboxInterface
         return $this->toolsMetadata = $toolsMetadata;
     }
 
-    public function execute(ToolCall $toolCall): ToolResult
+    /**
+     * @return array<string, mixed>
+     */
+    protected function resolveArguments(object $tool, Tool $metadata, ToolCall $toolCall): array
     {
-        $metadata = $this->getMetadata($toolCall);
+        $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
 
-        $event = new ToolCallRequested($toolCall, $metadata);
-        $this->eventDispatcher?->dispatch($event);
+        $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
 
-        if ($event->isDenied()) {
-            $this->logger->debug(\sprintf('Tool "%s" denied: %s', $toolCall->getName(), $event->getDenialReason()));
-
-            return new ToolResult($toolCall, $event->getDenialReason() ?? 'Tool execution denied.');
-        }
-
-        if ($event->hasResult()) {
-            return $event->getResult();
-        }
-
-        $tool = $this->getExecutable($metadata);
-
-        try {
-            $this->logger->debug(\sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall->getArguments());
-
-            $arguments = $this->argumentResolver->resolveArguments($metadata, $toolCall);
-            $this->eventDispatcher?->dispatch(new ToolCallArgumentsResolved($tool, $metadata, $arguments));
-
-            $sourceCollection = null;
-            if ($tool instanceof HasSourcesInterface) {
-                $tool->setSourceCollection($sourceCollection = new SourceCollection());
-            }
-
-            $result = new ToolResult(
-                $toolCall,
-                $tool->{$metadata->getReference()->getMethod()}(...$arguments),
-                $sourceCollection,
-            );
-
-            $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
-        } catch (ToolExecutionExceptionInterface $e) {
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
-            throw $e;
-        } catch (\Throwable $e) {
-            $this->logger->warning(\sprintf('Failed to execute tool "%s".', $toolCall->getName()), ['exception' => $e]);
-            $this->eventDispatcher?->dispatch(new ToolCallFailed($tool, $metadata, $arguments ?? [], $e));
-            throw ToolExecutionException::executionFailed($toolCall, $e);
-        }
-
-        return $result;
+        return $arguments;
     }
 
-    private function getMetadata(ToolCall $toolCall): Tool
+    /**
+     * @param array<string, mixed> $arguments
+     */
+    protected function invoke(object $tool, Tool $metadata, array $arguments): mixed
     {
-        foreach ($this->getTools() as $metadata) {
-            if ($metadata->getName() === $toolCall->getName()) {
-                return $metadata;
-            }
-        }
-
-        throw ToolNotFoundException::notFoundForToolCall($toolCall);
+        return $tool->{$metadata->getReference()->getMethod()}(...$arguments);
     }
 
-    private function getExecutable(Tool $metadata): object
+    protected function prepareSources(object $tool): ?SourceCollection
+    {
+        if (!$tool instanceof HasSourcesInterface) {
+            return null;
+        }
+
+        $tool->setSourceCollection($sourceCollection = new SourceCollection());
+
+        return $sourceCollection;
+    }
+
+    protected function getExecutable(Tool $metadata): object
     {
         if (isset($this->instanceMap[$metadata->getName()])) {
             return $this->instanceMap[$metadata->getName()];
