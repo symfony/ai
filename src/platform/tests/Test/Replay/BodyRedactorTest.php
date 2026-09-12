@@ -124,6 +124,14 @@ final class BodyRedactorTest extends TestCase
     }
 
     #[Test]
+    public function itNeverLetsAUserPatternOverrideACredential(): void
+    {
+        $redactor = new BodyRedactor(extraPatterns: ['/sk-[A-Za-z0-9_\-]{16,}/' => '[mine]']);
+
+        $this->assertSame('[redacted-key]', $redactor->redact('sk-proj-AbCdEf0123456789XyZ'));
+    }
+
+    #[Test]
     public function itRejectsAnInvalidPattern(): void
     {
         $this->expectException(InvalidArgumentException::class);
