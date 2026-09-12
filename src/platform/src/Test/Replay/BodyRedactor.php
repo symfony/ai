@@ -24,13 +24,16 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
  * Redaction is therefore on by default rather than opt-in: the failure mode is silent and only
  * surfaces once the cassette is public, which is too late to be a useful signal.
  *
- * Rules come in three tiers:
+ * Rules come in three tiers, applied in this order:
  *
  *  - credentials are always applied and cannot be switched off;
  *  - personal data is applied by default but can be disabled, because a test may exist precisely to
  *    exercise how personal data flows through a prompt;
  *  - extra patterns cover identifiers that only make sense in one codebase - a customer reference,
  *    an internal ticket format - which no framework default can guess.
+ *
+ * The order matters: the built-in tiers run first, so a user pattern cannot claim a string a
+ * credential rule would have caught.
  *
  * @author Miguel Sampedro <264189149+MikiBuilder@users.noreply.github.com>
  */
@@ -69,7 +72,8 @@ final class BodyRedactor
 
     /**
      * @param bool                  $pii           whether to redact personal data on top of credentials
-     * @param array<string, string> $extraPatterns additional `pattern => replacement` pairs, applied last
+     * @param array<string, string> $extraPatterns additional `pattern => replacement` pairs, applied
+     *                                             after the built-in tiers so credentials always win
      *
      * @throws InvalidArgumentException if a supplied pattern is not a valid regular expression
      */
@@ -83,7 +87,7 @@ final class BodyRedactor
             }
         }
 
-        $this->patterns = $extraPatterns + ($pii ? self::PII_PATTERNS : []) + self::CREDENTIAL_PATTERNS;
+        $this->patterns = self::CREDENTIAL_PATTERNS + ($pii ? self::PII_PATTERNS : []) + $extraPatterns;
     }
 
     /**
