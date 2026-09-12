@@ -91,9 +91,17 @@ final class HttpCassette
 
     private int $cursor = 0;
 
+    private readonly BodyRedactor $redactor;
+
+    /**
+     * @param BodyRedactor|null $redactor replaces secrets and personal data in recorded request
+     *                                    bodies; defaults to the built-in rule set
+     */
     public function __construct(
         private readonly string $path,
+        ?BodyRedactor $redactor = null,
     ) {
+        $this->redactor = $redactor ?? new BodyRedactor();
     }
 
     public function exists(): bool
@@ -123,7 +131,7 @@ final class HttpCassette
         }
 
         $this->interactions[] = [
-            'request' => self::redactRequest($method, $url, $options),
+            'request' => $this->redactRequest($method, $url, $options),
             'response' => $response,
         ];
 
@@ -151,13 +159,16 @@ final class HttpCassette
      *
      * @return array<string, mixed>
      */
-    private static function redactRequest(string $method, string $url, array $options): array
+    private function redactRequest(string $method, string $url, array $options): array
     {
         $headers = self::sanitizeHeaders(self::normalizeRequestHeaders($options));
 
         $request = ['method' => $method, 'url' => $url];
 
-        $body = $options['json'] ?? $options['body'] ?? null;
+        // Redact before signing: a committed cassette has to stay reproducible from what it
+        // actually contains, and hashing the raw body would describe something the file no
+        // longer holds.
+        $body = $this->redactor->redact($options['json'] ?? $options['body'] ?? null);
         $request['signature'] = self::signature($method, $url, $body);
 
         if ([] !== $headers) {
