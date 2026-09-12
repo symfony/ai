@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `symfony-dotenv-check` tool and `symfony-dotenv-diagnostics` skill: reports which `.env*` file declares each variable and whether it resolves at runtime, without ever returning a raw value (only a masked length + first/last-character preview), as a safe replacement for `bin/console debug:dotenv`, which prints fully resolved secrets in clear text. Requires `symfony/dotenv`
+
 0.13
 ----
 
