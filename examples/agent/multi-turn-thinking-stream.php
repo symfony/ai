@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\Bridge\Clock\Clock;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
@@ -23,7 +22,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 // buffered one does.
 $platform = Factory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_client());
 
-$toolbox = new Toolbox([new Clock()], logger: logger());
+$toolbox = new Toolbox([clock_tool()], logger: logger());
 $agent = new Agent($platform, 'claude-sonnet-4-5-20250929', toolbox: $toolbox);
 
 $options = [

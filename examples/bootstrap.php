@@ -11,6 +11,7 @@
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\AI\Agent\Bridge\Clock\Clock as ClockTool;
 use Symfony\AI\Agent\Exception\ExceptionInterface as AgentException;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
@@ -29,6 +30,8 @@ use Symfony\AI\Platform\Test\Replay\HttpCassette;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\AI\Store\Exception\ExceptionInterface as StoreException;
+use Symfony\Component\Clock\Clock as SymfonyClock;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -39,6 +42,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 require_once __DIR__.'/vendor/autoload.php';
 (new Dotenv())->loadEnv(__DIR__.'/.env');
+
+const RECORDED_CLOCK_OUTPUT_PATTERN = '/Current date is (?<date>\d{4}-\d{2}-\d{2}) \(YYYY-MM-DD\) and the time is (?<time>\d{2}:\d{2}:\d{2}) \(HH:MM:SS\)\./';
 
 function env(string $var): string
 {
@@ -72,6 +77,37 @@ function cassette_path(): string
     $relative = str_starts_with($absolute, $base) ? substr($absolute, strlen($base)) : basename($absolute);
 
     return __DIR__.'/tests/fixtures/'.preg_replace('/\.php$/', '', $relative).'.json';
+}
+
+function clock_tool(): ClockTool
+{
+    if (is_replay()) {
+        $recordedAt = recorded_clock_time(cassette_path());
+        if (null !== $recordedAt) {
+            return new ClockTool(new MockClock(new DateTimeImmutable($recordedAt, new DateTimeZone('UTC'))));
+        }
+    }
+
+    return new ClockTool(new SymfonyClock());
+}
+
+function recorded_clock_time(string $cassettePath): ?string
+{
+    if (!is_file($cassettePath)) {
+        return null;
+    }
+
+    $cassette = file_get_contents($cassettePath);
+    if (false === $cassette) {
+        return null;
+    }
+
+    $matches = [];
+    if (1 !== preg_match(RECORDED_CLOCK_OUTPUT_PATTERN, $cassette, $matches)) {
+        return null;
+    }
+
+    return $matches['date'].' '.$matches['time'];
 }
 
 function http_client(): HttpClientInterface

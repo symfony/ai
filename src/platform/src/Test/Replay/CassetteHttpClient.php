@@ -62,9 +62,7 @@ final class CassetteHttpClient implements HttpClientInterface
             throw new InvalidArgumentException('Recording requires a real HttpClientInterface to delegate to; pass one as the second argument.');
         }
 
-        $this->replayClient = new MockHttpClient(function (): MockResponse {
-            return self::toMockResponse($this->cassette->next());
-        });
+        $this->replayClient = new MockHttpClient();
     }
 
     /**
@@ -73,7 +71,7 @@ final class CassetteHttpClient implements HttpClientInterface
     public function request(string $method, string $url, array $options = []): ResponseInterface
     {
         if (!$this->record) {
-            return $this->replayClient->request($method, $url, $options);
+            return self::toMockClientResponse($this->cassette->nextFor($method, $url, $options), $method, $url, $options);
         }
 
         $response = $this->realClient->request($method, $url, $options);
@@ -87,8 +85,7 @@ final class CassetteHttpClient implements HttpClientInterface
 
         // Re-issue the recorded bytes through a MockHttpClient so the caller reads exactly what
         // replay will serve (a bare MockResponse cannot be consumed on its own).
-        return (new MockHttpClient(self::toMockResponse(['status' => $status, 'headers' => $headers, 'body' => $body, 'body_format' => $bodyFormat])))
-            ->request($method, $url, $options);
+        return self::toMockClientResponse(['status' => $status, 'headers' => $headers, 'body' => $body, 'body_format' => $bodyFormat], $method, $url, $options);
     }
 
     public function stream(ResponseInterface|iterable $responses, ?float $timeout = null): ResponseStreamInterface
@@ -169,6 +166,15 @@ final class CassetteHttpClient implements HttpClientInterface
             'http_code' => $recorded['status'],
             'response_headers' => self::flattenHeaders($headers),
         ]);
+    }
+
+    /**
+     * @param array{status: int, headers: array<string, list<string>|string>, body: mixed, body_format?: 'json'|'sse'|'binary', body_size?: int} $recorded
+     * @param array<string, mixed>                                                                                                               $options
+     */
+    private static function toMockClientResponse(array $recorded, string $method, string $url, array $options): ResponseInterface
+    {
+        return (new MockHttpClient(self::toMockResponse($recorded)))->request($method, $url, $options);
     }
 
     /**
