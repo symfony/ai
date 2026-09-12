@@ -693,6 +693,62 @@ next round, and carrying them is what needs the key. A handler that asks exactly
 state and works without one. Missing the key, the ask is answered with a JSON-RPC internal error and
 the reason is logged on the ``mcp`` channel.
 
+Request Context
+^^^^^^^^^^^^^^^
+
+MCP tools can inject ``Mcp\Server\RequestContext`` to access information
+about the current request, session, client, or protocol version.
+
+::
+
+    namespace App\Mcp;
+
+    use Mcp\Capability\Attribute\McpTool;
+    use Mcp\Server\RequestContext;
+
+    final class ClientInfoTool
+    {
+        #[McpTool(name: 'client-info')]
+        public function getClientInfo(RequestContext $context): string
+        {
+            return sprintf(
+                'MCP protocol version: %s',
+                $context->getProtocolVersion()->value,
+            );
+        }
+    }
+
+The ``RequestContext`` is created for each request and must not be reused
+between requests.
+
+It provides access to request-specific information through methods such as:
+
+* ``getRequest()`` — the current JSON-RPC request;
+* ``getSession()`` — the current MCP session;
+* ``getProtocolVersion()`` — the MCP protocol revision used for the request;
+* ``getClientCapabilities()`` — capabilities declared by the client;
+* ``getTraceContext()`` — W3C trace context carried by the request;
+* ``getClientLogger()`` — a logger for sending log messages to the client.
+
+For example, a tool can inspect the client's capabilities:
+
+::
+
+    #[McpTool(name: 'client-capabilities')]
+    public function getClientCapabilities(RequestContext $context): array
+    {
+        $capabilities = $context->getClientCapabilities();
+
+        return [
+            'sampling' => $capabilities?->sampling !== null,
+            'roots' => $capabilities?->roots !== null,
+            'elicitation' => $capabilities?->elicitation !== null,
+        ];
+    }
+
+Use ``RequestContext`` only when a tool needs request- or client-specific
+information. Regular tool arguments should be used for application data.
+
 Cache Hints
 ^^^^^^^^^^^
 
