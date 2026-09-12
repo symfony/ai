@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Profiler;
 
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
@@ -59,6 +60,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $toolboxes;
 
     /**
+     * @var ToolboxInterface[]
+     */
+    private readonly array $toolSources;
+
+    /**
      * @var TraceableMessageStore[]
      */
     private readonly array $messageStores;
@@ -81,6 +87,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     /**
      * @param iterable<TraceablePlatform>     $platforms
      * @param iterable<TraceableToolbox>      $toolboxes
+     * @param iterable<ToolboxInterface>      $toolSources
      * @param iterable<TraceableMessageStore> $messageStores
      * @param iterable<TraceableChat>         $chats
      * @param iterable<TraceableAgent>        $agents
@@ -89,6 +96,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function __construct(
         iterable $platforms,
         iterable $toolboxes,
+        iterable $toolSources,
         iterable $messageStores,
         iterable $chats,
         iterable $agents,
@@ -96,6 +104,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     ) {
         $this->platforms = iterator_to_array($platforms);
         $this->toolboxes = iterator_to_array($toolboxes);
+        $this->toolSources = iterator_to_array($toolSources);
         $this->messageStores = iterator_to_array($messageStores);
         $this->chats = iterator_to_array($chats);
         $this->agents = iterator_to_array($agents);
@@ -193,8 +202,11 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     {
         $uniqueTools = [];
 
-        foreach ($this->toolboxes as $toolbox) {
-            foreach ($toolbox->getTools() as $tool) {
+        foreach ($this->toolSources as $toolbox) {
+            // Only what is already listed: describing the setup must not open a connection.
+            $tools = $toolbox instanceof DeferredToolbox ? $toolbox->getLoadedTools() : $toolbox->getTools();
+
+            foreach ($tools as $tool) {
                 $reference = $tool->getReference();
                 $key = $tool->getName().'::'.$reference->getClass().'::'.$reference->getMethod();
 

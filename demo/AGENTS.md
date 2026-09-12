@@ -4,7 +4,7 @@ AI agent guidance for the Symfony AI demo application.
 
 ## Project Overview
 
-Symfony 8.0 demo application showcasing the Symfony AI components: RAG over the Symfony blog, streaming chat, multi-agent orchestration, voice/speech, image cropping, webcam video captioning, YouTube transcript Q&A, Wikipedia-grounded answers, a demo MCP server, and the AI Mate development CLI.
+Symfony 8.0 demo application showcasing the Symfony AI components: RAG over the Symfony blog, streaming chat, multi-agent orchestration, voice/speech, image cropping, webcam video captioning, YouTube transcript Q&A, Wikipedia-grounded answers, a chat drawing its tools from remote MCP servers, a demo MCP server, and the AI Mate development CLI.
 
 ## Development Commands
 
@@ -31,12 +31,15 @@ vendor/bin/phpstan analyse                    # Static analysis (phpstan.dist.ne
 # There is no enforced formatter in this package — php-cs-fixer is configured at the monorepo root.
 ```
 
-The `e2e` suite drives all ten use cases in a real browser and asserts the Symfony AI panel of the
+The `e2e` suite drives all eleven use cases in a real browser and asserts the Symfony AI panel of the
 profiler (platform calls, tools, tool calls, token usage). It runs the app in the `dev` environment,
 calls the AI platforms for real, and is excluded from the default suite — never add it to CI.
 
-### MCP Server
-- **Demo MCP server** (`symfony/mcp-bundle`): `symfony console mcp:server` exposes tools/prompts/resources/resource-templates from `src/Mcp/`. Start it manually when demoing. Test with `{"method":"tools/list","jsonrpc":"2.0","id":1}`.
+### MCP
+`src/Mcp/` holds both sides of MCP, and `config/packages/mcp.yaml` configures both.
+- **Demo MCP server** (`mcp.servers.demo`): `symfony console mcp:server` exposes tools/prompts/resources/resource-templates from `src/Mcp/Tools/`, `src/Mcp/Prompts/` and `src/Mcp/Resources/`. Start it manually when demoing. Test with `{"method":"tools/list","jsonrpc":"2.0","id":1}`.
+- **MCP client** (`mcp.clients.remotes`): three public, key-less servers - `livescore` (football), `transit` (NYC subway) and `weather`. The `mcp` agent lists them as `mcp_server` tools, so it has no local tools at all. `symfony console debug:mcp --client=remotes --server=<name>` connects and prints what one advertises.
+- `livescore` only speaks the legacy HTTP+SSE transport, which the SDK's `HttpTransport` does not implement, so it is configured as a `stdio` child process running `npx -y mcp-remote`. Needs Node.js.
 
 ### AI Mate
 `symfony/ai-mate` (dev only) is a plain CLI, not a server: run `./vendor/bin/mate tools:list` and `./vendor/bin/mate tools:call <tool>`. Extensions are registered in `mate/extensions.php`, config in `mate/config.php`, custom tools in `mate/src/`.
@@ -49,7 +52,7 @@ symfony console app:blog:stream               # Streams the blog agent to the te
 ## Architecture
 
 ### AI Platforms
-`config/packages/ai.yaml` registers two platforms: `openai` and `huggingface`. Every agent currently routes to OpenAI — `blog` and `stream` on `gpt-4.1`, everything else (`youtube`, `recipe`, `wikipedia`, `speech`, `orchestrator`, `technical`, `fallback`) on `gpt-5-mini`. Speech also uses OpenAI `whisper-1` for STT and `tts-1` for TTS; the vectorizer uses `text-embedding-ada-002`. Hugging Face is configured but unused by any agent — wire it in explicitly if needed.
+`config/packages/ai.yaml` registers two platforms: `openai` and `huggingface`. Every agent currently routes to OpenAI — `blog` and `stream` on `gpt-4.1`, everything else (`youtube`, `recipe`, `wikipedia`, `mcp`, `speech`, `orchestrator`, `technical`, `fallback`) on `gpt-5-mini`. Speech also uses OpenAI `whisper-1` for STT and `tts-1` for TTS; the vectorizer uses `text-embedding-ada-002`. Hugging Face is configured but unused by any agent — wire it in explicitly if needed.
 
 The `Video` feature is the exception: `src/Video/TwigComponent.php` calls `PlatformInterface::invoke('gpt-5.2', ...)` directly (no agent in `ai.yaml`, no session, no tools) for one-shot webcam frame captioning.
 
@@ -59,7 +62,7 @@ Most user-facing features under `src/<Feature>/` are a trio:
 2. `TwigComponent.php` — a Symfony UX LiveComponent that drives the UI with no custom JS.
 3. Agent definition in `config/packages/ai.yaml` (prompt, tools, memory, platform, model).
 
-Features following this trio: `Blog`, `Stream`, `YouTube`, `Recipe`, `Wikipedia`, `Speech`. Exceptions: `Video` (direct platform call, described above) and `Crop` (custom `CropForm` + `ImageCropper` rather than chat). Reset button clears the session key.
+Features following this trio: `Blog`, `Stream`, `YouTube`, `Recipe`, `Wikipedia`, `Speech`, `Mcp`. Exceptions: `Video` (direct platform call, described above) and `Crop` (custom `CropForm` + `ImageCropper` rather than chat). Reset button clears the session key.
 
 ### RAG Pipeline (Blog)
 Index: RSS feed loader → `TextContainsFilter` (keeps only "Week of Symfony" posts, wired as `app.filter.week_of_symfony`) → `TextSplitTransformer` + `TextTrimTransformer` → OpenAI `text-embedding-ada-002` → pgvector store (`symfony_blog` table, cosine distance).
@@ -75,7 +78,7 @@ The `speech` agent demonstrates two composition features:
 - **Subagent as tool**: the `blog` agent is registered on `speech` as a tool named `symfony_blog` via `agent: 'blog'`. Delegate by declaring the subagent in YAML, not by calling another `Chat` class.
 
 ### Tools vs. Memory vs. Subagents (all three appear in `ai.yaml`)
-- **Tool**: FQCN (e.g. `Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia`), or a `service:` + `method:` entry with `name`/`description`, or an `agent:` entry for a subagent.
+- **Tool**: FQCN (e.g. `Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia`), or a `service:` + `method:` entry with `name`/`description`, or an `agent:` entry for a subagent, or an `mcp_server:` entry naming a `<client>.<server>` connection of `mcp.yaml`.
 - **Memory**: `memory.service: 'App\...'` — a class implementing the memory contract; contributes context, not callable by the model.
 - **`tools: false`** disables tool use entirely for the agent.
 

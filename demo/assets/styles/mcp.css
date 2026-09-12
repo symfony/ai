@@ -1,0 +1,37 @@
+.mcp {
+    body&, .card-img-top {
+        background: #1f6f6b;
+        background: linear-gradient(0deg, #1f6f6b 0%, #3fa9a2 100%);
+    }
+
+    .card-img-top {
+        color: #ffffff;
+    }
+
+    footer, footer a {
+        color: #ffffff;
+    }
+
+    &.chat {
+        .user-message {
+            background: #ffffff;
+        }
+
+        .bot-message {
+            background: #ffffff;
+
+            pre {
+                margin-bottom: 0;
+                font-size: 0.75rem;
+                line-height: 1.1;
+            }
+        }
+
+        .avatar {
+            &.bot, &.user {
+                outline: 1px solid #d4e8e6;
+                background: #d4e8e6;
+            }
+        }
+    }
+}

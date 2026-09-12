@@ -33,6 +33,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Agent\\Bridge\\Mapbox\\.*
+    - name: McpTool
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Agent\\Bridge\\Mcp\\.*
     - name: OllamaTool
       collectors:
         - type: classLike
@@ -384,6 +388,9 @@ deptrac:
     FirecrawlTool:
       - AgentComponent
     MapboxTool:
+      - AgentComponent
+      - PlatformComponent
+    McpTool:
       - AgentComponent
       - PlatformComponent
     OllamaTool:

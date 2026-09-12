@@ -8,11 +8,11 @@
         <p class="my-4 text-dark">
             {{ 'home.intro'|trans }}<br />
             {{ 'home.intro_suffix'|trans }}<br />
-            Central to this demo are six chatbot examples that are implemented in <code>src/**/Chat.php</code> and AI
+            Central to this demo are nine chatbot examples that are implemented in <code>src/**/Chat.php</code> and AI
             configuration can be found in <code>config/packages/ai.yaml</code>.
         </p>
         <h3 class="text-dark">{{ 'home.examples'|trans }}</h3>
-        <div class="row row-cols-1 row-cols-md-5 g-3">
+        <div class="row row-cols-1 row-cols-md-4 g-3">
             <div class="col">
                 <div class="card youtube bg-body shadow-sm">
                     <div class="card-img-top py-2">
@@ -89,6 +89,8 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
+        <div class="row mt-2 row-cols-1 row-cols-md-4 g-3">
             <div class="col">
                 <div class="card movies bg-body shadow-sm">
                     <div class="card-img-top py-2">
@@ -108,8 +110,25 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-        <div class="row mt-2 row-cols-1 row-cols-md-5 g-3 justify-content-center">
+            <div class="col">
+                <div class="card mcp bg-body shadow-sm">
+                    <div class="card-img-top py-2">
+                        {{ ux_icon('mcp') }}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">MCP Client Bot</h5>
+                        <p class="card-text">An agent without own tools, using those of three remote MCP servers: football, subway and weather.</p>
+                        <a href="{{ path('mcp') }}" class="btn btn-outline-dark d-block">Try MCP Client Bot</a>
+                    </div>
+                    {# Profiler route only available in dev #}
+                    {% if 'dev' == app.environment %}
+                        <div class="card-footer">
+                            {{ ux_icon('code') }}
+                            <a href="{{ path('_profiler_open_file', { file: 'src/Mcp/Chat.php', line: 21 }) }}">See Implementation</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
             <div class="col">
                 <div class="card speech bg-body shadow-sm">
                     <div class="card-img-top py-2">
@@ -148,6 +167,8 @@
                     {% endif %}
                 </div>
             </div>
+        </div>
+        <div class="row mt-2 row-cols-1 row-cols-md-4 g-3 justify-content-center">
             <div class="col">
                 <div class="card crop bg-body shadow-sm">
                     <div class="card-img-top py-2">

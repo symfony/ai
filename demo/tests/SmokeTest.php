@@ -28,7 +28,7 @@ final class SmokeTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h1', 'Welcome to the Symfony AI Demo');
-        $this->assertSelectorCount(10, '.card');
+        $this->assertSelectorCount(11, '.card');
     }
 
     #[DataProvider('provideChats')]
@@ -50,6 +50,7 @@ final class SmokeTest extends WebTestCase
         yield 'Blog' => ['/blog', 'Retrieval Augmented Generation based on the Symfony blog'];
         yield 'Recipe' => ['/recipe', 'Cooking Recipes'];
         yield 'Wikipedia' => ['/wikipedia', 'Wikipedia Research'];
+        yield 'MCP' => ['/mcp', 'Remote MCP Servers'];
         yield 'YouTube' => ['/youtube', 'Chat about a YouTube Video'];
         yield 'Document' => ['/document', 'Chat about a Document'];
     }
