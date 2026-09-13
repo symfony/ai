@@ -1,0 +1,67 @@
+---------------------------------------------------------------------------
+
+by ousamabenyounes at 2026-09-08T13:26:25Z
+
+Rebased onto the latest `main` to resolve the merge conflict that had made this PR `CONFLICTING`. The only conflict was in `src/platform/CHANGELOG.md`: I kept every new `0.14` bullet that landed on `main` and appended this PR's entry to the same upcoming section (no new section, no bullets dropped). The feature commit itself is unchanged — `git range-diff` confirms the only difference versus the previous head is that CHANGELOG hunk.
+
+Validated the rebased head locally (PHP 8.5, real replay, no credentials):
+
+- `src/platform` unit suite: **904 tests OK** (1 pre-existing skip)
+- Anthropic `ReplayTest`: **145 tests OK**
+- Examples replay (`ExamplesReplayTest`, `CASSETTE=replay` through the real bridge pipeline): **10 tests OK** — this exercises the new request-signature verification against the cassettes that were added to `main` after this PR branched; they carry the legacy `signature` only, so the backward-compatible fallback path is covered
+- PHPStan (platform + Anthropic bridge shard): no errors
+- PHP-CS-Fixer: 0 of 2233 files need fixing
+
+Pushed as `be0b33fc873d21c72051d0dc4ff47ea32e4fec8e`.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-11T18:45:07Z
+
+Heads up: #2487 (redact recorded bodies) touches `HttpCassette::redactRequest()`/`signature()` too, redacting the body before hashing it. This branch still hashes the raw body when verifying, so once #2487 lands, a live request carrying credentials or PII would fail verification against the redacted recorded signature. Whichever of these merges second needs to redact the live request the same way before comparing signatures.
+
+---------------------------------------------------------------------------
+
+by ousamabenyounes at 2026-09-12T21:23:09Z
+
+On the `text_to_speech` cassettes: re-recorded, not hand-edited — and the diff shape is the evidence rather than my memory of it.
+
+The body went from a JSON **string** (`"{\"model\":...,\"response_format\":\"mp3\"}"`) to a structured object with the keys in a different order (`voice` before `model`). That is what the writer produces once the request body is stored decoded; it is not a shape anyone reaches by editing the file by hand.
+
+`response_format` disappearing is a correction, as you suspected: `TextToSpeech/ModelClient.php` builds `['json' => array_merge($options, ['model' => ..., 'input' => ...])]` and never sends `response_format`, so the key was a stale leftover in the recording rather than something the client emits today.
+
+CI on `ae366c83` is green apart from `Integration / Store / Milvus`, which fails on `Failed to connect to 127.0.0.1 port 19530` — the Milvus service did not come up on the runner. Unrelated to this branch, which touches only `Test/Replay`. Notably `Integration / Examples (replay)` and the full Examples matrix are green, so the `save()` flag changes replay the committed cassettes unchanged.
+
+---------------------------------------------------------------------------
+
+by ousamabenyounes at 2026-09-13T07:15:15Z
+
+**Update on `b07c6e3d`** — two fixture findings and one offer.
+
+**1. A retyped `tool_use.input`.** `multi-turn-thinking-stream.json` recorded `"input":[]` where the request sends `"input":{}`. It is the trace of a decode/encode cycle — in PHP an empty array decoded from `{}` re-encodes as `[]` — not of the writer, which stores the body verbatim.
+
+It hid because that fixture has `signature` but no `signature_v2`, so verification falls to the legacy path, where both sides are decoded and ksorted — and `json_decode('{}', true)` and `json_decode('[]', true)` are both the empty array. The lenient path cannot tell them apart.
+
+My first attempt restored the whole pre-PR body, which was wrong: the re-record had also fixed a duplicated `thinking` block, and dropping that broke `Integration / Examples (replay)`. The pushed fix changes only the retyped value and recomputes the signature through `redactRequest()` itself. Also added a test that recomputes every interaction's signature from its own stored body.
+
+**2. `brave.json`, left untouched on purpose.** 7 of its 15 interactions have a signature that does not reproduce their own body — exactly the 7 OpenAI requests carrying a body. I cannot establish which body is authoritative, and recomputing the hashes blind would only prove internal consistency, which is what this change argues against. Fix here, follow-up, or leave — your call.
+
+**3. A data-loss bug that already affects `main`.** `HttpCassette::save()` encodes without `JSON_THROW_ON_ERROR`, so an unencodable body makes `json_encode()` return `false` and the file is overwritten with a bare newline. Measured on `main`, unpatched:
+
+```
+cassette after first record:     595 bytes
+second record (resource body):   no error raised
+cassette after:                  1 byte
+```
+
+Reachable via `Cartesia/CartesiaClient.php:95` and `ElevenLabs/ElevenLabsClient.php:71`, which pass an open `fopen()` handle as the body. `Test/Recording/Cassette.php` already guards against this and documents why. The commit also adds `JSON_PRESERVE_ZERO_FRACTION`, which `signature()` already hashes with.
+
+That part is three lines plus tests and depends on nothing else here — happy to split it into its own PR so it can land while this one is in review.
+
+CI is green except `Integration / Store / Milvus` (`Failed to connect to 127.0.0.1 port 19530`, 9 of 10 tests skipped); it fails identically on every push and this PR touches no store code.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-13T17:12:00Z
+
+Follow-up for brave.json: #2518
