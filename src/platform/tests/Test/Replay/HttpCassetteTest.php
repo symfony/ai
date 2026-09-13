@@ -22,7 +22,7 @@ final class HttpCassetteTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->path = sys_get_temp_dir() . '/ai-cassette-' . bin2hex(random_bytes(6)) . '.json';
+        $this->path = sys_get_temp_dir().'/ai-cassette-'.bin2hex(random_bytes(6)).'.json';
     }
 
     protected function tearDown(): void
@@ -344,6 +344,6 @@ final class HttpCassetteTest extends TestCase
 
     public static function committedExampleCassettes(): iterable
     {
-        yield 'agent/multi-turn-thinking-stream' => [\dirname(__DIR__, 3) . '/../../examples/tests/fixtures/agent/multi-turn-thinking-stream.json'];
+        yield 'agent/multi-turn-thinking-stream' => [\dirname(__DIR__, 3).'/../../examples/tests/fixtures/agent/multi-turn-thinking-stream.json'];
     }
 }
