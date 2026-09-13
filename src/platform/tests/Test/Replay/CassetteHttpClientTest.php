@@ -529,4 +529,73 @@ final class CassetteHttpClientTest extends TestCase
 
         $client->request('POST', self::REQUEST_URL, ['json' => 1])->getContent();
     }
+
+    public function testReplaysWhenTheLiveBodyCarriesDataTheCassetteRedacted()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => [self::INPUT_KEY => 'write to alice@example.com']],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        // The cassette stores `[redacted-email]`, the live request still carries the real address,
+        // so the raw hashes cannot agree. Without the redacted retry this throws on exactly the
+        // requests redaction was added to protect.
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->assertSame(
+            self::REPLAY_RESPONSE,
+            $client->request('POST', self::REQUEST_URL, ['json' => [self::INPUT_KEY => 'write to alice@example.com']])->getContent(),
+        );
+    }
+
+    public function testStillThrowsWhenTheBodyChangedBeyondRedaction()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => [self::INPUT_KEY => 'write to alice@example.com']],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        // The retry must not become a wildcard: the address is the same, the surrounding prompt is
+        // not, and that is a genuine payload change.
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('body differs');
+
+        $client->request('POST', self::REQUEST_URL, ['json' => [self::INPUT_KEY => 'call alice@example.com']])->getContent();
+    }
+
+    public function testTwoBodiesThatRedactAlikeAreIndistinguishable()
+    {
+        $recorder = new HttpCassette($this->path);
+        $recorder->record(
+            'POST',
+            self::REQUEST_URL,
+            ['json' => [self::INPUT_KEY => 'write to alice@example.com']],
+            200,
+            [self::CONTENT_TYPE_HEADER => [self::JSON_CONTENT_TYPE]],
+            self::REPLAY_RESPONSE,
+        );
+
+        // Documents a consequence rather than a desirable property. Verification is exact only on
+        // the parts redaction leaves alone: the cassette no longer holds what would tell these two
+        // requests apart, so the check cannot either. Asserted here so that changing it is a
+        // deliberate decision and not an accident.
+        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+
+        $this->assertSame(
+            self::REPLAY_RESPONSE,
+            $client->request('POST', self::REQUEST_URL, ['json' => [self::INPUT_KEY => 'write to bob@example.com']])->getContent(),
+        );
+    }
 }

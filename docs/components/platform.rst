@@ -1971,11 +1971,19 @@ reproducible from what it actually contains. The default patterns are deliberate
 over-eager rule that swallowed timestamps or identifiers out of a payload would corrupt the very
 recording it is meant to protect.
 
+<<<<<<< HEAD
 Replay verification accounts for this: the outgoing body is checked as sent first, and only retried
 against its redacted form when that does not match, so a cassette recorded before redaction cannot
 start failing. The trade-off is that verification is exact only on the parts redaction leaves alone
 - two bodies differing solely in a redacted value are indistinguishable to the check, because the
 cassette no longer holds what would tell them apart.
+=======
+Replay verification accounts for this: the outgoing body is checked as sent first, and only
+retried against its redacted form when that does not match, so a cassette recorded before
+redaction cannot start failing. The trade-off is that verification is exact only on the parts
+redaction leaves alone - two bodies differing solely in a redacted value are indistinguishable
+to the check, because the cassette no longer holds what would tell them apart.
+>>>>>>> 615ee9a4 ([Platform] Retry replay verification against the redacted body)
 
 Verification is unconditional: it is what turns a replay test from a fixed-response stub into a
 check of the payload the bridge actually builds, so there is no flag to switch it off. The

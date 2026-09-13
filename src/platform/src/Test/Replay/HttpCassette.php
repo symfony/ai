@@ -181,7 +181,7 @@ final class HttpCassette
     {
         $interaction = $this->currentInteraction();
         [$url, $options] = $this->replaceInRequest($url, $options);
-        self::assertRequestSignatureMatches($interaction['request'] ?? null, $method, $url, $options, $this->path, $this->cursor);
+        $this->assertRequestSignatureMatches($interaction['request'] ?? null, $method, $url, $options, $this->path, $this->cursor);
         ++$this->cursor;
 
         return $interaction['response'];
@@ -412,7 +412,7 @@ final class HttpCassette
     /**
      * @param array<string, mixed> $options
      */
-    private static function assertRequestSignatureMatches(mixed $recordedRequest, string $method, string $url, array $options, string $path, int $cursor): void
+    private function assertRequestSignatureMatches(mixed $recordedRequest, string $method, string $url, array $options, string $path, int $cursor): void
     {
         if (!\is_array($recordedRequest)) {
             return;
@@ -420,11 +420,28 @@ final class HttpCassette
 
         $body = self::requestBody($options);
         if (isset($recordedRequest[self::REQUEST_SIGNATURE_V2]) && \is_string($recordedRequest[self::REQUEST_SIGNATURE_V2])) {
-            $signature = self::signature($method, $url, self::requestQuery($options), $body);
-            if ($recordedRequest[self::REQUEST_SIGNATURE_V2] === $signature) {
+            $query = self::requestQuery($options);
+
+            if ($recordedRequest[self::REQUEST_SIGNATURE_V2] === self::signature($method, $url, $query, $body)) {
                 return;
             }
 
+            // A cassette written after body redaction stores the redacted form, so a live request
+            // carrying the real value cannot match the raw hash. Retry against the redacted body
+            // rather than redacting up front: the first attempt is unchanged, so a cassette that
+            // happens to hold credential-shaped text cannot start failing because of this.
+            //
+            // Verification is therefore exact only on the parts redaction leaves alone. Two bodies
+            // that redact to the same form are indistinguishable here - by construction, since the
+            // cassette no longer holds what would tell them apart.
+            $body = $this->redactor->redact($body);
+            if ($recordedRequest[self::REQUEST_SIGNATURE_V2] === self::signature($method, $url, $query, $body)) {
+                return;
+            }
+
+            // $body is the redacted form from here on, so the message compares like with like: the
+            // recorded body is redacted too, and reporting "body differs" for a redaction that did
+            // its job would point at the wrong thing.
             throw new RuntimeException(self::mismatchMessage($recordedRequest, $method, $url, $options, $body, $path, $cursor));
         }
 
