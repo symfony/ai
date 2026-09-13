@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add token usage to streamed results, extracted from the `turn.completed` event
+
 0.9
 ---
 

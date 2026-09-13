@@ -17,7 +17,13 @@ namespace Symfony\AI\Mate\Skill\Model;
  * Shared by "skills:list" (which renders the columns) and "skills:validate" (which renders the
  * issues and turns them into an exit code).
  *
- * @phpstan-type SkillIssue array{level: 'warning'|'error', message: string}
+ * An issue carries the weight it should have on that exit code: an "error" always fails, a
+ * "warning" fails under --strict, and a "suggestion" is advice about the authored content that
+ * never fails a run, because it is a heuristic a correct skill may legitimately not satisfy.
+ *
+ * @phpstan-type SkillIssue array{level: 'suggestion'|'warning'|'error', message: string}
+ *
+ * @internal
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */

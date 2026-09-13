@@ -14,7 +14,6 @@ namespace App\Document;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -56,16 +55,15 @@ final class Chat
         // Step 2 — have the chat agent read the extracted text and open with a
         // meaningful summary. This is the orchestration on display: one capability
         // (OCR transcription) feeds another (the reasoning agent).
-        $summary = $this->agent->call(new MessageBag(
+        $execution = $this->agent->call(new MessageBag(
             Message::forSystem($system),
             Message::ofUser($this->summaryPrompt),
         ));
-        \assert($summary instanceof TextResult);
 
         $messages = new MessageBag(
             Message::forSystem($system),
             Message::ofUser($url),
-            Message::ofAssistant($summary->getContent()),
+            Message::ofAssistant($execution->getResult()),
         );
 
         $this->reset();
@@ -77,11 +75,9 @@ final class Chat
         $messages = $this->loadMessages();
 
         $messages->add(Message::ofUser($message));
-        $result = $this->agent->call($messages);
+        $execution = $this->agent->call($messages);
 
-        \assert($result instanceof TextResult);
-
-        $messages->add(Message::ofAssistant($result->getContent()));
+        $messages->add(Message::ofAssistant($execution->getResult()));
 
         $this->saveMessages($messages);
     }

@@ -9,8 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Mcp\Capability\Discovery\Discoverer;
-use Mcp\Capability\Discovery\DiscovererInterface;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
 use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
@@ -20,21 +19,31 @@ use Symfony\AI\Mate\Command\DebugExtensionsCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
-use Symfony\AI\Mate\Command\ServeCommand;
+use Symfony\AI\Mate\Command\SkillsDisableCommand;
+use Symfony\AI\Mate\Command\SkillsEnableCommand;
 use Symfony\AI\Mate\Command\SkillsInstallCommand;
 use Symfony\AI\Mate\Command\SkillsListCommand;
+use Symfony\AI\Mate\Command\SkillsOverrideCommand;
 use Symfony\AI\Mate\Command\SkillsPruneCommand;
+use Symfony\AI\Mate\Command\SkillsResetCommand;
 use Symfony\AI\Mate\Command\SkillsValidateCommand;
-use Symfony\AI\Mate\Command\StopCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
 use Symfony\AI\Mate\Command\ToolsListCommand;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\DocBlockParser;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
+use Symfony\AI\Mate\Discovery\SchemaGenerator;
+use Symfony\AI\Mate\Invocation\ArgumentCaster;
+use Symfony\AI\Mate\Invocation\HandlerInvoker;
+use Symfony\AI\Mate\Invocation\ResourceReader;
+use Symfony\AI\Mate\Invocation\ToolInvoker;
+use Symfony\AI\Mate\Runtime\InvocationPhpVersionProbe;
+use Symfony\AI\Mate\Runtime\PhpVersionGuard;
 use Symfony\AI\Mate\Service\ExtensionConfigSynchronizer;
 use Symfony\AI\Mate\Service\Logger;
-use Symfony\AI\Mate\Service\RegistryProvider;
 use Symfony\AI\Mate\Skill\Linker;
 use Symfony\AI\Mate\Skill\LinkerInterface;
 use Symfony\AI\Mate\Skill\SkillContentHasher;
@@ -63,7 +72,8 @@ return static function (ContainerConfigurator $container): void {
         ->set('mate.debug_log_file', $debugLogFile)
         ->set('mate.debug_file_enabled', $debugFileEnabled)
         ->set('mate.debug_enabled', $debugEnabled)
-        ->set('mate.mcp_protocol_version', '2025-03-26')
+        ->set('mate.php_version', null)
+        ->set('mate.invocation', 'vendor/bin/mate')
     ;
 
     $container->services()
@@ -76,7 +86,8 @@ return static function (ContainerConfigurator $container): void {
             ->bind('$extensions', '%mate.extensions%')
             ->bind('$disabledFeatures', '%mate.disabled_features%')
             ->bind('$enabledExtensions', '%mate.enabled_extensions%')
-            ->bind('$mcpProtocolVersion', '%mate.mcp_protocol_version%')
+            ->bind('$invocation', '%mate.invocation%')
+            ->bind('$pinnedPhpVersion', '%mate.php_version%')
 
         ->set('_build.logger', Logger::class)
             ->private() // To be removed when we compile
@@ -91,20 +102,31 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$debugEnabled', '%mate.debug_enabled%')
             ->alias(Logger::class, LoggerInterface::class)
 
-        // Container service for commands that need it
+        // Container services for handlers that need to be resolved at runtime
         ->alias(ContainerInterface::class, 'service_container')
-
-        // Register discovery services
-        ->set(Discoverer::class)
-            ->alias(DiscovererInterface::class, Discoverer::class)
+        ->alias(PsrContainerInterface::class, 'service_container')
 
         ->set(ComposerExtensionDiscovery::class)
 
-        ->set(FilteredDiscoveryLoader::class)
+        ->set(PhpVersionGuard::class)
+            ->public()
+            ->arg('$expectedVersion', '%mate.php_version%')
 
-        ->set(RegistryProvider::class)
+        ->set(InvocationPhpVersionProbe::class)
+            ->arg('$workingDirectory', '%mate.root_dir%')
 
+        // Native discovery pipeline (attribute + reflection based)
+        ->set(DocBlockParser::class)
+        ->set(SchemaGenerator::class)
+        ->set(ReflectionDiscoverer::class)
+        ->set(CapabilityRegistry::class)
         ->set(CapabilityCollector::class)
+
+        // Tool/resource invocation
+        ->set(ArgumentCaster::class)
+        ->set(HandlerInvoker::class)
+        ->set(ToolInvoker::class)
+        ->set(ResourceReader::class)
 
         ->set(AgentInstructionsAggregator::class)
         ->set(AgentInstructionsMaterializer::class)
@@ -125,13 +147,7 @@ return static function (ContainerConfigurator $container): void {
         ->set(InitCommand::class)
             ->public()
 
-        ->set(ServeCommand::class)
-            ->public()
-
         ->set(DiscoverCommand::class)
-            ->public()
-
-        ->set(StopCommand::class)
             ->public()
 
         ->set(DebugCapabilitiesCommand::class)
@@ -165,6 +181,18 @@ return static function (ContainerConfigurator $container): void {
             ->public()
 
         ->set(SkillsPruneCommand::class)
+            ->public()
+
+        ->set(SkillsOverrideCommand::class)
+            ->public()
+
+        ->set(SkillsResetCommand::class)
+            ->public()
+
+        ->set(SkillsEnableCommand::class)
+            ->public()
+
+        ->set(SkillsDisableCommand::class)
             ->public()
     ;
 };

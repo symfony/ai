@@ -69,4 +69,4 @@ $agent = new Agent($platform, 'gpt-5-mini', [$memoryProcessor]);
 $messages = new MessageBag(Message::ofUser('Have we discussed about my friend John in the past? If yes, what did we talk about?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

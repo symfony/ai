@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
@@ -37,7 +38,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsAllProfiles()
     {
-        $result = Toon::decode($this->tool->listProfiles());
+        $result = $this->decodeUntrusted($this->tool->listProfiles());
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -49,7 +50,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithLimit()
     {
-        $result = Toon::decode($this->tool->listProfiles(limit: 2));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 2));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -57,7 +58,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByMethod()
     {
-        $result = Toon::decode($this->tool->listProfiles(method: 'POST'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(method: 'POST'));
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -67,7 +68,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByStatusCode()
     {
-        $result = Toon::decode($this->tool->listProfiles(statusCode: 404));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(statusCode: 404));
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -77,7 +78,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByUrl()
     {
-        $result = Toon::decode($this->tool->listProfiles(url: 'users'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(url: 'users'));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -85,7 +86,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByIp()
     {
-        $result = Toon::decode($this->tool->listProfiles(ip: '127.0.0.1'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(ip: '127.0.0.1'));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -93,7 +94,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByRoute()
     {
-        $result = Toon::decode($this->tool->listProfiles(url: '/api/users'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(url: '/api/users'));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -101,7 +102,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testGetProfileReturnsProfileWithResourceUri()
     {
-        $profile = Toon::decode($this->tool->getProfile('abc123'));
+        $profile = $this->decodeUntrusted($this->tool->getProfile('abc123'));
 
         $this->assertArrayHasKey('token', $profile);
         $this->assertArrayHasKey('resource_uri', $profile);
@@ -119,7 +120,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesIncludesResourceUri()
     {
-        $result = Toon::decode($this->tool->listProfiles());
+        $result = $this->decodeUntrusted($this->tool->listProfiles());
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -136,7 +137,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesReturnsIntegerKeys()
     {
-        $result = Toon::decode($this->tool->listProfiles());
+        $result = $this->decodeUntrusted($this->tool->listProfiles());
 
         $this->assertArrayHasKey('profiles', $result);
         $keys = array_keys($result['profiles']);
@@ -151,5 +152,21 @@ final class ProfilerToolTest extends TestCase
         $this->expectExceptionMessage('Symfony profiler tools are not available in this Mate workspace.');
 
         $tool->listProfiles();
+    }
+
+    /**
+     * Decodes a tool response that is expected to carry the untrusted-data
+     * envelope, asserts the security notice is present, and returns the payload.
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeUntrusted(string $response): array
+    {
+        $decoded = Toon::decode($response);
+
+        $this->assertIsArray($decoded);
+        $this->assertSame(ResponseEncoder::UNTRUSTED_NOTICE, $decoded['_security_notice']);
+
+        return $decoded['untrusted_data'];
     }
 }

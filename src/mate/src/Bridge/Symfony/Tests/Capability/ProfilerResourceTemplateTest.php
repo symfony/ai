@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -49,8 +50,7 @@ final class ProfilerResourceTemplateTest extends TestCase
     {
         $resource = $this->template->getProfileResource('abc123');
 
-        $data = Toon::decode($resource['text']);
-        $this->assertIsArray($data);
+        $data = $this->decodeUntrusted($resource['text']);
 
         $this->assertArrayHasKey('token', $data);
         $this->assertArrayHasKey('method', $data);
@@ -65,8 +65,7 @@ final class ProfilerResourceTemplateTest extends TestCase
     {
         $resource = $this->template->getProfileResource('abc123');
 
-        $data = Toon::decode($resource['text']);
-        $this->assertIsArray($data);
+        $data = $this->decodeUntrusted($resource['text']);
 
         $this->assertArrayHasKey('collectors', $data);
         $this->assertIsArray($data['collectors']);
@@ -105,9 +104,8 @@ final class ProfilerResourceTemplateTest extends TestCase
     {
         $resource = $this->template->getCollectorResource('abc123', 'request');
 
-        $data = Toon::decode($resource['text']);
+        $data = $this->decodeUntrusted($resource['text']);
 
-        $this->assertIsArray($data);
         $this->assertArrayHasKey('name', $data);
         $this->assertSame('request', $data['name']);
     }
@@ -145,5 +143,21 @@ final class ProfilerResourceTemplateTest extends TestCase
         $data = Toon::decode($resource['text']);
         $this->assertIsArray($data);
         $this->assertSame('Symfony profiler resources are not available in this Mate workspace.', $data['error']);
+    }
+
+    /**
+     * Decodes the text of a resource that carries application data, asserts the
+     * untrusted-data envelope is present, and returns the payload.
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeUntrusted(string $text): array
+    {
+        $decoded = Toon::decode($text);
+
+        $this->assertIsArray($decoded);
+        $this->assertSame(ResponseEncoder::UNTRUSTED_NOTICE, $decoded['_security_notice']);
+
+        return $decoded['untrusted_data'];
     }
 }

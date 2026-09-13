@@ -33,7 +33,7 @@ $result = $agent->call($messages, [
 
 assert($result->getMetadata()->has('cached'));
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;
 
 // Thanks to the cache adapter and the "prompt_cache_key" key, this call will not trigger any network call
 
@@ -43,4 +43,4 @@ $secondResult = $agent->call($messages, [
 
 assert($secondResult->getMetadata()->has('cached'));
 
-echo $secondResult->getContent().\PHP_EOL;
+echo $secondResult->asText().\PHP_EOL;

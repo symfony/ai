@@ -108,6 +108,78 @@ final class RawProcessResultTest extends TestCase
         $rawResult->getData();
     }
 
+    public function testGetDataFailureReportsCliErrorInsteadOfUnrelatedStderr()
+    {
+        $jsonOutput = json_encode([
+            'type' => 'result',
+            'subtype' => 'error_max_turns',
+            'is_error' => true,
+            'errors' => ['Reached maximum number of turns (1)'],
+        ]);
+
+        $phpCode = \sprintf('fwrite(STDERR, "warning: connectors are disabled"); echo %s; exit(1);', escapeshellarg($jsonOutput));
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Claude Code CLI process failed: "Reached maximum number of turns (1)"');
+
+        $rawResult->getData();
+    }
+
+    public function testGetDataFailureFallsBackToResultSubtype()
+    {
+        $jsonOutput = json_encode(['type' => 'result', 'subtype' => 'error_during_execution', 'is_error' => true]);
+
+        $phpCode = \sprintf('echo %s; exit(1);', escapeshellarg($jsonOutput));
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Claude Code CLI process failed: "error_during_execution"');
+
+        $rawResult->getData();
+    }
+
+    public function testGetDataFailureFallsBackToExitCodeWithoutAnyOutput()
+    {
+        $process = new Process(['php', '-r', 'exit(3);']);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Claude Code CLI process failed: "exit code 3"');
+
+        $rawResult->getData();
+    }
+
+    public function testGetDataStreamFailureReportsCliError()
+    {
+        $jsonOutput = json_encode([
+            'type' => 'result',
+            'subtype' => 'error_max_turns',
+            'is_error' => true,
+            'errors' => ['Reached maximum number of turns (2)'],
+        ]);
+
+        $phpCode = \sprintf('fwrite(STDERR, "warning: connectors are disabled"); echo %s.PHP_EOL; exit(1);', escapeshellarg($jsonOutput));
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Claude Code CLI process failed: "Reached maximum number of turns (2)"');
+
+        foreach ($rawResult->getDataStream() as $data) {
+        }
+    }
+
     public function testGetDataStreamYieldsJsonLines()
     {
         $lines = [

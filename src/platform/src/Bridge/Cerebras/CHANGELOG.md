@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add a Cerebras assistant message normalizer that drops the `reasoning_content` of the shared contract, which Cerebras answers with a 400 `property 'messages.N.assistant.reasoning_content' is unsupported`; its streamed responses carry a reasoning trace, so a replayed turn reaches it
+
 0.11
 ----
 

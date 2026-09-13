@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
@@ -39,8 +40,10 @@ $messages = new MessageBag(Message::ofUser('First, list the files in this folder
 
 $result = $agent->call($messages, ['stream' => true]);
 
-foreach ($result->getContent() as $chunk) {
-    echo $chunk;
+foreach ($result->getContent() as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 
 echo \PHP_EOL;

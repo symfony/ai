@@ -33,4 +33,4 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('Crawl the following URL: https://symfony.com/doc/current/setup.html then resume it in less than 200 words.'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

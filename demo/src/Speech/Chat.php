@@ -41,7 +41,7 @@ final class Chat
         $messages = $this->loadMessages();
         $messages->add(Message::ofUser(Audio::fromFile($path)));
 
-        $result = $this->agent->call($messages);
+        $result = $this->agent->call($messages)->getResult();
 
         $text = $result->getMetadata()->get('text');
         $assistantMessage = Message::ofAssistant($text);

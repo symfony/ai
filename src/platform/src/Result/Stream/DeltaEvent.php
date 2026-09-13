@@ -35,6 +35,8 @@ final class DeltaEvent extends Event
     }
 
     /**
+     * Replaces the delta about to be yielded.
+     *
      * @param DeltaInterface|\Generator<DeltaInterface> $delta
      */
     public function setDelta(DeltaInterface|\Generator $delta): void

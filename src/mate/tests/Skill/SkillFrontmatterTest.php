@@ -101,7 +101,7 @@ final class SkillFrontmatterTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertSame('system-information', $result['name']);
-        $this->assertStringStartsWith('Inspect the runtime', $result['description']);
+        $this->assertStringStartsWith('Resolve which dependency versions', $result['description']);
     }
 
     public function testRewriteNameKeepsRegexMetacharactersLiteral()

@@ -1,9 +1,9 @@
 Symfony AI - Mate Component
 ===========================
 
-The Mate component provides an MCP (Model Context Protocol) server that enables
-AI assistants to interact with PHP applications (including Symfony) through
-standardized tools. This is a development tool, not intended for production use.
+The Mate component provides a command-line assistant (``vendor/bin/mate``) that lets coding
+agents inspect a running PHP application (including Symfony) through project-aware tools.
+This is a development tool, not intended for production use.
 
 Installation
 ------------
@@ -15,16 +15,24 @@ Installation
 Purpose
 -------
 
-Symfony AI Mate is a **development tool** that creates a local MCP server to enhance
-your AI assistant (JetBrains AI, Claude, GitHub Copilot, Cursor, etc.) with specific
-knowledge about your PHP application and development environment.
+Symfony AI Mate is a **development tool** that gives your coding agent (Claude Code, Codex,
+GitHub Copilot, Cursor, JetBrains AI, etc.) specific knowledge about your PHP application and
+development environment.
+
+Mate is a plain CLI: the agent runs ``vendor/bin/mate tools:call …`` the way it runs any other
+command. There is no server to start, no client-specific configuration file, and no permanent
+tool descriptions occupying the agent's context window. Any agent that can run a shell command
+can use Mate.
+
+Mate reads your application without booting it: the compiled container is parsed from the dumped
+XML, the profiler and logs are read from disk. That means it still answers when the application
+itself does not boot, which is usually the moment you need it.
 
 **Important**: This is intended for development and debugging only, not for production
 deployment.
 
-This is the core package that creates and manages your MCP server. It works with any
-PHP application - while it includes Symfony-specific tools via bridges, the core
-functionality is framework-agnostic.
+This is the core package. It works with any PHP application - while it includes
+Symfony-specific tools via bridges, the core functionality is framework-agnostic.
 
 Quick Start
 -----------
@@ -44,16 +52,11 @@ Initialize configuration:
 This creates:
 
 * ``mate/`` directory with configuration files
-* ``mate/src`` directory for custom extensions
+* ``mate/src`` directory for custom tools
 * ``mate/AGENT_INSTRUCTIONS.md`` placeholder (refreshed by ``mate discover``)
-* ``mcp.json`` for MCP clients that support it (e.g. Claude Desktop)
-* ``bin/codex`` and ``bin/codex.bat`` wrappers for Codex runtime MCP injection
-
-While generating ``mcp.json``, ``mate init`` asks which PHP binary the coding agent should use to
-launch the server. The default is detected from the environment: for a containerized setup where
-a ``.ddev/`` directory is present, it defaults to ``ddev exec php`` so the host-side agent starts
-Mate inside the container; otherwise it defaults to ``php``. Accept the default or provide your own
-launch command (for example ``docker compose exec php php`` for a plain Docker Compose setup).
+* a managed instruction block in ``AGENTS.md``
+* ``CLAUDE.md`` importing ``AGENTS.md`` via ``@AGENTS.md``, so Claude Code picks the
+  instructions up
 
 It also updates your ``composer.json`` with the following configuration:
 
@@ -83,6 +86,19 @@ After running ``mate init``, update your autoloader:
 .. code-block:: terminal
 
     $ composer dump-autoload
+
+Finally, install the skills:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate skills:install
+
+This writes the ``SKILL.md`` files of every enabled extension into ``.agents/skills/``, with a
+mirror in ``.claude/skills/``. Do not skip this step. The instructions above tell an agent that
+Mate exists, but the skills are what tell it *when* to reach for which tool, and they are the file
+an agent trips over on its own while looking around a fresh checkout. ``mate discover`` runs the
+install for you, and so does Composer after ``composer require``, so in practice you rarely call
+it by hand. See `Skills`_.
 
 Automatic Discovery
 -------------------
@@ -114,40 +130,144 @@ This command also refreshes:
 * ``mate/AGENT_INSTRUCTIONS.md``
 * Managed AI Mate instruction section in ``AGENTS.md``
 
-Start the MCP server:
+Using Mate from a coding agent
+------------------------------
+
+There is nothing to start. Your agent discovers Mate through the instructions written into
+``AGENTS.md`` and ``mate/AGENT_INSTRUCTIONS.md``, and runs four commands:
 
 .. code-block:: terminal
 
-    $ vendor/bin/mate serve
+    $ vendor/bin/mate tools:list                          # what is available
+    $ vendor/bin/mate tools:inspect symfony-profiler-list # parameters and JSON input schema
+    $ vendor/bin/mate tools:call symfony-profiler-list --limit=1
+    $ vendor/bin/mate resources:read symfony-profiler://profile/<token>
 
-For Codex, start with the generated wrapper (``./bin/codex``); Codex does not read this project's ``mcp.json``:
+Tool parameters are passed as long options, one per parameter, and coerced to the parameter's
+declared type. Booleans may be passed as a bare flag, and a variadic parameter collects the option
+repeated. For nested or associative values, and for parameter names that collide with a console
+option, pass a JSON object instead:
 
 .. code-block:: terminal
 
-    $ ./bin/codex
+    $ vendor/bin/mate tools:call monolog-search --term="^GET" --regex
+    $ vendor/bin/mate tools:call some-tool --tag=a --tag=b
+    $ vendor/bin/mate tools:call some-tool --json='{"filters": {"level": "error"}}'
+
+All four accept ``--format``. Use ``--format=json`` when the result is parsed, and
+``--format=toon`` (requires ``helgesverre/toon``) for the smallest context footprint.
+
+.. note::
+
+    ``mate init`` asks which command your agent should use and records it as ``mate.invocation``
+    in ``mate/config.php``, together with the PHP version that command runs under. See
+    `Choosing the interpreter`_.
 
 Add Custom Tools
 ----------------
 
-The easiest way to add tools is to create a ``mate/src`` folder next to your ``src`` and ``tests`` directories,
-then add a class with a method using the ``#[McpTool]`` attribute::
+The easiest way to add tools is to create a ``mate/src`` folder next to your ``src`` and ``tests``
+directories, then add a class with a public method carrying the ``#[MateTool]`` attribute::
 
-    // mate/MyTool.php
+    // mate/src/MyTool.php
     namespace Mate;
 
-    use Mcp\Capability\Attribute\McpTool;
+    use Symfony\AI\Mate\Attribute\MateTool;
 
     class MyTool
     {
-        #[McpTool(name: 'my_tool', description: 'My custom tool')]
+        /**
+         * @param string $param The value to process
+         */
+        #[MateTool(name: 'my-tool', title: 'My Tool', description: 'My custom tool')]
         public function execute(string $param): array
         {
             return ['result' => $param];
         }
     }
 
-More about attributes and how to configure Prompts, Resources and more can be found at the
-`MCP SDK documentation`_.
+Mate discovers the method by reflection and derives its JSON input schema from the signature plus
+the ``@param`` PHPDoc, so the description you write there is what the agent sees in
+``tools:inspect``.
+
+Two further attributes cover data the agent navigates into rather than calls:
+
+* ``#[MateResource]`` marks a method as a static resource, addressed by a fixed ``uri``.
+* ``#[MateResourceTemplate]`` marks a method as a templated resource; the variables in its
+  ``uriTemplate`` are passed to the method.
+
+::
+
+    use Symfony\AI\Mate\Attribute\MateResource;
+    use Symfony\AI\Mate\Attribute\MateResourceTemplate;
+
+    class MyResources
+    {
+        #[MateResource(uri: 'my-app://config', name: 'config', mimeType: 'application/json')]
+        public function config(): string
+        {
+            return json_encode(['debug' => true]);
+        }
+
+        #[MateResourceTemplate(uriTemplate: 'my-app://entity/{id}', name: 'entity')]
+        public function entity(string $id): array
+        {
+            return ['id' => $id];
+        }
+    }
+
+Resources are read with ``vendor/bin/mate resources:read <uri>``. The split is worth keeping in
+mind when designing your own: a tool is something the agent *calls* with arguments, a resource is
+something it *addresses* and can drill into, which keeps large payloads out of the context window
+until they are actually needed.
+
+After adding a class under ``mate/src/``, run ``composer dump-autoload`` if the autoloader does not
+know it yet. Verify with ``vendor/bin/mate tools:list``.
+
+Choosing the interpreter
+------------------------
+
+Mate reads the compiled container, the profiler cache and the logs of *this* project, and
+extensions may behave differently per runtime. Running it under the wrong interpreter therefore
+does not just fail, it reports on something that is not the application under test.
+
+``mate init`` asks which command your coding agent should use and writes two parameters into
+``mate/config.php``::
+
+    $container->parameters()
+        ->set('mate.invocation', 'ddev exec vendor/bin/mate')
+        ->set('mate.php_version', '8.3')
+    ;
+
+``mate.invocation``
+    The full command the agent must use, wrapper included. It is materialized into
+    ``mate/AGENT_INSTRUCTIONS.md`` and the managed ``AGENTS.md`` block, so the prefix ends up where
+    the agent actually reads it. When a ``.ddev/`` directory is present, ``mate init`` proposes
+    ``ddev exec vendor/bin/mate`` as the default. Answering with a wrapper alone is enough,
+    ``symfony php`` is recorded as ``symfony php vendor/bin/mate``. Left at its default, the value
+    is the plain ``vendor/bin/mate`` and nothing is prefixed anywhere.
+
+``mate.php_version``
+    The PHP version the project runs on, recorded as ``major.minor``. When ``mate.invocation``
+    wraps the binary, ``mate init`` runs ``php`` through that wrapper to find out which
+    interpreter it really reaches, rather than recording the one that happened to run ``init``.
+    If the wrapper cannot be reached, ``init`` warns and falls back to the current process, and
+    you should check the value by hand. Mate refuses to start under a
+    different one and points at ``mate.invocation`` in the error:
+
+    .. code-block:: terminal
+
+        $ vendor/bin/mate tools:list
+
+         [ERROR] Mate is running under PHP 8.4.15 but this project expects PHP 8.3.
+                 Run it as "ddev exec vendor/bin/mate". ...
+
+    Set the parameter to ``null`` to disable the check.
+
+    ``init``, ``list``, ``help`` and ``completion`` stay callable under any interpreter, because
+    ``init`` is the command that writes this configuration in the first place and the others never
+    read the application. They print a warning instead, so a wrong interpreter is visible before it
+    reaches a command that does refuse.
 
 Configuration
 -------------
@@ -271,16 +391,35 @@ profiler data access tools for Symfony applications.
 Container Introspection
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**MCP Tools:**
+**Tools:**
 
-* ``symfony-services`` - List Symfony services from the compiled container and optionally filter by service ID or class name using the ``query`` parameter
+* ``symfony-services`` - Search services in the compiled container, filtered by service ID,
+  class name or tag. Returns the matches under ``services`` together with ``count`` and
+  ``truncated``; at most ``limit`` entries (default 100) are listed, so narrow the filter rather
+  than raising the limit. Both this tool and the next one fail loudly when no container has been
+  dumped yet, instead of answering as if nothing matched
+* ``symfony-service-detail`` - Show one service by its exact ID, including class, tags, method
+  calls and constructor or factory information
 
 **Configuration:**
 
-Configure the cache directory::
+Single cache directory (default)::
 
     $container->parameters()
         ->set('ai_mate_symfony.cache_dir', '%mate.root_dir%/var/cache');
+
+Multiple directories with contexts (e.g., for `multi-kernel applications`_ that split their
+cache per ``APP_ID``)::
+
+    $container->parameters()
+        ->set('ai_mate_symfony.cache_dir', [
+            'website' => '%mate.root_dir%/var/cache/website',
+            'admin' => '%mate.root_dir%/var/cache/admin',
+        ]);
+
+When using multiple directories, ``symfony-services`` returns the services grouped by context and
+``symfony-service-detail`` includes the ``context`` a service was found in. Both tools accept an
+optional ``context`` parameter to narrow the lookup to a single kernel.
 
 **Troubleshooting:**
 
@@ -301,14 +440,14 @@ Profiler Data Access
 When ``symfony/http-kernel`` and ``symfony/web-profiler-bundle`` are installed, profiler tools
 become available for accessing Symfony profiler data.
 
-**MCP Tools:**
+**Tools:**
 
 * ``symfony-profiler-list`` - List available profiler profiles with summary data, supports filtering by date range (``from``/``to`` parameters) and limiting results (use ``limit: 1`` for the latest profile)
 * ``symfony-profiler-get`` - Get a specific profile by token
 
 All tools return profiles with a ``resource_uri`` field that points to the full profile resource.
 
-**MCP Resources:**
+**Resources:**
 
 * ``symfony-profiler://profile/{token}`` - Full profile details including metadata and list of available collectors with URIs
 * ``symfony-profiler://profile/{token}/{collector}`` - Detailed collector-specific data (request, response, exception, events, etc.)
@@ -328,7 +467,7 @@ Single profiler directory (default)::
     $container->parameters()
         ->set('ai_mate_symfony.profiler_dir', '%mate.root_dir%/var/cache/dev/profiler');
 
-Multiple directories with contexts (e.g., for multi-kernel applications)::
+Multiple directories with contexts (e.g., for `multi-kernel applications`_)::
 
     $container->parameters()
         ->set('ai_mate_symfony.profiler_dir', [
@@ -340,38 +479,16 @@ When using multiple directories, profiles include a ``context`` field for filter
 
 **Example Usage:**
 
-Search for errors::
+.. code-block:: terminal
 
-    // Using symfony-profiler-list tool
-    {
-        "method": "tools/call",
-        "params": {
-            "name": "symfony-profiler-list",
-            "arguments": {
-                "statusCode": 500,
-                "limit": 20
-            }
-        }
-    }
+    # Find the failed requests
+    $ vendor/bin/mate tools:call symfony-profiler-list --statusCode=500 --limit=20
 
-Access full profile via resource::
+    # See which collectors that profile actually has
+    $ vendor/bin/mate resources:read symfony-profiler://profile/abc123
 
-    // Using resource template
-    {
-        "method": "resources/read",
-        "params": {
-            "uri": "symfony-profiler://profile/abc123"
-        }
-    }
-
-Access specific collector::
-
-    {
-        "method": "resources/read",
-        "params": {
-            "uri": "symfony-profiler://profile/abc123/exception"
-        }
-    }
+    # Read one of them
+    $ vendor/bin/mate resources:read symfony-profiler://profile/abc123/exception
 
 **Security:**
 
@@ -407,10 +524,24 @@ The Monolog bridge (``symfony/ai-monolog-mate-extension``) provides log search a
 * ``monolog-list-files`` - List available log files
 * ``monolog-list-channels`` - List all log channels
 
-Configure the log directory::
+Single log directory (default)::
 
     $container->parameters()
         ->set('ai_mate_monolog.log_dir', '%mate.root_dir%/var/log');
+
+Multiple directories with contexts (e.g., for `multi-kernel applications`_ that split their
+logs per ``APP_ID``)::
+
+    $container->parameters()
+        ->set('ai_mate_monolog.log_dir', [
+            'website' => '%mate.root_dir%/var/log/website',
+            'admin' => '%mate.root_dir%/var/log/admin',
+        ]);
+
+When using multiple directories, log entries and files carry a ``kernel_context`` field, and all
+Monolog tools accept an optional ``kernelContext`` parameter to restrict the lookup to a single
+kernel. The field is named ``kernel_context`` rather than ``context`` to keep it apart from the
+Monolog context of a log record.
 
 **Troubleshooting**
 
@@ -436,9 +567,13 @@ Skills
 ------
 
 `Agent Skills <https://agentskills.io>`_ are ``SKILL.md`` files that give your coding agent
-structured, multi-step "how-to" knowledge for a task. Extensions can ship skills alongside their MCP tools, and Mate
-installs them onto the filesystem where coding agents read them — a polyfill until skills can be
-served over MCP directly.
+structured, multi-step "how-to" knowledge for a task. Extensions can ship skills alongside their
+tools, and Mate installs them onto the filesystem where coding agents read them.
+
+Skills are what make the CLI findable. A tool that exists but is never invoked is worth nothing,
+and a bare CLI is invisible to an agent that was never told about it. The skills describe when to
+reach for which tool and in what order, which is the difference between Mate being installed and
+Mate being used.
 
 You usually do not run anything: ``mate discover`` (which also runs automatically after
 ``composer require``) installs the skills of every enabled extension. To sync them manually, use
@@ -453,7 +588,7 @@ avoid clashing with skills you maintain from other sources; the ``name`` in the 
   reads its own directory.
 
 Both folders are generated output: ``skills:install`` is an idempotent reconciler that rebuilds them
-from source on every run and prunes skills that are gone or disabled. Do not edit them by hand — your
+from source on every run and prunes skills that are gone or disabled. Do not edit them by hand, your
 changes are overwritten on the next run and reported as errors by ``mate skills:validate``.
 
 Skills are **copied, never symlinked into** ``vendor/``. What your agent loads is a real file you can
@@ -463,16 +598,18 @@ skill change into a reviewable diff instead of something that lands silently.
 
 All skill state lives in ``mate/extensions.php``. Two keys per skill carry your intent:
 
-* ``enabled`` controls whether the skill is installed at all.
+* ``enabled`` controls whether the skill is installed at all. Use ``mate skills:disable <name>`` and
+  ``mate skills:enable <name>`` to flip it.
 * ``mode`` is either ``managed``, where Mate builds the skill from the package, or ``override``,
   which hands ownership to you: Mate then builds from your own ``mate/skills/<name>/`` copy and
-  never writes into ``mate/skills/``.
+  never writes into ``mate/skills/``. Use ``mate skills:override <name>`` to switch, and
+  ``mate skills:reset <name>`` to hand the skill back.
 
-The ``skills:*`` commands set both for you, which is the recommended way to change them — they also
+The ``skills:*`` commands set both for you, which is the recommended way to change them, and they also
 reinstall, so the recorded state below never falls out of step with your intent. Editing the two keys
 by hand works as well; the next install picks the change up.
 
-Everything else is written by Mate and rewritten on every install — the resulting ``state``
+Everything else is written by Mate and rewritten on every install; the resulting ``state``
 (``managed``, ``override`` or ``disabled``), the ``source`` it was built from, the ``source_hash``
 and ``hash`` pair used to detect drift, and the generated ``targets``::
 
@@ -499,10 +636,42 @@ and ``hash`` pair used to detect drift, and the generated ``targets``::
 
 Use ``mate skills:list`` for an overview, and ``mate skills:validate`` to check the generated folders
 against that record: it reports hand-edited content, missing folders, and sources that moved on since
-the last install. ``mate skills:prune`` removes leftover ``mate-*`` folders.
+the last install. It also looks at the installed content itself: it warns when a Markdown link points
+at a file that is not part of the skill, and suggests a better description when it is too short or
+never says when the skill applies, because that description is all an agent has when it decides
+whether to load the skill. Those description findings are suggestions, not warnings: they are printed
+but never change the exit code, not even with ``--strict``. ``mate skills:prune`` removes leftover
+``mate-*`` folders.
 
-The core package itself ships a ``system-information`` skill describing how to inspect the PHP
-runtime and installed package versions via the ``server-info`` tool.
+To see what an install would do before it does it, run ``mate skills:install --dry-run``: the same
+reconciler runs and reports what it would install, rebuild or remove, but nothing is written.
+
+A skill ships with the extension whose tools it drives, so a project only ever installs skills it
+can actually follow. The core package ships two:
+
+``php-environment-check``
+    Establish whether a failing tool is the PHP runtime rather than the application.
+
+``system-information``
+    Resolve which dependency versions are actually installed, via ``composer show`` and
+    ``composer.lock``.
+
+The Symfony extension adds three:
+
+``symfony-profiler-debugging``
+    Diagnose a request that errored or was slow, through the profiler: which profile to find, which
+    collectors to read, and in what order depending on the symptom.
+
+``symfony-request-triage``
+    Decide which of the other skills a given symptom calls for.
+
+``symfony-service-inspection``
+    Inspect the compiled DI container when the wiring, not the code, is the suspect.
+
+And the Monolog extension one:
+
+``symfony-log-investigation``
+    Investigate trends across requests in the Monolog log files, rather than one failed request.
 
 Commands
 --------
@@ -511,7 +680,7 @@ Commands
     Initialize AI Mate configuration and create the ``mate/`` directory.
 
 ``mate discover``
-    Scan for MCP extensions in installed packages. This command will:
+    Scan for Mate extensions in installed packages. This command will:
 
     - Scan your vendor directory for packages with ``extra.ai-mate`` configuration
     - Generate or update ``mate/extensions.php`` with discovered extensions
@@ -522,29 +691,45 @@ Commands
 ``mate skills:install``
     Install the Agent Skills shipped by your enabled extensions so your coding agent can use
     them. This runs automatically as part of ``mate discover``; use it for an explicit re-sync.
-    See `Skills`_.
+    Pass ``--dry-run`` to see what a run would install, rebuild or remove without writing
+    anything. See `Skills`_.
 
 ``mate skills:list``
     List declared and installed skills with their enabled, mode, state and status information.
     Read-only diagnostic. See `Skills`_.
 
 ``mate skills:validate``
-    Check the generated skill folders against the state recorded in ``mate/extensions.php``. Exits
-    with a non-zero status when a skill is broken; pass ``--strict`` to fail on warnings too.
-    Read-only. See `Skills`_.
+    Check the generated skill folders against the state recorded in ``mate/extensions.php``, and the
+    installed content itself for dead links and descriptions an agent cannot act on. Exits with a
+    non-zero status when a skill is broken; pass ``--strict`` to fail on warnings too. Suggestions
+    about a description never affect the exit code. Read-only. See `Skills`_.
 
 ``mate skills:prune``
     Remove generated ``mate-*`` folders that no longer belong to any skill. Pass ``--dry-run`` to
     see what would be removed. See `Skills`_.
 
-``mate serve``
-    Start the MCP server with stdio transport.
+``mate skills:override <name>``
+    Take ownership of a skill: copy the package's version into ``mate/skills/<name>/`` and switch it
+    to ``'mode' => 'override'``. Accepts the installed (``mate-…``) or the original name. Pass
+    ``--force`` to replace an existing copy. See `Skills`_.
+
+``mate skills:reset <name>``
+    Hand an overridden skill back to Mate, so it is built from the package again. Your copy under
+    ``mate/skills/<name>/`` is kept unless you pass ``--delete-copy``. See `Skills`_.
+
+``mate skills:disable <name>``
+    Hide a skill from coding agents: remove its generated folders and record it as disabled. The
+    entry stays in ``mate/extensions.php``, and a copy of your own under ``mate/skills/`` is left
+    untouched. See `Skills`_.
+
+``mate skills:enable <name>``
+    Make a disabled skill visible again and rebuild its generated folders. See `Skills`_.
 
 ``mate clear-cache``
-    Clear the MCP server cache.
+    Clear the cache.
 
 ``mate debug:capabilities``
-    Display all discovered MCP capabilities grouped by extension. This command is useful for:
+    Display all discovered capabilities grouped by extension. This command is useful for:
 
     - Verifying extension installation and capability registration
     - Debugging missing or misconfigured extensions
@@ -561,7 +746,7 @@ Commands
         Filter by extension package name (e.g., ``symfony/ai-monolog-mate-extension``)
 
     ``--type=TYPE``
-        Filter by capability type: ``tool``, ``resource``, ``prompt``, or ``template``
+        Filter by capability type: ``tool``, ``resource``, or ``template``
 
     **Examples:**
 
@@ -586,7 +771,7 @@ Commands
         $ vendor/bin/mate debug:capabilities --extension=_custom
 
 ``mate debug:extensions``
-    Display detailed information about discovered and loaded MCP extensions. This command is useful for:
+    Display detailed information about discovered and loaded Mate extensions. This command is useful for:
 
     - Understanding which extensions are discovered vs enabled vs loaded
     - Debugging extension loading issues
@@ -630,8 +815,8 @@ Commands
         # TOON output for token-efficient inspection
         $ vendor/bin/mate debug:extensions --format=toon
 
-``mate mcp:tools:list``
-    List all available MCP tools with their metadata. This command provides a compact
+``mate tools:list``
+    List all available tools with their metadata. This command provides a compact
     overview of tools for quick reference and filtering.
 
     **Options:**
@@ -651,26 +836,23 @@ Commands
     .. code-block:: terminal
 
         # List all tools
-        $ vendor/bin/mate mcp:tools:list
+        $ vendor/bin/mate tools:list
 
         # Filter by name pattern
-        $ vendor/bin/mate mcp:tools:list --filter="monolog*"
-        $ vendor/bin/mate mcp:tools:list --filter="*search"
+        $ vendor/bin/mate tools:list --filter="monolog*"
+        $ vendor/bin/mate tools:list --filter="*search"
 
         # Show tools from specific extension
-        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension
+        $ vendor/bin/mate tools:list --extension=symfony/ai-monolog-mate-extension
 
         # JSON output for scripting
-        $ vendor/bin/mate mcp:tools:list --format=json
-
-        # TOON output for token-efficient inspection
-        $ vendor/bin/mate mcp:tools:list --format=toon
+        $ vendor/bin/mate tools:list --format=json
 
         # Combined filters
-        $ vendor/bin/mate mcp:tools:list --extension=symfony/ai-monolog-mate-extension --filter="*search"
+        $ vendor/bin/mate tools:list --extension=symfony/ai-monolog-mate-extension --filter="*search"
 
-``mate mcp:tools:inspect``
-    Display detailed information about a specific MCP tool including its full JSON schema.
+``mate tools:inspect``
+    Display detailed information about a specific tool including its full JSON input schema.
     This command is useful for understanding tool parameters and requirements.
 
     **Arguments:**
@@ -689,28 +871,70 @@ Commands
     .. code-block:: terminal
 
         # Inspect a specific tool
-        $ vendor/bin/mate mcp:tools:inspect server-info
+        $ vendor/bin/mate tools:inspect server-info
 
         # Inspect extension tool
-        $ vendor/bin/mate mcp:tools:inspect monolog-search
+        $ vendor/bin/mate tools:inspect monolog-search
 
         # JSON output for scripting
-        $ vendor/bin/mate mcp:tools:inspect server-info --format=json
+        $ vendor/bin/mate tools:inspect server-info --format=json
 
-        # TOON output for token-efficient inspection
-        $ vendor/bin/mate mcp:tools:inspect server-info --format=toon
-
-``mate mcp:tools:call``
-    Execute MCP tools via JSON input parameters. This command allows you to test and
-    debug tools by executing them directly from the command line.
+``mate tools:call``
+    Execute a tool, passing each of its parameters as a long option.
 
     **Arguments:**
 
     ``tool-name``
         Name of the tool to execute (required)
 
-    ``json-input``
-        JSON object with tool parameters (required)
+    **Options:**
+
+    ``--<param>=<value>``
+        One option per tool parameter. Values are coerced to the parameter's declared type.
+        A boolean parameter may be passed as a bare ``--<flag>``. Repeat the option to pass
+        several values to a variadic parameter; repeating it on a single-value parameter is an
+        error rather than a silent last-one-wins.
+
+    ``--json=JSON``
+        Tool parameters as a JSON object, merged under any ``--<param>`` options. Use this for
+        nested or associative values, and for parameter names shadowed by a console option
+        (``format``, ``json``, ``help``, ``silent``, ``quiet``, ``verbose``, ``version``,
+        ``ansi``, ``no-ansi``, ``no-interaction``).
+
+    ``--format=FORMAT``
+        Output format: ``pretty`` (default), ``json``, or ``toon``.
+        The ``toon`` format requires ``helgesverre/toon``.
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Execute a tool without parameters
+        $ vendor/bin/mate tools:call server-info
+
+        # Execute a tool with parameters
+        $ vendor/bin/mate tools:call monolog-search --term=error --level=error
+
+        # Boolean parameters may be passed as bare flags
+        $ vendor/bin/mate tools:call monolog-search --term="^GET" --regex
+
+        # Complex or array parameters
+        $ vendor/bin/mate tools:call some-tool --json='{"tags": ["a", "b"]}'
+
+        # JSON output format
+        $ vendor/bin/mate tools:call server-info --format=json
+
+        # TOON output for token-efficient inspection
+        $ vendor/bin/mate tools:call server-info --format=toon
+
+``mate resources:read``
+    Read a resource by its URI. Matches both static resources and resource templates; for a
+    template, the variables in the URI are passed to the handler.
+
+    **Arguments:**
+
+    ``uri``
+        URI of the resource to read (required)
 
     **Options:**
 
@@ -722,17 +946,15 @@ Commands
 
     .. code-block:: terminal
 
-        # Execute tool with empty parameters
-        $ vendor/bin/mate mcp:tools:call server-info '{}'
+        # List the collectors a profile actually has
+        $ vendor/bin/mate resources:read symfony-profiler://profile/abc123
 
-        # Execute tool with parameters
-        $ vendor/bin/mate mcp:tools:call monolog-search '{"term": "error", "level": "error"}'
+        # Read one collector
+        $ vendor/bin/mate resources:read symfony-profiler://profile/abc123/db
 
-        # JSON output format
-        $ vendor/bin/mate mcp:tools:call server-info '{}' --format=json
+        # JSON output for scripting
+        $ vendor/bin/mate resources:read symfony-profiler://profile/abc123 --format=json
 
-        # TOON output for token-efficient inspection
-        $ vendor/bin/mate mcp:tools:call server-info '{}' --format=toon
 
 Security
 --------
@@ -752,4 +974,4 @@ Further Reading
     mate/creating-extensions
     mate/troubleshooting
 
-.. _`MCP SDK documentation`: https://github.com/modelcontextprotocol/php-sdk
+.. _`multi-kernel applications`: https://symfony.com/doc/current/configuration/multiple_kernels.html

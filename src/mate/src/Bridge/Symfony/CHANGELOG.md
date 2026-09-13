@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * Add the `symfony-profiler-debugging`, `symfony-request-triage` and `symfony-service-inspection` skills, which used to ship from `symfony/ai-mate` itself and were therefore installed into projects that do not have this extension and cannot run the tools they describe
+ * Mark the output of `symfony-profiler-list`, `symfony-profiler-get`, `symfony-services`, `symfony-service-detail` and the profiler resources as untrusted data, since request/response payloads, SQL queries and container metadata are frequently controlled by end users or third-party packages
+ * Allow `ai_mate_symfony.cache_dir` to be a map of context name to cache directory, so a single Mate server can introspect the containers of multi-kernel (`APP_ID`) applications. `symfony-services` then returns the services grouped per context, `symfony-service-detail` reports the context a service was found in, and both accept an optional `context` filter parameter
+
 0.7
 ---
 

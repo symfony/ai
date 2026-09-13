@@ -19,12 +19,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Finder\Finder;
 
 /**
- * Clear the MCP server cache.
+ * Clear the cache.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-#[AsCommand('clear-cache', 'Clear the MCP server cache')]
+#[AsCommand('clear-cache', 'Clear the cache')]
 class ClearCacheCommand extends Command
 {
     public function __construct(
@@ -40,7 +40,7 @@ class ClearCacheCommand extends Command
 
     public static function getDefaultDescription(): string
     {
-        return 'Clear the MCP server cache';
+        return 'Clear the cache';
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

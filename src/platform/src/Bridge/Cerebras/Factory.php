@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Cerebras;
 
+use Symfony\AI\Platform\Bridge\Cerebras\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Cerebras\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -48,6 +49,7 @@ final class Factory
             [new ResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create([
+                new AssistantMessageNormalizer(),
                 new ToolNormalizer(),
             ]),
             $eventDispatcher,

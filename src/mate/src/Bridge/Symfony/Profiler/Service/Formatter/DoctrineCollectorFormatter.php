@@ -14,6 +14,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
  * Formats Doctrine collector data.
@@ -113,9 +114,18 @@ final class DoctrineCollectorFormatter implements CollectorFormatterInterface
      * reset tokens, ...) and there is no key name to decide which are sensitive,
      * so every leaf value is redacted. The array shape and parameter count are
      * preserved so the AI can still see that the query was parameterized.
+     *
+     * A stored profile hands the parameters over as a VarDumper {@see Data}
+     * object rather than a plain array, so it is unwrapped first; otherwise the
+     * whole parameter list would collapse into a single redacted scalar and the
+     * count/shape would be lost.
      */
     private function redactParams(mixed $params): mixed
     {
+        if ($params instanceof Data) {
+            $params = $params->getValue(true);
+        }
+
         if (\is_array($params)) {
             return array_map(fn (mixed $param): mixed => $this->redactParams($param), $params);
         }

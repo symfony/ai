@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\InMemory\Store;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -122,7 +123,7 @@ final class TraceableStoreTest extends TestCase
             {
             }
 
-            public function add(VectorDocument|array $documents): void
+            public function add(VectorDocumentInterface|array $documents): void
             {
             }
 
@@ -181,7 +182,7 @@ final class TraceableStoreTest extends TestCase
                 $this->dropOptions = $options;
             }
 
-            public function add(VectorDocument|array $documents): void
+            public function add(VectorDocumentInterface|array $documents): void
             {
             }
 

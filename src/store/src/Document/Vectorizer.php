@@ -28,7 +28,7 @@ final class Vectorizer implements VectorizerInterface
     ) {
     }
 
-    public function vectorize(string|\Stringable|EmbeddableDocumentInterface|array $values, array $options = []): Vector|VectorDocument|array
+    public function vectorize(string|\Stringable|EmbeddableDocumentInterface|array $values, array $options = []): Vector|VectorDocumentInterface|array
     {
         if (\is_string($values) || $values instanceof \Stringable) {
             return $this->vectorizeString($values, $options);
@@ -99,7 +99,7 @@ final class Vectorizer implements VectorizerInterface
      *
      * @throws ExceptionInterface
      */
-    private function vectorizeEmbeddableDocument(EmbeddableDocumentInterface $document, array $options = []): VectorDocument
+    private function vectorizeEmbeddableDocument(EmbeddableDocumentInterface $document, array $options = []): VectorDocumentInterface
     {
         $this->logger->debug('Vectorizing embeddable document', ['document_id' => $document->getId()]);
         $result = $this->platform->invoke($this->model, $document->getContent(), $options);
@@ -145,7 +145,7 @@ final class Vectorizer implements VectorizerInterface
      * @param array<EmbeddableDocumentInterface> $documents
      * @param array<string, mixed>               $options
      *
-     * @return array<VectorDocument>
+     * @return array<VectorDocumentInterface>
      */
     private function vectorizeEmbeddableDocuments(array $documents, array $options = []): array
     {

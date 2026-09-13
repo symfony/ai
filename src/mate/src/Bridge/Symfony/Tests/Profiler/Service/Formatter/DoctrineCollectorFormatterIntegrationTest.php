@@ -116,6 +116,32 @@ final class DoctrineCollectorFormatterIntegrationTest extends TestCase
         $this->assertCount(2, $result['queries']);
     }
 
+    public function testFormatRedactsSampleParamsFromRealCollectorPreservingShape()
+    {
+        // A stored profile hands parameters over as a VarDumper Data object, not
+        // a plain array. Each bound value must be redacted while the parameter
+        // count/shape stays visible, and a param-less query must stay empty
+        // rather than collapse into a single misleading "***REDACTED***".
+        $collector = $this->createRealCollector([
+            'default' => [
+                ['sql' => 'SELECT * FROM users WHERE email = ? AND password_hash = ?', 'params' => [1 => 'alice@example.com', 2 => 's3cr3t-hash']],
+                ['sql' => 'SELECT 1', 'params' => []],
+            ],
+        ]);
+
+        $result = $this->formatter->format($collector);
+
+        $bySql = [];
+        foreach ($result['queries'] as $query) {
+            $bySql[$query['sql']] = $query['sample_params'];
+        }
+
+        $this->assertSame(['***REDACTED***', '***REDACTED***'], array_values($bySql['SELECT * FROM users WHERE email = ? AND password_hash = ?']));
+        $this->assertSame([], $bySql['SELECT 1']);
+        $this->assertStringNotContainsString('alice@example.com', json_encode($result));
+        $this->assertStringNotContainsString('s3cr3t-hash', json_encode($result));
+    }
+
     /**
      * @param array<string, list<array{sql: string, params: array<int, mixed>}>> $queriesByConnection
      */

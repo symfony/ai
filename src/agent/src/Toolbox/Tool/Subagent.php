@@ -33,7 +33,7 @@ final class Subagent implements HasSourcesInterface
      */
     public function __invoke(string $message): string
     {
-        $result = $this->agent->call($message);
+        $result = $this->agent->call($message)->getResult();
 
         \assert($result instanceof TextResult);
 

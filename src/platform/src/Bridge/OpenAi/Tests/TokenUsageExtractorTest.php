@@ -38,6 +38,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'gpt-4o-2024-08-06',
             'usage' => [
                 'input_tokens' => 10,
                 'output_tokens' => 20,
@@ -60,6 +61,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(20, $tokenUsage->getThinkingTokens());
         $this->assertSame(40, $tokenUsage->getCachedTokens());
         $this->assertSame(50, $tokenUsage->getTotalTokens());
+        $this->assertSame('gpt-4o-2024-08-06', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()

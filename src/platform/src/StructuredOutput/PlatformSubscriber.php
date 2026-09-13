@@ -28,7 +28,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
 {
     public const RESPONSE_FORMAT = 'response_format';
 
-    private string $outputType;
+    private ?string $outputType = null;
 
     private ?object $objectToPopulate = null;
 
@@ -54,6 +54,8 @@ final class PlatformSubscriber implements EventSubscriberInterface
      */
     public function processInput(InvocationEvent $event): void
     {
+        $this->reset();
+
         $options = $event->getOptions();
 
         if (!isset($options[self::RESPONSE_FORMAT])) {
@@ -67,7 +69,6 @@ final class PlatformSubscriber implements EventSubscriberInterface
             $className = $responseFormat::class;
         } elseif (\is_string($responseFormat)) {
             if (class_exists($responseFormat)) {
-                $this->objectToPopulate = null;
                 $className = $responseFormat;
             } elseif (str_contains($responseFormat, '\\')) {
                 throw new InvalidArgumentException(\sprintf('The response format class "%s" does not exist.', $responseFormat));
@@ -101,13 +102,18 @@ final class PlatformSubscriber implements EventSubscriberInterface
         $converter = new ResultConverter(
             $deferred->getResultConverter(),
             $this->serializer,
-            $this->outputType ?? null,
+            $this->outputType,
             $this->objectToPopulate
         );
 
         $event->setDeferredResult(new DeferredResult($converter, $deferred->getRawResult(), $options));
 
-        // Reset object to populate for next invocation
+        $this->reset();
+    }
+
+    private function reset(): void
+    {
+        $this->outputType = null;
         $this->objectToPopulate = null;
     }
 }

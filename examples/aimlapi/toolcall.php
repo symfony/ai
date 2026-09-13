@@ -27,4 +27,4 @@ $agent = new Agent($platform, 'google/gemini-2.5-flash', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

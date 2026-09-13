@@ -40,7 +40,7 @@ final class Chat
         $messages->add(Message::ofUser($message));
         $result = $this->agent->call($messages);
 
-        $response = Message::ofAssistant($result);
+        $response = Message::ofAssistant($result->asText());
         $response->getMetadata()->add('sources', $result->getMetadata()->get('sources', []));
         $messages->add($response);
 

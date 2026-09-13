@@ -14,12 +14,15 @@ namespace Symfony\AI\Mate\Skill\Model;
 /**
  * Outcome of a single {@see \Symfony\AI\Mate\Skill\SkillInstaller::install()} run.
  *
+ * @internal
+ *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class SkillInstallResult
 {
     /**
      * @param list<string>                                   $installed newly installed skills (not installed before this run)
+     * @param list<string>                                   $updated   skills that were already installed and got rebuilt
      * @param list<string>                                   $removed   installed names pruned from the generated folders
      * @param array<string, string>                          $skipped   installed name => reason for skills that could not be built
      * @param list<string>                                   $active    installed names present in the generated folders after the run
@@ -28,6 +31,7 @@ final class SkillInstallResult
      */
     public function __construct(
         public readonly array $installed,
+        public readonly array $updated,
         public readonly array $removed,
         public readonly array $skipped,
         public readonly array $active,

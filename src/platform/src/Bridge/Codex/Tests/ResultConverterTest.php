@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -149,9 +150,12 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $chunk;
         }
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertSame('Hello', $chunks[0]->getText());
+        $this->assertInstanceOf(TokenUsage::class, $chunks[1]);
+        $this->assertSame(10, $chunks[1]->getPromptTokens());
+        $this->assertSame(5, $chunks[1]->getCompletionTokens());
     }
 
     public function testConvertStreamingYieldsMultipleAgentMessages()
@@ -174,11 +178,14 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $chunk;
         }
 
-        $this->assertCount(2, $chunks);
+        $this->assertCount(3, $chunks);
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertSame('First part.', $chunks[0]->getText());
         $this->assertInstanceOf(TextDelta::class, $chunks[1]);
         $this->assertSame('Second part.', $chunks[1]->getText());
+        $this->assertInstanceOf(TokenUsage::class, $chunks[2]);
+        $this->assertSame(50, $chunks[2]->getPromptTokens());
+        $this->assertSame(20, $chunks[2]->getCompletionTokens());
     }
 
     public function testConvertStreamingIgnoresNonAgentEvents()
@@ -203,9 +210,10 @@ final class ResultConverterTest extends TestCase
             $chunks[] = $chunk;
         }
 
-        $this->assertCount(1, $chunks);
+        $this->assertCount(2, $chunks);
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertSame('Hello', $chunks[0]->getText());
+        $this->assertInstanceOf(TokenUsage::class, $chunks[1]);
     }
 
     public function testGetTokenUsageExtractor()

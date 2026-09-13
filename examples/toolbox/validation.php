@@ -65,10 +65,10 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox, eventDispatcher: 
 $messages = new MessageBag(Message::ofUser('Look up the order with reference "ORD-2026-0042", shipping to Berlin, DE.'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;
 
 // The LLM is instructed to use a malformed reference on purpose, to show the #[Schema] pattern being enforced.
 $messages = new MessageBag(Message::ofUser('Look up the order using exactly this reference, unmodified: "not-a-valid-reference", shipping to Berlin, DE.'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

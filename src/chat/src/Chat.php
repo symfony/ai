@@ -16,7 +16,6 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\StreamResult;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -40,7 +39,9 @@ final class Chat implements ChatInterface
         $messages = $this->store->load();
 
         $messages->add($message);
-        $result = $this->agent->call($messages);
+
+        // the execution is lazy, reading its result runs the agent and returns the underlying result
+        $result = $this->agent->call($messages)->getResult();
 
         $assistantMessage = Message::ofAssistant($result);
         $assistantMessage->getMetadata()->merge($result->getMetadata());
@@ -56,12 +57,14 @@ final class Chat implements ChatInterface
         $messages = $this->store->load();
         $messages->add($message);
 
-        $result = $this->agent->call($messages, ['stream' => true]);
+        $execution = $this->agent->call($messages, ['stream' => true]);
 
-        \assert($result instanceof StreamResult);
+        yield from $execution->asStream();
 
-        $result->addListener(new ChatStreamListener($messages, $this->store));
+        $assistantMessage = Message::ofAssistant($execution->getResult());
+        $assistantMessage->getMetadata()->merge($execution->getMetadata());
+        $messages->add($assistantMessage);
 
-        yield from $result->getContent();
+        $this->store->save($messages);
     }
 }

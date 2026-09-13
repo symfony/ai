@@ -27,4 +27,4 @@ $agent = new Agent($platform, 'ai/gemma3n', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('Who is the actual Prime Minister of France?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

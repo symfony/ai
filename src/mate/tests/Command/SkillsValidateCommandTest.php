@@ -117,7 +117,7 @@ final class SkillsValidateCommandTest extends TestCase
     public function testWarnsWhenTheSourceChangedSinceTheLastInstall()
     {
         $this->installFixture();
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.', 'UPDATED UPSTREAM');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.', 'UPDATED UPSTREAM');
 
         $tester = new CommandTester($this->command());
         $tester->execute([]);
@@ -130,7 +130,7 @@ final class SkillsValidateCommandTest extends TestCase
     public function testStrictTurnsWarningsIntoFailures()
     {
         $this->installFixture();
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.', 'UPDATED UPSTREAM');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.', 'UPDATED UPSTREAM');
 
         $tester = new CommandTester($this->command());
         $tester->execute(['--strict' => true]);
@@ -188,10 +188,97 @@ final class SkillsValidateCommandTest extends TestCase
         $this->assertNotSame([], $decoded['skills'][0]['issues']);
     }
 
-    private function installFixture(): void
+    public function testWarnsAboutALinkThatIsNotPartOfTheSkill()
+    {
+        $this->createInstalledPackage($this->rootDir);
+        $this->createSkill(
+            $this->rootDir.'/vendor/vendor/pkg-a/skills',
+            'system-information',
+            'Inspect the runtime environment when diagnosing a version-specific problem.',
+            'See [the checklist](references/checklist.md) and [the docs](https://symfony.com).',
+        );
+        $this->createManager($this->rootDir)->reinstall();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--strict' => true]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('links to "references/checklist.md"', $output);
+        $this->assertStringNotContainsString('symfony.com', $output);
+    }
+
+    public function testAcceptsALinkToAFileShippedWithTheSkill()
+    {
+        $this->createInstalledPackage($this->rootDir);
+        $skillDir = $this->rootDir.'/vendor/vendor/pkg-a/skills/system-information';
+        $this->createSkill(
+            $this->rootDir.'/vendor/vendor/pkg-a/skills',
+            'system-information',
+            'Inspect the runtime environment when diagnosing a version-specific problem.',
+            'See [the checklist](references/checklist.md).',
+        );
+        mkdir($skillDir.'/references', 0777, true);
+        file_put_contents($skillDir.'/references/checklist.md', "# Checklist\n");
+        $this->createManager($this->rootDir)->reinstall();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--strict' => true]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+    }
+
+    public function testSuggestsABetterDescriptionThatCannotTriggerTheSkill()
     {
         $this->createInstalledPackage($this->rootDir);
         $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.');
+        $this->createManager($this->rootDir)->reinstall();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('SUGGESTION', $output);
+        $this->assertStringContainsString('Description is only 12 characters long', $output);
+        $this->assertStringContainsString('does not say when to use the skill', $output);
+    }
+
+    public function testStrictDoesNotFailOnDescriptionSuggestions()
+    {
+        $this->createInstalledPackage($this->rootDir);
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.');
+        $this->createManager($this->rootDir)->reinstall();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--strict' => true, '--format' => 'json']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $decoded = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($decoded);
+        $this->assertTrue($decoded['valid']);
+        $this->assertSame('ok', $decoded['skills'][0]['status']);
+        $this->assertSame('suggestion', $decoded['skills'][0]['issues'][0]['level']);
+    }
+
+    public function testAcceptsADescriptionThatNamesTheSituationWithoutATriggerWord()
+    {
+        $this->createInstalledPackage($this->rootDir);
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Use this for deploying the application to production.');
+        $this->createManager($this->rootDir)->reinstall();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--strict' => true]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringNotContainsString('SUGGESTION', $tester->getDisplay());
+    }
+
+    private function installFixture(): void
+    {
+        $this->createInstalledPackage($this->rootDir);
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.');
         $this->createManager($this->rootDir)->reinstall();
     }
 

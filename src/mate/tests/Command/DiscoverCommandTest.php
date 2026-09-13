@@ -217,7 +217,7 @@ PHP
             $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
 
             $output = $tester->getDisplay();
-            $this->assertStringContainsString('No MCP extensions found', $output);
+            $this->assertStringContainsString('No Mate extensions found', $output);
             $this->assertFileExists($tempDir.'/mate/AGENT_INSTRUCTIONS.md');
             $this->assertFileExists($tempDir.'/AGENTS.md');
         } finally {

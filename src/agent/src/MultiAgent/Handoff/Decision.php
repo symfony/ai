@@ -15,8 +15,6 @@ namespace Symfony\AI\Agent\MultiAgent\Handoff;
  * Represents the orchestrator's decision on which agent should handle a request.
  *
  * @author Oskar Stark <oskarstark@googlemail.com>
- *
- * @internal
  */
 final class Decision
 {

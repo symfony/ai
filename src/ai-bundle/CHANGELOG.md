@@ -4,6 +4,7 @@ CHANGELOG
 0.13
 ----
 
+ * Add support for template variables in file prompts
  * Add an `embedding_function` option to the `chromadb` store, referencing a service implementing `Codewithkyrian\ChromaDB\Embeddings\EmbeddingFunction`, so a bundle-configured store can serve a `TextQuery`
  * Add `bedrockmantle` platform configuration for the Bedrock Mantle bridge, with an `api` option selecting the Chat Completions, Responses, or Anthropic Messages route
 

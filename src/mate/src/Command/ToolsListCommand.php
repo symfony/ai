@@ -24,7 +24,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Display available MCP tools with metadata.
+ * Display available tools with metadata.
  *
  * @phpstan-import-type Capabilities from CapabilityCollector
  *
@@ -38,7 +38,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('mcp:tools:list', 'Display available MCP tools with metadata')]
+#[AsCommand('tools:list', 'Display available tools with metadata')]
 class ToolsListCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
@@ -61,12 +61,12 @@ class ToolsListCommand extends Command
 
     public static function getDefaultName(): string
     {
-        return 'mcp:tools:list';
+        return 'tools:list';
     }
 
     public static function getDefaultDescription(): string
     {
-        return 'Display available MCP tools with metadata';
+        return 'Display available tools with metadata';
     }
 
     protected function configure(): void
@@ -79,7 +79,7 @@ class ToolsListCommand extends Command
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (table, json, toon)', 'table')
             ->setHelp(
                 <<<HELP
-The <info>%command.name%</info> command displays all available MCP tools with their metadata.
+The <info>%command.name%</info> command displays all available tools with their metadata.
 
 <info>Usage Examples:</info>
 
@@ -100,7 +100,10 @@ The <info>%command.name%</info> command displays all available MCP tools with th
   %command.full_name% --extension=symfony/ai-monolog-mate-extension --filter="search*"
 
   <comment># For detailed tool information with schema, use:</comment>
-  {$script} mcp:tools:inspect <tool-name>
+  {$script} tools:inspect <tool-name>
+
+  <comment># To run a tool, use:</comment>
+  {$script} tools:call <tool-name> --<param>=<value>
 HELP
             );
     }
@@ -112,7 +115,7 @@ HELP
         $format = $input->getOption('format');
         \assert(\is_string($format));
 
-        if (!$this->ensureToonFormatAvailable($io, $format)) {
+        if (!$this->ensureFormatSupported($io, $format, ['table', 'json', 'toon'])) {
             return Command::FAILURE;
         }
 
@@ -203,7 +206,7 @@ HELP
      */
     private function outputTable(array $tools, SymfonyStyle $io): void
     {
-        $io->title('MCP Tools');
+        $io->title('Available Tools');
 
         if ([] === $tools) {
             $io->warning('No tools found');
@@ -212,12 +215,13 @@ HELP
         }
 
         $table = new Table($io);
-        $table->setHeaders(['Tool Name', 'Description', 'Handler', 'Extension']);
+        $table->setHeaders(['Tool Name', 'Description', 'Arguments', 'Handler', 'Extension']);
 
         foreach ($tools as $toolName => $toolData) {
             $table->addRow([
                 $toolName,
-                $this->truncate($toolData['description'] ?? '', 50),
+                $toolData['description'] ?? '',
+                $this->formatArguments($toolData['input_schema']),
                 $toolData['handler'],
                 $toolData['extension'],
             ]);
@@ -247,12 +251,40 @@ HELP
         ];
     }
 
-    private function truncate(string $text, int $length): string
+    /**
+     * Renders the schema's parameter names as a compact summary, required ones first and
+     * unmarked, optional ones trailing with a `?` (e.g. `query, path?, limit?`), so the
+     * table conveys the call shape without forcing a separate `tools:inspect`.
+     *
+     * @param array<string, mixed>|null $inputSchema
+     */
+    private function formatArguments(?array $inputSchema): string
     {
-        if (\strlen($text) <= $length) {
-            return $text;
+        if (null === $inputSchema) {
+            return '';
         }
 
-        return substr($text, 0, $length - 3).'...';
+        $properties = $inputSchema['properties'] ?? [];
+        if (!\is_array($properties) || [] === $properties) {
+            return '';
+        }
+
+        $required = $inputSchema['required'] ?? [];
+        \assert(\is_array($required));
+
+        $required = array_flip($required);
+        $optional = [];
+        $names = [];
+
+        foreach (array_keys($properties) as $name) {
+            \assert(\is_string($name));
+            if (isset($required[$name])) {
+                $names[] = $name;
+            } else {
+                $optional[] = $name.'?';
+            }
+        }
+
+        return implode(', ', [...$names, ...$optional]);
     }
 }

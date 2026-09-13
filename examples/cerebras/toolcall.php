@@ -26,4 +26,4 @@ $agent = new Agent($platform, 'gpt-oss-120b', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('How many days until next Christmas?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

@@ -11,6 +11,11 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Cancellation;
+use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\Progress;
+use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -34,33 +39,55 @@ final class SpeechAgent implements AgentInterface
     ) {
     }
 
-    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
-        $messages = InputNormalizer::toMessageBag($input);
+        $cancellation = new Cancellation();
 
-        if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
-            $messages = $this->transcribe($messages, $options);
-        }
+        return new Execution(function () use ($input, $options, $cancellation): \Generator {
+            $messages = InputNormalizer::toMessageBag($input);
 
-        $result = $this->agent->call($messages, $options);
+            if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
+                $messages = $this->transcribe($messages, $options, $cancellation);
+            }
 
-        if (!$this->textToSpeechPlatform instanceof PlatformInterface) {
-            return $result;
-        }
+            $result = null;
+            foreach ($cancellation->forward($this->agent->call($messages, $options)) as $update) {
+                if ($update instanceof ResultUpdate) {
+                    $result = $update->getResult();
 
-        if (!$this->configuration->supportsTextToSpeech()) {
-            return $result;
-        }
+                    continue;
+                }
 
-        $speechResult = $this->textToSpeechPlatform->invoke(
-            $this->configuration->getTextToSpeechModel(),
-            $result->getContent(),
-            $this->configuration->getTextToSpeechOptions(),
-        );
+                if ($update instanceof Progress) {
+                    yield $update;
+                }
+            }
 
-        $speechResult->getMetadata()->add('text', $result->getContent());
+            if ($cancellation->isRequested()) {
+                return;
+            }
 
-        return $speechResult->getResult();
+            if (!$result instanceof ResultInterface) {
+                throw new RuntimeException(\sprintf('The agent "%s" finished without producing a result.', $this->agent->getName()));
+            }
+
+            if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
+                yield new ResultUpdate($result);
+
+                return;
+            }
+
+            $speechResult = $this->textToSpeechPlatform->invoke(
+                $this->configuration->getTextToSpeechModel(),
+                $result->getContent(),
+                $this->configuration->getTextToSpeechOptions(),
+            );
+            $cancellation->activate($speechResult->getRawResult());
+
+            $speechResult->getMetadata()->add('text', $result->getContent());
+
+            yield new ResultUpdate($speechResult->getResult());
+        }, cancellation: $cancellation);
     }
 
     public function getName(): string
@@ -71,7 +98,7 @@ final class SpeechAgent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    private function transcribe(MessageBag $messages, array $options): MessageBag
+    private function transcribe(MessageBag $messages, array $options, Cancellation $cancellation): MessageBag
     {
         try {
             $latestUserMessage = $messages->latestAs(Role::User);
@@ -97,6 +124,7 @@ final class SpeechAgent implements AgentInterface
                 ...$options,
             ],
         );
+        $cancellation->activate($result->getRawResult());
 
         $text = new Text($result->asText());
         $messages->replace($latestUserMessage->getId(), Message::ofUser($text));

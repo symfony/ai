@@ -11,9 +11,10 @@
 
 namespace Symfony\AI\Mate\Container;
 
-use Mcp\Capability\Discovery\Discoverer;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
+use Symfony\AI\Mate\Exception\ContainerCompilationException;
 use Symfony\AI\Mate\Exception\MissingDependencyException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -22,13 +23,15 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\Dotenv\Dotenv;
 
 /**
- * Factory for building a Symfony DI Container with MCP extension configurations.
+ * Factory for building a Symfony DI Container with extension configurations.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
 final class ContainerFactory
 {
+    private ?ReflectionDiscoverer $discoverer = null;
+
     public function __construct(
         private string $rootDir,
     ) {
@@ -46,12 +49,17 @@ final class ContainerFactory
         $extensionDiscovery = new ComposerExtensionDiscovery($this->rootDir, $logger);
 
         $this->loadExtensions($container, $extensionDiscovery, $logger);
-        $this->loadUserServices($container, $extensionDiscovery, $logger);
+        $includes = $this->loadUserServices($container, $extensionDiscovery, $logger);
         $this->loadEnvironmentVariables($container);
 
         // Remove the logger definition, it's not needed anymore'
         $container->removeDefinition('_build.logger');
-        $container->compile(true);
+        $this->compile($container, $includes);
+
+        // Hand the build-time instance to the runtime so discovery is not repeated per invocation.
+        if (null !== $this->discoverer) {
+            $container->set(ReflectionDiscoverer::class, $this->discoverer);
+        }
 
         return $container;
     }
@@ -73,9 +81,12 @@ final class ContainerFactory
         $enabledExtensions = $this->getEnabledExtensions();
         $container->setParameter('mate.enabled_extensions', $enabledExtensions);
         if ([] === $enabledExtensions) {
-            $container->setParameter('mate.extensions', [
-                '_custom' => $extensionDiscovery->discoverRootProject(),
-            ]);
+            // The root project still contributes tools, so its handlers need registering here too;
+            // otherwise whether a user's own tool is wired depends on some unrelated vendor
+            // extension happening to be enabled.
+            $rootOnly = ['_custom' => $extensionDiscovery->discoverRootProject()];
+            $this->registerServices($container, $rootOnly, $logger);
+            $container->setParameter('mate.extensions', $rootOnly);
 
             return;
         }
@@ -93,40 +104,37 @@ final class ContainerFactory
     }
 
     /**
-     * Pre-register all discovered services in the container.
+     * Pre-register the handler classes of all discovered capabilities as public services.
      *
      * @param array<string, array{dirs: string[], includes: string[]}> $extensions
      */
     private function registerServices(ContainerBuilder $container, array $extensions, LoggerInterface $logger): void
     {
-        $discoverer = new Discoverer($logger);
+        $discoverer = $this->discoverer = new ReflectionDiscoverer($logger);
+        $container->register(ReflectionDiscoverer::class)
+            ->setSynthetic(true)
+            ->setPublic(true);
+
         foreach ($extensions as $data) {
-            $discoveryState = $discoverer->discover($this->rootDir, $data['dirs']);
-            foreach ($discoveryState->getTools() as $tool) {
-                $this->maybeRegisterHandler($container, $tool->handler);
+            $capabilities = $discoverer->discover($this->rootDir, $data['dirs']);
+
+            foreach ($capabilities->getTools() as $tool) {
+                $this->registerHandler($container, $tool->handlerClass);
             }
 
-            foreach ($discoveryState->getResources() as $resource) {
-                $this->maybeRegisterHandler($container, $resource->handler);
+            foreach ($capabilities->getResources() as $resource) {
+                $this->registerHandler($container, $resource->handlerClass);
             }
 
-            foreach ($discoveryState->getPrompts() as $prompt) {
-                $this->maybeRegisterHandler($container, $prompt->handler);
-            }
-
-            foreach ($discoveryState->getResourceTemplates() as $template) {
-                $this->maybeRegisterHandler($container, $template->handler);
+            foreach ($capabilities->getResourceTemplates() as $template) {
+                $this->registerHandler($container, $template->handlerClass);
             }
         }
     }
 
-    /**
-     * @param \Closure|array{0: object|string, 1: string}|string $handler
-     */
-    private function maybeRegisterHandler(ContainerBuilder $container, \Closure|array|string $handler): void
+    private function registerHandler(ContainerBuilder $container, string $className): void
     {
-        $className = $this->extractClassName($handler);
-        if (null === $className) {
+        if (!class_exists($className)) {
             return;
         }
 
@@ -140,27 +148,6 @@ final class ContainerFactory
         $container->register($className, $className)
             ->setAutowired(true)
             ->setPublic(true);
-    }
-
-    /**
-     * @param \Closure|array{0: object|string, 1: string}|string $handler
-     */
-    private function extractClassName(\Closure|array|string $handler): ?string
-    {
-        if ($handler instanceof \Closure) {
-            return null;
-        }
-
-        if (\is_string($handler)) {
-            return class_exists($handler) ? $handler : null;
-        }
-
-        $class = $handler[0];
-        if (\is_object($class)) {
-            return $class::class;
-        }
-
-        return class_exists($class) ? $class : null;
     }
 
     /**
@@ -239,14 +226,19 @@ final class ContainerFactory
         (new Dotenv())->load($this->rootDir.\DIRECTORY_SEPARATOR.$envFile, ...$extra);
     }
 
-    private function loadUserServices(ContainerBuilder $container, ComposerExtensionDiscovery $extensionDiscovery, LoggerInterface $logger): void
+    /**
+     * @return list<string> the service files that were loaded, for use in a compile error
+     */
+    private function loadUserServices(ContainerBuilder $container, ComposerExtensionDiscovery $extensionDiscovery, LoggerInterface $logger): array
     {
         $rootProject = $extensionDiscovery->discoverRootProject();
+        $loaded = [];
 
         $loader = new PhpFileLoader($container, new FileLocator($this->rootDir));
         foreach ($rootProject['includes'] as $include) {
             try {
                 $loader->load($include);
+                $loaded[] = $include;
 
                 $logger->debug('Loaded user services', [
                     'file' => $include,
@@ -257,6 +249,28 @@ final class ContainerFactory
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+
+        return $loaded;
+    }
+
+    /**
+     * A service file that parses but does not compile is a user mistake, and the compiler reports
+     * it from deep inside the DI internals. Naming the files that were loaded points at the one
+     * place the caller can actually change.
+     *
+     * @param list<string> $includes
+     */
+    private function compile(ContainerBuilder $container, array $includes): void
+    {
+        try {
+            $container->compile(true);
+        } catch (\Throwable $e) {
+            $hint = [] === $includes
+                ? ''
+                : \sprintf(' Check the service definitions in "%s".', implode('", "', $includes));
+
+            throw new ContainerCompilationException('The Mate container could not be compiled: '.$e->getMessage().$hint, 0, $e);
         }
     }
 }

@@ -43,4 +43,12 @@ interface TokenUsageInterface
     public function getRemainingTokensMonth(): ?int;
 
     public function getTotalTokens(): ?int;
+
+    /**
+     * The model that consumed these tokens, as the provider reports it in its response - which is
+     * usually the resolved snapshot ("gpt-4o-2024-08-06") rather than the alias that was requested.
+     *
+     * Null when the provider does not name a model in the payload the usage was read from.
+     */
+    public function getModel(): ?string;
 }

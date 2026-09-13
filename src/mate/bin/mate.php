@@ -35,8 +35,27 @@ if (!$root) {
 
 use Symfony\AI\Mate\App;
 use Symfony\AI\Mate\Container\ContainerFactory;
+use Symfony\AI\Mate\Exception\ContainerCompilationException;
+use Symfony\AI\Mate\Exception\PhpVersionMismatchException;
 
-$containerFactory = new ContainerFactory($root);
-$container = $containerFactory->create();
+// The first bare argument is the command name; the guard needs it to stay out of `init`'s way.
+$commandName = null;
+foreach (array_slice($_SERVER['argv'] ?? [], 1) as $argument) {
+    if (!str_starts_with($argument, '-')) {
+        $commandName = $argument;
+        break;
+    }
+}
 
-App::build($container)->run();
+try {
+    $containerFactory = new ContainerFactory($root);
+    $container = $containerFactory->create();
+    $application = App::build($container, $commandName);
+} catch (ContainerCompilationException|PhpVersionMismatchException $e) {
+    // Thrown before the console exists, so report it here rather than as a stack trace.
+    fwrite(\STDERR, \PHP_EOL.' [ERROR] '.$e->getMessage().\PHP_EOL.\PHP_EOL);
+
+    exit(1);
+}
+
+$application->run();

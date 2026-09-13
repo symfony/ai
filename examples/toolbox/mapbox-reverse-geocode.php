@@ -27,4 +27,4 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What address is at coordinates longitude -73.985131, latitude 40.758895?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

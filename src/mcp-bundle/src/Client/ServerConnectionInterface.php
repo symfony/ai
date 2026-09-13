@@ -12,6 +12,7 @@
 namespace Symfony\AI\McpBundle\Client;
 
 use Mcp\Schema\Enum\LoggingLevel;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\Prompt;
 use Mcp\Schema\PromptReference;
@@ -56,6 +57,11 @@ interface ServerConnectionInterface
     public function disconnect(): void;
 
     public function getServerInfo(): ?Implementation;
+
+    /**
+     * The protocol revision negotiated with this server, or null before the first request.
+     */
+    public function getProtocolVersion(): ?ProtocolVersion;
 
     public function getInstructions(): ?string;
 
@@ -116,4 +122,9 @@ interface ServerConnectionInterface
     public function complete(PromptReference|ResourceReference $ref, array $argument): CompletionCompleteResult;
 
     public function setLoggingLevel(LoggingLevel $level): void;
+
+    /**
+     * Tell the server that this client's roots changed.
+     */
+    public function sendRootsListChanged(): void;
 }

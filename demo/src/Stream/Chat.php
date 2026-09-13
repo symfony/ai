@@ -18,7 +18,6 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -67,14 +66,11 @@ final class Chat
             return Message::ofAssistant('');
         }
 
-        $stream = $this->agent->call($messages, ['stream' => true])->getContent();
-        \assert(is_iterable($stream));
+        $execution = $this->agent->call($messages, ['stream' => true]);
 
         $response = '';
-        foreach ($stream as $delta) {
-            if ($delta instanceof TextDelta) {
-                yield $response .= (string) $delta;
-            }
+        foreach ($execution->asTextStream() as $delta) {
+            yield $response .= $delta;
         }
 
         $assistantMessage = Message::ofAssistant($response);

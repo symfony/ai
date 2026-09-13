@@ -142,6 +142,55 @@ the question and routes it to the appropriate specialist automatically::
     so the orchestrator can route to any number of domains. For debugging, pass a PSR-3 logger to
     the ``MultiAgent`` constructor to see which agent handles each request.
 
+Step 7: Show Which Agent Answers
+--------------------------------
+
+Routing is invisible from the outside: the caller asks a question and gets an answer, with no clue
+which specialist produced it. Iterating the multi-agent instead of reading its result lets you show
+that, because the delegated agents report their own steps into the very same execution. The routing
+itself arrives as a ``Progress`` update of the ``handoff`` stage, carrying the orchestrator's
+:class:`Symfony\\AI\\Agent\\MultiAgent\\Handoff\\Decision` as payload::
+
+    use Symfony\AI\Agent\Execution\Update\Progress;
+    use Symfony\AI\Agent\Execution\Update\Result;
+    use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
+
+    $messages = new MessageBag(
+        Message::ofUser('I get a "Call to undefined method" error in my controller.'),
+    );
+
+    foreach ($multiAgent->call($messages) as $update) {
+        if ($update instanceof Progress && 'handoff' === $update->getStage()) {
+            $decision = $update->getPayload();
+            \assert($decision instanceof Decision);
+
+            echo $update->getMessage().' Reason: '.$decision->getReasoning().\PHP_EOL;
+
+            continue;
+        }
+
+        if ($update instanceof Progress) {
+            echo '  '.$update->getMessage().\PHP_EOL; // the specialist's own model requests and tool calls
+        }
+
+        if ($update instanceof Result) {
+            echo $update->getResult()->getContent().\PHP_EOL;
+        }
+    }
+
+The message names the agent that actually runs, while the decision explains why the orchestrator
+picked it - the two differ when the orchestrator selects an agent that no handoff defines, in which
+case the fallback answers instead. See the
+`orchestrator-iterable.php <https://github.com/symfony/ai/blob/main/examples/multi-agent/orchestrator-iterable.php>`_
+example for a runnable version of this loop.
+
+.. note::
+
+    The orchestrator's own routing round is machinery, not answer: its ``model_request`` and
+    ``tool_call`` updates are forwarded so you can show that a decision is being made, but the
+    deltas that spell out the ``Decision`` are not. With the ``stream`` option, the ``delta``
+    updates you receive are therefore only those of the agent that answers.
+
 Learn More
 ----------
 

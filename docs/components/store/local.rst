@@ -86,16 +86,16 @@ Metadata Filtering
 
 Both stores support filtering search results based on document metadata using a callable::
 
-    use Symfony\AI\Store\Document\VectorDocument;
+    use Symfony\AI\Store\Document\VectorDocumentInterface;
 
     $results = $store->query($vectorQuery, [
-        'filter' => fn(VectorDocument $doc) => $doc->getMetadata()['category'] === 'products',
+        'filter' => fn(VectorDocumentInterface $doc) => $doc->getMetadata()['category'] === 'products',
     ]);
 
 You can combine multiple conditions::
 
     $results = $store->query($vectorQuery, [
-        'filter' => fn(VectorDocument $doc) =>
+        'filter' => fn(VectorDocumentInterface $doc) =>
             $doc->getMetadata()['price'] <= 100
             && $doc->getMetadata()['stock'] > 0
             && $doc->getMetadata()['enabled'] === true,
@@ -105,7 +105,7 @@ You can combine multiple conditions::
 Filter nested metadata::
 
     $results = $store->query($vectorQuery, [
-        'filter' => fn(VectorDocument $doc) =>
+        'filter' => fn(VectorDocumentInterface $doc) =>
             $doc->getMetadata()['options']['size'] === 'S'
             && $doc->getMetadata()['options']['color'] === 'blue',
     ]);
@@ -114,7 +114,7 @@ Use array functions for complex filtering::
 
     $allowedBrands = ['Nike', 'Adidas', 'Puma'];
     $results = $store->query($vectorQuery, [
-        'filter' => fn(VectorDocument $doc) =>
+        'filter' => fn(VectorDocumentInterface $doc) =>
             \in_array($doc->getMetadata()['brand'] ?? '', $allowedBrands, true),
     ]);
 
@@ -134,5 +134,5 @@ Example combining both options::
 
     $results = $store->query($vectorQuery, [
         'maxItems' => 5,
-        'filter' => fn(VectorDocument $doc) => $doc->getMetadata()['active'] === true,
+        'filter' => fn(VectorDocumentInterface $doc) => $doc->getMetadata()['active'] === true,
     ]);

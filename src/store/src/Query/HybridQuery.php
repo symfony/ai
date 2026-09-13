@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Query;
 
-use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 /**
@@ -28,7 +28,7 @@ final class HybridQuery implements QueryInterface
      * @param string|array<string> $text Single search text or array of texts (combined with OR logic)
      */
     public function __construct(
-        private readonly Vector $vector,
+        private readonly VectorInterface $vector,
         private readonly string|array $text,
         private readonly float $semanticRatio = 0.5,
     ) {
@@ -37,7 +37,7 @@ final class HybridQuery implements QueryInterface
         }
     }
 
-    public function getVector(): Vector
+    public function getVector(): VectorInterface
     {
         return $this->vector;
     }

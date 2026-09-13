@@ -23,8 +23,8 @@
     "require": {
         "php": ">=8.2",
         "centamiv/vektor": "^2.0.1",
-        "symfony/ai-platform": "^0.12",
-        "symfony/ai-store": "^0.12",
+        "symfony/ai-platform": "^0.13",
+        "symfony/ai-store": "^0.13",
         "symfony/filesystem": "^7.3|^8.0",
         "symfony/uid": "^7.3|^8.0"
     },

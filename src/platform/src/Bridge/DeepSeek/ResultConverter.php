@@ -94,8 +94,8 @@ final class ResultConverter implements ResultConverterInterface
     /**
      * @param array<string, mixed> $usage
      */
-    protected function convertStreamUsage(array $usage): TokenUsage
+    protected function convertStreamUsage(array $usage, ?string $model = null): TokenUsage
     {
-        return $this->getTokenUsageExtractor()->extractFromArray($usage);
+        return $this->getTokenUsageExtractor()->extractFromArray($usage, $model);
     }
 }

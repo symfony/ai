@@ -27,4 +27,4 @@ $agent = new Agent($platform, 'gpt-oss-120b', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('Please summarize this video for me: https://www.youtube.com/watch?v=6uXW-ulpj0s'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

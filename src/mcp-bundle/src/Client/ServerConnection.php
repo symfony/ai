@@ -15,6 +15,7 @@ use Mcp\Client;
 use Mcp\Client\Transport\TransportInterface;
 use Mcp\Exception\ExceptionInterface as McpExceptionInterface;
 use Mcp\Schema\Enum\LoggingLevel;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\PromptReference;
 use Mcp\Schema\ResourceReference;
@@ -109,6 +110,13 @@ final class ServerConnection implements ServerConnectionInterface, ResetInterfac
         return $this->client->getServerInfo();
     }
 
+    public function getProtocolVersion(): ?ProtocolVersion
+    {
+        $this->connect();
+
+        return $this->client->getProtocolVersion();
+    }
+
     public function getInstructions(): ?string
     {
         $this->connect();
@@ -184,6 +192,11 @@ final class ServerConnection implements ServerConnectionInterface, ResetInterfac
     public function setLoggingLevel(LoggingLevel $level): void
     {
         $this->call('logging/setLevel', fn () => $this->client->setLoggingLevel($level));
+    }
+
+    public function sendRootsListChanged(): void
+    {
+        $this->call('notifications/roots/list_changed', fn () => $this->client->sendRootsListChanged());
     }
 
     /**

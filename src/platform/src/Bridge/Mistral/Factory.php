@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
+use Symfony\AI\Platform\Bridge\Mistral\Contract\AssistantMessageNormalizer;
+use Symfony\AI\Platform\Bridge\Mistral\Contract\AudioNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentUrlNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\ImageUrlNormalizer;
@@ -47,14 +49,17 @@ final class Factory
 
         return new Provider(
             $name,
-            [new Embeddings\ModelClient($httpClient, $apiKey, $baseUrl), new Llm\ModelClient($httpClient, $apiKey, $baseUrl), new Ocr\ModelClient($httpClient, $apiKey)],
-            [new Embeddings\ResultConverter(), new Llm\ResultConverter(), new Ocr\ResultConverter()],
+            [new Embeddings\ModelClient($httpClient, $apiKey, $baseUrl), new Llm\ModelClient($httpClient, $apiKey, $baseUrl), new Ocr\ModelClient($httpClient, $apiKey), new SpeechToText\ModelClient($httpClient, $apiKey, $baseUrl)],
+            [new Embeddings\ResultConverter(), new Llm\ResultConverter(), new Ocr\ResultConverter(), new SpeechToText\ResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create([
+                new AssistantMessageNormalizer(),
                 new ToolNormalizer(),
                 new DocumentNormalizer(),
                 new DocumentUrlNormalizer(),
                 new ImageUrlNormalizer(),
+                new AudioNormalizer(),
+                new SpeechToText\AudioNormalizer(),
             ]),
             $eventDispatcher,
         );

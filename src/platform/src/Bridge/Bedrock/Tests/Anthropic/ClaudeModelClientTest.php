@@ -48,7 +48,7 @@ final class ClaudeModelClientTest extends TestCase
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('us.anthropic.claude-sonnet-4-6', $arg->getModelId());
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 return true;
             }))
@@ -143,7 +143,7 @@ final class ClaudeModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayNotHasKey('model', $body);
@@ -165,7 +165,7 @@ final class ClaudeModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertSame('bedrock-'.self::VERSION, $body['anthropic_version']);
@@ -187,7 +187,7 @@ final class ClaudeModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertSame(['type' => 'auto'], $body['tool_choice']);
@@ -237,7 +237,7 @@ final class ClaudeModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('output_config', $body);

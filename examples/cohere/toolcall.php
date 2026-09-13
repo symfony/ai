@@ -26,6 +26,6 @@ $agent = new Agent($platform, 'command-a-03-2025', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What time is it?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;
 
 print_token_usage($result->getMetadata()->get('token_usage'));

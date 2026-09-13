@@ -91,7 +91,7 @@ final class SkillsPruneCommandTest extends TestCase
     private function installFixture(): void
     {
         $this->createInstalledPackage($this->rootDir);
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.');
         $this->createManager($this->rootDir)->reinstall();
     }
 

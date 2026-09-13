@@ -99,6 +99,7 @@ final class RecordingProviderTest extends TestCase
 
         $object = $this->replay()->invoke('any-model', 'q')->asObject();
 
+        $this->assertIsObject($object);
         $this->assertSame(42, $object->answer);
     }
 

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -51,15 +52,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->get($this->cacheKey, static fn (): array => []);
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
         $existingVectors = $this->cache->get($this->cacheKey, static fn (): array => []);
 
-        $newVectors = array_map(static fn (VectorDocument $document): array => [
+        $newVectors = array_map(static fn (VectorDocumentInterface $document): array => [
             'id' => $document->getId(),
             'vector' => $document->getVector()->getData(),
             'metadata' => $document->getMetadata()->getArrayCopy(),
@@ -132,7 +133,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool
+     *     filter?: callable(VectorDocumentInterface): bool
      * } $options If maxItems is provided, only the top N results will be returned.
      *            If filter is provided, only documents matching the filter will be considered.
      */
@@ -154,10 +155,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function queryVector(VectorQuery $query, array $options): iterable
     {
@@ -167,7 +168,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
+        $vectorDocuments = array_map(static fn (array $document): VectorDocumentInterface => new VectorDocument(
             id: $document['id'],
             vector: new Vector($document['vector']),
             metadata: new Metadata($document['metadata']),
@@ -183,10 +184,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function queryText(TextQuery $query, array $options): iterable
     {
@@ -196,7 +197,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $vectorDocuments = array_map(static fn (array $document): VectorDocument => new VectorDocument(
+        $vectorDocuments = array_map(static fn (array $document): VectorDocumentInterface => new VectorDocument(
             id: $document['id'],
             vector: new Vector($document['vector']),
             metadata: new Metadata($document['metadata']),
@@ -206,7 +207,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
         }
 
-        $filteredDocuments = array_filter($vectorDocuments, static function (VectorDocument $doc) use ($query): bool {
+        $filteredDocuments = array_filter($vectorDocuments, static function (VectorDocumentInterface $doc) use ($query): bool {
             $text = strtolower($doc->getMetadata()->getText() ?? '');
 
             foreach ($query->getTexts() as $searchText) {
@@ -234,10 +235,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     maxItems?: positive-int,
-     *     filter?: callable(VectorDocument): bool,
+     *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.13
+----
+
+ * [BC BREAK] Remove `ChatStreamListener`; `Chat::stream()` consumes the agent's execution itself and persists the streamed answer once it is complete
+
 0.9
 ---
 

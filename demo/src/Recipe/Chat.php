@@ -17,7 +17,6 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
-use Symfony\AI\Platform\Result\Stream\Delta\PartialObjectDelta;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -85,21 +84,17 @@ final class Chat
             return new Recipe();
         }
 
-        $stream = $this->agent->call($messages, [
+        $execution = $this->agent->call($messages, [
             'stream' => true,
             'response_format' => Recipe::class,
-        ])->getContent();
-
-        \assert(is_iterable($stream));
+        ]);
 
         $recipe = new Recipe();
-        foreach ($stream as $delta) {
-            if ($delta instanceof PartialObjectDelta) {
-                $recipe = $delta->getObject();
-                \assert($recipe instanceof Recipe);
+        foreach ($execution->asStreamedObject() as $partial) {
+            \assert($partial instanceof Recipe);
+            $recipe = $partial;
 
-                yield $recipe;
-            }
+            yield $recipe;
         }
 
         $assistantMessage = Message::ofAssistant($recipe->toString());

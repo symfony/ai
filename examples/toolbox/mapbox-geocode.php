@@ -27,4 +27,4 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What are the coordinates of Brandenburg Gate in Berlin?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

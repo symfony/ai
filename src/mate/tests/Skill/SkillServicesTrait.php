@@ -36,15 +36,17 @@ trait SkillServicesTrait
         $frontmatter = new SkillFrontmatter();
         $hasher = new SkillContentHasher();
         $repository = new SkillStateRepository($rootDir);
+        $filesystem = new Filesystem();
 
         return new SkillManager(
             $rootDir,
             new ComposerExtensionDiscovery($rootDir, $logger),
             new SkillDiscovery($rootDir, $frontmatter, $logger),
             $repository,
-            new SkillInstaller($rootDir, $repository, $frontmatter, $hasher, $linker ?? new Linker(), new Filesystem(), $logger),
+            new SkillInstaller($rootDir, $repository, $frontmatter, $hasher, $linker ?? new Linker(), $filesystem, $logger),
             $hasher,
             $frontmatter,
+            $filesystem,
         );
     }
 

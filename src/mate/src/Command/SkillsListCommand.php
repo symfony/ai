@@ -77,7 +77,7 @@ class SkillsListCommand extends Command
         $format = $input->getOption('format');
         \assert(\is_string($format));
 
-        if (!$this->ensureToonFormatAvailable($io, $format)) {
+        if (!$this->ensureFormatSupported($io, $format, ['table', 'json', 'toon'])) {
             return Command::FAILURE;
         }
 

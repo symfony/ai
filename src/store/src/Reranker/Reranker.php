@@ -14,7 +14,7 @@ namespace Symfony\AI\Store\Reranker;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 
 /**
  * Platform-based reranker that delegates to PlatformInterface for cross-encoder scoring.
@@ -37,7 +37,7 @@ final class Reranker implements RerankerInterface
         }
 
         $texts = array_map(
-            static fn (VectorDocument $doc): string => $doc->getMetadata()->getText()
+            static fn (VectorDocumentInterface $doc): string => $doc->getMetadata()->getText()
                 ?? $doc->getMetadata()->getSource() ?? '',
             $documents,
         );

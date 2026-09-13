@@ -173,7 +173,7 @@ echo "--- Agent Search Process ---\n\n";
 $messages = new MessageBag(Message::ofUser($question));
 $result = $agent->call($messages);
 
-echo $result->getContent()."\n\n";
+echo $result->asText()."\n\n";
 
 // 5. Show the final working set
 echo "--- Final Working Set ---\n";

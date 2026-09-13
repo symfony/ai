@@ -23,7 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Display all MCP capabilities grouped by extension.
+ * Display all capabilities grouped by extension.
  *
  * @phpstan-import-type Capabilities from CapabilityCollector
  * @phpstan-import-type ExtensionData from DebugExtensionsCommand
@@ -35,14 +35,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *         extensions: int,
  *         tools: int,
  *         resources: int,
- *         prompts: int,
  *         resource_templates: int
  *     }
  * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-#[AsCommand('debug:capabilities', 'Display all MCP capabilities grouped by extension')]
+#[AsCommand('debug:capabilities', 'Display all capabilities grouped by extension')]
 class DebugCapabilitiesCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
@@ -70,7 +69,7 @@ class DebugCapabilitiesCommand extends Command
 
     public static function getDefaultDescription(): string
     {
-        return 'Display all MCP capabilities grouped by extension';
+        return 'Display all capabilities grouped by extension';
     }
 
     protected function configure(): void
@@ -78,10 +77,10 @@ class DebugCapabilitiesCommand extends Command
         $this
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
             ->addOption('extension', null, InputOption::VALUE_REQUIRED, 'Filter by extension package name')
-            ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Filter by type (tool, resource, prompt, template)')
+            ->addOption('type', null, InputOption::VALUE_REQUIRED, 'Filter by type (tool, resource, template)')
             ->setHelp(
                 <<<'HELP'
-The <info>%command.name%</info> command displays all discovered MCP capabilities
+The <info>%command.name%</info> command displays all discovered capabilities
 grouped by their providing extension/package.
 
 <info>Usage Examples:</info>
@@ -114,7 +113,7 @@ HELP
         $format = $input->getOption('format');
         \assert(\is_string($format));
 
-        if (!$this->ensureToonFormatAvailable($io, $format)) {
+        if (!$this->ensureFormatSupported($io, $format, ['text', 'json', 'toon'])) {
             return Command::FAILURE;
         }
 
@@ -126,14 +125,22 @@ HELP
         $extensionFilter = $input->getOption('extension');
         $typeFilter = $input->getOption('type');
 
-        if (null !== $extensionFilter) {
-            \assert(\is_string($extensionFilter));
-            $capabilities = $this->filterExtensions($capabilities, $extensionFilter);
-        }
+        // A rejected filter is a caller mistake, not a crash; rendering it as an uncaught
+        // exception buries the message under a file and line the caller cannot act on.
+        try {
+            if (null !== $extensionFilter) {
+                \assert(\is_string($extensionFilter));
+                $capabilities = $this->filterExtensions($capabilities, $extensionFilter);
+            }
 
-        if (null !== $typeFilter) {
-            \assert(\is_string($typeFilter));
-            $capabilities = $this->filterByType($capabilities, $typeFilter);
+            if (null !== $typeFilter) {
+                \assert(\is_string($typeFilter));
+                $capabilities = $this->filterByType($capabilities, $typeFilter);
+            }
+        } catch (InvalidArgumentException $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
         }
 
         if ('json' === $format) {
@@ -168,7 +175,7 @@ HELP
      */
     private function filterByType(array $capabilities, string $type): array
     {
-        $validTypes = ['tool', 'resource', 'prompt', 'template'];
+        $validTypes = ['tool', 'resource', 'template'];
         if (!\in_array($type, $validTypes, true)) {
             throw new InvalidArgumentException(\sprintf('Invalid type "%s". Valid types: "%s"', $type, implode(', ', $validTypes)));
         }
@@ -176,7 +183,6 @@ HELP
         $typeMap = [
             'tool' => 'tools',
             'resource' => 'resources',
-            'prompt' => 'prompts',
             'template' => 'resource_templates',
         ];
 
@@ -195,11 +201,10 @@ HELP
      */
     private function outputText(array $capabilitiesByExtension, SymfonyStyle $io): void
     {
-        $io->title('Mate MCP Capabilities');
+        $io->title('Mate Capabilities');
 
         $totalTools = 0;
         $totalResources = 0;
-        $totalPrompts = 0;
         $totalTemplates = 0;
 
         foreach ($capabilitiesByExtension as $extensionName => $capabilities) {
@@ -240,20 +245,6 @@ HELP
                 $totalResources += \count($resources);
             }
 
-            $prompts = $capabilities['prompts'] ?? [];
-            if (\count($prompts) > 0) {
-                $io->text(\sprintf('<info>Prompts (%d)</info>', \count($prompts)));
-                foreach ($prompts as $name => $prompt) {
-                    $io->text(\sprintf('  • %s', $name));
-                    $io->text(\sprintf('    Handler: %s', $prompt['handler']));
-                    if ('' !== ($prompt['description'] ?? '')) {
-                        $io->text(\sprintf('    Description: %s', $prompt['description']));
-                    }
-                }
-                $io->newLine();
-                $totalPrompts += \count($prompts);
-            }
-
             $templates = $capabilities['resource_templates'] ?? [];
             if (\count($templates) > 0) {
                 $io->text(\sprintf('<info>Resource Templates (%d)</info>', \count($templates)));
@@ -273,7 +264,6 @@ HELP
         $io->text(\sprintf('Extensions: %d', \count($capabilitiesByExtension)));
         $io->text(\sprintf('Tools: %d', $totalTools));
         $io->text(\sprintf('Resources: %d', $totalResources));
-        $io->text(\sprintf('Prompts: %d', $totalPrompts));
         $io->text(\sprintf('Templates: %d', $totalTemplates));
     }
 
@@ -286,13 +276,11 @@ HELP
     {
         $totalTools = 0;
         $totalResources = 0;
-        $totalPrompts = 0;
         $totalTemplates = 0;
 
         foreach ($capabilitiesByExtension as $caps) {
             $totalTools += \count($caps['tools'] ?? []);
             $totalResources += \count($caps['resources'] ?? []);
-            $totalPrompts += \count($caps['prompts'] ?? []);
             $totalTemplates += \count($caps['resource_templates'] ?? []);
         }
 
@@ -302,7 +290,6 @@ HELP
                 'extensions' => \count($capabilitiesByExtension),
                 'tools' => $totalTools,
                 'resources' => $totalResources,
-                'prompts' => $totalPrompts,
                 'resource_templates' => $totalTemplates,
             ],
         ];

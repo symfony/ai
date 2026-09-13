@@ -486,7 +486,7 @@ Configure the prompt with a file path:
                 prompt:
                     file: '%kernel.project_dir%/prompts/assistant.txt'
 
-The file can be in any text format (.txt, .json, .md, etc.). The entire content of the file will be used as the system prompt text.
+The file can be in any text format (.txt, .json, .md, etc.). The entire content of the file will be used as the system prompt text. The file may contain ``{placeholder}`` markers, which are replaced at call time when matching ``template_vars`` are provided in the agent input.
 
 Example Text File
 .................
@@ -1429,11 +1429,11 @@ Speech is disabled by default and can be disabled when needed with ``speech: fal
 Using the result
 ~~~~~~~~~~~~~~~~
 
-When TTS is configured, the decorated agent returns the speech result
-(a :class:`Symfony\\AI\\Platform\\Result\\BinaryResult`) directly. The original text from the LLM is available
+When TTS is configured, the decorated agent's execution resolves to the speech result
+(a :class:`Symfony\\AI\\Platform\\Result\\BinaryResult`). The original text from the LLM is available
 via the result's metadata (under the ``text`` key)::
 
-    $result = $agent->call($messages);
+    $result = $agent->call($messages)->getResult();
 
     $result->getMetadata()->get('text');    // text from the LLM
     $result->getContent();                  // raw audio bytes

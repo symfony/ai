@@ -31,8 +31,8 @@ $messages = new MessageBag(
     Message::ofUser('Compute the 10th Fibonacci number using a short Python snippet.'),
 );
 
-$result = $agent->call($messages, $options);
-$messages->add($assistant = Message::ofAssistant($result));
+$execution = $agent->call($messages, $options);
+$messages->add($assistant = Message::ofAssistant($execution->getResult()));
 
 output()->writeln('<info>====== Turn 1 ======</info>');
 foreach ($assistant->getContent() as $part) {
@@ -49,5 +49,5 @@ echo \PHP_EOL;
 
 output()->writeln('<info>====== Turn 2 ======</info>');
 $messages->add(Message::ofUser('What number did your snippet print? Answer with the number only.'));
-$result = $agent->call($messages, $options);
-output()->writeln('<comment>Assistant:</comment> '.$result->getContent());
+$execution = $agent->call($messages, $options);
+output()->writeln('<comment>Assistant:</comment> '.$execution->asText());

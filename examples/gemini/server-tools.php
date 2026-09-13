@@ -33,4 +33,4 @@ $result = $agent->call($messages, [
     'temperature' => 1.0,
 ]);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

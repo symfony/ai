@@ -1,7 +1,7 @@
-Creating MCP Extensions
-=======================
+Creating Mate Extensions
+========================
 
-MCP extensions are Composer packages that declare themselves using a specific configuration
+Mate extensions are Composer packages that declare themselves using a specific configuration
 in ``composer.json``, similar to PHPStan extensions.
 
 Quick Start
@@ -19,7 +19,7 @@ You can also start from the official extension template:
         "name": "vendor/my-extension",
         "type": "library",
         "require": {
-            "symfony/ai-mate": "^0.12"
+            "symfony/ai-mate": "^0.13"
         },
         "extra": {
             "ai-mate": {
@@ -33,13 +33,14 @@ The ``extra.ai-mate`` section is required for your package to be discovered as a
 If your package uses Mate internally but must not be exposed as a reusable extension, set
 ``"extension": false`` in ``extra.ai-mate``.
 
-2. Create MCP Capabilities
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+2. Create Capabilities
+~~~~~~~~~~~~~~~~~~~~~~
 
-::
+Mark public methods with the native Mate attributes. Mate finds them by reflection and derives
+the JSON input schema from the method signature plus the ``@param`` PHPDoc::
 
-    use Mcp\Capability\Attribute\McpTool;
     use Psr\Log\LoggerInterface;
+    use Symfony\AI\Mate\Attribute\MateTool;
 
     class MyTool
     {
@@ -49,7 +50,10 @@ If your package uses Mate internally but must not be exposed as a reusable exten
         ) {
         }
 
-        #[McpTool(name: 'my-tool', description: 'What this tool does')]
+        /**
+         * @param string $param The value to process
+         */
+        #[MateTool(name: 'my-tool', title: 'My Tool', description: 'What this tool does')]
         public function execute(string $param): string
         {
             $this->logger->info('Tool executed', ['param' => $param]);
@@ -57,6 +61,24 @@ If your package uses Mate internally but must not be exposed as a reusable exten
             return 'Result: ' . $param;
         }
     }
+
+Three attributes are available, all in ``Symfony\AI\Mate\Attribute``:
+
+``#[MateTool]``
+    A method the agent calls with arguments. Parameters: ``name``, ``title``, ``description``.
+
+``#[MateResource]``
+    Data the agent addresses by a fixed URI. Parameters: ``uri``, ``name``, ``title``,
+    ``description``, ``mimeType``.
+
+``#[MateResourceTemplate]``
+    Data addressed by a URI pattern; the variables of ``uriTemplate`` are passed to the method.
+    Parameters: ``uriTemplate``, ``name``, ``title``, ``description``, ``mimeType``.
+
+.. note::
+
+    These are Mate's own attributes and unrelated to the Agent component's
+    ``Symfony\AI\Agent\Toolbox\Attribute\AsTool``.
 
 3. Install and Enable
 ~~~~~~~~~~~~~~~~~~~~~
@@ -85,7 +107,7 @@ To disable an extension, set ``enabled`` to ``false``::
 Dependency Injection
 --------------------
 
-Tools, Resources, and Prompts support constructor dependency injection via Symfony's DI Container.
+Tools and resources support constructor dependency injection via Symfony's DI Container.
 Dependencies are automatically resolved and injected.
 
 Configuring Services
@@ -150,7 +172,7 @@ Agent Instructions
 - Path to a markdown file containing instructions for AI agents
 - Relative to package root
 - Conventionally named ``INSTRUCTIONS.md``
-- Content is aggregated and provided to AI assistants during MCP handshake
+- Content is aggregated into ``mate/AGENT_INSTRUCTIONS.md`` and the managed block in ``AGENTS.md``
 
 Example configuration:
 
@@ -222,13 +244,13 @@ Example opt-out:
     }
 
 Writing Effective Agent Instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agent instructions help AI assistants understand when and how to use your extension's tools.
 A good ``INSTRUCTIONS.md`` file should:
 
-1. **Map CLI commands to MCP tools** - Show what tools replace common CLI operations
-2. **Highlight benefits** - Explain why the MCP tools are better than alternatives
+1. **Map existing commands to your tools** - Show what tools replace common CLI operations
+2. **Highlight benefits** - Explain why your tools are better than the alternatives
 3. **Be concise** - AI assistants have context limits; focus on essential guidance
 
 Example ``INSTRUCTIONS.md``:
@@ -237,12 +259,12 @@ Example ``INSTRUCTIONS.md``:
 
     ## My Extension
 
-    Use MCP tools instead of CLI for better results:
+    Use the Mate tools instead of the CLI for better results:
 
-    | Instead of...              | Use                    |
-    |----------------------------|------------------------|
-    | `my-cli command`           | `my-tool`              |
-    | `my-cli search "term"`     | `my-search` with term  |
+    | Instead of...              | Use                                                    |
+    |----------------------------|--------------------------------------------------------|
+    | `my-cli command`           | `vendor/bin/mate tools:call my-tool`                   |
+    | `my-cli search "term"`     | `vendor/bin/mate tools:call my-search --term="term"`   |
 
     ### Benefits
     - Structured output that AI can parse
@@ -312,7 +334,7 @@ If extensions are discovered but not loading:
            'vendor/my-extension' => ['enabled' => true],  // Must be true
        ];
 
-2. **Verify scan directories exist** and contain PHP files with MCP attributes.
+2. **Verify scan directories exist** and contain PHP files with Mate attributes.
 
 3. **Check for PHP errors** in your extension code:
 
@@ -323,15 +345,15 @@ If extensions are discovered but not loading:
 Tools Not Appearing
 ~~~~~~~~~~~~~~~~~~~
 
-If your MCP tools don't appear in the AI assistant:
+If your tools don't appear:
 
-1. **Verify MCP attributes** are correctly applied::
+1. **Verify the Mate attributes** are correctly applied::
 
-       use Mcp\Capability\Attribute\McpTool;
+       use Symfony\AI\Mate\Attribute\MateTool;
 
        class MyTool
        {
-           #[McpTool(name: 'my-tool', description: 'Description here')]
+           #[MateTool(name: 'my-tool', description: 'Description here')]
            public function execute(): string
            {
                return 'result';
@@ -340,9 +362,13 @@ If your MCP tools don't appear in the AI assistant:
 
 2. **Check that classes are in scan directories** defined in ``composer.json``.
 
-3. **Restart your AI assistant** after making changes.
+3. **Confirm the class is autoloadable** - Mate resolves the class name from the file and skips
+   the file when the class cannot be loaded. Run ``composer dump-autoload`` after adding it.
 
-4. **Check server logs** for registration errors.
+4. **List what Mate actually found**::
+
+       $ vendor/bin/mate tools:list
+       $ vendor/bin/mate debug:capabilities --extension=vendor/my-extension
 
 Tool Execution Fails
 ~~~~~~~~~~~~~~~~~~~~
@@ -418,4 +444,4 @@ If your agent instructions aren't being provided to AI assistants:
 
    Look for ``instructions`` field in the output.
 
-For general server issues and debugging tips, see the :doc:`troubleshooting` guide.
+For general issues and debugging tips, see the :doc:`troubleshooting` guide.

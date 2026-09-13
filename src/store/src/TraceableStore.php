@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
@@ -22,7 +22,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *
  * @phpstan-type StoreData array{
  *     method: string,
- *     documents?: VectorDocument|VectorDocument[],
+ *     documents?: VectorDocumentInterface|VectorDocumentInterface[],
  *     query?: QueryInterface,
  *     ids?: string[]|string,
  *     options?: array<string, mixed>,
@@ -54,7 +54,7 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         return $this->store;
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
         $this->calls[] = [
             'method' => 'add',

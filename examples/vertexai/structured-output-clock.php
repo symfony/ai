@@ -48,4 +48,4 @@ $result = $agent->call($messages, ['response_format' => [
     ],
 ]]);
 
-dump($result->getContent());
+dump($result->asObject());

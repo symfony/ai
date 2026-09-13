@@ -59,7 +59,7 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
         }
 
         $this->calls[] = [
-            'model' => $model,
+            'model' => $model instanceof Model ? $model->getName() : $model,
             'input' => \is_object($input) ? clone $input : $input,
             'options' => $options,
             'result' => $deferredResult,

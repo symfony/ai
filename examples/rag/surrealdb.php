@@ -68,4 +68,4 @@ $messages = new MessageBag(
 );
 $response = $agent->call($messages);
 
-echo $response->getContent().\PHP_EOL;
+echo $response->asText().\PHP_EOL;

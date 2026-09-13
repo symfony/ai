@@ -46,7 +46,7 @@ final class NovaModelClientTest extends TestCase
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('us.amazon.nova-pro-v1:0', $arg->getModelId());
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 return true;
             }))
@@ -65,7 +65,7 @@ final class NovaModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayNotHasKey('model', $body);
@@ -87,7 +87,7 @@ final class NovaModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertSame(['tools' => ['Tool']], $body['toolConfig']);
@@ -113,7 +113,7 @@ final class NovaModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('inferenceConfig', $body);
@@ -140,7 +140,7 @@ final class NovaModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('inferenceConfig', $body);
@@ -167,7 +167,7 @@ final class NovaModelClientTest extends TestCase
             ->with($this->callback(function ($arg) {
                 $this->assertInstanceOf(InvokeModelRequest::class, $arg);
                 $this->assertSame('application/json', $arg->getContentType());
-                $this->assertTrue(json_validate($arg->getBody()));
+                $this->assertJson($arg->getBody());
 
                 $body = json_decode($arg->getBody(), true);
                 $this->assertArrayHasKey('inferenceConfig', $body);

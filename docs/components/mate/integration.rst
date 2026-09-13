@@ -1,173 +1,165 @@
 Integration
 ===========
 
-This page explains how to integrate Symfony AI Mate with AI development tools.
+This page explains how to make Symfony AI Mate discoverable to your coding agent.
 
-JetBrains AI Assistant
-----------------------
+There is no server to configure. Mate is a CLI, so any agent that can run a shell command can
+already use it. The whole integration problem is a different one: **an agent will not use a tool it
+does not know exists.** Everything below is about closing that gap.
 
-To connect Symfony AI Mate to JetBrains AI Assistant (see `JetBrains MCP documentation`_ for more details):
+How agents find Mate
+--------------------
 
-1. Press ``Cmd`` + ``,`` (macOS) or ``Ctrl`` + ``Alt`` + ``S`` (Windows/Linux) to open **Settings**.
-2. Navigate to **Tools | AI Assistant | Model Context Protocol (MCP)**.
-3. Click the **+** (Add) button.
-4. Configure the server parameters:
+``mate init`` and ``mate discover`` write three things:
 
-   - **Name**: Symfony AI Mate
-   - **Command type**: Select ``stdio``
-   - **Executable**: ``php``
-   - **Arguments**: ``/absolute/path/to/vendor/bin/mate serve``
+``mate/AGENT_INSTRUCTIONS.md``
+    The aggregated instructions of every enabled extension: which tools exist and when to reach for
+    them.
 
-5. Click **OK** to save.
+A managed block in ``AGENTS.md``
+    A summary pointing at the CLI, delimited by ``<!-- BEGIN AI_MATE_INSTRUCTIONS -->`` and
+    ``<!-- END AI_MATE_INSTRUCTIONS -->``. Mate rewrites only what is between those markers, so
+    anything else in your ``AGENTS.md`` is preserved.
 
-.. note::
+``CLAUDE.md``
+    A managed ``@AGENTS.md`` import, because Claude Code reads ``CLAUDE.md`` and would otherwise
+    never see ``AGENTS.md``.
 
-    Replace ``/absolute/path/to/`` with the actual path to your project's vendor directory.
+On top of that, ``mate discover`` installs the Agent Skills of every enabled extension into
+``.agents/skills/`` and mirrors them into ``.claude/skills/``. See the Skills section of the
+:doc:`component documentation <../mate>` for the details.
 
-Claude Desktop
---------------
+Re-run ``vendor/bin/mate discover`` whenever you add or remove an extension. With the Composer
+plugin installed this happens automatically after ``composer install`` and ``composer update``.
 
-To connect Symfony AI Mate to Claude Desktop (see `Claude Desktop MCP documentation`_ for more details):
-
-1. Open Claude Desktop.
-2. Go to **Settings** > **Developer** and click **Edit Config**.
-
-   Alternatively, open the file manually:
-
-   - **macOS**: ``~/Library/Application Support/Claude/claude_desktop_config.json``
-   - **Windows**: ``%APPDATA%\Claude\claude_desktop_config.json``
-
-3. Add the server configuration to the ``mcpServers`` object:
-
-   .. code-block:: json
-
-       {
-           "mcpServers": {
-               "symfony-ai-mate": {
-                   "command": "php",
-                   "args": ["/absolute/path/to/vendor/bin/mate", "serve"]
-               }
-           }
-       }
-
-4. Save the file and restart Claude Desktop.
-
-.. note::
-
-    Replace ``/absolute/path/to/`` with the actual path to your project's vendor directory.
+Per-agent notes
+---------------
 
 Claude Code
------------
+~~~~~~~~~~~
 
-To add Symfony AI Mate to Claude Code (see `Claude Code MCP documentation`_ for more details):
+Works out of the box after ``mate init``: it reads ``CLAUDE.md``, which imports ``AGENTS.md``, and
+loads skills from ``.claude/skills/``. Verify with:
 
 .. code-block:: terminal
 
-    $ claude mcp add mate $(pwd)/vendor/bin/mate serve --scope local
-    $ claude mcp list  # Verify: mate - ✓ Connected
+    $ vendor/bin/mate tools:list
+
+and ask Claude Code to run it. If it prefers its own approach, see `The agent ignores Mate`_.
 
 Codex
------
+~~~~~
 
-Symfony AI Mate initializes project-local Codex wrappers:
+Reads ``AGENTS.md`` and ``.agents/skills/`` directly. No wrapper and no configuration are needed
+any more: earlier versions of Mate shipped ``bin/codex`` wrappers because Codex does not read a
+project-local MCP configuration, but without an MCP server there is nothing left to inject.
 
-* ``bin/codex`` (macOS/Linux)
-* ``bin/codex.bat`` (Windows)
+GitHub Copilot, Cursor, OpenCode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use these wrappers to start Codex with runtime MCP injection:
+These read ``AGENTS.md`` and, where supported, ``.agents/skills/``. If your agent uses a different
+instruction file, import ``AGENTS.md`` from it the way ``CLAUDE.md`` does, or point the agent at
+``mate/AGENT_INSTRUCTIONS.md``.
 
-.. code-block:: terminal
+JetBrains AI Assistant
+~~~~~~~~~~~~~~~~~~~~~~
 
-    $ ./bin/codex
+Add the contents of ``mate/AGENT_INSTRUCTIONS.md`` to the project instructions, and allow the
+assistant to run ``vendor/bin/mate``.
 
-.. note::
+Choosing the PHP interpreter
+----------------------------
 
-    Codex does not read this project's ``mcp.json``. The wrappers pass
-    runtime ``-c mcp_servers...`` options so no persistent Codex config is written.
+Mate runs under whichever ``php`` the agent's shell resolves. That is correct on a machine with a
+single PHP installation and no containers, and wrong in exactly the setups where Mate is most
+useful:
+
+* **ddev, Docker, Lando** - the application, its database and its profiler cache live inside the
+  container. A ``mate`` started on the host may not reach them, or reads a different filesystem
+  entirely.
+* **Several PHP versions side by side** (brew, phpenv, distro packages) - the shell default is not
+  necessarily the one the project targets.
+* **Extensions** - a tool that needs an extension the default binary lacks fails in a way that looks
+  like a bug in Mate.
+
+This matters more than for an ordinary console command, because Mate reads the profiler cache and
+the compiled container of *this* project. Run under the wrong interpreter, it either fails to start
+or reports something that is not the application under test.
+
+``mate init`` asks for this and records it, so in most cases you do not have to do anything: it
+proposes ``ddev exec vendor/bin/mate`` when a ``.ddev/`` directory is present, writes the answer to
+``mate.invocation`` in ``mate/config.php``, and materializes it into ``mate/AGENT_INSTRUCTIONS.md``
+and the managed ``AGENTS.md`` block. It also records the PHP version it ran under as
+``mate.php_version``, and Mate refuses to start under a different one rather than reporting on the
+wrong runtime.
+
+To change it later, edit the two parameters::
+
+    // mate/config.php
+    $container->parameters()
+        ->set('mate.invocation', 'docker compose exec php vendor/bin/mate')
+        ->set('mate.php_version', '8.3')
+    ;
+
+Then run ``vendor/bin/mate discover`` so the instructions pick the new command up.
 
 Troubleshooting
 ---------------
 
-Claude Desktop Not Connecting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _`The agent ignores Mate`:
 
-1. **Verify config file location**:
+The agent ignores Mate
+~~~~~~~~~~~~~~~~~~~~~~
 
-   - macOS: ``~/Library/Application Support/Claude/claude_desktop_config.json``
-   - Windows: ``%APPDATA%\Claude\claude_desktop_config.json``
+The most common failure, and it is a discovery problem rather than a technical one.
 
-2. **Check JSON syntax**:
-
-   .. code-block:: json
-
-       {
-           "mcpServers": {
-               "symfony-ai-mate": {
-                   "command": "php",
-                   "args": ["/absolute/path/to/vendor/bin/mate", "serve"]
-               }
-           }
-       }
-
-3. **Use absolute paths** - relative paths often fail.
-
-4. **Restart Claude Desktop** after configuration changes.
-
-JetBrains AI Assistant Not Connecting
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. **Verify settings path**: Tools → AI Assistant → Model Context Protocol (MCP)
-
-2. **Check configuration**:
-
-   - Command type: ``stdio``
-   - Executable: ``php``
-   - Arguments: ``/absolute/path/to/vendor/bin/mate serve``
-
-3. **Test manually** from the same directory as your IDE.
-
-Claude Code Not Connecting
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. **Check connection status**:
-
-   .. code-block:: terminal
-
-       $ claude mcp list
-
-   Look for ``mate - ✓ Connected``
-
-2. **Re-add the server**:
-
-   .. code-block:: terminal
-
-       $ claude mcp remove mate
-       $ claude mcp add mate $(pwd)/vendor/bin/mate serve --scope local
-
-3. **Check for conflicting servers** with similar names.
-
-Codex Not Showing Mate Tools
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. **Use the wrapper**:
-
-   .. code-block:: terminal
-
-       $ ./bin/codex
-
-2. **Refresh extension and agent instructions**:
+1. **Confirm the instructions exist**:
 
    .. code-block:: terminal
 
        $ vendor/bin/mate discover
 
-3. **Check wrapper scripts exist**:
+   Then check that ``AGENTS.md`` contains the managed block, and that ``CLAUDE.md`` imports it.
 
-   - macOS/Linux: ``bin/codex``
-   - Windows: ``bin/codex.bat``
+2. **Confirm the skills are installed**:
 
-For general server issues and debugging tips, see the :doc:`troubleshooting` guide.
+   .. code-block:: terminal
 
-.. _`JetBrains MCP documentation`: https://www.jetbrains.com/help/idea/model-context-protocol.html
-.. _`Claude Desktop MCP documentation`: https://docs.anthropic.com/en/docs/build-with-claude/mcp
-.. _`Claude Code MCP documentation`: https://docs.anthropic.com/en/docs/build-with-claude/claude-code
+       $ vendor/bin/mate skills:list
+
+   A skill in state ``disabled`` is not installed; an empty list means no enabled extension ships
+   skills.
+
+3. **Confirm the agent reads the file it needs.** Claude Code needs ``CLAUDE.md``, Codex needs
+   ``AGENTS.md``. If you keep your own instruction file, it has to import one of them.
+
+4. **Say it explicitly once.** Asking the agent to run ``vendor/bin/mate tools:list`` is enough to
+   establish that the tools exist; the instructions carry it from there.
+
+The command works, the tools are empty
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate debug:extensions
+    $ vendor/bin/mate debug:capabilities
+
+If an extension shows as ``[not loaded]``, the package is missing or failed to load. If your own
+tools under ``mate/src/`` are absent, run ``composer dump-autoload``: Mate resolves the class name
+from the file and skips files whose class cannot be autoloaded.
+
+Wrong PHP or wrong environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call server-info
+
+This reports the PHP version, OS and loaded extensions of the runtime Mate is using. If that is not
+the runtime serving your application, see `Choosing the PHP interpreter`_.
+
+If Mate refuses to start with a PHP version mismatch instead, that is the same problem caught
+earlier: run the command it names, or correct ``mate.php_version`` if the recorded value is the
+wrong one.
+
+For general debugging tips, see the :doc:`troubleshooting` guide.

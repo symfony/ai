@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
@@ -101,9 +102,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
@@ -205,7 +206,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @return array<string, mixed>
      */
-    private function convertToIndexableArray(VectorDocument $document): array
+    private function convertToIndexableArray(VectorDocumentInterface $document): array
     {
         return [
             'id' => $document->getId(),
@@ -217,7 +218,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array<string, mixed> $data
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data): VectorDocumentInterface
     {
         $id = $data['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
 

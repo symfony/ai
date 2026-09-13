@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<container xmlns="http://symfony.com/schema/dic/services">
+    <services>
+        <service id="cache.app" class="Symfony\Component\Cache\Adapter\ArrayAdapter">
+            <tag name="cache.pool"/>
+        </service>
+        <service id="admin.dashboard" class="Admin\Controller\DashboardController">
+            <tag name="controller.service_arguments"/>
+        </service>
+    </services>
+</container>

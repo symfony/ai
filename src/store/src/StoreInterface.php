@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\QueryInterface;
 
@@ -23,9 +23,9 @@ interface StoreInterface
     /**
      * Adds documents to the store, so they can be queried afterwards.
      *
-     * @param VectorDocument|VectorDocument[] $documents
+     * @param VectorDocumentInterface|VectorDocumentInterface[] $documents
      */
-    public function add(VectorDocument|array $documents): void;
+    public function add(VectorDocumentInterface|array $documents): void;
 
     /**
      * Removes the documents with the given ids from the store.
@@ -47,7 +47,7 @@ interface StoreInterface
      *
      * @param array<string, mixed> $options
      *
-     * @return iterable<VectorDocument>
+     * @return iterable<VectorDocumentInterface>
      *
      * @throws UnsupportedQueryTypeException if query type not supported
      */

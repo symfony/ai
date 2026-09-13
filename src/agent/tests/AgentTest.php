@@ -17,6 +17,7 @@ use Symfony\AI\Agent\AgentAwareInterface;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
+use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
@@ -33,13 +34,17 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class AgentTest extends TestCase
 {
@@ -77,7 +82,7 @@ final class AgentTest extends TestCase
         $processor = new MessageBagCapturingProcessor();
 
         $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor]);
-        $agent->call('Hello there');
+        $agent->call('Hello there')->getResult();
 
         $this->assertInstanceOf(MessageBag::class, $processor->messageBag);
         $messages = $processor->messageBag->getMessages();
@@ -92,7 +97,7 @@ final class AgentTest extends TestCase
         $userMessage = Message::ofUser('Hello there');
 
         $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor]);
-        $agent->call($userMessage);
+        $agent->call($userMessage)->getResult();
 
         $this->assertInstanceOf(MessageBag::class, $processor->messageBag);
         $this->assertSame([$userMessage], $processor->messageBag->getMessages());
@@ -104,7 +109,7 @@ final class AgentTest extends TestCase
         $messageBag = new MessageBag(Message::ofUser('Hello there'));
 
         $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor]);
-        $agent->call($messageBag);
+        $agent->call($messageBag)->getResult();
 
         $this->assertSame($messageBag, $processor->messageBag);
     }
@@ -125,7 +130,7 @@ final class AgentTest extends TestCase
         };
 
         $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$agentAwareProcessor]);
-        $agent->call(new MessageBag());
+        $agent->call(new MessageBag())->getResult();
 
         $this->assertSame($agent, $agentAwareProcessor->agent);
     }
@@ -137,7 +142,7 @@ final class AgentTest extends TestCase
 
         /** @phpstan-ignore-next-line argument.type */
         $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [new \stdClass()]);
-        $agent->call(new MessageBag());
+        $agent->call(new MessageBag())->getResult();
     }
 
     public function testConstructorThrowsExceptionForInvalidOutputProcessor()
@@ -147,7 +152,7 @@ final class AgentTest extends TestCase
 
         /** @phpstan-ignore-next-line argument.type */
         $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [], [new \stdClass()]);
-        $agent->call(new MessageBag());
+        $agent->call(new MessageBag())->getResult();
     }
 
     public function testCallProcessesInputThroughProcessors()
@@ -171,7 +176,7 @@ final class AgentTest extends TestCase
             ->willReturn($response);
 
         $agent = new Agent($platform, $modelName, [$inputProcessor]);
-        $actualResult = $agent->call($messages);
+        $actualResult = $agent->call($messages)->getResult();
 
         $this->assertSame($result, $actualResult);
     }
@@ -197,7 +202,7 @@ final class AgentTest extends TestCase
             ->willReturn($response);
 
         $agent = new Agent($platform, $modelName, [], [$outputProcessor]);
-        $actualResult = $agent->call($messages);
+        $actualResult = $agent->call($messages)->getResult();
 
         $this->assertSame($result, $actualResult);
     }
@@ -217,7 +222,7 @@ final class AgentTest extends TestCase
             ->willReturn($response);
 
         $agent = new Agent($platform, 'gpt-4');
-        $actualResult = $agent->call($messages);
+        $actualResult = $agent->call($messages)->getResult();
 
         $this->assertSame($result, $actualResult);
     }
@@ -237,7 +242,7 @@ final class AgentTest extends TestCase
             ->willReturn($response);
 
         $agent = new Agent($platform, 'gpt-4');
-        $actualResult = $agent->call($messages);
+        $actualResult = $agent->call($messages)->getResult();
 
         $this->assertSame($result, $actualResult);
     }
@@ -258,9 +263,45 @@ final class AgentTest extends TestCase
             ->willReturn($response);
 
         $agent = new Agent($platform, 'gpt-4');
-        $actualResult = $agent->call($messages, $options);
+        $actualResult = $agent->call($messages, $options)->getResult();
 
         $this->assertSame($result, $actualResult);
+    }
+
+    public function testCancelStopsTheActiveStreamAndCancelsItsHttpResponse()
+    {
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects($this->once())->method('cancel');
+
+        $stream = new StreamResult((static function (): \Generator {
+            yield new TextDelta('First');
+            yield new TextDelta('Second');
+        })());
+
+        $platform = $this->createStub(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(
+            new PlainConverter($stream),
+            new RawHttpResult($response),
+            ['stream' => true],
+        ));
+
+        $execution = (new Agent($platform, 'gpt-4'))->call('Hello', ['stream' => true]);
+        $deltas = [];
+
+        foreach ($execution->asStream() as $delta) {
+            $this->assertInstanceOf(TextDelta::class, $delta);
+            $deltas[] = $delta->getText();
+            $execution->cancel();
+            $execution->cancel();
+        }
+
+        $execution->cancel();
+
+        $this->assertSame(['First'], $deltas);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled.');
+
+        $execution->getResult();
     }
 
     public function testConstructorAcceptsTraversableProcessors()
@@ -303,7 +344,7 @@ final class AgentTest extends TestCase
         $this->expectException(MaxIterationsExceededException::class);
         $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
 
-        $agent->call(new MessageBag(), []);
+        $agent->call(new MessageBag(), [])->getResult();
     }
 
     public function testGetNameReturnsDefaultName()

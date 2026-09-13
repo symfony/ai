@@ -5,7 +5,6 @@
     "type": "symfony-ai-mate",
     "keywords": [
         "ai",
-        "mcp",
         "profiler",
         "symfony",
         "debug",
@@ -28,7 +27,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-mate": "^0.12",
+        "symfony/ai-mate": "^0.13",
         "symfony/dependency-injection": "^7.3|^8.0"
     },
     "require-dev": {
@@ -38,6 +37,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "symfony/http-client": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
         "symfony/mailer": "^7.3|^8.0",
         "symfony/stopwatch": "^7.3|^8.0",
@@ -79,7 +79,10 @@
             "includes": [
                 "config/config.php"
             ],
-            "instructions": "INSTRUCTIONS.md"
+            "instructions": "INSTRUCTIONS.md",
+            "skills": [
+                "skills"
+            ]
         }
     }
 }

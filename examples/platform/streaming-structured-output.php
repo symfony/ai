@@ -34,13 +34,16 @@ $result = $platform->invoke('gpt-4o-mini', $messages, [
 ]);
 
 // Each streamed snapshot is a progressively populated Recipe instance: the name
-// appears first, then ingredients trickle in one by one, then the steps. We
-// re-render the whole recipe card on every snapshot so the terminal shows it
-// filling up live instead of dumping the final object at once.
-foreach ($result->asStreamedObject() as $recipe) {
-    /** @var Recipe $recipe */
-    echo "\033[2J\033[H"; // clear screen and move the cursor to the top-left
+// appears first, then ingredients trickle in one by one, then the steps. On an
+// interactive terminal we re-render the whole recipe card on every snapshot so it
+// shows up filling live; when the output is captured - by the example runner or a
+// pipe - the clear-screen escape sequences would garble it, so the card is printed
+// once at the end instead.
+$live = is_interactive();
+$snapshots = 0;
+$latest = null;
 
+$render = static function (Recipe $recipe): void {
     echo '🍕 '.($recipe->name ?? '…')."\n\n";
 
     echo "Ingredients\n-----------\n";
@@ -52,4 +55,22 @@ foreach ($result->asStreamedObject() as $recipe) {
     foreach ($recipe->steps as $index => $step) {
         echo sprintf("  %d. %s\n", $index + 1, $step);
     }
+};
+
+foreach ($result->asStreamedObject() as $recipe) {
+    /* @var Recipe $recipe */
+    ++$snapshots;
+    $latest = $recipe;
+
+    if (!$live) {
+        continue;
+    }
+
+    echo "\033[2J\033[H"; // clear screen and move the cursor to the top-left
+    $render($recipe);
+}
+
+if (!$live && null !== $latest) {
+    echo sprintf("Received %d streamed snapshots, the last one being:\n\n", $snapshots);
+    $render($latest);
 }

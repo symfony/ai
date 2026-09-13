@@ -339,6 +339,7 @@ final class PlatformSubscriberTest extends TestCase
 
         $processor->processResult($resultEvent);
 
+        /** @var City $result */
         $result = $resultEvent->getDeferredResult()->asObject();
         $this->assertSame($city, $result);
         $this->assertSame('Berlin', $result->name);
@@ -409,7 +410,7 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame(['response_format' => 'url'], $event->getOptions());
     }
 
-    public function testObjectToPopulateIsResetAfterProcessResult()
+    public function testObjectToPopulateIsNotReusedForFollowingInvocation()
     {
         $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
 
@@ -476,5 +477,122 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame(3500000, $city1->population);
         $this->assertSame('Paris', $city2->name);
         $this->assertSame(2161000, $city2->population);
+    }
+
+    public function testOutputTypeIsNotReusedForFollowingInvocationWithRawResponseFormat()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $invocationEvent1 = new InvocationEvent($model, new MessageBag(), ['response_format' => SomeStructure::class]);
+        $processor->processInput($invocationEvent1);
+
+        $converter1 = new PlainConverter(new TextResult('{"some": "data"}'));
+        $deferred1 = new DeferredResult($converter1, new InMemoryRawResult());
+        $resultEvent1 = new ResultEvent($model, $deferred1, $invocationEvent1->getOptions());
+        $processor->processResult($resultEvent1);
+
+        // A raw JSON schema is passed through untouched by processInput(), so no output type is set.
+        $rawResponseFormat = ['type' => 'json_schema', 'json_schema' => ['name' => 'city', 'schema' => ['type' => 'object']]];
+        $invocationEvent2 = new InvocationEvent($model, new MessageBag(), ['response_format' => $rawResponseFormat]);
+        $processor->processInput($invocationEvent2);
+
+        $this->assertSame(['response_format' => $rawResponseFormat], $invocationEvent2->getOptions());
+
+        $converter2 = new PlainConverter(new TextResult('{"name": "Paris"}'));
+        $deferred2 = new DeferredResult($converter2, new InMemoryRawResult());
+        $resultEvent2 = new ResultEvent($model, $deferred2, $invocationEvent2->getOptions());
+        $processor->processResult($resultEvent2);
+
+        $this->assertSame(['name' => 'Paris'], $resultEvent2->getDeferredResult()->getResult()->getContent());
+    }
+
+    public function testOutputTypeIsNotReusedForFollowingInvocationWithNonClassStringResponseFormat()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $invocationEvent1 = new InvocationEvent($model, new MessageBag(), ['response_format' => SomeStructure::class]);
+        $processor->processInput($invocationEvent1);
+
+        $converter1 = new PlainConverter(new TextResult('{"some": "data"}'));
+        $deferred1 = new DeferredResult($converter1, new InMemoryRawResult());
+        $resultEvent1 = new ResultEvent($model, $deferred1, $invocationEvent1->getOptions());
+        $processor->processResult($resultEvent1);
+
+        $invocationEvent2 = new InvocationEvent($model, new MessageBag(), ['response_format' => 'json_object']);
+        $processor->processInput($invocationEvent2);
+
+        $this->assertSame(['response_format' => 'json_object'], $invocationEvent2->getOptions());
+
+        $converter2 = new PlainConverter(new TextResult('{"name": "Paris"}'));
+        $deferred2 = new DeferredResult($converter2, new InMemoryRawResult());
+        $resultEvent2 = new ResultEvent($model, $deferred2, $invocationEvent2->getOptions());
+        $processor->processResult($resultEvent2);
+
+        $this->assertSame(['name' => 'Paris'], $resultEvent2->getDeferredResult()->getResult()->getContent());
+    }
+
+    public function testInvocationWithoutResultEventDoesNotLeakStateIntoFollowingInvocation()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        // The provider call fails, so this invocation never reaches processResult().
+        $city = new City(name: 'Berlin');
+        $invocationEvent1 = new InvocationEvent($model, new MessageBag(), ['response_format' => $city]);
+        $processor->processInput($invocationEvent1);
+
+        $rawResponseFormat = ['type' => 'json_schema', 'json_schema' => ['name' => 'city', 'schema' => ['type' => 'object']]];
+        $invocationEvent2 = new InvocationEvent($model, new MessageBag(), ['response_format' => $rawResponseFormat]);
+        $processor->processInput($invocationEvent2);
+
+        $converter2 = new PlainConverter(new TextResult('{"name": "Paris", "population": 2161000}'));
+        $deferred2 = new DeferredResult($converter2, new InMemoryRawResult());
+        $resultEvent2 = new ResultEvent($model, $deferred2, $invocationEvent2->getOptions());
+        $processor->processResult($resultEvent2);
+
+        $this->assertSame(['name' => 'Paris', 'population' => 2161000], $resultEvent2->getDeferredResult()->getResult()->getContent());
+        $this->assertSame('Berlin', $city->name);
+        $this->assertNull($city->population);
+    }
+
+    public function testInvocationFailingInProcessInputDoesNotLeakStateIntoFollowingInvocation()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $invocationEvent1 = new InvocationEvent($model, new MessageBag(), ['response_format' => SomeStructure::class]);
+        $processor->processInput($invocationEvent1);
+
+        $converter1 = new PlainConverter(new TextResult('{"some": "data"}'));
+        $deferred1 = new DeferredResult($converter1, new InMemoryRawResult());
+        $resultEvent1 = new ResultEvent($model, $deferred1, $invocationEvent1->getOptions());
+        $processor->processResult($resultEvent1);
+
+        // processInput() stores the object to populate before it rejects the unsupported model.
+        $city = new City(name: 'Berlin');
+        $unsupportedModel = new Model('gpt-3');
+        $invocationEvent2 = new InvocationEvent($unsupportedModel, new MessageBag(), ['response_format' => $city]);
+
+        try {
+            $processor->processInput($invocationEvent2);
+            $this->fail(\sprintf('Expected "%s" to be thrown.', MissingModelSupportException::class));
+        } catch (MissingModelSupportException) {
+        }
+
+        // A class, not a raw schema: the object to populate is only consulted once an output
+        // type is set, so a leaked one would be deserialized into here.
+        $invocationEvent3 = new InvocationEvent($model, new MessageBag(), ['response_format' => City::class]);
+        $processor->processInput($invocationEvent3);
+
+        $converter3 = new PlainConverter(new TextResult('{"name": "Paris", "population": 2161000}'));
+        $deferred3 = new DeferredResult($converter3, new InMemoryRawResult());
+        $resultEvent3 = new ResultEvent($model, $deferred3, $invocationEvent3->getOptions());
+        $processor->processResult($resultEvent3);
+
+        $this->assertNotSame($city, $resultEvent3->getDeferredResult()->asObject());
+        $this->assertSame('Berlin', $city->name);
+        $this->assertNull($city->population);
     }
 }

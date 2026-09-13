@@ -27,4 +27,4 @@ $agent = new Agent($platform, 'deepseek-chat', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('How many days until next Christmas?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

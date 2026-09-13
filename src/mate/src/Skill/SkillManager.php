@@ -12,9 +12,14 @@
 namespace Symfony\AI\Mate\Skill;
 
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
+use Symfony\AI\Mate\Discovery\PathGuard;
+use Symfony\AI\Mate\Exception\AmbiguousSkillException;
+use Symfony\AI\Mate\Exception\RuntimeException;
+use Symfony\AI\Mate\Exception\SkillNotFoundException;
 use Symfony\AI\Mate\Skill\Model\DiscoveredSkill;
 use Symfony\AI\Mate\Skill\Model\SkillInstallResult;
 use Symfony\AI\Mate\Skill\Model\SkillStatus;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Entry point the skills:* commands work against.
@@ -29,6 +34,19 @@ use Symfony\AI\Mate\Skill\Model\SkillStatus;
  */
 final class SkillManager
 {
+    /**
+     * Below this, a description cannot carry both what the skill does and when it applies.
+     */
+    private const MIN_DESCRIPTION_LENGTH = 40;
+
+    /**
+     * Words a description uses to name the situation it applies to.
+     *
+     * Deliberately generous: the check is a nudge, not a gate, so "Use this for deploying" passes
+     * on the same footing as "Use when deploying".
+     */
+    private const USAGE_CUE_PATTERN = '/\b(when|whenever|if|before|after|while|during|unless|once)\b|\buse (this|it)\b/i';
+
     public function __construct(
         private string $rootDir,
         private ComposerExtensionDiscovery $extensionDiscovery,
@@ -37,6 +55,7 @@ final class SkillManager
         private SkillInstaller $installer,
         private SkillContentHasher $hasher,
         private SkillFrontmatter $frontmatter,
+        private Filesystem $filesystem,
     ) {
     }
 
@@ -51,9 +70,9 @@ final class SkillManager
         return $this->skillDiscovery->discover($extensions);
     }
 
-    public function reinstall(): SkillInstallResult
+    public function reinstall(bool $dryRun = false): SkillInstallResult
     {
-        return $this->installer->install($this->discover());
+        return $this->installer->install($this->discover(), $dryRun);
     }
 
     /**
@@ -62,6 +81,133 @@ final class SkillManager
     public function pruneStrays(bool $dryRun): array
     {
         return $this->installer->pruneStrays($dryRun);
+    }
+
+    /**
+     * Resolves an installed ("mate-foo") or original ("foo") name to the skill that owns it.
+     *
+     * Resolution runs against the recorded state, not discovery, so a skill stays addressable while
+     * its package is temporarily absent.
+     *
+     * @return array{package: string, name: string}
+     *
+     * @throws SkillNotFoundException  when no recorded skill matches
+     * @throws AmbiguousSkillException when more than one package owns the name
+     */
+    public function resolve(string $input): array
+    {
+        $matches = $this->repository->findAll($input);
+
+        if ([] === $matches) {
+            throw new SkillNotFoundException(\sprintf('Unknown skill "%s". Run "mate skills:list" to see what is available.', $input));
+        }
+
+        if (\count($matches) > 1) {
+            $packages = array_map(static fn (array $match): string => $match['package'], $matches);
+
+            throw new AmbiguousSkillException(\sprintf('Skill "%s" is provided by more than one package (%s).', $input, implode(', ', $packages)));
+        }
+
+        $name = $matches[0]['name'];
+        if (PathGuard::hasTraversal($name)) {
+            throw new SkillNotFoundException(\sprintf('Skill name "%s" is not a valid directory name.', $name));
+        }
+
+        return ['package' => $matches[0]['package'], 'name' => $name];
+    }
+
+    /**
+     * @param 'managed'|'override' $mode
+     */
+    public function setMode(string $package, string $name, string $mode): void
+    {
+        $this->repository->setMode($package, $name, $mode);
+    }
+
+    public function setEnabled(string $package, string $name, bool $enabled): void
+    {
+        $this->repository->setEnabled($package, $name, $enabled);
+    }
+
+    /**
+     * Reads the recorded "enabled" flag of a single skill.
+     *
+     * Deliberately not SkillStatus::$enabled: that one is the effective value, false as soon as the
+     * owning extension is disabled. A command that writes this flag has to compare against the flag
+     * itself, or it would call a skill "already disabled" when only its extension is.
+     *
+     * @return bool|null null when the package records no such skill
+     */
+    public function isEnabled(string $package, string $name): ?bool
+    {
+        foreach ($this->repository->findAll($name) as $match) {
+            if ($match['package'] === $package) {
+                return $match['state']['enabled'];
+            }
+        }
+
+        return null;
+    }
+
+    public function overrideCopyPath(string $name): string
+    {
+        return SkillInstaller::OVERRIDE_SKILLS_DIR.'/'.$name;
+    }
+
+    /**
+     * Copies the package's version of a skill into mate/skills/<name>/ for the user to own.
+     *
+     * The copy is taken from the declared source rather than the generated folder, so it keeps the
+     * original frontmatter name; the installed name is applied at build time as for any other skill.
+     *
+     * @return string the created path, relative to the project root
+     */
+    public function createOverrideCopy(string $package, string $name, bool $force): string
+    {
+        $target = $this->rootDir.'/'.$this->overrideCopyPath($name);
+
+        if (is_dir($target) && !$force) {
+            throw new RuntimeException(\sprintf('"%s" already exists. Pass --force to replace it.', $this->overrideCopyPath($name)));
+        }
+
+        $skill = $this->findDiscovered($package, $name);
+        if (null === $skill) {
+            throw new RuntimeException(\sprintf('Skill "%s" is not currently provided by "%s", so there is nothing to copy.', $name, $package));
+        }
+
+        $this->filesystem->remove($target);
+        $this->filesystem->mirror($skill->absolutePath, $target);
+
+        return $this->overrideCopyPath($name);
+    }
+
+    public function removeOverrideCopy(string $name): bool
+    {
+        $target = $this->rootDir.'/'.$this->overrideCopyPath($name);
+        if (!is_dir($target)) {
+            return false;
+        }
+
+        $this->filesystem->remove($target);
+
+        return true;
+    }
+
+    public function hasOverrideCopy(string $name): bool
+    {
+        return is_dir($this->rootDir.'/'.$this->overrideCopyPath($name));
+    }
+
+    /**
+     * @return list<SkillStatus>
+     */
+    public function statusFor(string $installedOrOriginalName): array
+    {
+        return array_values(array_filter(
+            $this->status(),
+            static fn (SkillStatus $status): bool => $status->installedName === $installedOrOriginalName
+                || $status->originalName === $installedOrOriginalName,
+        ));
     }
 
     /**
@@ -98,6 +244,17 @@ final class SkillManager
         usort($statuses, static fn (SkillStatus $a, SkillStatus $b): int => $a->installedName <=> $b->installedName);
 
         return $statuses;
+    }
+
+    private function findDiscovered(string $package, string $name): ?DiscoveredSkill
+    {
+        foreach ($this->discover() as $skill) {
+            if ($skill->package === $package && $skill->originalName === $name) {
+                return $skill;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -161,8 +318,8 @@ final class SkillManager
             return $issues;
         }
 
-        if ('override' === $recordedState && !is_file($this->rootDir.'/mate/skills/'.$name.'/SKILL.md')) {
-            $issues[] = ['level' => 'error', 'message' => \sprintf('Overridden skill has no copy at mate/skills/%s/SKILL.md.', $name)];
+        if ('override' === $recordedState && !is_file($this->rootDir.'/'.$this->overrideCopyPath($name).'/SKILL.md')) {
+            $issues[] = ['level' => 'error', 'message' => \sprintf('Overridden skill has no copy at %s/SKILL.md.', $this->overrideCopyPath($name))];
         }
 
         foreach ($state['targets'] ?? [] as $target) {
@@ -217,7 +374,7 @@ final class SkillManager
         }
 
         $sourceDir = 'override' === ($state['state'] ?? null)
-            ? $this->rootDir.'/mate/skills/'.substr($installedName, 5)
+            ? $this->rootDir.'/'.$this->overrideCopyPath(substr($installedName, 5))
             : $skill?->absolutePath;
 
         if (null !== $sourceDir && is_dir($sourceDir)) {
@@ -238,6 +395,78 @@ final class SkillManager
         $frontmatter = $this->frontmatter->parse($content);
         if (null === $frontmatter || ($frontmatter['name'] ?? null) !== $installedName) {
             $issues[] = ['level' => 'error', 'message' => \sprintf('Installed SKILL.md does not declare "name: %s".', $installedName)];
+        }
+
+        return array_merge(
+            $issues,
+            $this->collectDescriptionIssues($frontmatter['description'] ?? ''),
+            $this->collectReferenceIssues($agentsTarget, $content),
+        );
+    }
+
+    /**
+     * Checks the description an agent decides from, before it ever opens the skill.
+     *
+     * Both findings are suggestions, and deliberately never fail a run: a description that never
+     * says when the skill applies makes the agent guess, but length and wording are heuristics
+     * tuned for English prose, and a correct description can miss both and still read well.
+     *
+     * @return list<SkillIssue>
+     */
+    private function collectDescriptionIssues(string $description): array
+    {
+        if ('' === $description) {
+            return [];
+        }
+
+        $issues = [];
+
+        if (mb_strlen($description) < self::MIN_DESCRIPTION_LENGTH) {
+            $issues[] = ['level' => 'suggestion', 'message' => \sprintf('Description is only %d characters long; an agent picks the skill from it alone.', mb_strlen($description))];
+        }
+
+        if (1 !== preg_match(self::USAGE_CUE_PATTERN, $description)) {
+            $issues[] = ['level' => 'suggestion', 'message' => 'Description does not say when to use the skill; name the situation it applies to, as in "Use when the tests fail" or "Use this for deploying".'];
+        }
+
+        return $issues;
+    }
+
+    /**
+     * Checks that the files SKILL.md links to came along into the installed folder.
+     *
+     * A skill folder is self-contained by design, so a relative link that resolves to nothing is a
+     * dead end for the agent following it. Only inline Markdown links are inspected: a path
+     * mentioned in prose is as likely to name a file in the user's project as one in the skill.
+     *
+     * @return list<SkillIssue>
+     */
+    private function collectReferenceIssues(string $agentsTarget, string $content): array
+    {
+        preg_match_all('/\[[^\]]*\]\(([^)\s]+)\)/', $content, $matches);
+
+        /** @var list<string> $missing */
+        $missing = [];
+        foreach ($matches[1] as $target) {
+            $path = explode('#', explode('?', trim($target, '<>'))[0])[0];
+            if ('' === $path) {
+                continue;
+            }
+
+            // Anything addressable on its own: URLs, mail links, and paths anchored at the project root.
+            if (str_starts_with($path, '/') || 1 === preg_match('#^[a-z][a-z0-9+.-]*:#i', $path)) {
+                continue;
+            }
+
+            $path = rawurldecode($path);
+            if (!file_exists($agentsTarget.'/'.$path) && !\in_array($path, $missing, true)) {
+                $missing[] = $path;
+            }
+        }
+
+        $issues = [];
+        foreach ($missing as $path) {
+            $issues[] = ['level' => 'warning', 'message' => \sprintf('SKILL.md links to "%s", which is not part of the installed skill.', $path)];
         }
 
         return $issues;
@@ -264,8 +493,11 @@ final class SkillManager
             return 'not installed';
         }
 
-        if ([] !== $issues) {
-            return 'stale';
+        // Suggestions are advice about the authored content, not drift, so they leave a skill "ok".
+        foreach ($issues as $issue) {
+            if ('warning' === $issue['level']) {
+                return 'stale';
+            }
         }
 
         return 'ok';

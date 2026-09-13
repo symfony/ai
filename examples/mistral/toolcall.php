@@ -26,4 +26,4 @@ $agent = new Agent($platform, 'mistral-large-latest', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What time is it?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

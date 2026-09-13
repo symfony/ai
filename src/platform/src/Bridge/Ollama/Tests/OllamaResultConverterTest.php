@@ -236,6 +236,7 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertSame(42, $tokenUsage->getPromptTokens());
         $this->assertSame(17, $tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertSame('deepseek-r1:latest', $tokenUsage->getModel());
     }
 
     public function testConvertStreamingToolCallResponse()

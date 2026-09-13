@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Vector\VectorInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class VectorDocument
+final class VectorDocument implements VectorDocumentInterface
 {
     public function __construct(
         private readonly int|string $id,

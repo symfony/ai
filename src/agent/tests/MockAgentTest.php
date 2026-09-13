@@ -53,7 +53,7 @@ final class MockAgentTest extends TestCase
         $agent = new MockAgent($responses);
 
         $messages = new MessageBag(Message::ofUser('hello'));
-        $result = $agent->call($messages);
+        $result = $agent->call($messages)->getResult();
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hi there!', $result->getContent());
@@ -100,7 +100,7 @@ final class MockAgentTest extends TestCase
         $messages = new MessageBag(Message::ofUser('test'));
         $options = ['temperature' => 0.7, 'max_tokens' => 100];
 
-        $result = $agent->call($messages, $options);
+        $result = $agent->call($messages, $options)->getResult();
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('configured response', $result->getContent());
@@ -313,7 +313,7 @@ final class MockAgentTest extends TestCase
         $agent = new MockAgent(['hello' => $mockResponse]);
 
         $messages = new MessageBag(Message::ofUser('hello'));
-        $result = $agent->call($messages);
+        $result = $agent->call($messages)->getResult();
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Mock response content', $result->getContent());

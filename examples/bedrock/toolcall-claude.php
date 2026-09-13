@@ -33,4 +33,4 @@ $agent = new Agent($platform, 'claude-sonnet-4-5-20250929', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

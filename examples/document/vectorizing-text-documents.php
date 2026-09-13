@@ -11,7 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Store\Document\TextDocument;
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\Component\Uid\Uuid;
 
@@ -28,4 +28,4 @@ $textDocuments = [
 $vectorizer = new Vectorizer($platform, 'text-embedding-3-large');
 $vectorDocuments = $vectorizer->vectorize($textDocuments);
 
-dump(array_map(static fn (VectorDocument $document) => $document->getVector()->getDimensions(), $vectorDocuments));
+dump(array_map(static fn (VectorDocumentInterface $document) => $document->getVector()->getDimensions(), $vectorDocuments));

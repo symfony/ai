@@ -59,4 +59,4 @@ $agent = new Agent($platform, 'gemini-2.5-flash', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('I drove 150 kilometers. How many miles is that? Also, what is 150 divided by 8?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

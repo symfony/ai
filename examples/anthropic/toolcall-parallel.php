@@ -30,7 +30,7 @@ $messages = new MessageBag(
 );
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL.\PHP_EOL;
+echo $result->asText().\PHP_EOL.\PHP_EOL;
 
 // Claude requests all three cities in a single turn, so the tool runs three times.
 echo 'Tool executed for: '.implode(', ', $temperature->calledFor).\PHP_EOL;

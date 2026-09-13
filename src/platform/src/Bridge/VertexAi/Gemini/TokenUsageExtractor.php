@@ -34,7 +34,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             return null;
         }
 
-        return $this->fromUsageMetadata($content['usageMetadata']);
+        return $this->fromUsageMetadata($content['usageMetadata'], $content['modelVersion'] ?? null);
     }
 
     /**
@@ -46,7 +46,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
      *     totalTokenCount?: int
      * } $usage
      */
-    public function fromUsageMetadata(array $usage): TokenUsage
+    public function fromUsageMetadata(array $usage, ?string $model = null): TokenUsage
     {
         return new TokenUsage(
             promptTokens: $usage['promptTokenCount'] ?? null,
@@ -54,6 +54,7 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
             thinkingTokens: $usage['thoughtsTokenCount'] ?? null,
             cachedTokens: $usage['cachedContentTokenCount'] ?? null,
             totalTokens: $usage['totalTokenCount'] ?? null,
+            model: $model,
         );
     }
 }

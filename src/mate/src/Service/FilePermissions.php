@@ -29,10 +29,4 @@ final class FilePermissions
      * created by Mate so the files they contain are not exposed to other users on shared hosts.
      */
     public const DIRECTORY = 0750;
-
-    /**
-     * Owner read/write/execute, group and others read/execute. Used for generated executables
-     * such as bin/codex.
-     */
-    public const EXECUTABLE = 0755;
 }

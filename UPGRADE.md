@@ -1,3 +1,78 @@
+UPGRADE FROM 0.13 to 0.14
+=========================
+
+Agent
+-----
+
+ * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns
+   `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the
+   retriever it reads from. Code narrowing the returned documents to the concrete class has to widen.
+
+Platform
+--------
+
+ * `TokenUsage\TokenUsageInterface` gained a `getModel()` method reporting the model that consumed
+   the tokens, so a run that mixes models can be priced per call. `TokenUsage` and
+   `TokenUsageAggregation` implement it; a custom implementation has to add it:
+
+   ```diff
+    final class MyTokenUsage implements TokenUsageInterface
+    {
+        // ...
+   +
+   +    public function getModel(): ?string
+   +    {
+   +        return $this->model;
+   +    }
+    }
+   ```
+
+   `TokenUsageAggregation::getModel()` returns the model only when every usage it sums up agrees on
+   one, and `null` otherwise -- iterate `getTokenUsages()` to price a run that mixed models.
+
+ * `Bridge\Generic\Completions\CompletionsConversionTrait::convertStreamUsage()` takes the model
+   reported by the stream chunk as a second argument, so an overriding result converter has to
+   accept it as well:
+
+   ```diff
+   -protected function convertStreamUsage(array $usage): TokenUsage
+   +protected function convertStreamUsage(array $usage, ?string $model = null): TokenUsage
+   ```
+
+Store
+-----
+
+ * `Indexer\SourceIndexer` passes its options on to the loader, not only to the document processor,
+   so that a source can be narrowed at runtime. A `Document\LoaderInterface` implementation that
+   previously only ever saw options passed to `load()` directly now also receives the indexing
+   options (`chunk_size`, `platform_options`, and whatever else the caller passed). Loaders ignoring
+   unknown options - which the interface asks for - are unaffected.
+
+ * `Query\VectorQuery` and `Query\HybridQuery` accept and return `Platform\Vector\VectorInterface`
+   instead of the final `Platform\Vector\Vector` class. Passing a `Vector` is unchanged. This is what
+   makes a "more like this" query possible without a cast: the vector of a document returned by a store
+   can now be fed straight back into a query.
+
+ * Stores are now typed against `Document\VectorDocumentInterface` rather than the final
+   `Document\VectorDocument` class, so that a store can hand back a document carrying more than an
+   id, a vector and metadata - the entity it was built from, for instance. `VectorDocument` implements
+   the new interface, so passing one is unchanged, but a custom store has to widen its signature:
+
+   ```diff
+   -public function add(VectorDocument|array $documents): void
+   +public function add(VectorDocumentInterface|array $documents): void
+    {
+   -    if ($documents instanceof VectorDocument) {
+   +    if ($documents instanceof VectorDocumentInterface) {
+            $documents = [$documents];
+        }
+        // ...
+    }
+   ```
+
+   The same applies to anything typed on the documents a store returns: `RetrieverInterface`,
+   `Reranker\RerankerInterface` and `VectorizerInterface` now speak in terms of the interface too.
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 
@@ -18,6 +93,55 @@ Agent
    `Toolbox\ToolExecutorInterface` (default: `SequentialToolExecutor`), so a custom execution strategy can be
    plugged in via the `toolExecutor` argument.
 
+ * `AgentInterface::call()` now returns a lazy `Execution` instead of a `ResultInterface`. The execution *is* the
+   result it produces, so reading it eagerly is unchanged — `$agent->call($input)->getContent()` still works — but
+   the returned object is now also iterable and observable:
+
+   ```php
+   // eager, unchanged
+   $text = $agent->call('Hello')->getContent();
+
+   // observe the run, or resolve the result explicitly
+   foreach ($agent->call('Hello') as $update) { /* Progress / Result updates */ }
+   $result = $agent->call('Hello')->onProgress($cb)->getResult();
+   ```
+
+   Custom `AgentInterface` implementations and decorators must change their `call()` return type to `Execution`
+   and wrap their result:
+
+   ```php
+   public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+   {
+       return new Execution(function (): \Generator {
+           yield new Result($someResult);
+       });
+   }
+   ```
+
+   Two consequences of the laziness: the agent no longer runs until the execution is consumed — side effects and
+   exceptions now surface on `getContent()`/`getResult()`/iteration rather than on the `call()` line — and code that
+   type-checks the result (`$agent->call(...) instanceof TextResult`) must `getResult()` first. Because the loop is
+   also no longer recursing through `call()`, output processors see the final, fully assembled result and input
+   processors run once per agent call instead of once per tool-calling round.
+
+ * `Toolbox\StreamListener` has been removed, and `call()` with the `stream` option no longer returns a
+   `StreamResult`. Iterating the returned execution's `getContent()` still yields the platform's deltas, so the
+   common streaming loop is unchanged:
+
+   ```php
+   $result = $agent->call($messages, ['stream' => true]);
+   foreach ($result->getContent() as $delta) { /* ... */ } // unchanged
+
+   // or observe the whole execution
+   foreach ($agent->call($messages, ['stream' => true]) as $update) { /* ... */ }
+   ```
+
+   Code relying on the `StreamResult` type specifically — `instanceof StreamResult`, `addListener()` — must be
+   reworked to consume the execution instead (as the `Chat` component's `stream()` now does).
+
+ * A tool-calling round adds one assistant message per turn — text, thinking blocks and tool calls
+   together — instead of splitting it. Code asserting on the message bag's shape needs updating.
+
 AI Bundle
 ---------
 
@@ -37,6 +161,17 @@ AI Bundle
    ```
 
    The default (`false`, tool messages are preserved) is unchanged.
+
+Chat
+----
+
+ * `ChatStreamListener` has been removed. `Chat::stream()` now consumes the agent's execution itself: it yields the
+   streamed deltas and persists the assistant message, including the result metadata, once the stream is complete.
+   Since `AgentInterface::call()` no longer returns a `StreamResult` (see the Agent section), there is no stream to
+   attach the listener to anymore.
+
+ * `Chat::stream()` persists the assistant turn whole — a `Thinking` part now survives where plain text
+   was stored. Code reading persisted history must expect structured content.
 
 MCP Bundle
 ----------
@@ -159,6 +294,34 @@ MCP Bundle
 
    A single configured client also answers a plain `McpClientInterface` type hint, unchanged.
 
+ * **Every HTTP server now also serves the 2026-07-28 revision**, on the endpoint it already had. The
+   SDK builds a dispatcher per era and the transport routes each request, so no configuration turns
+   this on — and an existing server gets it by upgrading. That revision removed server-initiated
+   requests, so a tool, prompt or resource handler calling `$gateway->sample()` or
+   `$gateway->listRoots()` now fails for clients speaking it ("This protocol revision has no
+   server-initiated requests"), while continuing to work for handshake-era clients on the same
+   endpoint. Take what those handlers need through tool arguments, resource URIs or server
+   configuration instead, or guard the calls with `$gateway->supportsSampling()` /
+   `$gateway->supportsRoots()`.
+
+   Until the handlers are ready, list only handshake-era revisions to refuse the modern era outright:
+
+   ```yaml
+   # config/packages/mcp.yaml
+   mcp:
+       servers:
+           api:
+               protocol_versions: ['2025-11-25'] # handshake era only
+               registry: '*'
+   ```
+
+   Elicitation survived, as a multi round-trip request: `$gateway->elicit()` keeps working unchanged.
+   A handler that elicits *more than once* now needs `servers.<name>.request_state.key` (at least 32
+   bytes), because without a session the answers to the earlier asks travel through the client and are
+   signed. Roots, sampling and MCP logging are deprecated by the same revision (SEP-2577), and
+   `mcp/sdk` 0.8 triggers a deprecation for each configured handler — including the one behind
+   `clients.<name>.forward_server_logs`, which defaults to `true`.
+
 Mate
 ----
 
@@ -175,6 +338,125 @@ Mate
    `targets` are written by `mate skills:install` and rewritten on every run. If you ran a `0.13`
    development build, delete the now-unused `mate/skills.lock.php` — it is neither read nor written
    anymore.
+
+ * Mate no longer runs an MCP server; it is now a plain CLI that coding agents invoke directly.
+   The `mcp/sdk` dependency, the `serve`/`stop` commands and the whole MCP server runtime have
+   been removed. Remove any `mate serve`/`mate stop` usage and delete the generated `mcp.json`
+   and `.mcp.json` from your project — agents should run the `mate` commands instead.
+
+ * `mate init` no longer generates `mcp.json`, `.mcp.json` or the Codex wrappers (`bin/codex`,
+   `bin/codex.bat`). It now writes CLI-oriented agent instructions (`mate/AGENT_INSTRUCTIONS.md`
+   and the managed block in `AGENTS.md`). Point your coding agent at those instructions instead
+   of an MCP server configuration.
+
+ * The tool/resource commands were renamed:
+
+   ```diff
+   -vendor/bin/mate mcp:tools:list
+   -vendor/bin/mate mcp:tools:inspect <tool>
+   -vendor/bin/mate mcp:tools:call <tool> '{"limit": 1}'
+   -vendor/bin/mate mcp:resources:read <uri>
+   +vendor/bin/mate tools:list
+   +vendor/bin/mate tools:inspect <tool>
+   +vendor/bin/mate tools:call <tool> --limit=1
+   +vendor/bin/mate resources:read <uri>
+   ```
+
+   `tools:call` now takes tool parameters as long options instead of a positional JSON object.
+   Use `--<param>=<value>` (booleans may be passed as a bare `--<flag>`), or pass a full JSON
+   object via `--json='{...}'` for complex/array-valued parameters.
+
+ * Custom tools, resources and resource templates now use native Mate attributes instead of the
+   `mcp/sdk` ones. Replace the attribute imports on your `mate/src/` classes:
+
+   ```diff
+   -use Mcp\Capability\Attribute\McpTool;
+   -use Mcp\Capability\Attribute\McpResource;
+   -use Mcp\Capability\Attribute\McpResourceTemplate;
+   +use Symfony\AI\Mate\Attribute\MateTool;
+   +use Symfony\AI\Mate\Attribute\MateResource;
+   +use Symfony\AI\Mate\Attribute\MateResourceTemplate;
+
+   -#[McpTool(name: 'my-tool', description: '...')]
+   +#[MateTool(name: 'my-tool', description: '...')]
+    public function myTool(int $limit = 10): string { /* ... */ }
+   ```
+
+   The parameters are otherwise the same (`name`, `title`, `description` for tools;
+   `uri`/`uriTemplate`, `name`, `title`, `description`, `mimeType` for resources), and input
+   schemas are still derived from the method signature plus `@param` PHPDoc. Two differences to
+   watch for:
+
+   * `name` is **required** on `#[MateTool]`; it no longer defaults to the method name.
+   * The attributes may only be placed on a **method**, no longer on a class.
+
+   Getting either wrong makes the attribute fail to construct, and discovery then skips the whole
+   file with only a log line, so the tools simply stop appearing in `tools:list`. Run
+   `vendor/bin/mate tools:list` after migrating to confirm everything is still there.
+
+ * Prompts are gone. There is no Mate equivalent of `#[McpPrompt]`, `debug:capabilities` no
+   longer accepts `--type=prompt` and no longer reports a prompt count. Move the content of a
+   prompt method into a skill (`mate skills:install`) or into your project's `AGENTS.md`.
+
+ * `symfony-services` no longer returns the bare `id => class` map. It now answers with the map
+   under `services`, plus `count` and `truncated`, and lists at most `limit` entries (default 100)
+   so an unfiltered call cannot fill the context window. Together with the `untrusted_data`
+   envelope that all tool responses gained, a script reading the old shape needs two extra hops:
+
+   ```diff
+   -$services = json_decode($output, true);
+   +$services = json_decode($output, true)['untrusted_data']['services'];
+   ```
+
+   In a multi-kernel application the result stays nested per context, so each context carries its
+   own `services`, `count` and `truncated`:
+   `json_decode($output, true)['untrusted_data']['admin']['services']`.
+
+   The tool also fails now, instead of answering with an empty result, when no container has been
+   dumped yet. That case used to be indistinguishable from "no service matched"; warm the cache
+   (`bin/console cache:warmup`) in the environment you are inspecting.
+
+ * An unknown `--format` value is rejected instead of falling back to the human-readable default.
+   A script passing anything other than the formats a command lists now gets an error and a
+   non-zero exit code rather than a table it cannot parse.
+
+ * `mate/config.php` gained two parameters, and `mate init` fills them in for new projects.
+   `mate.invocation` is the command your coding agent must use (for example
+   `ddev exec vendor/bin/mate`); it is written into `mate/AGENT_INSTRUCTIONS.md` and the managed
+   `AGENTS.md` block, so the wrapper reaches the agent that has to type it. `mate.php_version`
+   records the runtime, and Mate refuses to start under a different major.minor, because it would
+   otherwise report on a runtime that is not your application's. `init`, `list`, `help` and
+   `completion` print a warning instead of refusing.
+
+   **An existing project gets neither parameter, and therefore neither behavior.** `discover` does
+   not add them, `mate.invocation` stays the bare `vendor/bin/mate` and the interpreter check stays
+   off. Add both by hand; do not re-run `vendor/bin/mate init` for this, because accepting its
+   overwrite prompt replaces `mate/config.php` with the template and drops any services you
+   registered in it:
+
+   ```diff
+    // mate/config.php
+    $container->parameters()
+   +    // The command your coding agent must use, wrapper included.
+   +    ->set('mate.invocation', 'ddev exec vendor/bin/mate')
+   +
+   +    // The major.minor your application runs on. Leave it out to keep Mate runnable under any
+   +    // interpreter, which is what an upgraded project does until you set it.
+   +    ->set('mate.php_version', '8.3')
+    ;
+   ```
+
+   This matters most where the application does not run on the host: under DDEV, Docker or the
+   Symfony CLI, an unpinned Mate started on the host reads the host's runtime and reports on
+   something that is not the application under test.
+
+ * The Monolog bridge's `monolog-tail` tool takes a `limit` parameter instead of `lines`, matching
+   `monolog-search` and `monolog-context-search`:
+
+   ```diff
+   -vendor/bin/mate tools:call monolog-tail --lines=50
+   +vendor/bin/mate tools:call monolog-tail --limit=50
+   ```
 
 Platform
 --------

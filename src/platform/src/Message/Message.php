@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\ComputerCall;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\CustomToolCall;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
+use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\FileSearch;
 use Symfony\AI\Platform\Message\Content\LocalShellCall;
 use Symfony\AI\Platform\Message\Content\McpApprovalRequest;
@@ -25,6 +26,7 @@ use Symfony\AI\Platform\Message\Content\McpListTools;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
+use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
@@ -36,6 +38,7 @@ use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -134,7 +137,7 @@ final class Message
         }
 
         if ($part instanceof WebSearchResult) {
-            return [new WebSearch($part->getQuery(), $part->getId(), $part->getStatus(), $part->getQueries())];
+            return [new WebSearch($part->getQuery(), $part->getId(), $part->getStatus(), $part->getQueries(), $part->getSignature())];
         }
 
         if ($part instanceof FileSearchResult) {
@@ -163,6 +166,17 @@ final class Message
 
         if ($part instanceof LocalShellCallResult) {
             return [new LocalShellCall($part->getContent(), $part->getCallId(), $part->getId(), $part->getStatus())];
+        }
+
+        // a model can return binary output next to its tool calls (Gemini inlineData, a Responses
+        // image_generation_call)
+        if ($part instanceof BinaryResult) {
+            return [new File($part->getContent(), $part->getMimeType() ?? 'application/octet-stream')];
+        }
+
+        // Drains the stream when the caller has not read it
+        if ($part instanceof StreamResult) {
+            return array_values($part->getAssistantMessage()->getContent());
         }
 
         if ($part instanceof MultiPartResult) {

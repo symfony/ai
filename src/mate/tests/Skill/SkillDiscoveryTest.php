@@ -39,8 +39,8 @@ final class SkillDiscoveryTest extends TestCase
 
     public function testDiscoversPackageAndRootSkills()
     {
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.');
-        $this->createSkill($this->rootDir.'/mate/skills', 'project-notes', 'Project notes.');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.');
+        $this->createSkill($this->rootDir.'/mate/skills', 'project-notes', 'Read the project notes when starting work in this repository.');
 
         $skills = $this->discovery()->discover([
             'vendor/pkg-a' => ['dirs' => [], 'includes' => [], 'skills' => ['vendor/vendor/pkg-a/skills']],
@@ -103,8 +103,8 @@ final class SkillDiscoveryTest extends TestCase
 
     public function testThrowsOnInstalledNameCollisionBetweenPackages()
     {
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'From A.');
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-b/skills', 'system-information', 'From B.');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect package A when diagnosing a version-specific problem.');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-b/skills', 'system-information', 'Inspect package B when diagnosing a version-specific problem.');
 
         $this->expectException(SkillCollisionException::class);
         $this->expectExceptionMessage('mate-system-information');

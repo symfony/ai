@@ -600,6 +600,168 @@ This wraps the configured Symfony session handler (e.g. Redis, database, filesys
 your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
 Expired sessions are cleaned up lazily on read.
 
+The Modern Era
+..............
+
+The 2026-07-28 revision drops the ``initialize`` handshake and the session that went with it: every
+request describes itself, so any worker can answer any request, and no long-running connection is
+needed.
+
+Both eras are served **on the same endpoint**, with nothing to configure. The SDK builds a dispatcher
+per era, and the HTTP transport classifies every request before anything else looks at it: an envelope
+claiming a modern revision goes to the modern dispatcher, the ``initialize`` handshake and its
+session's later requests go to the other. A client picks nothing.
+
+STDIO carries the handshake era alone — it has no per-request envelope to classify — so a server
+configured for both transports simply serves the modern era over HTTP only.
+
+By default the HTTP endpoint supports every revision the SDK supports and negotiates with the client.
+Narrow the supported revisions through ``protocol_versions``:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            api:
+                protocol_versions: ['2025-11-25', '2026-07-28']
+                http:
+                    path: /mcp
+                registry: '*'
+
+Each era takes what belongs to it. The modern revisions listed become the only ones that leg answers
+for; listing none of them refuses the modern era, leaving the handshake one alone. A handshake-era
+revision pins the handshake to exactly that one — the SDK either negotiates over everything it knows
+or is pinned to a single revision, so narrowing that era to a subset is rejected when the container is
+compiled.
+
+The options below tune the modern-era leg. They are inert for handshake-era clients, which keep being
+served exactly as before. The converse does not hold: the modern leg is on for every server, including
+one written before the revision existed, and it drops things the handshake era offers.
+
+.. caution::
+
+    **The 2026-07-28 revision has no server-initiated requests.** Sampling and roots were removed with
+    it, so a handler calling ``$gateway->sample()`` or ``$gateway->listRoots()`` fails for a
+    2026-07-28 client — *"This protocol revision has no server-initiated requests: sampling and roots
+    were removed with it, so take what you need through tool arguments, resource URIs or server
+    configuration instead"* — while the same handler keeps working for handshake-era clients on the
+    same endpoint. Both calls are also deprecated as of ``mcp/sdk`` 0.8 (SEP-2577), as is
+    ``$gateway->log()``.
+
+    Take what such a handler needs through tool arguments, resource URIs or server configuration
+    instead, or guard the call with ``$gateway->supportsSampling()`` / ``$gateway->supportsRoots()``,
+    which report what the client of the current request declared. Elicitation is the one ask that
+    survived, as a multi round-trip request; see *Request State* below.
+
+    Until the handlers are ready, ``protocol_versions`` is the opt-out: list only handshake-era
+    revisions and the server refuses the modern era altogether.
+
+    .. code-block:: yaml
+
+        # config/packages/mcp.yaml
+        mcp:
+            servers:
+                api:
+                    protocol_versions: ['2025-11-25'] # handshake era only, no modern leg
+                    registry: '*'
+
+Request State
+^^^^^^^^^^^^^
+
+A handler that needs another round trip has nowhere to keep its progress once sessions are gone, so
+the state travels through the client and is signed to keep it honest:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                request_state:
+                    key: '%env(MCP_REQUEST_STATE_KEY)%'
+                    ttl: 600 # seconds a minted state stays valid
+
+The key must be at least 32 bytes — below that the signature protecting the state is forgeable, so a
+shorter literal is refused when the container is compiled, and the SDK refuses one arriving from an
+env variable at runtime. **The same value must reach every process that might serve the retry**: a
+per-worker random key makes the follow-up request fail signature validation.
+
+Two kinds of handler need it. One returns an ``InputRequiredResult`` itself. The other simply calls
+``$gateway->elicit()``: on the modern leg the ask ends the request and the client re-sends the whole
+call with the answer, so a handler that asks more than once has to carry the earlier answers to the
+next round, and carrying them is what needs the key. A handler that asks exactly once never mints
+state and works without one. Missing the key, the ask is answered with a JSON-RPC internal error and
+the reason is logged on the ``mcp`` channel.
+
+Cache Hints
+^^^^^^^^^^^
+
+Without a session the client caches instead, and the revision expects the server to say for how long.
+``ttl_ms: 0`` (the default) refuses caching:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                cache:
+                    ttl_ms: 5000
+                    scope: private # or "public"
+                    methods:
+                        'tools/list': { ttl_ms: 60000, scope: public }
+                        'resources/read': { ttl_ms: 1000 }
+
+Use ``public`` only for answers that do not vary by caller — anything shaped by the current user must
+stay ``private``.
+
+Subscriptions
+^^^^^^^^^^^^^
+
+``subscriptions/listen`` replaces the held-open HTTP GET stream. Delivery needs a bus, and the choice
+depends on your runtime:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            api:
+                subscriptions:
+                    bus: cache # none (default), memory, or cache
+                    cache_pool: 'cache.mcp.notifications'
+                    lifetime: 30.0 # seconds before the server closes a stream gracefully
+
+Under PHP-FPM the process publishing a notification is not the one holding the stream, so ``memory``
+cannot reach it — use ``cache``. ``memory`` suits a single-process runtime; ``lifetime: 0`` holds the
+stream until the client or the runtime ends it.
+
+``cache.mcp.notifications`` is auto-created as a PSR-16 wrapper around ``cache.app`` when you leave it
+at its default, exactly as the session store is. Each server namespaces its own keys inside that pool,
+so two servers can share it without reading each other's notifications.
+
+Only registry changes — the four ``list_changed`` notifications — are published for you. Everything
+else, ``notifications/resources/updated`` above all, is your application publishing it. Inject the
+server's bus to do that::
+
+    use Mcp\Schema\Notification\ResourceUpdatedNotification;
+    use Mcp\Server\Subscription\NotificationBusInterface;
+
+    class DocumentSaver
+    {
+        public function __construct(
+            private NotificationBusInterface $apiNotificationBus,
+        ) {
+        }
+
+        public function save(Document $document): void
+        {
+            // ...
+            $this->apiNotificationBus->publish(new ResourceUpdatedNotification($document->uri()));
+        }
+    }
+
+The argument name follows the server name, as ``$defaultNotificationBus`` for a server called
+``default``; the service id is ``mcp.server.<name>.notification_bus``.
+
 Act as Client
 ~~~~~~~~~~~~~
 
@@ -706,22 +868,44 @@ Failures surface as bundle exceptions naming the client and server:
 The HTTP transport uses the application's PSR-18 client (``psr18.http_client``, provided by
 ``symfony/http-client``) unless the ``http_client`` option points at another service.
 
-Sampling and Elicitation
-........................
+Server-initiated Requests
+.........................
 
-A remote server can ask the client to run a completion (*sampling*) or to prompt the user
-(*elicitation*). Point the matching option at a service implementing the SDK's callback interface; the
-capability is advertised only when a handler backs it:
+A remote server can ask the client to run a completion (*sampling*), to prompt the user
+(*elicitation*), or for the filesystem roots it may work in (*roots*). Point the matching option at a
+service implementing the SDK's callback interface; each capability is advertised only when a handler
+backs it, because advertising one without a handler earns a "method not found" from the client:
 
 .. code-block:: yaml
 
     mcp:
         clients:
             research:
+                roots: 'App\Mcp\RootsHandler'            # Mcp\Client\Handler\Request\RootsCallbackInterface
                 sampling: 'App\Mcp\SamplingHandler'      # Mcp\Client\Handler\Request\SamplingCallbackInterface
                 elicitation: 'App\Mcp\ElicitationHandler' # Mcp\Client\Handler\Request\ElicitationCallbackInterface
+                capabilities:
+                    roots_list_changed: true
                 servers:
                     github: { transport: http, url: 'https://api.githubcopilot.com/mcp/' }
+
+When the set of roots changes, tell the server with ``$connection->sendRootsListChanged()``.
+
+.. caution::
+
+    Roots, sampling and MCP logging are deprecated as of protocol revision 2026-07-28 (SEP-2577), with
+    2027-07-28 as the earliest removal. ``mcp/sdk`` 0.8 triggers a deprecation when the handler behind
+    each of them is instantiated, so an application still using them sees one per configured handler.
+    Because ``forward_server_logs`` defaults to ``true``, a client emits the logging one without opting
+    into anything; set it to ``false`` to configure no logging handler at all. The replacements are the
+    ones the revision names: directories through tool arguments or resource URIs rather than roots, an
+    LLM provider's API directly rather than sampling, and stderr or OpenTelemetry rather than MCP
+    logging. Elicitation is not deprecated.
+
+Besides the tool, prompt and resource calls, a connection also exposes
+``$connection->complete($ref, $argument)`` to complete one argument of a prompt or resource template,
+and ``$connection->getProtocolVersion()`` for the revision negotiated with that server (``null`` until
+the first request opens the connection).
 
 Logging notifications received from remote servers are written to the ``mcp`` logger channel; set
 ``forward_server_logs: false`` to drop them.
@@ -758,7 +942,27 @@ Configuration
                     path: /mcp # HTTP endpoint path (default: /mcp/<name>)
                     allowed_hosts: ['example.com'] # DNS rebinding allowlist; false disables the protection
 
-                session:
+                # Revisions this server answers for, in either era. Unset (the default) inherits
+                # the SDK's own support. Listing no modern revision refuses the modern era; a
+                # handshake-era revision pins the handshake to it.
+                protocol_versions: ['2025-11-25', '2026-07-28']
+
+                request_state: # Signs the state a multi-round-trip answer carries through the client
+                    key: '%env(MCP_REQUEST_STATE_KEY)%' # Required when a handler asks for more input; 32 bytes minimum
+                    ttl: 600 # Seconds a minted state stays valid (default: 600)
+
+                cache: # Cache hints the modern-era leg puts on its answers
+                    ttl_ms: 0 # Default freshness in milliseconds; 0 (default) refuses caching
+                    scope: private # 'private' (default) or 'public'
+                    methods: # Per-method overrides
+                        'tools/list': { ttl_ms: 60000, scope: public }
+
+                subscriptions: # Delivery for "subscriptions/listen" streams
+                    bus: none # 'none' (default), 'memory' or 'cache'
+                    cache_pool: 'cache.mcp.notifications' # PSR-16 service for the 'cache' bus
+                    lifetime: 30.0 # Seconds a stream is held; 0 means until the client or runtime ends it
+
+                session: # The handshake era's sessions; the modern era has none
                     store: file # 'file', 'memory', 'cache' or 'framework' (default: file)
                     directory: '%kernel.cache_dir%/mcp-sessions/default' # File store (default: cache_dir/mcp-sessions/<name>)
                     cache_pool: 'cache.mcp.sessions' # Cache pool service for the cache store (PSR-16)
@@ -782,10 +986,10 @@ Configuration
                     name: 'acme-research' # (default: the configuration key)
                     version: '1.0.0'
                     description: null
-                protocol_version: null # MCP protocol version to negotiate (default: the SDK default)
+                # protocol_version: '2026-07-28' # MCP protocol version to negotiate (default: the SDK default)
                 capabilities:
-                    roots: false # Advertise the "roots" capability
-                    roots_list_changed: false
+                    roots_list_changed: false # The "roots" capability itself follows the handler below
+                roots: null # Service id implementing RootsCallbackInterface; enables the capability
                 sampling: null # Service id implementing SamplingCallbackInterface; enables the capability
                 elicitation: null # Service id implementing ElicitationCallbackInterface; enables the capability
                 forward_server_logs: true # Write logging notifications to the "mcp" channel
@@ -802,7 +1006,7 @@ Configuration
                         headers:
                             Authorization: 'Bearer %env(GITHUB_MCP_TOKEN)%'
                         http_client: null # Service id of a PSR-18 client (default: psr18.http_client)
-                        max_sse_buffer_bytes: null # Bytes buffered per SSE event (default: the SDK value)
+                        # max_sse_buffer_bytes: 1048576 # Bytes buffered per SSE event (default: the SDK value)
                         request_timeout: 300 # Overrides the client-level value
 
                     filesystem:
@@ -813,7 +1017,7 @@ Configuration
                         env: # Environment variables for the child process
                             LOG_LEVEL: 'debug'
                         inherit_env: true # Merge "env" over the current environment instead of replacing it
-                        max_buffer_size: null # Bytes buffered per line (default: the SDK value)
+                        # max_buffer_size: 1048576 # Bytes buffered per line (default: the SDK value)
 
 Logging Configuration
 ---------------------

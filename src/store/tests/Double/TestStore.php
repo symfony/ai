@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Tests\Double;
 
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -21,15 +21,15 @@ use Symfony\AI\Store\StoreInterface;
 final class TestStore implements StoreInterface
 {
     /**
-     * @var VectorDocument[]
+     * @var VectorDocumentInterface[]
      */
     public array $documents = [];
 
     public int $addCalls = 0;
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 

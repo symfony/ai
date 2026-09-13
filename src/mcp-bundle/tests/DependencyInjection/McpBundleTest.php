@@ -15,18 +15,28 @@ use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Registry;
 use Mcp\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Schema\Icon;
 use Mcp\Server;
 use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
+use Mcp\Server\Protocol;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
+use Mcp\Server\Stateless\RequestStateCodec;
+use Mcp\Server\Stateless\StatelessProtocol;
+use Mcp\Server\Subscription\InMemoryNotificationBus;
+use Mcp\Server\Subscription\NotificationBusInterface;
+use Mcp\Server\Subscription\Psr16NotificationBus;
+use Mcp\Server\Subscription\PublishingEventDispatcher;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
@@ -34,8 +44,13 @@ use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
+use Symfony\Component\DependencyInjection\Compiler\ValidateEnvPlaceholdersPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBag;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class McpBundleTest extends TestCase
 {
@@ -525,6 +540,306 @@ class McpBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition(McpAppRenderer::SERVICE_ID));
     }
 
+    public function testBothErasAreServedByOneServerOnOneEndpoint()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        // The SDK hands the transport a dispatcher per era, and the transport routes
+        // each request; there is no second server, controller or route to configure.
+        $definition = $container->getDefinition('mcp.server.default');
+        $this->assertSame(Server::class, $definition->getClass());
+        $this->assertSame('mcp.server.default.builder', (string) $definition->getFactory()[0]);
+        $this->assertSame('build', $definition->getFactory()[1]);
+        $this->assertSame(McpController::class, $container->getDefinition('mcp.server.default.controller')->getClass());
+        $this->assertSame(
+            [['name' => 'default', 'path' => '/mcp/default', 'controller' => 'mcp.server.default.controller::handle']],
+            $container->getDefinition('mcp.server.route_loader')->getArgument(0),
+        );
+
+        // Which legs are live is the SDK's answer to the builder calls rather than something
+        // the definition shows, so the built server is what settles it: a handshake-era
+        // protocol (hence the session) and a modern-era one, on the same object.
+        $server = $this->buildServer($container, 'default');
+        $this->assertInstanceOf(Protocol::class, $this->legOf($server, 'protocol'));
+        $this->assertInstanceOf(StatelessProtocol::class, $this->legOf($server, 'statelessProtocol'));
+    }
+
+    public function testTheSdkSupportIsInheritedWhenNoRevisionIsListed()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        foreach (['setModernVersions', 'withoutModernEra', 'setProtocolVersion'] as $call) {
+            $this->assertSame([], $this->callsNamed($container, $call), $call);
+        }
+    }
+
+    public function testListingModernRevisionsNarrowsTheModernLeg()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['protocol_versions' => ['2026-07-28']],
+        ]));
+
+        $versions = $this->callsNamed($container, 'setModernVersions', 'modern')[0][1][0];
+        $this->assertCount(1, $versions);
+        $this->assertSame(['2026-07-28'], $versions[0]->getArguments());
+
+        // Nothing is pinned: the handshake keeps negotiating over every revision it knows.
+        $this->assertSame([], $this->callsNamed($container, 'setProtocolVersion', 'modern'));
+    }
+
+    public function testListingOnlyHandshakeRevisionsPinsItAndRefusesTheModernEra()
+    {
+        $container = $this->buildContainer($this->config([
+            'legacy' => ['protocol_versions' => ['2025-11-25']],
+        ]));
+
+        $pinned = $this->callsNamed($container, 'setProtocolVersion', 'legacy')[0][1][0];
+        $this->assertSame(['2025-11-25'], $pinned->getArguments());
+
+        $this->assertSame([[]], array_column($this->callsNamed($container, 'withoutModernEra', 'legacy'), 1));
+        $this->assertSame([], $this->callsNamed($container, 'setModernVersions', 'legacy'));
+
+        // The contrast that gives testBothErasAreServedByOneServerOnOneEndpoint its meaning:
+        // the built server then carries no modern-era dispatcher at all.
+        $this->assertNull($this->legOf($this->buildServer($container, 'legacy'), 'statelessProtocol'));
+    }
+
+    public function testBothErasCanBeNarrowedAtOnce()
+    {
+        $container = $this->buildContainer($this->config([
+            'both' => ['protocol_versions' => ['2025-11-25', '2026-07-28']],
+        ]));
+
+        $this->assertSame(['2025-11-25'], $this->callsNamed($container, 'setProtocolVersion', 'both')[0][1][0]->getArguments());
+        $this->assertSame(['2026-07-28'], $this->callsNamed($container, 'setModernVersions', 'both')[0][1][0][0]->getArguments());
+    }
+
+    public function testNarrowingTheHandshakeEraToASubsetIsRejected()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageMatches('/pinned to a single revision/');
+
+        $this->buildContainer($this->config([
+            'legacy' => ['protocol_versions' => ['2025-06-18', '2025-11-25']],
+        ]));
+    }
+
+    public function testRequestStateIsConfiguredForMultiRoundTripAnswers()
+    {
+        // What bin2hex(random_bytes(32)) gives you. Asserted against the SDK's own minimum so the
+        // fixture cannot drift back into a key the codec would refuse at runtime.
+        $key = '4f8a1c05b7e2d93610fa8c4b2e57d0913a6ecb4728f105d3c9b60a7e8412fd56';
+        $this->assertGreaterThanOrEqual(RequestStateCodec::MINIMUM_KEY_BYTES, \strlen($key));
+
+        $container = $this->buildContainer($this->config([
+            'modern' => ['request_state' => ['key' => $key, 'ttl' => 90]],
+        ]));
+
+        $this->assertSame([[$key, 90]], array_column($this->callsNamed($container, 'setRequestState', 'modern'), 1));
+    }
+
+    public function testAShortRequestStateKeyIsRejectedWhenTheContainerIsCompiled()
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageMatches('/must be at least 32 bytes/');
+
+        $this->buildContainer($this->config(['modern' => ['request_state' => ['key' => 'too-short']]]));
+    }
+
+    public function testAnEnvPlaceholderKeyIsNotMeasured()
+    {
+        // Its length is unknowable at compile time, so the check must not turn a valid config
+        // into an error. Here the reference is still written as it was configured; the test below
+        // covers the other shape it takes, once a kernel's env machinery has registered it.
+        $container = $this->buildContainer($this->config([
+            'modern' => ['request_state' => ['key' => '%env(MCP_REQUEST_STATE_KEY)%']],
+        ]));
+
+        $this->assertSame(
+            [['%env(MCP_REQUEST_STATE_KEY)%', 600]],
+            array_column($this->callsNamed($container, 'setRequestState', 'modern'), 1),
+        );
+    }
+
+    public function testAnEnvPlaceholderKeySurvivesTheRealCompilationPath()
+    {
+        // The test above builds the container by hand, so the config component never learns it is
+        // handling a placeholder and the node's validator is simply reached and skipped. A kernel
+        // runs ValidateEnvPlaceholdersPass, which re-processes the configuration with the
+        // placeholder registered — and there cannotBeEmpty() on a validated node refuses every env
+        // variable outright, before the validator gets a say.
+        $container = new ContainerBuilder(new EnvPlaceholderParameterBag());
+        $container->setParameter('kernel.debug', true);
+        $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', 'public');
+        $container->setParameter('kernel.project_dir', '/path/to/project');
+
+        $container->registerExtension((new McpBundle())->getContainerExtension());
+        $container->prependExtensionConfig('mcp', $this->config([
+            'modern' => ['request_state' => ['key' => '%env(MCP_REQUEST_STATE_KEY)%']],
+        ])['mcp']);
+
+        (new MergeExtensionConfigurationPass(['mcp']))->process($container);
+        (new ValidateEnvPlaceholdersPass())->process($container);
+
+        // The placeholder has been swapped for the unique id the parameter bag resolves at
+        // runtime, so what is asserted is that the key arrived at all and still names the variable.
+        $calls = array_column($this->callsNamed($container, 'setRequestState', 'modern'), 1);
+        $this->assertCount(1, $calls);
+        $this->assertStringContainsString('MCP_REQUEST_STATE_KEY', $calls[0][0]);
+        $this->assertSame(600, $calls[0][1]);
+    }
+
+    public function testCacheHintsAreBuiltAsAPolicy()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => [
+                'cache' => ['ttl_ms' => 30000, 'methods' => ['tools/list' => ['ttl_ms' => 3600000, 'scope' => 'public']]],
+            ],
+        ]));
+
+        $calls = $this->callsNamed($container, 'setCachePolicy', 'modern');
+        $this->assertCount(1, $calls);
+
+        // The override wraps the default, so the outermost call is withMethod().
+        $policy = $calls[0][1][0];
+        $this->assertSame('withMethod', $policy->getFactory()[1]);
+        $this->assertSame('tools/list', $policy->getArgument(0));
+        $this->assertSame(3600000, $policy->getArgument(1));
+    }
+
+    public function testSubscriptionsAreOptOut()
+    {
+        $container = $this->buildContainer($this->config(['modern' => []]));
+
+        $this->assertSame([], $this->callsNamed($container, 'setNotificationBus', 'modern'));
+    }
+
+    public function testSubscriptionsAreWiredWhenAskedFor()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => [
+                'subscriptions' => ['bus' => 'memory', 'lifetime' => 5.0],
+            ],
+        ]));
+
+        $this->assertSame([5.0], $this->callsNamed($container, 'setSubscriptionLifetime', 'modern')[0][1]);
+        $this->assertSame(InMemoryNotificationBus::class, $container->getDefinition('mcp.server.modern.notification_bus')->getClass());
+    }
+
+    public function testTheBusIsAutowirableSoTheApplicationCanPublishToIt()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['subscriptions' => ['bus' => 'memory']],
+        ]));
+
+        // Registry changes publish themselves; everything else is the application calling
+        // publish(), which it cannot do without a way to inject the bus.
+        $this->assertSame(
+            'mcp.server.modern.notification_bus',
+            (string) $container->getAlias(NotificationBusInterface::class.' $modernNotificationBus'),
+        );
+    }
+
+    public function testTheCacheBusNamespacesItsKeysPerServer()
+    {
+        $container = $this->buildContainer($this->config([
+            'first' => ['subscriptions' => ['bus' => 'cache']],
+            'second' => ['subscriptions' => ['bus' => 'cache']],
+        ]));
+
+        $arguments = [];
+        foreach (['first', 'second'] as $name) {
+            $definition = $container->getDefinition(\sprintf('mcp.server.%s.notification_bus', $name));
+            $this->assertSame(Psr16NotificationBus::class, $definition->getClass());
+            $arguments[$name] = $definition->getArguments();
+
+            $this->assertSame('cache.mcp.notifications', (string) $arguments[$name]['$cache']);
+            $this->assertSame('logger', (string) $arguments[$name]['$logger']);
+        }
+
+        // Both servers sit on the same default pool, so only the key prefix keeps one server's
+        // notifications — and its cursor — out of the other's listen streams.
+        $this->assertSame('mcp-first-notifications.', $arguments['first']['$prefix']);
+        $this->assertSame('mcp-second-notifications.', $arguments['second']['$prefix']);
+    }
+
+    public function testTheDefaultNotificationPoolIsCreatedButACustomOneIsNot()
+    {
+        $container = $this->buildContainer($this->config([
+            'default' => ['subscriptions' => ['bus' => 'cache']],
+        ]));
+
+        $pool = $container->getDefinition('cache.mcp.notifications');
+        $this->assertSame(Psr16Cache::class, $pool->getClass());
+        $this->assertSame('cache.app', (string) $pool->getArgument(0));
+
+        $container = $this->buildContainer($this->config([
+            'default' => ['subscriptions' => ['bus' => 'cache', 'cache_pool' => 'app.my_psr16']],
+        ]));
+
+        // An application-provided pool is referenced as configured, never invented: a typo has
+        // to surface as an unknown service rather than as a silently working cache.
+        $this->assertSame('app.my_psr16', (string) $container->getDefinition('mcp.server.default.notification_bus')->getArgument('$cache'));
+        $this->assertFalse($container->hasDefinition('app.my_psr16'));
+    }
+
+    public function testTheRegistryPublishesItsChangesToTheConfiguredBus()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['subscriptions' => ['bus' => 'memory']],
+        ]));
+
+        $dispatcher = $container->getDefinition('mcp.server.modern.registry')->getArgument(0);
+
+        $this->assertInstanceOf(Definition::class, $dispatcher);
+        $this->assertSame(PublishingEventDispatcher::class, $dispatcher->getClass());
+        $this->assertSame('event_dispatcher', (string) $dispatcher->getArgument(1));
+    }
+
+    public function testTheRegistryPublishesToTheSameBusTheProtocolReads()
+    {
+        $container = $this->buildContainer($this->config([
+            'modern' => ['subscriptions' => ['bus' => 'memory']],
+        ]));
+
+        $published = (string) $container->getDefinition('mcp.server.modern.registry')->getArgument(0)->getArgument(0);
+        $read = $this->callsNamed($container, 'setNotificationBus', 'modern');
+
+        $this->assertCount(1, $read);
+        $this->assertSame('mcp.server.modern.notification_bus', $published);
+        $this->assertSame($published, (string) $read[0][1][0]);
+    }
+
+    public function testEachServerPublishesToItsOwnBus()
+    {
+        $container = $this->buildContainer($this->config([
+            'first' => ['subscriptions' => ['bus' => 'memory']],
+            'second' => ['subscriptions' => ['bus' => 'memory']],
+        ]));
+
+        $this->assertNotSame(
+            (string) $container->getDefinition('mcp.server.first.registry')->getArgument(0)->getArgument(0),
+            (string) $container->getDefinition('mcp.server.second.registry')->getArgument(0)->getArgument(0),
+        );
+    }
+
+    public function testTheRegistryUsesThePlainDispatcherWithoutSubscriptions()
+    {
+        $container = $this->buildContainer($this->config(['modern' => []]));
+
+        $this->assertSame('event_dispatcher', (string) $container->getDefinition('mcp.server.modern.registry')->getArgument(0));
+    }
+
+    public function testNoBusIsRegisteredWhenSubscriptionsAreOff()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $this->assertFalse($container->hasDefinition('mcp.server.default.notification_bus'));
+        $this->assertSame([], $this->callsNamed($container, 'setNotificationBus'));
+        $this->assertSame([], $this->callsNamed($container, 'setSubscriptionLifetime'));
+    }
+
     /**
      * Builds an "mcp" configuration from partial server definitions, defaulting each server to
      * exposing every tool so the "at least one element list" validation is satisfied.
@@ -551,6 +866,87 @@ class McpBundleTest extends TestCase
             $container->getDefinition('mcp.server.'.$server.'.builder')->getMethodCalls(),
             static fn (array $call): bool => $call[0] === $method,
         ));
+    }
+
+    /**
+     * Instantiates the SDK server the container describes, so an assertion can reach what the
+     * builder calls actually produced rather than restating the calls themselves.
+     *
+     * References are stood in for and tagged iterators come out empty: which eras a server
+     * carries does not depend on the registered elements.
+     */
+    private function buildServer(ContainerBuilder $container, string $name): Server
+    {
+        $dispatcher = new EventDispatcher();
+        $services = [
+            'event_dispatcher' => $dispatcher,
+            'logger' => new NullLogger(),
+            \sprintf('mcp.server.%s.registry', $name) => new Registry($dispatcher),
+            \sprintf('mcp.server.%s.session.store', $name) => new InMemorySessionStore(),
+        ];
+
+        $builder = Server::builder();
+        foreach ($container->getDefinition(\sprintf('mcp.server.%s.builder', $name))->getMethodCalls() as $call) {
+            \call_user_func_array([$builder, $call[0]], $this->resolveArguments($call[1], $services));
+        }
+
+        return $builder->build();
+    }
+
+    /**
+     * @param array<array-key, mixed> $arguments
+     * @param array<string, object>   $services
+     *
+     * @return array<array-key, mixed>
+     */
+    private function resolveArguments(array $arguments, array $services): array
+    {
+        return array_map(fn (mixed $argument): mixed => $this->resolveArgument($argument, $services), $arguments);
+    }
+
+    /**
+     * @param array<string, object> $services
+     */
+    private function resolveArgument(mixed $argument, array $services): mixed
+    {
+        if ($argument instanceof Reference) {
+            return $services[(string) $argument];
+        }
+
+        if ($argument instanceof TaggedIteratorArgument) {
+            return [];
+        }
+
+        if (\is_array($argument)) {
+            return $this->resolveArguments($argument, $services);
+        }
+
+        if (!$argument instanceof Definition) {
+            return $argument;
+        }
+
+        $arguments = $this->resolveArguments($argument->getArguments(), $services);
+        $factory = $argument->getFactory();
+
+        if (null === $factory) {
+            $class = $argument->getClass();
+            $this->assertNotNull($class);
+
+            return new $class(...$arguments);
+        }
+
+        $this->assertIsCallable($factory);
+
+        return \call_user_func_array($factory, $arguments);
+    }
+
+    /**
+     * The eras are private state of the SDK's server, and deliberately so: nothing but a test
+     * has business asking which dispatchers a built server carries.
+     */
+    private function legOf(Server $server, string $property): mixed
+    {
+        return (new \ReflectionProperty(Server::class, $property))->getValue($server);
     }
 
     /**

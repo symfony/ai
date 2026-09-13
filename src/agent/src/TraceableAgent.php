@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\Agent;
 
+use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Contracts\Service\ResetInterface;
@@ -40,7 +40,7 @@ final class TraceableAgent implements AgentInterface, ResetInterface
     ) {
     }
 
-    public function call(string|MessageBag|UserMessage $input, array $options = []): ResultInterface
+    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
     {
         $this->calls[] = [
             'input' => $input,

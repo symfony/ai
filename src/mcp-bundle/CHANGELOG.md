@@ -20,6 +20,16 @@ CHANGELOG
  * Add `--clients` and `--client` options to `debug:mcp`, which now covers both sides of the bundle:
    the configured servers and what the configured clients reach
  * Add a `--server` option to `debug:mcp` and a server argument to `mcp:server`
+ * Add support for the 2026-07-28 revision, served on the same endpoint as the handshake era: the SDK
+   classifies each request and routes it to the lifecycle it belongs to
+ * Add `servers.<name>.protocol_versions` narrowing the revisions a server answers for; left unset it
+   inherits the SDK's own support in both eras
+ * Add `servers.<name>.request_state` to sign the state a multi-round-trip answer carries through the client
+ * Add `servers.<name>.cache` for the cache hints the modern-era leg puts on its answers, with per-method overrides
+ * Add `servers.<name>.subscriptions` configuring delivery for `subscriptions/listen` streams
+ * Add the `clients.<name>.roots` option pointing at a `RootsCallbackInterface` service, replacing the
+   `capabilities.roots` flag, and add `getProtocolVersion()` and `sendRootsListChanged()` on
+   `ServerConnectionInterface`
 
 0.12
 ----

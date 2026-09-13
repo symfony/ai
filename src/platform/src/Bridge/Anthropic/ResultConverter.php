@@ -37,11 +37,13 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
@@ -117,6 +119,8 @@ class ResultConverter implements ResultConverterInterface
         }
 
         $results = [];
+        /** @var array<string, array{index: int, blocks: list<array<string, mixed>>}> $webSearchCalls */
+        $webSearchCalls = [];
         foreach ($data['content'] as $content) {
             if ('tool_use' === $content['type']) {
                 $results[] = new ToolCallResult([new ToolCall($content['id'], $content['name'], $content['input'])]);
@@ -130,6 +134,20 @@ class ResultConverter implements ResultConverterInterface
                     $results[] = new ExecutableCodeResult($content['input']['command'], 'bash', $content['id']);
                 } elseif ('text_editor_code_execution' === $content['name']) {
                     $results[] = new ExecutableCodeResult($content['input']['file_text'] ?? $content['input']['command'], null, $content['id']);
+                } elseif ('web_search' === $content['name']) {
+                    $query = \is_string($content['input']['query'] ?? null) ? $content['input']['query'] : null;
+                    $id = \is_string($content['id'] ?? null) ? $content['id'] : null;
+
+                    if (null !== $id) {
+                        $webSearchCalls[$id] = ['index' => \count($results), 'blocks' => [$content]];
+                    }
+
+                    $results[] = new WebSearchResult(
+                        $query,
+                        $id,
+                        queries: null === $query ? [] : [$query],
+                        signature: self::encodeWebSearchBlocks([$content]),
+                    );
                 }
             } elseif ('bash_code_execution_tool_result' === $content['type']) {
                 $results[] = new CodeExecutionResult(
@@ -139,6 +157,33 @@ class ResultConverter implements ResultConverterInterface
                 );
             } elseif ('text_editor_code_execution_tool_result' === $content['type']) {
                 $results[] = new CodeExecutionResult(true, null, $content['tool_use_id']);
+            } elseif ('web_search_tool_result' === $content['type']) {
+                // Neither result type reports the individual hits, so only the status survives the
+                // conversion; the blocks themselves travel on in the signature, because Anthropic
+                // rejects a replayed `web_search_tool_result` without its `server_tool_use` call.
+                $id = \is_string($content['tool_use_id'] ?? null) ? $content['tool_use_id'] : null;
+                $status = self::webSearchStatus($content);
+                $call = null === $id ? null : ($webSearchCalls[$id] ?? null);
+
+                if (null !== $call) {
+                    $previous = $results[$call['index']];
+                    \assert($previous instanceof WebSearchResult);
+                    $blocks = [...$call['blocks'], $content];
+                    $webSearchCalls[$id]['blocks'] = $blocks;
+                    $results[$call['index']] = new WebSearchResult(
+                        $previous->getQuery(),
+                        $previous->getId(),
+                        $status,
+                        $previous->getQueries(),
+                        self::encodeWebSearchBlocks($blocks),
+                    );
+                } else {
+                    $results[] = new WebSearchResult(
+                        id: $id,
+                        status: $status,
+                        signature: self::encodeWebSearchBlocks([$content]),
+                    );
+                }
             } elseif ('thinking' === $content['type']) {
                 $results[] = new ThinkingResult($content['thinking'], $content['signature'] ?? null);
             }
@@ -159,16 +204,70 @@ class ResultConverter implements ResultConverterInterface
         return new TokenUsageExtractor();
     }
 
+    /**
+     * The replay payload of one hosted web search: the `server_tool_use` call and its
+     * `web_search_tool_result`, in the order Anthropic sent them. Anthropic rejects either block
+     * without the other on the next turn, so both travel as the result's signature.
+     *
+     * @param list<array<string, mixed>> $blocks
+     */
+    private static function encodeWebSearchBlocks(array $blocks): string
+    {
+        return json_encode($blocks, \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param array{id: string|null, query: string|null, queries: list<string>, blocks: list<array<string, mixed>>} $call
+     * @param array<string, mixed>|null                                                                             $result
+     */
+    private static function webSearchComplete(array $call, ?array $result = null, ?string $status = null): WebSearchComplete
+    {
+        $blocks = $call['blocks'];
+        if (null !== $result) {
+            $blocks[] = $result;
+        }
+
+        return new WebSearchComplete(new WebSearchResult(
+            $call['query'],
+            $call['id'],
+            $status,
+            $call['queries'],
+            self::encodeWebSearchBlocks($blocks),
+        ));
+    }
+
+    /**
+     * Success carries a list of `web_search_result` blocks; an error is a single
+     * `web_search_tool_result_error` object reporting an `error_code` instead.
+     *
+     * @param array<string, mixed> $content
+     */
+    private static function webSearchStatus(array $content): ?string
+    {
+        if ('web_search_tool_result_error' !== ($content['content']['type'] ?? null)) {
+            return 'completed';
+        }
+
+        return \is_string($content['content']['error_code'] ?? null) ? $content['content']['error_code'] : null;
+    }
+
     private function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
         $currentToolCall = null;
         $currentToolCallJson = '';
+        /** @var array{id: string|null, block: array<string, mixed>}|null $currentWebSearch */
+        $currentWebSearch = null;
+        $currentWebSearchJson = '';
+        /** @var array{id: string|null, query: string|null, queries: list<string>, blocks: list<array<string, mixed>>}|null $pendingWebSearch */
+        $pendingWebSearch = null;
         $currentThinking = null;
         $currentThinkingSignature = null;
         $inMessage = false;
         $stopReason = null;
         $outputTokens = null;
+        // Only message_start names the model; carry it so the message_delta usage reports it too.
+        $model = null;
 
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
@@ -189,6 +288,7 @@ class ResultConverter implements ResultConverterInterface
 
             if ('message_start' === $type) {
                 $inMessage = true;
+                $model = $data['message']['model'] ?? null;
             }
 
             // Anthropic reports usage in both message_start and message_delta:
@@ -202,7 +302,7 @@ class ResultConverter implements ResultConverterInterface
             if ('message_start' === $type && isset($data['message']['usage'])) {
                 $usage = $data['message']['usage'];
                 unset($usage['output_tokens']);
-                yield $this->getTokenUsageExtractor()->extractFromArray($usage);
+                yield $this->getTokenUsageExtractor()->extractFromArray($usage, $model);
             }
 
             if ('message_delta' === $type) {
@@ -212,7 +312,7 @@ class ResultConverter implements ResultConverterInterface
                     $outputTokens = $data['usage']['output_tokens'] ?? $outputTokens;
                     yield $this->getTokenUsageExtractor()->extractFromArray([
                         'output_tokens' => $outputTokens ?? 0,
-                    ]);
+                    ], $model);
                 }
             }
 
@@ -220,6 +320,16 @@ class ResultConverter implements ResultConverterInterface
             if ('content_block_delta' === $type && isset($data['delta']['text'])) {
                 yield new TextDelta($data['delta']['text']);
                 continue;
+            }
+
+            // A closed `server_tool_use` call waits for its `web_search_tool_result` so both blocks
+            // reach the assistant turn as one search; anything else starting means none is coming.
+            if ('content_block_start' === $type
+                && null !== $pendingWebSearch
+                && 'web_search_tool_result' !== ($data['content_block']['type'] ?? null)
+            ) {
+                yield self::webSearchComplete($pendingWebSearch);
+                $pendingWebSearch = null;
             }
 
             // Handle thinking content block start
@@ -255,6 +365,46 @@ class ResultConverter implements ResultConverterInterface
                 continue;
             }
 
+            // Handle provider-hosted web search content block start
+            if ('content_block_start' === $type
+                && 'server_tool_use' === ($data['content_block']['type'] ?? null)
+                && 'web_search' === ($data['content_block']['name'] ?? null)
+            ) {
+                $id = \is_string($data['content_block']['id'] ?? null) ? $data['content_block']['id'] : null;
+                $currentWebSearch = [
+                    'id' => $id,
+                    'block' => $data['content_block'],
+                ];
+                $currentWebSearchJson = '';
+                continue;
+            }
+
+            if ('content_block_start' === $type
+                && 'web_search_tool_result' === ($data['content_block']['type'] ?? null)
+            ) {
+                $id = \is_string($data['content_block']['tool_use_id'] ?? null) ? $data['content_block']['tool_use_id'] : null;
+                $status = self::webSearchStatus($data['content_block']);
+
+                if (null !== $pendingWebSearch && (null === $id || $pendingWebSearch['id'] === $id)) {
+                    yield self::webSearchComplete($pendingWebSearch, $data['content_block'], $status);
+                    $pendingWebSearch = null;
+
+                    continue;
+                }
+
+                if (null !== $pendingWebSearch) {
+                    yield self::webSearchComplete($pendingWebSearch);
+                    $pendingWebSearch = null;
+                }
+
+                yield new WebSearchComplete(new WebSearchResult(
+                    id: $id,
+                    status: $status,
+                    signature: self::encodeWebSearchBlocks([$data['content_block']]),
+                ));
+                continue;
+            }
+
             // Handle tool_use content block start
             if ('content_block_start' === $type
                 && isset($data['content_block']['type'])
@@ -275,9 +425,11 @@ class ResultConverter implements ResultConverterInterface
                 && 'input_json_delta' === $data['delta']['type']
             ) {
                 $partialJson = $data['delta']['partial_json'] ?? '';
-                $currentToolCallJson .= $partialJson;
                 if (null !== $currentToolCall) {
+                    $currentToolCallJson .= $partialJson;
                     yield new ToolInputDelta($currentToolCall['id'], $currentToolCall['name'], $partialJson);
+                } elseif (null !== $currentWebSearch) {
+                    $currentWebSearchJson .= $partialJson;
                 }
                 continue;
             }
@@ -309,6 +461,29 @@ class ResultConverter implements ResultConverterInterface
                     $currentToolCallJson = '';
                     continue;
                 }
+
+                if (null !== $currentWebSearch) {
+                    $input = \is_array($currentWebSearch['block']['input'] ?? null) ? $currentWebSearch['block']['input'] : [];
+                    if ('' !== $currentWebSearchJson) {
+                        try {
+                            $input = json_decode($currentWebSearchJson, true, flags: \JSON_THROW_ON_ERROR);
+                        } catch (\JsonException $e) {
+                            throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "web_search" tool: "%s"', $e->getMessage()), 0, $e);
+                        }
+                    }
+                    $query = \is_string($input['query'] ?? null) ? $input['query'] : null;
+                    $currentWebSearch['block']['input'] = \is_array($input) ? $input : [];
+
+                    $pendingWebSearch = [
+                        'id' => $currentWebSearch['id'],
+                        'query' => $query,
+                        'queries' => null === $query ? [] : [$query],
+                        'blocks' => [$currentWebSearch['block']],
+                    ];
+                    $currentWebSearch = null;
+                    $currentWebSearchJson = '';
+                    continue;
+                }
             }
 
             // Handle message stop - yield tool calls if any were collected
@@ -322,6 +497,13 @@ class ResultConverter implements ResultConverterInterface
                     }
 
                     throw new MaxOutputTokensException($message);
+                }
+
+                // A turn stopping on `pause_turn` ends after the call block, its result arriving
+                // only on the next request, so the call replays on its own.
+                if (null !== $pendingWebSearch) {
+                    yield self::webSearchComplete($pendingWebSearch);
+                    $pendingWebSearch = null;
                 }
 
                 if ([] !== $toolCalls) {

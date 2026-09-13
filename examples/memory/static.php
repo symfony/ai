@@ -34,4 +34,4 @@ $agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor, $memoryProc
 $messages = new MessageBag(Message::ofUser('What do we do today?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

@@ -16,6 +16,7 @@ use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Agent\AgentInstructionsAggregator;
 use Symfony\AI\Mate\Agent\AgentInstructionsMaterializer;
 use Symfony\AI\Mate\Command\InitCommand;
+use Symfony\AI\Mate\Runtime\InvocationPhpVersionProbe;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -47,22 +48,31 @@ final class InitCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertDirectoryExists($this->tempDir.'/mate');
+        $this->assertDirectoryExists($this->tempDir.'/mate/src');
         $this->assertFileExists($this->tempDir.'/mate/extensions.php');
         $this->assertFileExists($this->tempDir.'/mate/config.php');
         $this->assertFileExists($this->tempDir.'/mate/.env');
         $this->assertFileExists($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md');
-        $this->assertFileExists($this->tempDir.'/mcp.json');
-        $this->assertFileExists($this->tempDir.'/bin/codex');
-        $this->assertFileExists($this->tempDir.'/bin/codex.bat');
-        $this->assertTrue(is_executable($this->tempDir.'/bin/codex'));
-        $this->assertTrue(is_link($this->tempDir.'/.mcp.json'));
-        $this->assertSame('mcp.json', readlink($this->tempDir.'/.mcp.json'));
         $this->assertFileExists($this->tempDir.'/AGENTS.md');
 
         $content = file_get_contents($this->tempDir.'/mate/extensions.php');
         $this->assertIsString($content);
         $this->assertStringContainsString('mate discover', $content);
         $this->assertStringContainsString('enabled', $content);
+    }
+
+    public function testDoesNotGenerateMcpArtifacts()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertFileDoesNotExist($this->tempDir.'/mcp.json');
+        $this->assertFileDoesNotExist($this->tempDir.'/.mcp.json');
+        $this->assertFileDoesNotExist($this->tempDir.'/bin/codex');
+        $this->assertFileDoesNotExist($this->tempDir.'/bin/codex.bat');
     }
 
     public function testDisplaysSuccessMessage()
@@ -77,7 +87,7 @@ final class InitCommandTest extends TestCase
         $this->assertStringContainsString('extensions.php', $output);
         $this->assertStringContainsString('config.php', $output);
         $this->assertStringContainsString('composer dump-autoload', $output);
-        $this->assertStringContainsString('./bin/codex', $output);
+        $this->assertStringContainsString('tools:call', $output);
         $this->assertStringContainsString('Summary', $output);
         $this->assertStringContainsString('Created', $output);
     }
@@ -91,8 +101,9 @@ final class InitCommandTest extends TestCase
         mkdir($this->tempDir.'/mate', 0755, true);
         file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return ["test" => "value"];');
 
-        // Execute with 'no' response (twice for both files)
-        $tester->setInputs(['no', 'no']);
+        // Decline overwriting the existing extensions.php.
+        // The first prompt is the agent invocation; the second is the overwrite confirmation.
+        $tester->setInputs(['vendor/bin/mate', 'no']);
         $tester->execute([]);
 
         // File should still contain original content
@@ -111,8 +122,9 @@ final class InitCommandTest extends TestCase
         mkdir($this->tempDir.'/mate', 0755, true);
         file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return ["test" => "value"];');
 
-        // Execute with 'yes' response (twice for both files)
-        $tester->setInputs(['yes', 'yes']);
+        // Confirm overwriting the existing extensions.php.
+        // The first prompt is the agent invocation; the second is the overwrite confirmation.
+        $tester->setInputs(['vendor/bin/mate', 'yes']);
         $tester->execute([]);
 
         // File should be overwritten with template content
@@ -121,6 +133,285 @@ final class InitCommandTest extends TestCase
         $this->assertStringNotContainsString('test', $content);
         $this->assertStringContainsString('mate discover', $content);
         $this->assertStringContainsString('enabled', $content);
+    }
+
+    public function testRecordsTheAgentInvocationAndRuntimeInConfig()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['ddev exec vendor/bin/mate']);
+        $tester->execute([]);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringNotContainsString('##MATE_INVOCATION##', $config);
+        $this->assertStringNotContainsString('##MATE_PHP_VERSION##', $config);
+        $this->assertStringContainsString("'ddev exec vendor/bin/mate'", $config);
+        $this->assertStringContainsString(
+            "'".\PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION."'",
+            $config,
+        );
+    }
+
+    public function testDoesNotProbeWhenTheInvocationIsTheBareBinary()
+    {
+        $probe = new InvocationPhpVersionProbe(null, function (array $command): string {
+            $this->fail('The bare binary runs on the host directly; it must not be probed.');
+        });
+
+        $command = $this->createCommand($probe);
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['vendor/bin/mate']);
+        $tester->execute([]);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString(
+            "'".\PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION."'",
+            $config,
+        );
+    }
+
+    /**
+     * A wrapped invocation runs under whatever PHP the wrapper routes to, which may differ
+     * from the host process running `mate init`; a working probe must pin that real version.
+     */
+    public function testWrappedInvocationWithAWorkingProbeUsesTheDetectedPhpVersion()
+    {
+        $probe = new InvocationPhpVersionProbe(null, static function (array $command): string {
+            return 'MATE_PHP_VERSION=7.4';
+        });
+
+        $command = $this->createCommand($probe);
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['ddev exec vendor/bin/mate']);
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString("'7.4'", $config);
+        $this->assertStringNotContainsString(\PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION, $config);
+        $this->assertStringNotContainsString('Could not determine', $tester->getDisplay());
+    }
+
+    /**
+     * A failed probe must not crash `init` or block file generation: it falls back to the
+     * current process's version, exactly like today, and warns so the developer can fix
+     * "mate.php_version" in mate/config.php by hand if that guess is wrong.
+     */
+    public function testWrappedInvocationWithAFailingProbeFallsBackAndWarns()
+    {
+        $probe = new InvocationPhpVersionProbe(null, static function (array $command): ?string {
+            return null;
+        });
+
+        $command = $this->createCommand($probe);
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['ddev exec vendor/bin/mate']);
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString(
+            "'".\PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION."'",
+            $config,
+        );
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Could not determine', $display);
+        $this->assertStringContainsString('ddev exec vendor/bin/mate', $display);
+    }
+
+    /**
+     * The managed AGENTS.md block promises one command; the file it points at must not name
+     * another one until `discover` happens to run.
+     */
+    public function testWritesTheAgentInvocationIntoTheGeneratedInstructions()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['ddev exec vendor/bin/mate']);
+        $tester->execute([]);
+
+        $instructions = file_get_contents($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+        $this->assertIsString($instructions);
+        $this->assertStringNotContainsString('##MATE_INVOCATION##', $instructions);
+        $this->assertStringContainsString('ddev exec vendor/bin/mate tools:list', $instructions);
+
+        $agents = file_get_contents($this->tempDir.'/AGENTS.md');
+        $this->assertIsString($agents);
+        $this->assertStringContainsString('ddev exec vendor/bin/mate', $agents);
+    }
+
+    /**
+     * A wrapper on its own is the natural answer to "which command", and materializing it
+     * verbatim would produce "symfony php tools:list", which runs nothing.
+     */
+    public function testCompletesABareWrapperWithTheBinary()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['symfony php']);
+        $tester->execute([]);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString("'symfony php vendor/bin/mate'", $config);
+
+        $instructions = file_get_contents($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+        $this->assertIsString($instructions);
+        $this->assertStringContainsString('symfony php vendor/bin/mate tools:list', $instructions);
+    }
+
+    public function testKeepsAnInvocationThatAlreadyNamesTheBinary()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['docker compose exec app php bin/mate']);
+        $tester->execute([]);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString("'docker compose exec app php bin/mate'", $config);
+    }
+
+    /**
+     * Re-running `init` after an upgrade is the natural thing to try, and the only safe answer to
+     * the overwrite prompt is "no", because the template would discard the services the user
+     * registered. AGENTS.md is the file the agent reads, so it has to keep naming the command the
+     * kept config.php configures rather than the answer that went nowhere.
+     */
+    public function testKeepingTheConfigKeepsItsInvocationInTheInstructions()
+    {
+        $this->scaffoldInitializedProject('ddev exec vendor/bin/mate');
+
+        $command = $this->createCommand(null, 'ddev exec vendor/bin/mate');
+        $tester = new CommandTester($command);
+
+        // One "no" per scaffolded file. No invocation prompt: the config stays as it is.
+        $tester->setInputs(['no', 'no', 'no', 'no', 'no']);
+        $tester->execute([]);
+
+        $agents = file_get_contents($this->tempDir.'/AGENTS.md');
+        $this->assertIsString($agents);
+        $this->assertStringContainsString('ddev exec vendor/bin/mate', $agents);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString('a service the user registered themselves', $config);
+    }
+
+    /**
+     * `mate.php_version` is nullable on purpose: null turns the interpreter check off. Passing the
+     * PHP that happens to run `init` in its place would make the generated instructions promise a
+     * refusal nothing enforces, which is precisely what an upgraded project without the parameter
+     * must not be told.
+     */
+    public function testAProjectWithoutAPinnedVersionIsNotPromisedTheInterpreterCheck()
+    {
+        $this->scaffoldInitializedProject('vendor/bin/mate');
+
+        $command = $this->createCommand(null, 'vendor/bin/mate', null);
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['no', 'no', 'no', 'no', 'no']);
+        $tester->execute([]);
+
+        $agents = file_get_contents($this->tempDir.'/AGENTS.md');
+        $this->assertIsString($agents);
+        $this->assertStringNotContainsString('refuses to start', $agents);
+    }
+
+    public function testAProjectWithAPinnedVersionIsPromisedTheInterpreterCheck()
+    {
+        $this->scaffoldInitializedProject('vendor/bin/mate');
+
+        $command = $this->createCommand(null, 'vendor/bin/mate', '8.3');
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['no', 'no', 'no', 'no', 'no']);
+        $tester->execute([]);
+
+        $agents = file_get_contents($this->tempDir.'/AGENTS.md');
+        $this->assertIsString($agents);
+        $this->assertStringContainsString('refuses to start', $agents);
+    }
+
+    public function testDoesNotAskForAnInvocationItWouldDiscard()
+    {
+        $this->scaffoldInitializedProject('ddev exec vendor/bin/mate');
+
+        $command = $this->createCommand(null, 'ddev exec vendor/bin/mate');
+        $tester = new CommandTester($command);
+
+        $tester->setInputs(['no', 'no', 'no', 'no', 'no']);
+        $tester->execute([]);
+
+        $this->assertStringNotContainsString('Which command should your coding agent use', $tester->getDisplay());
+    }
+
+    public function testReplacingTheConfigAsksForTheInvocationAgain()
+    {
+        $this->scaffoldInitializedProject('ddev exec vendor/bin/mate');
+
+        $command = $this->createCommand(null, 'ddev exec vendor/bin/mate');
+        $tester = new CommandTester($command);
+
+        // extensions.php: no, config.php: yes, then the invocation, then the remaining files.
+        $tester->setInputs(['no', 'yes', 'symfony php', 'no', 'no', 'no']);
+        $tester->execute([]);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString("'symfony php vendor/bin/mate'", $config);
+
+        $agents = file_get_contents($this->tempDir.'/AGENTS.md');
+        $this->assertIsString($agents);
+        $this->assertStringContainsString('symfony php vendor/bin/mate', $agents);
+    }
+
+    /**
+     * The instructions carry the invocation too, so replacing them while keeping the config must
+     * not fall back to the template default either.
+     */
+    public function testReplacingOnlyTheInstructionsKeepsTheConfiguredInvocation()
+    {
+        $this->scaffoldInitializedProject('ddev exec vendor/bin/mate');
+
+        $command = $this->createCommand(null, 'ddev exec vendor/bin/mate');
+        $tester = new CommandTester($command);
+
+        // Everything declined except AGENT_INSTRUCTIONS.md, the last of the five.
+        $tester->setInputs(['no', 'no', 'no', 'no', 'yes']);
+        $tester->execute([]);
+
+        $instructions = file_get_contents($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md');
+        $this->assertIsString($instructions);
+        $this->assertStringNotContainsString('##MATE_INVOCATION##', $instructions);
+        $this->assertStringContainsString('ddev exec vendor/bin/mate tools:list', $instructions);
+    }
+
+    public function testDefaultsTheInvocationToThePlainBinary()
+    {
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $config = file_get_contents($this->tempDir.'/mate/config.php');
+        $this->assertIsString($config);
+        $this->assertStringContainsString("'vendor/bin/mate'", $config);
     }
 
     public function testCreatesDirectoryIfNotExists()
@@ -137,92 +428,6 @@ final class InitCommandTest extends TestCase
         $this->assertDirectoryExists($this->tempDir.'/mate');
         $this->assertFileExists($this->tempDir.'/mate/extensions.php');
         $this->assertFileExists($this->tempDir.'/mate/config.php');
-    }
-
-    public function testMcpJsonUsesPhpBinaryByDefault()
-    {
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $mcpJson = $this->readMcpJson();
-        $this->assertSame('php', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
-        $this->assertSame(
-            ['./vendor/bin/mate', 'serve', '--force-keep-alive'],
-            $mcpJson['mcpServers']['symfony-ai-mate']['args']
-        );
-    }
-
-    public function testMcpJsonDefaultsToDdevWrapperWhenDdevDetected()
-    {
-        mkdir($this->tempDir.'/.ddev', 0755, true);
-
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        // Accept the detected default by submitting an empty answer.
-        $tester->setInputs(['']);
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $mcpJson = $this->readMcpJson();
-        $this->assertSame('ddev', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
-        $this->assertSame(
-            ['exec', 'php', './vendor/bin/mate', 'serve', '--force-keep-alive'],
-            $mcpJson['mcpServers']['symfony-ai-mate']['args']
-        );
-    }
-
-    public function testMcpJsonUsesProvidedPhpBinary()
-    {
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        $tester->setInputs(['docker compose exec php php']);
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $mcpJson = $this->readMcpJson();
-        $this->assertSame('docker', $mcpJson['mcpServers']['symfony-ai-mate']['command']);
-        $this->assertSame(
-            ['compose', 'exec', 'php', 'php', './vendor/bin/mate', 'serve', '--force-keep-alive'],
-            $mcpJson['mcpServers']['symfony-ai-mate']['args']
-        );
-    }
-
-    public function testKeepsExistingMcpJsonUntouchedWhenOverwriteDeclined()
-    {
-        $existing = <<<'JSON'
-            {
-                "mcpServers": {
-                    "symfony-ai-mate": {
-                        "command": "my-custom-php",
-                        "args": ["./vendor/bin/mate", "serve"]
-                    }
-                }
-            }
-            JSON;
-        file_put_contents($this->tempDir.'/mcp.json', $existing);
-
-        $command = $this->createCommand();
-        $tester = new CommandTester($command);
-
-        // Decline overwriting the existing mcp.json; no PHP binary prompt should follow.
-        $tester->setInputs(['no']);
-        $tester->execute([]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        // The user's file is left exactly as-is, with no placeholder resolution.
-        $this->assertSame($existing, file_get_contents($this->tempDir.'/mcp.json'));
-        // And the command neither prompts for a binary nor claims it configured one.
-        $display = $tester->getDisplay();
-        $this->assertStringNotContainsString('PHP binary to run Mate', $display);
-        $this->assertStringNotContainsString('Configured', $display);
     }
 
     public function testSetsExtensionFalseByDefault()
@@ -248,6 +453,26 @@ final class InitCommandTest extends TestCase
         $this->assertFalse($composerJson['extra']['ai-mate']['extension']);
     }
 
+    public function testPreservesNonAsciiCharactersInComposerJson()
+    {
+        file_put_contents($this->tempDir.'/composer.json', json_encode([
+            'name' => 'test/package',
+            'authors' => [['name' => 'Michał Pysiak']],
+        ], \JSON_UNESCAPED_UNICODE));
+
+        $command = $this->createCommand();
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $composerContent = file_get_contents($this->tempDir.'/composer.json');
+        $this->assertIsString($composerContent);
+        $this->assertStringContainsString('Michał Pysiak', $composerContent);
+        $this->assertStringNotContainsString('\\u', $composerContent);
+    }
+
     public function testScaffoldsSensitiveFilesWithSecurePermissions()
     {
         if ('\\' === \DIRECTORY_SEPARATOR) {
@@ -265,27 +490,40 @@ final class InitCommandTest extends TestCase
         $this->assertSame(0640, fileperms($this->tempDir.'/mate/config.php') & 0777);
     }
 
-    private function createCommand(): InitCommand
-    {
+    /**
+     * The default probe is inert on purpose. A real one would run the wrapper from the test's
+     * inputs, so the suite would shell out to whatever `ddev`, `symfony` or `docker` happens to be
+     * installed, in the developer's current directory. Tests that care about probing pass their
+     * own runner.
+     *
+     * `$invocation` and `$pinnedPhpVersion` stand for what the container loaded from an existing
+     * `mate/config.php`, which is what a re-run in an initialized project sees.
+     */
+    private function createCommand(
+        ?InvocationPhpVersionProbe $phpVersionProbe = null,
+        string $invocation = 'vendor/bin/mate',
+        ?string $pinnedPhpVersion = null,
+    ): InitCommand {
         $logger = new NullLogger();
         $aggregator = new AgentInstructionsAggregator($this->tempDir, [], $logger);
-        $materializer = new AgentInstructionsMaterializer($this->tempDir, $aggregator, $logger);
+        $materializer = new AgentInstructionsMaterializer($this->tempDir, $aggregator, $logger, $invocation, $pinnedPhpVersion);
 
-        return new InitCommand($this->tempDir, $materializer);
+        $probe = $phpVersionProbe ?? new InvocationPhpVersionProbe(null, static fn (array $command): ?string => null);
+
+        return new InitCommand($this->tempDir, $materializer, $probe, $invocation, $pinnedPhpVersion);
     }
 
     /**
-     * @return array{mcpServers: array{symfony-ai-mate: array{command: string, args: list<string>}}}
+     * Writes the scaffolded files a re-run finds, with the invocation the project configured.
      */
-    private function readMcpJson(): array
+    private function scaffoldInitializedProject(string $invocation): void
     {
-        $content = file_get_contents($this->tempDir.'/mcp.json');
-        $this->assertIsString($content);
-
-        $decoded = json_decode($content, true);
-        $this->assertIsArray($decoded);
-
-        return $decoded;
+        mkdir($this->tempDir.'/mate', 0755, true);
+        file_put_contents($this->tempDir.'/mate/config.php', "<?php\n\n// \$container->parameters()->set('mate.invocation', '".$invocation."');\n// a service the user registered themselves\n");
+        file_put_contents($this->tempDir.'/mate/extensions.php', '<?php return [];');
+        file_put_contents($this->tempDir.'/mate/.env', '');
+        file_put_contents($this->tempDir.'/mate/.gitignore', '');
+        file_put_contents($this->tempDir.'/mate/AGENT_INSTRUCTIONS.md', 'Run `'.$invocation.' tools:list`.');
     }
 
     private function removeDirectory(string $dir): void

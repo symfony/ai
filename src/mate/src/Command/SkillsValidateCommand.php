@@ -26,10 +26,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Checks the installed skills against the state recorded in mate/extensions.php.
  *
- * Read-only. Reports two kinds of finding: errors, where the generated folders no longer match what
- * was recorded (missing, hand-edited, mirror pointing elsewhere, disabled but still present), and
+ * Read-only. Reports three kinds of finding: errors, where the generated folders no longer match
+ * what was recorded (missing, hand-edited, mirror pointing elsewhere, disabled but still present);
  * warnings, where reality has legitimately moved on (source changed since the last install, a skill
- * declared but never installed, a mirror copied because symlinks are unavailable).
+ * declared but never installed, a mirror copied because symlinks are unavailable); and suggestions
+ * about the authored content, which are printed but never affect the exit code, not even under
+ * --strict, because they are heuristics a correct skill may miss.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -65,7 +67,8 @@ The <info>%command.name%</info> command compares the generated skill folders aga
 recorded in <comment>mate/extensions.php</comment>.
 
 It exits with <comment>1</comment> when any error is found, and with <comment>--strict</comment> also
-when any warning is found. Most findings are fixed by running
+when any warning is found. Suggestions about the authored content are printed but never change the
+exit code. Most findings are fixed by running
 <info>mate skills:install</info> or <info>mate skills:prune</info>.
 HELP
         );
@@ -78,7 +81,7 @@ HELP
         $format = $input->getOption('format');
         \assert(\is_string($format));
 
-        if (!$this->ensureToonFormatAvailable($io, $format)) {
+        if (!$this->ensureFormatSupported($io, $format, ['table', 'json', 'toon'])) {
             return Command::FAILURE;
         }
 
@@ -142,7 +145,11 @@ HELP
             foreach ($status->issues as $issue) {
                 $io->text(\sprintf(
                     '%s %s',
-                    'error' === $issue['level'] ? '<fg=red>ERROR</>' : '<fg=yellow>WARNING</>',
+                    match ($issue['level']) {
+                        'error' => '<fg=red>ERROR</>',
+                        'warning' => '<fg=yellow>WARNING</>',
+                        'suggestion' => '<fg=cyan>SUGGESTION</>',
+                    },
                     $issue['message'],
                 ));
             }

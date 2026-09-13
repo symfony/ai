@@ -45,6 +45,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
@@ -65,7 +66,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * @phpstan-type FunctionCall array{id?: string|null, arguments: string, call_id?: string|null, name: string, type: 'function_call'}
  * @phpstan-type Thinking array{summary: list<array{type: string, text?: string}>, id: string, encrypted_content?: string|null}
  * @phpstan-type Error array{code?: string|null, type?: string|null, param?: string|null, message?: string|null}
- * @phpstan-type WebSearchCall array{type: 'web_search_call', id?: string, status?: string, action?: array{type?: string, query?: string, queries?: list<string>}}
+ * @phpstan-type WebSearchCall array{type: 'web_search_call', id?: string, status?: string, action?: array<string, mixed>}
  * @phpstan-type FileSearchCall array{type: 'file_search_call', id?: string, status?: string, queries?: list<string>, results?: list<array<string, mixed>>|null}
  * @phpstan-type CodeInterpreterCall array{type: 'code_interpreter_call', id?: string, status?: string, code?: string|null, outputs?: list<array{type?: string, logs?: string, url?: string}>|null}
  * @phpstan-type ImageGenerationCall array{type: 'image_generation_call', id?: string, status?: string, result?: string|null}
@@ -303,7 +304,13 @@ class ResultConverter implements ResultConverterInterface
         $queries = $action['queries'] ?? [];
         $query = $action['query'] ?? ($queries[0] ?? null);
 
-        return [new WebSearchResult($query, $item['id'] ?? null, $item['status'] ?? null, $queries)];
+        return [new WebSearchResult(
+            $query,
+            $item['id'] ?? null,
+            $item['status'] ?? null,
+            $queries,
+            json_encode($item, \JSON_THROW_ON_ERROR),
+        )];
     }
 
     /**
@@ -569,6 +576,12 @@ class ResultConverter implements ResultConverterInterface
                 $item = $event['item'];
                 $toolCall = $this->convertFunctionCall($item);
                 $toolCalls[$toolCall->getId()] = $toolCall;
+            }
+
+            if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'web_search_call' === ($event['item']['type'] ?? null)) {
+                /** @var WebSearchCall $item */
+                $item = $event['item'];
+                yield new WebSearchComplete($this->convertWebSearchCall($item)[0]);
             }
 
             // The full reasoning item (including encrypted_content when requested

@@ -29,6 +29,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'ai/mxbai-embed-large',
             'usage' => [
                 'prompt_tokens' => 12,
                 'total_tokens' => 12,
@@ -41,6 +42,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(12, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertSame(12, $tokenUsage->getTotalTokens());
+        $this->assertSame('ai/mxbai-embed-large', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -57,5 +59,6 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(7, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 }

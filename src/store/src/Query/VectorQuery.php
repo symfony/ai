@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Query;
 
-use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\VectorInterface;
 
 /**
  * Classic vector search query using semantic similarity.
@@ -21,11 +21,11 @@ use Symfony\AI\Platform\Vector\Vector;
 final class VectorQuery implements QueryInterface
 {
     public function __construct(
-        private readonly Vector $vector,
+        private readonly VectorInterface $vector,
     ) {
     }
 
-    public function getVector(): Vector
+    public function getVector(): VectorInterface
     {
         return $this->vector;
     }

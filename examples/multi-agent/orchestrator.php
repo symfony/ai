@@ -62,11 +62,11 @@ $technicalQuestion = 'I get this error in my php code: "Call to undefined method
 echo "Question: $technicalQuestion\n\n";
 $messages = new MessageBag(Message::ofUser($technicalQuestion));
 $result = $multiAgent->call($messages);
-echo 'Answer: '.substr($result->getContent(), 0, 300).'...'.\PHP_EOL.\PHP_EOL;
+echo 'Answer: '.substr($result->asText(), 0, 300).'...'.\PHP_EOL.\PHP_EOL;
 
 echo "=== General Question ===\n";
 $generalQuestion = 'Can you give me a lasagne recipe?';
 echo "Question: $generalQuestion\n\n";
 $messages = new MessageBag(Message::ofUser($generalQuestion));
 $result = $multiAgent->call($messages);
-echo 'Answer: '.substr($result->getContent(), 0, 300).'...'.\PHP_EOL;
+echo 'Answer: '.substr($result->asText(), 0, 300).'...'.\PHP_EOL;

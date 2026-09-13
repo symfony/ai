@@ -36,6 +36,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'MiniMax-M2',
             'usage' => [
                 'prompt_tokens' => 10,
                 'completion_tokens' => 20,
@@ -49,6 +50,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(30, $tokenUsage->getTotalTokens());
+        $this->assertSame('MiniMax-M2', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -66,6 +68,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 
     public function testItExtractsTokenUsageFromUsageArray()

@@ -113,6 +113,81 @@ class AssistantMessageNormalizerTest extends TestCase
                 'content' => 'Foo',
             ]],
         ];
+
+        $normalizedToolCall = [
+            'arguments' => json_encode($toolCall->getArguments()),
+            'call_id' => $toolCall->getId(),
+            'name' => $toolCall->getName(),
+            'type' => 'function_call',
+        ];
+
+        yield 'text accompanying a tool call is replayed, not dropped' => [
+            Message::ofAssistant(new Text('Let me roll.'), $toolCall),
+            [
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => 'Let me roll.',
+                ],
+                $normalizedToolCall,
+            ],
+        ];
+
+        yield 'text on both sides of a tool call keeps its positions' => [
+            Message::ofAssistant(new Text('Before. '), $toolCall, new Text('After.')),
+            [
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => 'Before. ',
+                ],
+                $normalizedToolCall,
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => 'After.',
+                ],
+            ],
+        ];
+
+        yield 'a reasoning item after text stays after it' => [
+            Message::ofAssistant(new Text('Thinking about it. '), new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Done.')),
+            [
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => 'Thinking about it. ',
+                ],
+                $reasoningItem,
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => 'Done.',
+                ],
+            ],
+        ];
+
+        yield 'reasoning, text and a tool call in the order the model produced them' => [
+            Message::ofAssistant(new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Let me roll.'), $toolCall),
+            [
+                $reasoningItem,
+                [
+                    'role' => 'assistant',
+                    'type' => 'message',
+                    'content' => 'Let me roll.',
+                ],
+                $normalizedToolCall,
+            ],
+        ];
+
+        yield 'an assistant turn with nothing replayable keeps the empty message' => [
+            Message::ofAssistant(new Thinking('Pondering.')),
+            [[
+                'role' => 'assistant',
+                'type' => 'message',
+                'content' => null,
+            ]],
+        ];
     }
 
     #[DataProvider('supportsNormalizationProvider')]

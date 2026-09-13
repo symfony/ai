@@ -11,15 +11,16 @@
 
 namespace Symfony\AI\Mate\Tests\Command\Fixtures;
 
-use Mcp\Capability\Attribute\McpResource;
-use Mcp\Capability\Attribute\McpResourceTemplate;
+use Symfony\AI\Mate\Attribute\MateResource;
+use Symfony\AI\Mate\Attribute\MateResourceTemplate;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class SampleResources
 {
-    #[McpResource(
+    #[MateResource(
         uri: 'sample://greeting',
         name: 'sample-greeting',
         description: 'A static greeting resource for tests',
@@ -30,10 +31,21 @@ final class SampleResources
         return 'Hello from the Mate test fixture!';
     }
 
+    #[MateResource(
+        uri: 'sample://payload',
+        name: 'sample-payload',
+        description: 'A resource whose body is an encoded structure',
+        mimeType: 'application/json',
+    )]
+    public function getPayload(): string
+    {
+        return ResponseEncoder::encode(['answer' => 42, 'nested' => ['ok' => true]]);
+    }
+
     /**
      * @return array{uri: string, mimeType: string, text: string}
      */
-    #[McpResourceTemplate(
+    #[MateResourceTemplate(
         uriTemplate: 'sample://echo/{message}',
         name: 'sample-echo',
         description: 'Echoes the message back as a resource',

@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add model information to token usage extraction
+
+0.13
+----
+
+ * Add a Mistral assistant message normalizer that replays a reasoning turn as a `thinking` chunk of the content list, the shape the API accepts and its result converter already reads, instead of the `reasoning_content` of the OpenAI-compatible convention, which Mistral rejects with a 422 `Extra inputs are not permitted`
+ * Add a Mistral audio normalizer so `Content\Audio` can be used as a chat message part (audio understanding) with Voxtral models such as `voxtral-small-latest`
+ * Add Voxtral speech-to-text support through the dedicated `/v1/audio/transcriptions` endpoint, exposing a `SpeechToText` model, model client, result converter and audio normalizer (opt-in via `new SpeechToText('voxtral-mini-latest')`)
+
 0.11
 ----
 

@@ -11,7 +11,7 @@
 
 namespace Mate;
 
-use Mcp\Capability\Attribute\McpTool;
+use Symfony\AI\Mate\Attribute\MateTool;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -41,7 +41,7 @@ class SymfonyAiFeaturesTool
      *     message?: string
      * }
      */
-    #[McpTool('symfony-ai-features', 'Detects and lists all available Symfony AI features, platforms, agents, tools, and configurations in this project')]
+    #[MateTool(name: 'symfony-ai-features', title: 'Symfony AI Features', description: 'Detects and lists all available Symfony AI features, platforms, agents, tools, and configurations in this project')]
     public function getFeatures(bool $includeDetails = true): array
     {
         $configPath = $this->rootDir.'/config/packages/ai.yaml';

@@ -5,16 +5,14 @@ This page covers common issues when using Symfony AI Mate and how to resolve the
 
 For specific issues, see also:
 
-* :doc:`integration` - AI assistant connection issues
-* :doc:`creating-extensions` - Extension and tool issues
+* :doc:`integration` - the agent not finding or not using Mate
+* :doc:`creating-extensions` - extension and tool issues
 
-Server Issues
--------------
+Command Issues
+--------------
 
-Server Not Starting
-~~~~~~~~~~~~~~~~~~~
-
-If the MCP server doesn't start:
+The Command Does Not Run
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. **Check PHP version** (requires 8.2+):
 
@@ -28,30 +26,29 @@ If the MCP server doesn't start:
 
        $ ls -la vendor/bin/mate
 
-3. **Run manually to see errors**:
-
-   .. code-block:: terminal
-
-       $ vendor/bin/mate serve
-
-   Look for error messages in the output.
-
-4. **Check for missing dependencies**:
+3. **Check for missing dependencies**:
 
    .. code-block:: terminal
 
        $ composer install
 
-Server Crashes on Startup
-~~~~~~~~~~~~~~~~~~~~~~~~~
+4. **Run it directly to see the error**:
 
-If the server starts but immediately crashes:
+   .. code-block:: terminal
+
+       $ vendor/bin/mate tools:list
+
+Container Fails to Build
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every invocation builds Mate's own DI container, which loads your ``mate/config.php``. If a command
+fails before producing output:
 
 1. **Check for syntax errors** in your custom tools:
 
    .. code-block:: terminal
 
-       $ php -l mate/MyTool.php
+       $ php -l mate/src/MyTool.php
 
 2. **Verify service configuration**:
 
@@ -74,7 +71,101 @@ On Windows, ensure PHP is in your PATH and run:
 
 .. code-block:: terminal
 
-    > php vendor/bin/mate serve
+    > php vendor/bin/mate tools:list
+
+Discovery Issues
+----------------
+
+A Tool Does Not Appear
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:list
+    $ vendor/bin/mate debug:capabilities
+
+1. **Run** ``composer dump-autoload``. Mate resolves the class name from the file and skips any file
+   whose class cannot be autoloaded. This is the most common cause for a tool under ``mate/src/``
+   that never shows up.
+
+2. **Check the scan directories**. For your own tools, ``extra.ai-mate.scan-dirs`` in
+   ``composer.json`` must cover the directory the class lives in.
+
+3. **Check the method is public** and carries ``#[MateTool]``. Abstract classes, interfaces, traits
+   and enums are skipped.
+
+4. **Check the feature is not disabled** in ``mate/config.php`` via
+   ``MateHelper::disableFeatures()``.
+
+5. **Enable debug logging** (see below). Mate logs the classes it could not autoload and the files
+   it failed to process.
+
+An Extension Does Not Load
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate debug:extensions --show-all
+
+``[not loaded]`` means the package was configured but could not be loaded; ``[enabled]`` without
+``[loaded]`` usually means the package was removed without updating ``mate/extensions.php``. Run
+``vendor/bin/mate discover`` to resynchronize.
+
+Instructions or Skills Are Stale
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate discover        # refresh extensions, instructions and skills
+    $ vendor/bin/mate skills:validate # check the generated folders against the recorded state
+
+``skills:validate`` reports hand-edited content, missing folders and sources that moved on since the
+last install. If you want to own a skill's content, set its ``mode`` to ``override`` in
+``mate/extensions.php`` rather than editing the generated folder.
+
+Tool Execution Issues
+---------------------
+
+A Parameter Is Not Accepted
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Check the actual schema before guessing:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:inspect <tool-name>
+
+Values are coerced to the parameter's declared type, so a value that cannot be cast is rejected
+rather than silently passed through, naming the option and the value it rejected.
+
+A variadic parameter takes the option repeated:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call some-tool --tag=a --tag=b
+
+Repeating an option that is not variadic is an error, so a typo cannot quietly discard the first
+value. Nested or associative values have no option form; pass them as JSON:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call some-tool --json='{"filters": {"level": "error"}}'
+
+The same applies to a parameter whose name is taken by a console option (``format``, ``json``,
+``help``, ``silent``, ``quiet``, ``verbose``, ``version``, ``ansi``, ``no-ansi``,
+``no-interaction``).
+
+The Output Is Too Large
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Prefer a resource URI over dumping everything, and use a compact format:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call symfony-profiler-list --limit=1 --format=json
+    $ vendor/bin/mate resources:read symfony-profiler://profile/<token> --format=toon
+
+``--format=toon`` requires ``helgesverre/toon`` and produces the smallest context footprint.
 
 Debugging Tips
 --------------
@@ -86,14 +177,14 @@ Set the ``MATE_DEBUG`` environment variable to enable debug-level logging:
 
 .. code-block:: terminal
 
-    $ MATE_DEBUG=1 vendor/bin/mate serve
+    $ MATE_DEBUG=1 vendor/bin/mate tools:list
 
 This outputs detailed debug information to stderr, including:
 
 - Service registration details
 - Extension discovery information
+- Classes that could not be autoloaded during discovery
 - Tool execution logs
-- Internal state changes
 
 Log to File
 ~~~~~~~~~~~
@@ -102,45 +193,34 @@ Set the ``MATE_DEBUG_FILE`` environment variable to redirect logs to a file:
 
 .. code-block:: terminal
 
-    $ MATE_DEBUG_FILE=1 vendor/bin/mate serve
+    $ MATE_DEBUG_FILE=1 vendor/bin/mate tools:list
 
-This creates a ``dev.log`` file in the current directory with all log output.
-This is particularly useful when running the server through AI assistants (like Claude Code)
-where stderr output may not be easily accessible.
+This creates a ``dev.log`` file in the current directory with all log output. This is particularly
+useful when the command is run by a coding agent, where stderr may not be easily accessible.
 
 To customize the log file path, use the ``MATE_DEBUG_LOG_FILE`` environment variable:
 
 .. code-block:: terminal
 
-    $ MATE_DEBUG_FILE=1 MATE_DEBUG_LOG_FILE=/var/log/mate/debug.log vendor/bin/mate serve
+    $ MATE_DEBUG_FILE=1 MATE_DEBUG_LOG_FILE=/var/log/mate/debug.log vendor/bin/mate tools:list
 
-You can combine both environment variables for debug logging to file:
+You can combine both environment variables:
 
 .. code-block:: terminal
 
-    $ MATE_DEBUG=1 MATE_DEBUG_FILE=1 vendor/bin/mate serve
-
-For AI assistant integration (e.g., Claude Code MCP configuration), add these to the server configuration:
-
-.. code-block:: json
-
-    {
-        "mcpServers": {
-            "symfony-ai-mate": {
-                "command": "php",
-                "args": ["vendor/bin/mate", "serve"],
-                "env": {
-                    "MATE_DEBUG": "1",
-                    "MATE_DEBUG_FILE": "1"
-                }
-            }
-        }
-    }
+    $ MATE_DEBUG=1 MATE_DEBUG_FILE=1 vendor/bin/mate tools:list
 
 Test Tools Manually
 ~~~~~~~~~~~~~~~~~~~
 
-Create a simple test script::
+Call the tool through the CLI, which exercises the same discovery, schema and casting path the agent
+uses:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call my-tool --param=test-value
+
+To bypass Mate entirely and test the method in isolation::
 
     // test-tool.php
     require 'vendor/autoload.php';

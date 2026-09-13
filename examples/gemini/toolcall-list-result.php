@@ -41,4 +41,4 @@ $messages = new MessageBag(
 );
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

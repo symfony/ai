@@ -1,0 +1,289 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.anthropic.com/v1/messages",
+                "signature": "97ecb73c393938a31af17a893762acad",
+                "headers": {
+                    "x-api-key": [
+                        "[redacted]"
+                    ],
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-beta": [
+                        "interleaved-thinking-2025-05-14"
+                    ]
+                },
+                "body": "{\"max_tokens\":4000,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-ratelimit-input-tokens-limit": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-remaining": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-reset": [
+                        "2026-08-28T23:00:56Z"
+                    ],
+                    "anthropic-ratelimit-output-tokens-limit": [
+                        "1000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-remaining": [
+                        "1000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-reset": [
+                        "2026-08-28T23:00:57Z"
+                    ],
+                    "anthropic-ratelimit-requests-limit": [
+                        "5000"
+                    ],
+                    "anthropic-ratelimit-requests-remaining": [
+                        "4999"
+                    ],
+                    "anthropic-ratelimit-requests-reset": [
+                        "2026-08-28T23:00:54Z"
+                    ],
+                    "anthropic-ratelimit-tokens-limit": [
+                        "6000000"
+                    ],
+                    "anthropic-ratelimit-tokens-remaining": [
+                        "6000000"
+                    ],
+                    "anthropic-ratelimit-tokens-reset": [
+                        "2026-08-28T23:00:56Z"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "anthropic-organization-id": [
+                        "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
+                    ],
+                    "anthropic-workspace-id": [
+                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
+                    ],
+                    "traceresponse": [
+                        "00-5dd6fe2b4be6465c82db06c25c448f5d-c27d744e26fdd300-01"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "vary": [
+                        "Accept-Encoding"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "x-robots-tag": [
+                        "none"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CeVygdGSA2DobmtNKT8oL\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking for the current time. I have access to a clock function that can provide this information. Let me call it.\",\"signature\":\"EvwCCpsBCBEYAipAseO3ISBFkLEkKGkboiJEhsL0hQoPI4xN+KUgyktTb0gjygbQH6s6EF4FZ7RfgPCHTEdVdWdAiFcQ7AlcvlDHeTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqabI1AYSDHTOZOdCMHeDSlh6OhoMAKjH68buSecYmYMyIjAkn0jFmpEIefCqKv83iqSDDDYcJZAvHJvvGtGdS/TgIgAOhRIm0MP4FYjTudfhZBYqjQG7krwko6HtNYkUi5K0i6f8BCRPoejL624+q2ZOmBHZ+xsQgBQLHpdYPi00SdeoDQ+b5tflbNxqr8IjCvg6EBuoCU/DjjXr7IOMI9/8zy4xLHvc+jbyt0V2TR7UTNHelv+hSODI225NpS5caPKxCOY/GnCL/OmDwVdnKmD4tfARfnLVSAgcYE/cDoXEUK0YAQ==\"},{\"type\":\"tool_use\",\"id\":\"toolu_012R7ErKzZ1gckpdkL7Hm2Y6\",\"name\":\"clock\",\"input\":{},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":729,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":69,\"output_tokens_details\":{\"thinking_tokens\":32},\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.anthropic.com/v1/messages",
+                "signature": "92e8f64cee3dd38853b56f2e16607af8",
+                "headers": {
+                    "x-api-key": [
+                        "[redacted]"
+                    ],
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-beta": [
+                        "interleaved-thinking-2025-05-14"
+                    ]
+                },
+                "body": "{\"max_tokens\":4000,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking for the current time. I have access to a clock function that can provide this information. Let me call it.\",\"signature\":\"EvwCCpsBCBEYAipAseO3ISBFkLEkKGkboiJEhsL0hQoPI4xN+KUgyktTb0gjygbQH6s6EF4FZ7RfgPCHTEdVdWdAiFcQ7AlcvlDHeTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqabI1AYSDHTOZOdCMHeDSlh6OhoMAKjH68buSecYmYMyIjAkn0jFmpEIefCqKv83iqSDDDYcJZAvHJvvGtGdS\\/TgIgAOhRIm0MP4FYjTudfhZBYqjQG7krwko6HtNYkUi5K0i6f8BCRPoejL624+q2ZOmBHZ+xsQgBQLHpdYPi00SdeoDQ+b5tflbNxqr8IjCvg6EBuoCU\\/DjjXr7IOMI9\\/8zy4xLHvc+jbyt0V2TR7UTNHelv+hSODI225NpS5caPKxCOY\\/GnCL\\/OmDwVdnKmD4tfARfnLVSAgcYE\\/cDoXEUK0YAQ==\"},{\"type\":\"tool_use\",\"id\":\"toolu_012R7ErKzZ1gckpdkL7Hm2Y6\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_012R7ErKzZ1gckpdkL7Hm2Y6\",\"content\":\"Current date is 2026-08-28 (YYYY-MM-DD) and the time is 23:00:57 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-ratelimit-input-tokens-limit": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-remaining": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-reset": [
+                        "2026-08-28T23:00:58Z"
+                    ],
+                    "anthropic-ratelimit-output-tokens-limit": [
+                        "1000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-remaining": [
+                        "1000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-reset": [
+                        "2026-08-28T23:00:59Z"
+                    ],
+                    "anthropic-ratelimit-requests-limit": [
+                        "5000"
+                    ],
+                    "anthropic-ratelimit-requests-remaining": [
+                        "4999"
+                    ],
+                    "anthropic-ratelimit-requests-reset": [
+                        "2026-08-28T23:00:57Z"
+                    ],
+                    "anthropic-ratelimit-tokens-limit": [
+                        "6000000"
+                    ],
+                    "anthropic-ratelimit-tokens-remaining": [
+                        "6000000"
+                    ],
+                    "anthropic-ratelimit-tokens-reset": [
+                        "2026-08-28T23:00:58Z"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "anthropic-organization-id": [
+                        "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
+                    ],
+                    "anthropic-workspace-id": [
+                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
+                    ],
+                    "traceresponse": [
+                        "00-2ec019040a26f6300b472aef58cae96d-514adba2943ca6df-01"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "vary": [
+                        "Accept-Encoding"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "x-robots-tag": [
+                        "none"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CeVygnNNs4uTjWE8oUGAw\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The clock function returned the current date and time. It's August 28, 2026, and the time is 23:00:57 (11:00:57 PM).\",\"signature\":\"EvMCCpsBCBEYAipAlLLeQi0yTF23HNO/No8XdFrHzuELDYCnsYaN86Towriw1c6UzU7RR8E6NH8e51mddWO0NweB9OMmvOF4odL5JTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBq6bI1AYSDFMe4CM00/wohtyudhoMv2xFDYCA2en03ZtIIjAzEs7v7H7lkIAfIbzjcguGO2Agc4weU08lDOzpwfNOZQLOxUdKDMskZI7VrMmpe3YqhAEJlCVmVvpeJ7Qco6Ar736iIrKBbVIAdTWFoUA/BsZf2eDv7+92OMPcbK2udEso5kuruaeW6J2j1+s6LhIJkExvqdVzwIJj5bX6ZvxT/1GZ3xL7yQVf4RsfNGiHNwhGejPHZSEo0au57FBszoWryY1EIjyf5o5d6hhrGXHBcuIbKbxFX2AYAQ==\"},{\"type\":\"text\",\"text\":\"The current time is **23:00:57** (11:00:57 PM) on August 28, 2026.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":855,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":80,\"output_tokens_details\":{\"thinking_tokens\":46},\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.anthropic.com/v1/messages",
+                "signature": "1600499222da9694f5d1aab9b090105e",
+                "headers": {
+                    "x-api-key": [
+                        "[redacted]"
+                    ],
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-beta": [
+                        "interleaved-thinking-2025-05-14"
+                    ]
+                },
+                "body": "{\"max_tokens\":4000,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking for the current time. I have access to a clock function that can provide this information. Let me call it.\",\"signature\":\"EvwCCpsBCBEYAipAseO3ISBFkLEkKGkboiJEhsL0hQoPI4xN+KUgyktTb0gjygbQH6s6EF4FZ7RfgPCHTEdVdWdAiFcQ7AlcvlDHeTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqabI1AYSDHTOZOdCMHeDSlh6OhoMAKjH68buSecYmYMyIjAkn0jFmpEIefCqKv83iqSDDDYcJZAvHJvvGtGdS\\/TgIgAOhRIm0MP4FYjTudfhZBYqjQG7krwko6HtNYkUi5K0i6f8BCRPoejL624+q2ZOmBHZ+xsQgBQLHpdYPi00SdeoDQ+b5tflbNxqr8IjCvg6EBuoCU\\/DjjXr7IOMI9\\/8zy4xLHvc+jbyt0V2TR7UTNHelv+hSODI225NpS5caPKxCOY\\/GnCL\\/OmDwVdnKmD4tfARfnLVSAgcYE\\/cDoXEUK0YAQ==\"},{\"type\":\"tool_use\",\"id\":\"toolu_012R7ErKzZ1gckpdkL7Hm2Y6\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_012R7ErKzZ1gckpdkL7Hm2Y6\",\"content\":\"Current date is 2026-08-28 (YYYY-MM-DD) and the time is 23:00:57 (HH:MM:SS).\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The clock function returned the current date and time. It\\u0027s August 28, 2026, and the time is 23:00:57 (11:00:57 PM).\",\"signature\":\"EvMCCpsBCBEYAipAlLLeQi0yTF23HNO\\/No8XdFrHzuELDYCnsYaN86Towriw1c6UzU7RR8E6NH8e51mddWO0NweB9OMmvOF4odL5JTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBq6bI1AYSDFMe4CM00\\/wohtyudhoMv2xFDYCA2en03ZtIIjAzEs7v7H7lkIAfIbzjcguGO2Agc4weU08lDOzpwfNOZQLOxUdKDMskZI7VrMmpe3YqhAEJlCVmVvpeJ7Qco6Ar736iIrKBbVIAdTWFoUA\\/BsZf2eDv7+92OMPcbK2udEso5kuruaeW6J2j1+s6LhIJkExvqdVzwIJj5bX6ZvxT\\/1GZ3xL7yQVf4RsfNGiHNwhGejPHZSEo0au57FBszoWryY1EIjyf5o5d6hhrGXHBcuIbKbxFX2AYAQ==\"},{\"type\":\"text\",\"text\":\"The current time is **23:00:57** (11:00:57 PM) on August 28, 2026.\"}]},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What did I just ask you?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-ratelimit-input-tokens-limit": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-remaining": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-reset": [
+                        "2026-08-28T23:01:00Z"
+                    ],
+                    "anthropic-ratelimit-output-tokens-limit": [
+                        "1000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-remaining": [
+                        "1000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-reset": [
+                        "2026-08-28T23:01:01Z"
+                    ],
+                    "anthropic-ratelimit-requests-limit": [
+                        "5000"
+                    ],
+                    "anthropic-ratelimit-requests-remaining": [
+                        "4999"
+                    ],
+                    "anthropic-ratelimit-requests-reset": [
+                        "2026-08-28T23:00:59Z"
+                    ],
+                    "anthropic-ratelimit-tokens-limit": [
+                        "6000000"
+                    ],
+                    "anthropic-ratelimit-tokens-remaining": [
+                        "6000000"
+                    ],
+                    "anthropic-ratelimit-tokens-reset": [
+                        "2026-08-28T23:01:00Z"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "anthropic-organization-id": [
+                        "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
+                    ],
+                    "anthropic-workspace-id": [
+                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
+                    ],
+                    "traceresponse": [
+                        "00-325b7312cff9a3189c2092c80f250e27-0dac75a9337effa3-01"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "vary": [
+                        "Accept-Encoding"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "x-robots-tag": [
+                        "none"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CeVygxgzJ8YQ2Yz3tnJrD\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking me to recall what they just asked me. Looking at the conversation history, their previous question was \\\"What time is it right now?\\\"\",\"signature\":\"EpUDCpsBCBEYAipA901XYhehLNNRiZ0tcJSGva0Vs2zf6kfnfMfD2abMHIawbTH0bQGgKSbFpHa7pT2lE0B501GYCvieYz7mEdQhijIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBrabI1AYSDP90NNDdYYH+7bD1zhoM347D2fI6objncS5aIjDQS15u0H/qts0uktibgwKii0ugJ9zxF6FRgNwMQ/Li4hAqWgOnXIwbMCfAKxbvWAwqpgH2de7dF7DoFlM9u0GoWc3f4jjNoygKLMHOuim7qT0UQcfWcKEOUR57e7Ea1G5dFDvYH+ac1Gj12nSL2k4M+dVNIPUZANtXUXw5V3BzFHNENJ9GaZ+ifyGgkuzixMnsh7wgZ50GhRMZHouXGL1E0w59uiUd/2j16f2TzM4y7j1/JhwMYkSgmccBn0LRBgZPZ9UbzzkxcLrgFramCOnJfSPM2UXJ08b+GAE=\"},{\"type\":\"text\",\"text\":\"You just asked me \\\"What time is it right now?\\\"\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":856,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":54,\"output_tokens_details\":{\"thinking_tokens\":37},\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}"
+            }
+        }
+    ]
+}

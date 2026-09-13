@@ -26,4 +26,4 @@ $agent = new Agent($platform, env('OLLAMA_LLM'), toolbox: $toolbox);
 
 $result = $agent->call(new MessageBag(Message::ofUser('What is Ollama?')));
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

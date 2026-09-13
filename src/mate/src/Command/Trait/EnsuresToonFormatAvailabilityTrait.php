@@ -24,6 +24,25 @@ trait EnsuresToonFormatAvailabilityTrait
         return class_exists(Toon::class);
     }
 
+    /**
+     * Rejects a format the command cannot produce, then checks that TOON is installed.
+     *
+     * Falling back to the default for an unknown value answers a request for machine-readable
+     * output with a human table and a success exit code, which the caller cannot detect.
+     *
+     * @param list<string> $supported
+     */
+    private function ensureFormatSupported(SymfonyStyle $io, string $format, array $supported): bool
+    {
+        if (!\in_array($format, $supported, true)) {
+            $io->error(\sprintf('Unknown output format "%s". Supported: "%s".', $format, implode('", "', $supported)));
+
+            return false;
+        }
+
+        return $this->ensureToonFormatAvailable($io, $format);
+    }
+
     private function ensureToonFormatAvailable(SymfonyStyle $io, string $format): bool
     {
         if ('toon' !== $format) {

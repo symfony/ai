@@ -35,8 +35,9 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
         }
 
         return new TokenUsage(
-            $payload['prompt_eval_count'],
-            $payload['eval_count'],
+            promptTokens: $payload['prompt_eval_count'],
+            completionTokens: $payload['eval_count'],
+            model: $payload['model'] ?? null,
         );
     }
 }

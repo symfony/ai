@@ -44,7 +44,7 @@ foreach ($platforms as $model => $platform) {
 
     $result = $agent->call($messages);
 
-    echo $userMsg." : \n".$result->getContent().\PHP_EOL.\PHP_EOL;
+    echo $userMsg." : \n".$result->asText().\PHP_EOL.\PHP_EOL;
 
     $userMsg = 'Search for purchase contract number PC-67890 with subsidiary Acme Corp';
     $messages = new MessageBag(
@@ -54,7 +54,7 @@ foreach ($platforms as $model => $platform) {
 
     $result = $agent->call($messages);
 
-    echo $userMsg." : \n".$result->getContent().\PHP_EOL;
+    echo $userMsg." : \n".$result->asText().\PHP_EOL;
 }
 
 // Tool that uses polymorphic interface as parameter

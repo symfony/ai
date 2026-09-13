@@ -4,10 +4,10 @@
 
 ## Homepage (ai.symfony.com)
 
-The Symfony AI homepage highlights the project's key value proposition: **Build AI-powered applications with PHP** using Symfony components. It covers:
+The Symfony AI homepage highlights the project's key value proposition: **Build AI-powered applications with PHP** using Symfony components. Three hero messages frame the project: "Build AI-powered applications with PHP" (agents, tool calling, RAG, and multi-modal support), "Integrate AI with the Symfony Framework" (configure agents, platforms, and stores with familiar YAML configuration), and "Build MCP Servers & Clients with PHP" (expose tools to AI agents or connect to any MCP server). It covers:
 
 ### Component Architecture
-A set of decoupled PHP components for AI integrations. Each works independently without the full framework. The architecture has four layers: AI Bundle (Symfony framework integration) at the top, Agent in the middle, a foundation layer (Platform, Store, Tools), and third-party integration bridges at the bottom.
+A set of decoupled PHP components for AI integrations. Each works independently without the full framework; the foundation layer abstracts away third-party specifics. The architecture has four layers: AI Bundle (Symfony framework integration) at the top, Agent in the middle, a foundation layer (Platform, Store, Tools), and third-party integration bridges at the bottom (platform bridges, store bridges, agent tools).
 
 ### Features
 - **Model Inference**: Send prompts to any AI model with a single method call; switch providers without changing code
@@ -21,17 +21,20 @@ A set of decoupled PHP components for AI integrations. Each works independently 
 - **Subagents**: Compose complex workflows by using agents as tools for other agents
 - **RAG**: Index documents into vector stores and retrieve relevant context for AI-powered answers
 
+### Symfony Mate
+A CLI for AI-assisted development. Gives AI assistants like Claude Code, Copilot, or Codex direct access to Symfony applications (profiler data, logs, container services) for real-time debugging. Install with `composer require --dev symfony/ai-mate`, optionally with the Symfony extension (`symfony/ai-symfony-mate-extension`, for profiler and services) and the Monolog extension (`symfony/ai-monolog-mate-extension`, for log search and filtering), then run `vendor/bin/mate init` and let the agent call `vendor/bin/mate tools:list`.
+
+### Model Context Protocol (MCP)
+The official MCP PHP SDK, built in collaboration with the PHP Foundation. Create MCP servers that expose tools and resources to AI agents, or build clients that connect to existing MCP servers. Tools are declared with the `#[McpTool]` attribute.
+
 ### Third Party Integration Bridges
 Four categories of bridges: Models (OpenAI, Gemini, Mistral, Claude), Platforms (HuggingFace, Azure, Ollama, Docker), Stores (Pinecone, PostgreSQL, MariaDB, ChromaDB), and Built-in Tools (Similarity Search, Wikipedia, YouTube, Brave).
 
+### Cookbook
+A list of practical, goal-oriented recipes rendered from the cookbook documentation, each combining components into a working outcome (see the Cookbook section below).
+
 ### Demos
 A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios: YouTube Transcript Bot, Recipe Bot, Wikipedia Research Bot, Symfony Blog Bot, Speech Bot with Subagent, Video Bot, Smart Image Cropping, and Turbo Stream Bot.
-
-### Model Context Protocol (MCP)
-The official MCP PHP SDK, built in collaboration with the PHP Foundation. Create MCP servers that expose tools and resources to AI agents, or build clients that connect to existing MCP servers.
-
-### Symfony Mate
-An MCP server for AI-assisted development. Gives AI assistants like Claude Code, Copilot, or Codex direct access to Symfony applications — profiler data, logs, container services — for real-time debugging.
 
 ### Get Involved & Get Support
 - [Documentation](https://symfony.com/doc/current/ai/index.html)
@@ -59,8 +62,8 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 - [SQLite Store](https://symfony.com/doc/current/ai/components/store/sqlite.html): SQLite-based vector store
 - [Supabase Bridge](https://symfony.com/doc/current/ai/components/store/supabase.html): Supabase vector store integration
 - [Chat Component](https://symfony.com/doc/current/ai/components/chat.html): High-level API for conversations with agents and message history persistence
-- [Mate Component](https://symfony.com/doc/current/ai/components/mate.html): MCP development server enabling AI assistants to interact with PHP/Symfony applications
-- [Creating MCP Extensions](https://symfony.com/doc/current/ai/components/mate/creating-extensions.html): Building custom MCP extensions for Mate
+- [Mate Component](https://symfony.com/doc/current/ai/components/mate.html): Command-line assistant enabling AI assistants to interact with PHP/Symfony applications
+- [Creating Extensions](https://symfony.com/doc/current/ai/components/mate/creating-extensions.html): Building custom extensions for Mate
 - [Mate Integration](https://symfony.com/doc/current/ai/components/mate/integration.html): Integrating Mate with AI assistants
 - [Mate Troubleshooting](https://symfony.com/doc/current/ai/components/mate/troubleshooting.html): Troubleshooting Mate setup and connections
 - [AI Bundle](https://symfony.com/doc/current/ai/bundles/ai-bundle.html): Symfony framework integration for Platform, Agent, Store, and Chat
@@ -70,47 +73,47 @@ An MCP server for AI-assisted development. Gives AI assistants like Claude Code,
 
 - [AI Bundle Fast Track](https://symfony.com/doc/current/ai/cookbook/ai-bundle-fast-track.html): Wire platforms, agents, tools, and a vector store in a Symfony app with YAML
 - [Tool Calling with Agents](https://symfony.com/doc/current/ai/cookbook/tool-calling-with-agents.html): Let AI agents call your PHP functions to fetch data or trigger actions
-- [Dynamic Tools](https://symfony.com/doc/current/ai/cookbook/dynamic-tools.html): Build a dynamic Toolbox for flexible tool management at runtime
-- [Runtime-driven Tool Parameters](https://symfony.com/doc/current/ai/cookbook/runtime-driven-tool-parameters.html): Constrain tool parameters and structured output with values from env, a database, or services
-- [Human in the Loop](https://symfony.com/doc/current/ai/cookbook/human-in-the-loop.html): Implement human-in-the-loop confirmation for tool execution
+- [Dynamic Tools](https://symfony.com/doc/current/ai/cookbook/dynamic-tools.html): Add, remove, and rename agent tools at runtime with a dynamic toolbox
+- [Human in the Loop](https://symfony.com/doc/current/ai/cookbook/human-in-the-loop.html): Require human approval before an agent executes sensitive tool calls
 - [Multi-Agent Orchestration](https://symfony.com/doc/current/ai/cookbook/multi-agent-orchestration.html): Route questions to specialist agents with a central orchestrator
-- [Chatbot with Memory](https://symfony.com/doc/current/ai/cookbook/chatbot-with-memory.html): Build a chatbot with persistent conversation memory
+- [Runtime-driven Tool Parameters](https://symfony.com/doc/current/ai/cookbook/runtime-driven-tool-parameters.html): Constrain tool parameters and structured output with values from env, a database, or services
+- [Chatbot with Memory](https://symfony.com/doc/current/ai/cookbook/chatbot-with-memory.html): Give an agent memory of user facts for personalized conversations
 - [Context Compression](https://symfony.com/doc/current/ai/cookbook/context-compression.html): Keep long conversations within context limits using a sliding window or summarization
-- [RAG Implementation](https://symfony.com/doc/current/ai/cookbook/rag-implementation.html): Retrieval Augmented Generation with vector stores and semantic search
+- [Build a RAG Pipeline](https://symfony.com/doc/current/ai/cookbook/rag-implementation.html): Index documents into a vector store and query them with an AI agent
 - [Build an MCP Server](https://symfony.com/doc/current/ai/cookbook/build-an-mcp-server.html): Expose tools, prompts, and resources to AI assistants over MCP
 
 ## Code
 
 - [GitHub Repository](https://github.com/symfony/ai): Source code and issue tracker
-- [Examples](https://github.com/symfony/ai/tree/main/examples): 320+ standalone examples for all components and platforms
+- [Examples](https://github.com/symfony/ai/tree/main/examples): 360+ standalone examples for all components and platforms
 - [Demo Application](https://github.com/symfony/ai-demo): Full Symfony web application with 8 AI use cases
 
 ## Components
 
 ### Platform
-Unified abstraction for interacting with different AI models and providers. Install with `composer require symfony/ai-platform`. Supports model inference, streaming, multi-modal input (text, images, audio, PDFs), structured output, and token usage tracking. Each AI provider has a dedicated bridge that can be installed independently.
+Unified abstraction for interacting with different AI models and providers. Install with `composer require symfony/ai-platform`. Supports model inference, streaming, multi-modal input (text, images, audio, PDFs), structured output, and token usage tracking. Each AI provider has a dedicated bridge that can be installed independently (e.g. `symfony/ai-open-ai-platform`, `symfony/ai-anthropic-platform`), plus infrastructure bridges for caching, failover, and generic OpenAI-compatible endpoints.
 
 ### Agent
-Framework for building AI agents that interact with users and perform multi-step tasks. Install with `composer require symfony/ai-agent`. Features tool calling with automatic schema generation from PHP classes via `#[AsTool]` attribute, input/output processor pipeline, memory system with embedding support, structured output, and subagent composition for hierarchical task delegation. Includes built-in tool bridges for Wikipedia, YouTube, Brave Search, Tavily, SerpApi, Firecrawl, Filesystem, Clock, Mapbox, Ollama, OpenMeteo, Scraper, and SimilaritySearch.
+Framework for building AI agents that interact with users and perform multi-step tasks. Install with `composer require symfony/ai-agent`. Features tool calling with automatic schema generation from PHP classes via `#[AsTool]` attribute, input/output processor pipeline, memory system with embedding support, structured output, and subagent composition for hierarchical task delegation. Includes built-in tool bridges for Wikipedia, YouTube, Brave Search, Tavily, SerpApi, Firecrawl, Filesystem, Clock, Mapbox, Ollama Web Search, OpenMeteo, Web Scraper, and SimilaritySearch.
 
 ### Store
 Low-level abstraction for storing and retrieving documents in vector databases. Install with `composer require symfony/ai-store`. Provides document vectorization, indexing, and semantic similarity retrieval for RAG applications. Supports 20+ backends including PostgreSQL, MongoDB, Pinecone, Qdrant, Weaviate, Meilisearch, ChromaDB, and more.
 
 ### Chat
-High-level API for building chats with agents and managing conversation history. Install with `composer require symfony/ai-chat`. Supports streaming, automatic conversation history persistence, and multiple message store backends (Redis, MongoDB, Doctrine DBAL, Meilisearch, SurrealDB, Cloudflare, Pogocache, PSR-6 Cache, and Session).
+High-level API for building chats with agents and managing conversation history. Install with `composer require symfony/ai-chat`. Supports streaming, automatic conversation history persistence, and multiple message store backends (Redis, MongoDB, Doctrine, Meilisearch, SurrealDB, Cloudflare, Pogocache, PSR-6 Cache, and Session).
 
 ### Mate
-MCP (Model Context Protocol) development server for AI assistants. Install with `composer require --dev symfony/ai-mate`. Enables AI assistants like Claude Desktop to interact with PHP applications through standardized tools. Supports auto-discovery of MCP extensions and custom tool definitions.
+Command-line development assistant for AI assistants. Install with `composer require --dev symfony/ai-mate`, then run `vendor/bin/mate init`. Exposes project-aware development tools to coding agents (Claude Code, Codex, Cursor, …) as plain commands — `tools:list`, `tools:inspect`, `tools:call`, `resources:read`, `debug:*`, `skills:list` — with `--format=json` for machine-readable output. Tool schemas are read on demand instead of being loaded up front. Supports auto-discovery of extensions (such as `symfony/ai-symfony-mate-extension` and `symfony/ai-monolog-mate-extension`) and ships an optional Composer plugin that refreshes extension discovery after `composer install`/`update`. Development tool, not intended for production use.
 
 ### AI Bundle
 Symfony framework integration for Platform, Agent, Store, and Chat components. Install with `composer require symfony/ai-bundle`. Provides YAML-based configuration, service auto-registration, security integration with `#[IsGrantedTool]`, and Symfony profiler integration for debugging.
 
 ### MCP Bundle
-Symfony integration for the official MCP SDK. Install with `composer require symfony/mcp-bundle`. Supports HTTP and STDIO transports, tool/prompt/resource definitions via attributes, and both server and client modes.
+Symfony integration for the official MCP SDK (`mcp/sdk`). Install with `composer require symfony/mcp-bundle`. Supports MCP capabilities (tools, prompts, resources) as a server via HTTP and STDIO transports, definitions via attributes, and both server and client modes.
 
 ## Supported AI Platforms
 
-OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, TransformersPHP, and more.
+OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, and TransformersPHP.
 
 ## Supported Vector Stores
 

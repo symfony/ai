@@ -35,6 +35,6 @@ $prompt = <<<PROMPT
 
 $result = $agent->call(new MessageBag(Message::ofUser($prompt)));
 
-echo $result->getContent().\PHP_EOL.\PHP_EOL;
+echo $result->asText().\PHP_EOL.\PHP_EOL;
 
 print_sources($result->getMetadata()->get('sources'));

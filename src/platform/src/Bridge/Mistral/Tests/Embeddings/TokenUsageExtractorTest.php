@@ -34,6 +34,7 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
+            'model' => 'mistral-embed',
             'usage' => [
                 'prompt_tokens' => 10,
                 'total_tokens' => 10,
@@ -48,6 +49,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertSame(10, $tokenUsage->getTotalTokens());
+        $this->assertSame('mistral-embed', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -67,6 +69,7 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertNull($tokenUsage->getModel());
     }
 
     private function createResponseObject(): ResponseInterface|MockObject

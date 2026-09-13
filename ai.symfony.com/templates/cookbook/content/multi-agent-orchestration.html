@@ -316,6 +316,99 @@ the <code translate="no" class="notranslate">MultiAgent</code> constructor to se
 </div>
 </div>
 <div class="section">
+<h2 id="step-7-show-which-agent-answers">
+    Step 7: Show Which Agent Answers
+    
+</h2>
+<p>Routing is invisible from the outside: the caller asks a question and gets an answer, with no clue
+which specialist produced it. Iterating the multi-agent instead of reading its result lets you show
+that, because the delegated agents report their own steps into the very same execution. The routing
+itself arrives as a <code translate="no" class="notranslate">Progress</code> update of the <code translate="no" class="notranslate">handoff</code> stage, carrying the orchestrator's
+<a href="https://github.com/symfony/ai/blob/main/src/agent/src/MultiAgent/Handoff/Decision.php" class="reference external" title="Symfony\AI\Agent\MultiAgent\Handoff\Decision" rel="external noopener noreferrer" target="_blank">Decision</a> as payload:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Execution</span>\<span class="hljs-title">Update</span>\<span class="hljs-title">Progress</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Execution</span>\<span class="hljs-title">Update</span>\<span class="hljs-title">Result</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">MultiAgent</span>\<span class="hljs-title">Handoff</span>\<span class="hljs-title">Decision</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">MessageBag</span>(
+    Message::<span class="hljs-title invoke__">ofUser</span>(<span class="hljs-string">'I get a "Call to undefined method" error in my controller.'</span>),
+);
+
+<span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>multiAgent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>) <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span>) {
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span> <span class="hljs-keyword">instanceof</span> Progress &amp;&amp; <span class="hljs-string">'handoff'</span> === <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span>-&gt;<span class="hljs-title invoke__">getStage</span>()) {
+        <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decision</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span>-&gt;<span class="hljs-title invoke__">getPayload</span>();
+        \<span class="hljs-title invoke__">assert</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decision</span> instanceof Decision);
+
+        <span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span>-&gt;<span class="hljs-title invoke__">getMessage</span>().<span class="hljs-string">' Reason: '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>decision</span>-&gt;<span class="hljs-title invoke__">getReasoning</span>().\<span class="hljs-keyword">PHP_EOL</span>;
+
+        <span class="hljs-keyword">continue</span>;
+    }
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span> <span class="hljs-keyword">instanceof</span> Progress) {
+        <span class="hljs-keyword">echo</span> <span class="hljs-string">'  '</span>.<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span>-&gt;<span class="hljs-title invoke__">getMessage</span>().\<span class="hljs-keyword">PHP_EOL</span>; <span class="hljs-comment">// the specialist's own model requests and tool calls</span>
+    }
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span> <span class="hljs-keyword">instanceof</span> Result) {
+        <span class="hljs-keyword">echo</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>update</span>-&gt;<span class="hljs-title invoke__">getResult</span>()-&gt;<span class="hljs-title invoke__">getContent</span>().\<span class="hljs-keyword">PHP_EOL</span>;
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The message names the agent that actually runs, while the decision explains why the orchestrator
+picked it - the two differ when the orchestrator selects an agent that no handoff defines, in which
+case the fallback answers instead. See the
+<a href="https://github.com/symfony/ai/blob/main/examples/multi-agent/orchestrator-iterable.php" class="reference external" rel="external noopener noreferrer" target="_blank">orchestrator-iterable.php</a>
+example for a runnable version of this loop.</p>
+<div class="admonition admonition-note ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span>Note</span>
+    </p><p>The orchestrator's own routing round is machinery, not answer: its <code translate="no" class="notranslate">model_request</code> and
+<code translate="no" class="notranslate">tool_call</code> updates are forwarded so you can show that a decision is being made, but the
+deltas that spell out the <code translate="no" class="notranslate">Decision</code> are not. With the <code translate="no" class="notranslate">stream</code> option, the <code translate="no" class="notranslate">delta</code>
+updates you receive are therefore only those of the agent that answers.</p>
+</div>
+</div>
+<div class="section">
 <h2 id="learn-more">
     Learn More
     

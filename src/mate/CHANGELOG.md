@@ -1,15 +1,30 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add an `Arguments` column to `tools:list`'s table output, and stop truncating tool descriptions to 50 characters, so a tool's parameters and full description are visible without a separate `tools:inspect` call
+ * Add a `tools:inspect <tool-name>` hint to `tools:call`'s error output when a parameter name is unknown or a required one is missing
+
 0.13
 ----
 
+ * Add `Encoding\ResponseEncoder::encodeUntrusted()`, wrapping a payload under an `untrusted_data` key alongside a `_security_notice`, so tool responses carrying data captured from the inspected application are explicitly marked as data rather than instructions
  * Change skill installation to copy skills into `.agents/skills/mate-<name>/` (rewriting the frontmatter name to the installed name) with relative `.claude/skills/` mirror symlinks, instead of symlinking into `vendor/`; the mirror falls back to a copy where symlinks are unavailable
  * Change `skills:install` into an idempotent reconciler that rebuilds both generated folders from source or user override on every run and prunes skills of removed or disabled extensions; `discover` runs it automatically
  * Add all per-skill state to `mate/extensions.php`: the user-editable `enabled` and `mode` (`managed`|`override`) plus the machine-managed `state`, `source`, `source_hash`, `hash` and `targets`
  * Add `skills:list` command: a read-only diagnostic listing declared and installed skills with their enabled/mode/state/status (including stale and broken detection)
  * Add `skills:validate` command: checks the generated folders against the recorded state and fails on hand-edited content, missing folders or a mispointed mirror (`--strict` also fails on warnings)
  * Add `skills:prune` command: removes generated `mate-*` folders that no longer belong to any skill (`--dry-run` to preview)
+ * Add `skills:override` and `skills:reset` commands: take ownership of a skill by copying it into `mate/skills/<name>/`, and hand it back to Mate again
+ * Add `--dry-run` to `skills:install`, reporting what the run would install, rebuild or remove without writing anything
+ * Add content checks to `skills:validate`: a warning when SKILL.md links to a file that is not part of the installed skill (failing `--strict` like any other warning), and suggestions when a description is shorter than 40 characters or never says when the skill applies (printed only, never changing the exit code, not even with `--strict`)
+ * Add `skills:disable` and `skills:enable` commands: flip `enabled` for a single skill and rebuild or remove its generated folders
+ * Add a managed `CLAUDE.md` in the project root to `mate init`/`mate discover` that imports `AGENTS.md` via `@AGENTS.md`, so Claude Code discovers the Mate CLI instructions it would otherwise never read
+ * Replace the MCP server with a native CLI: Mate no longer depends on `mcp/sdk`, the `serve` and `stop` commands and the MCP runtime are gone, and `mate init` writes CLI-oriented agent instructions instead of `mcp.json`/`.mcp.json` and the Codex wrappers. Tools and resources are discovered by reflection from the native `#[MateTool]`, `#[MateResource]` and `#[MateResourceTemplate]` attributes in `Symfony\AI\Mate\Attribute`; prompts have no native equivalent and are removed along with `debug:capabilities --type=prompt`
+ * Rename the tool/resource commands from `mcp:tools:*`/`mcp:resources:read` to `tools:list`, `tools:inspect`, `tools:call` and `resources:read`, and change `tools:call` to take tool parameters as long options (`tools:call symfony-profiler-list --limit=1`, repeated for variadic parameters) with `--json` for nested values, replacing the positional JSON argument
+ * Add `mate.invocation` and `mate.php_version` to `mate/config.php`: `mate init` asks how the coding agent should invoke Mate (defaulting to `ddev exec vendor/bin/mate` when a `.ddev/` directory is present), materializes that command into the agent instructions, pins `mate.php_version` by running `php` through that wrapper (falling back to the current process and warning when it cannot be probed), and Mate refuses to start under a different PHP major.minor (`init`, `discover`, `list`, `help` and `completion` warn instead of refusing)
 
 0.12
 ----

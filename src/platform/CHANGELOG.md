@@ -1,15 +1,26 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add a `server_tools` option to the Anthropic `ModelClient`, mapping `web_search` and `code_execution` to their versioned Anthropic tool spec, mirroring the Gemini and Vertex AI bridges' name-to-params map shape; unmapped tool names throw instead of being silently forwarded, and the raw `tools` option remains the escape hatch for anything not mapped. The Anthropic `ResultConverter` now merges the `server_tool_use`/`web_search_tool_result` pair of a web search into a single `Result\WebSearchResult` carrying query, id and status, instead of dropping the blocks (or throwing when a response carries only web-search blocks)
+ * Add `Result\Stream\Delta\WebSearchComplete`, emitted once per provider-hosted web search, so a streamed turn carries its searches into `Result\Stream\AssistantMessageStreamListener` and replays them like a buffered one
+ * [BC BREAK] Add `TokenUsage\TokenUsageInterface::getModel()`, reporting the model a provider says consumed the tokens, so a run mixing models (a chat model and an embeddings one, say) can be priced per call; `TokenUsageAggregation::getModel()` answers only when every usage it sums up agrees on a model, and `null` otherwise. `Test\Recording\ResultSerializer` records and replays it alongside the token counts, and a cassette recorded before the field existed still replays
+ * Add the serving provider to `ResultConvertedEvent` and `ResultErrorEvent`, so listeners can attribute a resolved result to the provider that produced it (e.g. to release held capacity)
+
 0.13
 ----
 
  * [BC BREAK] Add `ListenerInterface::onError()` and `Result\Stream\ErrorEvent`, dispatched when draining a `StreamResult` throws, so a listener can finalize on a failed stream where `onComplete()` never fires; `AbstractStreamListener` provides a no-op default
  * Add `Test\Replay\CassetteHttpClient` and `Test\Replay\HttpCassette` to record real HTTP responses (when the cassette file is missing) and replay them offline through the real bridge pipeline (Contract, `ModelClient`, `ResultConverter`) in tests, including raw Server-Sent Event streams; binary response bodies (images, audio, ...) are elided to a metadata stub (content type, byte size) and replayed as a small placeholder body
+ * `TemplateRendererListener` now renders templates without `template_vars`; consequently, an expression referencing an absent variable now throws instead of reaching the normalizer as an empty object
  * Add `Test\Recording\RecordingProvider` (with `Cassette`/`ResultSerializer`) to record a real provider's result once (when the cassette file is missing) and replay it offline in tests, preserving the result metadata a provider reports alongside the answer - scalars, `null`, arrays, `FinishReason\FinishReason` and token usage - so a replayed result can be asserted on for usage; a metadata value the serializer cannot rebuild throws instead of being dropped silently
  * Add `TokenUsage\TokenUsageAggregation::getTokenUsages()` to read back the individual usages an aggregation sums up
  * Encode `Test\Recording\Cassette` with `JSON_THROW_ON_ERROR` and `JSON_PRESERVE_ZERO_FRACTION` and check the write, so a result holding a value JSON cannot represent (`NAN`, `INF`, invalid UTF-8) raises instead of truncating the cassette and destroying the interactions already recorded in it, and a recorded float with no fractional part no longer replays as an integer
  * Add `Test\Replay\AbstractBridgeReplayTestCase` for cassette-driven bridge replay tests, and make the `examples/` corpus a record/replay harness: `examples/runner --record` captures every HTTP interaction of an example into a committed cassette and refreshes the replay goldens, `ExamplesReplayTest` re-runs each recorded example offline through the full bridge pipeline in CI, without credentials, against those goldens
+ * Add `Result\Stream\AssistantMessageStreamListener`, which rebuilds the assistant turn - text, thinking blocks with their signatures, tool calls, in provider order - from a streamed response
+ * Accept a `StreamResult` in `Message::ofAssistant()` and add `StreamResult::getAssistantMessage()`, so a streamed turn is replayed like a buffered one, draining the stream if the caller has not read it
  * Add `Result\CustomToolCallResult` for `custom_tool_call` output items reported by provider-specific server-side tools (e.g. xAI's `x_search`), converted the same way as the other built-in tool call results instead of being surfaced as a `ToolCall` the application is expected to execute
 
 0.12

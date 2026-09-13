@@ -11,7 +11,7 @@ Symfony AI consists of several lower and higher level **components** and the res
 * **Components**
   * **[Agent](src/agent/README.md)**: Framework for building AI agents that can interact with users and perform tasks.
   * **[Chat](src/chat/README.md)**: A unified interface to send messages to agents and store long-term context.
-  * **[Mate](src/mate/README.md)**: MCP development server enabling AI assistants to interact with PHP applications through standardized tools.
+  * **[Mate](src/mate/README.md)**: Command-line assistant that lets coding agents inspect a running PHP application through project-aware tools.
   * **[Platform](src/platform/README.md)**: A unified interface to various AI platforms like OpenAI, Anthropic, Azure, Gemini, VertexAI, and more.
   * **[Store](src/store/README.md)**: Data storage abstraction with indexing and retrieval for AI applications.
 * **Bundles**

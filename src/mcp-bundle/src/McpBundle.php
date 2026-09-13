@@ -21,10 +21,12 @@ use Mcp\Client as McpSdkClient;
 use Mcp\Client\Builder as McpSdkClientBuilder;
 use Mcp\Client\Handler\Notification\LoggingNotificationHandler;
 use Mcp\Client\Handler\Request\ElicitationRequestHandler;
+use Mcp\Client\Handler\Request\ListRootsRequestHandler;
 use Mcp\Client\Handler\Request\SamplingRequestHandler;
 use Mcp\Client\Transport\HttpTransport;
 use Mcp\Client\Transport\StdioTransport;
 use Mcp\Schema\ClientCapabilities;
+use Mcp\Schema\Enum\CacheScope;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Icon;
 use Mcp\Server;
@@ -34,6 +36,12 @@ use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
 use Mcp\Server\Session\Psr16SessionStore;
+use Mcp\Server\Stateless\RequestStateCodec;
+use Mcp\Server\Subscription\InMemoryNotificationBus;
+use Mcp\Server\Subscription\NotificationBusInterface;
+use Mcp\Server\Subscription\Psr16NotificationBus;
+use Mcp\Server\Subscription\PublishingEventDispatcher;
+use Mcp\Server\Wire\CachePolicy;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
 use Symfony\AI\McpBundle\Client\McpClient;
@@ -75,6 +83,15 @@ final class McpBundle extends AbstractBundle
         'resource_templates' => 'mcp.resource_template',
         'apps' => 'mcp.app',
     ];
+
+    /**
+     * The PSR-16 pools the bundle creates on demand — see {@see self::registerPsr16Fallback()}.
+     *
+     * Named constants because the auto-registration only fires for the configured default: a
+     * default changed in config/options.php alone would silently stop creating the pool.
+     */
+    public const DEFAULT_SESSION_CACHE_POOL = 'cache.mcp.sessions';
+    public const DEFAULT_NOTIFICATION_CACHE_POOL = 'cache.mcp.notifications';
 
     public function configure(DefinitionConfigurator $definition): void
     {
@@ -231,9 +248,9 @@ final class McpBundle extends AbstractBundle
                 $client['client_info']['description'],
             ])
             ->addMethodCall('setCapabilities', [new Definition(ClientCapabilities::class, [
-                $client['capabilities']['roots'],
-                $client['capabilities']['roots_list_changed'],
                 // Advertised only when a handler backs them, otherwise the server gets "method not found".
+                null !== $client['roots'],
+                $client['capabilities']['roots_list_changed'],
                 null !== $client['sampling'],
                 null !== $client['elicitation'],
             ])])
@@ -244,10 +261,12 @@ final class McpBundle extends AbstractBundle
             ->addTag('monolog.logger', ['channel' => 'mcp']);
 
         if (null !== $client['protocol_version']) {
-            $definition->addMethodCall('setProtocolVersion', [
-                (new Definition(ProtocolVersion::class))
-                    ->setFactory([ProtocolVersion::class, 'from'])
-                    ->setArguments([$client['protocol_version']]),
+            $definition->addMethodCall('setProtocolVersion', [$this->protocolVersion($client['protocol_version'])]);
+        }
+
+        if (null !== $client['roots']) {
+            $definition->addMethodCall('addRequestHandler', [
+                new Definition(ListRootsRequestHandler::class, [new Reference($client['roots']), $logger]),
             ]);
         }
 
@@ -341,7 +360,7 @@ final class McpBundle extends AbstractBundle
         $sessionId = $this->configureSessionStore($name, $server['session'], $container);
 
         $container->register($registryId, Registry::class)
-            ->setArguments([new Reference('event_dispatcher'), new Reference('logger')])
+            ->setArguments([$this->registryDispatcher($name, $server['subscriptions']), new Reference('logger')])
             ->addTag('monolog.logger', ['channel' => 'mcp']);
 
         $container->register($builderId, Builder::class)
@@ -364,6 +383,9 @@ final class McpBundle extends AbstractBundle
             ->addMethodCall('setLogger', [new Reference('logger')])
             ->addTag('mcp.server.builder', ['server' => $name])
             ->addTag('monolog.logger', ['channel' => 'mcp']);
+
+        $this->configureProtocolVersions($server['protocol_versions'], $builderId, $container);
+        $this->configureModernEra($name, $server, $builderId, $container);
 
         $container->register('mcp.server.'.$name, Server::class)
             ->setFactory([new Reference($builderId), 'build']);
@@ -390,6 +412,188 @@ final class McpBundle extends AbstractBundle
             ->setPublic(true)
             ->addTag('controller.service_arguments')
             ->addTag('monolog.logger', ['channel' => 'mcp']);
+    }
+
+    /**
+     * Narrows the revisions the server answers for, in either era.
+     *
+     * Left unset the SDK's own support stands: the handshake negotiates over every
+     * handshake-era revision, and the modern leg answers for every modern one.
+     *
+     * @param list<string> $versions
+     */
+    private function configureProtocolVersions(array $versions, string $builderId, ContainerBuilder $container): void
+    {
+        if ([] === $versions) {
+            return;
+        }
+
+        $builder = $container->getDefinition($builderId);
+        $modern = array_values(array_filter($versions, static fn (string $version): bool => ProtocolVersion::from($version)->isModern()));
+        $handshake = array_values(array_filter($versions, static fn (string $version): bool => !ProtocolVersion::from($version)->isModern()));
+
+        if ([] === $modern) {
+            $builder->addMethodCall('withoutModernEra');
+        } else {
+            $builder->addMethodCall('setModernVersions', [array_map($this->protocolVersion(...), $modern)]);
+        }
+
+        // The handshake negotiates rather than declares, so the SDK pins it to one
+        // revision instead of taking a list. Config validation keeps it to one.
+        if ([] !== $handshake) {
+            $builder->addMethodCall('setProtocolVersion', [$this->protocolVersion($handshake[0])]);
+        }
+    }
+
+    private function protocolVersion(string $version): Definition
+    {
+        return (new Definition(ProtocolVersion::class))
+            ->setFactory([ProtocolVersion::class, 'from'])
+            ->setArguments([$version]);
+    }
+
+    /**
+     * The builder calls that only mean something to the modern-era (2026-07-28)
+     * leg: which revisions it answers for, multi-round-trip state, cache hints
+     * and subscription delivery.
+     *
+     * The two eras share one endpoint — the transport classifies each request and
+     * routes it — so none of this changes how a handshake-era client is served.
+     *
+     * @param array{
+     *     request_state: array{key: string|null, ttl: int},
+     *     cache: array{ttl_ms: int, scope: string, methods: array<string, array{ttl_ms: int, scope: string}>},
+     *     subscriptions: array{bus: string, cache_pool: string, lifetime: float},
+     *     ...
+     * } $server
+     */
+    private function configureModernEra(string $name, array $server, string $builderId, ContainerBuilder $container): void
+    {
+        $builder = $container->getDefinition($builderId);
+
+        if (null !== $key = $server['request_state']['key']) {
+            if (1 !== preg_match('/^%[^%]+%$/', $container->resolveEnvPlaceholders($key)) && \strlen($key) < RequestStateCodec::MINIMUM_KEY_BYTES) {
+                throw new LogicException(\sprintf('The "request_state.key" of server "%s" must be at least %d bytes, got %d: below that the signature protecting the carried state is forgeable, and the SDK refuses it.', $name, RequestStateCodec::MINIMUM_KEY_BYTES, \strlen($key)));
+            }
+
+            $builder->addMethodCall('setRequestState', [$key, $server['request_state']['ttl']]);
+        }
+
+        // "private, immediately stale" is what the SDK does without a policy, so only a
+        // configuration that departs from it is worth building one for.
+        if (0 !== $server['cache']['ttl_ms'] || 'private' !== $server['cache']['scope'] || [] !== $server['cache']['methods']) {
+            $policy = (new Definition(CachePolicy::class))
+                ->setFactory([CachePolicy::class, 'default'])
+                ->setArguments([$server['cache']['ttl_ms'], $this->cacheScope($server['cache']['scope'])]);
+
+            foreach ($server['cache']['methods'] as $method => $override) {
+                $policy = (new Definition(CachePolicy::class))
+                    ->setFactory([$policy, 'withMethod'])
+                    ->setArguments([$method, $override['ttl_ms'], $this->cacheScope($override['scope'])]);
+            }
+
+            $builder->addMethodCall('setCachePolicy', [$policy]);
+        }
+
+        if (self::publishesNotifications($server['subscriptions'])) {
+            $builder
+                ->addMethodCall('setNotificationBus', [$this->notificationBus($name, $server['subscriptions'], $container)])
+                ->addMethodCall('setSubscriptionLifetime', [$server['subscriptions']['lifetime']]);
+        }
+    }
+
+    private function cacheScope(string $scope): Definition
+    {
+        return (new Definition(CacheScope::class))
+            ->setFactory([CacheScope::class, 'from'])
+            ->setArguments([$scope]);
+    }
+
+    /**
+     * One predicate for both halves, so the registry and the protocol cannot disagree about
+     * whether there is a bus.
+     *
+     * @param array{bus: string, cache_pool: string, lifetime: float} $subscriptions
+     */
+    private static function publishesNotifications(array $subscriptions): bool
+    {
+        return 'none' !== $subscriptions['bus'];
+    }
+
+    private static function notificationBusId(string $name): string
+    {
+        return \sprintf('mcp.server.%s.notification_bus', $name);
+    }
+
+    /**
+     * The dispatcher a server's registry announces its changes to.
+     *
+     * The SDK wraps the dispatcher in a {@see PublishingEventDispatcher} itself, but only around a
+     * registry it builds, and this bundle always supplies one — so without this the configured bus
+     * is read by every stream and written to by nothing.
+     *
+     * Per server, because the registries are per server.
+     *
+     * @param array{bus: string, cache_pool: string, lifetime: float} $subscriptions
+     */
+    private function registryDispatcher(string $name, array $subscriptions): Reference|Definition
+    {
+        if (!self::publishesNotifications($subscriptions)) {
+            return new Reference('event_dispatcher');
+        }
+
+        // By id: the bus is registered after this, and a forward reference resolves fine.
+        return new Definition(PublishingEventDispatcher::class, [
+            new Reference(self::notificationBusId($name)),
+            new Reference('event_dispatcher'),
+        ]);
+    }
+
+    /**
+     * @param array{bus: string, cache_pool: string, lifetime: float} $subscriptions
+     */
+    private function notificationBus(string $name, array $subscriptions, ContainerBuilder $container): Reference
+    {
+        $id = self::notificationBusId($name);
+
+        if ('memory' === $subscriptions['bus']) {
+            $container->register($id, InMemoryNotificationBus::class);
+        } else {
+            $this->registerPsr16Fallback($subscriptions['cache_pool'], self::DEFAULT_NOTIFICATION_CACHE_POOL, $container);
+
+            $container->register($id, Psr16NotificationBus::class)
+                ->setArguments([
+                    '$cache' => new Reference($subscriptions['cache_pool']),
+                    // Namespaced per server: two servers left on the default pool would otherwise
+                    // share one cursor, so each would read the other's notifications and their
+                    // publishes would overwrite each other under the same sequence number.
+                    '$prefix' => \sprintf('mcp-%s-notifications.', $name),
+                    '$logger' => new Reference('logger'),
+                ])
+                ->addTag('monolog.logger', ['channel' => 'mcp']);
+        }
+
+        // registryDispatcher() publishes the registry's own changes; everything else is the
+        // application calling publish(), so the bus has to be reachable.
+        $container->registerAliasForArgument($id, NotificationBusInterface::class, $name.' notification bus');
+
+        return new Reference($id);
+    }
+
+    /**
+     * Creates a default PSR-16 pool as a wrapper around cache.app, so the common case
+     * needs no services.yaml entry.
+     *
+     * Only ever for the configured default: any other id is the application's own service,
+     * and inventing one would hide a typo behind a working-looking cache.
+     */
+    private function registerPsr16Fallback(string $id, string $default, ContainerBuilder $container): void
+    {
+        if ($id !== $default || $container->hasDefinition($id) || $container->hasAlias($id)) {
+            return;
+        }
+
+        $container->register($id, Psr16Cache::class)->setArguments([new Reference('cache.app')]);
     }
 
     /**
@@ -605,16 +809,10 @@ final class McpBundle extends AbstractBundle
         }
 
         if ('cache' === $session['store']) {
-            $cachePoolId = $session['cache_pool'];
-
-            // Create the default cache pool as a PSR-16 wrapper around cache.app if it doesn't exist
-            if ('cache.mcp.sessions' === $cachePoolId && !$container->hasDefinition($cachePoolId) && !$container->hasAlias($cachePoolId)) {
-                $container->register($cachePoolId, Psr16Cache::class)
-                    ->setArguments([new Reference('cache.app')]);
-            }
+            $this->registerPsr16Fallback($session['cache_pool'], self::DEFAULT_SESSION_CACHE_POOL, $container);
 
             $container->register($id, Psr16SessionStore::class)
-                ->setArguments([new Reference($cachePoolId), $prefix, $session['ttl']]);
+                ->setArguments([new Reference($session['cache_pool']), $prefix, $session['ttl']]);
 
             return $id;
         }

@@ -14,6 +14,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\Translation\DataCollector\TranslationDataCollector;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
  * Formats translation collector data.
@@ -68,7 +69,7 @@ final class TranslationCollectorFormatter implements CollectorFormatterInterface
             return $data;
         }
 
-        if (\is_object($data) && method_exists($data, 'getValue')) {
+        if ($data instanceof Data) {
             return (array) $data->getValue(true);
         }
 

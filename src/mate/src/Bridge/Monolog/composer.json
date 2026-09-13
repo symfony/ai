@@ -5,7 +5,6 @@
     "type": "symfony-ai-mate",
     "keywords": [
         "ai",
-        "mcp",
         "monolog",
         "logs",
         "bridge",
@@ -28,7 +27,7 @@
     "require": {
         "php": ">=8.2",
         "monolog/monolog": "^2.0|^3.0",
-        "symfony/ai-mate": "^0.12"
+        "symfony/ai-mate": "^0.13"
     },
     "require-dev": {
         "helgesverre/toon": "^3.2.1",
@@ -64,7 +63,10 @@
             "includes": [
                 "config/config.php"
             ],
-            "instructions": "INSTRUCTIONS.md"
+            "instructions": "INSTRUCTIONS.md",
+            "skills": [
+                "skills"
+            ]
         }
     }
 }

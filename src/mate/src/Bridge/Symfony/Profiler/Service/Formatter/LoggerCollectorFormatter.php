@@ -14,6 +14,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpKernel\DataCollector\LoggerDataCollector;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
  * Formats logger collector data.
@@ -114,12 +115,12 @@ final class LoggerCollectorFormatter implements CollectorFormatterInterface
         $formatted = [];
         foreach ($logs as $log) {
             $message = $log['message'] ?? null;
-            if (\is_object($message) && method_exists($message, 'getValue')) {
+            if ($message instanceof Data) {
                 $message = $message->getValue();
             }
 
             $context = $log['context'] ?? null;
-            if (\is_object($context) && method_exists($context, 'getValue')) {
+            if ($context instanceof Data) {
                 $context = $context->getValue(true);
             }
 

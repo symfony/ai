@@ -33,4 +33,4 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('Retrieve all the links from https://symfony.com then list only the ones related to the Messenger component.'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

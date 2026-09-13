@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Sqlite\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -255,7 +256,7 @@ final class StoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new VectorQuery(new Vector([1.0, 0.0, 0.0])),
-            ['filter' => static fn (VectorDocument $doc): bool => 'a' === $doc->getMetadata()['category']],
+            ['filter' => static fn (VectorDocumentInterface $doc): bool => 'a' === $doc->getMetadata()['category']],
         ));
 
         $this->assertCount(2, $results);
@@ -356,7 +357,7 @@ final class StoreTest extends TestCase
 
         $this->assertNotEmpty($results);
 
-        $foundIds = array_map(static fn (VectorDocument $doc): string|int => $doc->getId(), $results);
+        $foundIds = array_map(static fn (VectorDocumentInterface $doc): string|int => $doc->getId(), $results);
 
         // Should find doc-1 (vector match) and/or doc-3 (text match)
         $this->assertTrue(
@@ -416,7 +417,7 @@ final class StoreTest extends TestCase
         // Both documents must appear and have non-null scores
         $this->assertCount(2, $results);
 
-        $ids = array_map(static fn (VectorDocument $doc): string|int => $doc->getId(), $results);
+        $ids = array_map(static fn (VectorDocumentInterface $doc): string|int => $doc->getId(), $results);
         $this->assertContains('doc-vector', $ids);
         $this->assertContains('doc-text', $ids);
 
@@ -548,7 +549,7 @@ final class StoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['filter' => static fn (VectorDocument $doc): bool => 'a' === $doc->getMetadata()['category']],
+            ['filter' => static fn (VectorDocumentInterface $doc): bool => 'a' === $doc->getMetadata()['category']],
         ));
 
         $this->assertCount(1, $results);

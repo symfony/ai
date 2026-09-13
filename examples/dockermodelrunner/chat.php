@@ -24,4 +24,4 @@ $messages = new MessageBag(
     Message::ofUser('What is the Symfony framework?'),
 );
 $result = $agent->call($messages);
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

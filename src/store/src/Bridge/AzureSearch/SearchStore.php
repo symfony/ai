@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
@@ -42,14 +43,14 @@ final class SearchStore implements StoreInterface
     ) {
     }
 
-    public function add(VectorDocument|array $documents): void
+    public function add(VectorDocumentInterface|array $documents): void
     {
-        if ($documents instanceof VectorDocument) {
+        if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
         $this->request('index', [
-            'value' => array_map(fn (VectorDocument $document): array => array_merge([
+            'value' => array_map(fn (VectorDocumentInterface $document): array => array_merge([
                 'id' => $document->getId(),
                 $this->vectorFieldName => $document->getVector()->getData(),
             ], $document->getMetadata()->getArrayCopy()), $documents),
@@ -201,7 +202,7 @@ final class SearchStore implements StoreInterface
     /**
      * @param array<string, mixed> $data
      */
-    private function convertToVectorDocument(array $data): VectorDocument
+    private function convertToVectorDocument(array $data): VectorDocumentInterface
     {
         return new VectorDocument(
             id: $data['id'],

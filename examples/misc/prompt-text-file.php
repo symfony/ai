@@ -28,4 +28,4 @@ $agent = new Agent($platform, 'gpt-5-mini', [$systemPromptProcessor]);
 $messages = new MessageBag(Message::ofUser('Can you explain what dependency injection is?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

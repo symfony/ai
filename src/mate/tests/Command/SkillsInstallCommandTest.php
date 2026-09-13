@@ -73,10 +73,54 @@ final class SkillsInstallCommandTest extends TestCase
         $this->assertStringContainsString('1 skill installed', $output);
     }
 
+    public function testDryRunReportsTheNewSkillWithoutWritingAnything()
+    {
+        $this->createPackageWithSkill();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--dry-run' => true]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertDirectoryDoesNotExist($this->rootDir.'/.agents/skills/mate-system-information');
+        $this->assertFileDoesNotExist((new SkillStateRepository($this->rootDir))->path());
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('dry run', $output);
+        $this->assertStringContainsString('Would install 1 new skill', $output);
+        $this->assertStringContainsString('mate-system-information', $output);
+    }
+
+    public function testDryRunReportsAChangedSourceAsARebuild()
+    {
+        $this->createPackageWithSkill();
+        (new CommandTester($this->command()))->execute([]);
+
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.', 'UPDATED UPSTREAM');
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--dry-run' => true]);
+
+        $this->assertStringContainsString('Would rebuild 1 skill', $tester->getDisplay());
+        $this->assertStringNotContainsString('UPDATED UPSTREAM', file_get_contents($this->rootDir.'/.agents/skills/mate-system-information/SKILL.md') ?: '');
+    }
+
+    public function testDryRunOnAnUpToDateProjectReportsNothingToDo()
+    {
+        $this->createPackageWithSkill();
+        (new CommandTester($this->command()))->execute([]);
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--dry-run' => true]);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Nothing to do', $output);
+        $this->assertStringNotContainsString('Would install', $output);
+    }
+
     private function createPackageWithSkill(): void
     {
         $this->createInstalledPackage($this->rootDir);
-        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'System info.');
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.');
     }
 
     private function command(): SkillsInstallCommand

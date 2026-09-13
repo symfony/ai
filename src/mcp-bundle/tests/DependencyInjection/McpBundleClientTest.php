@@ -14,6 +14,7 @@ namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 use Http\Discovery\Exception\NotFoundException;
 use Http\Discovery\Psr18ClientDiscovery;
 use Mcp\Client as McpSdkClient;
+use Mcp\Client\Handler\Request\ListRootsRequestHandler;
 use Mcp\Client\Transport\HttpTransport;
 use Mcp\Client\Transport\StdioTransport;
 use Mcp\Schema\ClientCapabilities;
@@ -162,9 +163,9 @@ final class McpBundleClientTest extends TestCase
         $container = $this->buildContainer($this->config([
             'plain' => ['servers' => ['github' => ['transport' => 'http', 'url' => 'https://example.com/mcp']]],
             'rich' => [
+                'roots' => 'app.roots',
                 'sampling' => 'app.sampling',
                 'elicitation' => 'app.elicitation',
-                'capabilities' => ['roots' => true],
                 'servers' => ['github' => ['transport' => 'http', 'url' => 'https://example.com/mcp']],
             ],
         ]));
@@ -177,7 +178,30 @@ final class McpBundleClientTest extends TestCase
 
         $rich = $this->callsNamed($container, 'rich', 'github', 'setCapabilities')[0][1][0];
         $this->assertSame([true, false, true, true], $rich->getArguments());
-        $this->assertCount(2, $this->callsNamed($container, 'rich', 'github', 'addRequestHandler'));
+        $this->assertCount(3, $this->callsNamed($container, 'rich', 'github', 'addRequestHandler'));
+    }
+
+    public function testTheRootsHandlerIsRegisteredWithTheConfiguredService()
+    {
+        $container = $this->buildContainer($this->config([
+            'research' => [
+                'roots' => 'app.roots',
+                'servers' => ['github' => ['transport' => 'http', 'url' => 'https://example.com/mcp']],
+            ],
+        ]));
+
+        $handlers = $this->callsNamed($container, 'research', 'github', 'addRequestHandler');
+        $this->assertCount(1, $handlers);
+
+        $handler = $handlers[0][1][0];
+        $this->assertInstanceOf(Definition::class, $handler);
+        $this->assertSame(ListRootsRequestHandler::class, $handler->getClass());
+        $this->assertSame('app.roots', (string) $handler->getArgument(0));
+
+        // The capability is advertised because a handler backs it, not because
+        // a boolean said so.
+        $capabilities = $this->callsNamed($container, 'research', 'github', 'setCapabilities')[0][1][0];
+        $this->assertSame([true, false, false, false], $capabilities->getArguments());
     }
 
     public function testServerLogsAreForwardedByDefault()

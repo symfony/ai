@@ -25,7 +25,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Discover MCP extensions installed via Composer.
+ * Discover Mate extensions installed via Composer.
  *
  * Scans for packages with extra.ai-mate configuration
  * and generates/updates mate/extensions.php with discovered extensions.
@@ -34,7 +34,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * @author Johannes Wachter <johannes@sulu.io>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-#[AsCommand('discover', 'Discover MCP bridges installed via Composer')]
+#[AsCommand('discover', 'Discover Mate bridges installed via Composer')]
 class DiscoverCommand extends Command
 {
     public function __construct(
@@ -54,7 +54,7 @@ class DiscoverCommand extends Command
 
     public static function getDefaultDescription(): string
     {
-        return 'Discover MCP bridges installed via Composer';
+        return 'Discover Mate bridges installed via Composer';
     }
 
     protected function configure(): void
@@ -80,7 +80,7 @@ class DiscoverCommand extends Command
         $discoveredSkills = $this->skillDiscovery->discover($combinedForSkills);
 
         if (!$composerMode) {
-            $io->title('MCP Extension Discovery');
+            $io->title('Extension Discovery');
             $io->text('Scanning for packages with <info>extra.ai-mate</info> configuration...');
             $io->newLine();
         }
@@ -104,14 +104,14 @@ class DiscoverCommand extends Command
                 }
             } else {
                 $io->warning([
-                    'No MCP extensions found.',
+                    'No Mate extensions found.',
                     'Packages must have "extra.ai-mate" configuration in their composer.json.',
                 ]);
                 $this->displayInstructionsStatus($io, $materializationResult);
                 if (isset($skillInstallResult)) {
                     $this->displaySkillSummary($io, $skillInstallResult);
                 }
-                $io->note('Run "composer require vendor/package" to install MCP extensions.');
+                $io->note('Run "composer require vendor/package" to install Mate extensions.');
             }
 
             return Command::SUCCESS;
@@ -265,7 +265,7 @@ class DiscoverCommand extends Command
     }
 
     /**
-     * @param array{instructions_file_updated: bool, agents_file_updated: bool} $materializationResult
+     * @param array{instructions_file_updated: bool, agents_file_updated: bool, claude_file_updated: bool} $materializationResult
      */
     private function displayInstructionsStatus(SymfonyStyle $io, array $materializationResult): void
     {
@@ -279,6 +279,12 @@ class DiscoverCommand extends Command
             $io->text('Updated <info>AGENTS.md</info> managed instructions block.');
         } else {
             $io->warning('Failed to update AGENTS.md managed instructions block.');
+        }
+
+        if ($materializationResult['claude_file_updated']) {
+            $io->text('Updated <info>CLAUDE.md</info> to import AGENTS.md.');
+        } else {
+            $io->warning('Failed to update CLAUDE.md to import AGENTS.md.');
         }
     }
 }

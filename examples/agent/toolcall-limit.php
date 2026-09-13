@@ -43,7 +43,7 @@ $messages = new MessageBag(
 );
 
 try {
-    $result = $agent->call($messages);
+    $answer = $agent->call($messages)->asText();
 } catch (MaxIterationsExceededException $e) {
     echo $e->getMessage().\PHP_EOL;
 
@@ -51,6 +51,6 @@ try {
 }
 
 output()->writeln('<error>Expected the tool call limit to stop the agent, but it returned a result.</error>');
-echo $result->getContent().\PHP_EOL;
+echo $answer.\PHP_EOL;
 
 exit(1);

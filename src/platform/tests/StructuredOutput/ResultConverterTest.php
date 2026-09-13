@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -53,6 +54,50 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(ObjectResult::class, $result);
         $this->assertInstanceOf(SomeStructure::class, $result->getContent());
         $this->assertSame('data', $result->getContent()->some);
+    }
+
+    public function testConvertUnwrapsJsonCodeFence()
+    {
+        $innerConverter = new PlainConverter(new TextResult("```json\n{\"key\": \"value\"}\n```"));
+        $converter = new ResultConverter($innerConverter, new Serializer());
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(ObjectResult::class, $result);
+        $this->assertSame(['key' => 'value'], $result->getContent());
+    }
+
+    public function testConvertUnwrapsBareCodeFenceWithOutputType()
+    {
+        $innerConverter = new PlainConverter(new TextResult("```\n{\"some\": \"data\"}\n```"));
+        $converter = new ResultConverter($innerConverter, new Serializer(), SomeStructure::class);
+
+        $result = $converter->convert(new InMemoryRawResult());
+
+        $this->assertInstanceOf(SomeStructure::class, $result->getContent());
+        $this->assertSame('data', $result->getContent()->some);
+    }
+
+    public function testConvertLeavesCodeFenceWithoutJsonBodyUntouched()
+    {
+        $innerConverter = new PlainConverter(new TextResult("```json\nnot json at all\n```"));
+        $converter = new ResultConverter($innerConverter, new Serializer());
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot json decode the content.');
+
+        $converter->convert(new InMemoryRawResult());
+    }
+
+    public function testConvertDoesNotUnwrapACodeFenceSurroundedByProse()
+    {
+        $innerConverter = new PlainConverter(new TextResult("Here you go:\n```json\n{\"key\": \"value\"}\n```"));
+        $converter = new ResultConverter($innerConverter, new Serializer());
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot json decode the content.');
+
+        $converter->convert(new InMemoryRawResult());
     }
 
     public function testConvertWithObjectToPopulate()

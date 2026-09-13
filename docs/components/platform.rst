@@ -653,6 +653,8 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallStart` -- signals the start of a tool call
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolInputDelta` -- a chunk of tool call input data
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete` -- signals all tool calls are complete and ready for execution
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\WebSearchComplete` --
+  signals provider-hosted web search output is ready for replay
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\MetadataDelta` -- metadata associated with the stream
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ChoiceDelta` -- a choice delta (e.g. multiple completions)
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` -- a chunk of binary data
@@ -732,6 +734,52 @@ from the visible deltas::
     so the same ``max_tokens`` case that surfaces as ``LENGTH`` on a buffered result raises an exception
     when streamed. Wrap the consumption loop in a ``try``/``catch`` when you need to handle truncation
     of a streamed response.
+
+Token Usage
+~~~~~~~~~~~
+
+Every bridge whose provider reports what a call consumed exposes it as the ``token_usage``
+result metadata, a :class:`Symfony\\AI\\Platform\\TokenUsage\\TokenUsageInterface`::
+
+    $result = $platform->invoke($model, $messages);
+    $result->asText();
+
+    $usage = $result->getMetadata()->get('token_usage');
+
+    $usage->getPromptTokens();
+    $usage->getCompletionTokens();
+    $usage->getModel(); // "gpt-4o-2024-08-06"
+
+``getModel()`` reports the model the provider says consumed the tokens, which is what makes a
+usage priceable: it is usually the resolved snapshot rather than the alias that was requested.
+It is ``null`` when the provider does not name a model in the payload the usage was read from --
+Cohere and the Vertex AI embeddings endpoint, for instance, report none.
+
+A run that calls more than one model -- an agent embedding a query before answering it, say --
+aggregates its usages into a
+:class:`Symfony\\AI\\Platform\\TokenUsage\\TokenUsageAggregation`. Its ``getModel()`` answers
+only when every usage agrees on a model, so price a mixed run per call instead::
+
+    $usage = $result->getMetadata()->get('token_usage');
+
+    $usages = $usage instanceof TokenUsageAggregation ? $usage->getTokenUsages() : [$usage];
+
+    $cost = 0.0;
+    foreach ($usages as $call) {
+        $price = $pricing[$call->getModel()] ?? null;
+        if (null === $price) {
+            continue;
+        }
+
+        $cost += $call->getPromptTokens() / 1_000_000 * $price['input']
+            + $call->getCompletionTokens() / 1_000_000 * $price['output'];
+    }
+
+.. note::
+
+    Like the finish reason, a streamed usage is only known once the stream has been consumed, and
+    it is aggregated from the usage events the provider emits along the way. Register the
+    :class:`Symfony\\AI\\Platform\\TokenUsage\\StreamListener` on the stream result to collect them.
 
 Custom Tool Calls (Provider Extensions)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -951,6 +999,34 @@ previous invocation back into the message bag is therefore a one-liner::
 so a result that contains a :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`
 followed by a :class:`Symfony\\AI\\Platform\\Result\\TextResult` (and any tool
 calls) is replayed in the same order on the next turn.
+
+Replaying a Streamed Turn
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A streamed response carries the assistant turn as deltas.
+:method:`Symfony\\AI\\Platform\\Message\\Message::ofAssistant` accepts a streamed result
+just like a buffered one and returns the turn the provider produced - text, thinking
+blocks with their signatures, and tool calls, in order::
+
+    $result = $platform->invoke($model, $messages, ['stream' => true])->getResult();
+    \assert($result instanceof StreamResult);
+
+    foreach ($result->getContent() as $delta) {
+        echo $delta;
+    }
+
+    $messages->add(Message::ofAssistant($result));
+
+The turn is collected while the stream is read;
+:method:`Symfony\\AI\\Platform\\Result\\StreamResult::getAssistantMessage` returns it
+directly, draining a stream that was never iterated.
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\AssistantMessageStreamListener` performs
+the reassembly and can be used on its own.
+
+.. caution::
+
+    Read the turn *after* the deltas, as above. A stream is read once, so asking for the
+    turn first drains it and the deltas never reach the loop that follows.
 
 Checking for Thinking Support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1274,7 +1350,7 @@ top this example uses the feature through the agent to leverage tool calling::
         ],
     ]]);
 
-    dump($result->getContent()); // returns an array
+    dump($result->asObject()); // returns an array
 
 Populating Existing Object Instances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

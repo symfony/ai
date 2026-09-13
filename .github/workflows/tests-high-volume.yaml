@@ -21,10 +21,12 @@ env:
 jobs:
     matrix:
         name: Matrix
+        if: github.repository == 'symfony/ai'
         uses: ./.github/workflows/build-matrix.yaml
 
     store-bridges-integration:
         name: High Volume / Store / ${{ matrix.bridge }}
+        if: github.repository == 'symfony/ai'
         needs: matrix
         runs-on: ubuntu-latest
         timeout-minutes: 30

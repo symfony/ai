@@ -18,8 +18,10 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArrayMultidimensional;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolObjectFloat;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolScalarFloat;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithNullableClass;
+use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
@@ -110,6 +112,30 @@ class ToolCallArgumentResolverTest extends TestCase
         $toolCall = new ToolCall('tool_id_1234', 'tool_scalar_float', ['height' => 1, 'weight' => 80]);
 
         $this->assertSame(['height' => 1.0, 'weight' => 80.0], $resolver->resolveArguments($metadata, $toolCall));
+    }
+
+    public function testThrowsWhenMandatoryParameterMissing()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolOptionalParam::class, 'bar'), 'tool_optional_param', 'A tool with one optional parameter');
+        $toolCall = new ToolCall('invocation', 'tool_optional_param', ['number' => 5]);
+
+        $this->expectException(ToolException::class);
+        $this->expectExceptionMessage('Parameter "text" is mandatory for tool "tool_optional_param".');
+        $arguments = $resolver->resolveArguments($metadata, $toolCall);
+    }
+
+    public function testContinuesWhenOptionalParameterMissing()
+    {
+        $resolver = new ToolCallArgumentResolver();
+
+        $metadata = new Tool(new ExecutionReference(ToolOptionalParam::class, 'bar'), 'tool_optional_param', 'A tool with one optional parameter');
+        $toolCall = new ToolCall('invocation', 'tool_optional_param', ['text' => 'hello']);
+
+        $arguments = $resolver->resolveArguments($metadata, $toolCall);
+
+        $this->assertSame(['text' => 'hello'], $arguments);
     }
 
     /**

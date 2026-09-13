@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory;
+use Symfony\AI\Platform\Bridge\ElevenLabs\Result\Transcript;
 use Symfony\AI\Platform\Message\Content\Audio;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -31,4 +32,8 @@ $result = $platform->invoke(
     ],
 );
 
-echo $result->asObject()->asSubRipText().\PHP_EOL;
+$transcript = $result->asObject();
+
+if ($transcript instanceof Transcript) {
+    echo $transcript->asSubRipText().\PHP_EOL;
+}

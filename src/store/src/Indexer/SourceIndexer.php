@@ -29,12 +29,13 @@ final class SourceIndexer implements IndexerInterface
     }
 
     /**
-     * @param string|iterable<string>|null $input Source identifier (file path, URL, etc.), iterable of sources, or null for source-independent loaders
+     * @param string|iterable<string>|null $input   Source identifier (file path, URL, etc.), iterable of sources, or null for source-independent loaders
+     * @param array<string, mixed>         $options passed to the loader as well as to the processor, so a source can be narrowed at runtime
      */
     public function index(string|iterable|object|null $input = null, array $options = []): void
     {
         if (null === $input) {
-            $this->processor->process($this->loader->load(), $options);
+            $this->processor->process($this->loader->load(null, $options), $options);
 
             return;
         }
@@ -45,12 +46,12 @@ final class SourceIndexer implements IndexerInterface
 
         $sources = \is_string($input) ? [$input] : $input;
 
-        $documents = (function () use ($sources) {
+        $documents = (function () use ($sources, $options) {
             foreach ($sources as $source) {
                 if (!\is_string($source)) {
                     throw new InvalidArgumentException(\sprintf('SourceIndexer expects sources to be strings, got "%s".', get_debug_type($source)));
                 }
-                yield from $this->loader->load($source);
+                yield from $this->loader->load($source, $options);
             }
         })();
 

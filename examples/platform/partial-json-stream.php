@@ -56,25 +56,49 @@ $deferred = $platform->invoke('gpt-4o-mini', $messages, [
 ]);
 
 // Each snapshot is the largest valid JSON value recovered so far: the name
-// appears first, then ingredients trickle in one by one, then the steps. We
-// re-render the whole recipe card on every snapshot so the terminal shows it
-// filling up live instead of dumping the final payload at once.
+// appears first, then ingredients trickle in one by one, then the steps. On an
+// interactive terminal we re-render the whole recipe card on every snapshot so it
+// shows up filling live; when the output is captured - by the example runner or a
+// pipe - the clear-screen escape sequences would garble it, so the card is printed
+// once at the end instead.
+$live = is_interactive();
+$snapshots = 0;
+$latest = null;
+
+/**
+ * @param array{name?: string|null, ingredients?: list<string>, steps?: list<string>} $recipe
+ */
+$render = static function (array $recipe): void {
+    echo '🍕 '.($recipe['name'] ?? '…')."\n\n";
+
+    echo "Ingredients\n-----------\n";
+    foreach ($recipe['ingredients'] ?? [] as $ingredient) {
+        echo '  • '.$ingredient."\n";
+    }
+
+    echo "\nSteps\n-----\n";
+    foreach ($recipe['steps'] ?? [] as $index => $step) {
+        echo sprintf("  %d. %s\n", $index + 1, $step);
+    }
+};
+
 foreach ($deferred->asPartialJsonStream() as $snapshot) {
     if (!is_array($snapshot)) {
         continue;
     }
 
+    ++$snapshots;
+    $latest = $snapshot;
+
+    if (!$live) {
+        continue;
+    }
+
     echo "\033[2J\033[H"; // clear screen and move the cursor to the top-left
+    $render($snapshot);
+}
 
-    echo '🍕 '.($snapshot['name'] ?? '…')."\n\n";
-
-    echo "Ingredients\n-----------\n";
-    foreach ($snapshot['ingredients'] ?? [] as $ingredient) {
-        echo '  • '.$ingredient."\n";
-    }
-
-    echo "\nSteps\n-----\n";
-    foreach ($snapshot['steps'] ?? [] as $index => $step) {
-        echo sprintf("  %d. %s\n", $index + 1, $step);
-    }
+if (!$live && null !== $latest) {
+    echo sprintf("Recovered %d partial snapshots, the last one being:\n\n", $snapshots);
+    $render($latest);
 }

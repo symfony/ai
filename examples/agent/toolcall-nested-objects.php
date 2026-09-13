@@ -61,5 +61,5 @@ foreach ($platforms as $model => $platform) {
 
     $result = $agent->call($messages);
 
-    echo $result->getContent().\PHP_EOL;
+    echo $result->asText().\PHP_EOL;
 }

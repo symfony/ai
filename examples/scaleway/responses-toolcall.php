@@ -32,4 +32,4 @@ $agent = new Agent($platform, 'gpt-oss-120b', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What date and time is it right now?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

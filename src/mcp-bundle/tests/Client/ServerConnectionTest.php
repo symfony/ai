@@ -12,6 +12,8 @@
 namespace Symfony\AI\McpBundle\Tests\Client;
 
 use Mcp\Client;
+use Mcp\Schema\ClientCapabilities;
+use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\PromptReference;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Client\ServerConnection;
@@ -173,6 +175,39 @@ final class ServerConnectionTest extends TestCase
         $call = end($transport->sent);
         $this->assertSame('completion/complete', $call['method']);
         $this->assertSame(['berlin'], $result->values);
+    }
+
+    public function testProtocolVersionComesFromTheHandshake()
+    {
+        $connection = $this->createConnection(new InMemoryTransport());
+
+        $this->assertSame(ProtocolVersion::V2025_11_25, $connection->getProtocolVersion());
+    }
+
+    public function testRootsListChangedIsSentAsANotification()
+    {
+        $transport = new InMemoryTransport();
+        $client = Client::builder()->setCapabilities(new ClientCapabilities(roots: true, rootsListChanged: true))->build();
+        $connection = new ServerConnection('research', 'github', $client, $transport);
+
+        $connection->sendRootsListChanged();
+
+        $call = end($transport->sent);
+        $this->assertSame('notifications/roots/list_changed', $call['method']);
+        // A notification carries no id, so nothing waits for an answer that will never come.
+        $this->assertArrayNotHasKey('id', $call);
+    }
+
+    public function testRootsListChangedWithoutTheCapabilityFailsLikeAnyOtherCall()
+    {
+        // The bundle advertises "roots.listChanged" only when a roots provider is configured,
+        // so the SDK's refusal has to arrive as a bundle exception naming the operation.
+        $connection = $this->createConnection(new InMemoryTransport());
+
+        $this->expectException(RemoteCallException::class);
+        $this->expectExceptionMessage('The "notifications/roots/list_changed" request of MCP client "research" to server "github" failed:');
+
+        $connection->sendRootsListChanged();
     }
 
     public function testNamesAreExposed()

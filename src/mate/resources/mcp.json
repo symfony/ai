@@ -1,8 +1,0 @@
-{
-    "mcpServers": {
-        "symfony-ai-mate": {
-            "command": "##PHP_BINARY##",
-            "args": ["##MATE_ARGS##"]
-        }
-    }
-}

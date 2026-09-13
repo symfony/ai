@@ -1,0 +1,199 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/chat/completions",
+                "signature": "a418ad834619b9eadbefa26ab76452cf",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "accept": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"reasoning_effort\":\"high\",\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\"}}}],\"messages\":[{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},{\"role\":\"user\",\"content\":\"What time is it right now?\"}],\"model\":\"mistral-medium-2604\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-max-retry-attempts-reached": [
+                        "false"
+                    ],
+                    "x-ratelimit-limit-tokens-minute": [
+                        "500000"
+                    ],
+                    "x-ratelimit-remaining-tokens-minute": [
+                        "498196"
+                    ],
+                    "x-ratelimit-tokens-query-cost": [
+                        "195"
+                    ],
+                    "x-ratelimit-limit-req-minute": [
+                        "1000"
+                    ],
+                    "x-ratelimit-remaining-req-minute": [
+                        "995"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"be4001e216174d2b9d3a2de5d0c8c583\",\"created\":1788046765,\"model\":\"mistral-medium-2604\",\"usage\":{\"prompt_tokens\":70,\"total_tokens\":195,\"completion_tokens\":125,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"object\":\"chat.completion\",\"choices\":[{\"index\":0,\"finish_reason\":\"tool_calls\",\"message\":{\"role\":\"assistant\",\"tool_calls\":[{\"id\":\"0AMsv2EWQ\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"},\"index\":0}],\"content\":[{\"type\":\"thinking\",\"thinking\":[{\"type\":\"text\",\"text\":\"Okay, the user is asking for the current time. I need to figure out how to get that information. The available tool is \\\"clock\\\" which provides the current date and time. So I should call the clock function. The function parameters are a dictionary, but maybe it doesn't need any specific arguments. Let me check the function's description again. It says it provides the current date and time, so probably just calling it without any arguments is sufficient. So I'll make a tool call to clock with an empty dict as the arguments. Then the response will be the current time.\"}],\"closed\":true}]}}]}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/chat/completions",
+                "signature": "46a926fe94497746825a314542c3d67c",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "accept": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"reasoning_effort\":\"high\",\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\"}}}],\"messages\":[{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"0AMsv2EWQ\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-08-29 (YYYY-MM-DD) and the time is 23:39:26 (HH:MM:SS).\",\"tool_call_id\":\"0AMsv2EWQ\"}],\"model\":\"mistral-medium-2604\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-max-retry-attempts-reached": [
+                        "false"
+                    ],
+                    "x-ratelimit-limit-tokens-minute": [
+                        "500000"
+                    ],
+                    "x-ratelimit-remaining-tokens-minute": [
+                        "497952"
+                    ],
+                    "x-ratelimit-tokens-query-cost": [
+                        "249"
+                    ],
+                    "x-ratelimit-limit-req-minute": [
+                        "1000"
+                    ],
+                    "x-ratelimit-remaining-req-minute": [
+                        "994"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"e14c743cf3a14304bc63c9c481bc53ff\",\"created\":1788046766,\"model\":\"mistral-medium-2604\",\"usage\":{\"prompt_tokens\":116,\"total_tokens\":249,\"completion_tokens\":133,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"object\":\"chat.completion\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"tool_calls\":null,\"content\":[{\"type\":\"thinking\",\"thinking\":[{\"type\":\"text\",\"text\":\"Okay, the user asked what time it is right now. I need to check the current time. The clock tool was called, and it provided the current date as 2026-08-29 and the time as 23:39:26. So the time is 23:39:26, which is 11:39 PM. I should just state the time clearly without any additional information.\"}],\"closed\":true},{\"type\":\"text\",\"text\":\"The current time is **23:39:26 (11:39:26 PM)** on August 29, 2026.\"}]}}]}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/chat/completions",
+                "signature": "8e37747d39a6f7954e1d28cb6dd1df7c",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "accept": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"reasoning_effort\":\"high\",\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\"}}}],\"messages\":[{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"0AMsv2EWQ\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-08-29 (YYYY-MM-DD) and the time is 23:39:26 (HH:MM:SS).\",\"tool_call_id\":\"0AMsv2EWQ\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":[{\"type\":\"text\",\"text\":\"Okay, the user asked what time it is right now. I need to check the current time. The clock tool was called, and it provided the current date as 2026-08-29 and the time as 23:39:26. So the time is 23:39:26, which is 11:39 PM. I should just state the time clearly without any additional information.\"}]},{\"type\":\"text\",\"text\":\"The current time is **23:39:26 (11:39:26 PM)** on August 29, 2026.\"}]},{\"role\":\"user\",\"content\":\"What did I just ask you?\"}],\"model\":\"mistral-medium-2604\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-max-retry-attempts-reached": [
+                        "false"
+                    ],
+                    "x-ratelimit-limit-tokens-minute": [
+                        "500000"
+                    ],
+                    "x-ratelimit-remaining-tokens-minute": [
+                        "497630"
+                    ],
+                    "x-ratelimit-tokens-query-cost": [
+                        "327"
+                    ],
+                    "x-ratelimit-limit-req-minute": [
+                        "1000"
+                    ],
+                    "x-ratelimit-remaining-req-minute": [
+                        "993"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"bbd836290bef4268aa6840133f7632b1\",\"created\":1788046767,\"model\":\"mistral-medium-2604\",\"usage\":{\"prompt_tokens\":258,\"total_tokens\":327,\"completion_tokens\":69,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"object\":\"chat.completion\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"tool_calls\":null,\"content\":[{\"type\":\"thinking\",\"thinking\":[{\"type\":\"text\",\"text\":\"The user is asking what they just asked me. I need to recall the previous interaction. The last question was \\\"What time is it right now?\\\" which I answered with the current time. So the user's previous question was about the current time. I should confirm that.\"}],\"closed\":true},{\"type\":\"text\",\"text\":\"You asked, \\\"What time is it right now?\\\"\"}]}}]}"
+            }
+        }
+    ]
+}

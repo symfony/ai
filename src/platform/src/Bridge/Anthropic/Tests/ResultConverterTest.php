@@ -38,10 +38,12 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\TokenUsage\StreamListener as TokenUsageStreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -256,7 +258,7 @@ final class ResultConverterTest extends TestCase
         // both message_start and message_delta. The stream aggregation sums
         // every yielded usage, so they must be counted only once.
         $raw = new InMemoryRawResult([], [
-            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => [], 'usage' => [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'model' => 'claude-sonnet-4-5-20250929', 'content' => [], 'usage' => [
                 'input_tokens' => 100,
                 'cache_creation_input_tokens' => 200,
                 'cache_read_input_tokens' => 300,
@@ -291,6 +293,9 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(200, $tokenUsage->getCacheCreationTokens());
         $this->assertSame(300, $tokenUsage->getCacheReadTokens());
         $this->assertSame(50, $tokenUsage->getCompletionTokens());
+        // message_delta carries no model of its own, so the aggregation only agrees on one
+        // if the message_start model was carried over to it.
+        $this->assertSame('claude-sonnet-4-5-20250929', $tokenUsage->getModel());
     }
 
     public function testStreamingThrowsWhenMessageStopIsMissing()
@@ -815,6 +820,396 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('finish_reason', $metadataDelta->getKey());
         $this->assertTrue($metadataDelta->getValue()->is(FinishReasonCase::STOP));
         $this->assertSame('end_turn', $metadataDelta->getValue()->getRaw());
+    }
+
+    public function testConvertServerToolUseWebSearchAloneIntoWebSearchResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('claude shannon birth date', $result->getQuery());
+        $this->assertSame('srvtoolu_01WYG3ziw53XMcoyKL4XcZmE', $result->getId());
+        $this->assertNull($result->getStatus());
+    }
+
+    public function testConvertWebSearchCallAndSuccessResultMergeIntoOneWebSearchResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                            'encrypted_content' => 'EqgfCioIARgBIiQ3YTAwMjY1Mi1mZjM5LTQ1NGUtODgxNC1kNjNjNTk1ZWI3Y...',
+                            'page_age' => 'April 30, 2025',
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('claude shannon birth date', $result->getQuery());
+        $this->assertSame('srvtoolu_01WYG3ziw53XMcoyKL4XcZmE', $result->getId());
+        $this->assertSame('completed', $result->getStatus());
+    }
+
+    public function testConvertWebSearchCallAndErrorResultMergeIntoOneWebSearchResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_a93jad',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_a93jad',
+                    'content' => [
+                        'type' => 'web_search_tool_result_error',
+                        'error_code' => 'max_uses_exceeded',
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('claude shannon birth date', $result->getQuery());
+        $this->assertSame('srvtoolu_a93jad', $result->getId());
+        $this->assertSame('max_uses_exceeded', $result->getStatus());
+    }
+
+    public function testConvertOrphanWebSearchToolResultIntoWebSearchResultWithoutQuery()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_a93jad',
+                    'content' => [
+                        'type' => 'web_search_tool_result_error',
+                        'error_code' => 'max_uses_exceeded',
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertNull($result->getQuery());
+        $this->assertSame('srvtoolu_a93jad', $result->getId());
+        $this->assertSame('max_uses_exceeded', $result->getStatus());
+    }
+
+    public function testConvertResponseWithOnlyWebSearchBlocksDoesNotThrow()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                            'encrypted_content' => 'EqgfCioIARgBIiQ3YTAwMjY1Mi1mZjM5LTQ1NGUtODgxNC1kNjNjNTk1ZWI3Y...',
+                            'page_age' => 'April 30, 2025',
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(WebSearchResult::class, $result);
+        $this->assertSame('completed', $result->getStatus());
+    }
+
+    public function testConvertTwoDistinctWebSearchesYieldTwoWebSearchResults()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_first',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_first',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                        ],
+                    ],
+                ],
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_second',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'alan turing birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_second',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Alan_Turing',
+                            'title' => 'Alan Turing - Wikipedia',
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(WebSearchResult::class, $parts[0]);
+        $this->assertSame('claude shannon birth date', $parts[0]->getQuery());
+        $this->assertSame('srvtoolu_first', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+
+        $this->assertInstanceOf(WebSearchResult::class, $parts[1]);
+        $this->assertSame('alan turing birth date', $parts[1]->getQuery());
+        $this->assertSame('srvtoolu_second', $parts[1]->getId());
+        $this->assertSame('completed', $parts[1]->getStatus());
+    }
+
+    public function testStreamedWebSearchMergesCallAndResultIntoOneDelta()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $deltas = $this->webSearchDeltas(new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_1',
+                'name' => 'web_search',
+                'input' => [],
+            ]],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"query":"Symfony AI"}']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'content_block_start', 'index' => 1, 'content_block' => [
+                'type' => 'web_search_tool_result',
+                'tool_use_id' => 'srvtoolu_1',
+                'content' => [['type' => 'web_search_result', 'url' => 'https://symfony.com/ai']],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 1],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn']],
+            ['type' => 'message_stop'],
+        ], $httpResponse));
+
+        // The pair is one search, as it is for a buffered response.
+        $this->assertCount(1, $deltas);
+        $this->assertSame('Symfony AI', $deltas[0]->getQuery());
+        $this->assertSame('srvtoolu_1', $deltas[0]->getId());
+        $this->assertSame('completed', $deltas[0]->getStatus());
+        $this->assertSame(['Symfony AI'], $deltas[0]->getQueries());
+    }
+
+    public function testStreamedWebSearchReportsErrorCodeAsStatus()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $deltas = $this->webSearchDeltas(new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_1',
+                'name' => 'web_search',
+                'input' => ['query' => 'Symfony AI'],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'content_block_start', 'index' => 1, 'content_block' => [
+                'type' => 'web_search_tool_result',
+                'tool_use_id' => 'srvtoolu_1',
+                'content' => ['type' => 'web_search_tool_result_error', 'error_code' => 'max_uses_exceeded'],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 1],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn']],
+            ['type' => 'message_stop'],
+        ], $httpResponse));
+
+        $this->assertCount(1, $deltas);
+        $this->assertSame('max_uses_exceeded', $deltas[0]->getStatus());
+    }
+
+    public function testStreamedDistinctWebSearchesYieldOneDeltaEach()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $deltas = $this->webSearchDeltas(new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_1',
+                'name' => 'web_search',
+                'input' => ['query' => 'first'],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'content_block_start', 'index' => 1, 'content_block' => [
+                'type' => 'web_search_tool_result',
+                'tool_use_id' => 'srvtoolu_1',
+                'content' => [],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 1],
+            ['type' => 'content_block_start', 'index' => 2, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_2',
+                'name' => 'web_search',
+                'input' => ['query' => 'second'],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 2],
+            ['type' => 'content_block_start', 'index' => 3, 'content_block' => [
+                'type' => 'web_search_tool_result',
+                'tool_use_id' => 'srvtoolu_2',
+                'content' => [],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 3],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn']],
+            ['type' => 'message_stop'],
+        ], $httpResponse));
+
+        $this->assertCount(2, $deltas);
+        $this->assertSame(['first', 'second'], [$deltas[0]->getQuery(), $deltas[1]->getQuery()]);
+        $this->assertSame(['srvtoolu_1', 'srvtoolu_2'], [$deltas[0]->getId(), $deltas[1]->getId()]);
+    }
+
+    public function testStreamedWebSearchWithoutResultBlockStillYieldsTheCall()
+    {
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        // Anthropic stops the turn on `pause_turn` after the call block; the result arrives
+        // only once the turn is continued.
+        $deltas = $this->webSearchDeltas(new InMemoryRawResult([], [
+            ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => [
+                'type' => 'server_tool_use',
+                'id' => 'srvtoolu_1',
+                'name' => 'web_search',
+                'input' => ['query' => 'Symfony AI'],
+            ]],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'pause_turn']],
+            ['type' => 'message_stop'],
+        ], $httpResponse));
+
+        $this->assertCount(1, $deltas);
+        $this->assertSame('Symfony AI', $deltas[0]->getQuery());
+        $this->assertNull($deltas[0]->getStatus());
+    }
+
+    public function testConvertWebSearchMergedWithTextBlockKeepsWireOrder()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                [
+                    'type' => 'server_tool_use',
+                    'id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'name' => 'web_search',
+                    'input' => ['query' => 'claude shannon birth date'],
+                ],
+                [
+                    'type' => 'web_search_tool_result',
+                    'tool_use_id' => 'srvtoolu_01WYG3ziw53XMcoyKL4XcZmE',
+                    'content' => [
+                        [
+                            'type' => 'web_search_result',
+                            'url' => 'https://en.wikipedia.org/wiki/Claude_Shannon',
+                            'title' => 'Claude Shannon - Wikipedia',
+                        ],
+                    ],
+                ],
+                [
+                    'type' => 'text',
+                    'text' => 'Claude Shannon was born on April 30, 1916.',
+                ],
+            ],
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+
+        $this->assertInstanceOf(WebSearchResult::class, $parts[0]);
+        $this->assertSame('claude shannon birth date', $parts[0]->getQuery());
+        $this->assertSame('srvtoolu_01WYG3ziw53XMcoyKL4XcZmE', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
+        $this->assertSame('Claude Shannon was born on April 30, 1916.', $parts[1]->getContent());
+    }
+
+    /**
+     * @return list<WebSearchResult>
+     */
+    private function webSearchDeltas(InMemoryRawResult $raw): array
+    {
+        $searches = [];
+        foreach ((new ResultConverter())->convert($raw, ['stream' => true])->getContent() as $delta) {
+            if ($delta instanceof WebSearchComplete) {
+                $searches[] = $delta->getWebSearch();
+            }
+        }
+
+        return $searches;
     }
 
     /**

@@ -12,12 +12,13 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use HelgeSverre\Toon\Toon;
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
-use Symfony\AI\Mate\Service\RegistryProvider;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
+use Symfony\AI\Mate\Invocation\HandlerInvoker;
+use Symfony\AI\Mate\Invocation\ResourceReader;
 use Symfony\AI\Mate\Tests\Command\Fixtures\SampleResources;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -78,6 +79,39 @@ final class ResourcesReadCommandTest extends TestCase
         $this->assertSame('Hello from the Mate test fixture!', $contents[0]['text']);
     }
 
+    /**
+     * An encoded body has to arrive as structure, not as a JSON document escaped inside a JSON
+     * string, which the caller would have to parse a second time.
+     */
+    public function testReadWithJsonFormatUnwrapsAnEncodedBody()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute([
+            'uri' => 'sample://payload',
+            '--format' => 'json',
+        ]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        $contents = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($contents);
+        $this->assertSame(['answer' => 42, 'nested' => ['ok' => true]], $contents[0]['text']);
+    }
+
+    public function testUnknownFormatIsRejected()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute([
+            'uri' => 'sample://greeting',
+            '--format' => 'xml',
+        ]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('Unknown output format "xml"', $tester->getDisplay());
+    }
+
     public function testReadWithToonFormat()
     {
         $tester = new CommandTester($this->createCommand());
@@ -117,14 +151,15 @@ final class ResourcesReadCommandTest extends TestCase
         ];
 
         $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
-        $registryProvider = new RegistryProvider($loader, $logger);
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, [], $discoverer, $logger);
 
         $container = new ContainerBuilder();
         $container->set(SampleResources::class, new SampleResources());
 
-        return new class($registryProvider, $container) extends ResourcesReadCommand {
+        $reader = new ResourceReader($registry, new HandlerInvoker($container));
+
+        return new class($reader) extends ResourcesReadCommand {
             protected function isToonFormatAvailable(): bool
             {
                 return true;

@@ -420,6 +420,20 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_AUDIO,
                 ],
             ],
+            'gemini-3.8-flash' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_AUDIO,
+                ],
+            ],
             'gemini-embedding-001' => [
                 'class' => Embeddings::class,
                 'capabilities' => [

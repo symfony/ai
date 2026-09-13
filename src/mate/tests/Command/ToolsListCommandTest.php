@@ -12,12 +12,12 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use HelgeSverre\Toon\Toon;
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ToolsListCommand;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -48,7 +48,7 @@ final class ToolsListCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('MCP Tools', $output);
+        $this->assertStringContainsString('Available Tools', $output);
         $this->assertStringContainsString('Total:', $output);
         $this->assertStringContainsString('tool(s)', $output);
         $this->assertStringContainsString('server-info', $output);
@@ -127,10 +127,9 @@ final class ToolsListCommandTest extends TestCase
 
     public function testExecuteWithInvalidNameFilter()
     {
-        $rootDir = $this->fixturesDir.'/with-ai-mate-config';
+        $rootDir = __DIR__.'/../..';
         $extensions = [
-            'vendor/package-a' => ['dirs' => ['mate/src'], 'includes' => []],
-            '_custom' => ['dirs' => [], 'includes' => []],
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
         ];
 
         $command = $this->createCommand($rootDir, $extensions);
@@ -156,11 +155,29 @@ final class ToolsListCommandTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $output = $tester->getDisplay();
-        $this->assertStringContainsString('MCP Tools', $output);
+        $this->assertStringContainsString('Available Tools', $output);
         $this->assertStringContainsString('Tool Name', $output);
         $this->assertStringContainsString('Description', $output);
         $this->assertStringContainsString('Handler', $output);
         $this->assertStringContainsString('Extension', $output);
+    }
+
+    public function testTableOutputShowsRequiredAndOptionalArguments()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['tests/Command/Fixtures'], 'includes' => []],
+        ];
+
+        $command = $this->createCommand($rootDir, $extensions);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--filter' => 'sample-add', '--format' => 'table']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Arguments', $output);
+        $this->assertStringContainsString('a, b?, negate?', $output);
     }
 
     public function testExecuteWithToonFormatFailsWhenToonIsNotAvailable()
@@ -170,10 +187,7 @@ final class ToolsListCommandTest extends TestCase
             '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
         ];
 
-        $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, [], $discoverer, $logger);
-        $collector = new CapabilityCollector($loader);
+        $collector = $this->createCollector($rootDir, $extensions);
 
         $command = new class($extensions, $collector) extends ToolsListCommand {
             protected function isToonFormatAvailable(): bool
@@ -209,15 +223,45 @@ final class ToolsListCommandTest extends TestCase
     }
 
     /**
+     * Falling back to the table for an unknown value answers a request for machine-readable
+     * output with something the caller cannot parse, and reports success while doing it.
+     */
+    public function testUnknownFormatIsRejected()
+    {
+        $rootDir = __DIR__.'/../..';
+        $extensions = [
+            '_custom' => ['dirs' => ['src/Capability'], 'includes' => []],
+        ];
+
+        $tester = new CommandTester($this->createCommand($rootDir, $extensions));
+
+        $tester->execute(['--format' => 'jsonl']);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('Unknown output format "jsonl"', $tester->getDisplay());
+        $this->assertStringContainsString('"table", "json", "toon"', $tester->getDisplay());
+    }
+
+    /**
+     * @param array<string, array{dirs: string[], includes: string[]}> $extensions
+     * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
+     */
+    private function createCollector(string $rootDir, array $extensions, array $disabledFeatures = []): CapabilityCollector
+    {
+        $logger = new NullLogger();
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+
+        return new CapabilityCollector($registry);
+    }
+
+    /**
      * @param array<string, array{dirs: string[], includes: string[]}> $extensions
      * @param array<string, array<string, array{enabled: bool}>>       $disabledFeatures
      */
     private function createCommand(string $rootDir, array $extensions, array $disabledFeatures = []): ToolsListCommand
     {
-        $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
-        $collector = new CapabilityCollector($loader);
+        $collector = $this->createCollector($rootDir, $extensions, $disabledFeatures);
 
         return new class($extensions, $collector) extends ToolsListCommand {
             protected function isToonFormatAvailable(): bool

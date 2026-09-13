@@ -124,6 +124,18 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                 ],
             ],
+            'qwen-3.8-27b' => [
+                'class' => Model::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
             'zai-glm-4.7' => [
                 'class' => Model::class,
                 'capabilities' => [

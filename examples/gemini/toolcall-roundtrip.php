@@ -30,18 +30,18 @@ $messages = new MessageBag(
 
 // plain chat
 $messages->add(Message::ofUser('What is the capital of France?'));
-$result = $agent->call($messages);
-echo 'Turn 1: '.$result->getContent().\PHP_EOL;
-$messages->add(Message::ofAssistant($result->getContent()));
+$execution = $agent->call($messages);
+echo 'Turn 1: '.$execution->asText().\PHP_EOL;
+$messages->add(Message::ofAssistant($execution->getResult()));
 
 // parallel tool calls – Clock returns a scalar string, EuropeanCapitalsTool returns a list
 // (the latter must be wrapped as a Protobuf Struct on the function_response leg)
 $messages->add(Message::ofUser('What time is it right now, and which European capitals do you know about via your tools?'));
-$result = $agent->call($messages);
-echo 'Turn 2: '.$result->getContent().\PHP_EOL;
-$messages->add(Message::ofAssistant($result->getContent()));
+$execution = $agent->call($messages);
+echo 'Turn 2: '.$execution->asText().\PHP_EOL;
+$messages->add(Message::ofAssistant($execution->getResult()));
 
 // another chat with tool results in MessageBag
 $messages->add(Message::ofUser('What was the first question I asked you?'));
-$result = $agent->call($messages);
-echo 'Turn 3: '.$result->getContent().\PHP_EOL;
+$execution = $agent->call($messages);
+echo 'Turn 3: '.$execution->asText().\PHP_EOL;

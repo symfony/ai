@@ -18,13 +18,20 @@ final class WebSearchResultTest extends TestCase
 {
     public function testGetters()
     {
-        $result = new WebSearchResult('latest AI news', 'ws_1', 'completed', ['latest AI news', 'OpenAI recent announcements']);
+        $result = new WebSearchResult(
+            'latest AI news',
+            'ws_1',
+            'completed',
+            ['latest AI news', 'OpenAI recent announcements'],
+            'provider-signature',
+        );
 
         $this->assertSame('latest AI news', $result->getContent());
         $this->assertSame('latest AI news', $result->getQuery());
         $this->assertSame('ws_1', $result->getId());
         $this->assertSame('completed', $result->getStatus());
         $this->assertSame(['latest AI news', 'OpenAI recent announcements'], $result->getQueries());
+        $this->assertSame('provider-signature', $result->getSignature());
     }
 
     public function testDefaultsToNull()
@@ -35,5 +42,7 @@ final class WebSearchResultTest extends TestCase
         $this->assertNull($result->getQuery());
         $this->assertNull($result->getId());
         $this->assertNull($result->getStatus());
+        $this->assertSame([], $result->getQueries());
+        $this->assertNull($result->getSignature());
     }
 }

@@ -84,7 +84,7 @@ return static function (ContainerConfigurator $configurator) {
         $services->set(MemoryCollectorFormatter::class)
             ->tag('ai_mate.profiler_collector_formatter');
 
-        // MCP Capabilities
+        // Capabilities
         $services->set(ProfilerTool::class)
             ->args([service(ProfilerDataProvider::class)]);
 

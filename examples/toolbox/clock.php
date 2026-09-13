@@ -29,4 +29,4 @@ $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 $messages = new MessageBag(Message::ofUser('What date and time is it?'));
 $result = $agent->call($messages);
 
-echo $result->getContent().\PHP_EOL;
+echo $result->asText().\PHP_EOL;

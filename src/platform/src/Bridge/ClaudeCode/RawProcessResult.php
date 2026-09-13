@@ -40,7 +40,7 @@ final class RawProcessResult implements RawResultInterface
         $this->process->wait();
 
         if (!$this->process->isSuccessful()) {
-            throw new RuntimeException(\sprintf('Claude Code CLI process failed: "%s"', $this->process->getErrorOutput()));
+            throw $this->createFailureException();
         }
 
         $output = $this->process->getOutput();
@@ -131,13 +131,57 @@ final class RawProcessResult implements RawResultInterface
         }
 
         if (!$this->process->isSuccessful()) {
-            throw new RuntimeException(\sprintf('Claude Code CLI process failed: "%s"', $this->process->getErrorOutput()));
+            throw $this->createFailureException();
         }
     }
 
     public function getObject(): Process
     {
         return $this->process;
+    }
+
+    /**
+     * The CLI reports why it stopped in the final `type=result` event on stdout, while
+     * stderr often only carries unrelated warnings, e.g. about the active auth source.
+     */
+    private function createFailureException(): RuntimeException
+    {
+        $reason = $this->extractResultError() ?? trim($this->process->getErrorOutput());
+
+        if ('' === $reason) {
+            $reason = \sprintf('exit code %d', $this->process->getExitCode() ?? -1);
+        }
+
+        return new RuntimeException(\sprintf('Claude Code CLI process failed: "%s"', $reason));
+    }
+
+    private function extractResultError(): ?string
+    {
+        foreach (array_reverse(explode(\PHP_EOL, $this->process->getOutput())) as $line) {
+            $line = trim($line);
+
+            if ('' === $line) {
+                continue;
+            }
+
+            $decoded = json_decode($line, true);
+
+            if (!\is_array($decoded) || 'result' !== ($decoded['type'] ?? null)) {
+                continue;
+            }
+
+            $errors = \is_array($decoded['errors'] ?? null) ? array_filter($decoded['errors'], 'is_string') : [];
+
+            if ([] !== $errors) {
+                return implode(', ', $errors);
+            }
+
+            $subtype = $decoded['subtype'] ?? null;
+
+            return \is_string($subtype) && '' !== $subtype ? $subtype : null;
+        }
+
+        return null;
     }
 
     /**

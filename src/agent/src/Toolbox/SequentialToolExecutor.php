@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
+use Symfony\AI\Agent\Execution\Update\Progress;
+use Symfony\AI\Agent\Execution\UpdateInterface;
 use Symfony\AI\Platform\Result\ToolCall;
 
 /**
@@ -28,12 +30,14 @@ final class SequentialToolExecutor implements ToolExecutorInterface
     /**
      * @param ToolCall[] $toolCalls
      *
-     * @return ToolResult[]
+     * @return \Generator<int, UpdateInterface, mixed, ToolResult[]>
      */
-    public function execute(array $toolCalls): array
+    public function execute(array $toolCalls): \Generator
     {
         $results = [];
         foreach ($toolCalls as $toolCall) {
+            yield new Progress('tool_call', \sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
+
             $results[] = $this->toolbox->execute($toolCall);
         }
 

@@ -30,4 +30,4 @@ $answer = $speechAgent->call(new MessageBag(
     Message::ofUser(Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'))
 ));
 
-echo $answer->getContent().\PHP_EOL;
+echo $answer->asText().\PHP_EOL;

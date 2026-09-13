@@ -11,11 +11,11 @@
 
 namespace Symfony\AI\Mate\Tests\Discovery;
 
-use Mcp\Capability\Discovery\Discoverer;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Discovery\CapabilityCollector;
-use Symfony\AI\Mate\Discovery\FilteredDiscoveryLoader;
+use Symfony\AI\Mate\Discovery\CapabilityRegistry;
+use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -42,7 +42,6 @@ final class CapabilityCollectorTest extends TestCase
 
         $this->assertArrayHasKey('tools', $capabilities);
         $this->assertArrayHasKey('resources', $capabilities);
-        $this->assertArrayHasKey('prompts', $capabilities);
         $this->assertArrayHasKey('resource_templates', $capabilities);
     }
 
@@ -60,7 +59,6 @@ final class CapabilityCollectorTest extends TestCase
         // Empty directories should result in empty capability arrays
         $this->assertIsArray($capabilities['tools']);
         $this->assertIsArray($capabilities['resources']);
-        $this->assertIsArray($capabilities['prompts']);
         $this->assertIsArray($capabilities['resource_templates']);
     }
 
@@ -77,7 +75,6 @@ final class CapabilityCollectorTest extends TestCase
 
         $this->assertIsArray($capabilities['tools']);
         $this->assertIsArray($capabilities['resources']);
-        $this->assertIsArray($capabilities['prompts']);
         $this->assertIsArray($capabilities['resource_templates']);
     }
 
@@ -124,27 +121,6 @@ final class CapabilityCollectorTest extends TestCase
         }
     }
 
-    public function testCollectCapabilitiesFormatsPrompts()
-    {
-        $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
-
-        $extension = [
-            'dirs' => ['mate/src'],
-            'includes' => [],
-        ];
-
-        $capabilities = $collector->collectCapabilities('test/extension', $extension);
-
-        $this->assertIsArray($capabilities['prompts']);
-        foreach ($capabilities['prompts'] as $name => $prompt) {
-            $this->assertIsString($name);
-            $this->assertArrayHasKey('name', $prompt);
-            $this->assertArrayHasKey('description', $prompt);
-            $this->assertArrayHasKey('handler', $prompt);
-            $this->assertArrayHasKey('arguments', $prompt);
-        }
-    }
-
     public function testCollectCapabilitiesFormatsResourceTemplates()
     {
         $collector = $this->createCollector($this->fixturesDir.'/with-ai-mate-config');
@@ -173,9 +149,9 @@ final class CapabilityCollectorTest extends TestCase
     private function createCollector(string $rootDir, array $extensions = [], array $disabledFeatures = []): CapabilityCollector
     {
         $logger = new NullLogger();
-        $discoverer = new Discoverer($logger);
-        $loader = new FilteredDiscoveryLoader($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
+        $discoverer = new ReflectionDiscoverer($logger);
+        $registry = new CapabilityRegistry($rootDir, $extensions, $disabledFeatures, $discoverer, $logger);
 
-        return new CapabilityCollector($loader);
+        return new CapabilityCollector($registry);
     }
 }

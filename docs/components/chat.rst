@@ -65,6 +65,9 @@ Once the stream is fully consumed, the assistant message is automatically
 persisted to the message store along with the user message. This means the
 conversation history is kept up-to-date without any additional code.
 
+The persisted message is the assistant turn as the provider produced it, thinking blocks
+and signatures included, so the stored conversation can be replayed on a later turn.
+
 .. note::
 
     Due to implementations limitations, using streaming with :class:`Symfony\\AI\\Chat\\Bridge\\Session\\MessageStore` is *not* recommended.

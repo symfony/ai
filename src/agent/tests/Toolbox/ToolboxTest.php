@@ -31,6 +31,7 @@ use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -170,10 +171,15 @@ final class ToolboxTest extends TestCase
 
     public function testExecuteWithException()
     {
-        $this->expectException(ToolExecutionException::class);
-        $this->expectExceptionMessage('Execution of tool "tool_exception" failed with error: Tool error.');
-
-        $this->toolbox->execute(new ToolCall('call_1234', 'tool_exception'));
+        try {
+            $this->toolbox->execute(new ToolCall('call_1234', 'tool_exception'));
+            $this->fail('Should have thrown before!');
+        } catch (ToolExecutionException $ex) {
+            $this->assertSame('Execution of tool "tool_exception" failed with error: Tool error.', $ex->getMessage());
+            $toolCall = $ex->getToolCall();
+            $this->assertInstanceOf(ToolCall::class, $toolCall);
+            $this->assertSame('call_1234', $toolCall->getId());
+        }
     }
 
     public function testExecuteWithCustomException()
@@ -416,5 +422,31 @@ final class ToolboxTest extends TestCase
         $result = $toolbox->execute(new ToolCall('call_1234', 'tool_required_params', ['text' => 'Hello', 'number' => 3]));
 
         $this->assertSame('Hello says "3".', $result->getResult());
+    }
+
+    public function testExceptionProvidesToolcall()
+    {
+        $toolbox = new class implements ToolboxInterface {
+            /** @return Tool[] */
+            public function getTools(): array
+            {
+                return [];
+            }
+
+            public function execute(ToolCall $toolCall): ToolResult
+            {
+                throw ToolNotFoundException::notFoundForToolCall($toolCall);
+            }
+        };
+
+        $toolCall = new ToolCall('4321_ABC', 'tool_xyz');
+
+        try {
+            $result = $toolbox->execute($toolCall);
+            $this->fail('Should have thrown before!');
+        } catch (ToolNotFoundException $ex) {
+            $this->assertSame('Tool not found for call: tool_xyz.', $ex->getMessage());
+            $this->assertSame('4321_ABC', $ex->getToolCall()->getId());
+        }
     }
 }

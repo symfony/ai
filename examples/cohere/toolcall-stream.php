@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Cohere\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -28,8 +29,10 @@ $result = $agent->call($messages, [
     'stream' => true,
 ]);
 
-foreach ($result->getContent() as $word) {
-    echo $word;
+foreach ($result->getContent() as $delta) {
+    if ($delta instanceof TextDelta) {
+        echo $delta;
+    }
 }
 
 echo \PHP_EOL;

@@ -17,6 +17,8 @@ namespace Symfony\AI\Mate\Skill\Model;
  * The {@see $source} path is always the declared source (e.g. "vendor/acme/pkg/skills/my-skill"),
  * regardless of whether the skill is later built from an override copy in mate/skills/.
  *
+ * @internal
+ *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class DiscoveredSkill

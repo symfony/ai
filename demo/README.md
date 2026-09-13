@@ -185,10 +185,11 @@ npx @modelcontextprotocol/inspector php bin/console mcp:server
 
 Which opens a web UI to interactively test the MCP server.
 
-## AI Mate - MCP Development Assistant
+## AI Mate - Development CLI
 
-[Symfony AI Mate](https://github.com/symfony/ai-mate) is an MCP (Model Context Protocol) server that provides AI
-assistants with Symfony-specific development capabilities.
+[Symfony AI Mate](https://github.com/symfony/ai-mate) is a command-line assistant that gives coding
+agents Symfony-specific knowledge about this application. There is no server to start: the agent
+runs `vendor/bin/mate` like any other command.
 
 ### Installation & Setup
 
@@ -205,29 +206,25 @@ vendor/bin/mate init
 vendor/bin/mate discover
 ```
 
-### MCP Client Configuration
+`mate init` writes the instructions your agent reads (`mate/AGENT_INSTRUCTIONS.md` plus a managed
+block in `AGENTS.md`, imported by `CLAUDE.md`) and installs the skills into `.agents/skills/`, with
+a mirror in `.claude/skills/`. No client-specific configuration file is involved.
 
-The `mcp.json` file in the project root enables automatic MCP client detection:
+### Running Tools
 
-```json
-{
-  "mcpServers": {
-    "symfony-ai-mate": {
-      "command": "./vendor/bin/mate",
-      "args": ["serve", "--force-keep-alive"]
-    }
-  }
-}
+```shell
+vendor/bin/mate tools:list                            # what is available
+vendor/bin/mate tools:inspect symfony-ai-features     # parameters and JSON input schema
+vendor/bin/mate tools:call symfony-ai-features        # run it
+vendor/bin/mate tools:call symfony-profiler-list --limit=1
 ```
-
-For other projects, add AI Mate to your MCP client settings (e.g., `~/.claude/mcp.json`, IDE settings, etc.).
 
 ### Custom Capability Example
 
 This demo includes a **`symfony-ai-features`** tool (see `mate/src/SymfonyAiFeaturesTool.php`) that analyzes the project's
 AI configuration and reports all available platforms, agents, tools, stores, and packages.
 
-**Try it in your MCP-enabled chat:**
+**Try it in your coding agent:**
 
 > "Which Symfony AI features are available in this demo?"
 >
@@ -239,17 +236,11 @@ AI configuration and reports all available platforms, agents, tools, stores, and
 >
 > "Is the php extension intl installed?"
 
-The AI assistant will use the `symfony-ai-features` and other MCP tool to provide detailed information about project
-internals.
+The agent will call `symfony-ai-features` and the other Mate tools to answer from the project
+itself rather than from reading the code.
 
 ### Creating Custom Tools
 
-Create tools in `mate/src/` and register them in `mate/config.php`. See the
+Add a class with a public method carrying `#[MateTool]` under `mate/src/`, then run
+`composer dump-autoload` and verify with `vendor/bin/mate tools:list`. See the
 [AI Mate documentation](https://symfony.com/doc/current/ai/components/mate.html) for detailed guides.
-
-### Testing
-
-```shell
-# Test with MCP Inspector
-npx @modelcontextprotocol/inspector ./vendor/bin/mate serve
-```

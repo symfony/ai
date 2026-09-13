@@ -12,7 +12,7 @@
 namespace Symfony\AI\Agent\Bridge\SimilaritySearch;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\RetrieverInterface;
 
 /**
@@ -22,7 +22,7 @@ use Symfony\AI\Store\RetrieverInterface;
 final class SimilaritySearch
 {
     /**
-     * @var VectorDocument[]
+     * @var VectorDocumentInterface[]
      */
     private array $usedDocuments = [];
 
@@ -52,7 +52,7 @@ final class SimilaritySearch
     }
 
     /**
-     * @return VectorDocument[]
+     * @return VectorDocumentInterface[]
      */
     public function getUsedDocuments(): array
     {
