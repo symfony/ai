@@ -22,7 +22,7 @@ final class HttpCassetteTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->path = sys_get_temp_dir().'/ai-cassette-'.bin2hex(random_bytes(6)).'.json';
+        $this->path = sys_get_temp_dir() . '/ai-cassette-' . bin2hex(random_bytes(6)) . '.json';
     }
 
     protected function tearDown(): void
@@ -320,6 +320,11 @@ final class HttpCassetteTest extends TestCase
         $cassette = json_decode(file_get_contents($cassettePath), true);
         $this->assertIsArray($cassette, $cassettePath);
 
+        // The committed body is already redacted, so recomputing it through the default rule set
+        // has to be a no-op for the signature to reproduce. That is the property under test: a
+        // redacted body signs to what the cassette stores.
+        $writer = new HttpCassette($cassettePath);
+
         $redact = new \ReflectionMethod(HttpCassette::class, 'redactRequest');
         $redact->setAccessible(true);
 
@@ -327,7 +332,7 @@ final class HttpCassetteTest extends TestCase
             $request = $interaction['request'];
             $options = \array_key_exists('body', $request) ? ['body' => $request['body']] : [];
 
-            $recomputed = $redact->invoke(null, $request['method'], $request['url'], $options);
+            $recomputed = $redact->invoke($writer, $request['method'], $request['url'], $options);
 
             $this->assertSame(
                 $request['signature'],
@@ -339,6 +344,6 @@ final class HttpCassetteTest extends TestCase
 
     public static function committedExampleCassettes(): iterable
     {
-        yield 'agent/multi-turn-thinking-stream' => [\dirname(__DIR__, 3).'/../../examples/tests/fixtures/agent/multi-turn-thinking-stream.json'];
+        yield 'agent/multi-turn-thinking-stream' => [\dirname(__DIR__, 3) . '/../../examples/tests/fixtures/agent/multi-turn-thinking-stream.json'];
     }
 }
