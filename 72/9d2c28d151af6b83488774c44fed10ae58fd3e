@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-11T23:12:03Z
+
+did you do a functional test here? maybe my claude is off, but the test that got executed failed with the standard demo setup:
+<img width="870" height="304" alt="image" src="https://github.com/user-attachments/assets/559ec354-3fd0-4626-97e1-9ebc4930cb3d" />
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-13T17:13:10Z
+
+Good catch, thanks. The demo's `mate/config.php` never loaded any `.env` file (`mate.env_file` defaults to `null`), so `has_api_key` was reading a process environment that never saw your `.env.local` key. Pushed a fix that sets `mate.env_file` to `'.env'` there.
+
+While tracing it I found the same bug one level up: the `mate init` template shipped `->set('mate.env_file', ['.env'])`, an array, but `ContainerFactory` only accepts a string and silently no-ops otherwise. Fixed the template and the matching docs example too, so this doesn't reintroduce itself on the next `init` or `discover`.
+
+Verified against the demo with a real key in `.env.local`, `has_api_key` now correctly reports true.
