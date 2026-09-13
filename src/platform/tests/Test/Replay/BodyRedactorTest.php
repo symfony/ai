@@ -56,7 +56,7 @@ final class BodyRedactorTest extends TestCase
     public static function providePersonalData(): iterable
     {
         yield 'email' => ['write to user@example.com please', 'write to [redacted-email] please'];
-        yield 'international phone' => ['call +34 686 762 644 today', 'call [redacted-phone] today'];
+        yield 'international phone' => ['call +34 600 123 456 today', 'call [redacted-phone] today'];
         yield 'us phone' => ['call +1 (555) 123-4567 today', 'call [redacted-phone] today'];
     }
 
