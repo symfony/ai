@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-13T17:13:59Z
+
+You're right, thanks. `glob()` already returns entries alphabetically sorted, so touching `app.log` before `app.1.log` or the other way round fed `usort()` the exact same array both times, the "creation order" data provider was testing the same case twice.
+
+Replaced it with the two rotation naming schemes from the PR description (`app.1.log` and `app-2024-01-01.log`), both of which glob() lists before `app.log` alphabetically, so the test now actually starts from the "wrong" order and proves the tie-break fixes it.
