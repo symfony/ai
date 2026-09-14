@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+  <services>
+    <service id="service_container" class="Symfony\Component\DependencyInjection\ContainerInterface" public="true" synthetic="true"/>
+    <service id="messenger.bus.default" class="Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\Service\MessageBus">
+      <argument type="iterator">
+        <argument type="service" id="messenger.middleware.add_bus_name_stamp_middleware"/>
+        <argument type="service" id="messenger.middleware.reject_redelivered_message_middleware"/>
+        <argument type="service" id="messenger.middleware.dispatch_after_current_bus"/>
+        <argument type="service" id="doctrine.orm.messenger.middleware_factory.transaction"/>
+        <argument type="service" id="messenger.middleware.send_message"/>
+        <argument type="service" id="messenger.middleware.handle_message"/>
+      </argument>
+    </service>
+    <service id="app.api_client" class="Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\Service\ApiClient">
+      <argument type="service" id="http_client"/>
+      <argument>sk-live-do-not-log-this</argument>
+      <argument>30</argument>
+      <argument type="collection">
+        <argument>first</argument>
+        <argument>second</argument>
+      </argument>
+      <argument>true</argument>
+      <argument>null</argument>
+    </service>
+    <service id="app.storage" class="Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\Service\Storage">
+      <argument type="collection">
+        <argument key="host">db.internal</argument>
+        <argument key="password">hunter2</argument>
+        <argument key="port">5432</argument>
+      </argument>
+      <argument type="tagged_iterator" tag="app.plugin"/>
+    </service>
+    <service id="app.factory_made" class="Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\Service\Unreflectable">
+      <argument>production-database-dsn</argument>
+      <argument type="service" id="logger"/>
+      <factory service="app.factory" method="create"/>
+    </service>
+    <service id="app.missing_class" class="App\Absolutely\NotThere">
+      <argument>some-literal</argument>
+    </service>
+    <service id="app.plain" class="Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\Service\MessageBus"/>
+  </services>
+</container>
