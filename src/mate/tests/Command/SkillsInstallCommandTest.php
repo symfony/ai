@@ -59,6 +59,23 @@ final class SkillsInstallCommandTest extends TestCase
         $this->assertStringContainsString('mate-system-information', $output);
     }
 
+    public function testInstallsDeclaredSkillsRendersPerSkillTableWithInstalledAction()
+    {
+        $this->createPackageWithSkill();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute([]);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Installed Name', $output);
+        $this->assertStringContainsString('Original', $output);
+        $this->assertStringContainsString('Package', $output);
+        $this->assertStringContainsString('Action', $output);
+        $this->assertStringContainsString('mate-system-information', $output);
+        $this->assertStringContainsString('vendor/pkg-a', $output);
+        $this->assertStringContainsString('installed', $output);
+    }
+
     public function testSecondRunIsIdempotent()
     {
         $this->createPackageWithSkill();
@@ -71,6 +88,81 @@ final class SkillsInstallCommandTest extends TestCase
         $output = $tester->getDisplay();
         $this->assertStringNotContainsString('Installed 1 new skill', $output);
         $this->assertStringContainsString('1 skill installed', $output);
+    }
+
+    public function testSecondRunShowsUnchangedActionInTable()
+    {
+        $this->createPackageWithSkill();
+
+        (new CommandTester($this->command()))->execute([]);
+
+        $tester = new CommandTester($this->command());
+        $tester->execute([]);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('mate-system-information', $output);
+        $this->assertStringContainsString('unchanged', $output);
+    }
+
+    public function testUpdatedSourceShowsRebuiltActionInTable()
+    {
+        $this->createPackageWithSkill();
+        (new CommandTester($this->command()))->execute([]);
+
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.', 'UPDATED UPSTREAM');
+
+        $tester = new CommandTester($this->command());
+        $tester->execute([]);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Rebuilt 1 skill', $output);
+        $this->assertStringContainsString('mate-system-information', $output);
+        $this->assertStringContainsString('rebuilt', $output);
+    }
+
+    public function testSkippedSkillAppearsInTableWithSkippedAction()
+    {
+        $this->createPackageWithSkill();
+        (new SkillStateRepository($this->rootDir))->setMode('vendor/pkg-a', 'system-information', 'override');
+
+        $tester = new CommandTester($this->command());
+        $tester->execute([]);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Skipped mate-system-information', $output);
+        $this->assertStringContainsString('skipped', $output);
+    }
+
+    public function testRemovedSkillDoesNotAppearInPerSkillTable()
+    {
+        $this->createPackageWithSkill();
+        (new CommandTester($this->command()))->execute([]);
+
+        (new SkillStateRepository($this->rootDir))->setEnabled('vendor/pkg-a', 'system-information', false);
+
+        $tester = new CommandTester($this->command());
+        $tester->execute([]);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Removed 1 skill', $output);
+        $this->assertStringNotContainsString('Installed Name', $output);
+    }
+
+    public function testJsonFormatIncludesSkillsAndSummary()
+    {
+        $this->createPackageWithSkill();
+
+        $tester = new CommandTester($this->command());
+        $tester->execute(['--format' => 'json']);
+
+        $decoded = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($decoded);
+        $this->assertFalse($decoded['dry_run']);
+        $this->assertSame(['mate-system-information'], $decoded['installed']);
+        $this->assertSame(1, $decoded['summary']['total']);
+        $this->assertSame(1, $decoded['summary']['installed']);
+        $this->assertSame('mate-system-information', $decoded['skills'][0]['installed_name']);
+        $this->assertSame('installed', $decoded['skills'][0]['action']);
     }
 
     public function testDryRunReportsTheNewSkillWithoutWritingAnything()
@@ -88,6 +180,7 @@ final class SkillsInstallCommandTest extends TestCase
         $this->assertStringContainsString('dry run', $output);
         $this->assertStringContainsString('Would install 1 new skill', $output);
         $this->assertStringContainsString('mate-system-information', $output);
+        $this->assertStringContainsString('would install', $output);
     }
 
     public function testDryRunReportsAChangedSourceAsARebuild()
@@ -100,7 +193,9 @@ final class SkillsInstallCommandTest extends TestCase
         $tester = new CommandTester($this->command());
         $tester->execute(['--dry-run' => true]);
 
-        $this->assertStringContainsString('Would rebuild 1 skill', $tester->getDisplay());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Would rebuild 1 skill', $output);
+        $this->assertStringContainsString('would rebuild', $output);
         $this->assertStringNotContainsString('UPDATED UPSTREAM', file_get_contents($this->rootDir.'/.agents/skills/mate-system-information/SKILL.md') ?: '');
     }
 
