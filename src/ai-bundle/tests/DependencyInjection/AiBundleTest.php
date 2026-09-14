@@ -188,6 +188,35 @@ class AiBundleTest extends TestCase
         $this->assertSame('serializer', (string) $arguments[1]);
     }
 
+    public function testValidatorSubscriberReceivesConfiguredValidationGroups()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+        $definition = $container->getDefinition('ai.platform.structured_output.validator_subscriber');
+
+        $this->assertTrue($definition->hasTag('kernel.event_subscriber'));
+
+        $arguments = $definition->getArguments();
+        $this->assertCount(2, $arguments);
+        $this->assertSame('validator', (string) $arguments[0]);
+        $this->assertSame(['ai'], $arguments[1]);
+    }
+
+    public function testValidatorSubscriberValidatesDefaultGroupWithoutConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test-key',
+                    ],
+                ],
+            ],
+        ]);
+        $definition = $container->getDefinition('ai.platform.structured_output.validator_subscriber');
+
+        $this->assertCount(1, $definition->getArguments());
+    }
+
     public function testStoreCommandsArentDefinedWithoutStore()
     {
         $container = $this->buildContainer([
@@ -9108,6 +9137,9 @@ class AiBundleTest extends TestCase
     {
         return [
             'ai' => [
+                'structured_output' => [
+                    'validation_groups' => ['ai'],
+                ],
                 'platform' => [
                     'amazeeai' => [
                         'api_key' => 'amazeeai_key_full',

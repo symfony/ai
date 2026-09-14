@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
+use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -29,9 +30,13 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 final class ValidatorResultConverter implements ResultConverterInterface
 {
+    /**
+     * @param string|GroupSequence|array<string|GroupSequence>|null $groups The validation groups to validate the structured output in, or null for the validator's default group
+     */
     public function __construct(
         private readonly ResultConverterInterface $innerConverter,
         private readonly ValidatorInterface $validator,
+        private readonly string|GroupSequence|array|null $groups = null,
     ) {
     }
 
@@ -47,7 +52,7 @@ final class ValidatorResultConverter implements ResultConverterInterface
         if ($innerResult instanceof StreamResult) {
             foreach ($innerResult->getListeners() as $listener) {
                 if ($listener instanceof PartialObjectStreamListener) {
-                    $listener->setValidator($this->validator);
+                    $listener->setValidator($this->validator, $this->groups);
                 }
             }
 
@@ -59,7 +64,7 @@ final class ValidatorResultConverter implements ResultConverterInterface
         }
 
         $structure = $innerResult->getContent();
-        $violations = $this->validator->validate($structure);
+        $violations = $this->validator->validate($structure, null, $this->groups);
 
         if (0 !== \count($violations)) {
             throw new ValidationException($violations);

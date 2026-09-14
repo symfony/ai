@@ -410,6 +410,35 @@ You can specify a custom HTTP client service for any platform:
                 api_key: '%env(OPENAI_API_KEY)%'
                 http_client: 'app.custom_http_client'
 
+Structured Output Validation
+----------------------------
+
+When ``symfony/validator`` is installed, the bundle registers the Platform component's ``ValidatorSubscriber``, which
+validates the object populated from a ``response_format`` invocation and throws a
+:class:`Symfony\\AI\\Platform\\Exception\\ValidationException` on violations. By default, the object is validated in the
+``Default`` validation group. To validate it in specific groups instead, configure them under ``structured_output``:
+
+.. code-block:: yaml
+
+    ai:
+        structured_output:
+            validation_groups: ['ai']
+
+A single call can still override the configured groups by passing the ``validation_groups`` option to the platform or
+agent. This lets you apply a dedicated set of constraints to model output, separate from the constraints used for user
+input::
+
+    use Symfony\Component\Validator\Constraints as Assert;
+
+    final class Invoice
+    {
+        #[Assert\NotBlank(groups: ['ai'])]
+        public string $customer = '';
+
+        #[Assert\Positive] // "Default" group only, skipped for model output
+        public int $total = 0;
+    }
+
 System Prompt Configuration
 ---------------------------
 

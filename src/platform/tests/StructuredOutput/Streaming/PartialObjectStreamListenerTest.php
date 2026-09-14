@@ -20,8 +20,10 @@ use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class PartialObjectStreamListenerTest extends TestCase
 {
@@ -168,6 +170,23 @@ final class PartialObjectStreamListenerTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $listener->getFinalObjectResult();
+    }
+
+    public function testValidatorReceivesConfiguredGroups()
+    {
+        $validator = $this->createMock(ValidatorInterface::class);
+        $validator->expects($this->once())
+            ->method('validate')
+            ->with($this->isInstanceOf(City::class), null, ['strict'])
+            ->willReturn(new ConstraintViolationList());
+
+        $listener = new PartialObjectStreamListener(new Serializer(), City::class);
+        $listener->setValidator($validator, ['strict']);
+
+        $stream = $this->buildStream(['{"name":"Berlin"}'], [$listener]);
+        iterator_to_array($stream->getContent(), false);
+
+        $this->assertNotNull($listener->getFinalObjectResult());
     }
 
     /**

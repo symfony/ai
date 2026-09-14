@@ -1432,6 +1432,24 @@ To enable validation, register the ``ValidatorSubscriber`` with your platform's 
 The ``ValidatorSubscriber`` will automatically validate any :class:`Symfony\\AI\\Platform\\Result\\ObjectResult` produced
 by the ``PlatformSubscriber``. To use this feature, make sure `symfony/validator` is installed in your project.
 
+By default, the object is validated in the ``Default`` validation group. To validate it in specific `validation groups`_
+instead, for example to apply a dedicated set of constraints to model output, pass them to the subscriber::
+
+    $dispatcher->addSubscriber(new ValidatorSubscriber(groups: ['ai']));
+
+The ``groups`` argument accepts the same values as ``ValidatorInterface::validate()``: a group name, a list of group
+names, or a ``GroupSequence``. A single invocation can override them with the ``validation_groups`` option, which is
+consumed by the subscriber and never forwarded to the provider::
+
+    $result = $platform->invoke('gpt-4o', $messages, [
+        'response_format' => MathReasoning::class,
+        'validation_groups' => ['ai', 'strict'],
+    ]);
+
+The groups also apply to the final object of a streamed structured output.
+
+.. _`validation groups`: https://symfony.com/doc/current/validation/groups.html
+
 Streaming Partial Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
