@@ -1,0 +1,58 @@
+---------------------------------------------------------------------------
+
+by DZunke at 2026-03-27T23:09:06Z
+
+I cannot fix the failing Job of Fabbot. The Vektor Store really exists since https://github.com/symfony/ai/pull/1561 🙈
+
+---------------------------------------------------------------------------
+
+by OskarStark at 2026-03-28T09:05:39Z
+
+You can ignore the failure
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-06T19:11:57Z
+
+First of all, thanks @DZunke, this is really fun and interesting!
+
+Have you seen the orchestrator approach @ineersa took with https://github.com/ineersa/re-search?
+In the end it would be great to have the agent open for different execution/orchestration pattern - no matter if fiber, subprocesses, sequential or via messenger - need to let that rest a bit to understand if this is the right direction from my point of view because i like that state handling in that re-search demo and think we should enable this as well
+
+Happy about more opinions!
+
+---------------------------------------------------------------------------
+
+by ineersa at 2026-04-06T20:33:00Z
+
+In theory this helps with parallel tool calls, but idk if it's supported on platform yet.
+With orchestrator and LLM queue , tool calls queue parallel tool calls will work too, and in theory you can scale them independently if needed. It pretty much mimicks event loop, but as we don't have real async in PHP it's using messenger.
+
+I still think that Workflow component with messenger will be crazy good for this, as we saw in Claude code sources it's pretty much one large state machine with lots of state transitions, no magic there.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-10T10:03:59Z
+
+<!-- changelog-version-bump:0.7 -->
+
+Hi! Version **0.7** has been released. This PR has changelog/upgrade entries under the `0.7` heading, which is now a released version.
+
+Please update the following files to place your entries under the next version **0.8**:
+
+- `src/ai-bundle/CHANGELOG.md`
+
+**For `CHANGELOG.md` files**: change the version heading from `0.7` to `0.8`
+**For `UPGRADE.md`**: place entries under `UPGRADE FROM 0.7 to 0.8`
+
+Thank you!
+
+---
+<sub>🤖 This comment was generated automatically by an agent.</sub>
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-05T00:10:56Z
+
+Hi @DZunke, rebased this after the new execution landed in agent component - still makes sense from your point of view or did you move on already to a more advanced variant?
+Cheers!
