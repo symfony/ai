@@ -58,6 +58,36 @@ final class DeferredResult
     }
 
     /**
+     * Adds an at-a-glance conversion-state summary to dumps, on top of the normal properties.
+     *
+     * The underlying HTTP response is not read here, directly or indirectly: $isConverted and
+     * $conversionFailure are plain, always-initialized properties, so computing "state" cannot trigger a
+     * conversion or otherwise touch $rawResult. That property is already safe to dump on its own, see
+     * {@see RawHttpResult::__debugInfo()}, which is what keeps a plain dump() or dd() of a DeferredResult safe.
+     *
+     * $options is a constructor-injected, always-initialized array and never holds $rawResult or anything
+     * derived from it. $metadata starts out empty and, once conversion succeeds, only ever holds what a
+     * ResultConverter or a stream listener explicitly added to it (e.g. token usage) — not the raw response
+     * itself. Reading $conversionFailure's message does not touch its (potentially deep) stack trace. None
+     * of the four can therefore drive the underlying HTTP stream forward as a side effect of dumping.
+     *
+     * @return array{state: 'pending'|'converted'|'failed', options: array<string, mixed>, metadata: array<string, mixed>, error: string|null}
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'state' => match (true) {
+                null !== $this->conversionFailure => 'failed',
+                $this->isConverted => 'converted',
+                default => 'pending',
+            },
+            'options' => $this->options,
+            'metadata' => $this->getMetadata()->all(),
+            'error' => $this->conversionFailure?->getMessage(),
+        ];
+    }
+
+    /**
      * Registers a callback invoked with the converted result once conversion succeeds.
      *
      * The callback may return a replacement result, which is then used as the converted result
