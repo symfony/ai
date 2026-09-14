@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-06T21:53:18Z
+
+somehow reminded me of #1857 - how about that one?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-07T17:59:41Z
+
+@chr-hertel pushed a new commit: switched to `Composer\InstalledVersions::getRootPackage()['install_path']` after your #1857 pointer showed `vendor-dir` isn't a reliable anchor either. Mind another look?
