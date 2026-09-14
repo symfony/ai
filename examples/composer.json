@@ -4,6 +4,8 @@
     "license": "MIT",
     "type": "project",
     "require": {
+        "async-aws/sso": "^1.0",
+        "async-aws/sso-oidc": "^1.0",
         "php": ">=8.2",
         "symfony/ai-agent": "^0.13",
         "symfony/ai-ai-ml-api-platform": "^0.13",

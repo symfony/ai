@@ -1,0 +1,33 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.us-east-1.api.aws/anthropic/v1/messages",
+                "signature": "f50b96e82d30320fb06f4c3470c50a37",
+                "headers": {
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-api-key": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"stream\":true,\"model\":\"anthropic.claude-haiku-4-5\",\"messages\":[{\"role\":\"user\",\"content\":\"Greet the world.\"}],\"max_tokens\":1000}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "text/event-stream"
+                    ]
+                },
+                "body_format": "sse",
+                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_mantle_stream\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"anthropic.claude-haiku-4-5\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"output_tokens\":0}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello from \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Bedrock Mantle.\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":7}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            }
+        }
+    ]
+}

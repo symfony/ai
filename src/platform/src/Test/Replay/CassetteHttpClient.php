@@ -74,6 +74,13 @@ final class CassetteHttpClient implements HttpClientInterface
             return self::toMockClientResponse($this->cassette->nextFor($method, $url, $options), $method, $url, $options);
         }
 
+        // AWS credential providers use the configured transport to contact SSO, STS, ECS or IMDS.
+        // Those exchanges authenticate the inference request but are not part of it: never persist
+        // their credential-bearing responses or consume a replay interaction for them.
+        if (self::isAwsCredentialRequest($url)) {
+            return $this->realClient->request($method, $url, $options);
+        }
+
         $response = $this->realClient->request($method, $url, $options);
 
         $status = $response->getStatusCode();
@@ -129,6 +136,23 @@ final class CassetteHttpClient implements HttpClientInterface
         }
 
         return 'json';
+    }
+
+    private static function isAwsCredentialRequest(string $url): bool
+    {
+        $host = parse_url($url, \PHP_URL_HOST);
+        if (!\is_string($host)) {
+            return false;
+        }
+
+        if (\in_array($host, ['169.254.169.254', '169.254.170.2'], true)) {
+            return true;
+        }
+
+        return 'sts.amazonaws.com' === $host
+            || str_starts_with($host, 'sts.') && str_ends_with($host, '.amazonaws.com')
+            || str_starts_with($host, 'portal.sso.') && str_ends_with($host, '.amazonaws.com')
+            || str_starts_with($host, 'oidc.') && str_ends_with($host, '.amazonaws.com');
     }
 
     /**

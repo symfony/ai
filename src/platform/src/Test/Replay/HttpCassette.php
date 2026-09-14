@@ -47,8 +47,11 @@ final class HttpCassette
         'x-subscription-token',
         'openai-organization',
         'openai-project',
+        'anthropic-workspace',
         'cookie',
         'set-cookie',
+        'x-amz-security-token',
+        'x-amz-sso_bearer_token',
     ];
 
     /**

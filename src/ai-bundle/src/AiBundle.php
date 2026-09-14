@@ -59,6 +59,9 @@ use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatal
 use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory as AzureOpenAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Messages\Factory as BedrockMantleMessagesFactory;
+use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\Factory as BedrockMantleResponsesFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\Factory as CartesiaFactory;
@@ -551,6 +554,58 @@ final class AiBundle extends AbstractBundle
                         new Reference('event_dispatcher'),
                     ])
                     ->addTag('ai.platform', ['name' => 'bedrock.'.$name]);
+
+                $container->setDefinition($platformId, $definition);
+            }
+
+            return;
+        }
+
+        if ('bedrockmantle' === $type) {
+            foreach ($platform as $name => $config) {
+                $isResponses = 'responses' === $config['api'];
+                $isMessages = 'messages' === $config['api'];
+                $factory = BedrockMantleFactory::class;
+                if ($isResponses) {
+                    $factory = BedrockMantleResponsesFactory::class;
+                }
+                if ($isMessages) {
+                    $factory = BedrockMantleMessagesFactory::class;
+                }
+
+                if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', $factory, ['symfony/ai-bundle'])) {
+                    throw new RuntimeException('Bedrock Mantle platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
+                }
+
+                $defaultModelCatalog = 'ai.platform.model_catalog.bedrockmantle';
+                if ($isResponses) {
+                    $defaultModelCatalog = 'ai.platform.model_catalog.bedrockmantle.responses';
+                }
+                if ($isMessages) {
+                    $defaultModelCatalog = 'ai.platform.model_catalog.bedrockmantle.messages';
+                }
+
+                $arguments = [
+                    $config['api_key'] ?? null,
+                    $config['region'],
+                    isset($config['credential_provider']) ? new Reference($config['credential_provider']) : null,
+                    new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    isset($config['model_catalog']) ? new Reference($config['model_catalog']) : new Reference($defaultModelCatalog),
+                    null, // $contract
+                    new Reference('event_dispatcher'),
+                ];
+                if ($isMessages) {
+                    $arguments[] = $config['cache_retention'];
+                    $arguments[] = $config['workspace'] ?? null;
+                }
+
+                $platformId = 'ai.platform.bedrockmantle.'.$name;
+                $definition = (new Definition(Platform::class))
+                    ->setFactory($factory.'::createPlatform')
+                    ->setLazy(true)
+                    ->addTag('proxy', ['interface' => PlatformInterface::class])
+                    ->setArguments($arguments)
+                    ->addTag('ai.platform', ['name' => 'bedrockmantle.'.$name]);
 
                 $container->setDefinition($platformId, $definition);
             }
