@@ -7,6 +7,7 @@ CHANGELOG
  * Add `Execution::cancel()` to stop an active execution and cancel its active HTTP response
  * `MultiAgent` and `SpeechAgent` now forward the `Progress` updates of the executions they delegate to, and `MultiAgent` reports its routing as a `Progress` update of the `handoff` stage carrying the orchestrator's `MultiAgent\Handoff\Decision` as payload
  * [BC BREAK] `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the retriever it reads from
+ * Add `#[MapToolArguments]` to map a flat tool-call payload onto a single DTO parameter while exposing the DTO properties as the tool schema root
 
 0.13
 ----
