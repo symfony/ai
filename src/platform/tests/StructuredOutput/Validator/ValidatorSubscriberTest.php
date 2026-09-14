@@ -12,7 +12,9 @@
 namespace Symfony\AI\Platform\Tests\StructuredOutput\Validator;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ValidationException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlainConverter;
@@ -28,12 +30,18 @@ use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\StructuredOutput\Validator\ValidatorResultConverter;
 use Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstraints;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithGroupedConstraints;
+use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class ValidatorSubscriberTest extends TestCase
 {
     public function testGetSubscribedEvents()
     {
         $this->assertSame([
+            InvocationEvent::class => 'processInput',
             ResultEvent::class => ['processResult', -10],
         ], ValidatorSubscriber::getSubscribedEvents());
     }
@@ -131,10 +139,87 @@ final class ValidatorSubscriberTest extends TestCase
         $deferred->asObject();
     }
 
+    public function testValidationGroupsOptionOverridesConfiguredGroups()
+    {
+        $object = new UserWithGroupedConstraints();
+
+        $validator = $this->createMock(ValidatorInterface::class);
+        $validator->expects($this->once())
+            ->method('validate')
+            ->with($this->identicalTo($object), null, ['strict'])
+            ->willReturn(new ConstraintViolationList());
+
+        $subscriber = new ValidatorSubscriber($validator, ['configured']);
+
+        $model = new Model('gpt-4');
+        $invocationEvent = new InvocationEvent($model, [], [
+            PlatformSubscriber::RESPONSE_FORMAT => UserWithGroupedConstraints::class,
+            ValidatorSubscriber::VALIDATION_GROUPS => ['strict'],
+        ]);
+
+        $subscriber->processInput($invocationEvent);
+
+        // The option is consumed, so it is not forwarded to the provider
+        $options = $invocationEvent->getOptions();
+        $this->assertSame([PlatformSubscriber::RESPONSE_FORMAT => UserWithGroupedConstraints::class], $options);
+
+        $converter = $this->createStub(ResultConverterInterface::class);
+        $converter->method('supports')->willReturn(true);
+        $converter->method('convert')->willReturn(new ObjectResult($object));
+
+        $resultEvent = new ResultEvent($model, new DeferredResult($converter, new InMemoryRawResult(), $options), $options);
+
+        $subscriber->processResult($resultEvent);
+
+        $this->assertSame($object, $resultEvent->getDeferredResult()->asObject());
+    }
+
+    public function testInvalidValidationGroupsOptionThrows()
+    {
+        $subscriber = new ValidatorSubscriber();
+        $event = new InvocationEvent(new Model('gpt-4'), [], [ValidatorSubscriber::VALIDATION_GROUPS => 42]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "validation_groups" option must be a string, an array or a GroupSequence.');
+
+        $subscriber->processInput($event);
+    }
+
+    public function testStreamingFinalObjectIsValidatedInConfiguredGroups()
+    {
+        $stream = $this->buildStreamWithListener([
+            '{"id":0,"name":""}',  // violates Positive in the "Default" group and NotBlank in the "strict" group
+        ], UserWithGroupedConstraints::class);
+
+        $options = [PlatformSubscriber::RESPONSE_FORMAT => UserWithGroupedConstraints::class];
+        $event = new ResultEvent(
+            new Model('gpt-4'),
+            new DeferredResult(new PlainConverter($stream), new InMemoryRawResult(), $options),
+            $options,
+        );
+
+        (new ValidatorSubscriber(groups: ['strict']))->processResult($event);
+
+        $deferred = $event->getDeferredResult();
+        // Trigger the converter chain, which injects the validator and its groups into the stream listener
+        $deferred->getResult();
+
+        try {
+            $deferred->asObject();
+            $this->fail('Expected a ValidationException to be thrown.');
+        } catch (ValidationException $e) {
+            $violations = $e->getViolations();
+            $this->assertInstanceOf(ConstraintViolationListInterface::class, $violations);
+            $this->assertCount(1, $violations);
+            $this->assertSame('name', $violations->get(0)->getPropertyPath());
+        }
+    }
+
     /**
-     * @param string[] $chunks
+     * @param string[]     $chunks
+     * @param class-string $outputType
      */
-    private function buildStreamWithListener(array $chunks): StreamResult
+    private function buildStreamWithListener(array $chunks, string $outputType = UserWithConstraints::class): StreamResult
     {
         $generator = (static function () use ($chunks): \Generator {
             foreach ($chunks as $chunk) {
@@ -144,13 +229,13 @@ final class ValidatorSubscriberTest extends TestCase
 
         return new StreamResult(
             $generator,
-            [new PartialObjectStreamListener(new Serializer(), UserWithConstraints::class)],
+            [new PartialObjectStreamListener(new Serializer(), $outputType)],
         );
     }
 
-    private function createValidator(): \Symfony\Component\Validator\Validator\ValidatorInterface
+    private function createValidator(): ValidatorInterface
     {
-        return \Symfony\Component\Validator\Validation::createValidatorBuilder()
+        return Validation::createValidatorBuilder()
             ->enableAttributeMapping()
             ->getValidator();
     }

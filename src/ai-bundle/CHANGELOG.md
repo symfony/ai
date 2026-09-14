@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add the `structured_output.validation_groups` option to validate structured output in specific validation groups instead of the `Default` group
+
 0.13
 ----
 

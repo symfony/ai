@@ -23,6 +23,7 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExcep
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -33,8 +34,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * On stream completion the listener also produces the final `ObjectResult`,
  * which `DeferredResult::asObject()` exposes after draining the stream.
- * If a `ValidatorInterface` is injected, the final object is validated
- * before being made available — partial snapshots are never validated.
+ * If a `ValidatorInterface` is injected, the final object is validated in the
+ * configured validation groups before being made available — partial snapshots
+ * are never validated.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -45,6 +47,9 @@ final class PartialObjectStreamListener extends AbstractStreamListener
     private ?ObjectResult $finalObjectResult = null;
     private ?ValidationException $validationException = null;
     private ?ValidatorInterface $validator = null;
+
+    /** @var string|GroupSequence|array<string|GroupSequence>|null */
+    private string|GroupSequence|array|null $validationGroups = null;
 
     private readonly SerializerInterface&DenormalizerInterface $serializer;
 
@@ -59,9 +64,13 @@ final class PartialObjectStreamListener extends AbstractStreamListener
         $this->serializer = $serializer;
     }
 
-    public function setValidator(?ValidatorInterface $validator): void
+    /**
+     * @param string|GroupSequence|array<string|GroupSequence>|null $groups The validation groups to validate the final object in, or null for the validator's default group
+     */
+    public function setValidator(?ValidatorInterface $validator, string|GroupSequence|array|null $groups = null): void
     {
         $this->validator = $validator;
+        $this->validationGroups = $groups;
     }
 
     public function getFinalObjectResult(): ?ObjectResult
@@ -130,7 +139,7 @@ final class PartialObjectStreamListener extends AbstractStreamListener
         }
 
         if (null !== $this->validator) {
-            $violations = $this->validator->validate($structure);
+            $violations = $this->validator->validate($structure, null, $this->validationGroups);
 
             if (0 !== \count($violations)) {
                 $this->validationException = new ValidationException($violations);

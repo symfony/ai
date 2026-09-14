@@ -380,6 +380,15 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.platform.structured_output.validator_subscriber');
         }
 
+        if ([] !== $config['structured_output']['validation_groups']) {
+            if (!$builder->hasDefinition('ai.platform.structured_output.validator_subscriber')) {
+                throw new RuntimeException('Configuring "ai.structured_output.validation_groups" requires the "symfony/validator" package. Try running "composer require symfony/validator".');
+            }
+
+            $builder->getDefinition('ai.platform.structured_output.validator_subscriber')
+                ->setArgument(1, $config['structured_output']['validation_groups']);
+        }
+
         if (false === $builder->getParameter('kernel.debug')) {
             $builder->removeDefinition('ai.data_collector');
             $builder->removeDefinition('ai.traceable_toolbox');
