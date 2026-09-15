@@ -1,0 +1,14 @@
+---------------------------------------------------------------------------
+
+by saifulferoz at 2026-08-24T01:58:03Z
+
+Thanks for the review @chr-hertel. Both addressed:
+
+- Added `examples/openai/realtime-session.php`. It creates a session against `gpt-4o-realtime-preview` and prints the returned id, model, voice, modalities and expiry. The ephemeral client secret is truncated in the output, since it grants access to the model on the account until it expires, and the comment notes that the secret is what gets handed to the browser or mobile client that opens the actual WebRTC connection.
+- Reverted `.gitignore`; `.idea` is in my global config now.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-11T18:12:26Z
+
+Linked from #2427, which asks for exactly this.
