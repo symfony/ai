@@ -41,6 +41,7 @@
         "symfony/ai-lm-studio-platform": "^0.13",
         "symfony/ai-manticore-search-store": "^0.13",
         "symfony/ai-maria-db-store": "^0.13",
+        "symfony/ai-mcp-tool": "^0.13",
         "symfony/ai-meilisearch-message-store": "^0.13",
         "symfony/ai-meilisearch-store": "^0.13",
         "symfony/ai-meta-platform": "^0.13",

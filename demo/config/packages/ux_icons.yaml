@@ -17,6 +17,7 @@ ux_icons:
         turbo: demo:turbo
         document: demo:document
         movie: demo:movie
+        mcp: demo:plug-connected
 
         # UI icons
         github: demo:github

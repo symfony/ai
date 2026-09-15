@@ -316,10 +316,35 @@ code {
     color: var(--text-muted);
 }
 
+/* Up to four cards per row, at least 210px wide, and a last row that is not full stays centered. */
 .demo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    container-type: inline-size;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 18px;
+
+    > .demo-card {
+        flex: 0 0 calc((100% - 3 * 18px) / 4);
+    }
+}
+
+@container (max-width: 893px) {
+    .demo-grid > .demo-card {
+        flex-basis: calc((100% - 2 * 18px) / 3);
+    }
+}
+
+@container (max-width: 665px) {
+    .demo-grid > .demo-card {
+        flex-basis: calc((100% - 18px) / 2);
+    }
+}
+
+@container (max-width: 437px) {
+    .demo-grid > .demo-card {
+        flex-basis: 100%;
+    }
 }
 
 .demo-card {

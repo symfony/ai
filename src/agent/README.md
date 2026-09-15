@@ -25,6 +25,7 @@ To use a specific tool, install the corresponding bridge package:
 | Filesystem        | `symfony/ai-filesystem-tool`        |
 | Firecrawl         | `symfony/ai-firecrawl-tool`         |
 | Mapbox            | `symfony/ai-mapbox-tool`            |
+| MCP               | `symfony/ai-mcp-tool`               |
 | Ollama Web Search | `symfony/ai-ollama-tool`            |
 | OpenMeteo         | `symfony/ai-open-meteo-tool`        |
 | SerpApi           | `symfony/ai-serp-api-tool`          |

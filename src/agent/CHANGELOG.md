@@ -10,6 +10,8 @@ CHANGELOG
  * Add an optional `Stopwatch` to `Toolbox\TraceableToolbox` and `TraceableAgent`, timing each tool execution and the consumption of each agent execution
  * Add `Execution\Execution::isStreamed()`
  * Add `Toolbox\FiberToolExecutor` to run tool calls concurrently through PHP Fibers, together with a `Toolbox\SuspendableTrait` for cooperative tools
+ * Add `Toolbox\AbstractToolbox` holding the shared part of executing a tool call - looking the tool up, the tool call events and the error handling - so a toolbox in front of a remote tool protocol only implements how a call is turned into a value
+ * Add `Toolbox\ChainToolbox` offering the tools of several toolboxes to one agent
 
 0.13
 ----

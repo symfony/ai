@@ -1,0 +1,31 @@
+.mcp {
+    .mcp-servers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+    }
+
+    .mcp-server {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: var(--radius-pill);
+        background: var(--violet-50);
+        font-family: var(--font-mono);
+        font-size: .76rem;
+        color: var(--sf-violet);
+
+        svg {
+            width: 13px;
+            height: 13px;
+        }
+    }
+
+    /* The weather server draws its rain radar as text characters. */
+    .bot-message pre {
+        font-size: .75rem;
+        line-height: 1.1;
+    }
+}

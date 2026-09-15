@@ -103,6 +103,7 @@ Advanced Example with Multiple Agents
                 model: 'claude-3-7-sonnet-latest'
                 tools: # Tools are opt-in: if undefined, the agent gets no tools; use "tools: true" to inject all tools.
                     - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
+                    - { mcp_server: 'research.filesystem' } # Tools of a remote MCP server configured under "mcp.clients"
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
                 max_tool_calls: 75 # Cap of tool-calling iterations per agent call (default 50); set to null to disable the limit
                 exclude_tool_messages: true # Drops tool call and tool result messages from the conversation history, default is false
@@ -950,6 +951,7 @@ The following tools can be installed as dedicated packages, no configuration is 
     $ composer require symfony/ai-clock-tool
     $ composer require symfony/ai-firecrawl-tool
     $ composer require symfony/ai-mapbox-tool
+    $ composer require symfony/ai-mcp-tool
     $ composer require symfony/ai-open-meteo-tool
     $ composer require symfony/ai-scraper-tool
     $ composer require symfony/ai-serp-api-tool
@@ -1080,6 +1082,41 @@ reference its service ID:
 
 To write tools that cooperate with the Fiber strategy, see
 :ref:`Writing Fiber-Compatible Tools <agent-fiber-compatible-tools>` in the Agent component documentation.
+
+Tools of a Remote MCP Server
+----------------------------
+
+An agent can use the tools of a remote `Model Context Protocol`_ server. Configure the connection with
+the MCP bundle and reference it as ``<client>.<server>`` in an ``mcp_server`` tool entry, so both
+bundles share one connection:
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-mcp-tool symfony/mcp-bundle
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        clients:
+            research:
+                servers:
+                    filesystem:
+                        transport: stdio
+                        command: ['npx', '-y', '@modelcontextprotocol/server-filesystem', '%kernel.project_dir%/var']
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        agent:
+            my_agent:
+                tools:
+                    - { mcp_server: 'research.filesystem' } # tools reach the model as "filesystem_<name>", change it with "prefix"
+
+The remote tools are offered next to the agent's other tools, also combined with ``tools: true``. A
+server that cannot be reached contributes no tools; lower its ``init_timeout`` and ``max_retries`` to
+notice that sooner.
 
 Token Usage Tracking
 --------------------
@@ -1484,6 +1521,7 @@ When only STT is configured (no TTS), the agent returns the same result type as 
 
     Handling both speech-to-text and text-to-speech introduces latency as most of the process is synchronous.
 
+.. _`Model Context Protocol`: https://modelcontextprotocol.io
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
 .. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform

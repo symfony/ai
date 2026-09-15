@@ -21,12 +21,12 @@ final class HomeTest extends E2ETestCase
         $crawler = $this->crawler();
 
         $this->assertSelectorTextContains('h1', 'Symfony AI');
-        $this->assertSelectorCount(10, '.demo-card');
+        $this->assertSelectorCount(11, '.demo-card');
 
         $links = $crawler->filter('.demo-card .demo-card-link')->each(static fn ($link) => $link->attr('href'));
 
         $this->assertSame([
-            '/youtube', '/recipe', '/movies', '/wikipedia', '/blog',
+            '/youtube', '/recipe', '/movies', '/wikipedia', '/mcp', '/blog',
             '/document', '/crop', '/speech', '/video', '/stream',
         ], $links);
     }
