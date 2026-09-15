@@ -15,6 +15,7 @@ use Symfony\AI\Mate\Attribute\MateTool;
 use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\InvalidArgumentException;
 
 /**
  * Tools for searching and analyzing Monolog log files.
@@ -29,7 +30,7 @@ final class LogSearchTool
     }
 
     /**
-     * @param string      $term          Text to search for in log messages, or a regex pattern when $regex is true
+     * @param string|null $term          Text to search for in log messages, or a regex pattern when $regex is true; omit to filter by level/channel/date only
      * @param bool        $regex         When true, treat $term as a regular expression pattern
      * @param string|null $level         Filter by log level: DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY
      * @param string|null $channel       Filter by Monolog channel name (e.g. app, security, doctrine)
@@ -39,9 +40,9 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter.')]
+    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Omit term to match all entries when filtering by level/channel/date only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter.')]
     public function search(
-        string $term,
+        ?string $term = null,
         bool $regex = false,
         ?string $level = null,
         ?string $channel = null,
@@ -52,6 +53,10 @@ final class LogSearchTool
         ?string $kernelContext = null,
     ): string {
         if ($regex) {
+            if (null === $term) {
+                throw new InvalidArgumentException('The "term" parameter is required when "regex" is true.');
+            }
+
             $pattern = $term;
             if (!str_starts_with($pattern, '/') && !str_starts_with($pattern, '#')) {
                 $pattern = '/'.$pattern.'/i';
@@ -67,7 +72,7 @@ final class LogSearchTool
             );
         } else {
             $criteria = new SearchCriteria(
-                term: $term,
+                term: '' === $term ? null : $term,
                 level: $level,
                 channel: $channel,
                 from: $this->parseDate($from),

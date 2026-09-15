@@ -17,7 +17,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogParser;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
+use Symfony\AI\Mate\Discovery\DocBlockParser;
+use Symfony\AI\Mate\Discovery\SchemaGenerator;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\InvalidArgumentException;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -307,12 +310,71 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
+    public function testSearchWithoutTermFiltersByLevelOnly()
+    {
+        // Regression test: an ERROR-level entry whose message never contains the literal
+        // word "error" must still be found when filtering by level alone, without a term.
+        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search(level: 'ERROR'));
+
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertCount(1, $result['entries']);
+        $this->assertSame('ERROR', $result['entries'][0]['level']);
+        $this->assertStringContainsString('No route found', $result['entries'][0]['message']);
+    }
+
+    public function testSearchWithoutTermFiltersByChannelOnly()
+    {
+        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search(channel: 'security'));
+
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertCount(1, $result['entries']);
+        $this->assertSame('security', $result['entries'][0]['channel']);
+    }
+
+    public function testSearchWithoutTermReturnsAllEntriesWithinBounds()
+    {
+        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search());
+
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertCount(3, $result['entries']);
+    }
+
+    public function testSearchWithTermStillFiltersByText()
+    {
+        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search('Deprecated'));
+
+        $this->assertArrayHasKey('entries', $result);
+        $this->assertCount(1, $result['entries']);
+        $this->assertStringContainsString('Deprecated function called', $result['entries'][0]['message']);
+    }
+
+    public function testSearchRegexWithoutTermThrows()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->createTermOptionalTool()->search(regex: true);
+    }
+
+    public function testSearchSchemaDoesNotRequireTerm()
+    {
+        $method = new \ReflectionMethod(LogSearchTool::class, 'search');
+        $schema = (new SchemaGenerator(new DocBlockParser()))->generate($method);
+
+        $this->assertNotContains('term', $schema['required'] ?? []);
+        $this->assertSame(['null', 'string'], $schema['properties']['term']['type']);
+    }
+
     private function createMultiKernelTool(): LogSearchTool
     {
         return new LogSearchTool(new LogReader(new LogParser(), [
             'website' => $this->fixturesDir,
             'admin' => $this->fixturesDir.'/logs',
         ]));
+    }
+
+    private function createTermOptionalTool(): LogSearchTool
+    {
+        return new LogSearchTool(new LogReader(new LogParser(), $this->fixturesDir.'/term-optional'));
     }
 
     /**

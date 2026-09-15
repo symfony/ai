@@ -1,0 +1,3 @@
+[2024-01-15 09:00:00] app.INFO: Application booted [] []
+[2024-01-15 09:01:00] app.ERROR: Uncaught PHP Exception: No route found for "GET /missing" [] []
+[2024-01-15 09:02:00] security.WARNING: Deprecated function called [] []
