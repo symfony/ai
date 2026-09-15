@@ -66,6 +66,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('cli', \sprintf('DROP TABLE %s', $this->table));
     }
 
+    public function count(): int
+    {
+        $result = $this->request('sql', \sprintf('SELECT COUNT(*) AS cnt FROM %s', $this->table));
+
+        return (int) ($result[0]['data'][0]['cnt'] ?? 0);
+    }
+
     /**
      * @throws \Random\RandomException {@see random_int()}
      */
@@ -172,6 +179,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $options = match ($route) {
             'cli' => [
                 'body' => $query,
+            ],
+            'sql' => [
+                'body' => ['mode' => 'raw', 'query' => $query],
             ],
             'bulk' => [
                 'headers' => [

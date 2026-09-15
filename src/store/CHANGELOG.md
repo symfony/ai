@@ -7,6 +7,7 @@ CHANGELOG
  * `Indexer\SourceIndexer` now passes its options to the loader as well as to the document processor
  * [BC BREAK] Accept and return `Platform\Vector\VectorInterface` in `Query\VectorQuery` and `Query\HybridQuery` instead of the final `Platform\Vector\Vector` class
  * [BC BREAK] Type stores, retrievers, rerankers and vectorizers against the new `Document\VectorDocumentInterface` instead of the final `Document\VectorDocument` class
+ * [BC BREAK] Add `count` method to `StoreInterface`, which now extends `\Countable`
 
 
 
