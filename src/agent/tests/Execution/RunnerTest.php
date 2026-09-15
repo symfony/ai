@@ -29,6 +29,8 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -41,6 +43,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
@@ -583,6 +586,39 @@ final class RunnerTest extends TestCase
             $expectedExecutions += 3;
             $this->assertSame($expectedExecutions, $executions);
         }
+    }
+
+    public function testRunsDrivenSideBySideHaveTheirRequestsInFlightBeforeEitherResponseIsRead()
+    {
+        $events = [];
+        $invocations = 0;
+        $platform = $this->createStub(PlatformInterface::class);
+        $platform->method('invoke')->willReturnCallback(function () use (&$events, &$invocations): DeferredResult {
+            $request = ++$invocations;
+            $events[] = 'request '.$request;
+
+            $converter = $this->createStub(ResultConverterInterface::class);
+            $converter->method('convert')->willReturnCallback(static function () use (&$events, $request): ResultInterface {
+                $events[] = 'response '.$request;
+
+                return new TextResult('Answer '.$request);
+            });
+
+            return new DeferredResult($converter, new InMemoryRawResult());
+        });
+
+        $runner = $this->createRunner($platform, $this->createStub(ToolboxInterface::class));
+
+        $first = $runner->run('gpt-4', new MessageBag(), []);
+        $second = $runner->run('gpt-4', new MessageBag(), []);
+
+        // running each generator to its first update sends the request without reading the response
+        $first->current();
+        $second->current();
+        $first->next();
+        $second->next();
+
+        $this->assertSame(['request 1', 'request 2', 'response 1', 'response 2'], $events);
     }
 
     public function testMaxIterationsLimitAppliesPerRun()

@@ -106,6 +106,22 @@ would read the result anyway and just want to observe the run on the side. See t
 `execution-callbacks.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-callbacks.php>`_
 examples for both.
 
+An execution suspends once its model request is sent and before the response is read, so executions driven side by
+side have their requests in flight at the same time instead of waiting for one another's answer. Start each of them
+before advancing any of them::
+
+    $first = $agent->call('Summarize this page.')->getIterator();
+    $second = $agent->call('Translate this page.')->getIterator();
+
+    // running each generator to its first update sends both requests
+    $first->current();
+    $second->current();
+
+    while ($first->valid() || $second->valid()) {
+        $first->next();
+        $second->next();
+    }
+
 .. note::
 
     The tool-calling loop is part of a single execution: the agent keeps invoking the model and executing the tools
