@@ -1932,10 +1932,10 @@ replay exactly as it would on the wire, while headers describing the live transf
 (``Authorization``, ``x-api-key``, ``x-goog-api-key``, the ``auth_bearer`` shorthand, cookies and
 provider account identifiers) are replaced with ``[redacted]`` in both request and response headers,
 as are credentials sent as body or query parameters (``api_key``, ``access_token``), before the
-cassette is written. Values that only the recording environment
-knows, like a real endpoint or key, can be passed as ``$replacements`` to ``HttpCassette``: they are
-swapped for their placeholders everywhere in the recorded requests and responses, so a replay run
-using the placeholders matches the recording. Per-request trace headers (``date``,
+cassette is written. Values that only the recording environment knows, like a real endpoint or key,
+can be passed as ``$replacements`` to ``HttpCassette``: they are swapped for their placeholders
+everywhere in the recorded requests and responses, so a replay run using the placeholders matches
+the recording. Per-request trace headers (``date``,
 ``cf-ray``, correlation and request ids, proxy latencies) are dropped on write, so that re-recording
 a cassette produces a diff of what the provider actually changed instead of noise; rate limiting
 headers are kept, because the converters read them. Binary response bodies (generated images, audio,
@@ -1971,19 +1971,11 @@ reproducible from what it actually contains. The default patterns are deliberate
 over-eager rule that swallowed timestamps or identifiers out of a payload would corrupt the very
 recording it is meant to protect.
 
-<<<<<<< HEAD
 Replay verification accounts for this: the outgoing body is checked as sent first, and only retried
 against its redacted form when that does not match, so a cassette recorded before redaction cannot
-start failing. The trade-off is that verification is exact only on the parts redaction leaves alone
-- two bodies differing solely in a redacted value are indistinguishable to the check, because the
-cassette no longer holds what would tell them apart.
-=======
-Replay verification accounts for this: the outgoing body is checked as sent first, and only
-retried against its redacted form when that does not match, so a cassette recorded before
-redaction cannot start failing. The trade-off is that verification is exact only on the parts
-redaction leaves alone - two bodies differing solely in a redacted value are indistinguishable
-to the check, because the cassette no longer holds what would tell them apart.
->>>>>>> 615ee9a4 ([Platform] Retry replay verification against the redacted body)
+start failing. The trade-off is that verification is exact only on the parts redaction leaves
+alone. Two bodies differing solely in a redacted value are indistinguishable to the check, because
+the cassette no longer holds what would tell them apart.
 
 Verification is unconditional: it is what turns a replay test from a fixed-response stub into a
 check of the payload the bridge actually builds, so there is no flag to switch it off. The

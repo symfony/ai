@@ -84,6 +84,8 @@ final class BodyRedactorTest extends TestCase
         yield 'model name' => ['llama-3.1-8b-instant'];
         yield 'token counts' => ['input 115 output 26'];
         yield 'hash' => ['sha 9a89bea9cc915e9e1164167c'];
+        yield 'retina asset' => ['logo_accuweather2@2x.png'];
+        yield 'retina asset in a url' => ['https://cdn.example.com/img/sprite@3x.webp'];
     }
 
     #[Test]

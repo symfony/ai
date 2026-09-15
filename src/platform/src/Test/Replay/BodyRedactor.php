@@ -63,7 +63,7 @@ final class BodyRedactor
      * @var array<string, string>
      */
     private const PII_PATTERNS = [
-        '/\b[\w.+-]+@[\w-]+\.[\w.]{2,}\b/' => '[redacted-email]',
+        '/\b[\w.+-]+@[A-Za-z][\w-]*(?:\.[\w-]+)*\.[A-Za-z]{2,}\b/' => '[redacted-email]',
         '/(?<![\w.])\+\d{1,3}[ .-]?\(?\d{1,4}\)?(?:[ .-]?\d{2,4}){2,4}(?![\w.])/' => '[redacted-phone]',
     ];
 

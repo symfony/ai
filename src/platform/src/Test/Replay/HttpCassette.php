@@ -104,7 +104,7 @@ final class HttpCassette
 
     private int $cursor = 0;
 
-    private readonly BodyRedactor $redactor;
+    private ?BodyRedactor $redactor;
 
     /**
      * @param array<string, string> $replacements values replaced in every recorded request and response, for
@@ -118,7 +118,7 @@ final class HttpCassette
         private readonly array $replacements = [],
         ?BodyRedactor $redactor = null,
     ) {
-        $this->redactor = $redactor ?? new BodyRedactor();
+        $this->redactor = $redactor;
     }
 
     public function exists(): bool
@@ -223,6 +223,15 @@ final class HttpCassette
     }
 
     /**
+     * Built on first use rather than in the constructor: a cassette that only replays never needs
+     * one, and a default instance created per cassette would be an object nobody asked for.
+     */
+    private function redactor(): BodyRedactor
+    {
+        return $this->redactor ??= new BodyRedactor();
+    }
+
+    /**
      * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
@@ -239,7 +248,7 @@ final class HttpCassette
         // actually contains, and hashing the raw body would describe something the file no
         // longer holds. Both signatures are computed from the same redacted body, so a freshly
         // written cassette verifies against itself through either path.
-        $body = $this->redactor->redact(self::requestBody($options));
+        $body = $this->redactor()->redact(self::requestBody($options));
 
         $request[self::REQUEST_SIGNATURE] = self::legacySignature($method, $url, $body);
         $request[self::REQUEST_SIGNATURE_V2] = self::signature($method, $url, $query, $body);
@@ -434,7 +443,7 @@ final class HttpCassette
             // Verification is therefore exact only on the parts redaction leaves alone. Two bodies
             // that redact to the same form are indistinguishable here - by construction, since the
             // cassette no longer holds what would tell them apart.
-            $body = $this->redactor->redact($body);
+            $body = $this->redactor()->redact($body);
             if ($recordedRequest[self::REQUEST_SIGNATURE_V2] === self::signature($method, $url, $query, $body)) {
                 return;
             }
