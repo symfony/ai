@@ -2,7 +2,8 @@ Built-in Tools
 ==============
 
 The Agent component ships with a collection of ready-made tool bridges that can be added to any agent.
-Each bridge is a separate Composer package and provides one or more tools registered via the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute.
+Each bridge is a separate Composer package and provides one or more tools registered via the :class:`Symfony\\AI\\Agent\\Toolbox\\Attribute\\AsTool` attribute -
+except for the MCP bridge, which discovers its tools from a remote server at runtime.
 
 .. tip::
 
@@ -162,6 +163,46 @@ Returns the current date and time. Compatible with `Symfony Clock`_. No API key 
 
 `Clock Example`_
 
+Model Context Protocol
+----------------------
+
+MCP
+~~~
+
+Exposes the tools a remote `Model Context Protocol`_ server advertises. The server decides which tools
+it offers, and each reaches the model prefixed with the server name, e.g. ``filesystem_read_file``.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-mcp-tool
+
+Reach the server through a toolset and hand it to the toolbox::
+
+    use Mcp\Client;
+    use Mcp\Client\Transport\StdioTransport;
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Bridge\Mcp\ClientToolset;
+    use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
+
+    $toolset = new ClientToolset(
+        'filesystem',
+        Client::builder()->build(),
+        new StdioTransport('npx', ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']),
+    );
+
+    $agent = new Agent($platform, 'gpt-4o-mini', toolbox: new McpToolbox($toolset));
+
+To offer them next to local tools, put both toolboxes behind a
+:class:`Symfony\\AI\\Agent\\Toolbox\\ChainToolbox`. A server that cannot be reached contributes no
+tools and is asked again after ``retryAfter`` seconds (60 by default).
+
+`MCP Example`_
+
+.. note::
+
+    In a Symfony application, configure the connection with the MCP bundle and reference it with
+    an ``mcp_server`` tool entry, see :doc:`/bundles/ai-bundle`.
+
 Retrieval Augmented Generation
 ------------------------------
 
@@ -198,4 +239,6 @@ See :doc:`/components/agent` for a full RAG integration example.
 .. _`Ollama Web Search Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/ollama-web-search.php
 .. _`Ollama Webpage Fetch Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/ollama-webpage-fetch.php
 .. _`Clock Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/clock.php
+.. _`Model Context Protocol`: https://modelcontextprotocol.io
+.. _`MCP Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/mcp.php
 .. _`Symfony Clock`: https://symfony.com/doc/current/components/clock.html

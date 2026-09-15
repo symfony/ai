@@ -6,6 +6,7 @@ CHANGELOG
 
  * Show agent calls, platform invocations and tool executions in the performance timeline of the profiler
  * Add support for configuring a tool execution strategy per agent via the `execution_strategy` option under `tools` (`sequential`, `fiber`, or a custom service ID)
+ * Add an `mcp_server` tool entry to `ai.agent.<name>.tools`, exposing the tools of a remote MCP server to an agent by referencing a connection configured under `mcp.clients`
 
 0.13
 ----
