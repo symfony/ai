@@ -13,7 +13,6 @@ namespace Symfony\AI\Agent\Toolbox\ToolFactory;
 
 use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
-use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
 use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -30,7 +29,7 @@ final class MemoryToolFactory implements ToolFactoryInterface
     private array $tools = [];
 
     public function __construct(
-        private readonly Factory $factory = new Factory(new MapToolArgumentsDescriber()),
+        private readonly Factory $factory = new Factory(),
     ) {
     }
 

@@ -250,14 +250,14 @@ class MapToolArgumentsTest extends TestCase
             [ToolWithScalarMappedArguments::class, 'concrete class'],
         ] as [$className, $message]) {
             try {
-                iterator_to_array((new ReflectionToolFactory())->getTool($className));
+                iterator_to_array((new ReflectionToolFactory($this->factoryWithProviders()))->getTool($className));
                 $this->fail(\sprintf('Expected ToolConfigurationException for %s.', $className));
             } catch (ToolConfigurationException $e) {
                 $this->assertStringContainsString($message, $e->getMessage());
             }
 
             try {
-                (new MemoryToolFactory())->addTool($className, 'invalid_mapped_tool', 'invalid');
+                (new MemoryToolFactory($this->factoryWithProviders()))->addTool($className, 'invalid_mapped_tool', 'invalid');
                 $this->fail(\sprintf('Expected ToolConfigurationException for MemoryToolFactory and %s.', $className));
             } catch (ToolConfigurationException $e) {
                 $this->assertStringContainsString($message, $e->getMessage());

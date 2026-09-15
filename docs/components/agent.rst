@@ -531,20 +531,41 @@ or flat parameter shapes. Schema generation still uses the existing JSON Schema 
 Validator constraints, ``#[Schema]`` attributes, and runtime ``#[Schema(provider: ...)]`` providers on
 DTO properties continue to apply.
 
-The default tool factories and AI Bundle configure
-:class:`Symfony\\AI\\Agent\\Toolbox\\MapToolArgumentsDescriber` automatically. When injecting a
-custom JSON Schema factory, wrap its object describer to support mapped arguments::
+The attribute enables runtime argument mapping. To generate flat schemas, explicitly configure
+:class:`Symfony\\AI\\Agent\\Toolbox\\MapToolArgumentsDescriber` in the JSON Schema factory and
+inject that factory into your tool factory. Neither the default tool factories nor AI Bundle
+enable this describer automatically::
 
     use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
     use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
+    use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
     use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 
+    $objectDescriber = new Describer(); // Or your configured object describer.
     $factory = new Factory(new MapToolArgumentsDescriber($objectDescriber));
     $tools = new MemoryToolFactory($factory);
 
 Wrap the complete object describer rather than adding this decorator to its list of describers.
 It replaces the attributed method subject with the DTO class subject before schema generation,
 preserving the describer context and leaving unmarked subjects unchanged.
+
+With AI Bundle, configure a tool-specific factory in your application services:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        app.tool_schema_describer:
+            class: Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber
+            arguments: ['@ai.platform.json_schema.describer']
+
+        app.tool_schema_factory:
+            class: Symfony\AI\Platform\Contract\JsonSchema\Factory
+            arguments: ['@app.tool_schema_describer']
+
+        ai.tool_factory:
+            class: Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory
+            arguments: ['@app.tool_schema_factory']
 
 Naming conversion follows the Serializer instance passed to
 :class:`Symfony\\AI\\Agent\\Toolbox\\ToolCallArgumentResolver`. The default resolver does not enable

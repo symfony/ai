@@ -4759,17 +4759,6 @@ class AiBundleTest extends TestCase
         $this->assertSame('ai.toolbox.agent_with_tools', (string) $container->getDefinition($agentId)->getArgument('$toolbox'));
     }
 
-    public function testToolSchemaFactoryWrapsTheConfiguredPlatformDescriber()
-    {
-        $container = $this->buildContainer(['ai' => []]);
-
-        $this->assertSame('ai.toolbox.json_schema_factory', (string) $container->getDefinition('ai.tool_factory')->getArgument(0));
-        $this->assertSame('ai.toolbox.json_schema.describer', (string) $container->getDefinition('ai.toolbox.json_schema_factory')->getArgument(0));
-        $this->assertSame(\Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber::class, $container->getDefinition('ai.toolbox.json_schema.describer')->getClass());
-        $this->assertSame('ai.platform.json_schema.describer', (string) $container->getDefinition('ai.toolbox.json_schema.describer')->getArgument(0));
-        $this->assertSame('ai.platform.json_schema.describer', (string) $container->getDefinition('ai.platform.json_schema_factory')->getArgument(0));
-    }
-
     public function testAgentWithoutToolsConfigDoesNotRegisterToolbox()
     {
         $container = $this->buildContainer([
