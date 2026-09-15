@@ -11,6 +11,7 @@ CHANGELOG
  * Add the serving provider to `ResultConvertedEvent` and `ResultErrorEvent`, so listeners can attribute a resolved result to the provider that produced it (e.g. to release held capacity)
  * Verify a replayed HTTP cassette request signature before serving the recorded response
  * Add an optional `Stopwatch` to `TraceablePlatform`, timing each invocation until its result is converted or its stream is consumed
+ * Add `Test\Replay\BodyRedactor` and redact recorded request bodies in `HttpCassette` by default; replay verification retries against the redacted body, so a cassette recorded before redaction keeps replaying
 
 0.13
 ----
