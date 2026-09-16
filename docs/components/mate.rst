@@ -518,7 +518,7 @@ Monolog Bridge
 
 The Monolog bridge (``symfony/ai-monolog-mate-extension``) provides log search and analysis tools:
 
-* ``monolog-search`` - Search log entries by text term with optional filters (supports ``regex`` parameter for regex patterns and ``level`` filter)
+* ``monolog-search`` - Search log entries by an optional text term (supports ``regex`` parameter for regex patterns), plus filters like ``level``, ``channel``, ``from`` and ``to``; omit the term to filter without a text match
 * ``monolog-context-search`` - Search logs by context field value
 * ``monolog-tail`` - Get the last N log entries
 * ``monolog-list-files`` - List available log files
