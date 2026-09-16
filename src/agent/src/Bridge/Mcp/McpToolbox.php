@@ -16,7 +16,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolCallException;
+use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolErrorException;
 use Symfony\AI\Agent\Toolbox\AbstractToolbox;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -131,7 +131,7 @@ final class McpToolbox extends AbstractToolbox
                 $detail = false !== $encoded ? $encoded : 'unknown error';
             }
 
-            throw ToolCallException::returnedError($this->toolset->getName(), $remoteName, $detail);
+            throw ToolErrorException::returnedError($this->toolset->getName(), $remoteName, $detail);
         }
 
         return $payload;
