@@ -1118,6 +1118,26 @@ The remote tools are offered next to the agent's other tools, also combined with
 server that cannot be reached contributes no tools; lower its ``init_timeout`` and ``max_retries`` to
 notice that sooner.
 
+An application that exposes its own tools as an MCP server can give them to one of its agents as well.
+Reference the server configured under ``mcp.servers`` by its plain name, without a client. Its tools
+are then called in-process through the server's own protocol handling, with no connection or child
+process, so the agent sees exactly the tools, schemas and errors that external MCP clients see:
+
+.. code-block:: yaml
+
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            archive:
+                registry: 'App\Mcp\'
+
+    # config/packages/ai.yaml
+    ai:
+        agent:
+            archive_chat:
+                tools:
+                    - { mcp_server: 'archive' } # this application's own "archive" server, tools reach the model as "archive_<name>"
+
 Token Usage Tracking
 --------------------
 

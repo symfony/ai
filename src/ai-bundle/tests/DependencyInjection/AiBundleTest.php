@@ -38,6 +38,7 @@ use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
+use Symfony\AI\AiBundle\Mcp\LocalServerToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
@@ -570,17 +571,47 @@ class AiBundleTest extends TestCase
         $this->assertTrue($deferred->hasTag('ai.profiler_toolbox'));
     }
 
-    public function testMcpServerReferenceWithoutServerNameThrows()
+    public function testAnMcpServerWithoutClientIsThisApplicationsOwnServerCalledInProcess()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [['mcp_server' => 'archive']],
+                    ],
+                ],
+            ],
+        ]);
+
+        $toolset = $container->getDefinition('ai.toolbox.research.mcp_toolset.archive');
+        $this->assertSame(LocalServerToolset::class, $toolset->getClass());
+        $this->assertSame('archive', $toolset->getArgument(0));
+        $this->assertSame('mcp.server.archive.builder', (string) $toolset->getArgument(1));
+
+        $toolbox = $container->getDefinition('ai.toolbox.research.mcp.archive');
+        $this->assertSame(McpToolbox::class, $toolbox->getClass());
+        $this->assertSame('ai.toolbox.research.mcp_toolset.archive', (string) $toolbox->getArgument(0));
+
+        $chained = $container->getDefinition('ai.toolbox.research')->getArgument(0);
+        $this->assertInstanceOf(IteratorArgument::class, $chained);
+        $this->assertSame(
+            ['ai.toolbox.research.local', 'ai.toolbox.research.mcp.archive.deferred'],
+            array_map(static fn (Reference $reference): string => (string) $reference, $chained->getValues()),
+        );
+    }
+
+    public function testInvalidMcpServerReferenceThrows()
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Invalid MCP server reference, expected the "<client>.<server>" format.');
+        $this->expectExceptionMessage('Invalid MCP server reference, expected "<server>" or "<client>.<server>".');
 
         $this->buildContainer([
             'ai' => [
                 'agent' => [
                     'research' => [
                         'model' => 'gpt-4o-mini',
-                        'tools' => [['mcp_server' => 'filesystem']],
+                        'tools' => [['mcp_server' => 'filesystem.local.extra']],
                     ],
                 ],
             ],
