@@ -25,9 +25,13 @@
                             </thead>
                             <tbody>
                                 {% for name, prop in tool.inputSchema.properties %}
+                                    {% set types = [] %}
+                                    {% for schema in prop.type is defined ? [prop] : (prop.anyOf ?? prop.oneOf ?? []) %}
+                                        {% set types = types|merge(schema.type is not defined ? [] : (schema.type is iterable ? schema.type : [schema.type])) %}
+                                    {% endfor %}
                                     <tr>
                                         <td><code>{{ name }}</code></td>
-                                        <td><span class="badge badge-primary">{{ prop.type is iterable ? prop.type|join('|') : (prop.type ?? 'any') }}</span></td>
+                                        <td><span class="badge badge-primary">{{ types is empty ? 'any' : types|reduce((carry, type) => type in carry ? carry : carry|merge([type]), [])|join('|') }}</span></td>
                                         <td>
                                             {% if tool.inputSchema.required is defined and name in tool.inputSchema.required %}
                                                 <span class="label status-error">Yes</span>
