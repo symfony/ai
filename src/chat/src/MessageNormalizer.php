@@ -62,7 +62,8 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 new ToolCall(
                     $data['toolsCalls']['id'],
                     $data['toolsCalls']['function']['name'],
-                    json_decode($data['toolsCalls']['function']['arguments'], true)
+                    json_decode($data['toolsCalls']['function']['arguments'], true),
+                    $data['toolsCalls']['signature'] ?? null
                 ),
                 ...([] !== $contentAsBase64 ? self::denormalizeContentParts($contentAsBase64, 'tool call content type') : [new Text($content)]),
             ),
@@ -112,6 +113,9 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         } elseif ($data instanceof ToolCallMessage) {
             $content = $data->asText() ?? '';
             $toolsCalls = $this->normalizer->normalize($data->getToolCall(), $format, $context);
+            if (\is_array($toolsCalls) && null !== $data->getToolCall()->getSignature()) {
+                $toolsCalls['signature'] = $data->getToolCall()->getSignature();
+            }
         }
 
         return [
@@ -152,7 +156,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             } elseif ($part instanceof Thinking) {
                 $parts[] = ['type' => Thinking::class, 'content' => $part->getContent(), 'signature' => $part->getSignature()];
             } elseif ($part instanceof ToolCall) {
-                $parts[] = ['type' => ToolCall::class, 'toolCall' => $this->normalizer->normalize($part, $format, $context)];
+                $parts[] = ['type' => ToolCall::class, 'toolCall' => $this->normalizer->normalize($part, $format, $context), 'signature' => $part->getSignature()];
             } elseif ($part instanceof File || $part instanceof ImageUrl || $part instanceof DocumentUrl) {
                 $parts[] = self::normalizeContentParts([$part])[0];
             }
@@ -227,6 +231,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                         $part['toolCall']['id'],
                         $part['toolCall']['function']['name'],
                         json_decode($part['toolCall']['function']['arguments'], true),
+                        $part['signature'] ?? null,
                     ),
                     default => self::denormalizeContentParts([$part], 'assistant part type')[0],
                 };
