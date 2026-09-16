@@ -79,12 +79,14 @@ final class Runner
         $iterations = 0;
 
         while (true) {
-            yield new Progress('model_request', 'Invoking model.', $model);
-
             $deferredResult = $this->platform->invoke($model, $messages, $options);
             $cancellation?->activate($deferredResult->getRawResult());
 
             try {
+                // the request is in flight but not read yet, so suspending here lets executions driven
+                // alongside this one send their own requests before this one blocks on its response
+                yield new Progress('model_request', 'Invoking model.', $model);
+
                 if ($cancellation?->isRequested()) {
                     return;
                 }
