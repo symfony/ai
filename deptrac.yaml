@@ -201,6 +201,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\LmStudio\\.*
+    - name: LoadBalancedPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\LoadBalanced\\.*
     - name: MetaPlatform
       collectors:
         - type: classLike
@@ -499,6 +503,8 @@ deptrac:
     LmStudioPlatform:
       - PlatformComponent
       - GenericPlatform
+    LoadBalancedPlatform:
+      - PlatformComponent
     MetaPlatform:
       - PlatformComponent
     MiniMaxPlatform:
