@@ -37,6 +37,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "symfony/dotenv": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
         "symfony/mailer": "^7.3|^8.0",
@@ -47,6 +48,7 @@
     },
     "suggest": {
         "doctrine/doctrine-bundle": "Required for Doctrine database profiler formatter",
+        "symfony/dotenv": "Required for the symfony-dotenv-check tool",
         "symfony/http-kernel": "Required for profiler data access tools",
         "symfony/mailer": "Required for mailer profiler formatter",
         "symfony/translation": "Required for translation profiler collector formatter",
