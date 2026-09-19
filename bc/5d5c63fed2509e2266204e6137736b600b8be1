@@ -1,0 +1,76 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-04-10T10:04:04Z
+
+<!-- changelog-version-bump:0.7 -->
+
+Hi! Version **0.7** has been released. This PR has changelog/upgrade entries under the `0.7` heading, which is now a released version.
+
+Please update the following files to place your entries under the next version **0.8**:
+
+- `src/store/src/Bridge/Cache/CHANGELOG.md`
+- `src/store/src/Bridge/ChromaDb/CHANGELOG.md`
+- `src/store/src/Bridge/ClickHouse/CHANGELOG.md`
+- `src/store/src/Bridge/Cloudflare/CHANGELOG.md`
+- `src/store/src/Bridge/Elasticsearch/CHANGELOG.md`
+- `src/store/src/Bridge/ManticoreSearch/CHANGELOG.md`
+- `src/store/src/Bridge/MariaDb/CHANGELOG.md`
+- `src/store/src/Bridge/Meilisearch/CHANGELOG.md`
+- `src/store/src/Bridge/Milvus/CHANGELOG.md`
+- `src/store/src/Bridge/MongoDb/CHANGELOG.md`
+- `src/store/src/Bridge/Neo4j/CHANGELOG.md`
+- `src/store/src/Bridge/OpenSearch/CHANGELOG.md`
+- `src/store/src/Bridge/Pinecone/CHANGELOG.md`
+- `src/store/src/Bridge/Postgres/CHANGELOG.md`
+- `src/store/src/Bridge/Qdrant/CHANGELOG.md`
+- `src/store/src/Bridge/Redis/CHANGELOG.md`
+- `src/store/src/Bridge/S3Vectors/CHANGELOG.md`
+- `src/store/src/Bridge/Supabase/CHANGELOG.md`
+- `src/store/src/Bridge/SurrealDb/CHANGELOG.md`
+- `src/store/src/Bridge/Typesense/CHANGELOG.md`
+- `src/store/src/Bridge/Vektor/CHANGELOG.md`
+- `src/store/src/Bridge/Weaviate/CHANGELOG.md`
+
+**For `CHANGELOG.md` files**: change the version heading from `0.7` to `0.8`
+**For `UPGRADE.md`**: place entries under `UPGRADE FROM 0.7 to 0.8`
+
+Thank you!
+
+---
+<sub>🤖 This comment was generated automatically by an agent.</sub>
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2026-05-06T07:21:58Z
+
+The Fabbot check is a false positive. The typo check want to replace "Vektor" with "Vector" bun the package is actually called "Vektor".
+FYI @chr-hertel / @OskarStark
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2026-05-21T13:09:13Z
+
+Prepare:
+- Fixed current merge conflicts
+- Fixed versions in CHANGELOG.md files
+- Add tests to AbstractStoreIntegrationTestCase
+
+Will check the tests later...
+
+---------------------------------------------------------------------------
+
+by lochmueller at 2026-09-15T07:38:26Z
+
+@wachterjohannes could not add the "BC Break" label to the PR. Could you?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-15T18:02:54Z
+
+One CHANGELOG.md still breaks CI: `src/store/src/Bridge/Postgres/CHANGELOG.md` has a stray blank line right after the released `0.9` heading. Removing it should turn the changelog check green.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-19T19:32:56Z
+
+The remaining red `Integration / Examples (replay)` check is unrelated: it's a stale run against a base before #2531 (merged 2026-09-16), which fixed object-ID drift in the dumped example output. A rebase on current main should turn it green.
