@@ -42,6 +42,7 @@ use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
+use Symfony\AI\AiBundle\Mcp\LocalServerToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
@@ -1463,7 +1464,8 @@ final class AiBundle extends AbstractBundle
     }
 
     /**
-     * One toolset and toolbox per configured MCP server, on top of the bundle's own connection.
+     * One toolset and toolbox per configured MCP server: a connection of the MCP bundle's clients, or one of
+     * this application's own servers called in-process.
      *
      * @param list<array{mcp_server: string, prefix?: string}> $servers
      *
@@ -1482,13 +1484,21 @@ final class AiBundle extends AbstractBundle
         $references = [];
 
         foreach ($servers as $server) {
-            [$client, $remoteServer] = explode('.', $server['mcp_server'], 2);
-            $suffix = $client.'.'.$remoteServer;
-
+            $suffix = $server['mcp_server'];
             $toolsetId = 'ai.toolbox.'.$agentName.'.mcp_toolset.'.$suffix;
-            $container->setDefinition($toolsetId, new Definition(ConnectionToolset::class, [
-                new Reference(\sprintf('mcp.client.%s.server.%s', $client, $remoteServer)),
-            ]));
+
+            if (str_contains($suffix, '.')) {
+                [$client, $remoteServer] = explode('.', $suffix, 2);
+                $container->setDefinition($toolsetId, new Definition(ConnectionToolset::class, [
+                    new Reference(\sprintf('mcp.client.%s.server.%s', $client, $remoteServer)),
+                ]));
+            } else {
+                // One of this application's own servers: called in-process, no connection to open.
+                $container->setDefinition($toolsetId, new Definition(LocalServerToolset::class, [
+                    $suffix,
+                    new Reference(\sprintf('mcp.server.%s.builder', $suffix)),
+                ]));
+            }
 
             $toolboxId = 'ai.toolbox.'.$agentName.'.mcp.'.$suffix;
             $container->setDefinition($toolboxId, new Definition(McpToolbox::class, [

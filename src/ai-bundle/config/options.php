@@ -296,7 +296,7 @@ return static function (DefinitionConfigurator $configurator): void {
                                             ->stringNode('service')->cannotBeEmpty()->end()
                                             ->stringNode('agent')->cannotBeEmpty()->end()
                                             ->stringNode('mcp_server')
-                                                ->info('A remote MCP server whose tools are exposed to this agent, as "<client>.<server>" referencing a connection configured under "mcp.clients".')
+                                                ->info('An MCP server whose tools are exposed to this agent: "<client>.<server>" references a connection configured under "mcp.clients", a plain "<server>" one of this application\'s own "mcp.servers", called in-process.')
                                                 ->example('research.filesystem')
                                                 ->cannotBeEmpty()
                                             ->end()
@@ -343,9 +343,9 @@ return static function (DefinitionConfigurator $configurator): void {
                                                     return false;
                                                 }
 
-                                                return !str_contains($v['mcp_server'], '.');
+                                                return 1 !== preg_match('/^[a-zA-Z0-9_-]++(\\.[a-zA-Z0-9_-]++)?$/', $v['mcp_server']);
                                             })
-                                            ->thenInvalid('Invalid MCP server reference, expected the "<client>.<server>" format.')
+                                            ->thenInvalid('Invalid MCP server reference, expected "<server>" or "<client>.<server>".')
                                         ->end()
                                     ->end()
                                 ->end()
