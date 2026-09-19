@@ -258,12 +258,14 @@ trait CompletionsConversionTrait
      */
     protected function convertChoice(array $choice): ToolCallResult|TextResult
     {
-        if ('tool_calls' === $choice['finish_reason']) {
+        // Keyed on the payload, not on finish_reason: some OpenAI-compatible servers answer a tool
+        // call with finish_reason "stop", which the streaming path above already handles by presence.
+        if ([] !== ($choice['message']['tool_calls'] ?? [])) {
             return $this->withFinishReason(new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls'])), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         if (\in_array($choice['finish_reason'], ['stop', 'length'], true)) {
-            return $this->withFinishReason(new TextResult($choice['message']['content']), FinishReasonMapper::map($choice['finish_reason']));
+            return $this->withFinishReason(new TextResult($choice['message']['content'] ?? ''), FinishReasonMapper::map($choice['finish_reason']));
         }
 
         throw new RuntimeException(\sprintf('Unsupported finish reason "%s".', $choice['finish_reason']));
