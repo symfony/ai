@@ -1,0 +1,125 @@
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-09-03T21:56:25Z
+
+@wachterjohannes opened this following the shape we agreed in #2409, in case you want to look before the code owners get to it.
+
+Two things I would especially like your eyes on:
+
+- **The default pattern set.** I erred on the side of leaving payloads alone, so keys prefixed with `sk-` and JWTs are caught, but a generic 32-hex string is not. It could be too narrow for real recordings; you have seen more of them than I have.
+
+- **The signature change.** Redacting before hashing is what you described, but it does mean a cassette recorded on `main` today and one recorded after this lands carry different signatures for the same request. Harmless while matching is FIFO. Worth a note somewhere if signature matching is on the roadmap.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-13T17:59:30Z
+
+#2469 merged today. Its signature check on main still hashes the raw request body, so the redaction/verification mismatch we talked about is now live, not hypothetical. Whenever you get to the rebase, redacting the live body before comparing should close it.
+
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-09-13T18:21:50Z
+
+Thanks for the heads-up. Starting the rebase now.
+
+Reading `main` after #2469, redacting the live body before comparing closes the verification path, but there are two more places the same mismatch shows up and I would rather agree on them before pushing:
+
+1. `redactRequest()` now writes two signatures. `signature_v2` is straightforward, redact then sign. `signature` (legacy) is the one I am unsure about: redacting before hashing it changes the v1 hash, and the whole point of keeping it is that cassettes recorded before #2469 still replay. My instinct is to leave the legacy signature over the raw body and only redact for v2, so old cassettes keep working and new ones are consistent with what they store. That does mean a legacy cassette re-recorded after this lands cannot be verified through the v1 path, which seems like the lesser problem, but tell me if you see it the other way.
+
+2. `mismatchMessage()` compares `$recordedRequest['body']` against the live `$body`. The recorded one is redacted after this PR, the live one is not, so the message would report `body differs` on every request carrying an email or a key even when the bodies are identical. That one needs the live body redacted too, otherwise the error message actively misleads.
+
+Will push the rebase with both handled unless you disagree on the legacy signature.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-13T18:40:06Z
+
+On 1: the premise doesn't hold, `redactRequest()` already computes both signatures from one `$body` in the same call, so there's no scenario where a freshly written cassette has v1 but not v2. Redact `$body` once before both signature calls and this is a one-liner, no permanent v1/v2 split needed. That also removes your "lesser problem": a freshly redacted cassette verifies fine against itself through v1, since v1 was hashed over the same redacted body that's stored.
+
+The real gap is on the verify side, not the write side: `assertRequestSignatureMatches()` always hashes the raw live body. Once cassettes store redacted bodies, a live request with a real credential won't match through either path. Redacting the live body unconditionally would risk breaking any already-committed cassette that happens to have credential-shaped text in it, so: try the raw live body first, exactly like today, and only redact and retry on a mismatch before falling through to `mismatchMessage()`. No version flag, can't regress an existing cassette since the first attempt is unchanged.
+
+`assertRequestSignatureMatches()` is `private static`, so it'll need the same instance-method treatment you already gave `redactRequest()` to reach the redactor.
+
+On 2: agreed, redact the live body for the message comparison too, that one's just display and carries no correctness risk either way.
+
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-09-13T19:00:19Z
+
+You are right, and my premise was simply wrong. I was picturing a cassette that carries v1 but not v2, which `redactRequest()` cannot produce: both hashes come from the same `$body` in the same call. Redacting once before both is the one-liner you describe, and a fresh cassette then verifies against itself through either path.
+
+Your verify-side shape makes sense too: raw first, redact and retry only on mismatch. The first attempt being untouched is what makes it safe for cassettes already committed.
+
+One thing I found while tracing it, which narrows the change slightly. The redacted retry is only reachable on the v2 path. A cassette holding v1 but no v2 can only have been written before #2469, so its stored body is raw and the first attempt already matches. Adding the retry to the legacy branch would be dead code, and `legacyRecordedRequestMatches()` needs no change for the same reason. Unless you can think of a way a v1-only cassette ends up with a redacted body, I will leave both alone.
+
+And one consequence worth stating out loud, since it weakens the guarantee #2469 added: two different raw bodies that redact to the same form now verify as equal. A cassette recorded with `alice@example.com` will accept a live request sending `bob@example.com`, because both are `[redacted-email]` by the time the hashes are compared. That is inherent to storing a redacted body rather than something to fix, but it means verification is exact only on the parts redaction leaves alone. I will put a line about it in the docs so nobody reads the check as stronger than it is.
+
+Rebase in progress, will push with the above unless you want the retry on both paths after all.
+
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-09-13T20:51:39Z
+
+Rebased onto `main` with #2469 in, and pushed the verification side.
+
+Write side is the one-liner you described: `$body` is redacted once, before both signatures and before it is stored, so a fresh cassette reproduces its own signature through either path.
+
+Verify side follows your shape. `assertRequestSignatureMatches()` hashes the live body as sent first, and only redacts and retries on a mismatch. An existing cassette cannot regress, since the first attempt is byte-for-byte what `main` does today.
+
+Three things worth flagging:
+
+The retry only exists on the v2 path. A cassette carrying v1 but no v2 predates #2469, so its stored body is raw and the first attempt already matches; adding the retry to the legacy branch would be unreachable. `legacyRecordedRequestMatches()` is untouched for the same reason.
+
+On your point about the message: `$body` is reassigned to the redacted form before `mismatchMessage()` is called, so the comparison is redacted against redacted. No signature change needed there.
+
+And the consequence, stated plainly because it weakens what #2469 added: two bodies that redact to the same form now verify as equal. A cassette recorded with `alice@example.com` accepts a live request sending `bob@example.com`. That is inherent to storing a redacted body rather than a gap in the implementation, but it is asserted in `testTwoBodiesThatRedactAlikeAreIndistinguishable` so that changing it later is a decision and not an accident, and there is a paragraph about it in the docs.
+
+`testCommittedCassettesReproduceTheirOwnRequestSignature` needed one change: it invoked `redactRequest()` statically through reflection. It now passes an instance, which incidentally makes it assert something stronger, that redacting an already-redacted body is a no-op.
+
+Platform suite: 944 tests, 1997 assertions, 2 skipped. I checked the new tests fail without the change: `testReplaysWhenTheLiveBodyCarriesDataTheCassetteRedacted` throws `body differs` on the pre-rebase `HttpCassette`, which is the error a user would hit on `main` today.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-15T18:12:46Z
+
+Design's landed and verified, just a merge conflict left. Can you rebase when you get a chance?
+
+---------------------------------------------------------------------------
+
+by MikiBuilder at 2026-09-15T21:09:40Z
+
+Rebased onto `main`, and the platform suite is green (957 tests). But the example replay job is failing on something I do not think I should decide alone.
+
+Two things fixed on the way, both worth having independently:
+
+`$replacements` landed on the constructor since your review, so the redactor is now the third parameter. The docs examples pass it as `redactor:` to keep that explicit.
+
+The email pattern was matching `logo_accuweather2@2x.png` in `toolbox/tavily.json`. Retina asset names look enough like an address for the old pattern, so the domain now has to start with a letter and the TLD has to be alphabetic. Two regression cases added. That one was a genuine bug the CI found for me.
+
+The remaining failures are all the same shape, and none of them are a content mismatch:
+
+    -MathReasoning {#475
+    +MathReasoning {#477
+       +steps: array:4 [
+    -    0 => Step {#491
+    +    0 => Step {#493
+
+Every asserted value is identical. What differs is VarDumper's object id. `ExamplesReplayTest` compares a full `dump()` against a committed `.out` fixture, and those fixtures contain the ids. Any object my code constructs before the dump shifts every id after it.
+
+I tried building the default redactor lazily instead of in the constructor, which moved it from 25 failures to 21 and from a +2 shift to +1. That confirms the cause but does not remove it: the retry path in `assertRequestSignatureMatches()` still instantiates one, so a cassette that does not match on the first attempt pays the cost.
+
+I do not think there is a way to add an injectable collaborator to `HttpCassette` without this, and the three ways out all seem to be yours to pick rather than mine:
+
+1. Re-record the example fixtures. The failing ones span OpenAI, Anthropic, Gemini, Mistral, HuggingFace, Cerebras, OpenRouter, OVH and Scaleway, so it needs credentials for all of them. I have none of those and would rather not guess at the output.
+
+2. Make the comparison ignore object ids. That is a change to `ExamplesReplayTest`, not to this feature, and it would make the whole suite robust against any future collaborator rather than just this one. It looks like the fix with the longest shelf life, but it is a separate concern from redaction.
+
+3. Keep the default path object-free, for example by making the built-in rules static functions and only constructing a `BodyRedactor` when one is passed in. That preserves the id sequence but gives up the shape we agreed on in #2409, and the three-tier defaults would have nowhere natural to live.
+
+My preference is 2, then 1. But this is a 251-fixture decision, so tell me which way you want it and I will do the work.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-19T19:32:58Z
+
+The remaining red `Integration / Examples (replay)` check is unrelated: it's a stale run against a base before #2531 (merged 2026-09-16), which fixed object-ID drift in the dumped example output. A rebase on current main should turn it green.
