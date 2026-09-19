@@ -54,6 +54,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Replicate           | `symfony/ai-replicate-platform`           |
 | Scaleway            | `symfony/ai-scaleway-platform`            |
 | TransformersPHP     | `symfony/ai-transformers-php-platform`    |
+| TypeSafe            | `symfony/ai-type-safe-platform`           |
 | Google Vertex AI    | `symfony/ai-vertex-ai-platform`           |
 | Voyage              | `symfony/ai-voyage-platform`              |
 

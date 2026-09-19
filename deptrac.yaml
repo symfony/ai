@@ -253,6 +253,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\TransformersPhp\\.*
+    - name: TypeSafePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\TypeSafe\\.*
     - name: VertexAiPlatform
       collectors:
         - type: classLike
@@ -536,6 +540,8 @@ deptrac:
       - GenericPlatform
       - OpenResponsesPlatform
     TransformersPhpPlatform:
+      - PlatformComponent
+    TypeSafePlatform:
       - PlatformComponent
     VertexAiPlatform:
       - PlatformComponent

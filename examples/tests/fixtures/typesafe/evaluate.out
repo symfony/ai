@@ -1,0 +1,19 @@
+Department: billing (confidence: 0.51)
+  sales: 0.00
+  billing: 0.68
+  technical: 0.32
+Frustration: 1.00 out of 2 (confidence: 1.00)
+Urgent: yes (probability: 0.99)
+The department is uncertain, routing the ticket to a human for review.
++------------ Token Usage +------------+
+| Model                   | jev-1.13.0 |
+| Prompt tokens           | 428        |
+| Completion tokens       | 73         |
+| Thinking tokens         | n/a        |
+| Tool tokens             | n/a        |
+| Cached tokens           | n/a        |
+| Remaining tokens minute | n/a        |
+| Remaining tokens month  | n/a        |
+| Remaining tokens        | n/a        |
+| Total tokens            | n/a        |
++-------------------------+------------+

@@ -3,6 +3,12 @@
     "description": "Example scripts about using Symfony AI",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/platform/src/Bridge/TypeSafe"
+        }
+    ],
     "require": {
         "php": ">=8.2",
         "symfony/ai-agent": "^0.13",
@@ -74,6 +80,7 @@
         "symfony/ai-surreal-db-store": "^0.13",
         "symfony/ai-tavily-tool": "^0.13",
         "symfony/ai-transformers-php-platform": "^0.13",
+        "symfony/ai-type-safe-platform": "dev-main",
         "symfony/ai-typesense-store": "^0.13",
         "symfony/ai-vektor-store": "^0.13",
         "symfony/ai-vertex-ai-platform": "^0.13",
