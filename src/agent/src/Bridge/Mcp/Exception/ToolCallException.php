@@ -25,9 +25,4 @@ class ToolCallException extends RuntimeException
     {
         return new self(\sprintf('Tool "%s" on MCP server "%s" failed: %s', $toolName, $serverName, $previous->getMessage()), 0, $previous);
     }
-
-    public static function returnedError(string $serverName, string $toolName, string $detail): self
-    {
-        return new self(\sprintf('Tool "%s" on MCP server "%s" returned an error: %s', $toolName, $serverName, $detail));
-    }
 }

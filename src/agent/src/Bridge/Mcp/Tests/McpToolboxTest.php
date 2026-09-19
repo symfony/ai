@@ -19,13 +19,14 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ConnectionException;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolCallException;
+use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolErrorException;
 use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
 use Symfony\AI\Agent\Bridge\Mcp\Tests\Double\StaticToolset;
 use Symfony\AI\Agent\Toolbox\ChainToolbox;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallRequested;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallSucceeded;
-use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
+use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
@@ -168,16 +169,16 @@ final class McpToolboxTest extends TestCase
         $this->assertSame('no matches', (new McpToolbox($toolset))->execute(new ToolCall('call_11', 'demo_search'))->getResult());
     }
 
-    public function testExecuteWrapsServerSideErrorAsToolCallException()
+    public function testExecuteReportsServerSideErrorAsToolErrorException()
     {
         $toolset = $this->toolset('oops', new CallToolResult([new TextContent('boom')], true));
 
         try {
             (new McpToolbox($toolset))->execute(new ToolCall('call_5', 'demo_oops'));
-            $this->fail('Expected a ToolExecutionException.');
-        } catch (ToolExecutionException $e) {
-            $this->assertInstanceOf(ToolCallException::class, $e->getPrevious());
-            $this->assertSame('Tool "oops" on MCP server "demo" returned an error: boom', $e->getPrevious()->getMessage());
+            $this->fail('Expected a ToolErrorException.');
+        } catch (ToolErrorException $e) {
+            $this->assertSame('Tool "oops" on MCP server "demo" returned an error: boom', $e->getMessage());
+            $this->assertSame('boom', $e->getToolCallResult());
         }
     }
 
@@ -187,10 +188,29 @@ final class McpToolboxTest extends TestCase
 
         try {
             (new McpToolbox($toolset))->execute(new ToolCall('call_6', 'demo_oops'));
-            $this->fail('Expected a ToolExecutionException.');
-        } catch (ToolExecutionException $e) {
-            $this->assertSame('Tool "oops" on MCP server "demo" returned an error: {"code":"E_NOPE"}', $e->getPrevious()->getMessage());
+            $this->fail('Expected a ToolErrorException.');
+        } catch (ToolErrorException $e) {
+            $this->assertSame('Tool "oops" on MCP server "demo" returned an error: {"code":"E_NOPE"}', $e->getMessage());
+            $this->assertSame('{"code":"E_NOPE"}', $e->getToolCallResult());
         }
+    }
+
+    public function testTheServerErrorMessageReachesTheModelThroughAFaultTolerantToolbox()
+    {
+        $toolset = $this->toolset('movie_details', new CallToolResult([new TextContent('No movie with slug "nope".')], true));
+
+        $result = (new FaultTolerantToolbox(new McpToolbox($toolset)))->execute(new ToolCall('call_12', 'demo_movie_details'));
+
+        $this->assertSame('No movie with slug "nope".', $result->getResult());
+    }
+
+    public function testATransportFailureIsNotShownToTheModel()
+    {
+        $toolset = new StaticToolset(tools: [$this->remoteTool('oops')], results: ['oops' => ToolCallException::callFailed('demo', 'oops', new \RuntimeException('Connection to secret-host:9000 refused.'))]);
+
+        $result = (new FaultTolerantToolbox(new McpToolbox($toolset)))->execute(new ToolCall('call_13', 'demo_oops'));
+
+        $this->assertSame('An error occurred while executing tool "demo_oops".', $result->getResult());
     }
 
     public function testExecuteThrowsForAToolTheServerDoesNotAdvertise()
