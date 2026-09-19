@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-17T15:23:29Z
+
+Thanks for reporting and fixing this right away @simoheinonen! can you share how your tool looks like - the parameter profile? do you actually have nullable? what's your experience how harnesses use that?
