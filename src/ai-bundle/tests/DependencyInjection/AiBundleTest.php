@@ -9503,6 +9503,9 @@ class AiBundleTest extends TestCase
                     'scaleway' => [
                         'api_key' => 'scaleway_key_full',
                     ],
+                    'typesafe' => [
+                        'api_key' => 'typesafe_key_full',
+                    ],
                     'voyage' => [
                         'api_key' => 'voyage_key_full',
                     ],

@@ -94,6 +94,7 @@ use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\Factory as ScalewayFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\Factory as TransformersPhpFactory;
+use Symfony\AI\Platform\Bridge\TypeSafe\Factory as TypeSafeFactory;
 use Symfony\AI\Platform\Bridge\VertexAi\Factory as VertexAiFactory;
 use Symfony\AI\Platform\Bridge\Voyage\Factory as VoyageFactory;
 use Symfony\AI\Platform\Capability;
@@ -1095,6 +1096,30 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'deepseek']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('typesafe' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-type-safe-platform', TypeSafeFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('TypeSafe platform configuration requires "symfony/ai-type-safe-platform" package. Try running "composer require symfony/ai-type-safe-platform".');
+            }
+
+            $platformId = 'ai.platform.typesafe';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(TypeSafeFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.typesafe'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'typesafe']);
 
             $container->setDefinition($platformId, $definition);
 

@@ -1,0 +1,56 @@
+{
+    "name": "symfony/ai-type-safe-platform",
+    "description": "TypeSafe platform bridge for Symfony AI",
+    "license": "MIT",
+    "type": "symfony-ai-platform",
+    "keywords": [
+        "ai",
+        "bridge",
+        "classification",
+        "jev",
+        "platform",
+        "typesafe"
+    ],
+    "authors": [
+        {
+            "name": "Yoan Bernabeu",
+            "email": "yoan.bernabeu@gmail.com"
+        },
+        {
+            "name": "Symfony Community",
+            "homepage": "https://symfony.com/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/ai-platform": "^0.13",
+        "symfony/http-client": "^7.3|^8.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5.53"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Symfony\\AI\\Platform\\Bridge\\TypeSafe\\": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Symfony\\AI\\PHPStan\\": "../../../../../.phpstan/",
+            "Symfony\\AI\\Platform\\Bridge\\TypeSafe\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "thanks": {
+            "name": "symfony/ai",
+            "url": "https://github.com/symfony/ai"
+        }
+    }
+}

@@ -1,0 +1,64 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.typesafe.ai/v1/systemone",
+                "signature": "1af94c5718e2b2ceb7f6b61c599c4cf6",
+                "signature_v2": "e77cd2891a2bbc93a2189572bf2a9414",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "jev-latest",
+                    "state": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+                    "questions": {
+                        "department": {
+                            "type": "choice",
+                            "instructions": "Which team should handle this?",
+                            "criteria": {
+                                "billing": "Payment or subscription issues",
+                                "technical": "Bugs or integration problems",
+                                "sales": "Pricing or account questions"
+                            }
+                        },
+                        "frustration": {
+                            "type": "score",
+                            "instructions": "How frustrated does the customer appear?",
+                            "criteria": [
+                                "Calm, just stating facts",
+                                "Frustrated but civil",
+                                "Very angry, strong language"
+                            ]
+                        },
+                        "is_urgent": {
+                            "type": "noul",
+                            "instructions": "Does the message convey urgency or time-sensitivity?"
+                        }
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "server": [
+                        "istio-envoy"
+                    ],
+                    "content-length": [
+                        "457"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-typesafe-request-id": [
+                        "req_01a0b8e8be517711aa6e0a7d62bbed10"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"jev-1.13.0\",\"answers\":{\"department\":{\"type\":\"choice\",\"choice\":\"billing\",\"confidence\":0.51,\"probabilities\":{\"sales\":0.0,\"billing\":0.68,\"technical\":0.32}},\"frustration\":{\"type\":\"score\",\"score\":1.0,\"confidence\":1.0,\"legend\":{\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\",\"2\":\"Very angry, strong language\"},\"probabilities\":{\"0\":0.0,\"1\":1.0,\"2\":0.0}},\"is_urgent\":{\"type\":\"noul\",\"noul\":0.99}},\"usage\":{\"input_tokens\":428,\"output_tokens\":73}}"
+            }
+        }
+    ]
+}

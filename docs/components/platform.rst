@@ -148,6 +148,7 @@ Supported Models & Platforms
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
+  * `TypeSafe's Jev`_ with `TypeSafe`_ as Platform, see :doc:`platform/typesafe`
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
@@ -2036,6 +2037,8 @@ Code Examples
 .. _`OpenAI's Text Embeddings`: https://platform.openai.com/docs/guides/embeddings/embedding-models
 .. _`Voyage's Embeddings`: https://docs.voyageai.com/docs/embeddings
 .. _`Voyage`: https://www.voyageai.com/
+.. _`TypeSafe's Jev`: https://docs.typesafe.ai/models
+.. _`TypeSafe`: https://typesafe.ai/
 .. _`Mistral Embed`: https://www.mistral.ai/
 .. _`OpenAI's GPT Image`: https://platform.openai.com/docs/guides/image-generation
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
