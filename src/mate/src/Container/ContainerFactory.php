@@ -21,6 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * Factory for building a Symfony DI Container with extension configurations.
@@ -51,6 +52,8 @@ final class ContainerFactory
         $this->loadExtensions($container, $extensionDiscovery, $logger);
         $includes = $this->loadUserServices($container, $extensionDiscovery, $logger);
         $this->loadEnvironmentVariables($container);
+        // mate/config.php may have overridden the parameter with another relative path
+        $this->resolveDebugLogFile($container);
 
         // Remove the logger definition, it's not needed anymore'
         $container->removeDefinition('_build.logger');
@@ -69,6 +72,7 @@ final class ContainerFactory
         $loader = new PhpFileLoader($container, new FileLocator(\dirname(__DIR__)));
         $loader->load('default.config.php');
         $container->setParameter('mate.root_dir', $this->rootDir);
+        $this->resolveDebugLogFile($container);
 
         $userSuffix = (getenv('USER') ?: getenv('USERNAME')) ?: 'default';
         $userSuffix = preg_replace('/[^a-zA-Z0-9]/', '', $userSuffix);
@@ -204,6 +208,21 @@ final class ContainerFactory
                 ]);
             }
         }
+    }
+
+    /**
+     * Anchors a relative log file at the project root, so that every logger writes to the same
+     * file regardless of the working directory, and leaves an absolute path untouched.
+     */
+    private function resolveDebugLogFile(ContainerBuilder $container): void
+    {
+        $parameterBag = $container->getParameterBag();
+        $logFile = $parameterBag->unescapeValue($parameterBag->resolveValue($container->getParameter('mate.debug_log_file')));
+        if (!\is_string($logFile) || '' === $logFile) {
+            return;
+        }
+
+        $container->setParameter('mate.debug_log_file', str_replace('%', '%%', Path::makeAbsolute($logFile, $this->rootDir)));
     }
 
     private function loadEnvironmentVariables(ContainerBuilder $container): void
