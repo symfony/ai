@@ -159,4 +159,90 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
         $modelClient->request(new Gpt('gpt-4o'), ['messages' => []], []);
     }
+
+    public function testItSubmitsABatchOfInputsInsteadOfOneRequest()
+    {
+        $recorded = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$recorded): MockResponse {
+            $recorded[] = [$url, self::collectBody($options)];
+
+            return str_contains($url, '/v1/files')
+                ? new MockResponse('{"id": "file-abc"}')
+                : new MockResponse('{"id": "batch_123", "status": "validating"}');
+        });
+
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $result = $modelClient->request(new Gpt('gpt-4o-mini'), [
+            'first' => ['input' => [['role' => 'user', 'content' => 'What is the capital of France?']]],
+            'second' => ['input' => [['role' => 'user', 'content' => 'What is the capital of Germany?']]],
+        ], ['batch' => true, 'max_output_tokens' => 50]);
+
+        $this->assertSame('batch_123', $result->getData()['id']);
+        $this->assertSame('https://api.openai.com/v1/files', $recorded[0][0]);
+        $this->assertSame('https://api.openai.com/v1/batches', $recorded[1][0]);
+
+        // Each line is the request it would have been on its own, without the "batch" option itself.
+        $this->assertStringContainsString('{"custom_id":"first","method":"POST","url":"\/v1\/responses","body":{"max_output_tokens":50,"model":"gpt-4o-mini","input":[{"role":"user","content":"What is the capital of France?"}]}}', $recorded[0][1]);
+        $this->assertStringNotContainsString('"batch"', $recorded[0][1]);
+    }
+
+    public function testItRefusesToStreamABatch()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch is answered as a file hours later, so it cannot be streamed.');
+
+        $modelClient->request(new Gpt('gpt-4o-mini'), ['first' => ['input' => []]], ['batch' => true, 'stream' => true]);
+    }
+
+    public function testItRefusesASingleInputAsABatch()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch invocation expects an array of inputs, keyed by the identifier to report each result under, and not a single input.');
+
+        $modelClient->request(new Gpt('gpt-4o-mini'), ['input' => [['role' => 'user', 'content' => 'Hello']]], ['batch' => true]);
+    }
+
+    public function testItSaysWhatIsWrongWithAnInputThatIsNotARequest()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input "first" of the batch did not normalize into a request');
+
+        $modelClient->request(new Gpt('gpt-4o-mini'), ['first' => 'What is the capital of France?'], ['batch' => true]);
+    }
+
+    public function testItRefusesAnEmptyBatch()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch invocation expects a non-empty array of inputs, "array" given.');
+
+        $modelClient->request(new Gpt('gpt-4o-mini'), [], ['batch' => true]);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function collectBody(array $options): string
+    {
+        $body = $options['body'] ?? '';
+
+        if (!\is_callable($body)) {
+            return (string) $body;
+        }
+
+        $collected = '';
+
+        while ('' !== $chunk = $body(8192)) {
+            $collected .= $chunk;
+        }
+
+        return $collected;
+    }
 }

@@ -56,18 +56,9 @@ class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
-        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
-            $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
-            $options['text']['format'] = $schema;
-            $options['text']['format']['name'] = $schema['name'];
-            $options['text']['format']['type'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['type'];
-
-            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
-        }
-
         $requestOptions = [
             'headers' => ['Content-Type' => 'application/json'],
-            'body' => $this->encodeJsonBody(array_merge($options, ['model' => $model->getName()], $payload)),
+            'body' => $this->encodeJsonBody($this->createBody($model, $payload, $options)),
         ];
 
         if (null !== $this->apiKey) {
@@ -77,6 +68,28 @@ class ModelClient implements ModelClientInterface
         // The ChatGPT Codex backend streams SSE without a text/event-stream
         // content type, so use a stream parser that handles that framing too.
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, $requestOptions), $this->createStreamParser());
+    }
+
+    /**
+     * The request body of a single Responses API call, separate from sending it so a batch can build one per line.
+     *
+     * @param array<string, mixed> $payload
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    protected function createBody(Model $model, array $payload, array $options): array
+    {
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
+            $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
+            $options['text']['format'] = $schema;
+            $options['text']['format']['name'] = $schema['name'];
+            $options['text']['format']['type'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['type'];
+
+            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
+        return array_merge($options, ['model' => $model->getName()], $payload);
     }
 
     /**

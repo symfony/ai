@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `edenai` platform configuration for the Eden AI bridge, including the `ai.platform.job_client.edenai` service for its asynchronous speech-to-text jobs
  * Add `typesafe` platform configuration for the TypeSafe bridge
+ * Register the OpenAI job client as `ai.platform.job_client.openai`, tagged and autowired by argument name, so a stored batch handle can be resolved from a worker
  * Show agent calls, platform invocations and tool executions in the performance timeline of the profiler
  * Add support for configuring a tool execution strategy per agent via the `execution_strategy` option under `tools` (`sequential`, `fiber`, or a custom service ID)
  * Add an `mcp_server` tool entry to `ai.agent.<name>.tools`, exposing the tools of a remote MCP server to an agent by referencing a connection configured under `mcp.clients`

@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
@@ -128,8 +129,18 @@ class ResultConverter implements ResultConverterInterface
             return new StreamResult($this->convertStream($result));
         }
 
-        $data = $result->getData();
+        return $this->convertData($result->getData());
+    }
 
+    /**
+     * Converts an already decoded response body, e.g. one line of a finished batch's result file.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws ExceptionInterface
+     */
+    public function convertData(array $data): ResultInterface
+    {
         if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
             throw new ContentFilterException($data['error']['message']);
         }
