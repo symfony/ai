@@ -1,58 +1,64 @@
 Integration
 ===========
 
-This page explains how to make Symfony AI Mate discoverable to your coding agent.
+Symfony AI Mate (``vendor/bin/mate``) is a CLI that gives coding agents project-aware tools for a
+PHP application: the compiled container, the profiler and the logs. This page explains how your
+coding agent finds Mate, and how to make sure it runs Mate under the right PHP.
 
 There is no server to configure. Mate is a CLI, so any agent that can run a shell command can
-already use it. The whole integration problem is a different one: **an agent will not use a tool it
-does not know exists.** Everything below is about closing that gap.
+already use it. The integration problem is a different one: **an agent will not use a tool it does
+not know exists.**
 
-How agents find Mate
+How Agents Find Mate
 --------------------
 
-``mate init`` and ``mate discover`` write three things:
+``mate init`` and ``mate discover`` write three files:
 
 ``mate/AGENT_INSTRUCTIONS.md``
     The aggregated instructions of every enabled extension: which tools exist and when to reach for
-    them.
+    them. The whole file is rewritten on every ``discover``, so do not edit it. Put your own notes
+    into ``AGENTS.md`` outside the markers described below.
 
 A managed block in ``AGENTS.md``
-    A summary pointing at the CLI, delimited by ``<!-- BEGIN AI_MATE_INSTRUCTIONS -->`` and
-    ``<!-- END AI_MATE_INSTRUCTIONS -->``. Mate rewrites only what is between those markers, so
-    anything else in your ``AGENTS.md`` is preserved.
+    A summary that points at the CLI, delimited by ``<!-- BEGIN AI_MATE_INSTRUCTIONS -->`` and
+    ``<!-- END AI_MATE_INSTRUCTIONS -->``. Mate rewrites only what is between those markers.
+    Anything else in your ``AGENTS.md`` is preserved.
 
-``CLAUDE.md``
-    A managed ``@AGENTS.md`` import, because Claude Code reads ``CLAUDE.md`` and would otherwise
+A managed block in ``CLAUDE.md``
+    An ``@AGENTS.md`` import, delimited by ``<!-- BEGIN AI_MATE_AGENTS_IMPORT -->`` and
+    ``<!-- END AI_MATE_AGENTS_IMPORT -->``. Claude Code reads ``CLAUDE.md`` and would otherwise
     never see ``AGENTS.md``.
 
 On top of that, ``mate discover`` installs the Agent Skills of every enabled extension into
-``.agents/skills/`` and mirrors them into ``.claude/skills/``. See the Skills section of the
-:doc:`component documentation <../mate>` for the details.
+``.agents/skills/`` and mirrors them into ``.claude/skills/``. See :doc:`skills`.
 
-Re-run ``vendor/bin/mate discover`` whenever you add or remove an extension. With the Composer
-plugin installed this happens automatically after ``composer install`` and ``composer update``.
+Run ``vendor/bin/mate discover`` whenever you add or remove an extension. With the Composer plugin
+this happens automatically after ``composer install`` and ``composer update``.
 
-Per-agent notes
+Per-Agent Notes
 ---------------
 
 Claude Code
 ~~~~~~~~~~~
 
-Works out of the box after ``mate init``: it reads ``CLAUDE.md``, which imports ``AGENTS.md``, and
-loads skills from ``.claude/skills/``. Verify with:
+Works out of the box after ``mate init``. It reads ``CLAUDE.md``, which imports ``AGENTS.md``, and
+loads skills from ``.claude/skills/``. To verify, run this from a Claude Code session:
 
 .. code-block:: terminal
 
     $ vendor/bin/mate tools:list
 
-and ask Claude Code to run it. If it prefers its own approach, see `The agent ignores Mate`_.
+If it prefers its own approach, see :ref:`mate-agent-ignores-mate`.
 
 Codex
 ~~~~~
 
-Reads ``AGENTS.md`` and ``.agents/skills/`` directly. No wrapper and no configuration are needed
-any more: earlier versions of Mate shipped ``bin/codex`` wrappers because Codex does not read a
-project-local MCP configuration, but without an MCP server there is nothing left to inject.
+Reads ``AGENTS.md`` and ``.agents/skills/`` directly. No wrapper and no configuration are needed.
+
+.. note::
+
+    Mate versions before 0.13 shipped ``bin/codex`` wrappers to inject an MCP configuration. Mate
+    no longer runs an MCP server, so the wrappers are gone.
 
 GitHub Copilot, Cursor, OpenCode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,99 +73,73 @@ JetBrains AI Assistant
 Add the contents of ``mate/AGENT_INSTRUCTIONS.md`` to the project instructions, and allow the
 assistant to run ``vendor/bin/mate``.
 
-Choosing the PHP interpreter
+.. _mate-choosing-the-interpreter:
+
+Choosing the PHP Interpreter
 ----------------------------
 
 Mate runs under whichever ``php`` the agent's shell resolves. That is correct on a machine with a
-single PHP installation and no containers, and wrong in exactly the setups where Mate is most
+single PHP installation and no containers. It is wrong in exactly the setups where Mate is most
 useful:
 
-* **ddev, Docker, Lando** - the application, its database and its profiler cache live inside the
-  container. A ``mate`` started on the host may not reach them, or reads a different filesystem
-  entirely.
-* **Several PHP versions side by side** (brew, phpenv, distro packages) - the shell default is not
+* **ddev, Docker, Lando**: the application, its database and its profiler cache live inside the
+  container. A ``mate`` started on the host may not reach them, or reads a different filesystem.
+* **Several PHP versions side by side** (brew, phpenv, distro packages): the shell default is not
   necessarily the one the project targets.
-* **Extensions** - a tool that needs an extension the default binary lacks fails in a way that looks
-  like a bug in Mate.
+* **PHP extensions**: a tool that needs an extension the default binary lacks fails in a way that
+  looks like a bug in Mate.
 
-This matters more than for an ordinary console command, because Mate reads the profiler cache and
-the compiled container of *this* project. Run under the wrong interpreter, it either fails to start
-or reports something that is not the application under test.
+This matters more than for an ordinary console command. Mate reads the compiled container, the
+profiler cache and the logs of *this* project. Under the wrong interpreter it either fails, or it
+reports on something that is not the application under test.
 
-``mate init`` asks for this and records it, so in most cases you do not have to do anything: it
-proposes ``ddev exec vendor/bin/mate`` when a ``.ddev/`` directory is present, writes the answer to
-``mate.invocation`` in ``mate/config.php``, and materializes it into ``mate/AGENT_INSTRUCTIONS.md``
-and the managed ``AGENTS.md`` block. It also records the PHP version it ran under as
-``mate.php_version``, and Mate refuses to start under a different one rather than reporting on the
-wrong runtime.
-
-To change it later, edit the two parameters::
+``mate init`` asks which command your coding agent should use and writes two parameters::
 
     // mate/config.php
     $container->parameters()
-        ->set('mate.invocation', 'docker compose exec php vendor/bin/mate')
+        ->set('mate.invocation', 'ddev exec vendor/bin/mate')
         ->set('mate.php_version', '8.3')
     ;
 
-Then run ``vendor/bin/mate discover`` so the instructions pick the new command up.
+``mate.invocation``
+    The full command the agent must use, wrapper included. It is written into
+    ``mate/AGENT_INSTRUCTIONS.md`` and the managed ``AGENTS.md`` block, so the prefix ends up where
+    the agent reads it.
 
-Troubleshooting
----------------
+    When a ``.ddev/`` directory is present, ``mate init`` proposes ``ddev exec vendor/bin/mate``.
+    Answering with a wrapper alone is enough: ``symfony php`` is recorded as
+    ``symfony php vendor/bin/mate``. The default is the plain ``vendor/bin/mate``.
 
-.. _`The agent ignores Mate`:
+``mate.php_version``
+    The PHP version the project runs on, as ``major.minor``. When ``mate.invocation`` wraps the
+    binary, ``mate init`` runs ``php`` through that wrapper to find out which interpreter it
+    reaches. If the wrapper cannot be reached, ``init`` warns and records the version of the
+    current process. Check the value by hand in that case.
 
-The agent ignores Mate
-~~~~~~~~~~~~~~~~~~~~~~
+    Mate refuses to start under a different version and names ``mate.invocation`` in the error:
 
-The most common failure, and it is a discovery problem rather than a technical one.
+    .. code-block:: terminal
 
-1. **Confirm the instructions exist**:
+        $ vendor/bin/mate tools:list
 
-   .. code-block:: terminal
+         [ERROR] Mate is running under PHP "8.4.15" but this project expects PHP "8.3".
+                 Run it as "ddev exec vendor/bin/mate".
 
-       $ vendor/bin/mate discover
+    Set the parameter to ``null`` to disable the check.
 
-   Then check that ``AGENTS.md`` contains the managed block, and that ``CLAUDE.md`` imports it.
+    ``init``, ``discover``, ``list``, ``help`` and ``completion`` only print a warning and still
+    run. ``init`` writes this configuration in the first place. ``discover`` reads Composer
+    metadata and runs unattended after every ``composer install``. The others never read the
+    application. The warning makes a wrong interpreter visible before it reaches a command that
+    does refuse.
 
-2. **Confirm the skills are installed**:
+After changing either parameter, run ``vendor/bin/mate discover`` so the instructions pick the new
+command up.
 
-   .. code-block:: terminal
+.. caution::
 
-       $ vendor/bin/mate skills:list
-
-   A skill in state ``disabled`` is not installed; an empty list means no enabled extension ships
-   skills.
-
-3. **Confirm the agent reads the file it needs.** Claude Code needs ``CLAUDE.md``, Codex needs
-   ``AGENTS.md``. If you keep your own instruction file, it has to import one of them.
-
-4. **Say it explicitly once.** Asking the agent to run ``vendor/bin/mate tools:list`` is enough to
-   establish that the tools exist; the instructions carry it from there.
-
-The command works, the tools are empty
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: terminal
-
-    $ vendor/bin/mate debug:extensions
-    $ vendor/bin/mate debug:capabilities
-
-If an extension shows as ``[not loaded]``, the package is missing or failed to load. If your own
-tools under ``mate/src/`` are absent, run ``composer dump-autoload``: Mate resolves the class name
-from the file and skips files whose class cannot be autoloaded.
-
-Wrong PHP or wrong environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: terminal
-
-    $ vendor/bin/mate tools:call server-info
-
-This reports the PHP version, OS and loaded extensions of the runtime Mate is using. If that is not
-the runtime serving your application, see `Choosing the PHP interpreter`_.
-
-If Mate refuses to start with a PHP version mismatch instead, that is the same problem caught
-earlier: run the command it names, or correct ``mate.php_version`` if the recorded value is the
-wrong one.
-
-For general debugging tips, see the :doc:`troubleshooting` guide.
+    With ``--no-interaction``, ``mate init`` does not ask. It records ``vendor/bin/mate`` and the
+    PHP version of the process that runs ``init``. Only a ``.ddev/`` directory changes that default.
+    Running ``init`` again does not correct it, because the question is skipped once
+    ``mate/config.php`` exists. For a project in Docker Compose, Lando or a similar setup, edit
+    both parameters by hand and run ``vendor/bin/mate discover``.

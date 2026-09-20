@@ -64,10 +64,13 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [SQLite Store](https://symfony.com/doc/current/ai/components/store/sqlite.html): SQLite-based vector store
 - [Supabase Bridge](https://symfony.com/doc/current/ai/components/store/supabase.html): Supabase vector store integration
 - [Chat Component](https://symfony.com/doc/current/ai/components/chat.html): High-level API for conversations with agents and message history persistence
-- [Mate Component](https://symfony.com/doc/current/ai/components/mate.html): Command-line assistant enabling AI assistants to interact with PHP/Symfony applications
+- [Mate Component](https://symfony.com/doc/current/ai/components/mate.html): Command-line assistant giving coding agents project-aware tools for PHP/Symfony applications
+- [Mate Integration](https://symfony.com/doc/current/ai/components/mate/integration.html): How coding agents find Mate, and choosing the PHP interpreter
+- [Mate Extensions](https://symfony.com/doc/current/ai/components/mate/extensions.html): The tools of the Symfony and Monolog extensions (symfony-services, symfony-profiler-list, monolog-search, ...) with their parameters, resources and configuration
+- [Mate Skills](https://symfony.com/doc/current/ai/components/mate/skills.html): Installing, overriding and validating Agent Skills shipped by extensions
+- [Mate Commands](https://symfony.com/doc/current/ai/components/mate/commands.html): Reference of the mate CLI's own commands (init, discover, tools:call, skills:*, debug:*) and their options, not the parameters of individual tools
 - [Creating Extensions](https://symfony.com/doc/current/ai/components/mate/creating-extensions.html): Building custom extensions for Mate
-- [Mate Integration](https://symfony.com/doc/current/ai/components/mate/integration.html): Integrating Mate with AI assistants
-- [Mate Troubleshooting](https://symfony.com/doc/current/ai/components/mate/troubleshooting.html): Troubleshooting Mate setup and connections
+- [Mate Troubleshooting](https://symfony.com/doc/current/ai/components/mate/troubleshooting.html): Troubleshooting Mate setup, discovery and tool calls
 - [AI Bundle](https://symfony.com/doc/current/ai/bundles/ai-bundle.html): Symfony framework integration for Platform, Agent, Store, and Chat
 - [MCP Bundle](https://symfony.com/doc/current/ai/bundles/mcp-bundle.html): Symfony integration for the official MCP SDK
 
