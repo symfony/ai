@@ -1,0 +1,62 @@
+---------------------------------------------------------------------------
+
+by aszenz at 2026-08-11T23:10:21Z
+
+@OskarStark @chr-hertel
+
+Could I get a review for this ?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-08-11T23:20:08Z
+
+didn't have time to look into that AWS feature yet to also set it up for myself:
+does bedrock treat this as separate product? is the model catalog different from the main bedrock setup?
+i wonder if we just bring it to the `symfony/ai-bedrock-platform` and have the dependency to open-responses optional
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-08-11T23:36:37Z
+
+> does bedrock treat this as separate product?
+
+they recommend mantle going forward since it works with any openai compatible model
+
+> is the model catalog different from the main bedrock setup?
+
+yes, it supports openai models too and various open one's in addition to also support anthropic one's
+
+> i wonder if we just bring it to the `symfony/ai-bedrock-platform` and have the dependency to open-responses optional
+
+not sure about this, the way i see it's a new endpoint for bedrock with a different catalog + api key support + dashboard console.
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-08-20T13:01:42Z
+
+@chr-hertel @wachterjohannes
+
+Can i get a review here ?
+
+Our team is using aws bedrock, and I have some more PRs targeting this platform.
+
+---------------------------------------------------------------------------
+
+by aszenz at 2026-08-26T15:34:41Z
+
+> Hey @aszenz, just double checked with the AWS docs and mantle is in my understanding a different inference engine of bedrock, therefore please merge this into the existing bridge. However, we should be explicit in the factory path + open-responses/generic would be optional dependencies only required if you use the mantle path.
+
+Thanks @chr-hertel
+
+Done, merged into existing bedrock platform. Also added support for invoking anthropic models using the mantle engine and added the new cassette tests.
+
+> on top, please double check the added examples, do the all run on your end with:
+> ```
+> cd examples/
+> composer u && ../link
+> ./runner bedrock --filter=mantle
+> ```
+
+These failures appear to have been caused by regional model availability. I standardized the examples on models available in us-east-1, and all examples now pass on my end.
+
+Note: Bedrock API keys are region-scoped, so you must select us-east-1 before generating the key and set AWS_DEFAULT_REGION=us-east-1. Standard AWS credentials via SSO also work, given the right IAM permissions.
