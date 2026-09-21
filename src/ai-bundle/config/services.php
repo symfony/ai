@@ -48,6 +48,7 @@ use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
 use Symfony\AI\Platform\Bridge\Higgsfield\Contract\HiggsfieldContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog as HuggingFaceModelCatalog;
+use Symfony\AI\Platform\Bridge\Jev\ModelCatalog as JevModelCatalog;
 use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
 use Symfony\AI\Platform\Bridge\Meta\ModelCatalog as MetaModelCatalog;
 use Symfony\AI\Platform\Bridge\MiniMax\Contract\MiniMaxContract;
@@ -144,6 +145,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
+        ->set('ai.platform.model_catalog.jev', JevModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
         ->set('ai.platform.model_catalog.meta', MetaModelCatalog::class)
         ->set('ai.platform.model_catalog.minimax', MiniMaxModelCatalog::class)

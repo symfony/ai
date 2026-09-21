@@ -84,6 +84,7 @@ use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
 use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
+use Symfony\AI\Platform\Bridge\Jev\Factory as JevFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\Factory as LmStudioFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\MiniMaxJobClient;
@@ -827,6 +828,30 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'huggingface']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('jev' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-jev-platform', JevFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Jev platform configuration requires "symfony/ai-jev-platform" package. Try running "composer require symfony/ai-jev-platform".');
+            }
+
+            $platformId = 'ai.platform.jev';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(JevFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.jev'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'jev']);
 
             $container->setDefinition($platformId, $definition);
 

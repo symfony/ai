@@ -160,6 +160,9 @@ Supported Models & Platforms
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
   * Fireworks' reranking models with `Fireworks`_ as Platform
   * Llama-Rank reranking models with `Together`_ as Platform (dedicated endpoint required)
+  * `Jev`_ with `TypeSafe`_ as Platform (typed decisions: choice, noul, score)
+
+  For complete Jev setup and usage, see :doc:`platform/jev`.
 * **Voice Models**
   * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
@@ -2258,6 +2261,8 @@ Code Examples
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
 .. _`Mistral OCR`: https://docs.mistral.ai/api/endpoint/ocr
 .. _`HuggingFace`: https://huggingface.co/
+.. _`Jev`: https://docs.typesafe.ai/
+.. _`TypeSafe`: https://docs.typesafe.ai/
 .. _`Mercure`: https://mercure.rocks/
 .. _`Streaming Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/stream.php
 .. _`Streaming GPT`: https://github.com/symfony/ai/blob/main/examples/openai/stream.php

@@ -1,0 +1,6 @@
+{
+    "detail": {
+        "error_type": "authentication_error",
+        "message": "Must supply an API key! Set the `Authorization` header to `Bearer <key>`."
+    }
+}

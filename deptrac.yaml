@@ -205,6 +205,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\HuggingFace\\.*
+    - name: JevPlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\Jev\\.*
     - name: LmStudioPlatform
       collectors:
         - type: classLike
@@ -518,6 +522,8 @@ deptrac:
     HiggsfieldPlatform:
       - PlatformComponent
     HuggingFacePlatform:
+      - PlatformComponent
+    JevPlatform:
       - PlatformComponent
     LmStudioPlatform:
       - PlatformComponent

@@ -10070,6 +10070,9 @@ class AiBundleTest extends TestCase
                     'huggingface' => [
                         'api_key' => 'huggingface_key_full',
                     ],
+                    'jev' => [
+                        'api_key' => 'jev_key_full',
+                    ],
                     'openai' => [
                         'api_key' => 'sk-openai_key_full',
                     ],

@@ -19,6 +19,7 @@
         "higgsfield",
         "huggingface",
         "inference",
+        "jev",
         "litellm",
         "llama",
         "lmstudio",

@@ -66,6 +66,7 @@
         "symfony/ai-generic-platform": "^0.13",
         "symfony/ai-higgsfield-platform": "^0.13",
         "symfony/ai-hugging-face-platform": "^0.13",
+        "symfony/ai-jev-platform": "dev-main",
         "symfony/ai-lm-studio-platform": "^0.13",
         "symfony/ai-manticore-search-store": "^0.13",
         "symfony/ai-maria-db-store": "^0.13",
@@ -134,6 +135,12 @@
         },
         "sort-packages": true
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Jev"
+        }
+    ],
     "extra": {
         "thanks": {
             "name": "symfony/ai",

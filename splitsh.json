@@ -64,6 +64,7 @@
         "ai-generic-platform": "src/platform/src/Bridge/Generic",
         "ai-higgsfield-platform": "src/platform/src/Bridge/Higgsfield",
         "ai-hugging-face-platform": "src/platform/src/Bridge/HuggingFace",
+        "ai-jev-platform": "src/platform/src/Bridge/Jev",
         "ai-lm-studio-platform": "src/platform/src/Bridge/LmStudio",
         "ai-meta-platform": "src/platform/src/Bridge/Meta",
         "ai-mini-max-platform": "src/platform/src/Bridge/MiniMax",

@@ -40,6 +40,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Generic             | `symfony/ai-generic-platform`             |
 | Google Gemini       | `symfony/ai-gemini-platform`              |
 | Hugging Face        | `symfony/ai-hugging-face-platform`        |
+| Jev                 | `symfony/ai-jev-platform`                 |
 | LM Studio           | `symfony/ai-lm-studio-platform`           |
 | Meta Llama          | `symfony/ai-meta-platform`                |
 | MiniMax             | `symfony/ai-mini-max-platform`            |

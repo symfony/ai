@@ -49,6 +49,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/generic'))
                     ->append($import('platform/higgsfield'))
                     ->append($import('platform/huggingface'))
+                    ->append($import('platform/jev'))
                     ->append($import('platform/lmstudio'))
                     ->append($import('platform/minimax'))
                     ->append($import('platform/mistral'))

@@ -12,6 +12,7 @@ CHANGELOG
  * Add `together` platform configuration for chat, embeddings, image generation, text-to-speech, speech-to-text and reranking
  * Add `venice` platform configuration for chat, embeddings, image generation and editing, text-to-speech, speech-to-text and video generation
  * Add `higgsfield` platform configuration for asynchronous image and video generation
+ * Add `jev` platform configuration for the Jev (TypeSafe) bridge
  * Register `ai.platform.job_runner` (autowired as `Platform\Job\JobRunner`) using the application clock and, for a platform running asynchronous jobs, its `ai.platform.job_client.<name>` client, built by the bridge factory and tagged `ai.platform.job_client`; render an asynchronous job in the profiler as the handle it carries instead of as a result
 
 0.13
