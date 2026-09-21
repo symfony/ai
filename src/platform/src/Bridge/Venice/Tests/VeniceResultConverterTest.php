@@ -12,12 +12,14 @@
 namespace Symfony\AI\Platform\Bridge\Venice\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Venice\VeniceJobClient;
 use Symfony\AI\Platform\Bridge\Venice\VeniceResultConverter;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -255,16 +257,35 @@ final class VeniceResultConverterTest extends TestCase
         (new VeniceResultConverter())->convert(new RawHttpResult($response));
     }
 
-    public function testConvertVideoRetrieveToBinary()
+    public function testConvertVideoQueueToJobHandle()
     {
         $httpClient = new MockHttpClient([
-            new JsonMockResponse([], ['response_headers' => ['content-type' => 'video/mp4']]),
+            new JsonMockResponse(['model' => 'seedance-1-5-pro-text-to-video', 'queue_id' => 'q-1']),
         ], 'https://api.venice.ai/api/v1/');
 
-        $response = $httpClient->request('POST', 'video/retrieve');
+        $response = $httpClient->request('POST', 'video/queue');
         $converted = (new VeniceResultConverter())->convert(new RawHttpResult($response));
 
-        $this->assertInstanceOf(BinaryResult::class, $converted);
+        $this->assertInstanceOf(JobResult::class, $converted);
+        $this->assertSame('q-1', $converted->getContent()->getId());
+        $this->assertSame('seedance-1-5-pro-text-to-video', $converted->getContent()->get('queue_model'));
+        $this->assertSame('venice', $converted->getContent()->getProvider());
+        $this->assertSame(VeniceJobClient::DEFAULT_MAX_DURATION, $converted->getContent()->getMaxDuration());
+        $this->assertSame(VeniceJobClient::DEFAULT_POLL_INTERVAL, $converted->getContent()->getPollInterval());
+    }
+
+    public function testConvertVideoQueueThrowsWithoutQueueIdentifier()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['model' => 'seedance-1-5-pro-text-to-video']),
+        ], 'https://api.venice.ai/api/v1/');
+
+        $response = $httpClient->request('POST', 'video/queue');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The Venice response does not contain a queue identifier.');
+
+        (new VeniceResultConverter())->convert(new RawHttpResult($response));
     }
 
     public function testConvertImageGenerationWithMultipleImagesReturnsChoiceResult()

@@ -30,20 +30,23 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 final class JobHandle implements \JsonSerializable
 {
     /**
-     * @param string               $id          the job identifier as issued by the provider
-     * @param array<string, mixed> $data        provider-specific data needed to poll and fetch the job
-     * @param string|null          $provider    the platform-level provider name, set by the job client
-     *                                          of the bridge that creates the handle
-     * @param int|null             $maxDuration how long, in seconds, this kind of job may reasonably
-     *                                          take at this provider - the bridge knows that video
-     *                                          generation runs for minutes where speech takes seconds,
-     *                                          and a caller usually does not
+     * @param string               $id           the job identifier as issued by the provider
+     * @param array<string, mixed> $data         provider-specific data needed to poll and fetch the job
+     * @param string|null          $provider     the platform-level provider name, set by the job client
+     *                                           of the bridge that creates the handle
+     * @param int|null             $maxDuration  how long, in seconds, this kind of job may reasonably
+     *                                           take at this provider - the bridge knows that video
+     *                                           generation runs for minutes where speech takes seconds,
+     *                                           and a caller usually does not
+     * @param float|null           $pollInterval how often, in seconds, it is worth asking this provider
+     *                                           about this kind of job - the same knowledge, on the other axis
      */
     public function __construct(
         private readonly string $id,
         private readonly array $data = [],
         private readonly ?string $provider = null,
         private readonly ?int $maxDuration = null,
+        private readonly ?float $pollInterval = null,
     ) {
         if ('' === $this->id) {
             throw new InvalidArgumentException('A job handle needs a non-empty job identifier.');
@@ -51,6 +54,10 @@ final class JobHandle implements \JsonSerializable
 
         if (null !== $this->maxDuration && $this->maxDuration < 1) {
             throw new InvalidArgumentException(\sprintf('The maximum duration of a job must be at least one second, "%d" given.', $this->maxDuration));
+        }
+
+        if (null !== $this->pollInterval && $this->pollInterval <= 0) {
+            throw new InvalidArgumentException(\sprintf('The poll interval of a job must be greater than zero, "%s" given.', $this->pollInterval));
         }
     }
 
@@ -92,17 +99,26 @@ final class JobHandle implements \JsonSerializable
     }
 
     /**
+     * How often it is worth polling this kind of job, in seconds - or null when the bridge has no
+     * expectation. Honoured by a {@see JobRunner} unless its caller decided otherwise.
+     */
+    public function getPollInterval(): ?float
+    {
+        return $this->pollInterval;
+    }
+
+    /**
      * Returns a copy with the given data merged into the existing one.
      *
      * @param array<string, mixed> $data
      */
     public function withData(array $data): self
     {
-        return new self($this->id, [...$this->data, ...$data], $this->provider, $this->maxDuration);
+        return new self($this->id, [...$this->data, ...$data], $this->provider, $this->maxDuration, $this->pollInterval);
     }
 
     /**
-     * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null}
+     * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null, poll_interval: float|null}
      */
     public function toArray(): array
     {
@@ -111,6 +127,7 @@ final class JobHandle implements \JsonSerializable
             'provider' => $this->provider,
             'data' => $this->data,
             'max_duration' => $this->maxDuration,
+            'poll_interval' => $this->pollInterval,
         ];
     }
 
@@ -145,8 +162,19 @@ final class JobHandle implements \JsonSerializable
             throw new InvalidArgumentException(\sprintf('The "max_duration" key of a serialized job handle must be an integer or null, "%s" given.', get_debug_type($maxDuration)));
         }
 
+        $pollInterval = $handle['poll_interval'] ?? null;
+
+        // A handle serialized as JSON brings a whole-number interval back as an int.
+        if (\is_int($pollInterval)) {
+            $pollInterval = (float) $pollInterval;
+        }
+
+        if (null !== $pollInterval && !\is_float($pollInterval)) {
+            throw new InvalidArgumentException(\sprintf('The "poll_interval" key of a serialized job handle must be a number or null, "%s" given.', get_debug_type($pollInterval)));
+        }
+
         /* @var array<string, mixed> $data */
-        return new self($id, $data, $provider, $maxDuration);
+        return new self($id, $data, $provider, $maxDuration, $pollInterval);
     }
 
     /**
@@ -176,7 +204,7 @@ final class JobHandle implements \JsonSerializable
     }
 
     /**
-     * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null}
+     * @return array{id: string, provider: string|null, data: array<string, mixed>, max_duration: int|null, poll_interval: float|null}
      */
     public function jsonSerialize(): array
     {

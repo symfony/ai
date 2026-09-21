@@ -176,7 +176,7 @@ Supported Models & Platforms
   * `Decart T2I`_ with `Decart`_  as Platform
   * `Decart T2V`_ with `Decart`_  as Platform
   * Image generation with `Together`_ as Platform
-  * Image and video generation with `Higgsfield`_ as Platform (asynchronous, poll-based)
+  * Image and video generation with `Higgsfield`_ as Platform (asynchronous, job-based)
   * `Venice T2I`_ with `Venice`_ as Platform
   * `Venice T2V`_ with `Venice`_ as Platform
 
@@ -1110,6 +1110,8 @@ Code Examples
 * `PDF Input with GPT`_
 * `PDF Input with Claude`_
 
+.. _platform-asynchronous-jobs:
+
 Asynchronous Jobs
 -----------------
 
@@ -1185,12 +1187,32 @@ Before polling, the runner asks the client whether the handle is one it can reso
 bridge's own judgement. A handle the client turns down raises an ``InvalidArgumentException`` rather
 than a request that fails halfway.
 
+How *often* a job is worth asking about splits the same way, and for the same reason: a generation
+running for ten minutes is not answered any sooner by polling it every second, and the bridge is
+what knows that. So a handle states its interval too, and the runner honours it — one Higgsfield
+generation is polled every five seconds, one Replicate prediction every second, through the same
+runner and without the caller knowing either number. State a different one per call, or per runner,
+exactly as with the budget::
+
+    $result = $runner->wait($jobClient, $handle, pollInterval: 0.5);
+
+Both of those are the provider's knowledge. How many requests a job is worth is not — that is a
+caller's concern (a rate limit, an API bill, a request that may spend three round trips and no
+more), so a job cannot state it and a ``maxPolls`` ceiling caps whatever the budget and the interval
+would otherwise allow::
+
+    // at most three requests, however much time they leave unspent
+    $result = $runner->wait($jobClient, $handle, maxPolls: 3);
+
+A ceiling never buys polls the budget does not pay for: whichever of the two runs out first ends the
+wait, and the :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException` says which one it was.
+
 In a Symfony application a runner using the application clock is available as
 ``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It
-carries no budget of its own, so the same shared service serves a job finishing in seconds and one
-running for minutes. Each job-capable platform also registers its client as
-``ai.platform.job_client.<name>``, autowired by the platform name as argument name - so the argument
-of a MiniMax job client has to be called ``$minimax``::
+carries no budget, interval or ceiling of its own, so the same shared service serves a job finishing
+in seconds and one running for minutes, each at the cadence its bridge states. Each job-capable
+platform also registers its client as ``ai.platform.job_client.<name>``, autowired by the platform
+name as argument name - so the argument of a MiniMax job client has to be called ``$minimax``::
 
     public function __construct(
         private JobRunner $jobRunner,
@@ -1205,6 +1227,9 @@ of a MiniMax job client has to be called ``$minimax``::
 
         // or bound it to what a request can afford
         $this->jobRunner->wait($this->minimax, $handle, maxDuration: 5);
+
+        // or to what it may spend
+        $this->jobRunner->wait($this->minimax, $handle, maxPolls: 3);
     }
 
 An application holding handles of several providers picks the client by the name the handle carries,
@@ -1239,14 +1264,21 @@ non-terminal, so a provider adding a state does not abort a running job.
 .. note::
 
     Only bridges whose provider works this way return a ``JobResult``; everything else answers
-    synchronously as before. Currently this is the MiniMax bridge, for video generation and
-    asynchronous speech synthesis.
+    synchronously as before. Currently these are:
+
+    * MiniMax, for video generation and asynchronous speech synthesis
+    * Higgsfield, for every image and video generation
+    * Venice, for video generation
+    * Replicate, for every prediction
 
 Code Examples
 ~~~~~~~~~~~~~
 
 * `Asynchronous Video Generation with MiniMax`_
 * `Resuming a MiniMax Video Job`_
+* `Asynchronous Image Generation with Higgsfield`_
+* `Asynchronous Video Generation with Venice`_
+* `Asynchronous Text Generation with Replicate`_
 
 Audio Processing
 ----------------
@@ -2267,6 +2299,9 @@ Code Examples
 .. _`Audio Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-input.php
 .. _`Asynchronous Video Generation with MiniMax`: https://github.com/symfony/ai/blob/main/examples/minimax/text-to-video.php
 .. _`Resuming a MiniMax Video Job`: https://github.com/symfony/ai/blob/main/examples/minimax/video-job-resume.php
+.. _`Asynchronous Image Generation with Higgsfield`: https://github.com/symfony/ai/blob/main/examples/higgsfield/text-to-image.php
+.. _`Asynchronous Video Generation with Venice`: https://github.com/symfony/ai/blob/main/examples/venice/text-to-video.php
+.. _`Asynchronous Text Generation with Replicate`: https://github.com/symfony/ai/blob/main/examples/replicate/chat-llama.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php

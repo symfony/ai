@@ -50,6 +50,7 @@ use Symfony\AI\Platform\Bridge\Deepgram\Factory as DeepgramFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
+use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
@@ -4634,6 +4635,52 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
     }
 
+    public function testVeniceRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'venice' => [
+                        'api_key' => 'venice_key',
+                        'endpoint' => 'https://api.venice.ai/api/v2/',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.venice');
+
+        $this->assertSame([VeniceFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('venice_key', $definition->getArgument(0));
+        $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
+        $this->assertSame([['key' => 'venice']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $venice'));
+    }
+
+    public function testHiggsfieldRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'higgsfield' => [
+                        'api_key' => 'higgsfield_key',
+                        'api_secret' => 'higgsfield_secret',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.higgsfield');
+
+        $this->assertSame([HiggsfieldFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('higgsfield_key', $definition->getArgument(0));
+        $this->assertSame('higgsfield_secret', $definition->getArgument(1));
+        $this->assertSame([['key' => 'higgsfield']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $higgsfield'));
+    }
+
     /**
      * A worker resolving a stored handle holds the handle, not the invocation that produced it, so
      * the job client is reachable on its own and tagged with the provider name the handle carries.
@@ -9203,17 +9250,15 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -9241,17 +9286,15 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -9279,17 +9322,15 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('foo', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],
@@ -9317,17 +9358,15 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
         $this->assertSame('scoped_http_client', (string) $definition->getArgument(2));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(3));
-        $this->assertSame(ClockInterface::class, (string) $definition->getArgument(3));
+        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
-        $this->assertSame('ai.platform.contract.venice', (string) $definition->getArgument(4));
-        $this->assertInstanceOf(Reference::class, $definition->getArgument(5));
-        $this->assertSame('event_dispatcher', (string) $definition->getArgument(5));
+        $this->assertSame('event_dispatcher', (string) $definition->getArgument(4));
 
         $this->assertSame([
             ['interface' => PlatformInterface::class],

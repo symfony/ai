@@ -115,6 +115,62 @@
                 "body_format": "json",
                 "body": "{\"id\":\"hv0qg32bahrnc0d0khcrnnhy84\",\"model\":\"meta/meta-llama-3-8b-instruct\",\"version\":\"hidden\",\"input\":{\"prompt\":\"\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\nTina has one brother and one sister. How many sisters do Tina's siblings have?\\u003c|eot_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e\",\"system\":\"\\u003c|begin_of_text|\\u003e\\u003c|start_header_id|\\u003esystem\\u003c|end_header_id|\\u003e\\n\\nYou are a helpful assistant.\\u003c|eot_id|\\u003e\"},\"logs\":\"Random seed used: `21802`\\nNote: Random seed will not impact output if greedy decoding is used.\\nFormatted prompt: `\\u003c|begin_of_text|\\u003e\\u003c|start_header_id|\\u003esystem\\u003c|end_header_id|\\u003e\\n\\nYou are a helpful assistant\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\nTina has one brother and one sister. How many sisters do Tina's siblings have?\\u003c|eot_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e`Random seed used: `21802`\\nNote: Random seed will not impact output if greedy decoding is used.\\nFormatted prompt: `\\u003c|begin_of_text|\\u003e\\u003c|start_header_id|\\u003esystem\\u003c|end_header_id|\\u003e\\n\\nYou are a helpful assistant\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\nTina has one brother and one sister. How many sisters do Tina's siblings have?\\u003c|eot_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e`\",\"output\":[\"\\n\\n\",\"That\",\"'s\",\" a\",\" clever\",\" question\",\"!\",\" Since\",\" Tina\",\" has\",\" one\",\" brother\",\" and\",\" one\",\" sister\",\",\",\" that\",\" means\",\" her\",\" brother\",\" and\",\" sister\",\" are\",\" her\",\" siblings\",\".\",\" And\",\" since\",\" Tina\",\" has\",\" a\",\" brother\",\" and\",\" a\",\" sister\",\",\",\" her\",\" brother\",\" and\",\" sister\",\" don\",\"'t\",\" have\",\" any\",\" sisters\",\".\",\" They\",\" have\",\" a\",\" brother\",\" and\",\" a\",\" sister\",\" (\",\"T\",\"ina\",\"),\",\" but\",\" no\",\" sisters\",\" of\",\" their\",\" own\",\".\\n\\n\",\"So\",\",\",\" the\",\" answer\",\" is\",\":\",\" Tina\",\"'s\",\" siblings\",\" have\",\" \",\"0\",\" sisters\",\".\"],\"data_removed\":false,\"error\":null,\"source\":\"api\",\"status\":\"succeeded\",\"created_at\":\"2026-09-13T19:58:12.82Z\",\"started_at\":\"2026-09-13T19:58:12.91369644Z\",\"completed_at\":\"2026-09-13T19:58:13.903671892Z\",\"urls\":{\"cancel\":\"https://api.replicate.com/v1/predictions/hv0qg32bahrnc0d0khcrnnhy84/cancel\",\"get\":\"https://api.replicate.com/v1/predictions/hv0qg32bahrnc0d0khcrnnhy84\",\"stream\":\"https://stream-b.svc.rno3.c.replicate.net/v1/streams/lh7vdpszu77ibeozf2xwka23funrtl45japsicrm5jvzcjqrch2a\",\"web\":\"https://replicate.com/p/hv0qg32bahrnc0d0khcrnnhy84\"},\"metrics\":{\"batch_size\":116.64877274490865,\"input_token_count\":46,\"output_token_count\":79,\"predict_time\":0.989975451,\"predict_time_share\":0.008480414981847092,\"time_to_first_token\":0.039417819,\"tokens_per_second\":83.10911126322954,\"total_time\":1.083671892}}\n"
             }
+        },
+        {
+            "request": {
+                "method": "GET",
+                "url": "https://api.replicate.com/v1/predictions/hv0qg32bahrnc0d0khcrnnhy84",
+                "signature": "3a8f6f49ec0beef7b0e4981ca0fa8b70",
+                "signature_v2": "d08f6da68be5806d20a237081f26bd82",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json; charset=utf-8"
+                    ],
+                    "ratelimit-remaining": [
+                        "59999"
+                    ],
+                    "ratelimit-reset": [
+                        "1"
+                    ],
+                    "x-xss-protection": [
+                        "1; mode=block"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000"
+                    ],
+                    "expect-ct": [
+                        "max-age=86400, enforce"
+                    ],
+                    "referrer-policy": [
+                        "same-origin"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "x-frame-options": [
+                        "SAMEORIGIN"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"hv0qg32bahrnc0d0khcrnnhy84\",\"model\":\"meta/meta-llama-3-8b-instruct\",\"version\":\"hidden\",\"input\":{\"prompt\":\"\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\nTina has one brother and one sister. How many sisters do Tina's siblings have?\\u003c|eot_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e\",\"system\":\"\\u003c|begin_of_text|\\u003e\\u003c|start_header_id|\\u003esystem\\u003c|end_header_id|\\u003e\\n\\nYou are a helpful assistant.\\u003c|eot_id|\\u003e\"},\"logs\":\"Random seed used: `21802`\\nNote: Random seed will not impact output if greedy decoding is used.\\nFormatted prompt: `\\u003c|begin_of_text|\\u003e\\u003c|start_header_id|\\u003esystem\\u003c|end_header_id|\\u003e\\n\\nYou are a helpful assistant\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\nTina has one brother and one sister. How many sisters do Tina's siblings have?\\u003c|eot_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e`Random seed used: `21802`\\nNote: Random seed will not impact output if greedy decoding is used.\\nFormatted prompt: `\\u003c|begin_of_text|\\u003e\\u003c|start_header_id|\\u003esystem\\u003c|end_header_id|\\u003e\\n\\nYou are a helpful assistant\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003euser\\u003c|end_header_id|\\u003e\\n\\nTina has one brother and one sister. How many sisters do Tina's siblings have?\\u003c|eot_id|\\u003e\\n\\n\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e\\u003c|eot_id|\\u003e\\u003c|start_header_id|\\u003eassistant\\u003c|end_header_id|\\u003e`\",\"output\":[\"\\n\\n\",\"That\",\"'s\",\" a\",\" clever\",\" question\",\"!\",\" Since\",\" Tina\",\" has\",\" one\",\" brother\",\" and\",\" one\",\" sister\",\",\",\" that\",\" means\",\" her\",\" brother\",\" and\",\" sister\",\" are\",\" her\",\" siblings\",\".\",\" And\",\" since\",\" Tina\",\" has\",\" a\",\" brother\",\" and\",\" a\",\" sister\",\",\",\" her\",\" brother\",\" and\",\" sister\",\" don\",\"'t\",\" have\",\" any\",\" sisters\",\".\",\" They\",\" have\",\" a\",\" brother\",\" and\",\" a\",\" sister\",\" (\",\"T\",\"ina\",\"),\",\" but\",\" no\",\" sisters\",\" of\",\" their\",\" own\",\".\\n\\n\",\"So\",\",\",\" the\",\" answer\",\" is\",\":\",\" Tina\",\"'s\",\" siblings\",\" have\",\" \",\"0\",\" sisters\",\".\"],\"data_removed\":false,\"error\":null,\"source\":\"api\",\"status\":\"succeeded\",\"created_at\":\"2026-09-13T19:58:12.82Z\",\"started_at\":\"2026-09-13T19:58:12.91369644Z\",\"completed_at\":\"2026-09-13T19:58:13.903671892Z\",\"urls\":{\"cancel\":\"https://api.replicate.com/v1/predictions/hv0qg32bahrnc0d0khcrnnhy84/cancel\",\"get\":\"https://api.replicate.com/v1/predictions/hv0qg32bahrnc0d0khcrnnhy84\",\"stream\":\"https://stream-b.svc.rno3.c.replicate.net/v1/streams/lh7vdpszu77ibeozf2xwka23funrtl45japsicrm5jvzcjqrch2a\",\"web\":\"https://replicate.com/p/hv0qg32bahrnc0d0khcrnnhy84\"},\"metrics\":{\"batch_size\":116.64877274490865,\"input_token_count\":46,\"output_token_count\":79,\"predict_time\":0.989975451,\"predict_time_share\":0.008480414981847092,\"time_to_first_token\":0.039417819,\"tokens_per_second\":83.10911126322954,\"total_time\":1.083671892}}\n"
+            }
         }
     ]
 }

@@ -69,6 +69,33 @@ Platform
    needs to be passed when the provider was registered under a different name - which
    `Factory::createProvider()` does on its own.
 
+ * The Replicate bridge no longer waits on a prediction. Replicate runs every model asynchronously -
+   it accepts the input and answers with a prediction identifier - so an invocation now returns a
+   `Result\JobResult` carrying a serializable `Job\JobHandle`, which is resolved explicitly through
+   the new `Bridge\Replicate\ReplicateJobClient`. Reading the result directly through `asText()`
+   therefore throws an `UnexpectedResultTypeException`:
+
+   ```diff
+   +use Symfony\AI\Platform\Bridge\Replicate\Factory as ReplicateFactory;
+   +use Symfony\AI\Platform\Job\JobRunner;
+   +
+   -$result = $platform->invoke('llama-3-8b-instruct', $messages);
+   -echo $result->asText();
+   +$handle = $platform->invoke('llama-3-8b-instruct', $messages)->asJob();
+   +
+   +$result = (new JobRunner())->wait(ReplicateFactory::createJobClient($apiKey), $handle);
+   +echo $result->asText();
+   ```
+
+   Accordingly, `Bridge\Replicate\Client` no longer takes a clock and no longer throws on a failed
+   prediction - it performs exactly one request per call and gained `get()` for the prediction lookup
+   the job client drives. Code building the bridge through `Bridge\Replicate\Factory` is unaffected.
+
+   ```diff
+   -$client = new Client($httpClient, $clock, $apiKey);
+   +$client = new Client($httpClient, $apiKey);
+   ```
+
 Store
 -----
 

@@ -19,7 +19,6 @@ use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
-use Symfony\Component\Clock\Clock;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -41,14 +40,27 @@ final class Factory
         string $name = 'replicate',
         string $baseUrl = 'https://api.replicate.com',
     ): ProviderInterface {
+        $client = new Client($httpClient ?? HttpClient::create(), $apiKey, $baseUrl);
+
         return new Provider(
             $name,
-            [new LlamaModelClient(new Client($httpClient ?? HttpClient::create(), new Clock(), $apiKey, $baseUrl))],
-            [new LlamaResultConverter()],
+            [new LlamaModelClient($client)],
+            [new LlamaResultConverter($name)],
             $modelCatalog,
             $contract ?? Contract::create([new LlamaMessageBagNormalizer()]),
             $eventDispatcher,
         );
+    }
+
+    /**
+     * The client resolving the predictions this bridge hands out, e.g. in a worker holding a stored handle.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        string $baseUrl = 'https://api.replicate.com',
+    ): ReplicateJobClient {
+        return new ReplicateJobClient(new Client($httpClient ?? HttpClient::create(), $apiKey, $baseUrl));
     }
 
     /**

@@ -13,9 +13,11 @@ namespace Symfony\AI\Platform\Bridge\Venice;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -38,6 +40,14 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class VeniceResultConverter implements ResultConverterInterface
 {
+    /**
+     * @param string $provider the name stamped onto the handles of the generations this converter queues
+     */
+    public function __construct(
+        private readonly string $provider = 'venice',
+    ) {
+    }
+
     public function supports(Model $model): bool
     {
         return $model instanceof Venice;
@@ -145,8 +155,28 @@ final class VeniceResultConverter implements ResultConverterInterface
             return new BinaryResult(base64_decode($images[0]));
         }
 
-        if (str_contains($rawUrl, 'video/retrieve')) {
-            return new BinaryResult($response->getContent());
+        // Venice answers a queued generation with an id instead of a video, so this produces a handle.
+        if (str_contains($rawUrl, 'video/queue')) {
+            $payload = $response->toArray();
+
+            $queueId = $payload['queue_id'] ?? null;
+            $model = $payload['model'] ?? null;
+
+            if (!\is_string($queueId)) {
+                throw new RuntimeException('The Venice response does not contain a queue identifier.');
+            }
+
+            if (!\is_string($model)) {
+                throw new RuntimeException('The Venice response does not contain the model the generation was queued for.');
+            }
+
+            return new JobResult(new JobHandle(
+                $queueId,
+                ['queue_model' => $model],
+                $this->provider,
+                VeniceJobClient::DEFAULT_MAX_DURATION,
+                VeniceJobClient::DEFAULT_POLL_INTERVAL,
+            ));
         }
 
         if (str_contains($rawUrl, 'transcription')) {

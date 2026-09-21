@@ -2,8 +2,8 @@
 
 Venice AI exposes a broad catalog through one OpenAI-compatible API: chat completion (with
 streaming, tool calling and vision), embeddings, image generation, editing and upscaling,
-text-to-speech, speech-to-text and video generation. Video is queue-based - the bridge submits
-the request, polls until the clip is ready and downloads it.
+text-to-speech, speech-to-text and video generation. Video is queue-based - the invocation queues
+the request and returns a job handle, which a `JobRunner` resolves once the clip is ready.
 
 ```bash
 php venice/chat.php

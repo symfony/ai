@@ -18,9 +18,7 @@ use Symfony\AI\Platform\Bridge\Venice\VeniceClient;
 use Symfony\AI\Platform\Bridge\Venice\VeniceParameters;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Audio;
-use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -340,42 +338,39 @@ final class VeniceClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testClientCanTriggerTextToVideoAndPollUntilReady()
-    {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse(['model' => 'seedance-1-5-pro-text-to-video', 'queue_id' => 'q-1']),
-            new JsonMockResponse(['status' => 'PROCESSING']),
-            new JsonMockResponse(['status' => 'PROCESSING']),
-            new MockResponse('binary-video-bytes', ['response_headers' => ['content-type' => 'video/mp4']]),
-        ], 'https://api.venice.ai/api/v1/');
-
-        $clock = new MockClock();
-        $client = new VeniceClient($httpClient, $clock);
-
-        $client->request(
-            new Venice('seedance-1-5-pro-text-to-video', [Capability::TEXT_TO_VIDEO]),
-            ['prompt' => 'Sunset over a beach'],
-            ['polling_interval_seconds' => 1],
-        );
-
-        $this->assertSame(4, $httpClient->getRequestsCount());
-    }
-
-    public function testClientCanTriggerImageToVideoWithAspectRatioOverride()
+    public function testClientQueuesTextToVideoWithoutWaitingForIt()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
-            if (str_contains($url, 'video/queue')) {
-                $body = $this->decodeJsonBody($options);
-                $this->assertSame('1:1', $body['aspect_ratio'] ?? null);
-                $this->assertSame('https://example.com/img.png', $body['image_url'] ?? null);
+            $this->assertStringContainsString('video/queue', $url);
+            $this->assertSame('Sunset over a beach', $this->decodeJsonBody($options)['prompt'] ?? null);
 
-                return new JsonMockResponse(['model' => 'seedance-1-5-pro-image-to-video', 'queue_id' => 'q-2']);
-            }
-
-            return new MockResponse('video-mp4', ['response_headers' => ['content-type' => 'video/mp4']]);
+            return new JsonMockResponse(['model' => 'seedance-1-5-pro-text-to-video', 'queue_id' => 'q-1']);
         }, 'https://api.venice.ai/api/v1/');
 
-        $client = new VeniceClient($httpClient, new MockClock());
+        $client = new VeniceClient($httpClient);
+
+        $result = $client->request(
+            new Venice('seedance-1-5-pro-text-to-video', [Capability::TEXT_TO_VIDEO]),
+            ['prompt' => 'Sunset over a beach'],
+        );
+
+        $this->assertSame('q-1', $result->getData()['queue_id']);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClientQueuesImageToVideoWithAspectRatioOverride()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertStringContainsString('video/queue', $url);
+
+            $body = $this->decodeJsonBody($options);
+            $this->assertSame('1:1', $body['aspect_ratio'] ?? null);
+            $this->assertSame('https://example.com/img.png', $body['image_url'] ?? null);
+
+            return new JsonMockResponse(['model' => 'seedance-1-5-pro-image-to-video', 'queue_id' => 'q-2']);
+        }, 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
 
         $client->request(
             new Venice('seedance-1-5-pro-image-to-video', [Capability::IMAGE_TO_VIDEO]),
@@ -383,45 +378,23 @@ final class VeniceClientTest extends TestCase
             ['aspect_ratio' => '1:1'],
         );
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testClientCanTriggerVideoToVideo()
+    public function testClientQueuesVideoToVideo()
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse(['model' => 'runway-gen4-aleph', 'queue_id' => 'q-3']),
-            new MockResponse('v2v', ['response_headers' => ['content-type' => 'video/mp4']]),
         ], 'https://api.venice.ai/api/v1/');
 
-        $client = new VeniceClient($httpClient, new MockClock());
+        $client = new VeniceClient($httpClient);
 
         $client->request(
             new Venice('runway-gen4-aleph', [Capability::VIDEO_TO_VIDEO]),
             ['prompt' => 'Restyle', 'video_url' => 'https://example.com/source.mp4'],
         );
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
-    }
-
-    public function testClientVideoPollingTimesOut()
-    {
-        $responses = [new JsonMockResponse(['model' => 'seedance-1-5-pro-text-to-video', 'queue_id' => 'q-x'])];
-        for ($i = 0; $i < 5; ++$i) {
-            $responses[] = new JsonMockResponse(['status' => 'PROCESSING']);
-        }
-
-        $httpClient = new MockHttpClient($responses, 'https://api.venice.ai/api/v1/');
-
-        $client = new VeniceClient($httpClient, new MockClock());
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Video generation timed out after 3 polling attempts.');
-
-        $client->request(
-            new Venice('seedance-1-5-pro-text-to-video', [Capability::TEXT_TO_VIDEO]),
-            ['prompt' => 'X'],
-            ['max_polling_attempts' => 3, 'polling_interval_seconds' => 0],
-        );
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testClientThrowsForUnsupportedCapability()

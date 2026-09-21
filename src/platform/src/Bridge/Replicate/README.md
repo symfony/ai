@@ -1,7 +1,9 @@
 Replicate Platform
 ==================
 
-Replicate platform bridge for Symfony AI.
+Replicate platform bridge for Symfony AI. Replicate runs every model as a prediction, so an
+invocation returns a `Result\JobResult` carrying the handle of that prediction, which
+`ReplicateJobClient` resolves once the model produced its output.
 
 Replicate Documentation
 -----------------------

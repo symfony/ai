@@ -13,8 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Replicate\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Replicate\Client;
-use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\Component\Clock\MockClock;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -23,32 +22,26 @@ use Symfony\Component\HttpClient\Response\MockResponse;
  */
 final class ClientTest extends TestCase
 {
-    public function testRequestWithImmediateSuccess()
+    public function testRequestReturnsTheCreatedPrediction()
     {
-        $httpClient = new MockHttpClient(new MockResponse('{"status": "succeeded", "output": ["Hello"]}'));
+        $httpClient = new MockHttpClient(new MockResponse('{"id": "pred-123", "status": "starting"}'));
 
-        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+        $client = new Client($httpClient, 'test-api-key');
         $response = $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
 
         $data = $response->toArray();
-        $this->assertSame('succeeded', $data['status']);
-        $this->assertSame(['Hello'], $data['output']);
+        $this->assertSame('pred-123', $data['id']);
+        $this->assertSame('starting', $data['status']);
     }
 
-    public function testRequestWithPolling()
+    public function testRequestDoesNotWaitForThePrediction()
     {
-        $httpClient = new MockHttpClient([
-            new MockResponse('{"id": "pred-123", "status": "starting"}'),
-            new MockResponse('{"id": "pred-123", "status": "processing"}'),
-            new MockResponse('{"id": "pred-123", "status": "succeeded", "output": ["World"]}'),
-        ]);
+        $httpClient = new MockHttpClient(new MockResponse('{"id": "pred-123", "status": "starting"}'));
 
-        $client = new Client($httpClient, new MockClock(), 'test-api-key');
-        $response = $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
+        $client = new Client($httpClient, 'test-api-key');
+        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
 
-        $data = $response->toArray();
-        $this->assertSame('succeeded', $data['status']);
-        $this->assertSame(['World'], $data['output']);
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testCustomBaseUrlIsUsedAndTrailingSlashNormalized()
@@ -56,10 +49,10 @@ final class ClientTest extends TestCase
         $httpClient = new MockHttpClient(function (string $method, string $url): MockResponse {
             $this->assertSame('https://replicate.example.com/v1/models/meta/llama-3.1-405b-instruct/predictions', $url);
 
-            return new MockResponse('{"status": "succeeded"}');
+            return new MockResponse('{"id": "pred-123", "status": "starting"}');
         });
 
-        $client = new Client($httpClient, new MockClock(), 'test-api-key', 'https://replicate.example.com/');
+        $client = new Client($httpClient, 'test-api-key', 'https://replicate.example.com/');
         $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
     }
 
@@ -68,10 +61,10 @@ final class ClientTest extends TestCase
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
             self::assertSame('Authorization: Bearer secret-key', $options['normalized_headers']['authorization'][0]);
 
-            return new MockResponse('{"status": "succeeded"}');
+            return new MockResponse('{"id": "pred-123", "status": "starting"}');
         });
 
-        $client = new Client($httpClient, new MockClock(), 'secret-key');
+        $client = new Client($httpClient, 'secret-key');
         $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'test']);
     }
 
@@ -81,56 +74,40 @@ final class ClientTest extends TestCase
             self::assertSame('POST', $method);
             self::assertSame('https://api.replicate.com/v1/models/meta/llama-3.1-405b-instruct/predictions', $url);
 
-            return new MockResponse('{"status": "succeeded"}');
+            return new MockResponse('{"id": "pred-123", "status": "starting"}');
         });
 
-        $client = new Client($httpClient, new MockClock(), 'test-key');
+        $client = new Client($httpClient, 'test-key');
         $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'test']);
     }
 
-    public function testRequestThrowsOnApiError()
+    public function testGetUrl()
+    {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) {
+            self::assertSame('GET', $method);
+            self::assertSame('https://api.replicate.com/v1/predictions/pred-123', $url);
+            self::assertSame('Authorization: Bearer test-key', $options['normalized_headers']['authorization'][0]);
+
+            return new MockResponse('{"id": "pred-123", "status": "succeeded", "output": ["Hello"]}');
+        });
+
+        $client = new Client($httpClient, 'test-key');
+
+        $this->assertSame(['Hello'], $client->get('v1/predictions/pred-123')['output']);
+    }
+
+    public function testGetThrowsOnApiError()
     {
         $httpClient = new MockHttpClient(new MockResponse(
             '{"detail": "Invalid version or not permitted"}',
             ['http_code' => 404],
         ));
 
-        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+        $client = new Client($httpClient, 'test-api-key');
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Replicate API error: "Invalid version or not permitted".');
+        $this->expectException(ModelNotFoundException::class);
 
-        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
-    }
-
-    public function testRequestThrowsOnFailedPrediction()
-    {
-        $httpClient = new MockHttpClient([
-            new MockResponse('{"id": "pred-123", "status": "starting"}'),
-            new MockResponse('{"id": "pred-123", "status": "failed", "error": "Out of memory"}'),
-        ]);
-
-        $client = new Client($httpClient, new MockClock(), 'test-api-key');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Replicate prediction "failed": "Out of memory".');
-
-        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
-    }
-
-    public function testRequestThrowsOnCanceledPrediction()
-    {
-        $httpClient = new MockHttpClient([
-            new MockResponse('{"id": "pred-123", "status": "starting"}'),
-            new MockResponse('{"id": "pred-123", "status": "canceled", "error": "Canceled by user"}'),
-        ]);
-
-        $client = new Client($httpClient, new MockClock(), 'test-api-key');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Replicate prediction "canceled": "Canceled by user".');
-
-        $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => 'Hello']);
+        $client->get('v1/predictions/pred-123');
     }
 
     public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
@@ -140,10 +117,10 @@ final class ClientTest extends TestCase
             self::assertJson($options['body']);
             self::assertStringContainsString('tool output \ufffd here', $options['body']);
 
-            return new MockResponse('{"status": "succeeded", "output": ["ok"]}');
+            return new MockResponse('{"id": "pred-123", "status": "starting"}');
         });
 
-        $client = new Client($httpClient, new MockClock(), 'test-api-key');
+        $client = new Client($httpClient, 'test-api-key');
         $client->request('meta/llama-3.1-405b-instruct', 'predictions', ['prompt' => "tool output \xB1 here"]);
     }
 }

@@ -40,12 +40,16 @@ final class MiniMaxResultConverter implements ResultConverterInterface
     use HttpStatusErrorHandlingTrait;
 
     /**
-     * How long MiniMax may reasonably take, carried in the job handle so a caller does not have to
-     * know that video generation runs an order of magnitude longer than speech synthesis.
+     * How long MiniMax may reasonably take and how often it is worth asking - both carried in the job
+     * handle, so a caller does not have to know that video runs an order of magnitude longer than speech.
      */
     private const AUDIO_MAX_DURATION = 120;
 
+    private const AUDIO_POLL_INTERVAL = 1.0;
+
     private const VIDEO_MAX_DURATION = 600;
+
+    private const VIDEO_POLL_INTERVAL = 5.0;
 
     /**
      * @param string $provider the name stamped onto the handles of the jobs this converter starts
@@ -82,11 +86,11 @@ final class MiniMaxResultConverter implements ResultConverterInterface
             // Unlike the synchronous endpoint, the asynchronous one delivers a tar bundling the audio
             // with a `.titles` and an `.extra` file, so the job client has to unpack the mp3 to make
             // both endpoints produce the same thing.
-            str_contains($url, '/t2a_async_v2') => $this->startJob($result->getData(), 'query/t2a_async_query_v2', 'audio/mpeg', self::AUDIO_MAX_DURATION, 'mp3'),
+            str_contains($url, '/t2a_async_v2') => $this->startJob($result->getData(), 'query/t2a_async_query_v2', 'audio/mpeg', self::AUDIO_MAX_DURATION, self::AUDIO_POLL_INTERVAL, 'mp3'),
             str_contains($url, '/t2a_v2') => new BinaryResult($this->decodeHexAudio($result->getData()), 'audio/mpeg'),
             str_contains($url, '/image_generation') => $this->convertImage($result->getData()),
             str_contains($url, '/music_generation') => new BinaryResult($this->decodeHexAudio($result->getData()), 'audio/mpeg'),
-            str_contains($url, '/video_generation') => $this->startJob($result->getData(), 'query/video_generation', 'video/mp4', self::VIDEO_MAX_DURATION),
+            str_contains($url, '/video_generation') => $this->startJob($result->getData(), 'query/video_generation', 'video/mp4', self::VIDEO_MAX_DURATION, self::VIDEO_POLL_INTERVAL),
             default => throw new RuntimeException(\sprintf('Unsupported MiniMax response for url "%s".', $url)),
         };
     }
@@ -207,10 +211,11 @@ final class MiniMaxResultConverter implements ResultConverterInterface
      *
      * @param array<string, mixed> $data
      * @param int                  $maxDuration   how long this endpoint may reasonably take, in seconds
+     * @param float                $pollInterval  how often it is worth asking this endpoint, in seconds
      * @param string|null          $archiveMember file extension to unpack from the downloaded tar,
      *                                            or null when the download is the payload itself
      */
-    private function startJob(array $data, string $queryPath, string $mimeType, int $maxDuration, ?string $archiveMember = null): JobResult
+    private function startJob(array $data, string $queryPath, string $mimeType, int $maxDuration, float $pollInterval, ?string $archiveMember = null): JobResult
     {
         $taskId = $data['task_id'] ?? throw new RuntimeException('The MiniMax response does not contain a task identifier.');
 
@@ -219,6 +224,6 @@ final class MiniMaxResultConverter implements ResultConverterInterface
             'mime_type' => $mimeType,
             'archive_member' => $archiveMember,
             'file_id' => $data['file_id'] ?? null,
-        ], $this->provider, $maxDuration));
+        ], $this->provider, $maxDuration, $pollInterval));
     }
 }

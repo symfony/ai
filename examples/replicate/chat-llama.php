@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\Replicate\Factory;
+use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -21,6 +22,12 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
     Message::ofUser('Tina has one brother and one sister. How many sisters do Tina\'s siblings have?'),
 );
-$result = $platform->invoke('llama-3-8b-instruct', $messages);
+
+// Replicate runs every model as a prediction, so the invocation returns a handle instead of an answer.
+$handle = $platform->invoke('llama-3-8b-instruct', $messages)->asJob();
+
+// Waiting is explicit. Replaying a cassette serves the polls instantly, so skip the real waiting.
+$jobClient = Factory::createJobClient(env('REPLICATE_API_KEY'), http_client());
+$result = (new JobRunner(clock()))->wait($jobClient, $handle);
 
 echo $result->asText().\PHP_EOL;

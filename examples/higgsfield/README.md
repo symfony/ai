@@ -1,8 +1,8 @@
 # Higgsfield Examples
 
 Higgsfield generates images and videos from text prompts or reference images. Generation is
-asynchronous: the bridge submits the request, polls the status endpoint until the media is
-ready, and downloads it.
+asynchronous: the invocation submits the request and returns a job handle, which a `JobRunner`
+resolves by polling the status endpoint until the media is ready.
 
 ```bash
 php higgsfield/text-to-image.php

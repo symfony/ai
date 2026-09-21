@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * [BC BREAK] Stop polling predictions inside `Client`. An invocation now returns a `Result\JobResult` carrying a serializable job handle, resolved through the new `ReplicateJobClient`, built by `Factory::createJobClient()` — see the platform `UPGRADE` notes. `Client` no longer takes a clock and gained `get()` for the prediction lookup
+
 0.11
 ----
 

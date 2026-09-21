@@ -61,7 +61,7 @@ if (!$status->is(JobStateCase::SUCCEEDED)) {
 
 // The job is done, so the runner returns without waiting - and hands back the same kind of result
 // a synchronous invocation would have.
-(new JobRunner())->wait($jobClient, $handle)->asFile(__DIR__.'/minimax-video.mp4');
+(new JobRunner(clock()))->wait($jobClient, $handle)->asFile(__DIR__.'/minimax-video.mp4');
 unlink($storage);
 
 echo 'Video saved to minimax-video.mp4'.\PHP_EOL;

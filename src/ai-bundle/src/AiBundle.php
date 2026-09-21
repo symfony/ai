@@ -83,6 +83,7 @@ use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
 use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
+use Symfony\AI\Platform\Bridge\Higgsfield\HiggsfieldJobClient;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\Factory as LmStudioFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
@@ -100,6 +101,7 @@ use Symfony\AI\Platform\Bridge\Scaleway\Factory as ScalewayFactory;
 use Symfony\AI\Platform\Bridge\Together\Factory as TogetherFactory;
 use Symfony\AI\Platform\Bridge\TransformersPhp\Factory as TransformersPhpFactory;
 use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
+use Symfony\AI\Platform\Bridge\Venice\VeniceJobClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Factory as VertexAiFactory;
 use Symfony\AI\Platform\Bridge\Voyage\Factory as VoyageFactory;
 use Symfony\AI\Platform\Capability;
@@ -805,6 +807,18 @@ final class AiBundle extends AbstractBundle
 
             $container->setDefinition($platformId, $definition);
 
+            $jobClientId = 'ai.platform.job_client.higgsfield';
+            $container->setDefinition($jobClientId, (new Definition(HiggsfieldJobClient::class))
+                ->setFactory(HiggsfieldFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    $platform['api_secret'],
+                    $platform['base_url'] ?? null,
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.platform.job_client', ['key' => 'higgsfield']));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'higgsfield');
+
             return;
         }
 
@@ -845,7 +859,6 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     $platform['endpoint'],
                     new Reference($platform['http_client']),
-                    new Reference(ClockInterface::class),
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
@@ -854,6 +867,17 @@ final class AiBundle extends AbstractBundle
 
             $container->setDefinition('ai.platform.'.$type, $definition);
             $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
+
+            $jobClientId = 'ai.platform.job_client.'.$type;
+            $container->setDefinition($jobClientId, (new Definition(VeniceJobClient::class))
+                ->setFactory(VeniceFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    $platform['endpoint'],
+                    new Reference($platform['http_client']),
+                ])
+                ->addTag('ai.platform.job_client', ['key' => $type]));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, $type);
 
             return;
         }

@@ -242,6 +242,143 @@ final class JobRunnerTest extends TestCase
         (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1', [], 'other-provider'));
     }
 
+    public function testItPollsAsOftenAsTheJobSaysItIsWorth()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1', maxDuration: 300, pollInterval: 5.0));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        // 300 seconds at one poll every five seconds - not the 300 a one-second default would spend.
+        $this->assertSame(60, $jobClient->statusCalls);
+    }
+
+    public function testARunnerIntervalOverrulesWhatTheJobAsksFor()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1', maxDuration: 60, pollInterval: 5.0));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        $this->assertSame(30, $jobClient->statusCalls);
+    }
+
+    public function testACallIntervalOverrulesTheRunnerAndTheJob()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+        $clock = new MockClock('2026-01-01 00:00:00');
+
+        try {
+            (new JobRunner($clock, 2.0))->wait($jobClient, new JobHandle('task-1', maxDuration: 60, pollInterval: 5.0), pollInterval: 10.0);
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        $this->assertSame(6, $jobClient->statusCalls);
+
+        // Slept between the six polls, not after the last one.
+        $this->assertSame('2026-01-01 00:00:50', $clock->now()->format('Y-m-d H:i:s'));
+    }
+
+    public function testAJobWithoutAnIntervalIsPolledEverySecond()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1'), maxDuration: 7);
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        $this->assertSame(7, $jobClient->statusCalls);
+    }
+
+    // Unlike the budget and the interval, a job cannot state this - it is the caller's business.
+    public function testAPollLimitCapsWhatTheBudgetWouldAllow()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 1.0, 300, 5))->wait($jobClient, new JobHandle('task-1'));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException $exception) {
+            // The budget is not what ran out, so the message must not claim it was.
+            $this->assertStringContainsString('did not finish within 5 poll(s)', $exception->getMessage());
+        }
+
+        $this->assertSame(5, $jobClient->statusCalls);
+    }
+
+    public function testACallPollLimitOverrulesTheRunners()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 1.0, 300, 50))->wait($jobClient, new JobHandle('task-1'), maxPolls: 2);
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException) {
+        }
+
+        $this->assertSame(2, $jobClient->statusCalls);
+    }
+
+    // A ceiling, not an allowance: it must not buy polls the budget does not pay for.
+    public function testAPollLimitDoesNotExtendTheBudget()
+    {
+        $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
+
+        try {
+            (new JobRunner(new MockClock(), 1.0, 3, 100))->wait($jobClient, new JobHandle('task-1'));
+            $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
+        } catch (JobTimeoutException $exception) {
+            $this->assertStringContainsString('did not finish within 3 second(s)', $exception->getMessage());
+        }
+
+        $this->assertSame(3, $jobClient->statusCalls);
+    }
+
+    public function testAPollLimitStillReturnsAResultThatArrivesInTime()
+    {
+        $jobClient = $this->jobClient(
+            new JobStatus(JobStateCase::RUNNING, 'Processing'),
+            new JobStatus(JobStateCase::SUCCEEDED, 'Success'),
+        );
+
+        $result = (new JobRunner(new MockClock(), 1.0, 300, 2))->wait($jobClient, new JobHandle('task-1'));
+
+        $this->assertSame('done', $result->asText());
+    }
+
+    public function testItRejectsANonsensicalCallPollInterval()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('greater than zero');
+
+        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), pollInterval: 0.0);
+    }
+
+    public function testItRejectsANonsensicalPollLimit()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least one');
+
+        new JobRunner(new MockClock(), 1.0, null, 0);
+    }
+
+    public function testItRejectsANonsensicalCallPollLimit()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least one');
+
+        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), maxPolls: 0);
+    }
+
     public function testItRejectsANonsensicalPollInterval()
     {
         $this->expectException(InvalidArgumentException::class);
