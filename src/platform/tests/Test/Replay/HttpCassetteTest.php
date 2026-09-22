@@ -335,7 +335,6 @@ final class HttpCassetteTest extends TestCase
         $writer = new HttpCassette($cassettePath);
 
         $redact = new \ReflectionMethod(HttpCassette::class, 'redactRequest');
-        $redact->setAccessible(true);
 
         foreach ($cassette['interactions'] as $index => $interaction) {
             $request = $interaction['request'];

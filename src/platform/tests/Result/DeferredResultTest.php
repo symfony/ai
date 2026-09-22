@@ -524,7 +524,7 @@ final class DeferredResultTest extends TestCase
         $this->assertSame($options, $debugInfo['options']);
     }
 
-    public function testDebugInfoReportsEmptyMetadataAndNullErrorWhilePending()
+    public function testDebugInfoReportsNullMetadataAndErrorWhilePending()
     {
         $resultConverter = $this->createMock(ResultConverterInterface::class);
         $resultConverter->expects($this->never())->method('convert');
@@ -533,7 +533,7 @@ final class DeferredResultTest extends TestCase
 
         $debugInfo = $deferredResult->__debugInfo();
 
-        $this->assertSame([], $debugInfo['metadata']);
+        $this->assertNull($debugInfo['metadata']);
         $this->assertNull($debugInfo['error']);
     }
 
