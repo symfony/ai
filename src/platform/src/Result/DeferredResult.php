@@ -59,6 +59,28 @@ final class DeferredResult
     }
 
     /**
+     * @return array{
+     *     state: 'pending'|'converted'|'failed',
+     *     options: array<string, mixed>,
+     *     metadata: array<string, mixed>|null,
+     *     error: string|null
+     * }
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'state' => match (true) {
+                null !== $this->conversionFailure => 'failed',
+                $this->isConverted => 'converted',
+                default => 'pending',
+            },
+            'options' => $this->options,
+            'metadata' => $this->metadata?->all(),
+            'error' => $this->conversionFailure?->getMessage(),
+        ];
+    }
+
+    /**
      * Registers a callback invoked with the converted result once conversion succeeds.
      *
      * The callback may return a replacement result, which is then used as the converted result
