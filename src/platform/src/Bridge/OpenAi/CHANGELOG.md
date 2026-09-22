@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add batch support: `invoke($model, $inputs, ['batch' => true])` uploads the inputs as a batch and returns a `JobHandle`, resolved later through `Batch\JobClient` (`Factory::createJobClient()`), which also reports the batch's progress and can cancel it
  * Add `Realtime` model, `Realtime\ModelClient`, `Realtime\ResultConverter`, and catalog entries (`gpt-4o-realtime-preview`, `gpt-4o-mini-realtime-preview`) for `POST /v1/realtime/client_secrets`
  * Add model information to token usage extraction
 

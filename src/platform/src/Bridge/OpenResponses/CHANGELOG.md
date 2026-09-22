@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add `ResultConverter::convertData()` and `ModelClient::createBody()`, so a bridge submitting Responses requests to an asynchronous endpoint can build their bodies and convert their responses without going through a single HTTP request
  * Add model information to token usage extraction
  * Replay hosted `web_search_call` items on the next turn, for buffered and streamed results
 

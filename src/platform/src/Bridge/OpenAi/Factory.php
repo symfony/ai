@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi;
 
+use Symfony\AI\Platform\Bridge\OpenAi\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -56,7 +57,7 @@ final class Factory
                 new Realtime\ModelClient($httpClient, $apiKey, $region),
             ],
             [
-                new Gpt\ResultConverter(),
+                new Gpt\ResultConverter($name),
                 new Embeddings\ResultConverter(),
                 new Image\ResultConverter(),
                 new TextToSpeech\ResultConverter(),
@@ -67,6 +68,18 @@ final class Factory
             $contract ?? OpenAiContract::create(),
             $eventDispatcher,
         );
+    }
+
+    /**
+     * The client resolving the batches this bridge hands out - typically in a worker picking up a
+     * stored handle, without a provider or platform at hand.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        ?string $region = null,
+    ): JobClient {
+        return new JobClient($httpClient ?? new EventSourceHttpClient(), $apiKey, $region);
     }
 
     /**

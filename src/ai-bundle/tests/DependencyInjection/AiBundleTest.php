@@ -55,6 +55,7 @@ use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
@@ -4808,6 +4809,33 @@ class AiBundleTest extends TestCase
         $this->assertSame([['key' => 'minimax']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $minimax'));
+    }
+
+    /**
+     * A batch is resolved long after the request that submitted it, so the client is reachable on its own.
+     */
+    public function testOpenAiRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                        'region' => 'EU',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.openai');
+
+        $this->assertSame([OpenAiFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('sk-openai_key_full', $definition->getArgument(0));
+        $this->assertSame('EU', $definition->getArgument(2));
+        $this->assertCount(3, $definition->getArguments());
+        $this->assertSame([['key' => 'openai']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $openai'));
     }
 
     public function testBedrockMantlePlatformUsesCompletionsRouteByDefault()

@@ -93,6 +93,7 @@ use Symfony\AI\Platform\Bridge\MiniMax\MiniMaxJobClient;
 use Symfony\AI\Platform\Bridge\Mistral\Factory as MistralFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
+use Symfony\AI\Platform\Bridge\OpenAi\Batch\JobClient as OpenAiJobClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\Factory as OpenResponsesFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\FallbackModelCatalog as OpenResponsesFallbackModelCatalog;
@@ -959,6 +960,17 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'openai']);
 
             $container->setDefinition($platformId, $definition);
+
+            $jobClientId = 'ai.platform.job_client.openai';
+            $container->setDefinition($jobClientId, (new Definition(OpenAiJobClient::class))
+                ->setFactory(OpenAiFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $platform['region'] ?? null,
+                ])
+                ->addTag('ai.platform.job_client', ['key' => 'openai']));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'openai');
 
             return;
         }

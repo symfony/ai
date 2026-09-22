@@ -1278,6 +1278,53 @@ non-terminal, so a provider adding a state does not abort a running job.
     * Higgsfield, for every image and video generation
     * Venice, for video generation
     * Replicate, for every prediction
+    * OpenAI, for batch requests
+
+Batch Requests
+~~~~~~~~~~~~~~
+
+Providers charge about half as much for work they may schedule at their own convenience. Such a
+batch is an asynchronous job carrying many requests, so an invocation asking for one is given many
+inputs, keyed by the identifier each result is reported back under::
+
+    $handle = $platform->invoke('gpt-4o-mini', [
+        'capital-fr' => new MessageBag(Message::ofUser('What is the capital of France?')),
+        'capital-de' => new MessageBag(Message::ofUser('What is the capital of Germany?')),
+    ], ['batch' => true, 'max_output_tokens' => 50])->asJob();
+
+Every input becomes the request it would have been on its own. The keys are yours: a batch comes
+back as an unordered file hours later, and the identifier is the only thing tying a result to the
+request it came from.
+
+A finished batch is a :class:`Symfony\\AI\\Platform\\Result\\BatchResult`, one
+:class:`Symfony\\AI\\Platform\\Result\\BatchItem` per request, read from the download as they
+are iterated - so the traversal is one-shot. Requests succeed and fail individually, and an item
+without a result says why: one the batch never sent, because it was canceled or expired, cost
+nothing and can be submitted again, where one that errored has to be fixed first::
+
+    foreach ($jobClient->getResult($handle)->getContent() as $item) {
+        if ($item->isSuccess()) {
+            echo $item->getId().': '.$item->getResult()->asText();
+        } elseif ($item->is(BatchItemCase::CANCELED, BatchItemCase::EXPIRED)) {
+            $queue->resubmit($item->getId());
+        }
+    }
+
+The result is fetched from the client rather than from a ``JobRunner`` here, because a canceled or
+expired batch is terminal without having succeeded: the runner reports it as a
+:class:`Symfony\\AI\\Platform\\Exception\\JobFailedException`, where the client still hands out
+the requests it did get through. On top of the interface, the OpenAI client reports a batch's
+progress in one request and cancels one that is no longer worth finishing.
+
+A successful item holds the ordinary result a synchronous invocation would have produced, except for
+structured output: the schema is sent with every request, but deserializing an answer happens when an
+invocation's result is converted, and a batch invocation's result is its handle - so an item holds
+the JSON as text, for the caller to deserialize and validate.
+
+.. note::
+
+    OpenAI decides per endpoint, not per model, which requests may be batched. A model its Responses
+    endpoint does not accept in a batch is rejected when the batch is created.
 
 Code Examples
 ~~~~~~~~~~~~~
@@ -1287,6 +1334,7 @@ Code Examples
 * `Asynchronous Image Generation with Higgsfield`_
 * `Asynchronous Video Generation with Venice`_
 * `Asynchronous Text Generation with Replicate`_
+* `Batch Requests with GPT`_
 
 Audio Processing
 ----------------
@@ -2316,6 +2364,7 @@ Code Examples
 .. _`Asynchronous Image Generation with Higgsfield`: https://github.com/symfony/ai/blob/main/examples/higgsfield/text-to-image.php
 .. _`Asynchronous Video Generation with Venice`: https://github.com/symfony/ai/blob/main/examples/venice/text-to-video.php
 .. _`Asynchronous Text Generation with Replicate`: https://github.com/symfony/ai/blob/main/examples/replicate/chat-llama.php
+.. _`Batch Requests with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/batch.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php

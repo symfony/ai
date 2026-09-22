@@ -94,6 +94,16 @@ trait TypedResultTrait
     }
 
     /**
+     * @return iterable<BatchItem> one-shot traversal, read from the provider's result file as it is iterated
+     *
+     * @throws ExceptionInterface
+     */
+    public function asBatch(): iterable
+    {
+        return $this->as(BatchResult::class)->getContent();
+    }
+
+    /**
      * @return Vector[]
      *
      * @throws ExceptionInterface

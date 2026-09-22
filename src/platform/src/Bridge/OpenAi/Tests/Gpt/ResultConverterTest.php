@@ -12,7 +12,9 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Gpt;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\OpenAi\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
@@ -27,6 +29,7 @@ use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -804,5 +807,73 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Server error (HTTP 500');
 
         $converter->convert(new RawHttpResult($httpResponse), ['stream' => true]);
+    }
+
+    public function testItConvertsABatchSubmissionIntoAJob()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'id' => 'batch_123',
+            'object' => 'batch',
+            'endpoint' => '/v1/responses',
+            'completion_window' => '24h',
+            'status' => 'validating',
+        ]);
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+
+        $handle = $result->getContent();
+
+        $this->assertSame('batch_123', $handle->getId());
+        $this->assertSame('openai', $handle->getProvider());
+        $this->assertSame(JobClient::KIND, $handle->get('kind'));
+        $this->assertSame('/v1/responses', $handle->get('endpoint'));
+        // The completion window is the longest the batch may take, so a caller need not know it.
+        $this->assertSame(86400, $handle->getMaxDuration());
+        // And a job running for hours is not worth asking about every second.
+        $this->assertSame(JobClient::DEFAULT_POLL_INTERVAL, $handle->getPollInterval());
+    }
+
+    #[TestWith(['12h', 43200])]
+    #[TestWith(['24h', 86400])]
+    #[TestWith([null, 86400])]
+    #[TestWith(['whenever', 86400])]
+    public function testItCarriesTheCompletionWindowOnTheHandle(?string $window, int $expected)
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn(['id' => 'batch_123', 'completion_window' => $window]);
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+        $this->assertSame($expected, $result->getContent()->getMaxDuration());
+    }
+
+    public function testItFailsWhenABatchSubmissionCarriesNoIdentifier()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn(['object' => 'batch']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The OpenAI response does not contain a batch identifier.');
+
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+    }
+
+    public function testItReportsAnErrorOnABatchSubmission()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(401);
+        $httpResponse->method('toArray')->willReturn(['error' => ['message' => 'Incorrect API key provided.']]);
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Incorrect API key provided.');
+
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
     }
 }
