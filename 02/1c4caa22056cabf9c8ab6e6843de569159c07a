@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by peter-si at 2026-05-19T09:22:28Z
+
+Heads up on red CI here:
+
+- **Fabbot / Check PR header** — fixed in this push (title was missing the `[Platform]` prefix, now `[Platform][VertexAi] ...` per the convention used in #1906 / #1938 / #1947).
+- **PHPStan / Component / Agent** — this is a **pre-existing failure on `main`** (verified by running `phpstan analyse src/agent` against `upstream/main`). `Toolbox::call()` triggers `Variable $sourceCollection might not be defined.` because PHPStan can't correlate the two `instanceof HasSourcesInterface` checks. It happens to surface on every PR that runs Agent's PHPStan, not just this one.
+
+I've opened #2103 with the two-line fix. Once that merges, the failure here will clear after a rebase. Let me know if you'd prefer this PR to depend on / include that fix instead.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-06-03T20:30:53Z
+
+Hi @peter-si,
+thanks for raising this, how did you end up with a tool result like `[{name: 'A'}, {name: 'B'}]`? so like, what is the return value of the tool?
+
+I would expect a tool result to be more structured, and that's why we have the `Symfony\AI\Agent\Toolbox\ToolResultConverter` dealing with this here
