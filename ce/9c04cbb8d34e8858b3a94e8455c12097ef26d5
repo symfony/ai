@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-21T19:32:13Z
+
+## Critical
+
+- **`src/platform/src/Bridge/OpenAi/Batch/JobClient.php` (`toItem()`)**: OpenAI never produces the `CANCELED` or `EXPIRED` cases. When a batch expires, OpenAI writes each request it never sent to the error file as `{"response": null, "error": {"code": "batch_expired", ...}}`, and does the same with `batch_cancelled` when a batch is cancelled. `toItem()` checks for a non-null `error` and turns every such line into `BatchItem::errored()` without a `raw` value. So the documented `$item->is(BatchItemCase::CANCELED, BatchItemCase::EXPIRED)` never matches for the only bridge that exists, and free, resubmittable requests look like requests that must be fixed. `BatchItem::canceled()`, `expired()` and `unknown()` are only ever called from `BatchItemTest`. Suggested fix: map `error.code` to the case (`batch_expired` → `expired()`, `batch_cancelled` → `canceled()`), pass the code as `$raw`, and add error-file fixtures for both to `JobClientTest`. `testItHandsOutWhatACanceledBatchGotThroughBeforeItStopped` only covers the output file.
+
+## Improvement
+
+- **`docs/components/platform.rst` ("tool calls, structured output and finish reasons included")**: only half true for structured output. The JSON schema reaches each request body through `createBody()`. But `StructuredOutput\PlatformSubscriber::processResult()` wraps the converter of the *submitting* invocation, which returns a `JobResult` and passes through unchanged. `JobClient` then converts every item with a plain `OpenResponsesResultConverter`, and the handle does not record the output type. With `response_format: MyDto::class`, each item is a `TextResult` holding a JSON string, not an `ObjectResult`. Either word the docs precisely or store the output class on the handle and deserialize in the job client.
+- **`JobClient::supports()`**: only checks `'kind' === 'batch'`. Anthropic and Mistral batch handles will naturally use `kind: batch` too, so the OpenAI client would claim them and `JobRunner`'s `supports()` guard would stop catching a wrong client. MiniMax keys on a bridge-specific field (`query_path`). Use something OpenAI-specific here, such as `kind: openai_batch` or also requiring `endpoint`.
+- **`BatchClient::upload()`**: the uploaded input file is never deleted, not even when `POST /v1/batches` fails after a successful upload. Every submission leaves a `purpose=batch` file in the account. At minimum, delete it when creating the batch fails. A cleanup method or a docs note would cover the success case.
+- **`JobClient::getRequestCounts()` / `getStatus()`**: each fetches `/v1/batches/{id}` separately, and `examples/openai/batch.php` calls both on every loop iteration, so it makes two identical requests per poll. Consider one method that returns both, or read the counts less often in the example.
+
+## Nitpick
+
+- **The `'/v1/responses'` literal**: defined four times (`Gpt\ModelClient::PATH`, the `BatchClient` default, `JobClient::ENDPOINT` and the fallback in `Gpt\ResultConverter::startBatch()`). One shared constant would stop them drifting apart once batched embeddings arrive.
+- **`Gpt\ModelClient::submitBatch()`**: rejecting only the `input`/`instructions` keys works because `MessageBagNormalizer` emits exactly those. If the normalizer ever gains another top-level key, a single `MessageBag` would slip through as a strange batch. Optional hardening.
+
+## Positive
+
+- The `createBody()` / `convertData()` seams in OpenResponses let each batch line reuse exactly the synchronous body and conversion paths, with no parallel implementation.
+- `readLines()` reads JSONL while it downloads and turns a single bad item into an errored item instead of failing the whole batch. There are tests for a missing trailing newline and for non-JSON lines.
+- The bundle wiring mirrors the MiniMax job client registration exactly.
