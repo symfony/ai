@@ -12,10 +12,9 @@
 namespace Symfony\AI\Store\Bridge\Supabase\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\Supabase\Store;
+use Symfony\AI\Store\Bridge\Supabase\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
-use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * The Supabase store does not implement {@see \Symfony\AI\Store\ManagedStoreInterface}: its schema is
@@ -29,14 +28,12 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
-            'http://127.0.0.1:3000',
-            '',
-            'documents',
-            'embedding',
-            3,
-            'match_documents',
+        return StoreFactory::create(
+            endpoint: 'http://127.0.0.1:3000',
+            table: 'documents',
+            vectorFieldName: 'embedding',
+            vectorDimension: 3,
+            functionName: 'match_documents',
         );
     }
 }

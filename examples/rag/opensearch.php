@@ -16,7 +16,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\OpenSearch\Store;
+use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -28,10 +28,10 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(
-    httpClient: http_client(),
-    endpoint: 'http://127.0.0.1:9200',
+$store = StoreFactory::create(
     indexName: 'movies',
+    endpoint: 'http://127.0.0.1:9200',
+    httpClient: http_client(),
 );
 
 // create embeddings and documents

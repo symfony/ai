@@ -164,6 +164,29 @@ Store
    +$store = StoreFactory::create('movies', 'http://127.0.0.1:9200', $httpClient);
    ```
 
+ * The same applies to the ManticoreSearch, Milvus, Neo4j, OpenSearch and Supabase stores: their `Store` no longer
+   accepts an endpoint or credentials and expects an HTTP client scoped to the instance instead. The removed
+   arguments moved to each bridge's new `StoreFactory`, which applies the credentials to the scoped client:
+
+   | Bridge          | Removed `Store` arguments                   | Factory arguments                          |
+   |-----------------|---------------------------------------------|--------------------------------------------|
+   | ManticoreSearch | `endpoint`                                  | `endpoint`                                 |
+   | Milvus          | `endpoint`, `apiKey`                        | `endpoint`, `apiKey` (bearer token)        |
+   | Neo4j           | `endpointUrl`, `username`, `password`       | `endpoint`, `username`, `password` (basic) |
+   | OpenSearch      | `endpoint`                                  | `endpoint`                                 |
+   | Supabase        | `endpoint`, `apiKey`                        | `endpoint`, `apiKey` (`apikey` + bearer)   |
+
+   ```diff
+   -use Symfony\AI\Store\Bridge\Milvus\Store;
+   +use Symfony\AI\Store\Bridge\Milvus\StoreFactory;
+
+   -$store = new Store($httpClient, 'http://localhost:19530', 'api-key', 'my_database', 'my_documents');
+   +$store = StoreFactory::create('my_database', 'my_documents', 'http://localhost:19530', 'api-key', $httpClient);
+   ```
+
+   Passing positional arguments to the old constructor does not fail on every bridge but shifts the values into the
+   wrong parameters, so switch to the factory or to named arguments.
+
 UPGRADE FROM 0.12 to 0.13
 =========================
 

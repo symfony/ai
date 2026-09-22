@@ -12,10 +12,9 @@
 namespace Symfony\AI\Store\Bridge\ManticoreSearch\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\ManticoreSearch\Store;
+use Symfony\AI\Store\Bridge\ManticoreSearch\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
-use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -25,10 +24,9 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
-            'http://127.0.0.1:9308',
+        return StoreFactory::create(
             'test_collection',
+            'http://127.0.0.1:9308',
             dimensions: 3,
         );
     }

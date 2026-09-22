@@ -125,25 +125,30 @@ use Symfony\AI\Store\Bridge\Cache\StoreFactory as CacheStoreFactory;
 use Symfony\AI\Store\Bridge\ChromaDb\Store as ChromaDbStore;
 use Symfony\AI\Store\Bridge\ChromaDb\StoreFactory as ChromaDbStoreFactory;
 use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
+use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory as ClickHouseStoreFactory;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
+use Symfony\AI\Store\Bridge\ManticoreSearch\StoreFactory as ManticoreSearchStoreFactory;
 use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
+use Symfony\AI\Store\Bridge\Milvus\StoreFactory as MilvusStoreFactory;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
+use Symfony\AI\Store\Bridge\Neo4j\StoreFactory as Neo4jStoreFactory;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
+use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory as OpenSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
 use Symfony\AI\Store\Bridge\Postgres\Distance;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Postgres\StoreFactory as PostgresStoreFactory;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
-use Symfony\AI\Store\Bridge\Qdrant\StoreFactory;
+use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
@@ -152,6 +157,7 @@ use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
 use Symfony\AI\Store\Bridge\Supabase\Store as SupabaseStore;
+use Symfony\AI\Store\Bridge\Supabase\StoreFactory as SupabaseStoreFactory;
 use Symfony\AI\Store\Bridge\SurrealDb\Store as SurrealDbStore;
 use Symfony\AI\Store\Bridge\SurrealDb\StoreFactory as SurrealDbStoreFactory;
 use Symfony\AI\Store\Bridge\Typesense\Store as TypesenseStore;
@@ -183,7 +189,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Translation\TranslatableMessage;
@@ -1825,23 +1830,14 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                if (isset($store['http_client'])) {
-                    $httpClient = new Reference($store['http_client']);
-                } else {
-                    $httpClient = new Definition(HttpClientInterface::class);
-                    $httpClient
-                        ->setLazy(true)
-                        ->setFactory([HttpClient::class, 'createForBaseUri'])
-                        ->setArguments([$store['dsn']]);
-                }
-
-                $definition = new Definition(ClickHouseStore::class);
-                $definition
+                $definition = (new Definition(ClickHouseStore::class))
+                    ->setFactory(ClickHouseStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
-                        $httpClient,
                         $store['database'],
                         $store['table'],
+                        $store['dsn'] ?? null,
+                        new Reference($store['http_client'] ?? 'http_client'),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
@@ -1898,7 +1894,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments([
                         $store['index_name'] ?? $name,
                         $store['endpoint'] ?? null,
-                        new Reference($store['http_client']),
+                        new Reference($store['http_client'] ?? 'http_client'),
                         $store['vectors_field'],
                         $store['dimensions'],
                         $store['similarity'],
@@ -1919,13 +1915,13 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $definition = new Definition(ManticoreSearchStore::class);
-                $definition
+                $definition = (new Definition(ManticoreSearchStore::class))
+                    ->setFactory(ManticoreSearchStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference('http_client'),
-                        $store['endpoint'],
                         $store['table'] ?? $name,
+                        $store['endpoint'] ?? null,
+                        new Reference($store['http_client'] ?? 'http_client'),
                         $store['field'],
                         $store['type'],
                         $store['similarity'],
@@ -2037,24 +2033,19 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['api_key'],
-                    $store['database'] ?? $name,
-                    $store['collection'],
-                    $store['vector_field'],
-                    $store['dimensions'],
-                ];
-
-                if (\array_key_exists('metric_type', $store)) {
-                    $arguments[7] = $store['metric_type'];
-                }
-
-                $definition = new Definition(MilvusStore::class);
-                $definition
+                $definition = (new Definition(MilvusStore::class))
+                    ->setFactory(MilvusStoreFactory::class.'::create')
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $store['database'] ?? $name,
+                        $store['collection'],
+                        $store['endpoint'] ?? null,
+                        $store['api_key'] ?? null,
+                        new Reference($store['http_client'] ?? 'http_client'),
+                        $store['vector_field'],
+                        $store['dimensions'],
+                        $store['metric_type'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
@@ -2106,13 +2097,13 @@ final class AiBundle extends AbstractBundle
 
             foreach ($stores as $name => $store) {
                 $arguments = [
-                    new Reference('http_client'),
-                    $store['endpoint'],
-                    $store['username'],
-                    $store['password'],
                     $store['database'] ?? $name,
                     $store['vector_index_name'],
                     $store['node_name'],
+                    $store['endpoint'] ?? null,
+                    $store['username'] ?? null,
+                    $store['password'] ?? null,
+                    new Reference($store['http_client'] ?? 'http_client'),
                     $store['vector_field'],
                     $store['dimensions'],
                     $store['distance'],
@@ -2122,8 +2113,8 @@ final class AiBundle extends AbstractBundle
                     $arguments[10] = $store['quantization'];
                 }
 
-                $definition = new Definition(Neo4jStore::class);
-                $definition
+                $definition = (new Definition(Neo4jStore::class))
+                    ->setFactory(Neo4jStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
@@ -2142,13 +2133,13 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $definition = new Definition(OpenSearchStore::class);
-                $definition
+                $definition = (new Definition(OpenSearchStore::class))
+                    ->setFactory(OpenSearchStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
-                        new Reference($store['http_client']),
-                        $store['endpoint'],
                         $store['index_name'] ?? $name,
+                        $store['endpoint'] ?? null,
+                        new Reference($store['http_client'] ?? 'http_client'),
                         $store['vectors_field'],
                         $store['dimensions'],
                         $store['space_type'],
@@ -2252,7 +2243,7 @@ final class AiBundle extends AbstractBundle
 
             foreach ($stores as $name => $store) {
                 $definition = (new Definition(QdrantStore::class))
-                    ->setFactory(StoreFactory::class.'::create')
+                    ->setFactory(QdrantStoreFactory::class.'::create')
                     ->setLazy(true)
                     ->setArguments([
                         $store['collection_name'] ?? $name,
@@ -2428,23 +2419,18 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference($store['http_client']),
-                    $store['url'],
-                    $store['api_key'],
-                    $store['table'] ?? $name,
-                    $store['vector_field'],
-                    $store['vector_dimension'],
-                ];
-
-                if (\array_key_exists('function_name', $store)) {
-                    $arguments[6] = $store['function_name'];
-                }
-
-                $definition = new Definition(SupabaseStore::class);
-                $definition
+                $definition = (new Definition(SupabaseStore::class))
+                    ->setFactory(SupabaseStoreFactory::class.'::create')
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $store['url'] ?? null,
+                        $store['api_key'] ?? null,
+                        new Reference($store['http_client'] ?? 'http_client'),
+                        $store['table'] ?? $name,
+                        $store['vector_field'],
+                        $store['vector_dimension'],
+                        $store['function_name'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('ai.store');
 

@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Bridge\OpenSearch\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\OpenSearch\Store;
+use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
 use Symfony\Component\HttpClient\HttpClient;
@@ -25,10 +25,9 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
-            'http://127.0.0.1:9200',
+        return StoreFactory::create(
             'test_index',
+            'http://127.0.0.1:9200',
             dimensions: 3,
         );
     }

@@ -23,13 +23,14 @@ use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
 {
     public function testStoreCannotSetupWithExtraOptions()
     {
-        $store = new Store(new MockHttpClient(), 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(new MockHttpClient(), 'bar', 'random');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No supported options.');
@@ -47,7 +48,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/cli".');
@@ -63,7 +64,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $store->setup();
 
@@ -78,7 +79,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($mockHttpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($mockHttpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/cli".');
@@ -94,7 +95,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $store->drop();
 
@@ -109,7 +110,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($mockHttpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($mockHttpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/bulk".');
@@ -143,7 +144,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -157,7 +158,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($mockHttpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($mockHttpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:9308/search".');
@@ -194,7 +195,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
         $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
         $this->assertCount(1, $documents);
@@ -216,7 +217,7 @@ final class StoreTest extends TestCase
             ]);
         });
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
         $store->clear();
 
         $this->assertSame('POST', $requestedMethod);
@@ -225,39 +226,21 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
-    public function testStoreNormalizesTrailingSlashOnEndpoint()
-    {
-        $requestedUrl = null;
-        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedUrl): MockResponse {
-            $requestedUrl = $url;
-
-            return new MockResponse('Query OK, 0 rows affected (0.006 sec)'.\PHP_EOL, [
-                'http_code' => 200,
-            ]);
-        });
-
-        $store = new Store($httpClient, 'http://127.0.0.1:9308/', 'bar', 'random');
-        $store->setup();
-
-        $this->assertSame('http://127.0.0.1:9308/cli', $requestedUrl);
-        $this->assertSame(1, $httpClient->getRequestsCount());
-    }
-
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:9308', 'test_index');
+        $store = new Store(new MockHttpClient(), 'test_index');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:9308', 'test_index');
+        $store = new Store(new MockHttpClient(), 'test_index');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:9308', 'test_index');
+        $store = new Store(new MockHttpClient(), 'test_index');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
@@ -277,7 +260,7 @@ final class StoreTest extends TestCase
             ]),
         ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:9308', 'bar', 'random');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
 
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());

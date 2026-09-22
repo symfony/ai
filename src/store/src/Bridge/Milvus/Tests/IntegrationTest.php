@@ -12,10 +12,9 @@
 namespace Symfony\AI\Store\Bridge\Milvus\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\Milvus\Store;
+use Symfony\AI\Store\Bridge\Milvus\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
-use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -25,12 +24,10 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
-            'http://127.0.0.1:19530',
-            '',
+        return StoreFactory::create(
             'test_database',
             'test_collection',
+            'http://127.0.0.1:19530',
             dimensions: 3,
         );
     }

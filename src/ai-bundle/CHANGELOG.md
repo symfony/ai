@@ -16,6 +16,8 @@ CHANGELOG
  * Add `higgsfield` platform configuration for asynchronous image and video generation
  * Register `ai.platform.job_runner` (autowired as `Platform\Job\JobRunner`) using the application clock and, for a platform running asynchronous jobs, its `ai.platform.job_client.<name>` client, built by the bridge factory and tagged `ai.platform.job_client`; render an asynchronous job in the profiler as the handle it carries instead of as a result
  * Allow configuring the `elasticsearch` store with a pre-scoped `http_client` instead of an `endpoint`
+ * Build the `clickhouse`, `manticoresearch`, `milvus`, `neo4j`, `opensearch` and `supabase` stores through their bridge `StoreFactory`, so a pre-scoped `http_client` can replace the endpoint and credentials; either the endpoint or `http_client` must be configured, credentials require the endpoint, and a custom `http_client` is scoped to the endpoint when both are set
+ * Add an `http_client` option to the `manticoresearch`, `milvus` and `neo4j` stores
 
 0.13
 ----

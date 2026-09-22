@@ -5,6 +5,9 @@ CHANGELOG
 ----
 
  * Add `count` method
+ * Introduce a `StoreFactory`
+ * [BC BREAK] Add support for `ScopingHttpClient` in `Store`
+ * [BC BREAK] The `endpoint` and `apiKey` parameters for `Store` have been removed
 
 0.11
 ----

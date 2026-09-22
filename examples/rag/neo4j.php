@@ -16,7 +16,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Neo4j\Store;
+use Symfony\AI\Store\Bridge\Neo4j\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
@@ -28,14 +28,14 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(
-    httpClient: http_client(),
-    endpointUrl: 'http://127.0.0.1:7474',
-    username: 'neo4j',
-    password: env('NEO4J_PASSWORD'),
+$store = StoreFactory::create(
     databaseName: 'neo4j',
     vectorIndexName: 'Movies',
     nodeName: 'movies',
+    endpoint: 'http://127.0.0.1:7474',
+    username: 'neo4j',
+    password: env('NEO4J_PASSWORD'),
+    httpClient: http_client(),
 );
 
 // initialize the table

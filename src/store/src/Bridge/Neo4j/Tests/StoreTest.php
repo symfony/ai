@@ -22,6 +22,7 @@ use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -32,9 +33,9 @@ final class StoreTest extends TestCase
             new JsonMockResponse([], [
                 'http_code' => 400,
             ]),
-        ], 'http://127.0.0.1:7474');
+        ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7474/db/symfony/query/v2".');
@@ -77,9 +78,9 @@ final class StoreTest extends TestCase
             ], [
                 'http_code' => 202,
             ]),
-        ], 'http://127.0.0.1:7474');
+        ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
 
         $store->setup();
         $store->setup();
@@ -93,9 +94,9 @@ final class StoreTest extends TestCase
             new JsonMockResponse([], [
                 'http_code' => 400,
             ]),
-        ], 'http://127.0.0.1:7474');
+        ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:7474/db/symfony/query/v2".');
@@ -109,9 +110,9 @@ final class StoreTest extends TestCase
             new JsonMockResponse([], [
                 'http_code' => 200,
             ]),
-        ], 'http://127.0.0.1:7474');
+        ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
 
         $store->drop();
 
@@ -127,9 +128,9 @@ final class StoreTest extends TestCase
             return new JsonMockResponse([], [
                 'http_code' => 200,
             ]);
-        }, 'http://127.0.0.1:7474');
+        });
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'document');
 
         $store->clear();
 
@@ -146,9 +147,9 @@ final class StoreTest extends TestCase
             return new JsonMockResponse([], [
                 'http_code' => 200,
             ]);
-        }, 'http://127.0.0.1:7474');
+        });
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'document');
 
         $store->clear(['batch_size' => 500]);
 
@@ -157,7 +158,7 @@ final class StoreTest extends TestCase
 
     public function testStoreCannotClearWithInvalidBatchSize()
     {
-        $store = new Store(new MockHttpClient(), 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+        $store = new Store(new MockHttpClient(), 'symfony', 'symfony', 'document');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The "batch_size" option must be a positive integer.');
@@ -166,7 +167,7 @@ final class StoreTest extends TestCase
 
     public function testStoreCannotClearWithUnsupportedOption()
     {
-        $store = new Store(new MockHttpClient(), 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'document');
+        $store = new Store(new MockHttpClient(), 'symfony', 'symfony', 'document');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Only the "batch_size" option is supported.');
@@ -241,9 +242,9 @@ final class StoreTest extends TestCase
             ], [
                 'http_code' => 200,
             ]),
-        ], 'http://127.0.0.1:7474');
+        ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
 
         $store->setup();
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
@@ -340,9 +341,9 @@ final class StoreTest extends TestCase
             ], [
                 'http_code' => 200,
             ]),
-        ], 'http://127.0.0.1:7474');
+        ]);
 
-        $store = new Store($httpClient, 'http://127.0.0.1:7474', 'symfony', 'symfony', 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
 
         $store->setup();
         $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))]);
@@ -355,19 +356,19 @@ final class StoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $store = new Store(new MockHttpClient(), 'neo4j', 'vector_index', 'Document');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $store = new Store(new MockHttpClient(), 'neo4j', 'vector_index', 'Document');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'bolt://localhost:7687', 'neo4j', 'password', 'neo4j', 'vector_index', 'Document');
+        $store = new Store(new MockHttpClient(), 'neo4j', 'vector_index', 'Document');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
@@ -385,10 +386,7 @@ final class StoreTest extends TestCase
         ]);
 
         $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:7474',
-            'neo4j',
-            'password',
+            ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'),
             'neo4j',
             'test_index',
             'TestNode',
