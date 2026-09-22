@@ -6,7 +6,31 @@
     "repositories": [
         {
             "type": "path",
+            "url": "../agent/src/Bridge/Mcp"
+        },
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/EdenAi"
+        },
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Fireworks"
+        },
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Higgsfield"
+        },
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Together"
+        },
+        {
+            "type": "path",
             "url": "../platform/src/Bridge/TypeSafe"
+        },
+        {
+            "type": "path",
+            "url": "../platform/src/Bridge/Venice"
         }
     ],
     "authors": [
@@ -22,9 +46,6 @@
             "name": "Symfony Community",
             "homepage": "https://symfony.com/contributors"
         }
-    ],
-    "repositories": [
-        {"type": "path", "url": "../platform/src/Bridge/EdenAi" }
     ],
     "require": {
         "php": ">=8.2",
@@ -71,15 +92,15 @@
         "symfony/ai-elasticsearch-store": "^0.13",
         "symfony/ai-eleven-labs-platform": "^0.13",
         "symfony/ai-failover-platform": "^0.13",
-        "symfony/ai-fireworks-platform": "^0.13",
+        "symfony/ai-fireworks-platform": "dev-main",
         "symfony/ai-gemini-platform": "^0.13",
         "symfony/ai-generic-platform": "^0.13",
-        "symfony/ai-higgsfield-platform": "^0.13",
+        "symfony/ai-higgsfield-platform": "dev-main",
         "symfony/ai-hugging-face-platform": "^0.13",
         "symfony/ai-lm-studio-platform": "^0.13",
         "symfony/ai-manticore-search-store": "^0.13",
         "symfony/ai-maria-db-store": "^0.13",
-        "symfony/ai-mcp-tool": "^0.13",
+        "symfony/ai-mcp-tool": "dev-main",
         "symfony/ai-meilisearch-message-store": "^0.13",
         "symfony/ai-meilisearch-store": "^0.13",
         "symfony/ai-meta-platform": "^0.13",
@@ -111,12 +132,12 @@
         "symfony/ai-supabase-store": "^0.13",
         "symfony/ai-surreal-db-message-store": "^0.13",
         "symfony/ai-surreal-db-store": "^0.13",
-        "symfony/ai-together-platform": "^0.13",
+        "symfony/ai-together-platform": "dev-main",
         "symfony/ai-transformers-php-platform": "^0.13",
         "symfony/ai-type-safe-platform": "dev-main",
         "symfony/ai-typesense-store": "^0.13",
         "symfony/ai-vektor-store": "^0.13",
-        "symfony/ai-venice-platform": "^0.13",
+        "symfony/ai-venice-platform": "dev-main",
         "symfony/ai-vertex-ai-platform": "^0.13",
         "symfony/ai-voyage-platform": "^0.13",
         "symfony/ai-weaviate-store": "^0.13",

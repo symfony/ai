@@ -3,6 +3,12 @@
     "description": "Symfony AI Demo Application",
     "license": "MIT",
     "type": "project",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../src/agent/src/Bridge/Mcp"
+        }
+    ],
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
@@ -18,7 +24,7 @@
         "symfony/ai-chat": "^0.13",
         "symfony/ai-clock-tool": "^0.13",
         "symfony/ai-hugging-face-platform": "^0.13",
-        "symfony/ai-mcp-tool": "^0.13",
+        "symfony/ai-mcp-tool": "dev-main",
         "symfony/ai-mistral-platform": "^0.13",
         "symfony/ai-open-ai-platform": "^0.13",
         "symfony/ai-postgres-store": "^0.13",
