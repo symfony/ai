@@ -79,17 +79,16 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(1.0, $answers->getChoice('department')->getConfidence());
     }
 
-    public function testItConvertsScoreWithoutProbabilities()
+    public function testItThrowsExceptionForScoreWithoutProbabilities()
     {
-        $result = (new ResultConverter())->convert($this->createRawResult([
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Answer "frustration" of type "score" is missing the "probabilities" key.');
+
+        (new ResultConverter())->convert($this->createRawResult([
             'answers' => [
                 'frustration' => ['type' => 'score', 'score' => 1.035, 'legend' => ['0' => 'Calm', '1' => 'Frustrated'], 'confidence' => 0.842],
             ],
         ]));
-
-        $answers = $result->getContent();
-        $this->assertInstanceOf(Answers::class, $answers);
-        $this->assertSame([], $answers->getScore('frustration')->getProbabilities());
     }
 
     public function testItThrowsExceptionForMissingAnswers()
@@ -179,7 +178,7 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Answer "frustration" of type "score" expects the "legend" key to be an array, "string" given.');
 
         (new ResultConverter())->convert($this->createRawResult(['answers' => [
-            'frustration' => ['type' => 'score', 'score' => 1.6, 'legend' => 'invalid', 'confidence' => 0.78],
+            'frustration' => ['type' => 'score', 'score' => 1.6, 'legend' => 'invalid', 'probabilities' => ['0' => 1.0], 'confidence' => 0.78],
         ]]));
     }
 
