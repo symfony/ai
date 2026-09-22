@@ -1,0 +1,14 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-21T00:17:35Z
+
+@welcoMattic i rebased this and adopted the async job capabilities from #2408 - somehow still not all example run on my side?
+
+can you please give it a final test before we bring it in?
+
+---------------------------------------------------------------------------
+
+by welcoMattic at 2026-09-22T12:00:15Z
+
+@chr-hertel I've fixed the branch and re-run examples scripts against the real Eden AI API.
+All good on my side.
