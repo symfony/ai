@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Agent\Toolbox;
 
-use Symfony\AI\Agent\Toolbox\Exception\ToolException;
+use Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
@@ -64,7 +64,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
     /**
      * @return array<string, mixed>
      *
-     * @throws ToolException When a mandatory tool parameter is missing or mapped DTO denormalization fails
+     * @throws InvalidToolCallArgumentsException When a mandatory tool parameter is missing or an argument cannot be denormalized
      */
     public function resolveArguments(Tool $metadata, ToolCall $toolCall): array
     {
@@ -75,7 +75,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
             try {
                 $argument = $this->denormalizer->denormalize($toolCall->getArguments(), $mapped->className, 'json');
             } catch (SerializerException $e) {
-                throw new ToolException(\sprintf('Cannot map arguments for tool "%s": "%s".', $toolCall->getName(), $e->getMessage()), previous: $e);
+                throw new InvalidToolCallArgumentsException(\sprintf('Cannot map arguments for tool "%s": "%s".', $toolCall->getName(), $e->getMessage()), previous: $e);
             }
 
             return [
@@ -90,7 +90,7 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
         foreach ($parameters as $name => $reflectionParameter) {
             if (!\array_key_exists($name, $toolCall->getArguments())) {
                 if (!$reflectionParameter->isOptional()) {
-                    throw new ToolException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
+                    throw new InvalidToolCallArgumentsException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
                 }
                 continue;
             }
@@ -120,7 +120,11 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
             }
 
             if ($this->denormalizer->supportsDenormalization($value, $parameterType, 'json')) {
-                $value = $this->denormalizer->denormalize($value, $parameterType, 'json');
+                try {
+                    $value = $this->denormalizer->denormalize($value, $parameterType, 'json');
+                } catch (SerializerException $e) {
+                    throw new InvalidToolCallArgumentsException(\sprintf('Invalid value for parameter "%s" of tool "%s": "%s"', $name, $toolCall->getName(), $e->getMessage()), previous: $e);
+                }
             }
 
             $arguments[$name] = $value;

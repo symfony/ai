@@ -174,8 +174,8 @@ class MapToolArgumentsTest extends TestCase
 
         try {
             $resolver->resolveArguments($metadata, $toolCall);
-            $this->fail('Expected a ToolException for the missing required field.');
-        } catch (\Symfony\AI\Agent\Toolbox\Exception\ToolException $e) {
+            $this->fail('Expected an InvalidToolCallArgumentsException for the missing required field.');
+        } catch (InvalidToolCallArgumentsException $e) {
             $this->assertStringContainsString('Cannot map arguments for tool "tool_with_mapped_arguments"', $e->getMessage());
             $this->assertInstanceOf(\Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException::class, $e->getPrevious());
         }
