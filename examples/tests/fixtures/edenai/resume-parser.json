@@ -1,0 +1,75 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/upload",
+                "signature": "fabb86f4b682649e0e8d8c5f030deba0",
+                "signature_v2": "f76cea6bdb885b5ae865053910cb805d",
+                "headers": {
+                    "content-type": [
+                        "multipart/form-data; boundary=VCw8eDp_"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {}
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "260"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"file_id\":\"c2673dba-a26b-447a-bd35-bb1d4b83fbd4\",\"file_name\":\"resume.pdf\",\"file_size\":1662,\"file_mimetype\":\"application/pdf\",\"purpose\":\"general\",\"metadata\":{\"page_count\":1},\"created_at\":\"2026-09-22T08:11:24.380646Z\",\"expires_at\":\"2026-10-22T08:11:24.380646Z\"}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "92181dac69e35ddcf09ec38f90510f7a",
+                "signature_v2": "fef06e7290c350e84271da517d4e2210",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "ocr/resume_parser/openai/gpt-4o",
+                    "input": {
+                        "file": "c2673dba-a26b-447a-bd35-bb1d4b83fbd4"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "4231"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.040000000\",\"provider\":\"openai\",\"feature\":\"ocr\",\"subfeature\":\"resume_parser\",\"output\":{\"extracted_data\":{\"personal_infos\":{\"name\":{\"first_name\":\"Alex\",\"last_name\":\"Martin\",\"raw_name\":\"Alex Martin\",\"middle\":null,\"title\":null,\"prefix\":null,\"sufix\":null},\"address\":{\"formatted_location\":\"12 rue de la Paix, 75002 Paris, France\",\"postal_code\":\"75002\",\"region\":null,\"country\":\"France\",\"country_code\":\"FR\",\"raw_input_location\":null,\"street\":\"rue de la Paix\",\"street_number\":\"12\",\"appartment_number\":null,\"city\":\"Paris\"},\"self_summary\":\"Backend engineer with 9 years of experience building PHP and Go services. Focused on distributed systems, API design and developer tooling.\",\"objective\":null,\"date_of_birth\":null,\"place_of_birth\":null,\"phones\":[\"+33 1 23 45 67 89\"],\"mails\":[\"alex.martin@example.com\"],\"urls\":[\"https://example.com/alex-martin\"],\"fax\":[],\"current_profession\":\"Senior Backend Engineer\",\"gender\":null,\"nationality\":null,\"martial_status\":null,\"current_salary\":null,\"availability\":\"Immediate\"},\"education\":{\"total_years_education\":null,\"entries\":[{\"title\":\"Master of Science in Computer Science\",\"start_date\":\"2014-09-01\",\"end_date\":\"2016-06-01\",\"location\":{\"formatted_location\":\"Nantes, France\",\"postal_code\":null,\"region\":null,\"country\":\"France\",\"country_code\":\"FR\",\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":\"Nantes\"},\"establishment\":\"University of Nantes\",\"description\":null,\"gpa\":null,\"accreditation\":null},{\"title\":\"Bachelor of Science in Software Engineering\",\"start_date\":\"2011-09-01\",\"end_date\":\"2014-06-01\",\"location\":{\"formatted_location\":\"Nantes, France\",\"postal_code\":null,\"region\":null,\"country\":\"France\",\"country_code\":\"FR\",\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":\"Nantes\"},\"establishment\":\"University of Nantes\",\"description\":null,\"gpa\":null,\"accreditation\":null}]},\"work_experience\":{\"total_years_experience\":\"9.0\",\"entries\":[{\"title\":\"Lead Backend Engineer\",\"start_date\":\"2021-03-01\",\"end_date\":null,\"company\":\"Acme Cloud\",\"location\":{\"formatted_location\":\"Paris, France\",\"postal_code\":null,\"region\":null,\"country\":\"France\",\"country_code\":\"FR\",\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":\"Paris\"},\"description\":\"Designed a multi-tenant billing platform serving 2 million requests per day. Led a team of five engineers and owned the public REST and GraphQL APIs.\",\"type\":\"Full time\",\"industry\":\"Technology\"},{\"title\":\"Backend Engineer\",\"start_date\":\"2017-09-01\",\"end_date\":\"2021-02-28\",\"company\":\"Globex Software\",\"location\":{\"formatted_location\":\"Lyon, France\",\"postal_code\":null,\"region\":null,\"country\":\"France\",\"country_code\":\"FR\",\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":\"Lyon\"},\"description\":\"Built event-driven microservices in PHP and Go on Kubernetes. Cut the checkout latency by 40 percent through query and cache tuning.\",\"type\":\"Full time\",\"industry\":\"Technology\"},{\"title\":\"Junior Developer\",\"start_date\":\"2016-06-01\",\"end_date\":\"2017-08-31\",\"company\":\"Initech\",\"location\":{\"formatted_location\":\"Nantes, France\",\"postal_code\":null,\"region\":null,\"country\":\"France\",\"country_code\":\"FR\",\"raw_input_location\":null,\"street\":null,\"street_number\":null,\"appartment_number\":null,\"city\":\"Nantes\"},\"description\":\"Maintained an internal CRM and its reporting pipeline.\",\"type\":\"Full time\",\"industry\":\"Technology\"}]},\"languages\":[{\"name\":\"French\",\"code\":null},{\"name\":\"English\",\"code\":null},{\"name\":\"Spanish\",\"code\":null}],\"skills\":[{\"name\":\"PHP\",\"type\":\"Specialized Skill\"},{\"name\":\"Symfony\",\"type\":\"Specialized Skill\"},{\"name\":\"Go\",\"type\":\"Specialized Skill\"},{\"name\":\"PostgreSQL\",\"type\":\"Specialized Skill\"},{\"name\":\"Redis\",\"type\":\"Specialized Skill\"},{\"name\":\"RabbitMQ\",\"type\":\"Specialized Skill\"},{\"name\":\"Docker\",\"type\":\"Specialized Skill\"},{\"name\":\"Kubernetes\",\"type\":\"Specialized Skill\"},{\"name\":\"Terraform\",\"type\":\"Specialized Skill\"}],\"certifications\":[{\"name\":\"Symfony Certified Developer Expert\",\"type\":null},{\"name\":\"Certified Kubernetes Application Developer\",\"type\":null}],\"courses\":[],\"publications\":[],\"interests\":[]}},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}

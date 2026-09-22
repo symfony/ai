@@ -127,14 +127,14 @@ Supported Models & Platforms
 ----------------------------
 
 * **Language Models**
-  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
-  * `Anthropic's Claude`_ with `Anthropic`_ and `AWS Bedrock`_ as Platform
+  * `OpenAI's GPT`_ with `OpenAI`_, `Azure`_, `OpenRouter`_ and `Eden AI`_ as Platform
+  * `Anthropic's Claude`_ with `Anthropic`_, `AWS Bedrock`_ and `Eden AI`_ as Platform
   * `Meta's Llama`_ with `Azure`_, `Ollama`_, `Replicate`_, `AWS Bedrock`_ and `OpenRouter`_ as Platform
-  * `Gemini`_ with `Google`_, `Vertex AI`_ and `OpenRouter`_ as Platform
+  * `Gemini`_ with `Google`_, `Vertex AI`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Vertex AI Gen AI`_ with `Vertex AI`_ as Platform
   * `DeepSeek's R1`_ with `OpenRouter`_ as Platform
   * `Amazon's Nova`_ with `AWS Bedrock`_ as Platform
-  * `Mistral's Mistral`_ with `Mistral`_ and `OpenRouter`_ as Platform
+  * `Mistral's Mistral`_ with `Mistral`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Albert API`_ models with `Albert`_ as Platform (French government's sovereign AI gateway)
   * Open-weight models (`gpt-oss`_, `Qwen`_, `Gemma`_) with `Bedrock Mantle`_ as Platform
   * Open-weight models like Llama, Qwen, Kimi or GLM with `Together`_ as Platform
@@ -144,7 +144,7 @@ Supported Models & Platforms
 * **Embeddings Models**
   * `Gemini Text Embeddings`_ with `Google`_ and `OpenRouter`_
   * `Vertex AI Text Embeddings`_ with `Vertex AI`_
-  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_ and `OpenRouter`_ as Platform
+  * `OpenAI's Text Embeddings`_ with `OpenAI`_, `Azure`_, `OpenRouter`_ and `Eden AI`_ as Platform
   * `Voyage's Embeddings`_ with `Voyage`_ as Platform
   * `Venice's Embeddings`_ with `Venice`_ as Platform
   * `Mistral Embed`_ with `Mistral`_ and `OpenRouter`_ as Platform
@@ -156,6 +156,7 @@ Supported Models & Platforms
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
   * `TypeSafe's Jev`_ with `TypeSafe`_ as Platform, see :doc:`platform/typesafe`
+  * OCR and document parsing (invoices, resumes, identity documents) with `Eden AI`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
@@ -171,6 +172,7 @@ Supported Models & Platforms
   * Text-to-speech and speech-to-text with `Together`_ as Platform
   * `Venice TTS`_ with `Venice`_ as Platform
   * `Venice STT`_ with `Venice`_ as Platform
+  * Multi-provider TTS and STT with `Eden AI`_ as Platform
 
   For complete Deepgram setup and usage guide (TTS + STT), see :doc:`platform/deepgram`.
 * **Image/Video Models**
@@ -180,13 +182,14 @@ Supported Models & Platforms
   * Image and video generation with `Higgsfield`_ as Platform (asynchronous, poll-based)
   * `Venice T2I`_ with `Venice`_ as Platform
   * `Venice T2V`_ with `Venice`_ as Platform
+  * Image generation, object detection and explicit content detection with `Eden AI`_ as Platform
 
   For complete Venice setup and usage guide (chat, images, audio and video), see :doc:`platform/venice`.
 
 Generic Platforms
 ~~~~~~~~~~~~~~~~~
 
-Platforms like `LiteLLM`_ or `OpenRouter`_ provide a unified API to access multiple models from different providers.
+Platforms like `LiteLLM`_, `OpenRouter`_ or `Eden AI`_ provide a unified API to access multiple models from different providers.
 Therefore, they rely on endpoint and contract design, that is inspired by OpenAI's original GPT API - an implicit
 standard in the industry. Platforms using this de facto standard can be used with the generic bridge::
 
@@ -218,6 +221,10 @@ models, or bypassing the catalog.
 AWS Bedrock reaches its models through two inference engines - the SDK-based ``InvokeModel`` API
 and the OpenAI- and Anthropic-compatible Mantle endpoint - each with its own factory and model
 catalog. See :doc:`platform/bedrock` for the full setup and usage guide.
+
+Eden AI pairs its OpenAI-compatible chat and embeddings endpoints with expert models for OCR,
+document parsing, speech and images, which are addressed as ``feature/subfeature/provider``.
+See :doc:`platform/edenai` for the full setup and usage guide.
 
 Providers and Multi-Provider Platforms
 --------------------------------------
@@ -1373,6 +1380,9 @@ completions, it is invoked with a single document content object - a
 The result exposes every ``Page`` with its markdown, dimensions, extracted layout images
 (with bounding boxes) and optional annotations.
 
+Eden AI also exposes OCR and document parsing (invoices, resumes, identity documents) from
+multiple providers. See :doc:`platform/edenai`.
+
 Code Examples
 ~~~~~~~~~~~~~
 
@@ -2239,6 +2249,7 @@ Code Examples
 .. _`Vertex AI`: https://cloud.google.com/vertex-ai/generative-ai/docs
 .. _`Google`: https://ai.google.dev/
 .. _`OpenRouter`: https://www.openrouter.ai/
+.. _`Eden AI`: https://www.edenai.co/
 .. _`DeepSeek's R1`: https://www.deepseek.com/
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/

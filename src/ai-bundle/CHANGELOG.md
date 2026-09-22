@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add `edenai` platform configuration for the Eden AI bridge, including the `ai.platform.job_client.edenai` service for its asynchronous speech-to-text jobs
  * Add `typesafe` platform configuration for the TypeSafe bridge
  * Show agent calls, platform invocations and tool executions in the performance timeline of the profiler
  * Add support for configuring a tool execution strategy per agent via the `execution_strategy` option under `tools` (`sequential`, `fiber`, or a custom service ID)

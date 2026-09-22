@@ -1,0 +1,77 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/upload",
+                "signature": "fabb86f4b682649e0e8d8c5f030deba0",
+                "signature_v2": "f76cea6bdb885b5ae865053910cb805d",
+                "headers": {
+                    "content-type": [
+                        "multipart/form-data; boundary=L-uORSRA"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {}
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "261"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"file_id\":\"5c38fb10-6869-4a26-838c-0706ac9ca935\",\"file_name\":\"invoice.pdf\",\"file_size\":2495,\"file_mimetype\":\"application/pdf\",\"purpose\":\"general\",\"metadata\":{\"page_count\":1},\"created_at\":\"2026-09-22T10:01:36.507083Z\",\"expires_at\":\"2026-10-22T10:01:36.507083Z\"}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "80d3035d9ec8a48de847d5e5e5a75300",
+                "signature_v2": "a9b6d23330ea37c8bac740866b9fca3a",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "ocr/financial_parser/affinda",
+                    "input": {
+                        "language": "en",
+                        "document_type": "invoice",
+                        "file": "5c38fb10-6869-4a26-838c-0706ac9ca935"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "3951"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.080000000\",\"provider\":\"affinda\",\"feature\":\"ocr\",\"subfeature\":\"financial_parser\",\"output\":{\"extracted_data\":[{\"customer_information\":{\"name\":null,\"id_reference\":null,\"mailling_address\":null,\"billing_address\":\"Hauptstrasse 25, 10115 Berlin, Germany accounts@globex.example\",\"shipping_address\":null,\"service_address\":null,\"remittance_address\":null,\"email\":null,\"phone\":null,\"vat_number\":\"DE811907980\",\"abn_number\":null,\"gst_number\":null,\"pan_number\":null,\"business_number\":null,\"siret_number\":null,\"siren_number\":null,\"customer_number\":null,\"coc_number\":null,\"fiscal_number\":null,\"registration_number\":null,\"tax_id\":null,\"website\":null,\"remit_to_name\":null,\"city\":\"Berlin\",\"country\":\"Germany\",\"house_number\":null,\"province\":\"Berlin\",\"street_name\":\"Hauptstraße\",\"zip_code\":\"13158\",\"municipality\":null},\"merchant_information\":{\"name\":\"Acme Consulting SARL\",\"address\":\"18 avenue des Champs, 75008 Paris, France\",\"phone\":null,\"tax_id\":null,\"id_reference\":null,\"vat_number\":\"FR40123456824\",\"abn_number\":null,\"gst_number\":null,\"business_number\":\"39271761100034\",\"siret_number\":null,\"siren_number\":null,\"pan_number\":null,\"coc_number\":null,\"fiscal_number\":null,\"email\":\"billing@acme-consulting.example\",\"fax\":null,\"website\":null,\"registration\":null,\"city\":\"Paris\",\"country\":\"France\",\"house_number\":null,\"province\":\"Paris\",\"street_name\":\"Avenue Des Champs Elysées\",\"zip_code\":\"75008\",\"country_code\":null},\"payment_information\":{\"amount_due\":2700.0,\"amount_tip\":null,\"amount_shipping\":null,\"amount_change\":null,\"amount_paid\":null,\"total\":null,\"subtotal\":2250.0,\"total_tax\":450.0,\"tax_rate\":null,\"discount\":null,\"gratuity\":null,\"service_charge\":null,\"previous_unpaid_balance\":null,\"prior_balance\":null,\"payment_terms\":null,\"payment_method\":null,\"payment_card_number\":null,\"payment_auth_code\":null,\"shipping_handling_charge\":null,\"transaction_number\":null,\"transaction_reference\":null},\"financial_document_information\":{\"invoice_receipt_id\":\"INV-2026-0042\",\"purchase_order\":\"PO-77310\",\"invoice_date\":\"2026-03-14\",\"time\":null,\"invoice_due_date\":\"2026-04-13\",\"service_start_date\":null,\"service_end_date\":null,\"reference\":null,\"biller_code\":null,\"order_date\":\"INV-2026-0042\",\"tracking_number\":null,\"barcodes\":[]},\"local\":{\"currency\":null,\"currency_code\":\"EUR\",\"currency_exchange_rate\":null,\"country\":null,\"language\":null},\"bank\":{\"iban\":\"FR7630006000011234567890189\",\"swift\":\"AGRIFRPP882\",\"bsb\":null,\"sort_code\":null,\"account_number\":null,\"routing_number\":null,\"bic\":null},\"item_lines\":[{\"tax\":null,\"amount_line\":null,\"description\":\"Description\",\"quantity\":null,\"unit_price\":null,\"unit_type\":null,\"date\":null,\"product_code\":null,\"purchase_order\":null,\"tax_rate\":null,\"base_total\":null,\"sub_total\":null,\"discount_amount\":null,\"discount_rate\":null,\"discount_code\":null,\"order_number\":null,\"title\":null},{\"tax\":null,\"amount_line\":1500.0,\"description\":\"Symfony architecture training, 2 days\",\"quantity\":null,\"unit_price\":2750.0,\"unit_type\":null,\"date\":null,\"product_code\":null,\"purchase_order\":null,\"tax_rate\":null,\"base_total\":null,\"sub_total\":null,\"discount_amount\":null,\"discount_rate\":null,\"discount_code\":null,\"order_number\":null,\"title\":null},{\"tax\":null,\"amount_line\":450.0,\"description\":\"Code review workshop\",\"quantity\":null,\"unit_price\":1450.0,\"unit_type\":null,\"date\":null,\"product_code\":null,\"purchase_order\":null,\"tax_rate\":null,\"base_total\":null,\"sub_total\":null,\"discount_amount\":null,\"discount_rate\":null,\"discount_code\":null,\"order_number\":null,\"title\":null},{\"tax\":null,\"amount_line\":300.0,\"description\":\"Support retainer, March 2026\",\"quantity\":null,\"unit_price\":1300.0,\"unit_type\":null,\"date\":null,\"product_code\":null,\"purchase_order\":null,\"tax_rate\":null,\"base_total\":null,\"sub_total\":null,\"discount_amount\":null,\"discount_rate\":null,\"discount_code\":null,\"order_number\":null,\"title\":null}],\"document_metadata\":{\"document_index\":null,\"document_page_number\":1,\"document_type\":null}}]},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}

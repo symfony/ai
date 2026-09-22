@@ -1,0 +1,41 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.edenai.run/v3/universal-ai",
+                "signature": "06bbec6f50c7256a44cf0ed07e6f992e",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "image/logo_detection/google",
+                    "input": {
+                        "file": "https://raw.githubusercontent.com/symfony/ai/main/fixtures/accordion.jpg"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "169"
+                    ],
+                    "server": [
+                        "uvicorn"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"success\",\"cost\":\"0.001500000\",\"provider\":\"google\",\"feature\":\"image\",\"subfeature\":\"logo_detection\",\"output\":{\"items\":[]},\"error\":null,\"original_response\":null}"
+            }
+        }
+    ]
+}

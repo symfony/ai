@@ -6,6 +6,10 @@
     "repositories": [
         {
             "type": "path",
+            "url": "../src/platform/src/Bridge/EdenAi"
+        },
+        {
+            "type": "path",
             "url": "../src/platform/src/Bridge/TypeSafe"
         }
     ],
@@ -40,6 +44,7 @@
         "symfony/ai-deepgram-platform": "^0.13",
         "symfony/ai-docker-model-runner-platform": "^0.13",
         "symfony/ai-doctrine-message-store": "^0.13",
+        "symfony/ai-eden-ai-platform": "dev-main",
         "symfony/ai-elasticsearch-store": "^0.13",
         "symfony/ai-eleven-labs-platform": "^0.13",
         "symfony/ai-failover-platform": "^0.13",

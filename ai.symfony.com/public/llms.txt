@@ -54,6 +54,7 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [Model Catalogs](https://symfony.com/doc/current/ai/components/platform/model-catalogs.html): How platforms resolve model names into Model objects with capabilities, and how to extend catalogs for new or local models
 - [Voyage AI](https://symfony.com/doc/current/ai/components/platform/voyage.html): Voyage AI embedding platform
 - [TypeSafe](https://symfony.com/doc/current/ai/components/platform/typesafe.html): TypeSafe Jev platform for typed decisions (noul, choice and score questions)
+- [Eden AI](https://symfony.com/doc/current/ai/components/platform/edenai.html): Eden AI gateway for chat, embeddings, OCR, document parsing, speech and image models across many providers
 - [Deepgram](https://symfony.com/doc/current/ai/components/platform/deepgram.html): Deepgram speech-to-text (STT) and text-to-speech (TTS) bridge over the Deepgram REST endpoints
 - [Agent Component](https://symfony.com/doc/current/ai/components/agent.html): Framework for building AI agents with tool calling, memory, and multi-step reasoning
 - [Store Component](https://symfony.com/doc/current/ai/components/store.html): Vector database abstraction for RAG with 20+ store backends
@@ -114,7 +115,7 @@ Symfony integration for the official MCP SDK (`mcp/sdk`). Install with `composer
 
 ## Supported AI Platforms
 
-OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, Fireworks, Together, Higgsfield, TransformersPHP, and TypeSafe.
+OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, Fireworks, Together, Higgsfield, TransformersPHP, TypeSafe, and Eden AI.
 
 ## Supported Vector Stores
 

@@ -35,6 +35,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Deepgram            | `symfony/ai-deepgram-platform`            |
 | DeepSeek            | `symfony/ai-deep-seek-platform`           |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |
+| Eden AI             | `symfony/ai-eden-ai-platform`             |
 | ElevenLabs          | `symfony/ai-eleven-labs-platform`         |
 | Failover            | `symfony/ai-failover-platform`            |
 | Generic             | `symfony/ai-generic-platform`             |

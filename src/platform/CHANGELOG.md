@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add the Eden AI bridge, covering the gateway's OpenAI-compatible chat and embeddings endpoints and its expert models: OCR, document parsing, text-to-speech, asynchronous speech-to-text, image analysis and image generation
  * Add the TypeSafe bridge, evaluating typed questions (noul, choice and score) against a state with the Jev models
  * Add `Capability::REALTIME_SESSION` and `Result\RealtimeSessionResult` for long-lived realtime sessions (ephemeral client credentials for WebRTC/WebSocket voice agents)
  * Add a `server_tools` option to the Anthropic `ModelClient`, mapping `web_search` and `code_execution` to their versioned Anthropic tool spec, mirroring the Gemini and Vertex AI bridges' name-to-params map shape; unmapped tool names throw instead of being silently forwarded, and the raw `tools` option remains the escape hatch for anything not mapped. The Anthropic `ResultConverter` now merges the `server_tool_use`/`web_search_tool_result` pair of a web search into a single `Result\WebSearchResult` carrying query, id and status, instead of dropping the blocks (or throwing when a response carries only web-search blocks)

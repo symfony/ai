@@ -7,6 +7,7 @@ CHANGELOG
  * Add model information to token usage extraction
  * Add a `CompletionsConversionTrait::yieldChunkMetadata()` extension point, so a bridge can promote the
    provider-specific payload of a stream chunk to result metadata
+ * Read the `detail` key of an authentication error payload, so gateways not using the OpenAI error shape report their own message instead of the generic `Authentication failed.`
 
 0.12
 ----
