@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic\Batch;
 
+use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -69,7 +70,7 @@ final class BatchClient
 
         $headers = [
             'x-api-key' => $this->apiKey,
-            'anthropic-version' => '2023-06-01',
+            'anthropic-version' => ModelClient::API_VERSION,
             'content-type' => 'application/json',
         ];
 

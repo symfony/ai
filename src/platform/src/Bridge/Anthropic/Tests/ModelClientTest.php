@@ -708,7 +708,7 @@ class ModelClientTest extends TestCase
         $modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('A batch invocation expects a non-empty array of inputs.');
+        $this->expectExceptionMessage('A batch invocation expects a non-empty array of inputs, "array" given.');
 
         $modelClient->request($this->model, [], ['batch' => true]);
     }

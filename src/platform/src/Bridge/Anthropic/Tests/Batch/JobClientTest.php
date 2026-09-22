@@ -238,7 +238,9 @@ final class JobClientTest extends TestCase
 
         $this->assertFalse($items[0]->isSuccess());
         $this->assertSame('Response does not contain any content.', $items[0]->getError());
-        $this->assertSame('succeeded', $items[0]->getRaw());
+        // Anthropic answered this request; failing to read its answer is this bridge's problem, so
+        // the item does not claim the provider reported a succeeded outcome.
+        $this->assertNull($items[0]->getRaw());
         $this->assertTrue($items[1]->isSuccess());
     }
 
@@ -253,6 +255,7 @@ final class JobClientTest extends TestCase
 
         $this->assertSame(BatchItemCase::ERRORED, $items[0]->getCase());
         $this->assertSame('The successful result of the request does not contain a message.', $items[0]->getError());
+        $this->assertNull($items[0]->getRaw());
     }
 
     /**

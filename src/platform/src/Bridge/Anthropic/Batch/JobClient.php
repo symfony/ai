@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic\Batch;
 
+use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\JobFailedException;
@@ -207,15 +208,17 @@ final class JobClient implements JobClientInterface
         if ('succeeded' === $type) {
             $message = $result['message'] ?? null;
 
+            // Anthropic answered the request, so the failure below is this bridge's and not its
+            // outcome - the item carries no raw outcome rather than claiming a succeeded one.
             if (!\is_array($message)) {
-                return BatchItem::errored($customId, 'The successful result of the request does not contain a message.', $type);
+                return BatchItem::errored($customId, 'The successful result of the request does not contain a message.');
             }
 
             try {
                 return BatchItem::succeeded($customId, $this->itemConverter->convertData($message), $type);
             } catch (ExceptionInterface $exception) {
                 // One unreadable response is that request's problem, not the batch's.
-                return BatchItem::errored($customId, $exception->getMessage(), $type);
+                return BatchItem::errored($customId, $exception->getMessage());
             }
         }
 
@@ -283,7 +286,7 @@ final class JobClient implements JobClientInterface
     {
         return [
             'x-api-key' => $this->apiKey,
-            'anthropic-version' => '2023-06-01',
+            'anthropic-version' => ModelClient::API_VERSION,
         ];
     }
 

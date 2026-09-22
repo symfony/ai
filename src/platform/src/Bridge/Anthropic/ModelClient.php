@@ -33,6 +33,11 @@ final class ModelClient implements ModelClientInterface
     public const BATCH = 'batch';
 
     /**
+     * The API version every request of this bridge states, batches and their results included.
+     */
+    public const API_VERSION = '2023-06-01';
+
+    /**
      * Anthropic requires a versioned `type` per server tool, so only tools whose
      * result blocks the converter can round-trip are mapped here. Anything else
      * stays reachable through the raw `tools` option.
@@ -89,7 +94,7 @@ final class ModelClient implements ModelClientInterface
 
         $headers = [
             'x-api-key' => $this->apiKey,
-            'anthropic-version' => '2023-06-01',
+            'anthropic-version' => self::API_VERSION,
             'content-type' => 'application/json',
         ];
 
@@ -169,7 +174,7 @@ final class ModelClient implements ModelClientInterface
     private function submitBatch(array $payload, array $options): RawHttpResult
     {
         if ([] === $payload) {
-            throw new InvalidArgumentException('A batch invocation expects a non-empty array of inputs.');
+            throw new InvalidArgumentException(\sprintf('A batch invocation expects a non-empty array of inputs, "%s" given.', get_debug_type($payload)));
         }
 
         if ($options['stream'] ?? false) {
