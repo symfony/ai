@@ -31,7 +31,7 @@ final class VideoTest extends E2ETestCase
 
         $this->chat('What do you see?');
 
-        $caption = $this->waitForTextChange('#welcome i', self::PLACEHOLDER);
+        $caption = $this->waitForTextChange('#video-caption', self::PLACEHOLDER);
 
         $this->assertNotSame('', $caption);
         $this->assertStringNotContainsString('Please provide both an instruction', $caption);

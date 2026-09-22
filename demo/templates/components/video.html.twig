@@ -9,7 +9,7 @@
                 <video id="videoFeed" class="video-feed" autoplay playsinline></video>
                 <canvas id="canvas" class="d-none"></canvas>
                 <div class="video-caption">
-                    <div data-loading="action(submit)|hide">{{ this.caption|markdown_to_html }}</div>
+                    <div id="video-caption" data-loading="action(submit)|hide">{{ this.caption|markdown_to_html }}</div>
                     <div data-loading="action(submit)|show" class="video-caption-loading">
                         <span class="typing" aria-hidden="true"><span></span><span></span><span></span></span>
                         <i>Analyzing the frame…</i>
