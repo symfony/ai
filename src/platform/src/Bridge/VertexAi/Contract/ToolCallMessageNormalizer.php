@@ -30,7 +30,7 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
      * @return array<array{
      *      functionResponse?: array{
      *          name: string,
-     *          response: array<int|string, mixed>
+     *          response: array{result: mixed}
      *      },
      *      inlineData?: array{mimeType: string, data: string}
      *  }>
@@ -42,13 +42,12 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer
         $text = $data->asText() ?? '';
         $resultContent = json_validate($text) ? json_decode($text, true, 512, \JSON_THROW_ON_ERROR) : $text;
 
+        // Vertex AI requires `response` (FunctionResponse) to be a Protobuf Struct, which cannot hold a JSON list
         $parts = [[
-            'functionResponse' => array_filter([
+            'functionResponse' => [
                 'name' => $data->getToolCall()->getName(),
-                'response' => \is_array($resultContent) ? $resultContent : [
-                    'rawResponse' => $resultContent,
-                ],
-            ]),
+                'response' => ['result' => $resultContent],
+            ],
         ]];
 
         foreach ($data->getContent() as $part) {
