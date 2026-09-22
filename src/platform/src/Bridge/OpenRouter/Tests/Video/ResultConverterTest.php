@@ -12,13 +12,14 @@
 namespace Symfony\AI\Platform\Bridge\OpenRouter\Tests\Video;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video\JobClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\Video\ResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\VideoGenerationModel;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
 /**
  * @author Tim Lochmüller <tim@fruit-lab.de>
@@ -33,26 +34,39 @@ final class ResultConverterTest extends TestCase
         $this->assertFalse($converter->supports(new Model('any-model')));
     }
 
-    public function testConvertsBinaryVideoResponse()
+    public function testConvertsSubmissionIntoJobResult()
     {
-        $videoContent = file_get_contents(\dirname(__DIR__, 7).'/fixtures/ocean.mp4');
+        $converter = new ResultConverter('my-openrouter');
+        $result = $converter->convert($this->createRawResult(['id' => 'job-123', 'status' => 'pending']));
 
-        $mockHttpClient = new MockHttpClient([
-            new MockResponse($videoContent, ['response_headers' => ['content-type' => 'video/mp4']]),
-        ]);
+        $handle = $result->getContent();
 
-        $response = $mockHttpClient->request('GET', 'https://example.com/video.mp4');
+        $this->assertSame('job-123', $handle->getId());
+        $this->assertSame('my-openrouter', $handle->getProvider());
+        $this->assertSame(ResultConverter::MAX_DURATION, $handle->getMaxDuration());
+        $this->assertTrue((new JobClient(new MockHttpClient()))->supports($handle));
+    }
 
-        $converter = new ResultConverter();
-        $result = $converter->convert(new RawHttpResult($response));
+    public function testThrowsWhenNoJobIdIsReturned()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The video generation request did not return a job ID.');
 
-        $this->assertInstanceOf(BinaryResult::class, $result);
-        $this->assertSame($videoContent, $result->getContent());
-        $this->assertSame('video/mp4', $result->getMimeType());
+        (new ResultConverter())->convert($this->createRawResult(['status' => 'pending']));
     }
 
     public function testTokenUsageExtractorIsNull()
     {
         $this->assertNull((new ResultConverter())->getTokenUsageExtractor());
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function createRawResult(array $data): RawHttpResult
+    {
+        $httpClient = new MockHttpClient([new JsonMockResponse($data, ['http_code' => 202])]);
+
+        return new RawHttpResult($httpClient->request('POST', 'https://openrouter.ai/api/v1/videos'));
     }
 }

@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video\JobClient;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -43,5 +44,10 @@ final class FactoryTest extends TestCase
         $platform = Factory::createPlatform('test-api-key', $httpClient);
 
         $this->assertInstanceOf(Platform::class, $platform);
+    }
+
+    public function testItCreatesJobClient()
+    {
+        $this->assertInstanceOf(JobClient::class, Factory::createJobClient('test-api-key', new MockHttpClient()));
     }
 }

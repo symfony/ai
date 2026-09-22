@@ -313,14 +313,19 @@ final class ModelApiCatalogTest extends TestCase
             'data' => [],
         ]);
 
-        $httpClient = new MockHttpClient([$modelsResponse, $embeddingsResponse]);
+        $videosResponse = new JsonMockResponse([
+            'data' => [],
+        ]);
+
+        $httpClient = new MockHttpClient([$modelsResponse, $embeddingsResponse, $videosResponse]);
 
         $catalog = new ModelApiCatalog($httpClient, 'https://gateway.internal/api/');
         $catalog->getModels();
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(3, $httpClient->getRequestsCount());
         $this->assertSame('https://gateway.internal/api/v1/models', $modelsResponse->getRequestUrl());
         $this->assertSame('https://gateway.internal/api/v1/embeddings/models', $embeddingsResponse->getRequestUrl());
+        $this->assertSame('https://gateway.internal/api/v1/videos/models', $videosResponse->getRequestUrl());
     }
 
     public function testAutoRouterModelStillWorksWithApiCatalog()

@@ -13,13 +13,14 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter\Video;
 
 use Symfony\AI\Platform\Bridge\OpenRouter\VideoGenerationModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
+ * Submits a video generation job; the returned job is resolved by {@see JobClient}.
+ *
  * @author Tim Lochmüller <tim@fruit-lab.de>
  */
 final class ModelClient implements ModelClientInterface
@@ -28,8 +29,6 @@ final class ModelClient implements ModelClientInterface
         private readonly HttpClientInterface $httpClient,
         #[\SensitiveParameter] private readonly ?string $apiKey = null,
         private readonly string $baseUrl = 'https://openrouter.ai/api',
-        private readonly int $pollIntervalSeconds = 5,
-        private readonly int $pollTimeoutSeconds = 600,
     ) {
     }
 
@@ -42,10 +41,7 @@ final class ModelClient implements ModelClientInterface
     {
         $prompt = $this->extractTextPrompt($payload, $options);
         $imageFrame = $this->extractImageFrame($payload, $options);
-
-        $pollIntervalSeconds = $options['poll_interval'] ?? $this->pollIntervalSeconds;
-        $pollTimeoutSeconds = $options['poll_timeout'] ?? $this->pollTimeoutSeconds;
-        unset($options['poll_interval'], $options['poll_timeout'], $options['prompt']);
+        unset($options['prompt']);
 
         $body = [
             'model' => $model->getName(),
@@ -54,22 +50,10 @@ final class ModelClient implements ModelClientInterface
             ...$imageFrame,
         ];
 
-        $createResponse = $this->httpClient->request('POST', $this->baseUrl.'/v1/videos', [
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/videos', [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
             'json' => $body,
-        ]);
-
-        $data = $createResponse->toArray();
-
-        if (!isset($data['id'])) {
-            throw new RuntimeException('The video generation request did not return a job ID.');
-        }
-
-        $contentUrl = $this->waitForCompletion((string) $data['id'], (int) $pollIntervalSeconds, (int) $pollTimeoutSeconds);
-
-        return new RawHttpResult($this->httpClient->request('GET', $contentUrl, [
-            'auth_bearer' => $this->apiKey,
         ]));
     }
 
@@ -119,39 +103,5 @@ final class ModelClient implements ModelClientInterface
         }
 
         throw new InvalidArgumentException('The video generation request requires a text prompt.');
-    }
-
-    private function waitForCompletion(string $jobId, int $pollIntervalSeconds, int $pollTimeoutSeconds): string
-    {
-        $deadline = microtime(true) + $pollTimeoutSeconds;
-
-        while (true) {
-            $statusData = $this->httpClient->request('GET', $this->baseUrl.'/v1/videos/'.$jobId, [
-                'auth_bearer' => $this->apiKey,
-            ])->toArray();
-
-            $status = $statusData['status'] ?? null;
-
-            if ('completed' === $status) {
-                $contentUrl = $statusData['unsigned_urls'][0] ?? null;
-                if (!\is_string($contentUrl) || '' === $contentUrl) {
-                    throw new RuntimeException(\sprintf('Video generation completed but no download URL was returned for job "%s".', $jobId));
-                }
-
-                return $contentUrl;
-            }
-
-            if ('failed' === $status) {
-                throw new RuntimeException(\sprintf('Video generation failed for job "%s".', $jobId));
-            }
-
-            if (microtime(true) >= $deadline) {
-                throw new RuntimeException(\sprintf('Video generation timed out for job "%s" after %d seconds.', $jobId, $pollTimeoutSeconds));
-            }
-
-            if ($pollIntervalSeconds > 0) {
-                sleep($pollIntervalSeconds);
-            }
-        }
     }
 }

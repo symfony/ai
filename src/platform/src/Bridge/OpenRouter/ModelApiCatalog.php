@@ -148,7 +148,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
      */
     protected function fetchRemoteVideoModels(): iterable
     {
-        $responseVideos = $this->httpClient->request('GET', 'https://openrouter.ai/api/v1/videos/models');
+        $responseVideos = $this->httpClient->request('GET', $this->baseUrl.'/v1/videos/models');
         foreach ($responseVideos->toArray()['data'] as $video) {
             $capabilities = [
                 Capability::INPUT_TEXT,

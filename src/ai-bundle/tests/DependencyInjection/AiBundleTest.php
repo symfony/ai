@@ -52,6 +52,7 @@ use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Factory as OpenRouterFactory;
 use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
@@ -4659,6 +4660,27 @@ class AiBundleTest extends TestCase
         $this->assertSame([['key' => 'minimax']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $minimax'));
+    }
+
+    public function testOpenRouterRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openrouter' => [
+                        'api_key' => 'sk-openrouter_key_full',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.openrouter');
+
+        $this->assertSame([OpenRouterFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('sk-openrouter_key_full', $definition->getArgument(0));
+        $this->assertSame([['key' => 'openrouter']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $openrouter'));
     }
 
     public function testBedrockMantlePlatformUsesCompletionsRouteByDefault()

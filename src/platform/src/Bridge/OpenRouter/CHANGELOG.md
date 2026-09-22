@@ -1,11 +1,15 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add video generation via the `POST /api/v1/videos` endpoint, returning a `Result\JobResult` resolved through the new `Video\JobClient`, built by `Factory::createJobClient()`
+
 0.13
 ----
 
  * Add configurable `$baseUrl` constructor parameter to `ModelApiCatalog`
- * Add support for video generation via the `POST /api/v1/videos` endpoint
 
 0.11
 ----
