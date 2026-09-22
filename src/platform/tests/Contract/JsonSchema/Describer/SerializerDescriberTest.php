@@ -49,6 +49,8 @@ final class SerializerDescriberTest extends TestCase
                             'enum' => ['name'],
                         ],
                     ],
+                    'required' => ['type'],
+                    'additionalProperties' => false,
                 ],
                 [
                     'description' => ListItemAge::class,
@@ -57,6 +59,8 @@ final class SerializerDescriberTest extends TestCase
                             'enum' => ['age'],
                         ],
                     ],
+                    'required' => ['type'],
+                    'additionalProperties' => false,
                 ],
             ],
         ];

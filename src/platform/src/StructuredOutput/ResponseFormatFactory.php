@@ -27,13 +27,53 @@ final class ResponseFormatFactory implements ResponseFormatFactoryInterface
 
     public function create(string $responseClass): array
     {
+        $schema = $this->schemaFactory->buildProperties($responseClass);
+        if (null !== $schema) {
+            $this->requireAllProperties($schema);
+        }
+
         return [
             'type' => 'json_schema',
             'json_schema' => [
                 'name' => u($responseClass)->afterLast('\\')->toString(),
-                'schema' => $this->schemaFactory->buildProperties($responseClass),
+                'schema' => $schema,
                 'strict' => true,
             ],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $schema
+     */
+    private function requireAllProperties(array &$schema): void
+    {
+        if (isset($schema['properties']) && \is_array($schema['properties'])) {
+            $schema['required'] = array_keys($schema['properties']);
+            $schema['additionalProperties'] = false;
+
+            foreach ($schema['properties'] as &$property) {
+                if (\is_array($property)) {
+                    $this->requireAllProperties($property);
+                }
+            }
+            unset($property);
+        }
+
+        foreach (['anyOf', 'oneOf', 'allOf'] as $composition) {
+            if (!isset($schema[$composition]) || !\is_array($schema[$composition])) {
+                continue;
+            }
+
+            foreach ($schema[$composition] as &$subSchema) {
+                if (\is_array($subSchema)) {
+                    $this->requireAllProperties($subSchema);
+                }
+            }
+            unset($subSchema);
+        }
+
+        if (isset($schema['items']) && \is_array($schema['items'])) {
+            $this->requireAllProperties($schema['items']);
+        }
     }
 }

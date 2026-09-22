@@ -80,7 +80,7 @@ class MapToolArgumentsTest extends TestCase
                     'enum' => ['active', 'archived'],
                 ],
             ],
-            'required' => ['ingredient', 'servingSize', 'status'],
+            'required' => ['ingredient'],
             'additionalProperties' => false,
         ], $tool->getParameters());
     }
@@ -110,7 +110,7 @@ class MapToolArgumentsTest extends TestCase
                     'type' => 'integer',
                 ],
             ],
-            'required' => ['ingredient', 'servingSize'],
+            'required' => ['ingredient'],
             'additionalProperties' => false,
         ];
 
