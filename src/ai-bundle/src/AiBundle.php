@@ -90,6 +90,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
 use Symfony\AI\Platform\Bridge\LmStudio\Factory as LmStudioFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\MiniMaxJobClient;
+use Symfony\AI\Platform\Bridge\Mistral\Batch\JobClient as MistralJobClient;
 use Symfony\AI\Platform\Bridge\Mistral\Factory as MistralFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
@@ -1082,6 +1083,16 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'mistral']);
 
             $container->setDefinition($platformId, $definition);
+
+            $jobClientId = 'ai.platform.job_client.mistral';
+            $container->setDefinition($jobClientId, (new Definition(MistralJobClient::class))
+                ->setFactory(MistralFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.platform.job_client', ['key' => 'mistral']));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'mistral');
 
             return;
         }

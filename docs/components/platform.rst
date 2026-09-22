@@ -1313,8 +1313,14 @@ nothing and can be submitted again, where one that errored has to be fixed first
 The result is fetched from the client rather than from a ``JobRunner`` here, because a canceled or
 expired batch is terminal without having succeeded: the runner reports it as a
 :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException`, where the client still hands out
-the requests it did get through. On top of the interface, the OpenAI client reports a batch's
-progress in one request and cancels one that is no longer worth finishing.
+the requests it did get through. On top of the interface, the OpenAI and Mistral clients report a
+batch's progress in one request and cancel one that is no longer worth finishing.
+
+Mistral takes the same invocation through the same option, and gives a batch 24 hours by default.
+A ``timeout_hours`` option shortens that window; it belongs to the job Mistral creates, so it is not
+sent with its requests, and it is what the handle reports as its maximum duration::
+
+    $handle = $platform->invoke('mistral-large-latest', $inputs, ['batch' => true, 'timeout_hours' => 6])->asJob();
 
 A successful item holds the ordinary result a synchronous invocation would have produced, except for
 structured output: the schema is sent with every request, but deserializing an answer happens when an
@@ -1335,6 +1341,7 @@ Code Examples
 * `Asynchronous Video Generation with Venice`_
 * `Asynchronous Text Generation with Replicate`_
 * `Batch Requests with GPT`_
+* `Batch Requests with Mistral`_
 
 Audio Processing
 ----------------
@@ -2365,6 +2372,7 @@ Code Examples
 .. _`Asynchronous Video Generation with Venice`: https://github.com/symfony/ai/blob/main/examples/venice/text-to-video.php
 .. _`Asynchronous Text Generation with Replicate`: https://github.com/symfony/ai/blob/main/examples/replicate/chat-llama.php
 .. _`Batch Requests with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/batch.php
+.. _`Batch Requests with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/batch.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
