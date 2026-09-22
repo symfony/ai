@@ -123,7 +123,7 @@ final class ResultConverter implements ResultConverterInterface
         [$requiredKeys, $arrayKeys] = match ($type) {
             'noul' => [['noul'], []],
             'choice' => [['choice', 'probabilities', 'confidence'], ['probabilities']],
-            'score' => [['score', 'legend', 'confidence'], ['legend', 'probabilities']],
+            'score' => [['score', 'legend', 'probabilities', 'confidence'], ['legend', 'probabilities']],
             default => [[], []],
         };
 

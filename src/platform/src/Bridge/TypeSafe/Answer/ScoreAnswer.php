@@ -57,14 +57,14 @@ final class ScoreAnswer implements AnswerInterface
     }
 
     /**
-     * @param array{type: 'score', score: int|float, legend: array<int, string>, probabilities?: array<int, int|float>, confidence: int|float} $data
+     * @param array{type: 'score', score: int|float, legend: array<int, string>, probabilities: array<int, int|float>, confidence: int|float} $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
             (float) $data['score'],
             $data['legend'],
-            array_map(floatval(...), $data['probabilities'] ?? []),
+            array_map(floatval(...), $data['probabilities']),
             (float) $data['confidence'],
         );
     }
