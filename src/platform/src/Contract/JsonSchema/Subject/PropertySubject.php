@@ -36,7 +36,7 @@ final class PropertySubject
     {
         return match (true) {
             $this->reflector instanceof \ReflectionParameter => !$this->reflector->isOptional(),
-            $this->reflector instanceof \ReflectionProperty => true,
+            $this->reflector instanceof \ReflectionProperty => $this->isPropertyRequired(),
             $this->reflector instanceof \ReflectionMethod => false,
         };
     }
@@ -51,5 +51,14 @@ final class PropertySubject
     public function getAttributes(string $class): array
     {
         return array_map(static fn (\ReflectionAttribute $attribute) => $attribute->newInstance(), $this->reflector->getAttributes($class));
+    }
+
+    private function isPropertyRequired(): bool
+    {
+        if (!$this->reflector->isPromoted()) {
+            return true;
+        }
+
+        return !(new \ReflectionParameter([$this->reflector->getDeclaringClass()->getName(), '__construct'], $this->reflector->getName()))->isOptional();
     }
 }

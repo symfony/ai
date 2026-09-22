@@ -2,37 +2,25 @@
 === Testing with model: claude-sonnet-4-5-20250929 ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-I found 1 result for order number ORD-12345 with John Doe as the responsible user.
+I found 1 result for order number **ORD-12345** with user responsible **John Doe**.
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found 1 purchase contract matching your search criteria for contract number PC-67890 with subsidiary Acme Corp.
+I found 1 purchase contract matching your search criteria. The search was for contract number PC-67890 with subsidiary Acme Corp.
 
 === Testing with model: gpt-5-mini ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-Search complete — 1 matching order found for ORD-12345 (user: John Doe).
+I found 1 matching order for number ORD-12345 with user responsible John Doe.
 
-What would you like to do next?
-- Show order details (status, items, dates, totals)
-- Download or export the order record
-- Update the order or add a note
-- Show raw/full JSON
-
-Tell me which and I’ll retrieve it.
+Would you like me to retrieve full order details (status, items, dates, attached documents, etc.) or apply any additional filters (e.g., departure date)?
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found 1 matching purchase contract (PC-67890) for subsidiary "Acme Corp."
-
-What would you like me to do next?
-- Show the contract details/summary
-- Download or export the contract
-- Share/forward it to someone
-- Anything else (specify)
+I found one result for purchase contract PC-67890 with subsidiary Acme Corp. Do you want the contract details, a PDF copy, or any specific fields (dates, value, line items, contacts)?
 
 === Testing with model: gemini-2.5-flash ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-Could you please provide the departure date for the order?
+I have found 1 result for order number ORD-12345 with user responsible John Doe.
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found a purchase contract with the number PC-67890 associated with Acme Corp.
+I found one result for purchase contract PC-67890 with subsidiary Acme Corp.
