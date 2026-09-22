@@ -50,7 +50,7 @@ final class ToolCallNormalizer implements NormalizerInterface
             'type' => 'function',
             'function' => [
                 'name' => $data->getName(),
-                'arguments' => json_encode($data->getArguments() ?: new \stdClass()),
+                'arguments' => json_encode($data->getArguments() ?: new \stdClass(), \JSON_UNESCAPED_SLASHES),
             ],
         ];
     }
