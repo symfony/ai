@@ -47,7 +47,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
     }
 
     /**
-     * @param array{functionResponse: array{name: string, response: array<int|string, mixed>}}[] $expected
+     * @param array{functionResponse: array{name: string, response: array{result: mixed}}}[] $expected
      */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(ToolCallMessage $message, array $expected)
@@ -85,7 +85,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
             [[
                 'functionResponse' => [
                     'name' => 'name1',
-                    'response' => ['rawResponse' => 'true'],
+                    'response' => ['result' => true],
                 ],
             ]],
         ];
@@ -98,7 +98,33 @@ final class ToolCallMessageNormalizerTest extends TestCase
             [[
                 'functionResponse' => [
                     'name' => 'name1',
-                    'response' => ['structured' => 'response'],
+                    'response' => ['result' => ['structured' => 'response']],
+                ],
+            ]],
+        ];
+
+        yield 'list response' => [
+            new ToolCallMessage(
+                new ToolCall('name1', 'name1', []),
+                new Text('[{"name":"Early bird"},{"name":"Late deal"}]'),
+            ),
+            [[
+                'functionResponse' => [
+                    'name' => 'name1',
+                    'response' => ['result' => [['name' => 'Early bird'], ['name' => 'Late deal']]],
+                ],
+            ]],
+        ];
+
+        yield 'plain text response' => [
+            new ToolCallMessage(
+                new ToolCall('name1', 'name1', []),
+                new Text('It is 12:00.'),
+            ),
+            [[
+                'functionResponse' => [
+                    'name' => 'name1',
+                    'response' => ['result' => 'It is 12:00.'],
                 ],
             ]],
         ];
@@ -112,7 +138,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
                 [
                     'functionResponse' => [
                         'name' => 'screenshot',
-                        'response' => ['rawResponse' => 'Here is the screenshot'],
+                        'response' => ['result' => 'Here is the screenshot'],
                     ],
                 ],
                 [
