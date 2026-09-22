@@ -15,7 +15,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
 use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
 use Symfony\AI\Mate\Exception\ContainerCompilationException;
-use Symfony\AI\Mate\Exception\MissingDependencyException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -230,10 +229,6 @@ final class ContainerFactory
         $envFile = $container->getParameter('mate.env_file');
         if (!\is_string($envFile) || '' === $envFile) {
             return;
-        }
-
-        if (!class_exists(Dotenv::class)) {
-            throw new MissingDependencyException('Cannot load any environment file with out Symfony Dotenv. Please run run "composer require symfony/dotenv" and try again.');
         }
 
         $extra = [];
