@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
+use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
@@ -50,11 +51,22 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
             ];
         }
 
+        $previousMessage = null;
         foreach ($data->withoutSystemMessage()->getMessages() as $message) {
-            $requestData['contents'][] = [
-                'role' => $message->getRole()->equals(Role::Assistant) ? 'model' : 'user',
-                'parts' => $this->normalizer->normalize($message, $format, $context),
-            ];
+            $parts = $this->normalizer->normalize($message, $format, $context);
+
+            // Vertex AI requires all responses to parallel function calls within a single content
+            if ($message instanceof ToolCallMessage && $previousMessage instanceof ToolCallMessage) {
+                $lastIndex = array_key_last($requestData['contents']);
+                $requestData['contents'][$lastIndex]['parts'] = [...$requestData['contents'][$lastIndex]['parts'], ...$parts];
+            } else {
+                $requestData['contents'][] = [
+                    'role' => $message->getRole()->equals(Role::Assistant) ? 'model' : 'user',
+                    'parts' => $parts,
+                ];
+            }
+
+            $previousMessage = $message;
         }
 
         return $requestData;
