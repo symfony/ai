@@ -51,6 +51,41 @@ final class JobHandleTest extends TestCase
         new JobHandle('task-1', [], null, 0);
     }
 
+    public function testItCarriesThePollIntervalThroughASerializationRoundTrip()
+    {
+        $handle = new JobHandle('task-1', [], 'minimax', 600, 5.0);
+
+        $restored = JobHandle::fromArray(json_decode(json_encode($handle), true, flags: \JSON_THROW_ON_ERROR));
+
+        $this->assertSame(5.0, $restored->getPollInterval());
+    }
+
+    // A whole-number interval comes back from JSON as an int, which must not make a stored handle unreadable.
+    public function testItAcceptsAWholeNumberPollIntervalFromStorage()
+    {
+        $this->assertSame(5.0, JobHandle::fromArray(['id' => 'task-1', 'poll_interval' => 5])->getPollInterval());
+    }
+
+    public function testAHandleStatesNoPollIntervalByDefault()
+    {
+        $this->assertNull((new JobHandle('task-1'))->getPollInterval());
+    }
+
+    public function testCopiesKeepThePollInterval()
+    {
+        $handle = new JobHandle('task-1', [], null, 600, 5.0);
+
+        $this->assertSame(5.0, $handle->withData(['file_id' => '1'])->getPollInterval());
+    }
+
+    public function testItRejectsANonsensicalPollInterval()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('greater than zero');
+
+        new JobHandle('task-1', [], null, null, 0.0);
+    }
+
     public function testItCarriesTheProviderItWasCreatedFor()
     {
         $this->assertNull((new JobHandle('task-1'))->getProvider());
@@ -81,7 +116,7 @@ final class JobHandleTest extends TestCase
 
     public function testItSurvivesAStringRoundTrip()
     {
-        $handle = new JobHandle('task-1', ['mime_type' => 'video/mp4'], 'minimax', 600);
+        $handle = new JobHandle('task-1', ['mime_type' => 'video/mp4'], 'minimax', 600, 2.5);
 
         $this->assertEquals($handle, JobHandle::fromString($handle->toString()));
     }
@@ -125,5 +160,7 @@ final class JobHandleTest extends TestCase
         yield 'provider not a string' => [['id' => 'task-1', 'provider' => 42], '"provider" key'];
         yield 'data not an array' => [['id' => 'task-1', 'data' => 'nope'], '"data" key'];
         yield 'max duration not an int' => [['id' => 'task-1', 'max_duration' => '600'], '"max_duration" key'];
+        yield 'poll interval not a number' => [['id' => 'task-1', 'poll_interval' => '5'], '"poll_interval" key'];
+        yield 'poll interval not positive' => [['id' => 'task-1', 'poll_interval' => 0.0], 'greater than zero'];
     }
 }

@@ -2747,6 +2747,88 @@
                 "body": null,
                 "body_size": 501396
             }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.venice.ai/api/v1/video/retrieve",
+                "signature": "057f4ec77c8cb0a7ced61ddf266ca676",
+                "signature_v2": "1a46ad1083eb12c94029338e6514b54d",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "pixverse-c1-text-to-video",
+                    "queue_id": "01a0c084-aadf-75ed-9bcb-58e65cb47062"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "video/mp4"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "*"
+                    ],
+                    "cache-control": [
+                        "no-store, no-cache, private, must-revalidate"
+                    ],
+                    "cdn-cache-control": [
+                        "no-store"
+                    ],
+                    "x-venice-version": [
+                        "outerface-api-server-us-east1-06462-qgv"
+                    ],
+                    "x-venice-balance-usd": [
+                        "3.31280222"
+                    ],
+                    "x-ratelimit-limit-requests": [
+                        "120"
+                    ],
+                    "x-ratelimit-remaining-requests": [
+                        "106"
+                    ],
+                    "x-ratelimit-reset-requests": [
+                        "1789936399575"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "permissions-policy": [
+                        "geolocation=(), camera=()"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "referrer-policy": [
+                        "strict-origin"
+                    ],
+                    "x-frame-options": [
+                        "SAMEORIGIN"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "binary",
+                "body": null,
+                "body_size": 501396
+            }
         }
     ]
 }

@@ -18,7 +18,6 @@ use Symfony\AI\Platform\Bridge\Replicate\LlamaModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
-use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -30,7 +29,7 @@ final class LlamaModelClientTest extends TestCase
     public function testSupportsLlamaModel()
     {
         $httpClient = new MockHttpClient();
-        $client = new Client($httpClient, new MockClock(), 'test-key');
+        $client = new Client($httpClient, 'test-key');
         $modelClient = new LlamaModelClient($client);
 
         $this->assertTrue($modelClient->supports(new Llama('llama-3.1-405b-instruct')));
@@ -39,7 +38,7 @@ final class LlamaModelClientTest extends TestCase
     public function testDoesNotSupportOtherModels()
     {
         $httpClient = new MockHttpClient();
-        $client = new Client($httpClient, new MockClock(), 'test-key');
+        $client = new Client($httpClient, 'test-key');
         $modelClient = new LlamaModelClient($client);
 
         $otherModel = $this->createMock(Model::class);
@@ -48,9 +47,9 @@ final class LlamaModelClientTest extends TestCase
 
     public function testRequestWithLlamaModel()
     {
-        $mockResponse = new MockResponse('{"status": "succeeded"}');
+        $mockResponse = new MockResponse('{"id": "pred-123", "status": "starting"}');
         $httpClient = new MockHttpClient($mockResponse);
-        $client = new Client($httpClient, new MockClock(), 'test-key');
+        $client = new Client($httpClient, 'test-key');
 
         $modelClient = new LlamaModelClient($client);
         $result = $modelClient->request(new Llama('llama-3.1-405b-instruct'), ['prompt' => 'Hello']);
@@ -60,7 +59,7 @@ final class LlamaModelClientTest extends TestCase
 
     public function testRequestThrowsExceptionForUnsupportedModel()
     {
-        $modelClient = new LlamaModelClient(new Client(new MockHttpClient(), new MockClock(), 'test-key'));
+        $modelClient = new LlamaModelClient(new Client(new MockHttpClient(), 'test-key'));
         $otherModel = $this->createMock(Model::class);
 
         $this->expectException(InvalidArgumentException::class);

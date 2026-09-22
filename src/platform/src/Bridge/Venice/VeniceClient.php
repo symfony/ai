@@ -13,13 +13,10 @@ namespace Symfony\AI\Platform\Bridge\Venice;
 
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\Component\Clock\ClockInterface;
-use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -29,7 +26,6 @@ final class VeniceClient implements ModelClientInterface
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly ClockInterface $clock = new MonotonicClock(),
     ) {
     }
 
@@ -179,51 +175,18 @@ final class VeniceClient implements ModelClientInterface
     }
 
     /**
+     * Queues the generation and answers with its queue id; resolving it is the job of
+     * {@see VeniceJobClient}.
+     *
      * @param array<string, mixed> $options
      */
     private function doVideoGeneration(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
-        $maxAttempts = \is_int($options['max_polling_attempts'] ?? null) ? $options['max_polling_attempts'] : 120;
-        $pollingInterval = \is_int($options['polling_interval_seconds'] ?? null) ? $options['polling_interval_seconds'] : 1;
-
-        unset($options['max_polling_attempts'], $options['polling_interval_seconds']);
-
-        $finalPayload = $payload->asVideoGenerationPayload($model, $options);
-
-        $queuedVideoGenerationResponse = $this->httpClient->request('POST', 'video/queue', [
+        return new RawHttpResult($this->httpClient->request('POST', 'video/queue', [
             'json' => [
-                ...$finalPayload,
+                ...$payload->asVideoGenerationPayload($model, $options),
                 'model' => $model->getName(),
             ],
-        ]);
-
-        $queueData = $queuedVideoGenerationResponse->toArray();
-
-        $retrieveBody = [
-            'model' => $queueData['model'],
-            'queue_id' => $queueData['queue_id'],
-        ];
-
-        for ($attempt = 0; $attempt < $maxAttempts; ++$attempt) {
-            $response = $this->httpClient->request('POST', 'video/retrieve', [
-                'json' => $retrieveBody,
-            ]);
-
-            $contentType = $response->getHeaders(false)['content-type'][0] ?? '';
-
-            if (!str_contains($contentType, 'application/json')) {
-                return new RawHttpResult($response);
-            }
-
-            $data = $response->toArray(false);
-
-            if ('PROCESSING' !== ($data['status'] ?? '')) {
-                return new RawHttpResult($response);
-            }
-
-            $this->clock->sleep($pollingInterval);
-        }
-
-        throw new RuntimeException(\sprintf('Video generation timed out after %d polling attempts.', $maxAttempts));
+        ]));
     }
 }

@@ -290,12 +290,13 @@ Transcribe audio files to text. ``language`` (ISO 639-1) and ``timestamps`` are 
 Video Generation
 ~~~~~~~~~~~~~~~~
 
-Generate videos from text prompts, from a source image or from a source video (passed as ``video_url``). The video API is
-queue-based: the bridge polls ``/video/retrieve`` until the video is ready, then returns the binary content. Polling
-can be tuned via ``max_polling_attempts`` and ``polling_interval_seconds``; the clock used between polls is the one
-passed to the factory, so a virtual clock keeps tests fast::
+Generate videos from text prompts, from a source image or from a source video (passed as ``video_url``). The video API
+is queue-based, and so is the bridge: the invocation queues the generation and returns a
+:class:`Symfony\\AI\\Platform\\Result\\JobResult` carrying the handle of that queue entry, rather than waiting for a video
+that takes minutes. See :ref:`Asynchronous Jobs <platform-asynchronous-jobs>` for what a handle is good for::
 
     use Symfony\AI\Platform\Bridge\Venice\Factory;
+    use Symfony\AI\Platform\Job\JobRunner;
     use Symfony\AI\Platform\Message\Content\Image;
     use Symfony\AI\Platform\Message\Content\Text;
 
@@ -304,22 +305,25 @@ passed to the factory, so a virtual clock keeps tests fast::
     // `duration` and `aspect_ratio` are required, and the accepted values differ per model, as does
     // `resolution`; `GET /models` reports all three under `model_spec.constraints`. Generation is
     // billed per pixel-second, so a short clip at a low resolution costs a fraction of a long one.
-    $result = $platform->invoke('pixverse-c1-text-to-video', new Text('A timelapse of a sunset over a mountain range'), [
+    $handle = $platform->invoke('pixverse-c1-text-to-video', new Text('A timelapse of a sunset over a mountain range'), [
         'duration' => '3s',
         'aspect_ratio' => '16:9',
         'resolution' => '360p',
-        'max_polling_attempts' => 180,
-    ]);
-    $result->asFile('/path/to/sunset.mp4');
+    ])->asJob();
+
+    // Waiting is the caller's decision, and the job client needs no platform of its own.
+    $jobClient = Factory::createJobClient($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
+    (new JobRunner())->wait($jobClient, $handle)->asFile('/path/to/sunset.mp4');
 
     // Image-to-video. This model derives the aspect ratio from the source image and rejects
     // `aspect_ratio`, which its empty `aspect_ratios` constraint announces.
-    $result = $platform->invoke('pixverse-c1-image-to-video', Image::fromFile('/path/to/mountain.jpg'), [
+    $handle = $platform->invoke('pixverse-c1-image-to-video', Image::fromFile('/path/to/mountain.jpg'), [
         'prompt' => 'Camera slowly zooms in',
         'duration' => '3s',
         'resolution' => '360p',
-    ]);
-    $result->asFile('/path/to/zoom.mp4');
+    ])->asJob();
+
+    (new JobRunner())->wait($jobClient, $handle)->asFile('/path/to/zoom.mp4');
 
 The bridge passes options through untouched and injects no defaults of its own, so a model that
 rejects a field never receives one it did not ask for.

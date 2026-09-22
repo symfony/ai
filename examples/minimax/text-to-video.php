@@ -28,8 +28,9 @@ echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;
 
 // Waiting is explicit, but how long is not something the caller has to know: the handle states that
 // video generation may run for minutes, and the runner honours that unless it is told otherwise.
+// Replaying a cassette serves the status polls instantly, so skip the real waiting.
 $jobClient = Factory::createJobClient(env('MINI_MAX_API_KEY'), http_client());
-$result = (new JobRunner())->wait($jobClient, $handle);
+$result = (new JobRunner(clock()))->wait($jobClient, $handle);
 
 $result->asFile(__DIR__.'/minimax-video.mp4');
 

@@ -19,8 +19,6 @@ use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
-use Symfony\Component\Clock\ClockInterface;
-use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -38,29 +36,31 @@ final class Factory
         string $endpoint = 'https://api.venice.ai/api/v1/',
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
-        ?ClockInterface $clock = null,
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'venice',
     ): ProviderInterface {
-        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-
-        $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint);
-
-        if (null !== $apiKey) {
-            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
-                'auth_bearer' => $apiKey,
-            ]);
-        }
+        $httpClient = self::createScopedHttpClient($endpoint, $apiKey, $httpClient);
 
         return new Provider(
             $name,
-            [new VeniceClient($httpClient, $clock ?? new MonotonicClock())],
-            [new VeniceResultConverter()],
+            [new VeniceClient($httpClient)],
+            [new VeniceResultConverter($name)],
             new ModelCatalog($httpClient),
             $contract ?? VeniceContract::create(),
             $eventDispatcher,
         );
+    }
+
+    /**
+     * The client resolving the generations this bridge queues, e.g. in a worker holding a stored handle.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] ?string $apiKey = null,
+        string $endpoint = 'https://api.venice.ai/api/v1/',
+        ?HttpClientInterface $httpClient = null,
+    ): VeniceJobClient {
+        return new VeniceJobClient(self::createScopedHttpClient($endpoint, $apiKey, $httpClient));
     }
 
     /**
@@ -70,16 +70,33 @@ final class Factory
         #[\SensitiveParameter] ?string $apiKey = null,
         string $endpoint = 'https://api.venice.ai/api/v1/',
         ?HttpClientInterface $httpClient = null,
-        ?ClockInterface $clock = null,
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'venice',
         ?ModelRouterInterface $modelRouter = null,
     ): PlatformInterface {
         return new Platform(
-            [self::createProvider($endpoint, $apiKey, $httpClient, $clock, $contract, $eventDispatcher, $name)],
+            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    private static function createScopedHttpClient(
+        string $endpoint,
+        #[\SensitiveParameter] ?string $apiKey,
+        ?HttpClientInterface $httpClient,
+    ): HttpClientInterface {
+        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+
+        $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint);
+
+        if (null === $apiKey) {
+            return $httpClient;
+        }
+
+        return ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
+            'auth_bearer' => $apiKey,
+        ]);
     }
 }

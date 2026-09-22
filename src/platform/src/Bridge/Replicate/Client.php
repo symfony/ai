@@ -13,15 +13,20 @@ namespace Symfony\AI\Platform\Bridge\Replicate;
 
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
-use Symfony\Component\Clock\ClockInterface;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
+ * Talks to the Replicate REST API, one request per call; resolving a prediction is the job of
+ * {@see ReplicateJobClient}.
+ *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class Client
 {
+    use HttpStatusErrorHandlingTrait;
     use JsonBodyEncodingTrait;
 
     private readonly string $baseUrl;
@@ -31,7 +36,6 @@ final class Client
      */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly ClockInterface $clock,
         #[\SensitiveParameter] private readonly string $apiKey,
         string $baseUrl = 'https://api.replicate.com',
     ) {
@@ -46,38 +50,45 @@ final class Client
     {
         $url = \sprintf('%s/v1/models/%s/%s', $this->baseUrl, $model, $endpoint);
 
-        $response = $this->httpClient->request('POST', $url, [
+        return $this->httpClient->request('POST', $url, [
             'headers' => ['Content-Type' => 'application/json'],
             'auth_bearer' => $this->apiKey,
             'body' => $this->encodeJsonBody(['input' => $body]),
         ]);
-        $data = $response->toArray(false);
-
-        if (isset($data['detail'])) {
-            throw new RuntimeException(\sprintf('Replicate API error: "%s".', $data['detail']));
-        }
-
-        while (!\in_array($data['status'], ['succeeded', 'failed', 'canceled'], true)) {
-            $this->clock->sleep(1); // we need to wait until the prediction is ready
-
-            $response = $this->getResponse($data['id']);
-            $data = $response->toArray(false);
-        }
-
-        if ('failed' === $data['status'] || 'canceled' === $data['status']) {
-            throw new RuntimeException(\sprintf('Replicate prediction "%s": "%s".', $data['status'], $data['error'] ?? 'Unknown error'));
-        }
-
-        return $response;
     }
 
-    private function getResponse(string $id): ResponseInterface
+    /**
+     * @return array<string, mixed>
+     */
+    public function get(string $path): array
     {
-        $url = \sprintf('%s/v1/predictions/%s', $this->baseUrl, $id);
-
-        return $this->httpClient->request('GET', $url, [
+        $response = $this->httpClient->request('GET', $this->baseUrl.'/'.$path, [
             'headers' => ['Content-Type' => 'application/json'],
             'auth_bearer' => $this->apiKey,
         ]);
+
+        $this->throwOnHttpError($response);
+
+        // Beyond the statuses the shared handling knows, any other error - an exhausted balance, a
+        // refused request - would otherwise read as an unknown state and be polled until the budget runs out.
+        if (400 <= $response->getStatusCode()) {
+            throw new RuntimeException(\sprintf('Replicate API error (HTTP %d): "%s".', $response->getStatusCode(), $this->extractErrorMessage($response) ?? 'Unknown error'));
+        }
+
+        return $response->toArray(false);
+    }
+
+    /**
+     * Overrides the shared lookup: Replicate puts its message into `detail` rather than `error.message`.
+     */
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        try {
+            $data = $response->toArray(false);
+        } catch (DecodingExceptionInterface) {
+            return null;
+        }
+
+        return \is_string($data['detail'] ?? null) ? $data['detail'] : null;
     }
 }

@@ -2233,6 +2233,59 @@
         {
             "request": {
                 "method": "GET",
+                "url": "https://platform.higgsfield.ai/requests/581f6d84-6602-4f41-af18-c6f0fc0661af/status",
+                "signature": "a6f0ec166f0d9a20878d063399a54625",
+                "signature_v2": "950dbd10bbc8677de1c33d0731b114f9",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "x-correlation-id": [
+                        "efa4bb406eb14c32a27af98c04ee863c"
+                    ],
+                    "x-process-time": [
+                        "0.016421321080997586"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "expect-ct": [
+                        "max-age=86400, enforce"
+                    ],
+                    "referrer-policy": [
+                        "same-origin"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "x-frame-options": [
+                        "SAMEORIGIN"
+                    ],
+                    "x-xss-protection": [
+                        "1; mode=block"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"status\":\"completed\",\"request_id\":\"581f6d84-6602-4f41-af18-c6f0fc0661af\",\"status_url\":\"https://platform.higgsfield.ai/requests/581f6d84-6602-4f41-af18-c6f0fc0661af/status\",\"cancel_url\":\"https://platform.higgsfield.ai/requests/581f6d84-6602-4f41-af18-c6f0fc0661af/cancel\",\"video\":{\"url\":\"https://d3u0tzju9qaucj.cloudfront.net/2b0cc7c2-23f9-44ea-a3ae-a724b57216ec/ebd64ba3-6fcc-478c-9f73-fa7daed72d53.mp4\"}}"
+            }
+        },
+        {
+            "request": {
+                "method": "GET",
                 "url": "https://d3u0tzju9qaucj.cloudfront.net/2b0cc7c2-23f9-44ea-a3ae-a724b57216ec/ebd64ba3-6fcc-478c-9f73-fa7daed72d53.mp4",
                 "signature": "2fff9f86f5ce7838d06bd0376f7fd43b",
                 "signature_v2": "a8cedb4592e94f17720f5ae6067d7d73"

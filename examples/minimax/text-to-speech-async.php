@@ -34,8 +34,9 @@ $handle = $platform->invoke('speech-2.6-hd', new Text('The real danger is not th
     ],
 ])->asJob();
 
+// Replaying a cassette serves the status polls instantly, so skip the real waiting.
 $jobClient = Factory::createJobClient(env('MINI_MAX_API_KEY'), http_client());
-$result = (new JobRunner())->wait($jobClient, $handle);
+$result = (new JobRunner(clock()))->wait($jobClient, $handle);
 
 // MiniMax delivers the asynchronous result as a tar bundling the mp3 with a `.titles` and an
 // `.extra` file; the bridge unpacks the audio, so this is the same mp3 the synchronous endpoint
