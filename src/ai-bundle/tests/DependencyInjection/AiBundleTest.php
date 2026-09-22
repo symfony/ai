@@ -42,6 +42,7 @@ use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
@@ -4736,6 +4737,31 @@ class AiBundleTest extends TestCase
         $this->assertSame([['key' => 'openai']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $openai'));
+    }
+
+    /**
+     * A batch is resolved long after the request that submitted it, so the client is reachable on its own.
+     */
+    public function testAnthropicRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'sk-ant-anthropic_key_full',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.anthropic');
+
+        $this->assertSame([AnthropicFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('sk-ant-anthropic_key_full', $definition->getArgument(0));
+        $this->assertCount(2, $definition->getArguments());
+        $this->assertSame([['key' => 'anthropic']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $anthropic'));
     }
 
     public function testBedrockMantlePlatformUsesCompletionsRouteByDefault()
