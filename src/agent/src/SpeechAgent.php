@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -77,14 +78,17 @@ final class SpeechAgent implements AgentInterface
                 return;
             }
 
+            // Reasoning models answer with a multi part result, whose thinking parts must not be spoken
+            $text = $result instanceof MultiPartResult ? $result->asText() : $result->getContent();
+
             $speechResult = $this->textToSpeechPlatform->invoke(
                 $this->configuration->getTextToSpeechModel(),
-                $result->getContent(),
+                $text,
                 $this->configuration->getTextToSpeechOptions(),
             );
             $cancellation->activate($speechResult->getRawResult());
 
-            $speechResult->getMetadata()->add('text', $result->getContent());
+            $speechResult->getMetadata()->add('text', $text);
 
             yield new ResultUpdate($speechResult->getResult());
         }, cancellation: $cancellation);

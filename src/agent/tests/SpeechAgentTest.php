@@ -32,9 +32,11 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class SpeechAgentTest extends TestCase
@@ -142,6 +144,28 @@ final class SpeechAgentTest extends TestCase
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-binary', $result->getContent());
+        $this->assertSame('hello', $result->getMetadata()->get('text'));
+    }
+
+    public function testCallSpeaksOnlyTextPartsOfMultiPartResult()
+    {
+        $ttsResult = new DeferredResult(new PlainConverter(new BinaryResult('audio-binary')), new InMemoryRawResult());
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with('tts-1', 'hello', [])
+            ->willReturn($ttsResult);
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())
+            ->method('call')
+            ->willReturn($this->execution(new MultiPartResult([new ThinkingResult('reasoning'), new TextResult('hello')])));
+
+        $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(ttsModel: 'tts-1'), $platform, $platform);
+        $result = $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult();
+
+        $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('hello', $result->getMetadata()->get('text'));
     }
 
