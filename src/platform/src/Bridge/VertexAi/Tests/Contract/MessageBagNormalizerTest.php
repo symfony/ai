@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\MessageBagNormalizer;
+use Symfony\AI\Platform\Bridge\VertexAi\Contract\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Bridge\VertexAi\Contract\UserMessageNormalizer;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Contract;
@@ -22,7 +23,9 @@ use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class MessageBagNormalizerTest extends TestCase
@@ -58,15 +61,19 @@ final class MessageBagNormalizerTest extends TestCase
 
         $userMessageNormalizer = new UserMessageNormalizer();
         $assistantMessageNormalizer = new AssistantMessageNormalizer();
+        $toolCallMessageNormalizer = new ToolCallMessageNormalizer();
 
         $mockNormalizer = $this->createMock(NormalizerInterface::class);
         $mockNormalizer->method('normalize')
-            ->willReturnCallback(static function ($message) use ($userMessageNormalizer, $assistantMessageNormalizer): ?array {
+            ->willReturnCallback(static function ($message) use ($userMessageNormalizer, $assistantMessageNormalizer, $toolCallMessageNormalizer): ?array {
                 if ($message instanceof UserMessage) {
                     return $userMessageNormalizer->normalize($message);
                 }
                 if ($message instanceof AssistantMessage) {
                     return $assistantMessageNormalizer->normalize($message);
+                }
+                if ($message instanceof ToolCallMessage) {
+                    return $toolCallMessageNormalizer->normalize($message);
                 }
 
                 return null;
@@ -118,6 +125,31 @@ final class MessageBagNormalizerTest extends TestCase
                     ['role' => 'user', 'parts' => [['text' => 'Hello']]],
                     ['role' => 'model', 'parts' => [['text' => 'Great to meet you. What would you like to know?']]],
                     ['role' => 'user', 'parts' => [['text' => 'I have two dogs in my house. How many paws are in my house?']]],
+                ],
+            ],
+        ];
+
+        $clockCall = new ToolCall('call_1', 'clock');
+        $weatherCall = new ToolCall('call_2', 'weather');
+
+        yield 'parallel tool calls are answered in a single content' => [
+            new MessageBag(
+                Message::ofUser('What time is it and how is the weather?'),
+                new AssistantMessage($clockCall, $weatherCall),
+                Message::ofToolCall($clockCall, '12:00'),
+                Message::ofToolCall($weatherCall, 'sunny'),
+            ),
+            [
+                'contents' => [
+                    ['role' => 'user', 'parts' => [['text' => 'What time is it and how is the weather?']]],
+                    ['role' => 'model', 'parts' => [
+                        ['functionCall' => ['name' => 'clock']],
+                        ['functionCall' => ['name' => 'weather']],
+                    ]],
+                    ['role' => 'user', 'parts' => [
+                        ['functionResponse' => ['name' => 'clock', 'response' => ['result' => '12:00']]],
+                        ['functionResponse' => ['name' => 'weather', 'response' => ['result' => 'sunny']]],
+                    ]],
                 ],
             ],
         ];
