@@ -1,104 +1,91 @@
 Troubleshooting
 ===============
 
-This page covers common issues when using Symfony AI Mate and how to resolve them.
+Symfony AI Mate (``vendor/bin/mate``) is a CLI that gives coding agents project-aware tools for a
+PHP application: the compiled container, the profiler and the logs.
 
-For specific issues, see also:
+Start with these three commands. They answer most questions below:
 
-* :doc:`integration` - the agent not finding or not using Mate
-* :doc:`creating-extensions` - extension and tool issues
+.. code-block:: terminal
 
-Command Issues
---------------
+    $ vendor/bin/mate debug:extensions --show-all  # what was discovered, enabled and loaded
+    $ vendor/bin/mate debug:capabilities           # which tools and resources exist
+    $ vendor/bin/mate tools:call server-info       # which PHP runtime Mate uses
 
 The Command Does Not Run
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
-1. **Check PHP version** (requires 8.2+):
+Nothing Happens or the Binary Is Missing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   .. code-block:: terminal
+1. Check the PHP version with ``php --version``. Mate requires PHP 8.2 or higher.
+2. Check that ``vendor/bin/mate`` exists. If not, run ``composer install``.
+3. On a permission error, run ``chmod +x vendor/bin/mate``. On Windows, run
+   ``php vendor/bin/mate tools:list``.
 
-       $ php --version
+PHP Version Mismatch
+~~~~~~~~~~~~~~~~~~~~
 
-2. **Verify the binary exists**:
+.. code-block:: terminal
 
-   .. code-block:: terminal
+     [ERROR] Mate is running under PHP "8.4.15" but this project expects PHP "8.3".
+             Run it as "ddev exec vendor/bin/mate".
 
-       $ ls -la vendor/bin/mate
+Run the command the error names. If the recorded version is the wrong one, correct
+``mate.php_version`` in ``mate/config.php``. See :ref:`mate-choosing-the-interpreter`.
 
-3. **Check for missing dependencies**:
+If Mate starts but reports on the wrong environment, ``server-info`` shows the PHP version, OS and
+loaded extensions of the runtime Mate uses. If that is not the runtime serving your application,
+change ``mate.invocation``.
 
-   .. code-block:: terminal
+The Container Fails to Build
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-       $ composer install
+Every invocation builds Mate's own DI container, which loads your ``mate/config.php`` and the
+service files of all enabled extensions. If a command fails before producing output:
 
-4. **Run it directly to see the error**:
-
-   .. code-block:: terminal
-
-       $ vendor/bin/mate tools:list
-
-Container Fails to Build
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Every invocation builds Mate's own DI container, which loads your ``mate/config.php``. If a command
-fails before producing output:
-
-1. **Check for syntax errors** in your custom tools:
+1. Check your tools and configuration for syntax errors:
 
    .. code-block:: terminal
 
        $ php -l mate/src/MyTool.php
+       $ php -l mate/config.php
 
-2. **Verify service configuration**:
+2. Look for a circular dependency or a missing argument in your service configuration.
+3. Disable the extension you added last in ``mate/extensions.php`` and try again.
 
-   .. code-block:: terminal
+.. _mate-agent-ignores-mate:
 
-       $ php -r "require 'vendor/autoload.php'; include 'mate/config.php';"
+The Agent Ignores Mate
+----------------------
 
-3. **Check for circular dependencies** in your service configuration.
+The most common failure. It is a discovery problem, not a technical one.
 
-Permission Denied Errors
-~~~~~~~~~~~~~~~~~~~~~~~~
+1. **Confirm the instructions exist.** Run ``vendor/bin/mate discover``. Then check that
+   ``AGENTS.md`` contains the managed block and that ``CLAUDE.md`` imports it.
 
-If you get permission errors:
+2. **Confirm the skills are installed.** Run ``vendor/bin/mate skills:list``. A skill in state
+   ``disabled`` is not installed. An empty list means no enabled extension ships skills.
 
-.. code-block:: terminal
+3. **Confirm the agent reads the file it needs.** Claude Code needs ``CLAUDE.md``, Codex needs
+   ``AGENTS.md``. If you keep your own instruction file, it has to import one of them. See
+   :doc:`integration`.
 
-    $ chmod +x vendor/bin/mate
+4. **Say it explicitly once.** Asking the agent to run ``vendor/bin/mate tools:list`` is enough to
+   establish that the tools exist. The instructions carry it from there.
 
-On Windows, ensure PHP is in your PATH and run:
+Extensions and Tools Are Missing
+--------------------------------
 
-.. code-block:: terminal
+An Extension Is Not Discovered
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    > php vendor/bin/mate tools:list
-
-Discovery Issues
-----------------
-
-A Tool Does Not Appear
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: terminal
-
-    $ vendor/bin/mate tools:list
-    $ vendor/bin/mate debug:capabilities
-
-1. **Run** ``composer dump-autoload``. Mate resolves the class name from the file and skips any file
-   whose class cannot be autoloaded. This is the most common cause for a tool under ``mate/src/``
-   that never shows up.
-
-2. **Check the scan directories**. For your own tools, ``extra.ai-mate.scan-dirs`` in
-   ``composer.json`` must cover the directory the class lives in.
-
-3. **Check the method is public** and carries ``#[MateTool]``. Abstract classes, interfaces, traits
-   and enums are skipped.
-
-4. **Check the feature is not disabled** in ``mate/config.php`` via
-   ``MateHelper::disableFeatures()``.
-
-5. **Enable debug logging** (see below). Mate logs the classes it could not autoload and the files
-   it failed to process.
+1. The package needs an ``extra.ai-mate`` section in its ``composer.json``.
+2. A package that sets ``extra.ai-mate.extension`` to ``false`` is never discovered as an
+   extension of another project. That is what ``mate init`` writes into an application. The flag
+   does not affect the application's own tools under ``mate/src/``.
+3. Run ``vendor/bin/mate discover`` and check that the package is listed in
+   ``mate/extensions.php`` with ``'enabled' => true``.
 
 An Extension Does Not Load
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,9 +94,48 @@ An Extension Does Not Load
 
     $ vendor/bin/mate debug:extensions --show-all
 
-``[not loaded]`` means the package was configured but could not be loaded; ``[enabled]`` without
-``[loaded]`` usually means the package was removed without updating ``mate/extensions.php``. Run
-``vendor/bin/mate discover`` to resynchronize.
+``[not loaded]`` means the package is configured but could not be loaded. ``[enabled]`` without
+``[loaded]`` usually means the package was removed while ``mate/extensions.php`` still lists it.
+Run ``vendor/bin/mate discover`` to resynchronize.
+
+A Tool Does Not Appear
+~~~~~~~~~~~~~~~~~~~~~~
+
+1. **Run** ``composer dump-autoload``. Mate resolves the class name from the file and skips any
+   file whose class cannot be autoloaded. This is the most common cause for a tool under
+   ``mate/src/`` that never shows up.
+
+2. **Check the scan directories.** ``extra.ai-mate.scan-dirs`` in ``composer.json`` must cover the
+   directory the class lives in.
+
+3. **Check the method.** It must be public and carry ``#[MateTool]``. Abstract classes,
+   interfaces, traits and enums are skipped.
+
+4. **Check the feature is not disabled** through ``MateHelper::disableFeatures()`` in
+   ``mate/config.php``.
+
+5. **Enable debug logging**, see `Debug Logging`_. Mate logs the classes it could not autoload and
+   the files it failed to process.
+
+A Dependency Is Not Injected
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Register the service in a file listed under ``extra.ai-mate.includes``::
+
+       $services->set(MyService::class)
+           ->autowire()
+           ->autoconfigure();
+
+2. Bind interfaces to an implementation::
+
+       $services->alias(MyInterface::class, MyImplementation::class);
+
+The Instructions of an Extension Are Missing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Check that the file named by ``extra.ai-mate.instructions`` exists. The path is relative to the
+package root. ``vendor/bin/mate debug:extensions`` prints an ``Agent instructions`` line for every
+extension that has one. With ``--format=json`` the key is ``agent_instructions``.
 
 Instructions or Skills Are Stale
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,108 +145,54 @@ Instructions or Skills Are Stale
     $ vendor/bin/mate discover        # refresh extensions, instructions and skills
     $ vendor/bin/mate skills:validate # check the generated folders against the recorded state
 
-``skills:validate`` reports hand-edited content, missing folders and sources that moved on since the
-last install. If you want to own a skill's content, set its ``mode`` to ``override`` in
-``mate/extensions.php`` rather than editing the generated folder.
+``skills:validate`` reports hand-edited content, missing folders and sources that changed since the
+last install. To own the content of a skill, run ``vendor/bin/mate skills:override <name>``. Do not
+edit the generated folder. See :doc:`skills`.
 
-Tool Execution Issues
----------------------
+Tool Calls Fail
+---------------
 
 A Parameter Is Not Accepted
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Check the actual schema before guessing:
+Check the schema before guessing:
 
 .. code-block:: terminal
 
     $ vendor/bin/mate tools:inspect <tool-name>
 
-Values are coerced to the parameter's declared type, so a value that cannot be cast is rejected
-rather than silently passed through, naming the option and the value it rejected.
+Values are cast to the declared type of the parameter. A value that cannot be cast is rejected,
+and the error names the option and the value.
 
-A variadic parameter takes the option repeated:
-
-.. code-block:: terminal
-
-    $ vendor/bin/mate tools:call some-tool --tag=a --tag=b
-
-Repeating an option that is not variadic is an error, so a typo cannot quietly discard the first
-value. Nested or associative values have no option form; pass them as JSON:
+A variadic parameter takes the option repeated. Repeating an option that is not variadic is an
+error, so a typo cannot quietly discard the first value:
 
 .. code-block:: terminal
 
-    $ vendor/bin/mate tools:call some-tool --json='{"filters": {"level": "error"}}'
+    $ vendor/bin/mate tools:call <tool-name> --tag=a --tag=b
 
-The same applies to a parameter whose name is taken by a console option (``format``, ``json``,
-``help``, ``silent``, ``quiet``, ``verbose``, ``version``, ``ansi``, ``no-ansi``,
-``no-interaction``).
-
-The Output Is Too Large
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Prefer a resource URI over dumping everything, and use a compact format:
+Nested or associative values have no option form. Pass them as JSON:
 
 .. code-block:: terminal
 
-    $ vendor/bin/mate tools:call symfony-profiler-list --limit=1 --format=json
-    $ vendor/bin/mate resources:read symfony-profiler://profile/<token> --format=toon
+    $ vendor/bin/mate tools:call <tool-name> --json='{"filters": {"level": "error"}}'
 
-``--format=toon`` requires ``helgesverre/toon`` and produces the smallest context footprint.
+The same applies to a parameter whose name is taken by a console option, like ``format`` or
+``verbose``. See ``tools:call`` in the :doc:`commands` for the full list.
 
-Debugging Tips
---------------
+A Custom Tool Fails When Called
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Enable Debug Logging
-~~~~~~~~~~~~~~~~~~~~
+A tool must return a scalar value or an array. An object fails when the result is encoded::
 
-Set the ``MATE_DEBUG`` environment variable to enable debug-level logging:
+    // Good
+    public function execute(): string { return 'result'; }
+    public function execute(): array { return ['key' => 'value']; }
 
-.. code-block:: terminal
+    // Bad
+    public function execute(): object { return new \stdClass(); }
 
-    $ MATE_DEBUG=1 vendor/bin/mate tools:list
-
-This outputs detailed debug information to stderr, including:
-
-- Service registration details
-- Extension discovery information
-- Classes that could not be autoloaded during discovery
-- Tool execution logs
-
-Log to File
-~~~~~~~~~~~
-
-Set the ``MATE_DEBUG_FILE`` environment variable to redirect logs to a file:
-
-.. code-block:: terminal
-
-    $ MATE_DEBUG_FILE=1 vendor/bin/mate tools:list
-
-This creates a ``dev.log`` file in the current directory with all log output. This is particularly
-useful when the command is run by a coding agent, where stderr may not be easily accessible.
-
-To customize the log file path, use the ``MATE_DEBUG_LOG_FILE`` environment variable:
-
-.. code-block:: terminal
-
-    $ MATE_DEBUG_FILE=1 MATE_DEBUG_LOG_FILE=/var/log/mate/debug.log vendor/bin/mate tools:list
-
-You can combine both environment variables:
-
-.. code-block:: terminal
-
-    $ MATE_DEBUG=1 MATE_DEBUG_FILE=1 vendor/bin/mate tools:list
-
-Test Tools Manually
-~~~~~~~~~~~~~~~~~~~
-
-Call the tool through the CLI, which exercises the same discovery, schema and casting path the agent
-uses:
-
-.. code-block:: terminal
-
-    $ vendor/bin/mate tools:call my-tool --param=test-value
-
-To bypass Mate entirely and test the method in isolation::
+To rule out Mate, test the method in isolation::
 
     // test-tool.php
     require 'vendor/autoload.php';
@@ -228,10 +200,73 @@ To bypass Mate entirely and test the method in isolation::
     $tool = new Mate\MyTool();
     var_dump($tool->execute('test-param'));
 
-Clear Cache
-~~~~~~~~~~~
+The Output Is Too Large
+~~~~~~~~~~~~~~~~~~~~~~~
 
-If you're experiencing stale behavior:
+Narrow the filter, read a resource URI over dumping everything, and use a compact format:
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call symfony-profiler-list --limit=1 --format=json
+    $ vendor/bin/mate resources:read symfony-profiler://profile/<token> --format=toon
+
+See :ref:`mate-output-formats`.
+
+Symfony and Monolog Extension Issues
+------------------------------------
+
+The Container Is Not Found
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``symfony-services`` and ``symfony-service-detail`` read the dumped container XML.
+
+1. Warm the cache with ``php bin/console cache:warmup``. The XML is only dumped in debug mode.
+2. Check that ``ai_mate_symfony.cache_dir`` points at the cache directory of the application.
+3. Check that a ``*DebugContainer.xml`` file exists below it.
+
+Profiles Are Not Found
+~~~~~~~~~~~~~~~~~~~~~~
+
+1. Check that ``ai_mate_symfony.profiler_dir`` points at the right directory.
+2. Check that the profiler is enabled in the environment you look at.
+3. Send a request to the application, so there is a profile to read.
+
+If a single collector is missing, it was not enabled when the profile was captured.
+
+Logs Are Not Found or Not Parsed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Check that ``ai_mate_monolog.log_dir`` points at the directory with your log files. Run
+   ``vendor/bin/mate tools:call monolog-list-files`` to see what Mate finds.
+2. The extension reads the standard Monolog line format and JSON. Entries in a custom format are
+   skipped.
+3. Check the file permissions of the log files.
+
+Debugging Tips
+--------------
+
+Debug Logging
+~~~~~~~~~~~~~
+
+``MATE_DEBUG=1`` writes debug-level logs to stderr: service registration, extension discovery and
+classes that could not be autoloaded.
+
+.. code-block:: terminal
+
+    $ MATE_DEBUG=1 vendor/bin/mate tools:list
+
+``MATE_DEBUG_FILE=1`` writes the logs to ``dev.log`` in the project root, whatever the working
+directory is. That helps when a coding agent runs the command and stderr is hard to reach.
+``MATE_DEBUG_LOG_FILE`` changes the path. A relative path is resolved against the project root, an
+absolute path is used as it is. The variables can be combined:
+
+.. code-block:: terminal
+
+    $ MATE_DEBUG=1 MATE_DEBUG_FILE=1 MATE_DEBUG_LOG_FILE=var/log/mate.log vendor/bin/mate tools:list
+    $ MATE_DEBUG_FILE=1 MATE_DEBUG_LOG_FILE=/tmp/mate-debug.log vendor/bin/mate tools:list
+
+Clear the Cache
+~~~~~~~~~~~~~~~
 
 .. code-block:: terminal
 
@@ -240,14 +275,13 @@ If you're experiencing stale behavior:
 Getting Help
 ------------
 
-If you're still experiencing issues:
+Search the `existing issues`_ first. For a community extension, use the issue tracker of that
+extension. `awesome-mate`_ links them. When you open a new issue, include:
 
-1. **Check the documentation**: Review the :doc:`../mate` main documentation
-2. **Search existing issues**: https://github.com/symfony/ai/issues
-3. **Create a new issue**: Include:
+* the PHP version and the Symfony AI Mate version
+* the error message, or the log written with ``MATE_DEBUG=1``
+* the steps to reproduce
+* your ``mate/config.php`` and ``mate/extensions.php``, without secrets
 
-   - PHP version (``php --version``)
-   - Symfony AI Mate version
-   - Error messages or logs
-   - Steps to reproduce
-   - Your configuration files (sanitized)
+.. _`existing issues`: https://github.com/symfony/ai/issues
+.. _`awesome-mate`: https://github.com/MatesOfMate/awesome-mate

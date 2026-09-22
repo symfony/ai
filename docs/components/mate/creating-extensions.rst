@@ -1,14 +1,19 @@
 Creating Mate Extensions
 ========================
 
-Mate extensions are Composer packages that declare themselves using a specific configuration
-in ``composer.json``, similar to PHPStan extensions.
+Symfony AI Mate (``vendor/bin/mate``) is a CLI that gives coding agents project-aware tools for a
+PHP application: the compiled container, the profiler and the logs.
+
+A Mate extension is a Composer package that declares itself through an ``extra.ai-mate`` section
+in its ``composer.json``, similar to a PHPStan extension. It can ship tools, resources, agent
+instructions and skills.
+
+.. tip::
+
+    The `matesofmate/extension-template`_ repository is a ready-made starting point.
 
 Quick Start
 -----------
-
-You can also start from the official extension template:
-`matesofmate/extension-template <https://github.com/matesofmate/extension-template>`_.
 
 1. Configure composer.json
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,28 +28,29 @@ You can also start from the official extension template:
         },
         "extra": {
             "ai-mate": {
-                "scan-dirs": ["src", "lib"],
+                "scan-dirs": ["src"],
                 "instructions": "INSTRUCTIONS.md"
             }
         }
     }
 
-The ``extra.ai-mate`` section is required for your package to be discovered as an extension.
-If your package uses Mate internally but must not be exposed as a reusable extension, set
-``"extension": false`` in ``extra.ai-mate``.
+The ``extra.ai-mate`` section is what makes the package an extension. Create the
+``INSTRUCTIONS.md`` file next to ``composer.json``. `Writing Agent Instructions`_ explains what
+belongs in it.
 
 2. Create Capabilities
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Mark public methods with the native Mate attributes. Mate finds them by reflection and derives
-the JSON input schema from the method signature plus the ``@param`` PHPDoc::
+Mark public methods with the Mate attributes. Mate finds them by reflection and derives the JSON
+input schema from the method signature plus the ``@param`` PHPDoc::
+
+    namespace Vendor\MyExtension;
 
     use Psr\Log\LoggerInterface;
     use Symfony\AI\Mate\Attribute\MateTool;
 
     class MyTool
     {
-        // Dependencies are automatically injected
         public function __construct(
             private LoggerInterface $logger,
         ) {
@@ -58,7 +64,7 @@ the JSON input schema from the method signature plus the ``@param`` PHPDoc::
         {
             $this->logger->info('Tool executed', ['param' => $param]);
 
-            return 'Result: ' . $param;
+            return 'Result: '.$param;
         }
     }
 
@@ -72,48 +78,35 @@ Three attributes are available, all in ``Symfony\AI\Mate\Attribute``:
     ``description``, ``mimeType``.
 
 ``#[MateResourceTemplate]``
-    Data addressed by a URI pattern; the variables of ``uriTemplate`` are passed to the method.
+    Data addressed by a URI pattern. The variables of ``uriTemplate`` are passed to the method.
     Parameters: ``uriTemplate``, ``name``, ``title``, ``description``, ``mimeType``.
+
+A tool must return a scalar value or an array. An object fails when the result is encoded.
 
 .. note::
 
-    These are Mate's own attributes and unrelated to the Agent component's
+    These are Mate's own attributes. They are unrelated to the Agent component's
     ``Symfony\AI\Agent\Toolbox\Attribute\AsTool``.
 
-3. Install and Enable
+3. Install and Verify
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: terminal
 
-    $ composer require vendor/my-extension
-    $ vendor/bin/mate discover
+    $ composer require --dev vendor/my-extension
+    $ vendor/bin/mate debug:capabilities --extension=vendor/my-extension
 
-The ``discover`` command will automatically add your extension to ``mate/extensions.php``::
+In a project that ran ``mate init``, the Composer plugin runs ``mate discover`` after the install.
+That adds the extension to ``mate/extensions.php``, enabled by default. Without the plugin, run
+``vendor/bin/mate discover`` yourself.
 
-    return [
-        'vendor/my-extension' => ['enabled' => true],
-    ];
-
-When the host project is already initialized, Composer install/update will also refresh discovery
-automatically through the Mate Composer plugin.
-
-To disable an extension, set ``enabled`` to ``false``::
-
-    return [
-        'vendor/my-extension' => ['enabled' => true],
-        'vendor/unwanted-extension' => ['enabled' => false],
-    ];
+If a tool is missing, see :doc:`troubleshooting`.
 
 Dependency Injection
 --------------------
 
-Tools and resources support constructor dependency injection via Symfony's DI Container.
-Dependencies are automatically resolved and injected.
-
-Configuring Services
-~~~~~~~~~~~~~~~~~~~~
-
-Register service configuration files in your ``composer.json``:
+Tools and resources are services in Mate's own DI container. Constructor dependencies are
+autowired. To configure services, list one or more PHP service files under ``includes``:
 
 .. code-block:: json
 
@@ -121,60 +114,103 @@ Register service configuration files in your ``composer.json``:
         "extra": {
             "ai-mate": {
                 "scan-dirs": ["src"],
-                "includes": [
-                    "config/services.php"
-                ]
+                "includes": ["config/services.php"]
             }
         }
     }
 
-Create service configuration files using Symfony DI format::
+The files use the standard Symfony DI format::
 
     // config/services.php
-    use App\MyApiClient;
     use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+    use Vendor\MyExtension\MyApiClient;
 
-    return function (ContainerConfigurator $configurator) {
-        $services = $configurator->services();
+    return static function (ContainerConfigurator $container): void {
+        $container->parameters()
+            ->set('my_extension.base_url', 'https://api.example.com');
 
-        // Register a service with parameters
-        $services->set(MyApiClient::class)
-            ->arg('$apiKey', '%env(MY_API_KEY)%')
-            ->arg('$baseUrl', 'https://api.example.com');
+        $container->services()
+            ->set(MyApiClient::class)
+                ->arg('$apiKey', '%env(MY_API_KEY)%')
+                ->arg('$baseUrl', '%my_extension.base_url%');
     };
+
+Expose what a project may want to change as a parameter, prefixed with the name of your
+extension. A project overrides it in its ``mate/config.php``. ``%mate.root_dir%`` holds the root
+directory of the project.
+
+Designing Tools for Agents
+--------------------------
+
+The context window of an agent is limited and expensive. A tool should distill its data source,
+not relay it.
+
+* **Return what changes the diagnosis.** Prefer counts over full lists when counts tell the story.
+  Drop fields the agent cannot act on.
+* **Limit unbounded results.** Logs, queries and services need a hard upper limit and a
+  ``truncated`` flag, so the agent knows it sees a sample and can ask again with a narrower
+  filter.
+* **Keep sensitive data out.** Passwords, tokens, auth headers and API keys must be omitted or
+  redacted. Omit a field when it is not needed for the diagnosis.
+* **Format for reasoning.** Use readable strings over numeric codes, rounded values with
+  consistent units, and flat structures.
+* **Split triage from detail.** A tool that lists answers "is this relevant?". A resource the
+  agent drills into answers "what exactly went wrong?". The profiler tools of the Symfony
+  extension work this way, see :doc:`extensions`.
+
+Returning Application Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data captured from the inspected application can contain text that end users or third-party
+packages control: log messages, URLs, SQL, request payloads. An agent must not read that text as
+instructions. Wrap such a payload with ``ResponseEncoder::encodeUntrusted()``::
+
+    use Symfony\AI\Mate\Attribute\MateTool;
+    use Symfony\AI\Mate\Encoding\ResponseEncoder;
+
+    class OrderLogTool
+    {
+        #[MateTool(name: 'my-order-log', description: 'List the latest order log entries')]
+        public function latest(int $limit = 20): string
+        {
+            // ...
+
+            return ResponseEncoder::encodeUntrusted(['entries' => $entries, 'truncated' => $truncated]);
+        }
+    }
+
+The payload ends up under an ``untrusted_data`` key, next to a ``_security_notice`` that tells the
+agent how to treat it. See :ref:`mate-untrusted-data`.
 
 Configuration Reference
 -----------------------
 
-Scan Directories
-~~~~~~~~~~~~~~~~
+All keys live under ``extra.ai-mate`` in ``composer.json``. All of them are optional, and all paths
+are relative to the package root.
 
-``extra.ai-mate.scan-dirs`` (optional)
+``scan-dirs``
+    List of directories to scan for Mate attributes. Without it no class is scanned, so an
+    extension that ships tools or resources needs this key.
 
-- Default: Package root directory
-- Relative to package root
-- Multiple directories supported
+``includes``
+    List of PHP service configuration files in the Symfony DI format. Environment variables are
+    available through ``%env()%``.
 
-Service Includes
-~~~~~~~~~~~~~~~~
+``instructions``
+    Path to a Markdown file with instructions for coding agents, by convention
+    ``INSTRUCTIONS.md``. The content is aggregated into the generated
+    ``mate/AGENT_INSTRUCTIONS.md`` of the project.
 
-``extra.ai-mate.includes`` (optional)
+``skills``
+    List of directories that hold `Agent Skills`_. A single string is accepted as well. By
+    convention one ``skills`` directory.
 
-- Array of service configuration file paths
-- Standard Symfony DI configuration format (PHP files)
-- Supports environment variables via ``%env()%``
+``extension``
+    Default ``true``. Set it to ``false`` to keep the package out of discovery. Use it for
+    applications and internal tooling packages that use Mate but are no extension. ``mate init``
+    writes it into an application.
 
-Agent Instructions
-~~~~~~~~~~~~~~~~~~
-
-``extra.ai-mate.instructions`` (optional)
-
-- Path to a markdown file containing instructions for AI agents
-- Relative to package root
-- Conventionally named ``INSTRUCTIONS.md``
-- Content is aggregated into ``mate/AGENT_INSTRUCTIONS.md`` and the managed block in ``AGENTS.md``
-
-Example configuration:
+A complete example:
 
 .. code-block:: json
 
@@ -182,78 +218,21 @@ Example configuration:
         "extra": {
             "ai-mate": {
                 "scan-dirs": ["src"],
-                "instructions": "INSTRUCTIONS.md"
-            }
-        }
-    }
-
-Skills
-~~~~~~
-
-``extra.ai-mate.skills`` (optional)
-
-- List of directories holding `Agent Skills <https://agentskills.io>`_, relative to package root
-  (a single string is also accepted)
-- Each immediate subdirectory is one skill and must contain a ``SKILL.md`` file
-- Conventionally a single ``skills`` directory
-- When a project runs ``mate discover`` (or ``mate skills:install``), each skill directory is
-  installed into the project's ``.agents/skills/`` and symlinked into ``.claude/skills/`` so coding
-  agents can use it
-
-Example configuration:
-
-.. code-block:: json
-
-    {
-        "extra": {
-            "ai-mate": {
-                "scan-dirs": ["src"],
+                "includes": ["config/services.php"],
+                "instructions": "INSTRUCTIONS.md",
                 "skills": ["skills"]
             }
         }
     }
 
-The directory layout for the example above::
+Writing Agent Instructions
+--------------------------
 
-    skills/
-    └── my-skill/
-        ├── SKILL.md
-        └── references/
-            └── details.md
+The instructions tell an agent when to use your tools. A good ``INSTRUCTIONS.md``:
 
-Extension Discovery Opt-Out
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``extra.ai-mate.extension`` (optional)
-
-- Default: ``true``
-- Set to ``false`` to exclude the package from Mate extension discovery
-- Useful for applications or internal tooling packages that use Mate but should not appear as installable extensions
-
-Example opt-out:
-
-.. code-block:: json
-
-    {
-        "extra": {
-            "ai-mate": {
-                "extension": false,
-                "scan-dirs": ["mate/src"]
-            }
-        }
-    }
-
-Writing Effective Agent Instructions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Agent instructions help AI assistants understand when and how to use your extension's tools.
-A good ``INSTRUCTIONS.md`` file should:
-
-1. **Map existing commands to your tools** - Show what tools replace common CLI operations
-2. **Highlight benefits** - Explain why your tools are better than the alternatives
-3. **Be concise** - AI assistants have context limits; focus on essential guidance
-
-Example ``INSTRUCTIONS.md``:
+1. **Maps existing commands to your tools.** Show which tool replaces which CLI operation.
+2. **States the benefit.** Explain why the tool beats the alternative.
+3. **Is short.** Every line costs context in every session.
 
 .. code-block:: markdown
 
@@ -271,177 +250,39 @@ Example ``INSTRUCTIONS.md``:
     - Better error handling and context
     - Integrated with project configuration
 
-Security
-~~~~~~~~
-
-Discovered extensions are managed in ``mate/extensions.php``:
-
-- The ``discover`` command automatically adds discovered extensions
-- All extensions default to ``enabled: true`` when discovered
-- Set ``enabled: false`` to disable an extension
-- Set ``extra.ai-mate.extension`` to ``false`` to keep a package out of discovery entirely
-
-Troubleshooting
+Shipping Skills
 ---------------
 
-Extensions Not Discovered
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Instructions say that a tool exists. A skill describes a whole task: which tools to use, in what
+order, and how to read the results. Each immediate subdirectory of a skills directory is one skill
+and must contain a ``SKILL.md`` file::
 
-If your extensions aren't being found:
+    skills/
+    └── my-skill/
+        ├── SKILL.md
+        └── references/
+            └── details.md
 
-1. **Verify composer.json configuration**:
+When a project runs ``mate discover``, each skill is copied into ``.agents/skills/mate-my-skill/``
+and mirrored into ``.claude/skills/``. See :doc:`skills` for what happens on the project side.
 
-   Ensure your package has the ``extra.ai-mate`` section:
+Two things decide whether a skill works:
 
-   .. code-block:: json
+* **The description.** It is all an agent has when it decides whether to load the skill. Say what
+  the skill does and when it applies.
+* **The links.** The whole skill directory is copied, and nothing outside of it. A Markdown link
+  in ``SKILL.md`` must therefore point at a file inside the skill directory.
 
-       {
-           "extra": {
-               "ai-mate": {
-                   "scan-dirs": ["src"]
-               }
-           }
-       }
+``vendor/bin/mate skills:validate`` checks both in a project that has your extension installed.
 
-2. **Run discovery**:
+Publishing an Extension
+-----------------------
 
-   .. code-block:: terminal
+Publish the package on Packagist like any other Composer package. Then add it to `awesome-mate`_,
+the curated list of Mate extensions, so that others find it. The `MatesOfMate`_ organisation also
+welcomes extensions that should be maintained by the community.
 
-       $ vendor/bin/mate discover
-
-   If the host project has already been initialized, Composer install/update should also refresh
-   discovery automatically.
-
-3. **Check the extensions file**:
-
-   .. code-block:: terminal
-
-       $ cat mate/extensions.php
-
-   Verify your package is listed and ``enabled`` is ``true``.
-
-   If the package intentionally sets ``extra.ai-mate.extension`` to ``false``, it will not appear
-   in ``mate/extensions.php``.
-
-Extensions Not Loading
-~~~~~~~~~~~~~~~~~~~~~~
-
-If extensions are discovered but not loading:
-
-1. **Check enabled status** in ``mate/extensions.php``::
-
-       return [
-           'vendor/my-extension' => ['enabled' => true],  // Must be true
-       ];
-
-2. **Verify scan directories exist** and contain PHP files with Mate attributes.
-
-3. **Check for PHP errors** in your extension code:
-
-   .. code-block:: terminal
-
-       $ php -l src/MyTool.php
-
-Tools Not Appearing
-~~~~~~~~~~~~~~~~~~~
-
-If your tools don't appear:
-
-1. **Verify the Mate attributes** are correctly applied::
-
-       use Symfony\AI\Mate\Attribute\MateTool;
-
-       class MyTool
-       {
-           #[MateTool(name: 'my-tool', description: 'Description here')]
-           public function execute(): string
-           {
-               return 'result';
-           }
-       }
-
-2. **Check that classes are in scan directories** defined in ``composer.json``.
-
-3. **Confirm the class is autoloadable** - Mate resolves the class name from the file and skips
-   the file when the class cannot be loaded. Run ``composer dump-autoload`` after adding it.
-
-4. **List what Mate actually found**::
-
-       $ vendor/bin/mate tools:list
-       $ vendor/bin/mate debug:capabilities --extension=vendor/my-extension
-
-Tool Execution Fails
-~~~~~~~~~~~~~~~~~~~~
-
-If tools are visible but fail when called:
-
-1. **Check return types** - tools must return scalar values or arrays::
-
-       // Good
-       public function execute(): string { return 'result'; }
-       public function execute(): array { return ['key' => 'value']; }
-
-       // Bad - objects are not directly serializable
-       public function execute(): object { return new stdClass(); }
-
-2. **Check for exceptions** in your tool code.
-
-3. **Verify dependencies** are properly injected.
-
-Dependency Injection Issues
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If dependencies aren't being injected:
-
-1. **Register services** in your ``services.php`` or ``config/services.php``::
-
-       $services->set(MyService::class)
-           ->autowire()
-           ->autoconfigure();
-
-2. **Check interface bindings**::
-
-       $services->alias(MyInterface::class, MyImplementation::class);
-
-3. **Verify service configuration** is listed in ``composer.json``:
-
-   .. code-block:: json
-
-       {
-           "extra": {
-               "ai-mate": {
-                   "includes": ["config/services.php"]
-               }
-           }
-       }
-
-Agent Instructions Not Loading
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If your agent instructions aren't being provided to AI assistants:
-
-1. **Verify the file exists** at the path specified in ``composer.json``
-
-2. **Check the path is correct** - must be relative to package root:
-
-   .. code-block:: json
-
-       {
-           "extra": {
-               "ai-mate": {
-                   "instructions": "INSTRUCTIONS.md"
-               }
-           }
-       }
-
-3. **Ensure the file is readable** and contains valid markdown
-
-4. **Use debug command** to verify discovery:
-
-   .. code-block:: terminal
-
-       $ vendor/bin/mate debug:extensions
-
-   Look for ``instructions`` field in the output.
-
-For general issues and debugging tips, see the :doc:`troubleshooting` guide.
+.. _`matesofmate/extension-template`: https://github.com/matesofmate/extension-template
+.. _`awesome-mate`: https://github.com/MatesOfMate/awesome-mate
+.. _`MatesOfMate`: https://github.com/MatesOfMate
+.. _`Agent Skills`: https://agentskills.io
