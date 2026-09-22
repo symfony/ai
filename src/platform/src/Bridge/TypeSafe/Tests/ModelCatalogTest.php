@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests;
 
 use Symfony\AI\Platform\Bridge\TypeSafe\Jev;
 use Symfony\AI\Platform\Bridge\TypeSafe\ModelCatalog;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
 
@@ -20,9 +21,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
-        yield 'jev-latest' => ['jev-latest', Jev::class, []];
-        yield 'jev-preview' => ['jev-preview', Jev::class, []];
-        yield 'jev-1.13.0' => ['jev-1.13.0', Jev::class, []];
+        yield 'jev-latest' => ['jev-latest', Jev::class, [Capability::INPUT_TEXT]];
+        yield 'jev-preview' => ['jev-preview', Jev::class, [Capability::INPUT_TEXT]];
+        yield 'jev-1.13.0' => ['jev-1.13.0', Jev::class, [Capability::INPUT_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

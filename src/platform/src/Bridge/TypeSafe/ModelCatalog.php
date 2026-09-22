@@ -27,15 +27,15 @@ final class ModelCatalog extends AbstractModelCatalog
         $defaultModels = [
             'jev-latest' => [
                 'class' => Jev::class,
-                'capabilities' => [],
+                'capabilities' => [Capability::INPUT_TEXT],
             ],
             'jev-preview' => [
                 'class' => Jev::class,
-                'capabilities' => [],
+                'capabilities' => [Capability::INPUT_TEXT],
             ],
             'jev-1.13.0' => [
                 'class' => Jev::class,
-                'capabilities' => [],
+                'capabilities' => [Capability::INPUT_TEXT],
             ],
         ];
 
