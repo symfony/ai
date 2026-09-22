@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Elasticsearch\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Symfony\AI\Store\Bridge\Elasticsearch\Store;
+use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
 use Symfony\Component\HttpClient\HttpClient;
@@ -25,12 +25,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return new Store(
-            HttpClient::create(),
-            'http://127.0.0.1:9200',
-            'test_index',
-            dimensions: 3,
-        );
+        return StoreFactory::create('test_index', 'http://127.0.0.1:9200', HttpClient::create(), dimensions: 3);
     }
 
     protected function waitForIndexing(): void
