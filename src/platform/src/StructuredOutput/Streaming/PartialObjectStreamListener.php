@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -164,6 +165,7 @@ final class PartialObjectStreamListener extends AbstractStreamListener
 
         if (null !== $this->objectToPopulate) {
             $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $this->objectToPopulate;
+            $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
         }
 
         return $context;

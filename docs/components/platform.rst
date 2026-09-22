@@ -1486,6 +1486,9 @@ values already set, and the very same instance is returned. This is useful for
 enriching database records, completing incomplete records, or collecting data
 progressively across multiple invocations using the same object.
 
+Nested objects the instance already holds are populated in place as well, rather
+than being replaced by new instances.
+
 Provide the object both as a ``template_vars`` entry (to give the model context
 about the already known values) and as the ``response_format`` (to populate it).
 This relies on the ``TemplateRendererListener`` being registered with a normalizer
@@ -1531,6 +1534,31 @@ serialization groups::
         ],
         'response_format' => $product,
     ]);
+
+By default the schema describes every property of the class, so the model is asked
+for values the instance already holds. Set the ``missing_properties_only`` option to
+only ask for what is still missing::
+
+    $city = new City(name: 'Berlin');
+
+    $result = $platform->invoke($model, $messages, [
+        'template_vars' => ['city' => $city],
+        'response_format' => $city,
+        'missing_properties_only' => true,
+    ]);
+
+    // The schema only described population, country and mayor
+    assert($city === $result->asObject());
+
+A property is left to the model when it is uninitialized, ``null`` or an empty array,
+and it can be written onto the instance. Every other value, including ``''``, ``0`` and
+``false``, is taken as given and removed from the schema. A nested object is decided by
+its own properties: one with nothing missing is removed, a ``null`` one is described in
+full, and a partially filled one is narrowed the same way.
+
+The option requires ``response_format`` to be the instance to populate, and it throws an
+:class:`Symfony\\AI\\Platform\\Exception\\InvalidArgumentException` before any request is sent
+when the instance has nothing left to fill in.
 
 Scoping the Schema to Serializer Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
