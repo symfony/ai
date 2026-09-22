@@ -1,0 +1,32 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-07T21:20:49Z
+
+Hi @solverat, thanks for checking in, how did you discover the issue? never had a problem with that? is it reproducible?
+Cheers!
+
+---------------------------------------------------------------------------
+
+by solverat at 2026-09-07T21:34:36Z
+
+Hi,
+
+I ran into it while debugging a chat turn that kept failing on a path filter. The model sent `/my-path/`, the call failed for an unrelated reason, and its next attempt sent `\/my-path\/` with a real backslash in it. I dumped the stored arguments byte by byte, the backslash was really there, so I went looking for who put it in.
+
+The encoding side is fully reproducible, and that is the snippet in the PR. Call `createRequestPayload()` on any message bag that holds an assistant tool call and you get `"\/my-path\/"` back. No provider needed.
+
+Whether the model then sends the backslash back varies from run to run. It needs a tool call that goes back into the history, an argument containing a slash, and a retry after a failed call. We saw it in three of five runs of the same prompt. With a single call it never happens, because the arguments never reach the model again.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-07T21:42:29Z
+
+Just super curious here because this change has impact horizontally across ... well, almost everywhere :D that's actually why i closed the mentioned #2087
+
+@symfony/ai any opinion? never had that issue myself
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-11T19:41:50Z
+
+The encoding difference is 100% reproducible without a provider, and tests stay green. Different footing than #2087. That one's root cause was never confirmed and touched the whole body for one bridge. This touches one field but reaches most bridges through the shared normalizer. Narrower change, proven mechanism. I'd land it.
