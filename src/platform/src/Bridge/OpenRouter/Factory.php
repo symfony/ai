@@ -16,6 +16,9 @@ use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient as RerankModelClien
 use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter as RerankResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ModelClient as SpeechModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ResultConverter as SpeechResultConverter;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video\JobClient as VideoJobClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video\ModelClient as VideoModelClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video\ResultConverter as VideoResultConverter;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
@@ -51,15 +54,29 @@ final class Factory
             new Generic\Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/embeddings'),
             new RerankModelClient($httpClient, $apiKey, $baseUrl),
             new SpeechModelClient($httpClient, $apiKey, $baseUrl),
+            new VideoModelClient($httpClient, $apiKey, $baseUrl),
         ];
         $resultConverters = [
             new Generic\Completions\ResultConverter(),
             new Generic\Embeddings\ResultConverter(),
             new RerankResultConverter(),
             new SpeechResultConverter(),
+            new VideoResultConverter($name),
         ];
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
+    }
+
+    /**
+     * The client resolving the video generation jobs this bridge hands out - typically in a worker
+     * picking up a stored handle, without a provider or platform at hand.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        string $baseUrl = 'https://openrouter.ai/api',
+    ): VideoJobClient {
+        return new VideoJobClient($httpClient ?? new EventSourceHttpClient(), $apiKey, $baseUrl);
     }
 
     /**

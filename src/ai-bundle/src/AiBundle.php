@@ -94,6 +94,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\Factory as OpenResponsesFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\FallbackModelCatalog as OpenResponsesFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory as OpenRouterFactory;
+use Symfony\AI\Platform\Bridge\OpenRouter\Video\JobClient as OpenRouterVideoJobClient;
 use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
 use Symfony\AI\Platform\Bridge\Scaleway\Factory as ScalewayFactory;
@@ -984,6 +985,16 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'openrouter']);
 
             $container->setDefinition($platformId, $definition);
+
+            $jobClientId = 'ai.platform.job_client.openrouter';
+            $container->setDefinition($jobClientId, (new Definition(OpenRouterVideoJobClient::class))
+                ->setFactory(OpenRouterFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.platform.job_client', ['key' => 'openrouter']));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'openrouter');
 
             return;
         }
