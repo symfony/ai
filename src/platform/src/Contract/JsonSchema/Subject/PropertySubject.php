@@ -16,15 +16,27 @@ namespace Symfony\AI\Platform\Contract\JsonSchema\Subject;
  */
 final class PropertySubject
 {
+    /**
+     * @param array<string, mixed> $context Describer context, e.g. `serializer_groups`
+     */
     public function __construct(
         private readonly string $name,
         private readonly \ReflectionProperty|\ReflectionMethod|\ReflectionParameter $reflector,
+        private readonly array $context = [],
     ) {
     }
 
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getContext(): array
+    {
+        return $this->context;
     }
 
     public function getReflector(): \ReflectionParameter|\ReflectionMethod|\ReflectionProperty

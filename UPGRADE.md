@@ -96,6 +96,25 @@ Platform
    -$client = new Client($httpClient, $clock, $apiKey);
    +$client = new Client($httpClient, $apiKey);
    ```
+ * `StructuredOutput\ResponseFormatFactoryInterface::create()` gained a `?object $instanceToPopulate = null`
+   parameter, the instance to populate when the new `missing_properties_only` option is set. Implementations must
+   add the parameter:
+
+   ```diff
+    final class MyResponseFormatFactory implements ResponseFormatFactoryInterface
+    {
+   -    public function create(string $responseClass): array
+   +    public function create(string $responseClass, ?object $instanceToPopulate = null): array
+        {
+            // ...
+        }
+    }
+   ```
+
+   An implementation that ignores the parameter silently disables `missing_properties_only`.
+
+ * Structured output deserialized onto an existing instance now populates nested objects in place
+   (`DEEP_OBJECT_TO_POPULATE`) instead of replacing them with new instances, so values they already hold are kept.
 
 Store
 -----

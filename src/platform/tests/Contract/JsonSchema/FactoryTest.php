@@ -19,14 +19,19 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\NestedGroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SchemaAttributeValuesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Ticket;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Trip;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithAccessors;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
 
 final class FactoryTest extends TestCase
@@ -509,5 +514,90 @@ final class FactoryTest extends TestCase
         $actual = $this->factory->buildProperties(GroupedDto::class, ['serializer_groups' => ['read', 'write']]);
 
         $this->assertSame(['name', 'age', 'slug'], array_keys($actual['properties']));
+    }
+
+    public function testBuildPropertiesPropagatesSerializerGroupsIntoNestedObjects()
+    {
+        $actual = $this->factory->buildProperties(NestedGroupedDto::class, ['serializer_groups' => ['write']]);
+
+        $this->assertSame(['title', 'child'], array_keys($actual['properties']));
+        $this->assertSame(['name', 'age'], array_keys($actual['properties']['child']['properties']));
+    }
+
+    public function testBuildPropertiesForInstanceDescribesOnlyMissingProperties()
+    {
+        // Uninitialized and null properties are missing
+        $user = new User();
+        $this->assertSame(['id', 'name', 'createdAt', 'isActive', 'age'], array_keys($this->factory->buildProperties(User::class, ['populate_instance' => $user])['properties']));
+
+        $user->id = 1;
+        $user->name = 'john';
+        $user->isActive = false;
+        $expected = [
+            'type' => 'object',
+            'properties' => [
+                'createdAt' => ['type' => 'string', 'format' => 'date-time'],
+                'age' => ['type' => ['integer', 'null']],
+            ],
+            'required' => ['createdAt', 'age'],
+            'additionalProperties' => false,
+        ];
+
+        $this->assertSame($expected, $this->factory->buildProperties(User::class, ['populate_instance' => $user]));
+    }
+
+    public function testBuildPropertiesForInstanceReadsPrivatePropertiesBehindAccessors()
+    {
+        $user = new UserWithAccessors();
+        $user->setId(1);
+        $user->setIsActive(true);
+
+        $actual = $this->factory->buildProperties(UserWithAccessors::class, ['populate_instance' => $user]);
+
+        $this->assertSame(['name', 'createdAt', 'age'], array_keys($actual['properties']));
+    }
+
+    public function testBuildPropertiesForInstanceSkipsPropertiesItCannotWrite()
+    {
+        // The readonly code can only be set through the constructor, which populating an existing instance never calls
+        $actual = $this->factory->buildProperties(Ticket::class, ['populate_instance' => new Ticket()]);
+
+        $this->assertSame(['seat'], array_keys($actual['properties']));
+    }
+
+    public function testBuildPropertiesForInstanceNarrowsNestedObjects()
+    {
+        $trip = new Trip(destination: new City(name: 'Berlin', country: 'Germany'));
+
+        $actual = $this->factory->buildProperties(Trip::class, ['populate_instance' => $trip]);
+
+        $this->assertSame(['title', 'destination', 'origin'], array_keys($actual['properties']));
+        // Partially filled: only what is still missing on it, and no longer nullable
+        $this->assertSame(['population', 'mayor'], array_keys($actual['properties']['destination']['properties']));
+        $this->assertSame('object', $actual['properties']['destination']['type']);
+        // Not set at all: the full class
+        $this->assertSame(['name', 'population', 'country', 'mayor'], array_keys($actual['properties']['origin']['properties']));
+        $this->assertSame(['object', 'null'], $actual['properties']['origin']['type']);
+    }
+
+    public function testBuildPropertiesForInstanceSkipsNestedObjectsWithNothingMissing()
+    {
+        $trip = new Trip(destination: new City(name: 'Berlin', population: 3500000, country: 'Germany', mayor: 'Kai Wegner'));
+
+        $actual = $this->factory->buildProperties(Trip::class, ['populate_instance' => $trip]);
+
+        $this->assertSame(['title', 'origin'], array_keys($actual['properties']));
+    }
+
+    public function testBuildPropertiesForInstanceSkipsFilledCollectionsAndScalars()
+    {
+        // A non-empty collection, an empty string and a zero are all filled: nothing is left to describe
+        $this->assertNull($this->factory->buildProperties(MathReasoning::class, ['populate_instance' => new MathReasoning([new Step('a', 'b')], '', 0.0)]));
+
+        // An empty collection is missing and is described with its full item schema
+        $actual = $this->factory->buildProperties(MathReasoning::class, ['populate_instance' => new MathReasoning([], '', 0.0)]);
+
+        $this->assertSame(['steps'], array_keys($actual['properties']));
+        $this->assertSame(['explanation', 'output'], array_keys($actual['properties']['steps']['items']['properties']));
     }
 }

@@ -5,6 +5,10 @@ CHANGELOG
 ----
 
  * Add the Eden AI bridge, covering the gateway's OpenAI-compatible chat and embeddings endpoints and its expert models: OCR, document parsing, text-to-speech, asynchronous speech-to-text, image analysis and image generation
+ * [BC BREAK] Add a `?object $instanceToPopulate = null` parameter to `StructuredOutput\ResponseFormatFactoryInterface::create()`
+ * Add the `missing_properties_only` option to `StructuredOutput\PlatformSubscriber`: with `response_format` set to an object, the JSON schema only describes the properties that instance is still missing (uninitialized, `null` or empty array) and can be written onto it, including nested objects, and the result is populated onto that instance; throws `InvalidArgumentException` when nothing is missing or when `response_format` is not an instance
+ * Add `Contract\JsonSchema\Subject\PropertySubject::getContext()` and propagate the describer context (e.g. `serializer_groups`) from `TypeInfoDescriber` and `MethodDescriber` into nested object schemas, which previously received an empty context
+ * Populate nested objects in place (`DEEP_OBJECT_TO_POPULATE`) when structured output is deserialized onto an existing instance
  * Add the TypeSafe bridge, evaluating typed questions (noul, choice and score) against a state with the Jev models
  * Add `Result\BatchResult`, `Result\BatchItem` and `Result\BatchItemCase`, the outcome of a batch of requests as one item per request, reached through `DeferredResult::asBatch()`; a successful item carries the ordinary result its request would have produced synchronously, and one without a result states whether it errored or was never sent because the batch was canceled or expired
  * Add `Capability::REALTIME_SESSION` and `Result\RealtimeSessionResult` for long-lived realtime sessions (ephemeral client credentials for WebRTC/WebSocket voice agents)

@@ -27,6 +27,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 final class PlatformSubscriber implements EventSubscriberInterface
 {
     public const RESPONSE_FORMAT = 'response_format';
+    public const MISSING_PROPERTIES_ONLY = 'missing_properties_only';
 
     private ?string $outputType = null;
 
@@ -58,6 +59,18 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
         $options = $event->getOptions();
 
+        // The option is consumed here and must never reach the provider, even when returning early below
+        $missingPropertiesOnly = false;
+        if (\array_key_exists(self::MISSING_PROPERTIES_ONLY, $options)) {
+            $missingPropertiesOnly = (bool) $options[self::MISSING_PROPERTIES_ONLY];
+            unset($options[self::MISSING_PROPERTIES_ONLY]);
+            $event->setOptions($options);
+        }
+
+        if ($missingPropertiesOnly && !\is_object($options[self::RESPONSE_FORMAT] ?? null)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" option requires the "%s" option to be the instance to populate.', self::MISSING_PROPERTIES_ONLY, self::RESPONSE_FORMAT));
+        }
+
         if (!isset($options[self::RESPONSE_FORMAT])) {
             return;
         }
@@ -85,7 +98,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
         $this->outputType = $className;
 
-        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className);
+        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className, $missingPropertiesOnly ? $responseFormat : null);
 
         $event->setOptions($options);
     }

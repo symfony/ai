@@ -18,6 +18,8 @@ interface ResponseFormatFactoryInterface
 {
     /**
      * @param class-string $responseClass
+     * @param object|null  $instanceToPopulate An instance of $responseClass to describe only the properties it is
+     *                                         still missing, or null to describe the whole class
      *
      * @return array{
      *     type: 'json_schema',
@@ -28,5 +30,5 @@ interface ResponseFormatFactoryInterface
      *     }
      * }
      */
-    public function create(string $responseClass): array;
+    public function create(string $responseClass, ?object $instanceToPopulate = null): array;
 }

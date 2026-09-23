@@ -41,6 +41,8 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
  *         maxProperties?: int,
  *         dependentRequired?: bool,
  *         anyOf?: list<mixed>,
+ *         properties?: array<string, mixed>,
+ *         items?: array<string, mixed>,
  *     }>,
  *     required: list<string>,
  *     additionalProperties: false,
@@ -70,7 +72,7 @@ final class Factory
     }
 
     /**
-     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]`
+     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]` or `['populate_instance' => $object]`
      *
      * @return JsonSchema|null
      */
