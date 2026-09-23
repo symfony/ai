@@ -17,6 +17,10 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyAccessExtractorInterface;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorResolverInterface;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 
 /**
  * Narrows the JSON schema of a class down to the properties a given instance of it is still missing.
@@ -32,11 +36,15 @@ final class InstanceSchemaFilter
 {
     private readonly PropertyAccessorInterface $propertyAccessor;
 
+    private readonly ClassDiscriminatorResolverInterface $discriminatorResolver;
+
     public function __construct(
         private readonly PropertyAccessExtractorInterface $accessExtractor = new ReflectionExtractor(),
         ?PropertyAccessorInterface $propertyAccessor = null,
+        ?ClassDiscriminatorResolverInterface $discriminatorResolver = null,
     ) {
         $this->propertyAccessor = $propertyAccessor ?? PropertyAccess::createPropertyAccessor();
+        $this->discriminatorResolver = $discriminatorResolver ?? new ClassDiscriminatorFromClassMetadata(new ClassMetadataFactory(new AttributeLoader()));
     }
 
     /**
@@ -48,20 +56,23 @@ final class InstanceSchemaFilter
      */
     public function filter(array $schema, object $instance): array
     {
-        return $this->narrow($schema, $instance, $schema);
+        return $this->narrow($schema, $instance, $schema, []);
     }
 
     /**
      * @param array<string, mixed> $schema
-     * @param array<string, mixed> $root   Schema that `$ref` pointers resolve against
+     * @param array<string, mixed> $root      Schema that `$ref` pointers resolve against
+     * @param array<int, true>     $narrowing Object ids of the instance and its parents, to stop at cycles
      *
      * @return array<string, mixed>
      */
-    private function narrow(array $schema, object $instance, array $root): array
+    private function narrow(array $schema, object $instance, array $root, array $narrowing): array
     {
         if (!isset($schema['properties']) || !\is_array($schema['properties'])) {
             return $schema;
         }
+
+        $narrowing[spl_object_id($instance)] = true;
 
         $properties = [];
         foreach ($schema['properties'] as $name => $propertySchema) {
@@ -78,8 +89,8 @@ final class InstanceSchemaFilter
                 continue;
             }
 
-            // A filled scalar, or an object whose schema cannot be narrowed, is taken as given
-            if (!$this->isPopulatableObject($value)) {
+            // A filled scalar, an object already being narrowed, or one whose schema cannot be narrowed is taken as given
+            if (!$this->isPopulatableObject($value) || isset($narrowing[spl_object_id($value)])) {
                 continue;
             }
 
@@ -89,7 +100,7 @@ final class InstanceSchemaFilter
             }
 
             try {
-                $objectSchema = $this->narrow($objectSchema, $value, $root);
+                $objectSchema = $this->narrow($objectSchema, $value, $root, $narrowing);
             } catch (InvalidArgumentException) {
                 // Nothing is missing on the nested object, so it is taken as given
                 continue;
@@ -102,9 +113,12 @@ final class InstanceSchemaFilter
             }
 
             // Only the branch of the instance's class remains, as the existing object cannot change its class
-            if (isset($propertySchema['anyOf'])) {
-                $propertySchema['anyOf'] = [$objectSchema];
-                $objectSchema = $propertySchema;
+            foreach (['anyOf', 'oneOf'] as $keyword) {
+                if (isset($propertySchema[$keyword])) {
+                    $propertySchema[$keyword] = [$objectSchema];
+                    $objectSchema = $propertySchema;
+                    break;
+                }
             }
 
             $properties[$name] = $objectSchema;
@@ -124,7 +138,7 @@ final class InstanceSchemaFilter
 
     /**
      * Resolves the object schema describing the given value, following `$ref` pointers and picking the
-     * `anyOf` branch whose discriminator matches the value. Returns null when no such schema is found.
+     * `anyOf`/`oneOf` branch whose discriminator matches the value. Returns null when no such schema is found.
      *
      * @param array<string, mixed> $schema
      * @param array<string, mixed> $root
@@ -148,12 +162,13 @@ final class InstanceSchemaFilter
             return $schema;
         }
 
-        if (!isset($schema['anyOf']) || !\is_array($schema['anyOf'])) {
+        $branches = $schema['anyOf'] ?? $schema['oneOf'] ?? null;
+        if (!\is_array($branches)) {
             return null;
         }
 
         $candidates = [];
-        foreach ($schema['anyOf'] as $branch) {
+        foreach ($branches as $branch) {
             if (!\is_array($branch)) {
                 continue;
             }
@@ -178,7 +193,8 @@ final class InstanceSchemaFilter
     }
 
     /**
-     * Compares the single-valued `const`/`enum` properties of a branch with the value's properties.
+     * Compares the single-valued `const`/`enum` properties of a branch with the value's properties, or with
+     * the serializer's discriminator type when the property only exists in the value's `DiscriminatorMap`.
      *
      * @param array<string, mixed> $schema
      *
@@ -186,6 +202,8 @@ final class InstanceSchemaFilter
      */
     private function matchesDiscriminator(array $schema, object $value): ?bool
     {
+        $typeProperty = $this->discriminatorResolver->getMappingForMappedObject($value)?->getTypeProperty();
+
         $discriminated = false;
         foreach ($schema['properties'] as $name => $propertySchema) {
             if (\array_key_exists('const', $propertySchema)) {
@@ -196,7 +214,9 @@ final class InstanceSchemaFilter
                 continue;
             }
 
-            $actual = $this->readValue($value, $name);
+            $actual = $name === $typeProperty
+                ? $this->discriminatorResolver->getTypeForMappedObject($value)
+                : $this->readValue($value, $name);
             if ($actual instanceof \BackedEnum) {
                 $actual = $actual->value;
             }
