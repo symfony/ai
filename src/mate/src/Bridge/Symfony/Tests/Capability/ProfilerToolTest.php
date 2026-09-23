@@ -293,6 +293,76 @@ final class ProfilerToolTest extends TestCase
         $this->assertSame('improved', $result['verdict']);
     }
 
+    public function testCompareAveragesSeveralRunsPerSide()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['query_count' => 40], ['query_count' => 44], ['query_count' => 42]],
+            [['query_count' => 4], ['query_count' => 6], ['query_count' => 5]],
+        );
+
+        $result = Toon::decode($tool->compare($baseline, $current));
+
+        $this->assertSame(['baseline1', 'baseline2', 'baseline3'], $result['baseline']['tokens']);
+        $this->assertSame(3, $result['baseline']['run_count']);
+        $this->assertArrayNotHasKey('token', $result['baseline']);
+        $this->assertEquals(42.0, $result['baseline']['query_count']);
+        $this->assertEquals(5.0, $result['current']['query_count']);
+        $this->assertSame('improved', $result['verdict']);
+        $this->assertEquals(-37.0, $result['delta']['query_count']);
+    }
+
+    public function testCompareWithASingleRunPerSideKeepsTheSingularTokenShape()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['query_count' => 40]],
+            [['query_count' => 4]],
+        );
+
+        $result = Toon::decode($tool->compare($baseline, $current));
+
+        $this->assertSame('baseline1', $result['baseline']['token']);
+        $this->assertArrayNotHasKey('tokens', $result['baseline']);
+        $this->assertArrayNotHasKey('run_count', $result['baseline']);
+    }
+
+    public function testCompareAveragesABooleanFieldIntoAFlakinessRate()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['has_exception' => false], ['has_exception' => false]],
+            [['has_exception' => true], ['has_exception' => false]],
+            'exception',
+        );
+
+        $result = Toon::decode($tool->compare($baseline, $current, 'exception'));
+
+        $this->assertEquals(0.0, $result['baseline']['has_exception']);
+        $this->assertEquals(0.5, $result['current']['has_exception']);
+        $this->assertEquals(0.5, $result['delta']['has_exception']);
+    }
+
+    public function testCompareDropsANonNumericFieldTheRunsDisagreeOn()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['query_count' => 1, 'connection' => 'default'], ['query_count' => 1, 'connection' => 'replica']],
+            [['query_count' => 1, 'connection' => 'default'], ['query_count' => 1, 'connection' => 'default']],
+        );
+
+        $result = Toon::decode($tool->compare($baseline, $current));
+
+        $this->assertArrayNotHasKey('connection', $result['baseline']);
+        $this->assertSame('default', $result['current']['connection']);
+    }
+
+    public function testCompareThrowsExceptionForBlankTokenList()
+    {
+        $tool = $this->createComparableTool(['query_count' => 1], ['query_count' => 1]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('At least one profiler token is required.');
+
+        $tool->compare(' , ', 'current');
+    }
+
     public function testCompareThrowsExceptionForUnknownToken()
     {
         $tool = $this->createComparableTool(['query_count' => 1], ['query_count' => 1]);
@@ -369,6 +439,43 @@ final class ProfilerToolTest extends TestCase
         $registry = new CollectorRegistry([new TestCollectorFormatter($collector)]);
 
         return new ProfilerTool(new ProfilerDataProvider($dir, $registry));
+    }
+
+    /**
+     * Builds a tool over a set of "baseline1", "baseline2", ... and "current1", "current2", ...
+     * profiles, one per given summary, all carrying the given collector.
+     *
+     * @param list<array<string, mixed>> $baselineSummaries
+     * @param list<array<string, mixed>> $currentSummaries
+     *
+     * @return array{0: ProfilerTool, 1: string, 2: string} the tool plus the comma-joined baseline and current token lists
+     */
+    private function createComparableToolWithRuns(array $baselineSummaries, array $currentSummaries, string $collector = 'db'): array
+    {
+        $dir = sys_get_temp_dir().'/mate-profiler-compare-'.bin2hex(random_bytes(8));
+        mkdir($dir, 0755, true);
+        $this->temporaryDirs[] = $dir;
+
+        $storage = new FileProfilerStorage('file:'.$dir);
+        $baselineTokens = [];
+        foreach ($baselineSummaries as $index => $summary) {
+            $token = 'baseline'.($index + 1);
+            $baselineTokens[] = $token;
+            $this->assertTrue($storage->write($this->createProfile($token, $collector, $summary)));
+        }
+
+        $currentTokens = [];
+        foreach ($currentSummaries as $index => $summary) {
+            $token = 'current'.($index + 1);
+            $currentTokens[] = $token;
+            $this->assertTrue($storage->write($this->createProfile($token, $collector, $summary)));
+        }
+
+        clearstatcache();
+
+        $registry = new CollectorRegistry([new TestCollectorFormatter($collector)]);
+
+        return [new ProfilerTool(new ProfilerDataProvider($dir, $registry)), implode(',', $baselineTokens), implode(',', $currentTokens)];
     }
 
     /**

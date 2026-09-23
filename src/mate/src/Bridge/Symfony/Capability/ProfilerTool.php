@@ -140,15 +140,18 @@ final class ProfilerTool
     }
 
     /**
-     * @param string $baseline  The profiler token of the profile measured before the change
-     * @param string $current   The profiler token of the profile measured after the change
+     * @param string $baseline  The profiler token measured before the change, or several comma-separated tokens averaged to smooth out run-to-run noise
+     * @param string $current   The profiler token measured after the change, or several comma-separated tokens averaged to smooth out run-to-run noise
      * @param string $collector The collector to compare (e.g. db, time, memory, logger)
      */
-    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Returns both summaries, the numeric difference for every shared numeric field, the raw before/after pair for every shared field that changed but is not numeric, and a verdict (improved, unchanged, regressed).')]
+    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Pass several comma-separated tokens on either side to average multiple runs, which is more reliable than a single run when the measurement has any noise. Returns both summaries, the numeric difference for every shared numeric field, the raw before/after pair for every shared field that changed but is not numeric, and a verdict (improved, unchanged, regressed).')]
     public function compare(string $baseline, string $current, string $collector = 'db'): string
     {
-        $baselineSummary = $this->getCollectorSummary($baseline, $collector);
-        $currentSummary = $this->getCollectorSummary($current, $collector);
+        $baselineTokens = $this->splitTokens($baseline);
+        $currentTokens = $this->splitTokens($current);
+
+        $baselineSummary = $this->averagedSummary($baselineTokens, $collector);
+        $currentSummary = $this->averagedSummary($currentTokens, $collector);
 
         $delta = [];
         $changed = [];
@@ -176,12 +179,82 @@ final class ProfilerTool
 
         return ResponseEncoder::encode([
             'collector' => $collector,
-            'baseline' => array_merge(['token' => $baseline], $baselineSummary),
-            'current' => array_merge(['token' => $current], $currentSummary),
+            'baseline' => array_merge($this->describeRuns($baselineTokens), $baselineSummary),
+            'current' => array_merge($this->describeRuns($currentTokens), $currentSummary),
             'delta' => $delta,
             'changed' => $changed,
             'verdict' => $this->buildVerdict($collector, $baselineSummary, $currentSummary),
         ]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function splitTokens(string $tokens): array
+    {
+        $split = array_values(array_filter(array_map(trim(...), explode(',', $tokens))));
+
+        if ([] === $split) {
+            throw new InvalidArgumentException('At least one profiler token is required.');
+        }
+
+        return $split;
+    }
+
+    /**
+     * @param list<string> $tokens
+     *
+     * @return array<string, mixed>
+     */
+    private function describeRuns(array $tokens): array
+    {
+        if (1 === \count($tokens)) {
+            return ['token' => $tokens[0]];
+        }
+
+        return ['tokens' => $tokens, 'run_count' => \count($tokens)];
+    }
+
+    /**
+     * A single token's summary is returned as-is. Several are averaged field by field, so
+     * one slow or flaky run does not decide the comparison: a numeric field (a bool counts
+     * as 0/1, so a flakiness rate like "has_exception: 0.4" is a legitimate answer) becomes
+     * its mean across the runs. A field every run agrees on, such as a fixed collector name,
+     * is kept as-is; one the runs disagree on has no single representative value and is
+     * dropped rather than guessed from whichever run happened to be averaged last.
+     *
+     * @param list<string> $tokens
+     *
+     * @return array<string, mixed>
+     */
+    private function averagedSummary(array $tokens, string $collector): array
+    {
+        $summaries = array_map(fn (string $token): array => $this->getCollectorSummary($token, $collector), $tokens);
+
+        if (1 === \count($summaries)) {
+            return $summaries[0];
+        }
+
+        $keys = array_unique(array_merge(...array_map(array_keys(...), $summaries)));
+
+        $averaged = [];
+        foreach ($keys as $key) {
+            $values = array_map(static fn (array $summary): mixed => $summary[$key] ?? null, $summaries);
+            $numbers = array_map($this->toComparableNumber(...), $values);
+
+            if (!\in_array(null, $numbers, true)) {
+                $averaged[$key] = round(array_sum($numbers) / \count($numbers), 2);
+
+                continue;
+            }
+
+            $first = $values[0];
+            if ([] === array_filter($values, static fn (mixed $value): bool => $value !== $first)) {
+                $averaged[$key] = $first;
+            }
+        }
+
+        return $averaged;
     }
 
     /**
