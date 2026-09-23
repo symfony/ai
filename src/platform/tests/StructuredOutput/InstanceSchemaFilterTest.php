@@ -18,6 +18,8 @@ use Symfony\AI\Platform\StructuredOutput\InstanceSchemaFilter;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Itinerary;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\Circle;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\Drawing;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\OrderFilter;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\SearchRequest;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
@@ -143,26 +145,52 @@ final class InstanceSchemaFilterTest extends TestCase
 
     public function testNarrowsNestedObjectsBehindAReference()
     {
-        // The shape a self-referential class takes once the schema factory supports recursion through `$defs`:
-        // the nested object is a `$ref`, so its `properties` are not inline where the filter looks for them.
-        $node = [
-            'type' => 'object',
-            'properties' => [
-                'label' => ['type' => ['string', 'null']],
-                'child' => ['$ref' => '#/$defs/TreeNode'],
-            ],
-            'required' => ['label', 'child'],
-            'additionalProperties' => false,
-        ];
-        $schema = $node + ['$defs' => ['TreeNode' => $node]];
-
         // The root is complete but for its child, and the child still lacks its own child
         $tree = new TreeNode(label: 'root', child: new TreeNode(label: 'leaf'));
 
-        $schema = $this->filter->filter($schema, $tree);
+        $schema = $this->filter->filter($this->treeNodeSchema(), $tree);
 
         $this->assertSame(['child'], array_keys($schema['properties']));
         $this->assertSame(['child'], array_keys($schema['properties']['child']['properties']));
+    }
+
+    public function testStopsAtObjectsAlreadyBeingNarrowed()
+    {
+        // The child points back to the root, which must not be narrowed a second time
+        $root = new TreeNode(label: 'root');
+        $root->child = new TreeNode(child: $root);
+
+        $schema = $this->filter->filter($this->treeNodeSchema(), $root);
+
+        $this->assertSame(['child'], array_keys($schema['properties']));
+        $this->assertSame(['label'], array_keys($schema['properties']['child']['properties']));
+    }
+
+    public function testNarrowsPolymorphicNestedObjectsWithADiscriminatorOutsideTheClass()
+    {
+        // "kind" only exists in the DiscriminatorMap, the Circle instance has no such property to read it from
+        $drawing = new Drawing(title: 'Logo', shape: new Circle(radius: 2.0));
+
+        $schema = $this->filterFor($drawing);
+
+        $this->assertSame(['shape'], array_keys($schema['properties']));
+        $this->assertCount(1, $schema['properties']['shape']['anyOf']);
+        $this->assertSame(['color'], array_keys($schema['properties']['shape']['anyOf'][0]['properties']));
+    }
+
+    public function testNarrowsPolymorphicNestedObjectsDescribedWithOneOf()
+    {
+        $request = new SearchRequest(query: 'cheap flights', filter: new OrderFilter(number: '42'));
+
+        $schema = $this->factory->buildProperties(SearchRequest::class);
+        $this->assertNotNull($schema);
+        $schema['properties']['filter'] = ['oneOf' => $schema['properties']['filter']['anyOf']];
+
+        $schema = $this->filter->filter($schema, $request);
+
+        $this->assertSame(['filter'], array_keys($schema['properties']));
+        $this->assertCount(1, $schema['properties']['filter']['oneOf']);
+        $this->assertSame(['userResponsible', 'departureDate'], array_keys($schema['properties']['filter']['oneOf'][0]['properties']));
     }
 
     public function testDropsNestedObjectsWithNothingMissing()
@@ -199,6 +227,27 @@ final class InstanceSchemaFilterTest extends TestCase
     public function testKeepsSchemaWithoutPropertiesAsIs()
     {
         $this->assertSame(['type' => 'object'], $this->filter->filter(['type' => 'object'], new City()));
+    }
+
+    /**
+     * The shape a self-referential class takes once the schema factory supports recursion through `$defs`:
+     * the nested object is a `$ref`, so its `properties` are not inline where the filter looks for them.
+     *
+     * @return array<string, mixed>
+     */
+    private function treeNodeSchema(): array
+    {
+        $node = [
+            'type' => 'object',
+            'properties' => [
+                'label' => ['type' => ['string', 'null']],
+                'child' => ['$ref' => '#/$defs/TreeNode'],
+            ],
+            'required' => ['label', 'child'],
+            'additionalProperties' => false,
+        ];
+
+        return $node + ['$defs' => ['TreeNode' => $node]];
     }
 
     /**
