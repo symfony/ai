@@ -28,7 +28,7 @@ final class SmokeTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h1', 'Welcome to the Symfony AI Demo');
-        $this->assertSelectorCount(11, '.demo-card');
+        $this->assertSelectorCount(12, '.demo-card');
     }
 
     #[DataProvider('provideChats')]
@@ -65,5 +65,15 @@ final class SmokeTest extends WebTestCase
         $this->assertSelectorCount(3, 'input[name="ratio"]');
         $this->assertSelectorCount(4, 'input[name="width"]');
         $this->assertSelectorCount(5, 'button[data-live-action-param="selectPreset"]');
+    }
+
+    public function testPartyGame()
+    {
+        $client = static::createClient();
+        $client->request('GET', '/party-game');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.chat-name', 'Will the AI Buy It?');
+        $this->assertSelectorCount(3, '.party-seg button');
     }
 }
