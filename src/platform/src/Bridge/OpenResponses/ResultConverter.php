@@ -25,6 +25,7 @@ use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -37,6 +38,9 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -59,7 +63,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
- * @phpstan-type OutputMessage array{content: array<Refusal|OutputText>, id: string, role: string, type: 'message'}
+ * @phpstan-type OutputMessage array{content: array<Refusal|OutputText>, id: string, role: string, type: 'message', phase?: string|null}
  * @phpstan-type OutputText array{type: 'output_text', text: string, annotations?: Annotation[]}
  * @phpstan-type Annotation UrlCitation|array{type: string}
  * @phpstan-type UrlCitation array{type: 'url_citation', url: string, title?: string, start_index?: int, end_index?: int}
@@ -82,6 +86,9 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class ResultConverter implements ResultConverterInterface
 {
     private const KEY_OUTPUT = 'output';
+
+    // Phase of an assistant message narrating the next step instead of answering
+    private const PHASE_COMMENTARY = 'commentary';
 
     public function supports(Model $model): bool
     {
@@ -475,6 +482,9 @@ class ResultConverter implements ResultConverterInterface
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
         $currentThinking = null;
+        $currentCommentary = null;
+        /** @var array<string, true> $commentaryItems */
+        $commentaryItems = [];
         /** @var array<string, ToolCall> $toolCalls */
         $toolCalls = [];
         // Announced function calls, keyed by output item id, so the argument deltas of an item
@@ -537,8 +547,35 @@ class ResultConverter implements ResultConverterInterface
                 yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
             }
 
+            // Deltas only carry the item id, so the phase is taken from the announcing item
+            if ('response.output_item.added' === $type
+                && 'message' === ($event['item']['type'] ?? null)
+                && self::PHASE_COMMENTARY === ($event['item']['phase'] ?? null)
+                && isset($event['item']['id'])
+            ) {
+                $commentaryItems[$event['item']['id']] = true;
+            }
+
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
-                yield new TextDelta($event['delta']);
+                if (isset($commentaryItems[$event['item_id'] ?? ''])) {
+                    if (null === $currentCommentary) {
+                        $currentCommentary = '';
+                        yield new CommentaryStart();
+                    }
+                    $currentCommentary .= $event['delta'];
+                    yield new CommentaryDelta($event['delta']);
+                } else {
+                    yield new TextDelta($event['delta']);
+                }
+            }
+
+            if ('response.output_item.done' === $type && isset($commentaryItems[$event['item']['id'] ?? ''])) {
+                unset($commentaryItems[$event['item']['id']]);
+
+                if (null !== $currentCommentary) {
+                    yield new CommentaryComplete($currentCommentary);
+                    $currentCommentary = null;
+                }
             }
 
             if ('response.reasoning_summary_text.delta' === $type && isset($event['delta'])) {
@@ -655,7 +692,7 @@ class ResultConverter implements ResultConverterInterface
     /**
      * @param OutputMessage $output
      *
-     * @return \Generator<TextResult>
+     * @return \Generator<TextResult|CommentaryResult>
      */
     private function convertOutputMessage(array $output): \Generator
     {
@@ -667,6 +704,13 @@ class ResultConverter implements ResultConverterInterface
         $content = array_pop($content);
         if ('refusal' === $content['type']) {
             yield new TextResult(\sprintf('Model refused to generate output: %s', $content['refusal']));
+
+            return;
+        }
+
+        // Narration and answer are both plain output text, only the phase tells them apart
+        if (self::PHASE_COMMENTARY === ($output['phase'] ?? null)) {
+            yield new CommentaryResult($content['text']);
 
             return;
         }
