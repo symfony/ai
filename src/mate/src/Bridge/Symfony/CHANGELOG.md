@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add constructor arguments to `symfony-service-detail`: the compiled container dump carries them but they were never read, so the services wired into a definition, such as the middleware list of a messenger bus, were invisible. Parameter names come from reflecting the constructor or factory method; scalar values are redacted when the name looks like a secret, including a DSN or URL, and also when the parameter cannot be identified at all
  * Add `symfony-dotenv-check` tool and `symfony-dotenv-diagnostics` skill: reports which `.env*` file declares each variable and whether it resolves at runtime, without ever returning a raw value (only a masked length + first/last-character preview), as a safe replacement for `bin/console debug:dotenv`, which prints fully resolved secrets in clear text. Requires `symfony/dotenv`
+ * Add the definition flags `debug:container <id>` reports (`public`, `synthetic`, `lazy`, `shared`, `abstract`, `autowire`, `autoconfigure`) to `symfony-service-detail`
 
 0.13
 ----

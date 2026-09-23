@@ -277,6 +277,76 @@ final class ServiceToolTest extends TestCase
         $this->assertSame('RouterFactory::create', $detail['factory']);
     }
 
+    public function testGetServiceDetailReportsDefinitionFlags()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = $this->decodeUntrusted($tool->getServiceDetail('app.event_listener'));
+
+        $this->assertFalse($detail['public']);
+        $this->assertFalse($detail['synthetic']);
+        $this->assertTrue($detail['lazy']);
+        $this->assertFalse($detail['shared']);
+        $this->assertFalse($detail['abstract']);
+        $this->assertTrue($detail['autowire']);
+        $this->assertTrue($detail['autoconfigure']);
+    }
+
+    public function testGetServiceDetailReportsSyntheticServices()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = $this->decodeUntrusted($tool->getServiceDetail('kernel'));
+
+        $this->assertTrue($detail['synthetic']);
+        $this->assertTrue($detail['public']);
+    }
+
+    public function testGetServiceDetailDefaultsFlagsToFalseWhenTheDumpOmitsThem()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = $this->decodeUntrusted($tool->getServiceDetail('cache.app'));
+
+        $this->assertFalse($detail['public']);
+        $this->assertFalse($detail['synthetic']);
+        $this->assertFalse($detail['lazy']);
+        $this->assertTrue($detail['shared']);
+        $this->assertFalse($detail['abstract']);
+        $this->assertFalse($detail['autowire']);
+        $this->assertFalse($detail['autoconfigure']);
+    }
+
+    public function testGetServiceDetailMarksExcludedPlaceholdersAsAbstract()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        $detail = $this->decodeUntrusted($tool->getServiceDetail('App\\Entity\\Product'));
+
+        $this->assertTrue($detail['abstract']);
+    }
+
+    public function testGetServiceDetailGivesAnAliasItsOwnVisibilityAndTheTargetsOtherFlags()
+    {
+        $provider = new ContainerProvider();
+        $tool = new ServiceTool($this->fixturesDir, $provider);
+
+        // public alias to a private, autowired target: the standard shape of an interface alias
+        $detail = $this->decodeUntrusted($tool->getServiceDetail('app.public_listener_alias'));
+
+        $this->assertSame('App\\EventListener\\RequestListener', $detail['class']);
+        $this->assertTrue($detail['public']);
+        $this->assertTrue($detail['lazy']);
+        $this->assertFalse($detail['shared']);
+        $this->assertTrue($detail['autowire']);
+        $this->assertTrue($detail['autoconfigure']);
+        $this->assertFalse($detail['abstract']);
+    }
+
     public function testGetServiceDetailThrowsForUnknownService()
     {
         $provider = new ContainerProvider();
