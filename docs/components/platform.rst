@@ -1556,6 +1556,9 @@ and it can be written onto the instance. Every other value, including ``''``, ``
 its own properties: one with nothing missing is removed, a ``null`` one is described in
 full, and a partially filled one is narrowed the same way.
 
+Only the missing properties are written back onto the instance, so a value the instance
+already holds is kept even if the model answers it anyway.
+
 The option requires ``response_format`` to be the instance to populate, and it throws an
 :class:`Symfony\\AI\\Platform\\Exception\\InvalidArgumentException` before any request is sent
 when the instance has nothing left to fill in.

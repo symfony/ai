@@ -400,6 +400,30 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame(3500000, $berlin->population);
     }
 
+    public function testMissingPropertiesOnlyKeepsGivenValuesTheModelAnswersAnyway()
+    {
+        $processor = new PlatformSubscriber(new ResponseFormatFactory());
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $berlin = new City(name: 'Berlin');
+        $trip = new Trip(title: 'City trip', destination: $berlin);
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => $trip,
+            'missing_properties_only' => true,
+        ]);
+        $processor->processInput($invocationEvent);
+
+        $converter = new PlainConverter(new TextResult('{"title": "Overwritten", "destination": {"name": "Paris", "population": 3500000}}'));
+        $resultEvent = new ResultEvent($model, new DeferredResult($converter, new InMemoryRawResult()), $invocationEvent->getOptions());
+        $processor->processResult($resultEvent);
+
+        $resultEvent->getDeferredResult()->asObject();
+
+        $this->assertSame('City trip', $trip->title);
+        $this->assertSame('Berlin', $berlin->name);
+        $this->assertSame(3500000, $berlin->population);
+    }
+
     public function testObjectInstancePopulatesNestedObjectsInPlace()
     {
         $processor = new PlatformSubscriber(new ResponseFormatFactory());

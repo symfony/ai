@@ -52,6 +52,21 @@ final class PartialObjectStreamListenerTest extends TestCase
         $this->assertSame('Germany', $last->country);
     }
 
+    public function testOnlyWritesTheGivenAttributes()
+    {
+        $city = new City(name: 'Berlin');
+        $listener = new PartialObjectStreamListener(new Serializer(), City::class, $city, ['population']);
+        $stream = $this->buildStream([
+            '{"name":"Paris","popu',
+            'lation":3500000}',
+        ], [$listener]);
+
+        iterator_to_array($stream->getContent(), false);
+
+        $this->assertSame('Berlin', $city->name);
+        $this->assertSame(3500000, $city->population);
+    }
+
     public function testPopulatesNestedObjectsInPlace()
     {
         $berlin = new City(name: 'Berlin');

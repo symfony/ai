@@ -35,12 +35,15 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
     private bool $missingPropertiesOnly = false;
 
+    private ?PropertySelection $selection = null;
+
     private SerializerInterface&DenormalizerInterface $serializer;
 
     public function __construct(
         private readonly ResponseFormatFactoryInterface $responseFormatFactory = new ResponseFormatFactory(),
         (SerializerInterface&DenormalizerInterface)|null $serializer = null,
-        private readonly InstanceSchemaFilter $instanceSchemaFilter = new InstanceSchemaFilter(),
+        private readonly MissingPropertiesResolver $missingPropertiesResolver = new MissingPropertiesResolver(),
+        private readonly SchemaSelector $schemaSelector = new SchemaSelector(),
     ) {
         $this->serializer = $serializer ?? new Serializer();
     }
@@ -103,7 +106,8 @@ final class PlatformSubscriber implements EventSubscriberInterface
         $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className);
 
         if ($this->missingPropertiesOnly && null !== $this->objectToPopulate) {
-            $options[self::RESPONSE_FORMAT]['json_schema']['schema'] = $this->instanceSchemaFilter->filter($options[self::RESPONSE_FORMAT]['json_schema']['schema'], $this->objectToPopulate);
+            $this->selection = $this->missingPropertiesResolver->resolve($this->objectToPopulate);
+            $options[self::RESPONSE_FORMAT]['json_schema']['schema'] = $this->schemaSelector->select($options[self::RESPONSE_FORMAT]['json_schema']['schema'], $this->selection);
         }
 
         $event->setOptions($options);
@@ -123,6 +127,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
             $this->serializer,
             $this->outputType,
             $this->objectToPopulate,
+            $this->selection?->toAttributes(),
         );
 
         $event->setDeferredResult(new DeferredResult($converter, $deferred->getRawResult(), $options));
@@ -135,5 +140,6 @@ final class PlatformSubscriber implements EventSubscriberInterface
         $this->outputType = null;
         $this->objectToPopulate = null;
         $this->missingPropertiesOnly = false;
+        $this->selection = null;
     }
 }

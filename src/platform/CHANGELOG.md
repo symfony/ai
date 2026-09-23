@@ -4,7 +4,7 @@ CHANGELOG
 0.14
 ----
 
- * Add the `missing_properties_only` option to `StructuredOutput\PlatformSubscriber`: with an object as `response_format`, the JSON schema is narrowed by the new `StructuredOutput\InstanceSchemaFilter` to the properties that instance is still missing,
+ * Add the `missing_properties_only` option to `StructuredOutput\PlatformSubscriber`: with an object as `response_format`, the new `StructuredOutput\MissingPropertiesResolver` selects the properties that instance is still missing, the new `StructuredOutput\SchemaSelector` narrows the JSON schema to them, and only those are written back onto the instance
  * Populate nested objects in place (`DEEP_OBJECT_TO_POPULATE`) when structured output is deserialized onto an existing instance, instead of replacing them with new instances
  * Add the Eden AI bridge, covering the gateway's OpenAI-compatible chat and embeddings endpoints and its expert models: OCR, document parsing, text-to-speech, asynchronous speech-to-text, image analysis and image generation
  * Add the TypeSafe bridge, evaluating typed questions (noul, choice and score) against a state with the Jev models

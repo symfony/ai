@@ -33,11 +33,15 @@ final class ResultConverter implements ResultConverterInterface
 {
     private readonly SerializerInterface&DenormalizerInterface $serializer;
 
+    /**
+     * @param array<int|string, mixed>|null $attributes Serializer `attributes` limiting what is written onto the object to populate
+     */
     public function __construct(
         private readonly ResultConverterInterface $innerConverter,
         SerializerInterface&DenormalizerInterface $serializer,
         private readonly ?string $outputType = null,
         private readonly ?object $objectToPopulate = null,
+        private readonly ?array $attributes = null,
     ) {
         $this->serializer = $serializer;
     }
@@ -68,6 +72,7 @@ final class ResultConverter implements ResultConverterInterface
                 $this->serializer,
                 $this->outputType,
                 $this->objectToPopulate,
+                $this->attributes,
             ));
         }
 
@@ -88,6 +93,10 @@ final class ResultConverter implements ResultConverterInterface
             if (null !== $this->objectToPopulate) {
                 $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $this->objectToPopulate;
                 $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
+            }
+
+            if (null !== $this->attributes) {
+                $context[AbstractNormalizer::ATTRIBUTES] = $this->attributes;
             }
 
             $structure = null === $this->outputType
