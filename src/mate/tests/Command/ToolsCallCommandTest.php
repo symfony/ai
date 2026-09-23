@@ -99,6 +99,76 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringContainsString('Invalid JSON', $output);
     }
 
+    public function testSmallResultStaysPretty()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-blob', '--json' => '{"size": 10}']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Result', $output);
+        $this->assertStringNotContainsString('Pretty rendering was skipped', $output);
+    }
+
+    public function testLargeResultFallsBackToJsonUnderPrettyFormat()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-blob', '--json' => '{"size": 9000}']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Pretty rendering was skipped', $output);
+
+        $jsonStart = strrpos($output, '{');
+        $this->assertNotFalse($jsonStart);
+        $result = json_decode(substr($output, $jsonStart), true);
+        $this->assertIsArray($result);
+        $this->assertSame(9000, \strlen($result['blob']));
+    }
+
+    public function testLargeResultFallsBackToJsonWithExplicitPrettyFormat()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-blob', '--json' => '{"size": 9000}', '--format' => 'pretty']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Pretty rendering was skipped', $output);
+    }
+
+    public function testExplicitJsonFormatIsUnaffectedByLargeResult()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-blob', '--json' => '{"size": 9000}', '--format' => 'json']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringNotContainsString('Pretty rendering was skipped', $output);
+
+        $result = json_decode($output, true);
+        $this->assertIsArray($result);
+        $this->assertSame(9000, \strlen($result['blob']));
+    }
+
+    public function testExplicitToonFormatIsUnaffectedByLargeResult()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-blob', '--json' => '{"size": 9000}', '--format' => 'toon']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $output = $tester->getDisplay();
+        $this->assertStringNotContainsString('Pretty rendering was skipped', $output);
+
+        $result = Toon::decode($output);
+        $this->assertIsArray($result);
+        $this->assertSame(9000, \strlen($result['blob']));
+    }
+
     public function testExecuteWithJsonParameters()
     {
         $tester = new CommandTester($this->createSampleToolCommand());

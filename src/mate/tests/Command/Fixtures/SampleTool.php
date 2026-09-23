@@ -53,4 +53,13 @@ final class SampleTool
     {
         return ResponseEncoder::encode(['sku' => $sku, 'tags' => $tags]);
     }
+
+    /**
+     * @param int $size Length of the generated payload string
+     */
+    #[MateTool(name: 'sample-blob', title: 'Sample Blob', description: 'Return a nested payload of a given size')]
+    public function blob(int $size): string
+    {
+        return ResponseEncoder::encode(['blob' => str_repeat('x', $size)]);
+    }
 }
