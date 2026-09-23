@@ -52,10 +52,15 @@ token from `symfony-profiler-list --limit=1`, and compare:
 mate tools:call symfony-profiler-compare --baseline=<old> --current=<new> --collector=db
 ```
 
-It returns both summaries, a `delta` per numeric metric, and a `verdict` (`improved`,
-`unchanged`, `regressed`). Report the delta, not the impression. `--collector=time` or
-`memory` works the same way for whatever metric the symptom was about. `unchanged` after a
-fix means the fix did not hit the hot path — go back to the reading order.
+It returns both summaries, a `delta` per shared numeric metric, a `changed` entry (`{baseline,
+current}`) for a shared field that changed but isn't numeric, such as `exception`'s
+`has_exception`, and a `verdict` (`improved`, `unchanged`, `regressed`) built from one leading
+metric per collector. Report the delta or the changed pair, not the impression. `--collector=time`
+or `memory` works the same way for whatever metric the symptom was about. A collector with no
+field anyone can call unambiguously better when lower (`mailer`, `request`) always verdicts
+`unchanged`, so check `delta`/`changed` directly there rather than trusting the verdict alone.
+For the rest, `unchanged` after a fix means the fix did not hit the hot path — go back to the
+reading order.
 
 ## Failure paths
 

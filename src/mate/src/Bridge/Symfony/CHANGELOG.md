@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `symfony-profiler-compare` tool that diffs the collector summary of two profiler profiles: a numeric delta for every shared numeric field, the raw before/after pair for a shared field that changed but isn't numeric, and an `improved`/`unchanged`/`regressed` verdict from a per-collector leading field, never a guess at one when a collector has no field anyone can call unambiguously better when lower
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
 

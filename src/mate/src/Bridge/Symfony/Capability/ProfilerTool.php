@@ -27,13 +27,25 @@ use Symfony\AI\Mate\Exception\RuntimeException;
 final class ProfilerTool
 {
     /**
-     * Metric that decides the verdict of a comparison, per collector. Collectors without an
-     * entry fall back to the first numeric metric of their summary.
+     * The field that decides a comparison's verdict, per collector: a lower value on
+     * `current` than on `baseline` counts as improved. A collector mapped to null has no
+     * field anyone can call unambiguously better when lower (sending more or fewer emails
+     * isn't inherently good; a request's own fields describe what was asked, not whether
+     * the outcome was good), so compare() reports its delta but never a verdict beyond
+     * `unchanged`. An unlisted collector is treated the same way: guessing a direction from
+     * whichever field happens to come first is exactly the bug this map exists to avoid.
      *
-     * @var array<string, string>
+     * @var array<string, string|null>
      */
     private const LEADING_METRICS = [
         'db' => 'query_count',
+        'time' => 'duration_ms',
+        'memory' => 'memory_mb',
+        'logger' => 'error_count',
+        'translation' => 'count_missings',
+        'exception' => 'has_exception',
+        'mailer' => null,
+        'request' => null,
     ];
 
     public function __construct(
@@ -132,25 +144,34 @@ final class ProfilerTool
      * @param string $current   The profiler token of the profile measured after the change
      * @param string $collector The collector to compare (e.g. db, time, memory, logger)
      */
-    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Returns both summaries, the difference for every numeric metric and a verdict (improved, unchanged, regressed).')]
+    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Returns both summaries, the numeric difference for every shared numeric field, the raw before/after pair for every shared field that changed but is not numeric, and a verdict (improved, unchanged, regressed).')]
     public function compare(string $baseline, string $current, string $collector = 'db'): string
     {
         $baselineSummary = $this->getCollectorSummary($baseline, $collector);
         $currentSummary = $this->getCollectorSummary($current, $collector);
 
         $delta = [];
+        $changed = [];
         foreach ($currentSummary as $key => $currentValue) {
-            if (!\is_int($currentValue) && !\is_float($currentValue)) {
+            if (!\array_key_exists($key, $baselineSummary)) {
                 continue;
             }
 
-            $baselineValue = $baselineSummary[$key] ?? null;
-            if (!\is_int($baselineValue) && !\is_float($baselineValue)) {
+            $baselineValue = $baselineSummary[$key];
+            $bothNumeric = (\is_int($currentValue) || \is_float($currentValue)) && (\is_int($baselineValue) || \is_float($baselineValue));
+
+            if ($bothNumeric) {
+                $difference = $currentValue - $baselineValue;
+                $delta[$key] = \is_float($difference) ? round($difference, 2) : $difference;
+
                 continue;
             }
 
-            $difference = $currentValue - $baselineValue;
-            $delta[$key] = \is_float($difference) ? round($difference, 2) : $difference;
+            // Only a numeric field gets a magnitude; anything else that changed is still
+            // reported, just as the raw pair, so a boolean or string flip is never silent.
+            if ($currentValue !== $baselineValue) {
+                $changed[$key] = ['baseline' => $baselineValue, 'current' => $currentValue];
+            }
         }
 
         return ResponseEncoder::encode([
@@ -158,7 +179,8 @@ final class ProfilerTool
             'baseline' => array_merge(['token' => $baseline], $baselineSummary),
             'current' => array_merge(['token' => $current], $currentSummary),
             'delta' => $delta,
-            'verdict' => $this->buildVerdict($collector, $delta),
+            'changed' => $changed,
+            'verdict' => $this->buildVerdict($collector, $baselineSummary, $currentSummary),
         ]);
     }
 
@@ -177,24 +199,50 @@ final class ProfilerTool
     }
 
     /**
-     * @param array<string, float|int> $delta
+     * @param array<string, mixed> $baselineSummary
+     * @param array<string, mixed> $currentSummary
      */
-    private function buildVerdict(string $collector, array $delta): string
+    private function buildVerdict(string $collector, array $baselineSummary, array $currentSummary): string
     {
-        $leadingMetric = self::LEADING_METRICS[$collector] ?? array_key_first($delta);
-        if (null === $leadingMetric || !isset($delta[$leadingMetric])) {
+        $leadingMetric = self::LEADING_METRICS[$collector] ?? null;
+        if (null === $leadingMetric) {
             return 'unchanged';
         }
 
-        if ($delta[$leadingMetric] < 0) {
+        $baselineNumber = $this->toComparableNumber($baselineSummary[$leadingMetric] ?? null);
+        $currentNumber = $this->toComparableNumber($currentSummary[$leadingMetric] ?? null);
+        if (null === $baselineNumber || null === $currentNumber) {
+            return 'unchanged';
+        }
+
+        $difference = $currentNumber - $baselineNumber;
+
+        if ($difference < 0) {
             return 'improved';
         }
 
-        if ($delta[$leadingMetric] > 0) {
+        if ($difference > 0) {
             return 'regressed';
         }
 
         return 'unchanged';
+    }
+
+    /**
+     * Booleans compare as 0/1, so a leading metric like `has_exception` still has a
+     * direction: false is lower, so losing the exception counts as the improvement.
+     */
+    private function toComparableNumber(mixed $value): int|float|null
+    {
+        if (\is_int($value) || \is_float($value)) {
+            return $value;
+        }
+
+        if (\is_bool($value)) {
+            return $value ? 1 : 0;
+        }
+
+        return null;
     }
 
     private function getDataProvider(): ProfilerDataProvider
