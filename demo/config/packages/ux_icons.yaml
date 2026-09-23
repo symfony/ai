@@ -18,6 +18,7 @@ ux_icons:
         document: demo:document
         movie: demo:movie
         mcp: demo:plug-connected
+        gavel: demo:gavel
 
         # UI icons
         github: demo:github
