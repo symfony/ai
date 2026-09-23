@@ -48,6 +48,17 @@ final class InstanceSchemaFilter
      */
     public function filter(array $schema, object $instance): array
     {
+        return $this->narrow($schema, $instance, $schema);
+    }
+
+    /**
+     * @param array<string, mixed> $schema
+     * @param array<string, mixed> $root   Schema that `$ref` pointers resolve against
+     *
+     * @return array<string, mixed>
+     */
+    private function narrow(array $schema, object $instance, array $root): array
+    {
         if (!isset($schema['properties']) || !\is_array($schema['properties'])) {
             return $schema;
         }
@@ -67,25 +78,36 @@ final class InstanceSchemaFilter
                 continue;
             }
 
-            // A filled scalar, or an object whose schema cannot be narrowed (e.g. a union), is taken as given
-            if (!$this->isPopulatableObject($value) || !isset($propertySchema['properties'])) {
+            // A filled scalar, or an object whose schema cannot be narrowed, is taken as given
+            if (!$this->isPopulatableObject($value)) {
+                continue;
+            }
+
+            $objectSchema = $this->resolveObjectSchema($propertySchema, $value, $root);
+            if (null === $objectSchema) {
                 continue;
             }
 
             try {
-                $propertySchema = $this->filter($propertySchema, $value);
+                $objectSchema = $this->narrow($objectSchema, $value, $root);
             } catch (InvalidArgumentException) {
                 // Nothing is missing on the nested object, so it is taken as given
                 continue;
             }
 
             // The object already exists and is populated in place, so it must not be answered with null
-            if (\is_array($propertySchema['type'] ?? null)) {
-                $types = array_values(array_diff($propertySchema['type'], ['null']));
-                $propertySchema['type'] = 1 === \count($types) ? $types[0] : $types;
+            if (\is_array($objectSchema['type'] ?? null)) {
+                $types = array_values(array_diff($objectSchema['type'], ['null']));
+                $objectSchema['type'] = 1 === \count($types) ? $types[0] : $types;
             }
 
-            $properties[$name] = $propertySchema;
+            // Only the branch of the instance's class remains, as the existing object cannot change its class
+            if (isset($propertySchema['anyOf'])) {
+                $propertySchema['anyOf'] = [$objectSchema];
+                $objectSchema = $propertySchema;
+            }
+
+            $properties[$name] = $objectSchema;
         }
 
         if ([] === $properties) {
@@ -98,6 +120,119 @@ final class InstanceSchemaFilter
         }
 
         return $schema;
+    }
+
+    /**
+     * Resolves the object schema describing the given value, following `$ref` pointers and picking the
+     * `anyOf` branch whose discriminator matches the value. Returns null when no such schema is found.
+     *
+     * @param array<string, mixed> $schema
+     * @param array<string, mixed> $root
+     *
+     * @return array<string, mixed>|null
+     */
+    private function resolveObjectSchema(array $schema, object $value, array $root): ?array
+    {
+        if (isset($schema['$ref']) && \is_string($schema['$ref'])) {
+            $resolved = $this->resolveReference($schema['$ref'], $root);
+            if (null === $resolved) {
+                return null;
+            }
+
+            // Siblings of the reference, like a description, take precedence over the referenced schema
+            unset($schema['$ref']);
+            $schema += $resolved;
+        }
+
+        if (isset($schema['properties'])) {
+            return $schema;
+        }
+
+        if (!isset($schema['anyOf']) || !\is_array($schema['anyOf'])) {
+            return null;
+        }
+
+        $candidates = [];
+        foreach ($schema['anyOf'] as $branch) {
+            if (!\is_array($branch)) {
+                continue;
+            }
+
+            $branch = $this->resolveObjectSchema($branch, $value, $root);
+            if (null === $branch) {
+                continue;
+            }
+
+            $match = $this->matchesDiscriminator($branch, $value);
+            if (true === $match) {
+                return $branch;
+            }
+
+            if (null === $match) {
+                $candidates[] = $branch;
+            }
+        }
+
+        // Without discriminator, only a single object branch (e.g. a nullable object) is unambiguous
+        return 1 === \count($candidates) ? $candidates[0] : null;
+    }
+
+    /**
+     * Compares the single-valued `const`/`enum` properties of a branch with the value's properties.
+     *
+     * @param array<string, mixed> $schema
+     *
+     * @return bool|null Null when the branch has no discriminating property
+     */
+    private function matchesDiscriminator(array $schema, object $value): ?bool
+    {
+        $discriminated = false;
+        foreach ($schema['properties'] as $name => $propertySchema) {
+            if (\array_key_exists('const', $propertySchema)) {
+                $expected = $propertySchema['const'];
+            } elseif (\is_array($propertySchema['enum'] ?? null) && 1 === \count($propertySchema['enum'])) {
+                $expected = $propertySchema['enum'][0];
+            } else {
+                continue;
+            }
+
+            $actual = $this->readValue($value, $name);
+            if ($actual instanceof \BackedEnum) {
+                $actual = $actual->value;
+            }
+
+            if ($expected !== $actual) {
+                return false;
+            }
+
+            $discriminated = true;
+        }
+
+        return $discriminated ? true : null;
+    }
+
+    /**
+     * @param array<string, mixed> $root
+     *
+     * @return array<string, mixed>|null
+     */
+    private function resolveReference(string $reference, array $root): ?array
+    {
+        if (!str_starts_with($reference, '#/')) {
+            return null;
+        }
+
+        $schema = $root;
+        foreach (explode('/', substr($reference, 2)) as $segment) {
+            $segment = str_replace(['~1', '~0'], ['/', '~'], $segment);
+            if (!\is_array($schema) || !isset($schema[$segment])) {
+                return null;
+            }
+
+            $schema = $schema[$segment];
+        }
+
+        return \is_array($schema) ? $schema : null;
     }
 
     /**
