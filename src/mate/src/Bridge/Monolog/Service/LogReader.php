@@ -226,24 +226,15 @@ final class LogReader
         }
 
         try {
-            $buffer = [];
+            $entries = [];
             $lineNumber = 0;
             $relativePath = $this->getRelativePath($file);
             $fileContext = $this->getKernelContext($file);
 
             while (false !== ($line = fgets($handle))) {
                 ++$lineNumber;
-                $buffer[] = ['line' => $line, 'number' => $lineNumber];
 
-                // Keep buffer size at 2x the requested limit to account for filtered entries
-                if (\count($buffer) > $limit * 2) {
-                    array_shift($buffer);
-                }
-            }
-
-            $entries = [];
-            for ($i = \count($buffer) - 1; $i >= 0 && \count($entries) < $limit; --$i) {
-                $entry = $this->parser->parse($buffer[$i]['line'], $relativePath, $buffer[$i]['number'], $fileContext);
+                $entry = $this->parser->parse($line, $relativePath, $lineNumber, $fileContext);
                 if (null === $entry) {
                     continue;
                 }
@@ -256,10 +247,15 @@ final class LogReader
                     continue;
                 }
 
+                // Keep only the most recent $limit matches, so an earlier match is never
+                // dropped based on where raw lines happen to fall near the end of the file.
                 $entries[] = $entry;
+                if (\count($entries) > $limit) {
+                    array_shift($entries);
+                }
             }
 
-            return array_reverse($entries);
+            return $entries;
         } finally {
             fclose($handle);
         }
