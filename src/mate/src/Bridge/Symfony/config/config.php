@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
  */
 
+use Symfony\AI\Mate\Bridge\Symfony\Capability\DotenvTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
@@ -25,6 +26,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -47,6 +49,12 @@ return static function (ContainerConfigurator $configurator) {
             service(ContainerProvider::class),
             service(ServiceArgumentResolver::class),
         ]);
+
+    // Dotenv inspection (optional - only if symfony/dotenv is available)
+    if (class_exists(Dotenv::class)) {
+        $services->set(DotenvTool::class)
+            ->args(['%mate.root_dir%']);
+    }
 
     // Profiler services (optional - only if profiler classes are available)
     if (class_exists(Profile::class)) {
