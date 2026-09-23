@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -49,12 +50,14 @@ final class PartialObjectStreamListener extends AbstractStreamListener
     private readonly SerializerInterface&DenormalizerInterface $serializer;
 
     /**
-     * @param class-string $outputType
+     * @param class-string                  $outputType
+     * @param array<int|string, mixed>|null $attributes Serializer `attributes` limiting what is written onto the object to populate
      */
     public function __construct(
         SerializerInterface&DenormalizerInterface $serializer,
         private readonly string $outputType,
         private readonly ?object $objectToPopulate = null,
+        private readonly ?array $attributes = null,
     ) {
         $this->serializer = $serializer;
     }
@@ -164,6 +167,11 @@ final class PartialObjectStreamListener extends AbstractStreamListener
 
         if (null !== $this->objectToPopulate) {
             $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $this->objectToPopulate;
+            $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
+        }
+
+        if (null !== $this->attributes) {
+            $context[AbstractNormalizer::ATTRIBUTES] = $this->attributes;
         }
 
         return $context;
