@@ -15,6 +15,8 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\StructuredOutput\MissingPropertiesResolver;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedAuthor;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedPage;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Itinerary;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\Circle;
@@ -132,6 +134,27 @@ final class MissingPropertiesResolverTest extends TestCase
         $root->child = new TreeNode(child: $root);
 
         $this->assertSame(['child' => ['label']], $this->resolver->resolve($root)->toAttributes());
+    }
+
+    public function testConsidersOnlyPropertiesInTheGivenGroups()
+    {
+        $this->assertSame(['title', 'internalNote', 'author'], $this->resolver->resolve(new GroupedPage())->toAttributes());
+        $this->assertSame(['title', 'author'], $this->resolver->resolve(new GroupedPage(), ['ai'])->toAttributes());
+    }
+
+    public function testConsidersOnlyPropertiesInTheGivenGroupsOnNestedObjects()
+    {
+        $page = new GroupedPage(title: 'Home', author: new GroupedAuthor());
+
+        $this->assertSame(['author' => ['name']], $this->resolver->resolve($page, ['ai'])->toAttributes());
+    }
+
+    public function testThrowsWhenOnlyPropertiesOutsideTheGroupsAreMissing()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('The given "%s" instance has no missing properties left to describe.', GroupedPage::class));
+
+        $this->resolver->resolve(new GroupedPage(title: 'Home', author: new GroupedAuthor(name: 'Jane')), ['ai']);
     }
 
     public function testThrowsWhenNothingIsMissing()

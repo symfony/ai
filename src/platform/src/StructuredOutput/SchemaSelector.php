@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\StructuredOutput;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 /**
- * Narrows a JSON schema down to a property selection, looking at the schema only.
+ * Narrows a JSON schema down to a property selection, and tells the selection a schema asks for, looking at the schema only.
  *
  * A nested selection is applied to the object schema behind the property, following `$ref` pointers and
  * picking the `anyOf`/`oneOf` branch that matches the selection's discriminator. Such an object already
@@ -35,6 +35,17 @@ final class SchemaSelector
     public function select(array $schema, PropertySelection $selection): array
     {
         return $this->narrow($schema, $selection, $schema);
+    }
+
+    /**
+     * The properties the schema asks for, down to nested objects and collection items. The branches of an
+     * `anyOf`/`oneOf` are merged, and a reference back to a schema being read is selected in full.
+     *
+     * @param array<string, mixed> $schema
+     */
+    public function selectionOf(array $schema): PropertySelection
+    {
+        return $this->describedSelection($schema, $schema, []) ?? new PropertySelection([]);
     }
 
     /**
@@ -172,6 +183,72 @@ final class SchemaSelector
         }
 
         return ($property['enum'] ?? null) === [$selection->getDiscriminatorValue()];
+    }
+
+    /**
+     * @param array<string, mixed> $schema
+     * @param array<string, mixed> $root
+     * @param array<string, true>  $reading References being read further up, to stop at recursion
+     *
+     * @return PropertySelection|null Null when the schema is not an object, or selects it in full
+     */
+    private function describedSelection(array $schema, array $root, array $reading): ?PropertySelection
+    {
+        if (isset($schema['$ref']) && \is_string($schema['$ref'])) {
+            $resolved = $this->resolveReference($schema['$ref'], $root);
+            if (null === $resolved || isset($reading[$schema['$ref']])) {
+                return null;
+            }
+
+            $reading[$schema['$ref']] = true;
+            $schema = $resolved;
+        }
+
+        if (isset($schema['properties']) && \is_array($schema['properties'])) {
+            $properties = [];
+            foreach ($schema['properties'] as $name => $propertySchema) {
+                $properties[$name] = \is_array($propertySchema) ? $this->describedSelection($propertySchema, $root, $reading) : null;
+            }
+
+            return new PropertySelection($properties);
+        }
+
+        if (isset($schema['items']) && \is_array($schema['items'])) {
+            return $this->describedSelection($schema['items'], $root, $reading);
+        }
+
+        $branches = $schema['anyOf'] ?? $schema['oneOf'] ?? null;
+        if (!\is_array($branches)) {
+            return null;
+        }
+
+        $merged = null;
+        foreach ($branches as $branch) {
+            // A scalar branch, like the null of a nullable object, adds no properties
+            if (!\is_array($branch) || null === $selection = $this->describedSelection($branch, $root, $reading)) {
+                continue;
+            }
+
+            $merged = null === $merged ? $selection : $this->merge($merged, $selection);
+        }
+
+        return $merged;
+    }
+
+    private function merge(PropertySelection $left, PropertySelection $right): PropertySelection
+    {
+        $properties = $left->getProperties();
+        foreach ($right->getProperties() as $name => $selection) {
+            if (!\array_key_exists($name, $properties)) {
+                $properties[$name] = $selection;
+                continue;
+            }
+
+            // Selected in full on either side stays in full
+            $properties[$name] = null === $properties[$name] || null === $selection ? null : $this->merge($properties[$name], $selection);
+        }
+
+        return new PropertySelection($properties);
     }
 
     /**

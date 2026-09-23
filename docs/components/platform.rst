@@ -1607,6 +1607,18 @@ Passing ``serializer_groups`` limits the schema to the properties tagged with on
 The same context is accepted by ``buildParameters()`` for tool method arguments, and it is propagated into nested
 schemas, so discriminated sub-schemas (``anyOf``) are scoped the same way.
 
+For structured output, pass the groups per call with the ``serializer_groups`` option. The schema is scoped to them,
+and only the properties the schema asks for are written onto the result::
+
+    $result = $platform->invoke($model, $messages, [
+        'response_format' => Product::class,
+        'serializer_groups' => ['write'],
+    ]);
+
+    // The schema only described name and price, a slug in the answer is ignored
+
+Combined with ``missing_properties_only``, only the missing properties within those groups are asked for.
+
 Validating Structured Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -17,7 +17,8 @@ namespace Symfony\AI\Platform\StructuredOutput;
 interface ResponseFormatFactoryInterface
 {
     /**
-     * @param class-string $responseClass
+     * @param class-string         $responseClass
+     * @param array<string, mixed> $context       Schema factory context, e.g. `['serializer_groups' => ['ai']]`
      *
      * @return array{
      *     type: 'json_schema',
@@ -28,5 +29,5 @@ interface ResponseFormatFactoryInterface
      *     }
      * }
      */
-    public function create(string $responseClass): array;
+    public function create(string $responseClass, array $context = []): array;
 }

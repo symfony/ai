@@ -25,9 +25,9 @@ final class ResponseFormatFactory implements ResponseFormatFactoryInterface
     ) {
     }
 
-    public function create(string $responseClass): array
+    public function create(string $responseClass, array $context = []): array
     {
-        $schema = $this->schemaFactory->buildProperties($responseClass);
+        $schema = $this->schemaFactory->buildProperties($responseClass, $context);
         if (null !== $schema) {
             $this->requireAllProperties($schema);
         }

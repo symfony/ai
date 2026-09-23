@@ -28,12 +28,18 @@ final class PlatformSubscriber implements EventSubscriberInterface
 {
     public const RESPONSE_FORMAT = 'response_format';
     public const MISSING_PROPERTIES_ONLY = 'missing_properties_only';
+    public const SERIALIZER_GROUPS = 'serializer_groups';
 
     private ?string $outputType = null;
 
     private ?object $objectToPopulate = null;
 
     private bool $missingPropertiesOnly = false;
+
+    /**
+     * @var list<string>|null
+     */
+    private ?array $serializerGroups = null;
 
     private ?PropertySelection $selection = null;
 
@@ -72,6 +78,12 @@ final class PlatformSubscriber implements EventSubscriberInterface
             $event->setOptions($options);
         }
 
+        if (\array_key_exists(self::SERIALIZER_GROUPS, $options)) {
+            $this->serializerGroups = null !== $options[self::SERIALIZER_GROUPS] ? array_values((array) $options[self::SERIALIZER_GROUPS]) : null;
+            unset($options[self::SERIALIZER_GROUPS]);
+            $event->setOptions($options);
+        }
+
         if ($this->missingPropertiesOnly && !\is_object($options[self::RESPONSE_FORMAT] ?? null)) {
             throw new InvalidArgumentException(\sprintf('The "%s" option requires the "%s" option to be the instance to populate.', self::MISSING_PROPERTIES_ONLY, self::RESPONSE_FORMAT));
         }
@@ -103,11 +115,15 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
         $this->outputType = $className;
 
-        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className);
+        $context = null !== $this->serializerGroups ? ['serializer_groups' => $this->serializerGroups] : [];
+        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className, $context);
 
+        // Only the properties the schema asks for are written back when deserializing
         if ($this->missingPropertiesOnly && null !== $this->objectToPopulate) {
-            $this->selection = $this->missingPropertiesResolver->resolve($this->objectToPopulate);
+            $this->selection = $this->missingPropertiesResolver->resolve($this->objectToPopulate, $this->serializerGroups ?? ['*']);
             $options[self::RESPONSE_FORMAT]['json_schema']['schema'] = $this->schemaSelector->select($options[self::RESPONSE_FORMAT]['json_schema']['schema'], $this->selection);
+        } elseif (null !== $this->serializerGroups && \is_array($options[self::RESPONSE_FORMAT]['json_schema']['schema'] ?? null)) {
+            $this->selection = $this->schemaSelector->selectionOf($options[self::RESPONSE_FORMAT]['json_schema']['schema']);
         }
 
         $event->setOptions($options);
@@ -140,6 +156,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
         $this->outputType = null;
         $this->objectToPopulate = null;
         $this->missingPropertiesOnly = false;
+        $this->serializerGroups = null;
         $this->selection = null;
     }
 }

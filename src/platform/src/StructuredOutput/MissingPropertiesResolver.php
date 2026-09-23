@@ -16,6 +16,7 @@ use Symfony\Component\PropertyAccess\Exception\ExceptionInterface as PropertyAcc
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\Extractor\SerializerExtractor;
 use Symfony\Component\PropertyInfo\PropertyAccessExtractorInterface;
 use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
@@ -31,6 +32,7 @@ use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
  * is taken as given. A nested object is decided by its own properties: it is left out when nothing is
  * missing on it, and otherwise selected with its own missing properties to be populated in place.
  *
+ * Only properties in the given serializer groups are considered, on the instance and its nested objects alike.
  * Property names are PHP property names, which the schema factory and the structured output serializer
  * both use as they are, without name conversion.
  *
@@ -43,7 +45,8 @@ final class MissingPropertiesResolver
     private readonly ClassDiscriminatorResolverInterface $discriminatorResolver;
 
     public function __construct(
-        private readonly PropertyListExtractorInterface&PropertyAccessExtractorInterface $propertyExtractor = new ReflectionExtractor(),
+        private readonly PropertyListExtractorInterface $propertyListExtractor = new SerializerExtractor(new ClassMetadataFactory(new AttributeLoader())),
+        private readonly PropertyAccessExtractorInterface $accessExtractor = new ReflectionExtractor(),
         ?PropertyAccessorInterface $propertyAccessor = null,
         ?ClassDiscriminatorResolverInterface $discriminatorResolver = null,
     ) {
@@ -52,25 +55,28 @@ final class MissingPropertiesResolver
     }
 
     /**
+     * @param list<string> $serializerGroups
+     *
      * @throws InvalidArgumentException When the instance is not missing anything
      */
-    public function resolve(object $instance): PropertySelection
+    public function resolve(object $instance, array $serializerGroups = ['*']): PropertySelection
     {
-        return $this->select($instance, [])
+        return $this->select($instance, $serializerGroups, [])
             ?? throw new InvalidArgumentException(\sprintf('The given "%s" instance has no missing properties left to describe.', $instance::class));
     }
 
     /**
-     * @param array<int, true> $resolving Object ids of the instance and its parents, to stop at cycles
+     * @param list<string>     $serializerGroups
+     * @param array<int, true> $resolving        Object ids of the instance and its parents, to stop at cycles
      */
-    private function select(object $instance, array $resolving): ?PropertySelection
+    private function select(object $instance, array $serializerGroups, array $resolving): ?PropertySelection
     {
         $resolving[spl_object_id($instance)] = true;
 
         $properties = [];
-        foreach ($this->propertyExtractor->getProperties($instance::class) ?? [] as $name) {
+        foreach ($this->propertyListExtractor->getProperties($instance::class, ['serializer_groups' => $serializerGroups]) ?? [] as $name) {
             // Only what can be written onto the existing instance is worth asking for
-            if (!$this->propertyExtractor->isWritable($instance::class, $name)) {
+            if (!$this->accessExtractor->isWritable($instance::class, $name)) {
                 continue;
             }
 
@@ -87,7 +93,7 @@ final class MissingPropertiesResolver
                 continue;
             }
 
-            $selection = $this->select($value, $resolving);
+            $selection = $this->select($value, $serializerGroups, $resolving);
             if (null !== $selection) {
                 $properties[$name] = $selection;
             }

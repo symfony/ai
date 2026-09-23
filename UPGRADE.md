@@ -69,6 +69,21 @@ Platform
    needs to be passed when the provider was registered under a different name - which
    `Factory::createProvider()` does on its own.
 
+ * `StructuredOutput\ResponseFormatFactoryInterface::create()` gained a `$context` argument that is passed
+   on to the JSON schema factory, e.g. to scope the schema to the `serializer_groups` option. A custom
+   implementation has to add it:
+
+   ```diff
+    final class MyResponseFormatFactory implements ResponseFormatFactoryInterface
+    {
+   -    public function create(string $responseClass): array
+   +    public function create(string $responseClass, array $context = []): array
+        {
+            // ...
+        }
+    }
+   ```
+
 Store
 -----
 

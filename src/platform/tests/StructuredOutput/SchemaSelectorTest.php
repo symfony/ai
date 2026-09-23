@@ -158,6 +158,35 @@ final class SchemaSelectorTest extends TestCase
         $this->assertSame(['label'], array_keys($child['properties']['child']['properties']));
     }
 
+    public function testTellsTheSelectionASchemaAsksFor()
+    {
+        $this->assertSame(['name', 'population', 'country', 'mayor'], $this->selector->selectionOf($this->schemaOf(City::class))->toAttributes());
+
+        $city = ['name', 'population', 'country', 'mayor'];
+        $this->assertSame(['title', 'destination' => $city, 'origin' => $city], $this->selector->selectionOf($this->schemaOf(Trip::class))->toAttributes());
+    }
+
+    public function testTellsTheSelectionOfCollectionItems()
+    {
+        $this->assertSame(
+            ['steps' => ['explanation', 'output'], 'finalAnswer', 'result'],
+            $this->selector->selectionOf($this->schemaOf(MathReasoning::class))->toAttributes(),
+        );
+    }
+
+    public function testMergesTheSelectionsOfAllBranches()
+    {
+        $this->assertSame(
+            ['query', 'filter' => ['type', 'number', 'userResponsible', 'departureDate', 'contractNumber', 'subsidiary']],
+            $this->selector->selectionOf($this->schemaOf(SearchRequest::class))->toAttributes(),
+        );
+    }
+
+    public function testSelectsRecursiveReferencesInFull()
+    {
+        $this->assertSame(['label', 'child' => ['label', 'child']], $this->selector->selectionOf($this->treeNodeSchema())->toAttributes());
+    }
+
     public function testThrowsWhenNoSelectedPropertyIsPartOfTheSchema()
     {
         $this->expectException(InvalidArgumentException::class);

@@ -30,6 +30,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoningWithAttributes;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListItemAge;
@@ -422,6 +423,60 @@ final class PlatformSubscriberTest extends TestCase
         $this->assertSame('City trip', $trip->title);
         $this->assertSame('Berlin', $berlin->name);
         $this->assertSame(3500000, $berlin->population);
+    }
+
+    public function testSerializerGroupsScopeTheSchemaAndTheResult()
+    {
+        $processor = new PlatformSubscriber(new ResponseFormatFactory());
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => GroupedDto::class,
+            'serializer_groups' => ['write'],
+        ]);
+        $processor->processInput($invocationEvent);
+
+        $options = $invocationEvent->getOptions();
+        $this->assertSame(['response_format'], array_keys($options));
+        $this->assertSame(['name', 'age'], array_keys($options['response_format']['json_schema']['schema']['properties']));
+
+        $converter = new PlainConverter(new TextResult('{"name": "Jane", "age": 42, "slug": "jane", "internal": "note"}'));
+        $resultEvent = new ResultEvent($model, new DeferredResult($converter, new InMemoryRawResult()), $options);
+        $processor->processResult($resultEvent);
+
+        $result = $resultEvent->getDeferredResult()->asObject();
+        $this->assertInstanceOf(GroupedDto::class, $result);
+        $this->assertSame('Jane', $result->name);
+        $this->assertSame(42, $result->age);
+        $this->assertSame('', $result->slug);
+        $this->assertSame('', $result->internal);
+    }
+
+    public function testSerializerGroupsCombineWithMissingPropertiesOnly()
+    {
+        $processor = new PlatformSubscriber(new ResponseFormatFactory());
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $dto = new GroupedDto();
+        $dto->name = 'Jane';
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), [
+            'response_format' => $dto,
+            'serializer_groups' => ['write'],
+            'missing_properties_only' => true,
+        ]);
+        $processor->processInput($invocationEvent);
+
+        $options = $invocationEvent->getOptions();
+        $this->assertSame(['age'], array_keys($options['response_format']['json_schema']['schema']['properties']));
+
+        $converter = new PlainConverter(new TextResult('{"name": "John", "age": 42, "slug": "john"}'));
+        $resultEvent = new ResultEvent($model, new DeferredResult($converter, new InMemoryRawResult()), $options);
+        $processor->processResult($resultEvent);
+
+        $this->assertSame($dto, $resultEvent->getDeferredResult()->asObject());
+        $this->assertSame('Jane', $dto->name);
+        $this->assertSame(42, $dto->age);
+        $this->assertSame('', $dto->slug);
     }
 
     public function testObjectInstancePopulatesNestedObjectsInPlace()

@@ -5,6 +5,8 @@ CHANGELOG
 ----
 
  * Add the `missing_properties_only` option to `StructuredOutput\PlatformSubscriber`: with an object as `response_format`, the new `StructuredOutput\MissingPropertiesResolver` selects the properties that instance is still missing, the new `StructuredOutput\SchemaSelector` narrows the JSON schema to them, and only those are written back onto the instance
+ * Add the `serializer_groups` option to `StructuredOutput\PlatformSubscriber`, scoping the structured output schema to the given serializer groups and writing back only the properties it asks for
+ * Add the `$context` argument to `StructuredOutput\ResponseFormatFactoryInterface::create()`, passed on to the JSON schema factory
  * Populate nested objects in place (`DEEP_OBJECT_TO_POPULATE`) when structured output is deserialized onto an existing instance, instead of replacing them with new instances
  * Add the Eden AI bridge, covering the gateway's OpenAI-compatible chat and embeddings endpoints and its expert models: OCR, document parsing, text-to-speech, asynchronous speech-to-text, image analysis and image generation
  * Add the TypeSafe bridge, evaluating typed questions (noul, choice and score) against a state with the Jev models
