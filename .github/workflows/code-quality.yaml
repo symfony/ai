@@ -56,7 +56,7 @@ jobs:
                   # -maxdepth 3 keeps the "src" shard to components and bundles; bridges live deeper
                   # and are covered by their own shards.
                   find ${{ matrix.shard.path }} -maxdepth 3 -name phpstan.dist.neon -not -path '*/vendor/*' | sort \
-                      | .github/run-in-packages.sh vendor/bin/phpstan analyse --no-progress --error-format=github -c '{}'
+                      | .github/run-in-packages.sh vendor/bin/phpstan analyse --no-progress --error-format=github --memory-limit=1G -c '{}'
 
     phpstan-demo:
         name: PHPStan / Demo
