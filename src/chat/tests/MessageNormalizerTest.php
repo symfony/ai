@@ -413,6 +413,58 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame('call-1', $denormalized->getToolCall()->getId());
         $this->assertSame('get_weather', $denormalized->getToolCall()->getName());
         $this->assertSame(['city' => 'Paris'], $denormalized->getToolCall()->getArguments());
+        $this->assertNull($denormalized->getToolCall()->getSignature());
+    }
+
+    public function testItRoundTripsToolCallMessageSignature()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $message = new ToolCallMessage(
+            new ToolCall('call-1', 'get_weather', ['city' => 'Paris'], 'signature-from-provider'),
+            new Text('Sunny, 22°C'),
+        );
+
+        $payload = $serializer->normalize($message);
+
+        $this->assertSame('signature-from-provider', $payload['toolsCalls']['signature']);
+
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(ToolCallMessage::class, $denormalized);
+        $this->assertSame('signature-from-provider', $denormalized->getToolCall()->getSignature());
+    }
+
+    public function testItRoundTripsAssistantToolCallSignature()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $message = new AssistantMessage(
+            new ToolCall('call-1', 'get_weather', ['city' => 'Paris'], 'signature-from-provider'),
+            new ToolCall('call-2', 'get_time', []),
+        );
+
+        $payload = $serializer->normalize($message);
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $this->assertInstanceOf(AssistantMessage::class, $denormalized);
+
+        $signatures = [];
+        foreach ($denormalized->getContent() as $part) {
+            if ($part instanceof ToolCall) {
+                $signatures[$part->getId()] = $part->getSignature();
+            }
+        }
+
+        $this->assertSame(['call-1' => 'signature-from-provider', 'call-2' => null], $signatures);
     }
 
     public function testItCanNormalizeAndDenormalizeMultimodalToolCallMessage()
