@@ -40,7 +40,7 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Omit term to match all entries when filtering by level/channel/date only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter.')]
+    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false.')]
     public function search(
         ?string $term = null,
         bool $regex = false,
@@ -81,7 +81,7 @@ final class LogSearchTool
             );
         }
 
-        return ResponseEncoder::encodeUntrusted(['entries' => $this->collectResults($criteria, $environment, $kernelContext)]);
+        return ResponseEncoder::encodeUntrusted($this->collectResults($criteria, $environment, $kernelContext));
     }
 
     /**
@@ -92,7 +92,7 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value.')]
+    #[MateTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false.')]
     public function searchContext(
         string $key,
         string $value,
@@ -108,7 +108,7 @@ final class LogSearchTool
             limit: $limit,
         );
 
-        return ResponseEncoder::encodeUntrusted(['entries' => $this->collectResults($criteria, $environment, $kernelContext)]);
+        return ResponseEncoder::encodeUntrusted($this->collectResults($criteria, $environment, $kernelContext));
     }
 
     /**
@@ -118,12 +118,16 @@ final class LogSearchTool
      * @param string|null $channel       Filter by Monolog channel name (e.g. app, security, doctrine)
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel. When multiple kernel contexts are configured, the most recent entries of every context are merged.')]
+    #[MateTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel. When multiple kernel contexts are configured, the most recent entries of every context are merged. tail only reads the newest log file per context: the response also carries total_matched (the match count within the file(s) actually read, not the whole log directory) and truncated (true when total_matched exceeds what entries returns): the length of entries alone is not that count when truncated is true, raise limit instead.')]
     public function tail(int $limit = 50, ?string $level = null, ?string $environment = null, ?string $channel = null, ?string $kernelContext = null): string
     {
-        $entries = $this->reader->tail($limit, $level, $environment, $channel, $kernelContext);
+        $result = $this->reader->tail($limit, $level, $environment, $channel, $kernelContext);
 
-        return ResponseEncoder::encodeUntrusted(['entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $entries))]);
+        return ResponseEncoder::encodeUntrusted([
+            'entries' => array_values(array_map(static fn ($entry) => $entry->toArray(), $result['entries'])),
+            'total_matched' => $result['total_matched'],
+            'truncated' => $result['truncated'],
+        ]);
     }
 
     /**
@@ -167,21 +171,27 @@ final class LogSearchTool
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array{entries: list<array<string, mixed>>, total_matched: int, truncated: bool}
      */
     private function collectResults(SearchCriteria $criteria, ?string $environment = null, ?string $kernelContext = null): array
     {
-        $results = [];
+        $entries = [];
 
         $generator = null !== $environment
             ? $this->reader->readForEnvironment($environment, $criteria, $kernelContext)
             : $this->reader->readAll($criteria, $kernelContext);
 
         foreach ($generator as $entry) {
-            $results[] = $entry->toArray();
+            $entries[] = $entry->toArray();
         }
 
-        return $results;
+        // total_matched is the size of the returned page, not an exact total across the
+        // whole log directory: reading still stops at $limit.
+        return [
+            'entries' => $entries,
+            'total_matched' => \count($entries),
+            'truncated' => \count($entries) === $criteria->getLimit(),
+        ];
     }
 
     private function parseDate(?string $date): ?\DateTimeImmutable
