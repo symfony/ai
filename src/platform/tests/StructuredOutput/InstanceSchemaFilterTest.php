@@ -18,8 +18,11 @@ use Symfony\AI\Platform\StructuredOutput\InstanceSchemaFilter;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Itinerary;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\OrderFilter;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\SearchRequest;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Ticket;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\TreeNode;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Trip;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithAccessors;
@@ -123,6 +126,43 @@ final class InstanceSchemaFilterTest extends TestCase
         ];
 
         $this->assertSame($expected, $this->filterFor(new Trip(destination: new City(name: 'Berlin', country: 'Germany'))));
+    }
+
+    public function testNarrowsPolymorphicNestedObjects()
+    {
+        // The filter is an OrderFilter that still lacks userResponsible and departureDate. Its schema is a
+        // discriminated `anyOf` (one branch per mapped class) without `properties` of its own.
+        $request = new SearchRequest(query: 'cheap flights', filter: new OrderFilter(number: '42'));
+
+        $schema = $this->filterFor($request);
+
+        $this->assertSame(['filter'], array_keys($schema['properties']));
+        // The branch matching the instance's class is narrowed to what it still lacks
+        $this->assertSame(['userResponsible', 'departureDate'], array_keys($schema['properties']['filter']['anyOf'][0]['properties']));
+    }
+
+    public function testNarrowsNestedObjectsBehindAReference()
+    {
+        // The shape a self-referential class takes once the schema factory supports recursion through `$defs`:
+        // the nested object is a `$ref`, so its `properties` are not inline where the filter looks for them.
+        $node = [
+            'type' => 'object',
+            'properties' => [
+                'label' => ['type' => ['string', 'null']],
+                'child' => ['$ref' => '#/$defs/TreeNode'],
+            ],
+            'required' => ['label', 'child'],
+            'additionalProperties' => false,
+        ];
+        $schema = $node + ['$defs' => ['TreeNode' => $node]];
+
+        // The root is complete but for its child, and the child still lacks its own child
+        $tree = new TreeNode(label: 'root', child: new TreeNode(label: 'leaf'));
+
+        $schema = $this->filter->filter($schema, $tree);
+
+        $this->assertSame(['child'], array_keys($schema['properties']));
+        $this->assertSame(['child'], array_keys($schema['properties']['child']['properties']));
     }
 
     public function testDropsNestedObjectsWithNothingMissing()
