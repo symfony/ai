@@ -210,7 +210,7 @@ final class ProfilerToolTest extends TestCase
         $this->assertSame(57, $result['delta']['query_count']);
     }
 
-    public function testCompareSkipsNonNumericSummaryFields()
+    public function testCompareReportsNonNumericFieldsAsChangedInsteadOfDelta()
     {
         $tool = $this->createComparableTool(
             ['query_count' => 8, 'connection' => 'default', 'truncated' => false],
@@ -221,9 +221,11 @@ final class ProfilerToolTest extends TestCase
 
         $this->assertSame(['query_count'], array_keys($result['delta']));
         $this->assertSame('replica', $result['current']['connection']);
+        $this->assertSame(['baseline' => 'default', 'current' => 'replica'], $result['changed']['connection']);
+        $this->assertSame(['baseline' => false, 'current' => true], $result['changed']['truncated']);
     }
 
-    public function testCompareUsesFirstNumericMetricForCollectorsWithoutLeadingMetric()
+    public function testCompareUsesTimesDurationAsLeadingMetric()
     {
         $tool = $this->createComparableTool(
             ['duration_ms' => 250.0],
@@ -236,6 +238,59 @@ final class ProfilerToolTest extends TestCase
         $this->assertSame('time', $result['collector']);
         $this->assertSame('improved', $result['verdict']);
         $this->assertEquals(-150.0, $result['delta']['duration_ms']);
+    }
+
+    /**
+     * A collector with no field anyone can call unambiguously better when lower (sending
+     * more emails is not inherently a regression) must never guess a direction, even
+     * though a numeric field visibly changed.
+     */
+    public function testCompareReportsUnchangedWhenCollectorHasNoDefinedLeadingMetric()
+    {
+        $tool = $this->createComparableTool(
+            ['message_count' => 1],
+            ['message_count' => 5],
+            'mailer',
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current', 'mailer'));
+
+        $this->assertSame('unchanged', $result['verdict']);
+        $this->assertSame(4, $result['delta']['message_count']);
+    }
+
+    /**
+     * The bug this fix closes: a collector whose only meaningful signal is a boolean
+     * (an exception appearing) used to be silently dropped before the verdict was built,
+     * so a baseline without an exception and a current profile with one reported
+     * "unchanged" instead of the regression it actually is.
+     */
+    public function testCompareDetectsANewlyIntroducedExceptionAsRegressed()
+    {
+        $tool = $this->createComparableTool(
+            ['has_exception' => false],
+            ['has_exception' => true, 'message' => 'Boom', 'class' => \RuntimeException::class],
+            'exception',
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current', 'exception'));
+
+        $this->assertSame('regressed', $result['verdict']);
+        $this->assertSame(['baseline' => false, 'current' => true], $result['changed']['has_exception']);
+        $this->assertArrayNotHasKey('has_exception', $result['delta']);
+    }
+
+    public function testCompareDetectsAFixedExceptionAsImproved()
+    {
+        $tool = $this->createComparableTool(
+            ['has_exception' => true, 'message' => 'Boom', 'class' => \RuntimeException::class],
+            ['has_exception' => false],
+            'exception',
+        );
+
+        $result = Toon::decode($tool->compare('baseline', 'current', 'exception'));
+
+        $this->assertSame('improved', $result['verdict']);
     }
 
     public function testCompareThrowsExceptionForUnknownToken()
