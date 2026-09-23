@@ -31,7 +31,7 @@ $messages = new MessageBag(
 $result = $platform->invoke('sonnet', $messages, [
     'stream' => true,
     'permission_mode' => 'plan',
-    'max_turns' => 2,
+    'max_turns' => 4,
 ]);
 
 foreach ($result->asStream() as $delta) {

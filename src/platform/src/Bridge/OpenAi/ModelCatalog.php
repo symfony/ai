@@ -198,6 +198,12 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::REALTIME_SESSION,
                 ],
             ],
+            'gpt-realtime-mini' => [
+                'class' => Realtime::class,
+                'capabilities' => [
+                    Capability::REALTIME_SESSION,
+                ],
+            ],
             'gpt-4o-mini-tts' => [
                 'class' => TextToSpeech::class,
                 'capabilities' => [
@@ -206,6 +212,12 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'gpt-4o-realtime-preview' => [
+                'class' => Realtime::class,
+                'capabilities' => [
+                    Capability::REALTIME_SESSION,
+                ],
+            ],
+            'gpt-realtime' => [
                 'class' => Realtime::class,
                 'capabilities' => [
                     Capability::REALTIME_SESSION,

@@ -57,7 +57,7 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
             }
             unset($session['modalities']);
         } elseif (!isset($session['output_modalities'])) {
-            $session['output_modalities'] = ['text', 'audio'];
+            $session['output_modalities'] = ['audio'];
         }
 
         if (isset($session['voice'])) {

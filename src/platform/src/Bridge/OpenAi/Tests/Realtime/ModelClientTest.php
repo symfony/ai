@@ -56,7 +56,7 @@ final class ModelClientTest extends TestCase
             self::assertSame('gpt-4o-realtime-preview', $session['model']);
             self::assertSame('You are a helpful customer service voice assistant.', $session['instructions']);
             self::assertSame('alloy', $session['audio']['output']['voice']);
-            self::assertSame(['text', 'audio'], $session['output_modalities']);
+            self::assertSame(['audio'], $session['output_modalities']);
             self::assertArrayNotHasKey('modalities', $session);
 
             return new MockResponse(json_encode([

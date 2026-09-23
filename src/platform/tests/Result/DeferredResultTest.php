@@ -18,12 +18,15 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
@@ -128,6 +131,15 @@ final class DeferredResultTest extends TestCase
 
         $deferredResult = new DeferredResult($resultConverter, $rawHttpResponse, $options);
         $deferredResult->getResult();
+    }
+
+    public function testAsTextJoinsMultipleTextParts()
+    {
+        $result = new MultiPartResult([new TextResult("\n"), new ToolCallResult([new ToolCall('id', 'tool')]), new TextResult('Hello World')]);
+
+        $deferredResult = new DeferredResult(new PlainConverter($result), new InMemoryRawResult());
+
+        $this->assertSame("\nHello World", $deferredResult->asText());
     }
 
     public function testItKeepsResultMetadata()

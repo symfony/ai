@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Image;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog;
+use Symfony\AI\Platform\Bridge\OpenAi\Realtime;
 use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Capability;
@@ -62,6 +63,12 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 
         // Whisper models
         yield 'whisper-1' => ['whisper-1', Whisper::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT]];
+
+        // Realtime models
+        yield 'gpt-realtime' => ['gpt-realtime', Realtime::class, [Capability::REALTIME_SESSION]];
+        yield 'gpt-realtime-mini' => ['gpt-realtime-mini', Realtime::class, [Capability::REALTIME_SESSION]];
+        yield 'gpt-4o-realtime-preview' => ['gpt-4o-realtime-preview', Realtime::class, [Capability::REALTIME_SESSION]];
+        yield 'gpt-4o-mini-realtime-preview' => ['gpt-4o-mini-realtime-preview', Realtime::class, [Capability::REALTIME_SESSION]];
 
         // Image models
         yield 'gpt-image-1' => ['gpt-image-1', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];

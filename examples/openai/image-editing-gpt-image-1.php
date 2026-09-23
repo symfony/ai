@@ -15,7 +15,8 @@ use Symfony\AI\Platform\Result\BinaryResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
+// Image edits regularly take longer than the default idle timeout of 60 seconds
+$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client()->withOptions(['timeout' => 300]));
 
 // Pass the source image to edit via the "image" option; the prompt describes the change.
 $result = $platform->invoke(

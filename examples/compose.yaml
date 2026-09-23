@@ -147,13 +147,16 @@ services:
             - '9201:9200'
 
     pinecone:
-        image: ghcr.io/pinecone-io/pinecone-local:latest
+        image: ghcr.io/pinecone-io/pinecone-index:latest
         platform: linux/amd64
         environment:
             PORT: 5080
-            PINECONE_HOST: localhost
+            INDEX_TYPE: serverless
+            VECTOR_TYPE: dense
+            DIMENSION: 1536
+            METRIC: cosine
         ports:
-            - '5080-5090:5080-5090'
+            - '5080:5080'
 
     opensearch:
         image: opensearchproject/opensearch

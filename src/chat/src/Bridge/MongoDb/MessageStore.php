@@ -51,21 +51,28 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
 
     public function drop(): void
     {
-        $this->client->getCollection($this->databaseName, $this->collectionName)->deleteMany([
-            'q' => [],
-        ]);
+        $this->client->getCollection($this->databaseName, $this->collectionName)->deleteMany([]);
     }
 
     public function save(MessageBag $messages): void
     {
         $currentCollection = $this->client->getCollection($this->databaseName, $this->collectionName);
 
-        $currentCollection->insertMany(array_map(
-            fn (MessageInterface $message): array => $this->serializer->normalize($message, context: [
+        $operations = [];
+        foreach ($messages->getMessages() as $message) {
+            $document = $this->serializer->normalize($message, context: [
                 'identifier' => '_id',
-            ]),
-            $messages->getMessages(),
-        ));
+            ]);
+
+            // Upsert so re-saving an already persisted message does not violate the unique _id index
+            $operations[] = ['replaceOne' => [['_id' => $document['_id']], $document, ['upsert' => true]]];
+        }
+
+        if ([] === $operations) {
+            return;
+        }
+
+        $currentCollection->bulkWrite($operations);
     }
 
     public function load(): MessageBag
