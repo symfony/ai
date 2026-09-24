@@ -107,6 +107,32 @@ class PathValidatorTest extends TestCase
         $validator->validate('sample.txt');
     }
 
+    public function testValidateThrowsOnDeniedBaseRelativePattern()
+    {
+        $validator = new PathValidator(
+            $this->fixturesPath,
+            deniedExtensions: [],
+            deniedPatterns: ['nested/*'],
+        );
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path "nested/file.txt" matches denied pattern "nested/*"');
+
+        $validator->validate('nested/file.txt');
+    }
+
+    public function testValidateNewFileThrowsOnDeniedBaseRelativePattern()
+    {
+        $validator = new PathValidator(
+            $this->fixturesPath,
+            deniedExtensions: [],
+            deniedPatterns: ['nested/*.txt'],
+        );
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path "nested/newfile.txt" matches denied pattern "nested/*.txt"');
+
+        $validator->validate('nested/newfile.txt', mustExist: false);
+    }
+
     public function testValidateNonExistentFileWithMustExistFalse()
     {
         $validator = new PathValidator($this->fixturesPath, [], [], []);
