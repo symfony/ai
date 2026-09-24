@@ -12,6 +12,7 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
 use Symfony\AI\Mate\Attribute\MateTool;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
@@ -25,6 +26,12 @@ use Symfony\AI\Mate\Exception\RuntimeException;
  */
 final class ProfilerTool
 {
+    /**
+     * Number of grouped statements the triage returns. Triage answers "where is the load",
+     * not "list every query" — the full grouped list stays behind the collector resource.
+     */
+    private const TRIAGE_QUERY_LIMIT = 5;
+
     public function __construct(
         private readonly ?ProfilerDataProvider $dataProvider = null,
     ) {
@@ -116,6 +123,54 @@ final class ProfilerTool
         return ResponseEncoder::encodeUntrusted($data);
     }
 
+    /**
+     * @param string|null $url   URL path of the request to triage (partial match); the newest matching profile is used
+     * @param string|null $token Exact profiler token to triage; takes precedence over url
+     */
+    #[MateTool(name: 'symfony-profiler-triage', title: 'Symfony Profiler Triage', description: 'Triage one request in a single call: returns query count, duplicate queries, the most expensive statements, total duration, whether an exception occurred and the logger error/warning counts for one profile. Start here instead of chaining symfony-profiler-list, symfony-profiler-get and a collector resource read. Without url or token it triages the most recent profile. Collectors the profile does not have are omitted.')]
+    public function triage(?string $url = null, ?string $token = null): string
+    {
+        $dataProvider = $this->getDataProvider();
+        $resolvedToken = $this->resolveTriageToken($url, $token);
+
+        $profileData = $dataProvider->findProfile($resolvedToken);
+        if (null === $profileData) {
+            throw new ProfileNotFoundException(\sprintf('Profile not found for token: "%s"', $resolvedToken));
+        }
+
+        $profile = $profileData->getProfile();
+        $available = $dataProvider->listAvailableCollectors($resolvedToken);
+
+        $triage = [
+            'token' => $profile->getToken(),
+            'method' => $profile->getMethod(),
+            'url' => $profile->getUrl(),
+            'status_code' => $profile->getStatusCode(),
+            'resource_uri' => \sprintf('symfony-profiler://profile/%s', $profile->getToken()),
+        ];
+
+        $db = $this->getTriageCollectorData($resolvedToken, 'db', $available);
+        if (null !== $db) {
+            $section = $db['summary'];
+            $queries = $db['data']['queries'] ?? null;
+            if (\is_array($queries)) {
+                $section['slowest_queries'] = $this->buildSlowestQueries($queries);
+                $section['slowest_queries_truncated'] = \count($queries) > self::TRIAGE_QUERY_LIMIT;
+            }
+
+            $triage['db'] = $section;
+        }
+
+        foreach (['time', 'exception', 'logger'] as $collector) {
+            $collectorData = $this->getTriageCollectorData($resolvedToken, $collector, $available);
+            if (null !== $collectorData) {
+                $triage[$collector] = $collectorData['summary'];
+            }
+        }
+
+        return ResponseEncoder::encode($triage);
+    }
+
     private function getDataProvider(): ProfilerDataProvider
     {
         if (null === $this->dataProvider) {
@@ -123,5 +178,76 @@ final class ProfilerTool
         }
 
         return $this->dataProvider;
+    }
+
+    private function resolveTriageToken(?string $url, ?string $token): string
+    {
+        if (null !== $token && '' !== $token) {
+            return $token;
+        }
+
+        $dataProvider = $this->getDataProvider();
+
+        if (null !== $url && '' !== $url) {
+            $profiles = $dataProvider->searchProfiles(['url' => $url], 1);
+            if ([] === $profiles) {
+                throw new ProfileNotFoundException(\sprintf('No profile found for url "%s"', $url));
+            }
+
+            return $profiles[0]->getToken();
+        }
+
+        $latest = $dataProvider->getLatestProfile();
+        if (null === $latest) {
+            throw new ProfileNotFoundException('No profiles recorded; the profiler storage is empty.');
+        }
+
+        return $latest->getToken();
+    }
+
+    /**
+     * Returns the collector data only when the profile actually has that collector and a
+     * formatter produced a summary for it, so a missing collector is omitted instead of guessed.
+     *
+     * @param array<string> $available
+     *
+     * @return array{name: string, data: array<string, mixed>, summary: array<string, mixed>}|null
+     */
+    private function getTriageCollectorData(string $token, string $collector, array $available): ?array
+    {
+        if (!\in_array($collector, $available, true)) {
+            return null;
+        }
+
+        $collectorData = $this->getDataProvider()->getCollectorData($token, $collector);
+        if ([] === $collectorData['summary']) {
+            return null;
+        }
+
+        return $collectorData;
+    }
+
+    /**
+     * @param array<mixed> $queries
+     *
+     * @return list<array{sql: string, count: int, total_time_ms: float, avg_time_ms: float}>
+     */
+    private function buildSlowestQueries(array $queries): array
+    {
+        $slowest = [];
+        foreach (\array_slice(array_values($queries), 0, self::TRIAGE_QUERY_LIMIT) as $query) {
+            if (!\is_array($query)) {
+                continue;
+            }
+
+            $slowest[] = [
+                'sql' => (string) ($query['sql'] ?? ''),
+                'count' => (int) ($query['count'] ?? 0),
+                'total_time_ms' => (float) ($query['total_time_ms'] ?? 0.0),
+                'avg_time_ms' => (float) ($query['avg_time_ms'] ?? 0.0),
+            ];
+        }
+
+        return $slowest;
     }
 }
