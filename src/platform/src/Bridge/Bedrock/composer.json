@@ -27,9 +27,9 @@
     "require": {
         "async-aws/bedrock-runtime": "^0.1|^1.0",
         "php": ">=8.2",
-        "symfony/ai-anthropic-platform": "^0.13",
-        "symfony/ai-meta-platform": "^0.13",
-        "symfony/ai-platform": "^0.13"
+        "symfony/ai-anthropic-platform": "^0.14",
+        "symfony/ai-meta-platform": "^0.14",
+        "symfony/ai-platform": "^0.14"
     },
     "require-dev": {
         "async-aws/sso": "^1.0",
@@ -38,8 +38,8 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/ai-generic-platform": "^0.13",
-        "symfony/ai-open-responses-platform": "^0.13",
+        "symfony/ai-generic-platform": "^0.14",
+        "symfony/ai-open-responses-platform": "^0.14",
         "symfony/console": "^7.3|^8.0"
     },
     "suggest": {
