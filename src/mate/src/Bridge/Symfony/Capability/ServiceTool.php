@@ -82,7 +82,7 @@ class ServiceTool
      * @param string      $id      The exact service ID to retrieve details for
      * @param string|null $context Filter by Symfony kernel context, only relevant when multiple cache directories are configured
      */
-    #[MateTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, constructor arguments, factory information and the definition flags debug:container reports (public, synthetic, lazy, shared, abstract, autowire, autoconfigure). Constructor arguments show which services are wired in, including the entries of a collection, such as the middleware list of a messenger bus. Scalar values are redacted when their parameter name looks like a secret, or when the parameter cannot be identified. When multiple kernel contexts are configured, the containers are searched in order and the result carries the context it was found in.')]
+    #[MateTool(name: 'symfony-service-detail', title: 'Symfony Service Detail', description: 'Get full details of a single Symfony DI container service by its exact ID, including class, tags, method calls, constructor arguments, factory information and the definition flags debug:container reports (public, synthetic, lazy, shared, abstract, autowired, autoconfigured). Constructor arguments show which services are wired in, including the entries of a collection, such as the middleware list of a messenger bus. Scalar values are redacted when their parameter name looks like a secret, or when the parameter cannot be identified. When multiple kernel contexts are configured, the containers are searched in order and the result carries the context it was found in.')]
     public function getServiceDetail(string $id, ?string $context = null): string
     {
         $containers = $this->readContainers($context);
@@ -118,8 +118,8 @@ class ServiceTool
                 'lazy' => $service->isLazy(),
                 'shared' => $service->isShared(),
                 'abstract' => $service->isAbstract(),
-                'autowire' => $service->isAutowired(),
-                'autoconfigure' => $service->isAutoconfigured(),
+                'autowired' => $service->isAutowired(),
+                'autoconfigured' => $service->isAutoconfigured(),
                 'tags' => $tags,
                 'calls' => $service->getCalls(),
                 'arguments' => $this->argumentResolver->resolve($service->getConstructor(), $service->getArguments()),
