@@ -79,6 +79,9 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
 
         if ($required) {
             $schema['required'] = array_keys($required);
+        }
+
+        if (isset($schema['properties']) && !isset($schema['additionalProperties'])) {
             $schema['additionalProperties'] = false;
         }
 

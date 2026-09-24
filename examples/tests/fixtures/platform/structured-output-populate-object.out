@@ -9,9 +9,9 @@ Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City {
 Populated object state:
 Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City {
   +name: "Berlin"
-  +population: 3645000
+  +population: 3748148
   +country: "Germany"
-  +mayor: "Kai Wegner"
+  +mayor: "Franziska Giffey"
 }
 
 Object identity preserved: true

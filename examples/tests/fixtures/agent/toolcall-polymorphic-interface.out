@@ -2,25 +2,39 @@
 === Testing with model: claude-sonnet-4-5-20250929 ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-I found 1 result for order number **ORD-12345** with user responsible **John Doe**.
+I found 1 order matching your search criteria:
+- **Order Number**: ORD-12345
+- **User Responsible**: John Doe
+
+The search returned 1 result for this order.
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found 1 purchase contract matching your search criteria. The search was for contract number PC-67890 with subsidiary Acme Corp.
+I found 1 purchase contract matching your search criteria:
+- **Contract Number**: PC-67890
+- **Subsidiary**: Acme Corp
+
+The search was successful and returned 1 result for this purchase contract.
 
 === Testing with model: gpt-5-mini ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-I found 1 matching order for number ORD-12345 with user responsible John Doe.
+I searched for order ORD-12345 with user responsible John Doe and found 1 matching result.
 
-Would you like me to retrieve full order details (status, items, dates, attached documents, etc.) or apply any additional filters (e.g., departure date)?
+Would you like me to show the order details (status, items, shipping/departure date, documents), export the record, or perform another search/filter?
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found one result for purchase contract PC-67890 with subsidiary Acme Corp. Do you want the contract details, a PDF copy, or any specific fields (dates, value, line items, contacts)?
+I found 1 matching purchase contract.
+
+Summary:
+- Contract number: PC-67890
+- Subsidiary: Acme Corp
+
+Would you like details from the contract (dates, value, parties, status), a copy of the contract, or any specific fields extracted?
 
 === Testing with model: gemini-2.5-flash ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-I have found 1 result for order number ORD-12345 with user responsible John Doe.
+I found 1 result for order number ORD-12345 with user responsible John Doe.
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
 I found one result for purchase contract PC-67890 with subsidiary Acme Corp.

@@ -55,10 +55,15 @@ final class PropertySubject
 
     private function isPropertyRequired(): bool
     {
-        if (!$this->reflector->isPromoted()) {
-            return true;
+        $constructor = $this->reflector->getDeclaringClass()->getConstructor();
+        if (null !== $constructor) {
+            foreach ($constructor->getParameters() as $parameter) {
+                if ($parameter->getName() === $this->reflector->getName()) {
+                    return !$parameter->isOptional();
+                }
+            }
         }
 
-        return !(new \ReflectionParameter([$this->reflector->getDeclaringClass()->getName(), '__construct'], $this->reflector->getName()))->isOptional();
+        return true;
     }
 }

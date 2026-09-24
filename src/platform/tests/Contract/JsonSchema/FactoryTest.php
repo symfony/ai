@@ -204,6 +204,41 @@ final class FactoryTest extends TestCase
         $this->assertSame(['type' => ['integer', 'null']], $actual['properties']['age']);
     }
 
+    public function testBuildPropertiesHonorsNonPromotedConstructorDefaults()
+    {
+        $dto = new class('continue') {
+            public readonly ?string $task;
+            public readonly ?string $artifactId;
+
+            public function __construct(?string $task, ?string $artifactId = null)
+            {
+                $this->task = $task;
+                $this->artifactId = $artifactId;
+            }
+        };
+
+        $actual = $this->factory->buildProperties($dto::class);
+
+        $this->assertNotNull($actual);
+        $this->assertSame(['task'], $actual['required']);
+        $this->assertSame(['type' => ['string', 'null']], $actual['properties']['artifactId']);
+    }
+
+    public function testBuildPropertiesWithOnlyOptionalFieldsRejectsUnknownProperties()
+    {
+        $dto = new class {
+            public function __construct(public readonly ?string $artifactId = null)
+            {
+            }
+        };
+
+        $actual = $this->factory->buildProperties($dto::class);
+
+        $this->assertNotNull($actual);
+        $this->assertArrayNotHasKey('required', $actual);
+        $this->assertFalse($actual['additionalProperties']);
+    }
+
     public function testBuildPropertiesForMathReasoningClass()
     {
         $expected = [
