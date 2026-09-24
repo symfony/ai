@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Bridge\Filesystem;
 
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\PathSecurityException;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * Validates paths against security constraints.
@@ -154,11 +155,17 @@ final class PathValidator
 
     private function assertNotDeniedPattern(string $path): void
     {
-        $filename = basename($path);
+        $basePath = realpath($this->basePath);
+
+        if (false === $basePath) {
+            throw new PathSecurityException(\sprintf('Base path "%s" does not exist.', $this->basePath));
+        }
+
+        $relativePath = Path::makeRelative($path, $basePath);
 
         foreach ($this->deniedPatterns as $pattern) {
-            if (fnmatch($pattern, $filename)) {
-                throw new PathSecurityException(\sprintf('Path "%s" matches denied pattern "%s".', $filename, $pattern));
+            if (fnmatch($pattern, basename($relativePath)) || fnmatch($pattern, $relativePath, \FNM_PATHNAME)) {
+                throw new PathSecurityException(\sprintf('Path "%s" matches denied pattern "%s".', $relativePath, $pattern));
             }
         }
     }
