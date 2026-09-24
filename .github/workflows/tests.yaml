@@ -227,10 +227,12 @@ jobs:
                   working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
 
             - name: Start Docker services
+              if: hashFiles(format('tmp/store/src/Bridge/{0}/compose.yaml', matrix.bridge)) != ''
               working-directory: tmp/store/src/Bridge/${{ matrix.bridge }}
-              run: docker compose up -d --wait || true
+              run: docker compose up -d --wait
 
             - name: Wait for services to be ready
+              if: hashFiles(format('tmp/store/src/Bridge/{0}/compose.yaml', matrix.bridge)) != ''
               run: sleep 15
 
             - name: Run integration tests

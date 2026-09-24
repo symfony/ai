@@ -178,27 +178,27 @@ Some examples talk to a service from `examples/compose.yaml` rather than (or
 in addition to) a third-party API. Detection heuristic: if the example
 references any of these env vars, it needs Docker:
 
-| Env var(s) used                                  | Compose service name |
-|--------------------------------------------------|----------------------|
-| `MARIADB_URI`                                    | `mariadb`            |
-| `POSTGRES_URI`                                   | `postgres`           |
-| `MONGODB_URI`                                    | `mongodb`            |
-| `REDIS_HOST`                                     | `redis`              |
-| `MEILISEARCH_HOST`                               | `meilisearch`        |
-| `QDRANT_HOST`                                    | `qdrant`             |
-| `WEAVIATE_HOST`                                  | `weaviate`           |
-| `MILVUS_HOST`                                    | `milvus` (+ `etcd`, `minio`) |
-| `ELASTICSEARCH_ENDPOINT`                         | `elasticsearch`      |
-| `OPENSEARCH_ENDPOINT`                            | `opensearch`         |
-| `CHROMADB_HOST` / `CHROMADB_PORT`                | `chromadb`           |
-| `TYPESENSE_HOST`                                 | `typesense`          |
-| `NEO4J_HOST` / `NEO4J_PASSWORD`                  | `neo4j`              |
-| `SURREALDB_HOST`                                 | `surrealdb`          |
-| `MANTICORESEARCH_HOST`                           | `manticore`          |
-| `CLICKHOUSE_HOST`                                | `clickhouse`         |
-| `POGOCACHE_HOST`                                 | `pogocache`          |
-| `PINECONE_HOST` (when set to `127.0.0.1`/local)  | `pinecone`           |
-| `LITELLM_HOST_URL`                               | `litellm` (+ `litellm-db`) |
+| Env var(s) used                                 | Compose service name       |
+|-------------------------------------------------|----------------------------|
+| `MARIADB_URI`                                   | `mariadb`                  |
+| `POSTGRES_URI`                                  | `postgres`                 |
+| `MONGODB_URI`                                   | `mongodb`                  |
+| `REDIS_HOST`                                    | `redis`                    |
+| `MEILISEARCH_HOST`                              | `meilisearch`              |
+| `QDRANT_HOST`                                   | `qdrant`                   |
+| `WEAVIATE_HOST`                                 | `weaviate`                 |
+| `MILVUS_HOST`                                   | `milvus`                   |
+| `ELASTICSEARCH_ENDPOINT`                        | `elasticsearch`            |
+| `OPENSEARCH_ENDPOINT`                           | `opensearch`               |
+| `CHROMADB_HOST` / `CHROMADB_PORT`               | `chromadb`                 |
+| `TYPESENSE_HOST`                                | `typesense`                |
+| `NEO4J_HOST` / `NEO4J_PASSWORD`                 | `neo4j`                    |
+| `SURREALDB_HOST`                                | `surrealdb`                |
+| `MANTICORESEARCH_HOST`                          | `manticore`                |
+| `CLICKHOUSE_HOST`                               | `clickhouse`               |
+| `POGOCACHE_HOST`                                | `pogocache`                |
+| `PINECONE_HOST` (when set to `127.0.0.1`/local) | `pinecone`                 |
+| `LITELLM_HOST_URL`                              | `litellm` (+ `litellm-db`) |
 
 Examples that hit a *remote* API (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
 `AZURE_*`, `AWS_*`, `BEDROCK`, `OPENROUTER_KEY`, ...) do not need Docker —
