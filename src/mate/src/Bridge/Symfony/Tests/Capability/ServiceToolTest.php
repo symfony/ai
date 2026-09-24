@@ -289,8 +289,8 @@ final class ServiceToolTest extends TestCase
         $this->assertTrue($detail['lazy']);
         $this->assertFalse($detail['shared']);
         $this->assertFalse($detail['abstract']);
-        $this->assertTrue($detail['autowire']);
-        $this->assertTrue($detail['autoconfigure']);
+        $this->assertTrue($detail['autowired']);
+        $this->assertTrue($detail['autoconfigured']);
     }
 
     public function testGetServiceDetailReportsSyntheticServices()
@@ -316,8 +316,8 @@ final class ServiceToolTest extends TestCase
         $this->assertFalse($detail['lazy']);
         $this->assertTrue($detail['shared']);
         $this->assertFalse($detail['abstract']);
-        $this->assertFalse($detail['autowire']);
-        $this->assertFalse($detail['autoconfigure']);
+        $this->assertFalse($detail['autowired']);
+        $this->assertFalse($detail['autoconfigured']);
     }
 
     public function testGetServiceDetailMarksExcludedPlaceholdersAsAbstract()
@@ -342,8 +342,8 @@ final class ServiceToolTest extends TestCase
         $this->assertTrue($detail['public']);
         $this->assertTrue($detail['lazy']);
         $this->assertFalse($detail['shared']);
-        $this->assertTrue($detail['autowire']);
-        $this->assertTrue($detail['autoconfigure']);
+        $this->assertTrue($detail['autowired']);
+        $this->assertTrue($detail['autoconfigured']);
         $this->assertFalse($detail['abstract']);
     }
 
