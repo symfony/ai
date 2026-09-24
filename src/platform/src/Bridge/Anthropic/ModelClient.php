@@ -11,8 +11,10 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Bridge\Anthropic\Batch\BatchClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -28,6 +30,13 @@ final class ModelClient implements ModelClientInterface
     use JsonSchemaSanitizerTrait;
     use PromptCachingTrait;
 
+    public const BATCH = 'batch';
+
+    /**
+     * The API version every request of this bridge states, batches and their results included.
+     */
+    public const API_VERSION = '2023-06-01';
+
     /**
      * Anthropic requires a versioned `type` per server tool, so only tools whose
      * result blocks the converter can round-trip are mapped here. Anything else
@@ -42,6 +51,7 @@ final class ModelClient implements ModelClientInterface
 
     private readonly EventSourceHttpClient $httpClient;
     private readonly string $baseUrl;
+    private readonly BatchClient $batchClient;
 
     /**
      * @param 'none'|'short'|'long' $cacheRetention Controls Anthropic prompt-caching retention:
@@ -62,6 +72,7 @@ final class ModelClient implements ModelClientInterface
 
         $this->httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
         $this->baseUrl = rtrim($baseUrl, '/');
+        $this->batchClient = new BatchClient($this->httpClient, $apiKey, $this->baseUrl);
     }
 
     public function supports(Model $model): bool
@@ -75,12 +86,40 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        if ($options[self::BATCH] ?? false) {
+            unset($options[self::BATCH]);
+
+            return $this->submitBatch($payload, $options);
+        }
+
         $headers = [
             'x-api-key' => $this->apiKey,
-            'anthropic-version' => '2023-06-01',
+            'anthropic-version' => self::API_VERSION,
             'content-type' => 'application/json',
         ];
 
+        ['body' => $body, 'beta_features' => $betaFeatures] = $this->createRequest($payload, $options);
+
+        if ([] !== $betaFeatures) {
+            $headers['anthropic-beta'] = implode(',', $betaFeatures);
+        }
+
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/messages', [
+            'headers' => $headers,
+            'body' => $this->encodeJsonBody($body),
+        ]));
+    }
+
+    /**
+     * The request body one input becomes, and the beta features Anthropic wants a header for.
+     *
+     * @param array<string, mixed> $payload
+     * @param array<string, mixed> $options
+     *
+     * @return array{body: array<string, mixed>, beta_features: list<string>}
+     */
+    private function createRequest(array $payload, array $options): array
+    {
         $cacheControl = $this->getCacheControl($this->cacheRetention);
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);
         $payload = $this->injectSystemCacheControl($payload, $cacheControl);
@@ -115,15 +154,55 @@ final class ModelClient implements ModelClientInterface
             unset($options['response_format']);
         }
 
+        $betaFeatures = [];
+
         if (isset($options['beta_features']) && \is_array($options['beta_features']) && \count($options['beta_features']) > 0) {
-            $headers['anthropic-beta'] = implode(',', $options['beta_features']);
+            $betaFeatures = array_values($options['beta_features']);
             unset($options['beta_features']);
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/messages', [
-            'headers' => $headers,
-            'body' => $this->encodeJsonBody(array_merge($options, $payload)),
-        ]));
+        return ['body' => array_merge($options, $payload), 'beta_features' => $betaFeatures];
+    }
+
+    /**
+     * Turns the normalized inputs into one request body each, keyed by the identifier to report it
+     * back under.
+     *
+     * @param array<string|int, mixed> $payload
+     * @param array<string, mixed>     $options
+     */
+    private function submitBatch(array $payload, array $options): RawHttpResult
+    {
+        if ([] === $payload) {
+            throw new InvalidArgumentException(\sprintf('A batch invocation expects a non-empty array of inputs, "%s" given.', get_debug_type($payload)));
+        }
+
+        if ($options['stream'] ?? false) {
+            throw new InvalidArgumentException('A batch is answered hours later, so it cannot be streamed.');
+        }
+
+        $requests = [];
+        $betaFeatures = [];
+
+        foreach ($payload as $customId => $input) {
+            // A single input normalizes into the keys of one Messages request, not into a map of them.
+            if (\in_array($customId, ['messages', 'system', 'model'], true)) {
+                throw new InvalidArgumentException('A batch invocation expects an array of inputs, keyed by the identifier to report each result under, and not a single input.');
+            }
+
+            if (!\is_array($input) || !\is_array($input['messages'] ?? null)) {
+                throw new InvalidArgumentException(\sprintf('The input "%s" of the batch did not normalize into a request, a batch takes the same inputs as any other invocation - a "%s", for instance - one per identifier.', $customId, MessageBag::class));
+            }
+
+            ['body' => $body, 'beta_features' => $features] = $this->createRequest($input, $options);
+
+            $requests[$customId] = $body;
+            $betaFeatures = array_merge($betaFeatures, $features);
+        }
+
+        // The beta features are headed on the batch as a whole, so a request needing one enables it
+        // for all of them - Anthropic has no per-request header.
+        return $this->batchClient->submit($requests, array_values(array_unique($betaFeatures)));
     }
 
     /**

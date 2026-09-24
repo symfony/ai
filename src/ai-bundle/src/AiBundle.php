@@ -62,6 +62,7 @@ use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
+use Symfony\AI\Platform\Bridge\Anthropic\Batch\JobClient as AnthropicJobClient;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory as AzureOpenAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
@@ -521,6 +522,16 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'anthropic']);
 
             $container->setDefinition($platformId, $definition);
+
+            $jobClientId = 'ai.platform.job_client.anthropic';
+            $container->setDefinition($jobClientId, (new Definition(AnthropicJobClient::class))
+                ->setFactory(AnthropicFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.platform.job_client', ['key' => 'anthropic']));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'anthropic');
 
             return;
         }

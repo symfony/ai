@@ -627,6 +627,92 @@ class ModelClientTest extends TestCase
         ]);
     }
 
+    public function testItSubmitsTheInputsOfABatchAsOneRequestEach()
+    {
+        $recorded = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$recorded): JsonMockResponse {
+            $recorded = [$url, $options];
+
+            return new JsonMockResponse(['id' => 'msgbatch_123', 'processing_status' => 'in_progress']);
+        });
+
+        $result = (new ModelClient($httpClient, 'test-api-key'))->request($this->model, [
+            'capital-fr' => ['model' => 'claude-3-5-sonnet-latest', 'messages' => [['role' => 'user', 'content' => 'What is the capital of France?']]],
+            'capital-de' => ['model' => 'claude-3-5-sonnet-latest', 'messages' => [['role' => 'user', 'content' => 'What is the capital of Germany?']]],
+        ], ['batch' => true, 'max_tokens' => 50]);
+
+        $this->assertSame('msgbatch_123', $result->getData()['id']);
+        $this->assertSame('https://api.anthropic.com/v1/messages/batches', $recorded[0]);
+
+        $body = json_decode($recorded[1]['body'], true);
+
+        $this->assertCount(2, $body['requests']);
+        $this->assertSame('capital-fr', $body['requests'][0]['custom_id']);
+        // Each request is the one it would have been on its own, without the "batch" option itself.
+        $this->assertSame([
+            'max_tokens' => 50,
+            'model' => 'claude-3-5-sonnet-latest',
+            'messages' => [['role' => 'user', 'content' => [['type' => 'text', 'text' => 'What is the capital of France?', 'cache_control' => ['type' => 'ephemeral']]]]],
+        ], $body['requests'][0]['params']);
+        $this->assertStringNotContainsString('"batch"', $recorded[1]['body']);
+    }
+
+    public function testItHeadsTheBetaFeaturesOfABatchOnTheBatchItself()
+    {
+        $recorded = [];
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$recorded): JsonMockResponse {
+            $recorded = $this->parseHeaders($options['headers']);
+
+            return new JsonMockResponse(['id' => 'msgbatch_123']);
+        });
+
+        (new ModelClient($httpClient, 'test-api-key'))->request($this->model, [
+            'capital-fr' => ['messages' => [['role' => 'user', 'content' => 'What is the capital of France?']]],
+        ], ['batch' => true, 'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024]]);
+
+        $this->assertSame('interleaved-thinking-2025-05-14', $recorded['anthropic-beta']);
+    }
+
+    public function testItRefusesToStreamABatch()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch is answered hours later, so it cannot be streamed.');
+
+        $modelClient->request($this->model, ['capital-fr' => ['messages' => []]], ['batch' => true, 'stream' => true]);
+    }
+
+    public function testItRefusesASingleInputAsABatch()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch invocation expects an array of inputs, keyed by the identifier to report each result under, and not a single input.');
+
+        $modelClient->request($this->model, ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['batch' => true]);
+    }
+
+    public function testItSaysWhatIsWrongWithAnInputThatIsNotARequest()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input "capital-fr" of the batch did not normalize into a request');
+
+        $modelClient->request($this->model, ['capital-fr' => 'What is the capital of France?'], ['batch' => true]);
+    }
+
+    public function testItRefusesAnEmptyBatch()
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch invocation expects a non-empty array of inputs, "array" given.');
+
+        $modelClient->request($this->model, [], ['batch' => true]);
+    }
+
     /**
      * @param list<string> $headers
      *
