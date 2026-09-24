@@ -66,3 +66,5 @@ $messages = new MessageBag(
 $result = $agent->call($messages);
 
 echo $result->asText().\PHP_EOL;
+
+$store->drop();

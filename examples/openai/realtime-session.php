@@ -19,7 +19,7 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 // A realtime session is created server side and returns an ephemeral client
 // secret. That secret is what you hand to a browser or mobile client, which
 // then opens the WebRTC or WebSocket connection to OpenAI itself.
-$result = $platform->invoke('gpt-4o-realtime-preview', 'You are a friendly assistant. Keep your answers short.', [
+$result = $platform->invoke('gpt-realtime', 'You are a friendly assistant. Keep your answers short.', [
     'voice' => 'alloy',
 ]);
 

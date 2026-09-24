@@ -781,6 +781,36 @@ final class ResultConverterTest extends TestCase
         $this->assertNull($result->getError());
     }
 
+    public function testConvertMcpCallWithStructuredError()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'output' => [
+                [
+                    'type' => 'mcp_call',
+                    'id' => 'mcp_1',
+                    'status' => 'failed',
+                    'server_label' => 'deepwiki',
+                    'name' => 'ask_wiki_question',
+                    'arguments' => '{"q":"hi"}',
+                    'output' => null,
+                    'error' => [
+                        'type' => 'mcp_protocol_error',
+                        'code' => -32602,
+                        'message' => 'Tool ask_wiki_question not found',
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(McpCallResult::class, $result);
+        $this->assertNull($result->getContent());
+        $this->assertSame('Tool ask_wiki_question not found', $result->getError());
+    }
+
     public function testConvertMcpListTools()
     {
         $converter = new ResultConverter();

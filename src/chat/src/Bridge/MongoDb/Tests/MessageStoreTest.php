@@ -41,9 +41,7 @@ final class MessageStoreTest extends TestCase
     public function testStoreCanDrop()
     {
         $collection = $this->createMock(Collection::class);
-        $collection->expects($this->once())->method('deleteMany')->with([
-            'q' => [],
-        ]);
+        $collection->expects($this->once())->method('deleteMany')->with([]);
 
         $client = $this->createMock(Client::class);
         $client->expects($this->once())->method('getCollection')->willReturn($collection);
@@ -71,12 +69,19 @@ final class MessageStoreTest extends TestCase
         $documents = null;
 
         $collection = $this->createMock(Collection::class);
-        $collection->expects($this->once())->method('insertMany')->with($this->callback(
+        $collection->expects($this->once())->method('bulkWrite')->with($this->callback(
             /**
-             * @param list<array<string, mixed>> $insertedDocuments
+             * @param list<array{replaceOne: array{0: array{_id: string}, 1: array<string, mixed>, 2: array{upsert: bool}}}> $operations
              */
-            static function (array $insertedDocuments) use (&$documents): bool {
-                $documents = $insertedDocuments;
+            static function (array $operations) use (&$documents): bool {
+                $documents = [];
+                foreach ($operations as $operation) {
+                    [$filter, $document, $options] = $operation['replaceOne'];
+                    if ($filter !== ['_id' => $document['_id']] || $options !== ['upsert' => true]) {
+                        return false;
+                    }
+                    $documents[] = $document;
+                }
 
                 return true;
             },

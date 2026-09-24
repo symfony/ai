@@ -35,6 +35,13 @@ trait TypedResultTrait
      */
     public function asText(): string
     {
+        $result = $this->getResult();
+
+        // A model may split its answer over several text parts
+        if ($result instanceof MultiPartResult && 1 < \count(array_filter($result->getContent(), static fn (ResultInterface $part) => $part instanceof TextResult))) {
+            return $result->asText();
+        }
+
         return $this->as(TextResult::class)->getContent();
     }
 

@@ -27,7 +27,7 @@ $messages = new MessageBag(
 $result = $platform->invoke('haiku', $messages, [
     'stream' => true,
     'permission_mode' => 'plan',
-    'max_turns' => 1,
+    'max_turns' => 3,
 ]);
 
 foreach ($result->asTextStream() as $delta) {

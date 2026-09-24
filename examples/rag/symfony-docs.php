@@ -51,7 +51,7 @@ $loader = new RstToctreeLoader(maxDepth: 2);
 $indexer = new SourceIndexer($loader, $processor);
 
 output()->writeln('Indexing Symfony docs — this will produce many chunks and use embedding API credits...');
-$indexer->index($docsDir.'/quick_tour/index.rst');
+$indexer->index($docsDir.'/console.rst');
 output()->writeln('<info>Indexing complete.</info>');
 
 // 3. Retrieve

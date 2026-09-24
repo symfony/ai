@@ -4,6 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/realtime/client_secrets",
+                "signature": "a96893cd6561d9ee45c641d3cb7e8342",
+                "signature_v2": "a35562260ca827de2e2642013f32f62d",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -12,16 +14,61 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"session\":{\"model\":\"gpt-4o-realtime-preview\",\"type\":\"realtime\",\"output_modalities\":[\"text\",\"audio\"],\"audio\":{\"output\":{\"voice\":\"alloy\"}},\"instructions\":\"You are a friendly assistant. Keep your answers short.\"}}"
+                "body": {
+                    "session": {
+                        "model": "gpt-realtime",
+                        "instructions": "You are a friendly assistant. Keep your answers short.",
+                        "type": "realtime",
+                        "output_modalities": [
+                            "audio"
+                        ],
+                        "audio": {
+                            "output": {
+                                "voice": "alloy"
+                            }
+                        }
+                    }
+                }
             },
             "response": {
                 "status": 200,
                 "headers": {
                     "content-type": [
                         "application/json"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "openai-version": [
+                        "2020-10-01"
+                    ],
+                    "openai-organization": [
+                        "[redacted]"
+                    ],
+                    "openai-project": [
+                        "[redacted]"
+                    ],
+                    "x-openai-proxy-wasm": [
+                        "v0.1"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "access-control-expose-headers": [
+                        "CF-Ray"
+                    ],
+                    "content-encoding": [
+                        "gzip"
                     ]
                 },
-                "body": "{\"client_secret\":{\"value\":\"ek_test_secret_1234567890\",\"expires_at\":1795000000},\"session\":{\"id\":\"sess_test_12345\",\"object\":\"realtime.session\",\"model\":\"gpt-4o-realtime-preview\",\"output_modalities\":[\"text\",\"audio\"],\"instructions\":\"You are a friendly assistant. Keep your answers short.\",\"audio\":{\"output\":{\"voice\":\"alloy\"}}}}"
+                "body_format": "json",
+                "body": "{\n  \"value\": \"ek_test_secret_1234567890\",\n  \"expires_at\": 1790125297,\n  \"session\": {\n    \"type\": \"realtime\",\n    \"object\": \"realtime.session\",\n    \"id\": \"sess_ER5UvcG1mFLvz2A8cwIdk\",\n    \"model\": \"gpt-realtime\",\n    \"output_modalities\": [\n      \"audio\"\n    ],\n    \"instructions\": \"You are a friendly assistant. Keep your answers short.\",\n    \"tools\": [],\n    \"tool_choice\": \"auto\",\n    \"max_output_tokens\": \"inf\",\n    \"tracing\": null,\n    \"truncation\": \"auto\",\n    \"prompt\": null,\n    \"expires_at\": 0,\n    \"audio\": {\n      \"input\": {\n        \"format\": {\n          \"type\": \"audio/pcm\",\n          \"rate\": 24000\n        },\n        \"transcription\": null,\n        \"noise_reduction\": null,\n        \"turn_detection\": {\n          \"type\": \"server_vad\",\n          \"threshold\": 0.5,\n          \"prefix_padding_ms\": 300,\n          \"silence_duration_ms\": 200,\n          \"idle_timeout_ms\": null,\n          \"create_response\": true,\n          \"interrupt_response\": true\n        }\n      },\n      \"output\": {\n        \"format\": {\n          \"type\": \"audio/pcm\",\n          \"rate\": 24000\n        },\n        \"voice\": \"alloy\",\n        \"speed\": 1.0\n      }\n    },\n    \"include\": null\n  }\n}"
             }
         }
     ]
