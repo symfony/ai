@@ -632,6 +632,9 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingDelta` -- a chunk of model reasoning
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingComplete` -- signals thinking is complete, includes accumulated thinking text and optional signature
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingSignature` -- a cryptographic signature for a thinking block
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryStart` -- signals the start of a commentary block, the model narrating what it is about to do
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryDelta` -- a chunk of that narration
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryComplete` -- signals commentary is complete, includes the accumulated narration
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallStart` -- signals the start of a tool call
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolInputDelta` -- a chunk of tool call input data
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete` -- signals all tool calls are complete and ready for execution

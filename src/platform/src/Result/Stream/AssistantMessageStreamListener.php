@@ -12,10 +12,14 @@
 namespace Symfony\AI\Platform\Result\Stream;
 
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -57,6 +61,8 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
 
     private ?int $openThinking = null;
 
+    private ?int $openCommentary = null;
+
     /**
      * Most recent thinking block, for providers that emit its signature after it closed.
      */
@@ -86,6 +92,7 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
         $this->toolCallSlots = [];
         $this->openThinking = null;
         $this->lastThinking = null;
+        $this->openCommentary = null;
     }
 
     /**
@@ -119,6 +126,27 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
             $this->content[$index] = new Thinking($delta->getThinking(), $delta->getSignature() ?? $thinking->getSignature());
             $this->openThinking = null;
             $this->lastThinking = $index;
+
+            return;
+        }
+
+        if ($delta instanceof CommentaryStart) {
+            $this->openCommentary();
+
+            return;
+        }
+
+        if ($delta instanceof CommentaryDelta) {
+            $index = $this->openCommentary ?? $this->openCommentary();
+            $this->content[$index] = new Commentary($this->commentaryAt($index)->getContent().$delta->getCommentary());
+
+            return;
+        }
+
+        if ($delta instanceof CommentaryComplete) {
+            $index = $this->openCommentary ?? $this->openCommentary();
+            $this->content[$index] = new Commentary($delta->getCommentary());
+            $this->openCommentary = null;
 
             return;
         }
@@ -201,6 +229,7 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
         }
 
         $this->openThinking = null;
+        $this->openCommentary = null;
 
         $index = array_key_last($this->content);
         $last = null === $index ? null : $this->content[$index];
@@ -238,6 +267,21 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
         $this->lastThinking = $index;
     }
 
+    private function openCommentary(): int
+    {
+        $this->content[] = new Commentary('');
+
+        return $this->openCommentary = array_key_last($this->content);
+    }
+
+    private function commentaryAt(int $index): Commentary
+    {
+        $commentary = $this->content[$index];
+        \assert($commentary instanceof Commentary);
+
+        return $commentary;
+    }
+
     private function openThinking(): int
     {
         $this->content[] = new Thinking('');
@@ -261,6 +305,10 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
 
         if ($part instanceof Text) {
             return '' === $part->getText();
+        }
+
+        if ($part instanceof Commentary) {
+            return '' === $part->getContent();
         }
 
         return false;
