@@ -4,6 +4,9 @@ UPGRADE FROM 0.13 to 0.14
 Agent
 -----
 
+ * Filesystem base directories must now exist at construction time.
+   `PathValidator::getBasePath()` now returns the canonical absolute path.
+
  * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns
    `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the
    retriever it reads from. Code narrowing the returned documents to the concrete class has to widen.
