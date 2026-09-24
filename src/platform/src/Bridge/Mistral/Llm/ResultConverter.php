@@ -13,12 +13,15 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Llm;
 
 use Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait;
 use Symfony\AI\Platform\Bridge\Generic\Completions\FinishReasonMapper;
+use Symfony\AI\Platform\Bridge\Mistral\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -42,6 +45,14 @@ final class ResultConverter implements ResultConverterInterface
     }
     use HttpStatusErrorHandlingTrait;
 
+    /**
+     * @param string $provider the name stamped onto the handles of the batches this converter starts
+     */
+    public function __construct(
+        private readonly string $provider = 'mistral',
+    ) {
+    }
+
     public function supports(Model $model): bool
     {
         return $model instanceof Mistral;
@@ -52,6 +63,11 @@ final class ResultConverter implements ResultConverterInterface
      */
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
+        // A batched invocation is answered with the job Mistral created, not with what it will produce.
+        if ($options[ModelClient::BATCH] ?? false) {
+            return $this->startBatch($result, $options);
+        }
+
         $httpResponse = $result->getObject();
 
         if (400 === $httpResponse->getStatusCode()) {
@@ -74,8 +90,17 @@ final class ResultConverter implements ResultConverterInterface
             return new StreamResult($this->convertStream($result));
         }
 
-        $data = $result->getData();
+        return $this->convertData($result->getData());
+    }
 
+    /**
+     * The result of one decoded chat completion, separate from receiving it so a batch can convert a
+     * whole file of them.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function convertData(array $data): ResultInterface
+    {
         if (!isset($data['choices'])) {
             throw new RuntimeException('Response does not contain choices.');
         }
@@ -162,6 +187,36 @@ final class ResultConverter implements ResultConverterInterface
             1 === \count($results) ? $results[0] : new MultiPartResult($results),
             FinishReasonMapper::map($choice['finish_reason'] ?? null),
         );
+    }
+
+    /**
+     * Mistral accepted the batch, so the invocation produces a reference to it rather than a result;
+     * resolving it is the job of {@see JobClient}.
+     *
+     * @param array<string, mixed> $options
+     */
+    private function startBatch(RawResultInterface|RawHttpResult $result, array $options): JobResult
+    {
+        $this->throwOnHttpError($result->getObject());
+
+        $data = $result->getData();
+        $id = $data['id'] ?? null;
+
+        if (!\is_string($id) || '' === $id) {
+            throw new RuntimeException('The Mistral response does not contain a batch identifier.');
+        }
+
+        $endpoint = $data['endpoint'] ?? null;
+        $timeoutHours = $options[ModelClient::TIMEOUT_HOURS] ?? null;
+
+        // The job states the timeout it was asked for nowhere in its own representation, so the
+        // longest the batch may take is carried over from the request that started it.
+        $maxDuration = \is_int($timeoutHours) && 0 < $timeoutHours ? $timeoutHours * 3600 : JobClient::DEFAULT_MAX_DURATION;
+
+        return new JobResult(new JobHandle($id, [
+            'kind' => JobClient::KIND,
+            'endpoint' => \is_string($endpoint) ? $endpoint : ModelClient::PATH,
+        ], $this->provider, $maxDuration, JobClient::DEFAULT_POLL_INTERVAL));
     }
 
     /**

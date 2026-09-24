@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add batch support on top of asynchronous jobs: `$platform->invoke($model, $inputs, ['batch' => true])->asJob()` submits many inputs as one Mistral batch job, resolved by `Batch\JobClient` (created through `Factory::createJobClient()`) into a `BatchResult` of `BatchItem`s, with `timeout_hours` shortening the window the job is given
  * Add model information to token usage extraction
 
 0.13
