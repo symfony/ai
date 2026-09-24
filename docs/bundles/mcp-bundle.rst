@@ -3,7 +3,7 @@ MCP Bundle
 
 Symfony integration bundle for `Model Context Protocol`_ using the official MCP SDK `mcp/sdk`_.
 
-Supports MCP capabilities (tools, prompts, resources) as server via HTTP transport and STDIO. Resource templates implementation ready but awaiting MCP SDK support.
+Supports MCP capabilities (tools, prompts, resources, resource templates) as server via HTTP transport and STDIO.
 
 Installation
 ------------
@@ -180,14 +180,7 @@ Static data that can be read::
 Resource Templates
 ^^^^^^^^^^^^^^^^^^
 
-Dynamic resources with parameters:
-
-.. note::
-
-    Resource Templates are not yet functional as the underlying MCP SDK is missing the required handlers.
-    See `MCP SDK issue #9 <https://github.com/modelcontextprotocol/php-sdk/issues/9>`_ for implementation status.
-
-::
+Dynamic resources with parameters::
 
     use Mcp\Capability\Attribute\McpResourceTemplate;
 
@@ -660,7 +653,9 @@ To use a custom cache backend, you need to configure a PSR-16 cache service in y
 This allows you to store sessions in Redis, a SQL database via Doctrine, or any other PSR-6 cache adapter.
 See the `Symfony Cache documentation`_ for more details on configuring cache pools.
 
-**Framework Storage** - Uses Symfony's ``SessionHandlerInterface`` for session persistence::
+**Framework Storage** - Uses Symfony's ``SessionHandlerInterface`` for session persistence:
+
+.. code-block:: yaml
 
     mcp:
         servers:

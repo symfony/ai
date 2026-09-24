@@ -247,7 +247,7 @@ Configure multiple providers in the same application:
                     api_key: '%env(DEEPSEEK_API_KEY)%'
                     model_catalog: 'app.model_catalog.deepseek'
                 groq:
-                    base_url: 'https://api.groq.com/openai/v1'
+                    base_url: 'https://api.groq.com/openai'
                     api_key: '%env(GROQ_API_KEY)%'
                     model_catalog: 'app.model_catalog.groq'
 

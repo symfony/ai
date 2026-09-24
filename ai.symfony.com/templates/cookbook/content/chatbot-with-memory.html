@@ -171,13 +171,15 @@ semantic similarity:</p>
                     <div class="linenodiv">
                         <pre>1
 2
-3</pre>
+3
+4</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Memory</span>\<span class="hljs-title">EmbeddingProvider</span>;
 
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>model</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>-&gt;<span class="hljs-title invoke__">getModelCatalog</span>()-&gt;<span class="hljs-title invoke__">getModel</span>(<span class="hljs-string">'text-embedding-3-small'</span>);
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>embeddingsMemory</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">EmbeddingProvider</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>model</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span>);</pre>
                     </div>
                 </td>

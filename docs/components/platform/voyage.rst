@@ -43,11 +43,10 @@ Basic multimodal embedding usage example::
 
     $platform = Factory::createPlatform($_ENV['VOYAGE_API_KEY'], $httpClient);
 
-    $result = $platform->invoke(
-        'voyage-multimodal-3',
+    $result = $platform->invoke('voyage-multimodal-3', [
         new ImageUrl('https://example.com/image1.jpg'),
-        new Collection(new Text('Hello, world!'), new ImageUrl('https://example.com/image2.jpg'))
-    );
+        new Collection(new Text('Hello, world!'), new ImageUrl('https://example.com/image2.jpg')),
+    ]);
 
     $vectors = $result->asVectors();
 

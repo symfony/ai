@@ -720,7 +720,7 @@ Vector storage using `Azure AI Search`_.
 
 .. note::
 
-    This is the only store that does not implement
+    Like Supabase, this store does not implement
     :class:`Symfony\\AI\\Store\\ManagedStoreInterface`: the index has to be created upfront,
     ``ai:store:setup`` does not work for it.
 

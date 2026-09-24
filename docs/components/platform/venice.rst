@@ -153,7 +153,7 @@ tokens are also exposed via ``TokenUsage::getThinkingTokens()``::
         'stream' => true,
     ]);
 
-    foreach ($result->getContent() as $chunk) {
+    foreach ($result->asStream() as $chunk) {
         if ($chunk instanceof Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta) {
             echo '[thinking] '.$chunk->getThinking();
         }

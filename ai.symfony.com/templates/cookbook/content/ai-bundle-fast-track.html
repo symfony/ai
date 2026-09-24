@@ -232,7 +232,7 @@ specific one with the <code translate="no" class="notranslate">ai.agent.&lt;name
             <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
         <span class="hljs-attr">researcher:</span>
             <span class="hljs-attr">platform:</span> <span class="hljs-string">'ai.platform.anthropic'</span>
-            <span class="hljs-attr">model:</span> <span class="hljs-string">'claude-3-7-sonnet-latest'</span></pre>
+            <span class="hljs-attr">model:</span> <span class="hljs-string">'claude-sonnet-4-5'</span></pre>
                     </div>
                 </td>
             </tr>
@@ -545,7 +545,7 @@ infrastructure and run the indexer from the console:</p>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>php bin/console ai:store:setup chromadb.knowledge_base
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>php bin/console ai:store:setup ai.store.chromadb.knowledge_base
 <span class="hljs-prompt">$ </span>php bin/console ai:store:index docs --<span class="hljs-built_in">source</span>=/path/to/document.txt</pre>
                     </div>
                 </td>

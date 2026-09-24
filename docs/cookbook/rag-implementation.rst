@@ -68,11 +68,12 @@ Step 3: Create Embeddings and Index Documents
 
 Use a vectorizer to convert documents into embeddings and store them::
 
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
     use Symfony\AI\Store\Document\Vectorizer;
     use Symfony\AI\Store\Indexer\DocumentIndexer;
     use Symfony\AI\Store\Indexer\DocumentProcessor;
 
-    $platform = Factory::createPlatform(env('OPENAI_API_KEY'));
+    $platform = Factory::createPlatform($apiKey);
     $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
     $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store));
     $indexer->index($documents);
@@ -120,16 +121,11 @@ You can customize the result header by passing a prompt template::
 Step 5: Create RAG-Enabled Agent
 --------------------------------
 
-Configure the agent with the similarity search processor::
+Configure the agent with the toolbox::
 
     use Symfony\AI\Agent\Agent;
 
-    $agent = new Agent(
-        $platform,
-        'gpt-4o-mini',
-        [$processor],  // Input processors
-        [$processor]   // Output processors
-    );
+    $agent = new Agent($platform, 'gpt-4o-mini', toolbox: $toolbox);
 
 The agent will automatically use the similarity search tool when needed.
 
