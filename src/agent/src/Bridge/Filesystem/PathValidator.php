@@ -20,17 +20,26 @@ use Symfony\AI\Agent\Bridge\Filesystem\Exception\PathSecurityException;
  */
 final class PathValidator
 {
+    private readonly string $basePath;
+
     /**
      * @param list<string> $allowedExtensions Extensions that are allowed (e.g., ['txt', 'md']). Empty means all allowed.
      * @param list<string> $deniedExtensions  Extensions that are denied (e.g., ['php', 'exe']).
      * @param list<string> $deniedPatterns    Glob patterns for files to deny (e.g., ['.*', '*.env*']).
      */
     public function __construct(
-        private readonly string $basePath,
+        string $basePath,
         private readonly array $allowedExtensions = [],
         private readonly array $deniedExtensions = ['php', 'phar', 'sh', 'exe', 'bat'],
         private readonly array $deniedPatterns = ['.*', '*.env*'],
     ) {
+        $realBasePath = realpath($basePath);
+
+        if (false === $realBasePath || !is_dir($realBasePath)) {
+            throw new PathSecurityException(\sprintf('Base path "%s" does not exist or is not a directory.', $basePath));
+        }
+
+        $this->basePath = $realBasePath;
     }
 
     /**

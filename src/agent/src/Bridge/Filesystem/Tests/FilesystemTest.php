@@ -175,6 +175,43 @@ class FilesystemTest extends TestCase
         $filesystem->move('sample.txt', 'moved.txt');
     }
 
+    public function testRelativeBaseRemainsAnchoredWhenMoveChangesWorkingDirectory()
+    {
+        $outsidePath = $this->tempPath.'-outside';
+        $workingPath = $this->tempPath.'/nested/runtime';
+        $originalWorkingDirectory = getcwd();
+
+        $this->symfonyFilesystem->mkdir([$workingPath, $outsidePath]);
+
+        try {
+            chdir($workingPath);
+
+            $filesystem = new Filesystem($this->symfonyFilesystem, '../..');
+            $outsideFile = $outsidePath.'/escaped.txt';
+            $assertOutsideMoveIsBlocked = function () use ($filesystem, $outsideFile): void {
+                try {
+                    $filesystem->move($this->tempPath.'/sample.txt', $outsideFile);
+                    $this->fail('Moving a file outside the base path should not be possible.');
+                } catch (PathSecurityException $e) {
+                    $this->assertStringContainsString('outside the allowed base path', $e->getMessage());
+                }
+            };
+
+            $assertOutsideMoveIsBlocked();
+            $filesystem->move($workingPath, $this->tempPath.'/runtime');
+            $assertOutsideMoveIsBlocked();
+
+            $this->assertFileExists($this->tempPath.'/sample.txt');
+            $this->assertFileDoesNotExist($outsideFile);
+        } finally {
+            if (false !== $originalWorkingDirectory) {
+                chdir($originalWorkingDirectory);
+            }
+
+            $this->symfonyFilesystem->remove($outsidePath);
+        }
+    }
+
     public function testDelete()
     {
         $filesystem = $this->createFilesystem(allowDelete: true);
