@@ -29,14 +29,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
-    private readonly string $endpoint;
-
     /**
-     * @param string $endpoint URL of the ManticoreSearch instance, with or without a trailing slash
+     * @param HttpClientInterface $httpClient HTTP client scoped to the ManticoreSearch instance, see {@see StoreFactory}
      */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        string $endpoint,
         private readonly string $table,
         private readonly string $field = '_vectors',
         private readonly string $type = 'hnsw',
@@ -44,7 +41,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly int $dimensions = 1536,
         private readonly string $quantization = '8bit',
     ) {
-        $this->endpoint = rtrim($endpoint, '/');
     }
 
     public function setup(array $options = []): void
@@ -195,7 +191,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             default => throw new InvalidArgumentException(\sprintf('The endpoint "%s" is not supported', $route)),
         };
 
-        $response = $this->httpClient->request('POST', \sprintf('%s/%s', $this->endpoint, $route), $options);
+        $response = $this->httpClient->request('POST', $route, $options);
 
         return 'cli' === $route ? [
             'result' => $response->getContent(),

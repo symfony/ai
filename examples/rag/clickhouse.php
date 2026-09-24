@@ -16,23 +16,23 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\ClickHouse\Store;
+use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\Retriever;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(
-    HttpClient::createForBaseUri('http://symfony:symfony@127.0.0.1:8123'),
-    'symfony',
-    'symfony',
+$store = StoreFactory::create(
+    databaseName: 'symfony',
+    tableName: 'symfony',
+    dsn: 'http://symfony:symfony@127.0.0.1:8123',
+    httpClient: http_client(),
 );
 
 // initialize the index

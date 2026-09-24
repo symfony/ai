@@ -35,8 +35,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -68,8 +66,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -79,28 +75,6 @@ final class StoreTest extends TestCase
         ]);
 
         $this->assertSame(2, $httpClient->getRequestsCount());
-    }
-
-    public function testStoreNormalizesTrailingSlashOnEndpoint()
-    {
-        $requestedUrl = null;
-        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedUrl): JsonMockResponse {
-            $requestedUrl = $url;
-
-            return new JsonMockResponse(['code' => 0, 'data' => []]);
-        });
-
-        $store = new Store(
-            $httpClient,
-            'http://127.0.0.1:19530/',
-            'test',
-            'test',
-            'test',
-        );
-
-        $store->drop();
-
-        $this->assertSame('http://127.0.0.1:19530/v2/vectordb/databases/drop', $requestedUrl);
     }
 
     public function testStoreCannotDropOnInvalidResponse()
@@ -113,8 +87,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -138,8 +110,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -159,8 +129,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -190,8 +158,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -211,8 +177,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -250,8 +214,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );
@@ -271,7 +233,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse(['code' => 0], ['http_code' => 200]);
         }, 'http://127.0.0.1:19530');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:19530', 'test', 'test', 'test_collection');
+        $store = new Store($httpClient, 'test', 'test_collection');
         $store->remove('abc');
 
         $this->assertSame('id in ["abc"]', $body['filter']);
@@ -286,7 +248,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse(['code' => 0], ['http_code' => 200]);
         }, 'http://127.0.0.1:19530');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:19530', 'test', 'test', 'test_collection');
+        $store = new Store($httpClient, 'test', 'test_collection');
 
         // A trailing backslash must not escape the closing quote of the string literal.
         $store->remove(['a\\', ' or id != "x']);
@@ -305,7 +267,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse(['code' => 0], ['http_code' => 200]);
         }, 'http://127.0.0.1:19530');
 
-        $store = new Store($httpClient, 'http://127.0.0.1:19530', 'test', 'test', 'test_collection');
+        $store = new Store($httpClient, 'test', 'test_collection');
         $store->clear();
 
         $this->assertSame('http://127.0.0.1:19530/v2/vectordb/entities/delete', $requestedUrl);
@@ -315,19 +277,19 @@ final class StoreTest extends TestCase
 
     public function testStoreSupportsVectorQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:19530', 'test-api-key', 'default', 'test_collection');
+        $store = new Store(new MockHttpClient(), 'default', 'test_collection');
         $this->assertTrue($store->supports(VectorQuery::class));
     }
 
     public function testStoreDoesNotSupportTextQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:19530', 'test-api-key', 'default', 'test_collection');
+        $store = new Store(new MockHttpClient(), 'default', 'test_collection');
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $store = new Store(new MockHttpClient(), 'http://localhost:19530', 'test-api-key', 'default', 'test_collection');
+        $store = new Store(new MockHttpClient(), 'default', 'test_collection');
         $this->assertFalse($store->supports(HybridQuery::class));
     }
 
@@ -348,8 +310,6 @@ final class StoreTest extends TestCase
 
         $store = new Store(
             $httpClient,
-            'http://127.0.0.1:19530',
-            'test',
             'test',
             'test',
         );

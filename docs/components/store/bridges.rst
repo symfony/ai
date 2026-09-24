@@ -15,6 +15,13 @@ page linked from their section.
     during queries, so they can only be used when the dataset fits into the PHP memory limit.
     They are meant for development and testing.
 
+.. note::
+
+    The HTTP-based stores (ClickHouse, Elasticsearch, ManticoreSearch, Milvus, Neo4j, OpenSearch
+    and Supabase) use the framework ``http_client`` service by default. Their ``http_client``
+    option accepts another service ID, which then replaces the endpoint and credentials, or is
+    scoped to the endpoint when both are configured. Credentials always require the endpoint.
+
 Local Stores
 ------------
 
@@ -239,13 +246,11 @@ Vector storage using `Supabase`_ with the ``pgvector`` extension through the RES
 
 ::
 
-    use Symfony\AI\Store\Bridge\Supabase\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\Supabase\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'https://your-project.supabase.co',
-        'your-anon-key',
+    $store = StoreFactory::create(
+        endpoint: 'https://your-project.supabase.co',
+        apiKey: 'your-anon-key',
         table: 'documents',
         vectorFieldName: 'embedding',
         vectorDimension: 768,
@@ -261,6 +266,8 @@ Vector storage using `Supabase`_ with the ``pgvector`` extension through the RES
                 my_store:
                     url: 'https://your-project.supabase.co'
                     api_key: '%env(SUPABASE_API_KEY)%'
+                    # or a pre-scoped HTTP client service instead of url and api_key:
+                    # http_client: 'app.supabase_client'
                     table: 'documents'
                     vector_field: 'embedding'
                     vector_dimension: 768
@@ -282,13 +289,11 @@ Vector storage using the ``dense_vector`` field type of `Elasticsearch`_.
 
 The index is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\Elasticsearch\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'https://localhost:9200',
+    $store = StoreFactory::create(
         'my_documents',
+        'https://localhost:9200',
         vectorsField: '_vectors',
         dimensions: 1536,
         similarity: 'cosine',
@@ -302,6 +307,8 @@ The index is created by ``setup()``::
             elasticsearch:
                 my_store:
                     endpoint: '%env(ELASTICSEARCH_URL)%'
+                    # or a pre-scoped HTTP client service instead of an endpoint:
+                    # http_client: 'app.elasticsearch_client'
                     index_name: 'my_documents'
                     vectors_field: '_vectors'
                     dimensions: 1536
@@ -318,13 +325,11 @@ Vector storage using the k-NN plugin of `OpenSearch`_.
 
 The index is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\OpenSearch\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'https://localhost:9200',
+    $store = StoreFactory::create(
         'my_documents',
+        'https://localhost:9200',
         vectorsField: '_vectors',
         dimensions: 1536,
         spaceType: 'cosinesimil',
@@ -338,6 +343,8 @@ The index is created by ``setup()``::
             opensearch:
                 my_store:
                     endpoint: '%env(OPENSEARCH_URL)%'
+                    # or a pre-scoped HTTP client service instead of an endpoint:
+                    # http_client: 'app.opensearch_client'
                     index_name: 'my_documents'
                     vectors_field: '_vectors'
                     dimensions: 1536
@@ -354,13 +361,11 @@ Vector storage using `ManticoreSearch`_ with HNSW-based similarity search.
 
 The table is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\ManticoreSearch\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\ManticoreSearch\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'http://localhost:9308',
+    $store = StoreFactory::create(
         'documents',
+        'http://localhost:9308',
         field: '_vectors',
         type: 'hnsw',
         similarity: 'cosine',
@@ -376,6 +381,8 @@ The table is created by ``setup()``::
             manticoresearch:
                 my_store:
                     endpoint: '%env(MANTICORESEARCH_URL)%'
+                    # or a pre-scoped HTTP client service instead of an endpoint:
+                    # http_client: 'app.manticoresearch_client'
                     table: 'documents'
                     field: '_vectors'
                     type: 'hnsw'
@@ -504,15 +511,13 @@ Vector storage using `Milvus`_.
 
 The collection is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\Milvus\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\Milvus\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'http://localhost:19530',
-        'your-api-key',
+    $store = StoreFactory::create(
         'my_database',
         'my_documents',
+        'http://localhost:19530',
+        'your-api-key',
         vectorFieldName: '_vectors',
         dimensions: 1536,
         metricType: 'COSINE',
@@ -527,6 +532,8 @@ The collection is created by ``setup()``::
                 my_store:
                     endpoint: '%env(MILVUS_URL)%'
                     api_key: '%env(MILVUS_API_KEY)%'
+                    # or a pre-scoped HTTP client service instead of endpoint and api_key:
+                    # http_client: 'app.milvus_client'
                     database: 'my_database'
                     collection: 'my_documents'
                     vector_field: '_vectors'
@@ -794,15 +801,14 @@ Vector storage using `ClickHouse`_.
 
     $ composer require symfony/ai-click-house-store
 
-The table is created by ``setup()``. The HTTP client has to be scoped to the ClickHouse DSN::
+The table is created by ``setup()``. Credentials can be passed as part of the DSN::
 
-    use Symfony\AI\Store\Bridge\ClickHouse\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory;
 
-    $store = new Store(
-        HttpClient::createForBaseUri('http://default:password@localhost:8123'),
+    $store = StoreFactory::create(
         databaseName: 'default',
         tableName: 'documents',
+        dsn: 'http://default:password@localhost:8123',
     );
 
 .. code-block:: yaml
@@ -813,6 +819,8 @@ The table is created by ``setup()``. The HTTP client has to be scoped to the Cli
             clickhouse:
                 my_store:
                     dsn: '%env(CLICKHOUSE_URL)%'
+                    # or a pre-scoped HTTP client service instead of a dsn:
+                    # http_client: 'app.clickhouse_client'
                     database: 'default'
                     table: 'documents'
 
@@ -827,17 +835,15 @@ Vector storage using the vector index of `Neo4j`_.
 
 The vector index is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\Neo4j\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\Neo4j\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'http://localhost:7474',
-        'neo4j',
-        'your-password',
+    $store = StoreFactory::create(
         'neo4j',
         'document_embeddings',
         'Document',
+        'http://localhost:7474',
+        'neo4j',
+        'your-password',
         embeddingsField: 'embeddings',
         embeddingsDimension: 1536,
         embeddingsDistance: 'cosine',
@@ -853,6 +859,8 @@ The vector index is created by ``setup()``::
                     endpoint: '%env(NEO4J_URL)%'
                     username: '%env(NEO4J_USERNAME)%'
                     password: '%env(NEO4J_PASSWORD)%'
+                    # or a pre-scoped HTTP client service instead of endpoint and credentials:
+                    # http_client: 'app.neo4j_client'
                     database: 'neo4j'
                     vector_index_name: 'document_embeddings'
                     node_name: 'Document'

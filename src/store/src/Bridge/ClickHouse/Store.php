@@ -177,7 +177,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['query']['param_'.$key] = $value;
         }
 
-        return $this->httpClient->request($method, '/', $options);
+        return $this->httpClient->request($method, '', $options);
     }
 
     /**
@@ -208,7 +208,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ];
 
-        $response = $this->httpClient->request('POST', '/', $options);
+        $response = $this->httpClient->request('POST', '', $options);
 
         if (200 !== $response->getStatusCode()) {
             $content = $response->getContent(false);

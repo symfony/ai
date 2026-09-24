@@ -32,11 +32,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
 {
     private const BATCH_SIZE = 10000;
 
+    /**
+     * @param HttpClientInterface $httpClient HTTP client scoped to the Neo4j instance, see {@see StoreFactory}
+     */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly string $endpointUrl,
-        private readonly string $username,
-        #[\SensitiveParameter] private readonly string $password,
         private readonly string $databaseName,
         private readonly string $vectorIndexName,
         private readonly string $nodeName,
@@ -172,12 +172,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *
      * @return array<string, mixed>
      */
-    private function request(string $method, string $endpoint, array $payload = []): array
+    private function request(string $method, string $path, array $payload = []): array
     {
-        $url = \sprintf('%s/%s', $this->endpointUrl, $endpoint);
-
-        $response = $this->httpClient->request($method, $url, [
-            'auth_basic' => \sprintf('%s:%s', $this->username, $this->password),
+        $response = $this->httpClient->request($method, $path, [
             'json' => $payload,
         ]);
 

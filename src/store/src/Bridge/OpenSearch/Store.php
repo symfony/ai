@@ -30,25 +30,21 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
-    private readonly string $endpoint;
-
     /**
-     * @param string $endpoint URL of the OpenSearch instance, with or without a trailing slash
+     * @param HttpClientInterface $httpClient HTTP client scoped to the OpenSearch instance, see {@see StoreFactory}
      */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        string $endpoint,
         private readonly string $indexName,
         private readonly string $vectorsField = '_vectors',
         private readonly int $dimensions = 1536,
         private readonly string $spaceType = 'l2',
     ) {
-        $this->endpoint = rtrim($endpoint, '/');
     }
 
     public function setup(array $options = []): void
     {
-        $indexExistResponse = $this->httpClient->request('HEAD', \sprintf('%s/%s', $this->endpoint, $this->indexName));
+        $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (200 === $indexExistResponse->getStatusCode()) {
             return;
@@ -72,7 +68,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $indexExistResponse = $this->httpClient->request('HEAD', \sprintf('%s/%s', $this->endpoint, $this->indexName));
+        $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (404 === $indexExistResponse->getStatusCode()) {
             throw new InvalidArgumentException(\sprintf('The index "%s" does not exist.', $this->indexName));
@@ -202,7 +198,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ];
         }
 
-        $response = $this->httpClient->request($method, \sprintf('%s/%s', $this->endpoint, $path), $finalOptions);
+        $response = $this->httpClient->request($method, $path, $finalOptions);
 
         return $response->toArray();
     }
