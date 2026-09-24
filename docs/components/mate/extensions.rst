@@ -107,9 +107,10 @@ Container Introspection
     cache directories the services are grouped by context.
 
 ``symfony-service-detail``
-    Show one service by its exact ``id``: class, tags, method calls and constructor or factory
-    information. Accepts ``context`` as well, and reports the ``context`` the service was found
-    in.
+    Show one service by its exact ``id``: class, tags, method calls, constructor or factory
+    information and the definition flags ``debug:container`` reports (``public``, ``synthetic``,
+    ``lazy``, ``shared``, ``abstract``, ``autowire``, ``autoconfigure``). Accepts ``context`` as
+    well, and reports the ``context`` the service was found in.
 
 Both tools fail with a clear error when no container was dumped yet. They never answer as if
 nothing matched.

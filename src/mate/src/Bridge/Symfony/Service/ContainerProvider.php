@@ -125,6 +125,13 @@ class ContainerProvider
                     $serviceTags,
                     $constructor,
                     $this->parseArguments($def),
+                    public: 'true' === (string) $attrs->public,
+                    synthetic: 'true' === (string) $attrs->synthetic,
+                    lazy: 'true' === (string) $attrs->lazy,
+                    shared: 'false' !== (string) $attrs->shared,
+                    abstract: 'true' === (string) $attrs->abstract,
+                    autowired: 'true' === (string) $attrs->autowire,
+                    autoconfigured: 'true' === (string) $attrs->autoconfigure,
                 );
 
                 if (null === $service->getAlias()) {
@@ -149,6 +156,13 @@ class ContainerProvider
                 $services[$alias]->getTags(),
                 $services[$alias]->getConstructor(),
                 $services[$alias]->getArguments(),
+                public: $service->isPublic(),
+                synthetic: $services[$alias]->isSynthetic(),
+                lazy: $services[$alias]->isLazy(),
+                shared: $services[$alias]->isShared(),
+                abstract: $services[$alias]->isAbstract(),
+                autowired: $services[$alias]->isAutowired(),
+                autoconfigured: $services[$alias]->isAutoconfigured(),
             );
         }
 

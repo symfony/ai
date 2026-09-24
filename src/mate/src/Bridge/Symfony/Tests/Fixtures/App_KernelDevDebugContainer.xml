@@ -17,8 +17,13 @@
         <service id="router" class="Symfony\Component\Routing\Router">
             <factory class="RouterFactory" method="create"/>
         </service>
-        <service id="app.event_listener" class="App\EventListener\RequestListener">
+        <service id="app.event_listener" class="App\EventListener\RequestListener" lazy="true" shared="false" autowire="true" autoconfigure="true">
             <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest"/>
         </service>
+        <service id="App\Entity\Product" class="App\Entity\Product" abstract="true">
+            <tag name="container.excluded"/>
+        </service>
+        <service id="kernel" class="App\Kernel" public="true" synthetic="true"/>
+        <service id="app.public_listener_alias" alias="app.event_listener" public="true"/>
     </services>
 </container>

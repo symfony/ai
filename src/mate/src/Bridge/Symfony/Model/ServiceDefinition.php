@@ -37,6 +37,13 @@ class ServiceDefinition
         private readonly array $tags,
         private readonly array $constructor,
         private readonly array $arguments = [],
+        private readonly bool $public = false,
+        private readonly bool $synthetic = false,
+        private readonly bool $lazy = false,
+        private readonly bool $shared = true,
+        private readonly bool $abstract = false,
+        private readonly bool $autowired = false,
+        private readonly bool $autoconfigured = false,
     ) {
     }
 
@@ -91,5 +98,40 @@ class ServiceDefinition
     public function getArguments(): array
     {
         return $this->arguments;
+    }
+
+    public function isPublic(): bool
+    {
+        return $this->public;
+    }
+
+    public function isSynthetic(): bool
+    {
+        return $this->synthetic;
+    }
+
+    public function isLazy(): bool
+    {
+        return $this->lazy;
+    }
+
+    public function isShared(): bool
+    {
+        return $this->shared;
+    }
+
+    public function isAbstract(): bool
+    {
+        return $this->abstract;
+    }
+
+    public function isAutowired(): bool
+    {
+        return $this->autowired;
+    }
+
+    public function isAutoconfigured(): bool
+    {
+        return $this->autoconfigured;
     }
 }
