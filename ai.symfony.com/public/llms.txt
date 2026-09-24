@@ -55,9 +55,14 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [Voyage AI](https://symfony.com/doc/current/ai/components/platform/voyage.html): Voyage AI embedding platform
 - [TypeSafe](https://symfony.com/doc/current/ai/components/platform/typesafe.html): TypeSafe Jev platform for typed decisions (noul, choice and score questions)
 - [Eden AI](https://symfony.com/doc/current/ai/components/platform/edenai.html): Eden AI gateway for chat, embeddings, OCR, document parsing, speech and image models across many providers
+- [Albert](https://symfony.com/doc/current/ai/components/platform/albert.html): Albert, the sovereign AI gateway of the French public administration (OpenAI-compatible)
+- [AWS Bedrock](https://symfony.com/doc/current/ai/components/platform/bedrock.html): AWS Bedrock bridge covering both the InvokeModel API and Bedrock Mantle (OpenAI-compatible and Anthropic Messages routes)
+- [Venice AI](https://symfony.com/doc/current/ai/components/platform/venice.html): Venice AI platform for chat, embeddings, speech, image and video generation
 - [Deepgram](https://symfony.com/doc/current/ai/components/platform/deepgram.html): Deepgram speech-to-text (STT) and text-to-speech (TTS) bridge over the Deepgram REST endpoints
 - [Agent Component](https://symfony.com/doc/current/ai/components/agent.html): Framework for building AI agents with tool calling, memory, and multi-step reasoning
+- [Built-in Tools](https://symfony.com/doc/current/ai/components/agent/tools.html): Ready-made agent tool bridges (web search, content, MCP, and more) with install commands
 - [Store Component](https://symfony.com/doc/current/ai/components/store.html): Vector database abstraction for RAG with 20+ store backends
+- [Store Bridges](https://symfony.com/doc/current/ai/components/store/bridges.html): All store bridges with package name, standalone setup, and AI Bundle configuration
 - [Local Stores](https://symfony.com/doc/current/ai/components/store/local.html): InMemory and PSR-6 Cache store backends
 - [MongoDB Bridge](https://symfony.com/doc/current/ai/components/store/mongodb.html): MongoDB Atlas Vector Search bridge for vector storage and similarity search
 - [S3 Vectors](https://symfony.com/doc/current/ai/components/store/s3-vectors.html): AWS S3 Vectors bridge for vector storage
@@ -81,6 +86,7 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [Dynamic Tools](https://symfony.com/doc/current/ai/cookbook/dynamic-tools.html): Add, remove, and rename agent tools at runtime with a dynamic toolbox
 - [Human in the Loop](https://symfony.com/doc/current/ai/cookbook/human-in-the-loop.html): Require human approval before an agent executes sensitive tool calls
 - [Multi-Agent Orchestration](https://symfony.com/doc/current/ai/cookbook/multi-agent-orchestration.html): Route questions to specialist agents with a central orchestrator
+- [Generator and Reviewer Loop](https://symfony.com/doc/current/ai/cookbook/generator-reviewer-loop.html): Pair a generating agent with a reviewing agent that validates its findings over several iterations
 - [Runtime-driven Tool Parameters](https://symfony.com/doc/current/ai/cookbook/runtime-driven-tool-parameters.html): Constrain tool parameters and structured output with values from env, a database, or services
 - [Chatbot with Memory](https://symfony.com/doc/current/ai/cookbook/chatbot-with-memory.html): Give an agent memory of user facts for personalized conversations
 - [Context Compression](https://symfony.com/doc/current/ai/cookbook/context-compression.html): Keep long conversations within context limits using a sliding window or summarization
@@ -96,10 +102,10 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 ## Components
 
 ### Platform
-Unified abstraction for interacting with different AI models and providers. Install with `composer require symfony/ai-platform`. Supports model inference, streaming, multi-modal input (text, images, audio, PDFs), structured output, and token usage tracking. Each AI provider has a dedicated bridge that can be installed independently (e.g. `symfony/ai-open-ai-platform`, `symfony/ai-anthropic-platform`), plus infrastructure bridges for caching, failover, and generic OpenAI-compatible endpoints.
+Unified abstraction for interacting with different AI models and providers. Install with `composer require symfony/ai-platform`. Supports model inference, streaming, multi-modal input (text, images, audio, PDFs), structured output, token usage tracking, asynchronous jobs, and batch requests. Each AI provider has a dedicated bridge that can be installed independently (e.g. `symfony/ai-open-ai-platform`, `symfony/ai-anthropic-platform`), plus infrastructure bridges for caching, failover, and generic OpenAI-compatible endpoints.
 
 ### Agent
-Framework for building AI agents that interact with users and perform multi-step tasks. Install with `composer require symfony/ai-agent`. Features tool calling with automatic schema generation from PHP classes via `#[AsTool]` attribute, input/output processor pipeline, memory system with embedding support, structured output, and subagent composition for hierarchical task delegation. Includes built-in tool bridges for Wikipedia, YouTube, Brave Search, Tavily, SerpApi, Firecrawl, Filesystem, Clock, Mapbox, Ollama Web Search, OpenMeteo, Web Scraper, and SimilaritySearch.
+Framework for building AI agents that interact with users and perform multi-step tasks. Install with `composer require symfony/ai-agent`. Features tool calling with automatic schema generation from PHP classes via `#[AsTool]` attribute, input/output processor pipeline, memory system with embedding support, structured output, and subagent composition for hierarchical task delegation. Includes built-in tool bridges for Wikipedia, YouTube, Brave Search, Tavily, SerpApi, Firecrawl, Filesystem, Clock, Mapbox, Ollama Web Search, OpenMeteo, Web Scraper, and SimilaritySearch, plus an MCP bridge that exposes the tools of remote MCP servers to an agent.
 
 ### Store
 Low-level abstraction for storing and retrieving documents in vector databases. Install with `composer require symfony/ai-store`. Provides document vectorization, indexing, and semantic similarity retrieval for RAG applications. Supports 20+ backends including PostgreSQL, MongoDB, Pinecone, Qdrant, Weaviate, Meilisearch, ChromaDB, and more.
@@ -108,17 +114,17 @@ Low-level abstraction for storing and retrieving documents in vector databases. 
 High-level API for building chats with agents and managing conversation history. Install with `composer require symfony/ai-chat`. Supports streaming, automatic conversation history persistence, and multiple message store backends (Redis, MongoDB, Doctrine, Meilisearch, SurrealDB, Cloudflare, Pogocache, PSR-6 Cache, and Session).
 
 ### Mate
-Command-line development assistant for AI assistants. Install with `composer require --dev symfony/ai-mate`, then run `vendor/bin/mate init`. Exposes project-aware development tools to coding agents (Claude Code, Codex, Cursor, …) as plain commands — `tools:list`, `tools:inspect`, `tools:call`, `resources:read`, `debug:*`, `skills:list` — with `--format=json` for machine-readable output. Tool schemas are read on demand instead of being loaded up front. Supports auto-discovery of extensions (such as `symfony/ai-symfony-mate-extension` and `symfony/ai-monolog-mate-extension`) and ships an optional Composer plugin that refreshes extension discovery after `composer install`/`update`. Development tool, not intended for production use.
+Command-line development assistant for AI assistants. Install with `composer require --dev symfony/ai-mate`, then run `vendor/bin/mate init`. Exposes project-aware development tools to coding agents (Claude Code, Codex, Cursor, …) as plain commands — `tools:list`, `tools:inspect`, `tools:call`, `resources:read`, `debug:*`, `skills:list` — with `--format=json` for machine-readable output. Tool schemas are read on demand instead of being loaded up front. Supports auto-discovery of extensions (such as `symfony/ai-symfony-mate-extension` and `symfony/ai-monolog-mate-extension`) and ships a Composer plugin that refreshes extension discovery after `composer install`/`update`. Development tool, not intended for production use.
 
 ### AI Bundle
 Symfony framework integration for Platform, Agent, Store, and Chat components. Install with `composer require symfony/ai-bundle`. Provides YAML-based configuration, service auto-registration, security integration with `#[IsGrantedTool]`, and Symfony profiler integration for debugging.
 
 ### MCP Bundle
-Symfony integration for the official MCP SDK (`mcp/sdk`). Install with `composer require symfony/mcp-bundle`. Supports MCP capabilities (tools, prompts, resources) as a server via HTTP and STDIO transports, definitions via attributes, and both server and client modes.
+Symfony integration for the official MCP SDK (`mcp/sdk`). Install with `composer require symfony/mcp-bundle`. Supports MCP capabilities (tools, prompts, resources, resource templates) as a server via HTTP and STDIO transports, definitions via attributes, and both server and client modes.
 
 ## Supported AI Platforms
 
-OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, Fireworks, Together, Higgsfield, TransformersPHP, TypeSafe, and Eden AI.
+OpenAI, Anthropic, Google Gemini, Google VertexAI, Azure OpenAI, AWS Bedrock, Ollama, Mistral, Cohere, Meta Llama, DeepSeek, Perplexity, HuggingFace, Replicate, OpenRouter, ElevenLabs, Cartesia, Cerebras, Claude Code, Codex, Decart, Deepgram, MiniMax, LM Studio, Docker Model Runner, OpenResponses, Voyage, Scaleway, OVH, AmazeeAi, Albert, AiMlApi, ModelsDev, Fireworks, Together, Higgsfield, TransformersPHP, TypeSafe, Venice, and Eden AI.
 
 ## Supported Vector Stores
 
