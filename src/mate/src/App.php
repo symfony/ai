@@ -25,6 +25,7 @@ use Symfony\AI\Mate\Command\SkillsOverrideCommand;
 use Symfony\AI\Mate\Command\SkillsPruneCommand;
 use Symfony\AI\Mate\Command\SkillsResetCommand;
 use Symfony\AI\Mate\Command\SkillsValidateCommand;
+use Symfony\AI\Mate\Command\ToolsCallBatchCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
 use Symfony\AI\Mate\Command\ToolsListCommand;
@@ -60,6 +61,7 @@ final class App
             ToolsListCommand::class,
             ToolsInspectCommand::class,
             ToolsCallCommand::class,
+            ToolsCallBatchCommand::class,
             ResourcesReadCommand::class,
             SkillsInstallCommand::class,
             SkillsListCommand::class,

@@ -74,12 +74,22 @@ bin/mate tools:list                             # List tools
 bin/mate tools:inspect server-info              # Inspect a tool with its schema
 bin/mate tools:call server-info                 # Execute a tool
 bin/mate tools:call symfony-profiler-list --limit=1   # ... with parameters as options
+bin/mate tools:call-batch --json='[{"tool":"a","params":{}},{"tool":"b","params":{}}]'  # Execute several tools in one call
 bin/mate resources:read <uri>                   # Read a resource by URI
 ```
 
 The `tools:*`, `resources:read`, `debug:*`, `skills:list` and `skills:validate` commands accept
 `--format=json` (also `toon` when `helgesverre/toon` is installed) for
 machine-readable output.
+
+`tools:call-batch` collapses N `tools:call` invocations into one, saving the (N-1) round-trips an
+agent would otherwise pay when it needs results from multiple tools for a single investigation
+(e.g. correlating a profiler request with logs from the same time window). Calls run sequentially
+(not in parallel) and one failing call does not abort the others; each result is reported with its
+own `ok`/`result`/`error`. A tool whose name looks mutating (contains `-apply`, `-fix`, `-install`,
+`-enable`, `-disable`, `-override`, `-reset` or `-prune`) is rejected from a batch and must be
+called individually with `tools:call`, since there is no `#[MateTool]` metadata yet to tell a
+read-only tool from one that writes.
 
 ## Agent Instructions Materialization
 

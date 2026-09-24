@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Command;
 
 use HelgeSverre\Toon\Toon;
 use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
+use Symfony\AI\Mate\Command\Trait\RendersToolResultTrait;
 use Symfony\AI\Mate\Discovery\CapabilityRegistry;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
@@ -40,6 +41,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ToolsCallCommand extends Command
 {
     use EnsuresToonFormatAvailabilityTrait;
+    use RendersToolResultTrait;
 
     /**
      * Options consumed by the command itself, never treated as tool parameters.
@@ -50,13 +52,6 @@ class ToolsCallCommand extends Command
      * Global console flags that carry no tool parameter meaning.
      */
     private const GLOBAL_FLAGS = ['help', 'silent', 'quiet', 'verbose', 'version', 'ansi', 'no-ansi', 'no-interaction'];
-
-    /**
-     * Size (in bytes of compact JSON) above which `--format=pretty` rendering is skipped in
-     * favor of automatic JSON output, since a large nested value renders as an unreadable
-     * wall of wrapped text otherwise. A real case that triggered this measured 35 KB.
-     */
-    private const PRETTY_RENDER_SIZE_THRESHOLD = 8192;
 
     public function __construct(
         private CapabilityRegistry $registry,
@@ -208,9 +203,8 @@ HELP
             $output->writeln(json_encode($result, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
         } elseif ('toon' === $format) {
             $output->writeln(Toon::encode($result));
-        } elseif (\strlen((string) json_encode($result, \JSON_UNESCAPED_SLASHES)) > self::PRETTY_RENDER_SIZE_THRESHOLD) {
-            $io->note('Pretty rendering was skipped because the result is too large to display readably. Use "--format=pretty" to force it anyway, or "--format=toon" for a token-efficient alternative.');
-            $output->writeln(json_encode($result, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+        } elseif ($this->isTooLargeToRenderPretty($result)) {
+            $this->renderJsonFallback($result, $io, $output);
         } else {
             $io->section('Result');
             $this->renderPretty($result, $io);
@@ -396,56 +390,5 @@ HELP
         ++$index;
 
         return $next;
-    }
-
-    /**
-     * `SymfonyStyle::definitionList()` pads every value to the width of the widest one in
-     * the list, so a single long value bloats every other row with whitespace.
-     *
-     * @param array<string, mixed> $result
-     */
-    private function renderPrettyList(array $result, SymfonyStyle $io): void
-    {
-        foreach ($result as $key => $value) {
-            $io->text(\sprintf('<info>%s</info>: %s', $key, $this->formatValue($value)));
-        }
-    }
-
-    private function renderPretty(mixed $result, SymfonyStyle $io): void
-    {
-        if (\is_array($result)) {
-            if (array_is_list($result)) {
-                foreach ($result as $item) {
-                    $io->text($this->formatValue($item));
-                }
-            } else {
-                $this->renderPrettyList($result, $io);
-            }
-        } elseif (\is_string($result)) {
-            $io->text($result);
-        } elseif (\is_bool($result)) {
-            $io->text($result ? 'true' : 'false');
-        } elseif (null === $result) {
-            $io->text('<comment>null</comment>');
-        } else {
-            $io->text((string) $result);
-        }
-    }
-
-    private function formatValue(mixed $value): string
-    {
-        if (\is_array($value)) {
-            return json_encode($value, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES);
-        }
-
-        if (\is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if (null === $value) {
-            return 'null';
-        }
-
-        return (string) $value;
     }
 }
