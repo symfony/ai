@@ -151,8 +151,9 @@ final class Filesystem
     {
         $this->assertWriteAllowed();
 
-        if (is_dir($source)) {
-            $resolvedSource = $this->pathValidator->validateDirectory($source);
+        $resolvedSource = $this->pathValidator->validateDirectory($source);
+
+        if (is_dir($resolvedSource)) {
             $resolvedDestination = $this->pathValidator->validateDirectory($destination, mustExist: false);
         } else {
             $resolvedSource = $this->pathValidator->validate($source);
@@ -174,9 +175,9 @@ final class Filesystem
     {
         $this->assertDeleteAllowed();
 
-        if (is_dir($path) || is_dir($this->pathValidator->getBasePath().'/'.$path)) {
-            $resolvedPath = $this->pathValidator->validateDirectory($path);
-        } else {
+        $resolvedPath = $this->pathValidator->validateDirectory($path);
+
+        if (!is_dir($resolvedPath)) {
             $resolvedPath = $this->pathValidator->validate($path);
         }
 
