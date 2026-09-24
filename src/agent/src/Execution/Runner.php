@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
+use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
@@ -34,6 +35,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tool\Tool;
@@ -71,7 +73,7 @@ final class Runner
      */
     public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null): \Generator
     {
-        $options = $this->exposeTools($options);
+        [$options, $allowedTools] = $this->exposeTools($options);
         $messages = $this->excludeToolMessages ? clone $messages : $messages;
 
         $sources = new SourceCollection();
@@ -121,6 +123,7 @@ final class Runner
             }
 
             $toolCalls = array_values($toolCallResult->getContent());
+            $this->denyRestrictedToolCalls($toolCalls, $allowedTools);
             $toolResults = yield from $this->toolExecutor->execute($toolCalls);
 
             $messages->add($assistantMessage ?? Message::ofAssistant($result));
@@ -245,36 +248,65 @@ final class Runner
     }
 
     /**
+     * Exposes the registered tools, narrowed down by the tool names given in the tools option.
+     *
      * @param array<string, mixed> $options
      *
-     * @return array<string, mixed>
+     * @return array{array<string, mixed>, list<string>|null} the options and the names of the tools allowed to be executed, null if unrestricted
      */
     private function exposeTools(array $options): array
     {
-        if (!$this->toolbox instanceof ToolboxInterface) {
-            return $options;
-        }
-
-        $toolMap = $this->toolbox->getTools();
-        if ([] === $toolMap) {
-            return $options;
-        }
-
+        $allowedTools = null;
         $serverTools = [];
 
         if (isset($options['tools']) && \is_array($options['tools'])) {
             $names = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_string($tool)));
             $serverTools = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_array($tool)));
 
-            // only filter tool map if tool names are provided as option, an empty option exposes no tool at all
+            // only restrict tools if tool names are provided as option, an empty option allows no tool at all
             if ([] !== $names || [] === $options['tools']) {
-                $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool): bool => \in_array($tool->getName(), $names, true)));
+                $allowedTools = $names;
             }
+        }
+
+        if (!$this->toolbox instanceof ToolboxInterface) {
+            return [$options, $allowedTools];
+        }
+
+        $toolMap = $this->toolbox->getTools();
+        if ([] === $toolMap) {
+            return [$options, $allowedTools];
+        }
+
+        if (null !== $allowedTools) {
+            $toolMap = array_values(array_filter($toolMap, static fn (Tool $tool): bool => \in_array($tool->getName(), $allowedTools, true)));
         }
 
         $options['tools'] = [...$toolMap, ...$serverTools];
 
-        return $options;
+        return [$options, $allowedTools];
+    }
+
+    /**
+     * Rejects calls of registered tools the tools option did not allow, unknown names are left to the toolbox.
+     *
+     * @param list<ToolCall>    $toolCalls
+     * @param list<string>|null $allowedTools
+     */
+    private function denyRestrictedToolCalls(array $toolCalls, ?array $allowedTools): void
+    {
+        if (null === $allowedTools || !$this->toolbox instanceof ToolboxInterface) {
+            return;
+        }
+
+        // listed again, since the tools of a toolbox can change during a run
+        $registeredTools = array_map(static fn (Tool $tool): string => $tool->getName(), $this->toolbox->getTools());
+
+        foreach ($toolCalls as $toolCall) {
+            if (\in_array($toolCall->getName(), $registeredTools, true) && !\in_array($toolCall->getName(), $allowedTools, true)) {
+                throw ToolNotFoundException::notFoundForToolCall($toolCall);
+            }
+        }
     }
 
     private function extractToolCallResult(ResultInterface $result): ?ToolCallResult

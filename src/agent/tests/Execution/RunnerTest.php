@@ -17,6 +17,7 @@ use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Execution\UpdateInterface;
+use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
@@ -98,6 +99,176 @@ final class RunnerTest extends TestCase
         $options = $this->captureOptions($toolbox, ['tools' => []]);
 
         $this->assertSame(['tools' => []], $options);
+    }
+
+    public function testToolOmittedFromTheToolsOptionIsNotExecuted()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $platform = $this->platform(new ToolCallResult([new ToolCall('id1', 'tool1')]));
+
+        $this->expectException(ToolNotFoundException::class);
+        $this->expectExceptionMessage('Tool not found for call: tool1.');
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool2']]);
+    }
+
+    public function testNoToolIsExecutedWithAnEmptyToolsOption()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $platform = $this->platform(new ToolCallResult([new ToolCall('id1', 'tool1')]));
+
+        $this->expectException(ToolNotFoundException::class);
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => []]);
+    }
+
+    public function testNoToolOfABatchIsExecutedWhenOneIsNotAllowed()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $platform = $this->platform(new ToolCallResult([new ToolCall('id1', 'tool2'), new ToolCall('id2', 'tool1')]));
+
+        $this->expectException(ToolNotFoundException::class);
+        $this->expectExceptionMessage('Tool not found for call: tool1.');
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool2']]);
+    }
+
+    public function testUnknownToolIsLeftToTheToolboxWithToolsOption()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $toolCall = new ToolCall('id1', 'unknown');
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1]);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->with($toolCall)
+            ->willReturn(new ToolResult($toolCall, 'Tool "unknown" was not found'));
+
+        $messageBag = new MessageBag();
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Final response'));
+
+        $result = $this->drive($this->createRunner($platform, $toolbox), $messageBag, ['tools' => ['tool1']]);
+
+        $this->assertSame('Final response', $result->getContent());
+        $toolCallMessage = $messageBag->getMessages()[1];
+        $this->assertInstanceOf(ToolCallMessage::class, $toolCallMessage);
+        $this->assertSame('Tool "unknown" was not found', $toolCallMessage->asText());
+    }
+
+    public function testToolRegisteredDuringTheRunIsNotExecutedWhenNotAllowed()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturnOnConsecutiveCalls([$tool1], [$tool1, $tool2]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $platform = $this->platform(new ToolCallResult([new ToolCall('id1', 'tool2')]));
+
+        $this->expectException(ToolNotFoundException::class);
+        $this->expectExceptionMessage('Tool not found for call: tool2.');
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool1']]);
+    }
+
+    public function testToolRegisteredAfterAnEmptyListingIsNotExecutedWhenNotAllowed()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturnOnConsecutiveCalls([], [$tool1, $tool2]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $platform = $this->platform(new ToolCallResult([new ToolCall('id1', 'tool2')]));
+
+        $this->expectException(ToolNotFoundException::class);
+        $this->expectExceptionMessage('Tool not found for call: tool2.');
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool1']]);
+    }
+
+    public function testStreamedToolCallOmittedFromTheToolsOptionIsNotExecuted()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $stream = new StreamResult((static function () {
+            yield new ToolCallComplete([new ToolCall('id1', 'tool1')]);
+        })());
+
+        $platform = $this->platform($stream);
+
+        $this->expectException(ToolNotFoundException::class);
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool2']]);
+    }
+
+    public function testRegisteredToolsAreExecutedWithoutToolsOption()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolCall = new ToolCall('id1', 'tool1');
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->with($toolCall)
+            ->willReturn(new ToolResult($toolCall, 'Tool1 response'));
+
+        $messageBag = new MessageBag();
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Final response'));
+
+        $this->drive($this->createRunner($platform, $toolbox), $messageBag);
+
+        $toolCallMessage = $messageBag->getMessages()[1];
+        $this->assertInstanceOf(ToolCallMessage::class, $toolCallMessage);
+        $this->assertSame('Tool1 response', $toolCallMessage->asText());
+    }
+
+    public function testRegisteredToolsAreExecutedWithOnlyServerToolsInTheToolsOption()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $toolCall = new ToolCall('id1', 'tool1');
+
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1]);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->with($toolCall)
+            ->willReturn(new ToolResult($toolCall, 'Tool1 response'));
+
+        $messageBag = new MessageBag();
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Final response'));
+
+        $this->drive($this->createRunner($platform, $toolbox), $messageBag, ['tools' => [['type' => 'web_search']]]);
+
+        $toolCallMessage = $messageBag->getMessages()[1];
+        $this->assertInstanceOf(ToolCallMessage::class, $toolCallMessage);
+        $this->assertSame('Tool1 response', $toolCallMessage->asText());
     }
 
     public function testServerToolsInTheToolsOptionAreKeptNextToRegisteredTools()
