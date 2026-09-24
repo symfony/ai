@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\OperationNotPermittedException;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\PathSecurityException;
 use Symfony\AI\Agent\Bridge\Filesystem\Filesystem;
+use Symfony\AI\Agent\Bridge\Filesystem\Tests\Fixtures\StatTrackingStreamWrapper;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 class FilesystemTest extends TestCase
@@ -175,6 +176,20 @@ class FilesystemTest extends TestCase
         $filesystem->move('sample.txt', 'moved.txt');
     }
 
+    public function testMoveValidatesPathBeforeCheckingItsType()
+    {
+        StatTrackingStreamWrapper::$statCalls = 0;
+        $this->assertTrue(stream_wrapper_register('filesystem-test', StatTrackingStreamWrapper::class));
+
+        try {
+            $this->expectException(PathSecurityException::class);
+            $this->createFilesystem()->move('filesystem-test://external/directory', 'moved');
+        } finally {
+            stream_wrapper_unregister('filesystem-test');
+            $this->assertSame(0, StatTrackingStreamWrapper::$statCalls);
+        }
+    }
+
     public function testDelete()
     {
         $filesystem = $this->createFilesystem(allowDelete: true);
@@ -201,6 +216,20 @@ class FilesystemTest extends TestCase
         $this->expectExceptionMessage('Delete operations are not permitted');
 
         $filesystem->delete('sample.txt');
+    }
+
+    public function testDeleteValidatesPathBeforeCheckingItsType()
+    {
+        StatTrackingStreamWrapper::$statCalls = 0;
+        $this->assertTrue(stream_wrapper_register('filesystem-test', StatTrackingStreamWrapper::class));
+
+        try {
+            $this->expectException(PathSecurityException::class);
+            $this->createFilesystem(allowDelete: true)->delete('filesystem-test://external/directory');
+        } finally {
+            stream_wrapper_unregister('filesystem-test');
+            $this->assertSame(0, StatTrackingStreamWrapper::$statCalls);
+        }
     }
 
     public function testMkdir()
