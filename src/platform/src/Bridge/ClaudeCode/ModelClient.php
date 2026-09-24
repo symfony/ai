@@ -31,7 +31,6 @@ final class ModelClient implements ModelClientInterface
      * @var array<string, string>
      */
     private const OPTION_FLAG_MAP = [
-        'tools' => '--allowedTools',
         'allowed_tools' => '--allowedTools',
     ];
 
@@ -94,7 +93,11 @@ final class ModelClient implements ModelClientInterface
         foreach ($options as $key => $value) {
             $flag = self::OPTION_FLAG_MAP[$key] ?? '--'.str_replace('_', '-', $key);
 
-            if (\is_array($value)) {
+            // an empty tool list, also passed by an Agent exposing no tools, disables all built-in tools
+            if ('tools' === $key && [] === $value) {
+                $command[] = $flag;
+                $command[] = '';
+            } elseif (\is_array($value)) {
                 foreach ($value as $item) {
                     $command[] = $flag;
                     $command[] = (string) $item;
