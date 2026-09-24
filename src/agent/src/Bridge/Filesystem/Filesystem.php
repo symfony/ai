@@ -159,6 +159,10 @@ final class Filesystem
             $resolvedDestination = $this->pathValidator->validate($destination, mustExist: false);
         }
 
+        $this->pathValidator->validateDirectoryContents($resolvedSource, $resolvedDestination);
+        // An existing destination directory gets overwritten
+        $this->pathValidator->validateDirectoryContents($resolvedDestination);
+
         $this->filesystem->rename($resolvedSource, $resolvedDestination, overwrite: true);
 
         return \sprintf('Successfully moved "%s" to "%s".', $source, $destination);
@@ -179,6 +183,8 @@ final class Filesystem
         } else {
             $resolvedPath = $this->pathValidator->validate($path);
         }
+
+        $this->pathValidator->validateDirectoryContents($resolvedPath);
 
         $this->filesystem->remove($resolvedPath);
 
