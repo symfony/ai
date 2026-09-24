@@ -12,6 +12,7 @@
 namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
+use AsyncAws\S3Vectors\S3VectorsClient;
 use Codewithkyrian\ChromaDB\Client;
 use MongoDB\Client as MongoDbClient;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -103,6 +104,7 @@ use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
 use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
+use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
 use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
@@ -3690,6 +3692,42 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testS3VectorsStoreCanBeConfiguredWithClientConfigurationAndFilter()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    's3vectors' => [
+                        'my_s3vectors_store' => [
+                            'vector_bucket_name' => 'my-bucket',
+                            'configuration' => [
+                                'region' => 'eu-central-1',
+                                'accessKeyId' => 'key',
+                            ],
+                            'filter' => [
+                                'category' => 'documentation',
+                                'tags' => ['symfony', 'ai'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.s3vectors.my_s3vectors_store');
+        $this->assertSame(S3VectorsStore::class, $definition->getClass());
+
+        $client = $definition->getArgument(0);
+        $this->assertInstanceOf(Definition::class, $client);
+        $this->assertSame(S3VectorsClient::class, $client->getClass());
+        $this->assertSame([['region' => 'eu-central-1', 'accessKeyId' => 'key']], $client->getArguments());
+
+        $this->assertSame('my-bucket', $definition->getArgument(1));
+        $this->assertSame('my_s3vectors_store', $definition->getArgument(2));
+        $this->assertSame(['category' => 'documentation', 'tags' => ['symfony', 'ai']], $definition->getArgument(3));
+        $this->assertSame(3, $definition->getArgument(4));
     }
 
     public function testRedisStoreWithCustomIndexCanBeConfigured()
