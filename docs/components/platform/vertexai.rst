@@ -13,7 +13,7 @@ To use Vertex AI with Symfony AI Platform, you need to install the platform comp
 
 .. code-block:: terminal
 
-    $ composer require symfony/ai-platform
+    $ composer require symfony/ai-vertex-ai-platform
 
 Setup
 -----

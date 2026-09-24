@@ -128,16 +128,18 @@ systems, and domain-specific chatbots.</p>
 5
 6
 7
-8</pre>
+8
+9</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Document</span>\<span class="hljs-title">Vectorizer</span>;
+                        <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">OpenAi</span>\<span class="hljs-title">Factory</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Document</span>\<span class="hljs-title">Vectorizer</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Indexer</span>\<span class="hljs-title">DocumentIndexer</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Store</span>\<span class="hljs-title">Indexer</span>\<span class="hljs-title">DocumentProcessor</span>;
 
-<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span> = Factory::<span class="hljs-title invoke__">createPlatform</span>(<span class="hljs-title invoke__">env</span>(<span class="hljs-string">'OPENAI_API_KEY'</span>));
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span> = Factory::<span class="hljs-title invoke__">createPlatform</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>apiKey</span>);
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>vectorizer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Vectorizer</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>, <span class="hljs-string">'text-embedding-3-small'</span>);
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>indexer</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">DocumentIndexer</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">DocumentProcessor</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>vectorizer</span>, <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>store</span>));
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>indexer</span>-&gt;<span class="hljs-title invoke__">index</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>documents</span>);</pre>
@@ -252,7 +254,7 @@ documents from a source (file path, URL, etc.) via a <a href="https://github.com
     Step 5: Create RAG-Enabled Agent
     
 </h2>
-<p>Configure the agent with the similarity search processor:</p>
+<p>Configure the agent with the toolbox:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
         <tbody>
@@ -261,24 +263,14 @@ documents from a source (file path, URL, etc.) via a <a href="https://github.com
                     <div class="linenodiv">
                         <pre>1
 2
-3
-4
-5
-6
-7
-8</pre>
+3</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
 
-<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
-    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,
-    <span class="hljs-string">'gpt-4o-mini'</span>,
-    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span>],  <span class="hljs-comment">// Input processors</span>
-    [<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>processor</span>]   <span class="hljs-comment">// Output processors</span>
-);</pre>
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>, <span class="hljs-string">'gpt-4o-mini'</span>, <span class="hljs-attr">toolbox</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>toolbox</span>);</pre>
                     </div>
                 </td>
             </tr>

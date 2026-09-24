@@ -228,9 +228,9 @@ To remove all documents from a store without dropping it, use ``bin/console ai:s
 
 .. code-block:: terminal
 
-    $ php bin/console ai:store:setup symfonycon
-    $ php bin/console ai:store:clear symfonycon --force
-    $ php bin/console ai:store:drop symfonycon --force
+    $ php bin/console ai:store:setup ai.store.chromadb.symfonycon
+    $ php bin/console ai:store:clear ai.store.chromadb.symfonycon --force
+    $ php bin/console ai:store:drop ai.store.chromadb.symfonycon --force
 
 
 Implementing a Bridge

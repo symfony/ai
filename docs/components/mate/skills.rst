@@ -153,7 +153,7 @@ The core package ships two:
     Resolve which dependency versions are installed, through ``composer show`` and
     ``composer.lock``.
 
-The Symfony extension adds three:
+The Symfony extension adds four:
 
 ``symfony-request-triage``
     Decide which of the other skills a given symptom calls for.
@@ -164,6 +164,10 @@ The Symfony extension adds three:
 
 ``symfony-service-inspection``
     Inspect the compiled DI container when the wiring is the suspect, not the code.
+
+``symfony-dotenv-diagnostics``
+    Diagnose a misconfigured ``.env`` setup or an environment variable that seems missing or wrong,
+    without printing raw secret values.
 
 The Monolog extension adds one:
 

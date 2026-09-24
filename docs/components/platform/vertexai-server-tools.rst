@@ -97,7 +97,7 @@ More info can be found at https://cloud.google.com/vertex-ai/generative-ai/docs/
 
     // Code Execution tool returns a MultiPartResult
 
-    foreach ($result as $part) {
+    foreach ($result->asMultiPart() as $part) {
         echo $part->getContent()."\n";
     }
 

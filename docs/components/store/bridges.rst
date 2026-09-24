@@ -282,13 +282,11 @@ Vector storage using the ``dense_vector`` field type of `Elasticsearch`_.
 
 The index is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\Elasticsearch\Store;
-    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory;
 
-    $store = new Store(
-        HttpClient::create(),
-        'https://localhost:9200',
+    $store = StoreFactory::create(
         'my_documents',
+        'https://localhost:9200',
         vectorsField: '_vectors',
         dimensions: 1536,
         similarity: 'cosine',
@@ -713,7 +711,7 @@ Vector storage using `Azure AI Search`_.
 
 .. note::
 
-    This is the only store that does not implement
+    Like Supabase, this store does not implement
     :class:`Symfony\\AI\\Store\\ManagedStoreInterface`: the index has to be created upfront,
     ``ai:store:setup`` does not work for it.
 

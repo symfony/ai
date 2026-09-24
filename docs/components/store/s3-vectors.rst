@@ -50,7 +50,7 @@ Before using the store, you need to initialize it with the appropriate configura
     $store->setup([
         'dimension' => 1536,
         'distanceMetric' => \AsyncAws\S3Vectors\Enum\DistanceMetric::COSINE, // Optional
-        'dataType' => \AsyncAws\S3Vectors\Enum\DataType::FLOAT32, // Optional
+        'dataType' => \AsyncAws\S3Vectors\Enum\DataType::FLOAT_32, // Optional
         'encryption' => ['kmsKeyId' => 'your-kms-key-id'], // Optional
         'tags' => ['env' => 'production'], // Optional
     ]);
@@ -127,13 +127,12 @@ The bridge supports the following distance metrics:
 
 * ``COSINE`` - Cosine distance (default)
 * ``EUCLIDEAN`` - Euclidean distance
-* ``DOT_PRODUCT`` - Dot product distance
 
 Data Types
 ~~~~~~~~~~
 
 The bridge supports the following data types for vectors:
 
-* ``FLOAT32`` - 32-bit floating point (default)
+* ``FLOAT_32`` - 32-bit floating point (default)
 
 .. _`AWS S3 Vectors`: https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors.html

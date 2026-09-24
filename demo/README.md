@@ -24,7 +24,7 @@ What you need to run this demo:
 This small demo sits on top of following technologies:
 
 * [PHP >= 8.4](https://www.php.net/releases/8.4/en.php)
-* [Symfony 8.0 incl. Twig, Asset Mapper & UX](https://symfony.com/)
+* [Symfony 8.1 incl. Twig, Asset Mapper & UX](https://symfony.com/)
 * [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 * [OpenAI's GPT & Embeddings](https://platform.openai.com/docs/overview)
 * [PostgreSQL with pgvector](https://github.com/pgvector/pgvector)
@@ -97,7 +97,7 @@ vendor/bin/phpunit --testsuite e2e  # end-to-end tests in a real browser
 
 ### End-to-End Tests
 
-The `e2e` suite uses [Symfony Panther](https://github.com/symfony/panther) to click through all ten
+The `e2e` suite uses [Symfony Panther](https://github.com/symfony/panther) to click through all eleven
 use cases and assert the Symfony AI panel of the profiler for the very request the click triggered.
 Every test calls an AI platform for real, which costs money and takes time - the suite is therefore
 excluded from the default one, and meant to be run locally.
@@ -108,7 +108,7 @@ Next to the setup above, it needs:
   downloads into `drivers/`. If only a Snap or Flatpak Chromium is installed, point Panther at it
   with `PANTHER_CHROME_BINARY` in `.env.test.local`.
 * **API keys** in `.env.local`, or exported in your environment - a test is skipped when the key of
-  its use case is missing: `OPENAI_API_KEY` for eight of them, `HUGGINGFACE_API_KEY` for the image
+  its use case is missing: `OPENAI_API_KEY` for nine of them, `HUGGINGFACE_API_KEY` for the image
   cropping, `MISTRAL_API_KEY` for the document OCR.
 * **ffmpeg** (optional) to convert the audio fixture for the fake microphone of the speech use case.
 
@@ -130,10 +130,10 @@ Screenshots of failing tests are written to `var/error-screenshots/`.
 
 ## Functionality
 
-* The chatbot application is a simple and small Symfony 8.0 application.
+* The chatbot application is a simple and small Symfony 8.1 application.
 * The UI is coupled to a [Twig LiveComponent](https://symfony.com/bundles/ux-live-component/current/index.html), that integrates different `Chat` implementations on top of the user's session.
-* You can reset the chat context by hitting the `Reset` button in the top right corner.
-* You find three different usage scenarios in the upper navbar.
+* You can reset the chat context by hitting the `Reset chat` button in the top right corner.
+* You find eleven different usage scenarios in the upper navbar.
 
 ### MCP
 

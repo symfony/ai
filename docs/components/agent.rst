@@ -645,7 +645,7 @@ tools in the same chain - which even enables you to overwrite the pre-existing c
     $reflectionFactory = new ReflectionToolFactory(); // Register tools with #[AsTool] attribute
     $metadataFactory = (new MemoryToolFactory())      // Register or overwrite tools explicitly
         ->addTool(...);
-    $toolbox = new Toolbox([...], new ChainFactory($metadataFactory, $reflectionFactory));
+    $toolbox = new Toolbox([...], new ChainFactory([$metadataFactory, $reflectionFactory]));
 
 .. note::
 
@@ -806,15 +806,15 @@ If you need to react more granularly to the lifecycle of individual tool calls, 
     });
 
     $eventDispatcher->addListener(ToolCallArgumentsResolved::class, function (ToolCallArgumentsResolved $event): void {
-        // Let the client know, that the tool $event->getMetadata()->getName() was executed
+        // Let the client know, that the tool $event->getDefinition()->getName() was executed
     });
 
     $eventDispatcher->addListener(ToolCallSucceeded::class, function (ToolCallSucceeded $event): void {
-        // Let the client know, that the tool $event->getMetadata()->getName() successfully returned the result $event->getResult()
+        // Let the client know, that the tool $event->getDefinition()->getName() successfully returned the result $event->getResult()
     });
 
     $eventDispatcher->addListener(ToolCallFailed::class, function (ToolCallFailed $event): void {
-        // Let the client know, that the tool $event->getMetadata()->getName() failed with the exception: $event->getException()
+        // Let the client know, that the tool $event->getDefinition()->getName() failed with the exception: $event->getException()
     });
 
 The :class:`Symfony\\AI\\Agent\\Toolbox\\Event\\ToolCallRequested` event is dispatched *before* a tool runs and
@@ -1073,7 +1073,7 @@ and are able to mutate both on top of the :class:`Symfony\\AI\\Agent\\Input` ins
             $input->setOptions($options);
 
             // mutate MessageBag
-            $input->getMessageBag()->append(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
+            $input->getMessageBag()->add(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
         }
     }
 

@@ -23,14 +23,7 @@ ollama serve
 ```
 
 ### Configuration
-By default, the examples expect Ollama to be run on `localhost:11434`, but you can customize this in your `.env.local`
-file - as well as the models to be used:
-
-For example
-```bash
-OLLAMA_HOST_URL=http://localhost:11434
-OLLAMA_LLM=llama3.2
-OLLAMA_EMBEDDINGS=nomic-embed-text
-```
+The examples expect Ollama to be run on `localhost:11434` and use the `llama3.2` and `nomic-embed-text` models. If
+your Ollama instance requires authentication, set `OLLAMA_API_KEY` in your `.env.local` file.
 
 You can find more models in the [Ollama model library](https://ollama.com/library).

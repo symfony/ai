@@ -3,7 +3,7 @@
 Symfony integration bundle for [Model Context Protocol](https://modelcontextprotocol.io/) using the official
 MCP SDK [mcp/sdk](https://github.com/modelcontextprotocol/php-sdk).
 
-**Supports MCP capabilities (tools, prompts, resources) as server via HTTP transport and STDIO. Resource templates implementation ready but awaiting MCP SDK support.**
+**Supports MCP capabilities (tools, prompts, resources, resource templates) as server via HTTP transport and STDIO.**
 
 **This Bundle is experimental**.
 [Experimental features](https://symfony.com/doc/current/contributing/code/experimental.html)

@@ -26,6 +26,7 @@ CacheStore
 Stores vectors using a PSR-6 cache implementation. Persistence depends on the cache adapter used::
 
     use Symfony\AI\Store\Bridge\Cache\Store;
+    use Symfony\AI\Store\Query\VectorQuery;
     use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
     $cache = new FilesystemAdapter();

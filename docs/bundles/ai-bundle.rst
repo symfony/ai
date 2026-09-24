@@ -124,7 +124,7 @@ Advanced Example with Multiple Agents
                       description: 'Can research on Wikipedia'
             research:
                 platform: 'ai.platform.anthropic'
-                model: 'claude-3-7-sonnet-latest'
+                model: 'claude-sonnet-4-5'
                 tools: # Tools are opt-in: if undefined, the agent gets no tools; use "tools: true" to inject all tools.
                     - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
                     - { mcp_server: 'research.filesystem' } # Tools of a remote MCP server configured under "mcp.clients"
@@ -137,7 +137,7 @@ Advanced Example with Multiple Agents
                 tools: false
             audio:
                 platform: 'ai.platform.elevenlabs'
-                model: 'text-to-speech'
+                model: 'eleven_multilingual_v2'
                 tools: false
             nova:
                 platform: 'ai.platform.bedrock.default'
@@ -830,7 +830,7 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
     $ php bin/console ai:store:setup <store>
 
     # Setup the chromadb store
-    $ php bin/console ai:store:setup chromadb.default
+    $ php bin/console ai:store:setup ai.store.chromadb.default
 
 .. note::
 
@@ -865,7 +865,7 @@ The ``ai:store:drop`` command drops the infrastructure for a store (e.g., remove
     $ php bin/console ai:store:drop <store> --force
 
     # Drop the chromadb store
-    $ php bin/console ai:store:drop chromadb.default --force
+    $ php bin/console ai:store:drop ai.store.chromadb.default --force
 
 .. warning::
 
@@ -1505,7 +1505,7 @@ Add a ``speech`` key to any agent configuration to enable speech capabilities:
                     tts_options:
                         voice: Dslrhjl3ZpzrctukrQSN
                     speech_to_text_platform: 'ai.platform.openai'
-                    stt_model: whisper
+                    stt_model: whisper-1
 
 The bundle automatically decorates the agent with ``SpeechAgent``. At least one of ``text_to_speech_platform`` or ``speech_to_text_platform``
 must be configured. Both can be enabled independently:

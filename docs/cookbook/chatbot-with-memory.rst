@@ -84,6 +84,7 @@ semantic similarity::
 
     use Symfony\AI\Agent\Memory\EmbeddingProvider;
 
+    $model = $platform->getModelCatalog()->getModel('text-embedding-3-small');
     $embeddingsMemory = new EmbeddingProvider($platform, $model, $store);
 
 Pass it to the ``MemoryInputProcessor`` just like the static provider.

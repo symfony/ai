@@ -1815,11 +1815,11 @@ Thanks to Symfony's Cache component, platform calls can be cached to reduce call
 
     $firstResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
-    echo $firstResult->getContent().\PHP_EOL;
+    echo $firstResult->asText().\PHP_EOL;
 
     $secondResult = $cachePlatform->invoke('gpt-4o-mini', new MessageBag(Message::ofUser('What is the capital of France?')));
 
-    echo $secondResult->getContent().\PHP_EOL;
+    echo $secondResult->asText().\PHP_EOL;
 
 High Availability
 -----------------
@@ -1847,7 +1847,7 @@ the :class:`Symfony\\AI\\Platform\\Bridge\\Failover\\FailoverPlatform` can be us
 
     // # Ollama will fail as 'gpt-4o' is not available in the catalog
     $platform = new FailoverPlatform([
-        OllamaFactory::createPlatform(env('OLLAMA_HOST_URL'), HttpClient::create()),
+        OllamaFactory::createPlatform(env('OLLAMA_HOST_URL'), httpClient: HttpClient::create()),
         OpenAiFactory::createPlatform(env('OPENAI_API_KEY'), HttpClient::create()),
     ], $rateLimiter);
 
@@ -2410,5 +2410,5 @@ Code Examples
 .. _`Venice STT`: https://docs.venice.ai/api-reference/endpoint/audio-transcription
 .. _`Venice T2I`: https://docs.venice.ai/api-reference/endpoint/generate-image
 .. _`Venice T2V`: https://docs.venice.ai/api-reference/endpoint/queue-video-generation
-.. _`Streaming Venice`: https://github.com/symfony/ai/blob/main/examples/venice/chat-as-stream.php
+.. _`Streaming Venice`: https://github.com/symfony/ai/blob/main/examples/venice/stream.php
 .. _`Embeddings with Venice`: https://github.com/symfony/ai/blob/main/examples/venice/embeddings.php
