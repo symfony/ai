@@ -152,16 +152,55 @@ final class ModelClientTest extends TestCase
         $this->assertSame($expected, $command);
     }
 
-    public function testBuildCommandRewritesToolsToAllowedTools()
+    public function testBuildCommandRestrictsTools()
     {
         $client = new ModelClient(self::$binary);
 
         $command = $client->buildCommand('Hello', ['tools' => ['Bash', 'Read']]);
 
-        $this->assertNotContains('--tools', $command);
-        $this->assertSame(2, \count(array_keys($command, '--allowedTools', true)));
-        $this->assertContains('Bash', $command);
-        $this->assertContains('Read', $command);
+        $expected = [
+            self::$binary,
+            '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
+            '--tools', 'Bash',
+            '--tools', 'Read',
+            '-p', 'Hello',
+        ];
+
+        $this->assertSame($expected, $command);
+    }
+
+    public function testBuildCommandWithEmptyToolsDisablesAllTools()
+    {
+        $client = new ModelClient(self::$binary);
+
+        $command = $client->buildCommand('Hello', ['tools' => []]);
+
+        $expected = [
+            self::$binary,
+            '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
+            '--tools', '',
+            '-p', 'Hello',
+        ];
+
+        $this->assertSame($expected, $command);
+    }
+
+    public function testBuildCommandKeepsToolsAndAllowedToolsSeparate()
+    {
+        $client = new ModelClient(self::$binary);
+
+        $command = $client->buildCommand('Hello', ['tools' => ['Bash', 'Read'], 'allowed_tools' => ['Read']]);
+
+        $expected = [
+            self::$binary,
+            '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
+            '--tools', 'Bash',
+            '--tools', 'Read',
+            '--allowedTools', 'Read',
+            '-p', 'Hello',
+        ];
+
+        $this->assertSame($expected, $command);
     }
 
     public function testBuildCommandPassesUnknownOptionsAsFlags()
