@@ -1640,7 +1640,10 @@ The option requires ``response_format`` to be the instance to populate and throw
 instance has no missing properties at all. It is consumed by the ``PlatformSubscriber``,
 which passes the instance to
 :class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactoryInterface` as its
-``$instanceToPopulate`` argument.
+``$instanceToPopulate`` argument. The shipped factory wraps it in a
+:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Selector\\MissingPropertiesSelector`, which the
+``Describer`` consults before describing each property, so the describers themselves stay
+a function of the class.
 
 Scoping the Schema to Serializer Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

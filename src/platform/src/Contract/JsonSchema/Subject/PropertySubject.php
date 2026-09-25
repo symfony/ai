@@ -44,6 +44,14 @@ final class PropertySubject
         return $this->reflector;
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function withContext(array $context): self
+    {
+        return new self($this->name, $this->reflector, $context);
+    }
+
     public function isRequired(): bool
     {
         return match (true) {

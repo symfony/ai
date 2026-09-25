@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\StructuredOutput;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\MissingPropertiesSelector;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 use function Symfony\Component\String\u;
@@ -28,7 +29,7 @@ final class ResponseFormatFactory implements ResponseFormatFactoryInterface
 
     public function create(string $responseClass, ?object $instanceToPopulate = null): array
     {
-        $context = null !== $instanceToPopulate ? ['populate_instance' => $instanceToPopulate] : [];
+        $context = null !== $instanceToPopulate ? [Factory::CONTEXT_SELECTOR => new MissingPropertiesSelector($instanceToPopulate)] : [];
         $schema = $this->schemaFactory->buildProperties($responseClass, $context);
 
         if (null !== $instanceToPopulate && !isset($schema['properties'])) {

@@ -72,8 +72,7 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
         $type = $this->typeResolver->resolve($subject->getReflector());
 
         $subSchema = $this->getTypeSchema($type, $subject->getContext());
-        // An object populated in place must not be answered with null, that would replace it
-        if ($type->isNullable() && !isset($subject->getContext()['populate_instance'])) {
+        if ($type->isNullable()) {
             if (!isset($subSchema['anyOf'])) {
                 $subSchema['type'] = (array) $subSchema['type'];
                 $subSchema['type'][] = 'null';
@@ -134,8 +133,6 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
             case $type->isIdentifiedBy(TypeIdentifier::ARRAY):
                 \assert($type instanceof CollectionType);
 
-                // The instance being populated is the collection, never one of its items
-                unset($context['populate_instance']);
                 $items = $this->getTypeSchema($type->getCollectionValueType(), $context);
 
                 return ['type' => 'array'] + ($items ? ['items' => $items] : []);

@@ -7,6 +7,7 @@ CHANGELOG
  * Add the Eden AI bridge, covering the gateway's OpenAI-compatible chat and embeddings endpoints and its expert models: OCR, document parsing, text-to-speech, asynchronous speech-to-text, image analysis and image generation
  * [BC BREAK] Add a `?object $instanceToPopulate = null` parameter to `StructuredOutput\ResponseFormatFactoryInterface::create()`
  * Add the `missing_properties_only` option to `StructuredOutput\PlatformSubscriber`: with `response_format` set to an object, the JSON schema only describes the properties that instance is still missing (uninitialized, `null` or empty array) and can be written onto it, including nested objects, and the result is populated onto that instance; throws `InvalidArgumentException` when nothing is missing or when `response_format` is not an instance
+ * Add `Contract\JsonSchema\Selector\PropertySelectorInterface`, applied by `Describer` through the `Factory::CONTEXT_SELECTOR` context to decide which properties are described, with `MissingPropertiesSelector` as the implementation behind `missing_properties_only`
  * Add `Contract\JsonSchema\Subject\PropertySubject::getContext()` and propagate the describer context (e.g. `serializer_groups`) from `TypeInfoDescriber` and `MethodDescriber` into nested object schemas, which previously received an empty context
  * Populate nested objects in place (`DEEP_OBJECT_TO_POPULATE`) when structured output is deserialized onto an existing instance
  * Add the TypeSafe bridge, evaluating typed questions (noul, choice and score) against a state with the Jev models

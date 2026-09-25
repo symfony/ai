@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\MissingPropertiesSelector;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
@@ -528,7 +529,7 @@ final class FactoryTest extends TestCase
     {
         // Uninitialized and null properties are missing
         $user = new User();
-        $this->assertSame(['id', 'name', 'createdAt', 'isActive', 'age'], array_keys($this->factory->buildProperties(User::class, ['populate_instance' => $user])['properties']));
+        $this->assertSame(['id', 'name', 'createdAt', 'isActive', 'age'], array_keys($this->factory->buildProperties(User::class, $this->onlyMissingOf($user))['properties']));
 
         $user->id = 1;
         $user->name = 'john';
@@ -543,7 +544,7 @@ final class FactoryTest extends TestCase
             'additionalProperties' => false,
         ];
 
-        $this->assertSame($expected, $this->factory->buildProperties(User::class, ['populate_instance' => $user]));
+        $this->assertSame($expected, $this->factory->buildProperties(User::class, $this->onlyMissingOf($user)));
     }
 
     public function testBuildPropertiesForInstanceReadsPrivatePropertiesBehindAccessors()
@@ -552,7 +553,7 @@ final class FactoryTest extends TestCase
         $user->setId(1);
         $user->setIsActive(true);
 
-        $actual = $this->factory->buildProperties(UserWithAccessors::class, ['populate_instance' => $user]);
+        $actual = $this->factory->buildProperties(UserWithAccessors::class, $this->onlyMissingOf($user));
 
         $this->assertSame(['name', 'createdAt', 'age'], array_keys($actual['properties']));
     }
@@ -560,7 +561,7 @@ final class FactoryTest extends TestCase
     public function testBuildPropertiesForInstanceSkipsPropertiesItCannotWrite()
     {
         // The readonly code can only be set through the constructor, which populating an existing instance never calls
-        $actual = $this->factory->buildProperties(Ticket::class, ['populate_instance' => new Ticket()]);
+        $actual = $this->factory->buildProperties(Ticket::class, $this->onlyMissingOf(new Ticket()));
 
         $this->assertSame(['seat'], array_keys($actual['properties']));
     }
@@ -569,7 +570,7 @@ final class FactoryTest extends TestCase
     {
         $trip = new Trip(destination: new City(name: 'Berlin', country: 'Germany'));
 
-        $actual = $this->factory->buildProperties(Trip::class, ['populate_instance' => $trip]);
+        $actual = $this->factory->buildProperties(Trip::class, $this->onlyMissingOf($trip));
 
         $this->assertSame(['title', 'destination', 'origin'], array_keys($actual['properties']));
         // Partially filled: only what is still missing on it, and no longer nullable
@@ -584,7 +585,7 @@ final class FactoryTest extends TestCase
     {
         $trip = new Trip(destination: new City(name: 'Berlin', population: 3500000, country: 'Germany', mayor: 'Kai Wegner'));
 
-        $actual = $this->factory->buildProperties(Trip::class, ['populate_instance' => $trip]);
+        $actual = $this->factory->buildProperties(Trip::class, $this->onlyMissingOf($trip));
 
         $this->assertSame(['title', 'origin'], array_keys($actual['properties']));
     }
@@ -592,12 +593,20 @@ final class FactoryTest extends TestCase
     public function testBuildPropertiesForInstanceSkipsFilledCollectionsAndScalars()
     {
         // A non-empty collection, an empty string and a zero are all filled: nothing is left to describe
-        $this->assertNull($this->factory->buildProperties(MathReasoning::class, ['populate_instance' => new MathReasoning([new Step('a', 'b')], '', 0.0)]));
+        $this->assertNull($this->factory->buildProperties(MathReasoning::class, $this->onlyMissingOf(new MathReasoning([new Step('a', 'b')], '', 0.0))));
 
         // An empty collection is missing and is described with its full item schema
-        $actual = $this->factory->buildProperties(MathReasoning::class, ['populate_instance' => new MathReasoning([], '', 0.0)]);
+        $actual = $this->factory->buildProperties(MathReasoning::class, $this->onlyMissingOf(new MathReasoning([], '', 0.0)));
 
         $this->assertSame(['steps'], array_keys($actual['properties']));
         $this->assertSame(['explanation', 'output'], array_keys($actual['properties']['steps']['items']['properties']));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function onlyMissingOf(object $instance): array
+    {
+        return [Factory::CONTEXT_SELECTOR => new MissingPropertiesSelector($instance)];
     }
 }

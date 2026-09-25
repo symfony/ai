@@ -53,6 +53,11 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
  */
 final class Factory
 {
+    /**
+     * Context key holding a `Selector\PropertySelectorInterface` that decides which properties are described.
+     */
+    public const CONTEXT_SELECTOR = 'selector';
+
     public function __construct(
         private readonly ObjectDescriberInterface $objectDescriber = new Describer(),
     ) {
@@ -72,7 +77,7 @@ final class Factory
     }
 
     /**
-     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]` or `['populate_instance' => $object]`
+     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]` or `[self::CONTEXT_SELECTOR => $selector]`
      *
      * @return JsonSchema|null
      */

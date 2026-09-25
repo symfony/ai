@@ -54,25 +54,15 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
             return [];
         }
 
-        $reflection = $subject->getReflector();
-        if (!$reflection instanceof \ReflectionClass) {
+        if (!$subject->getReflector() instanceof \ReflectionClass) {
             return [];
         }
 
-        $class = $reflection->name;
-        $context = $subject->getContext();
+        $class = $subject->getReflector()->name;
 
         // A per-call `serializer_groups` context narrows the schema to the given groups,
         // falling back to the groups this describer was configured with.
-        $serializerGroups = $context['serializer_groups'] ?? $this->serializerGroups;
-
-        // A per-call `populate_instance` context narrows the schema to what that instance is still missing,
-        // as long as it is of the described class (it is not, e.g., for the other branches of an `anyOf`).
-        $instance = $context['populate_instance'] ?? null;
-        if (!$instance instanceof $class) {
-            $instance = null;
-        }
-        unset($context['populate_instance']);
+        $serializerGroups = $subject->getContext()['serializer_groups'] ?? $this->serializerGroups;
 
         foreach ($this->propertyListExtractor->getProperties($class, ['serializer_groups' => $serializerGroups]) ?? [] as $propertyName) {
             if (!$this->propertyInfo->isWritable($class, $propertyName) && !$this->propertyInfo->isInitializable($class, $propertyName)) {
@@ -80,31 +70,13 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
             }
 
             $readInfo = $this->propertyReadWriteInfo->getReadInfo($class, $propertyName);
-
-            $propertyContext = $context;
-            if (null !== $instance) {
-                // A constructor-only (e.g. readonly) property can never be set on an existing instance
-                if (!$this->propertyInfo->isWritable($class, $propertyName)) {
-                    continue;
-                }
-
-                $value = $this->readValue($instance, $reflection, $propertyName, $readInfo);
-                if (\is_object($value)) {
-                    $propertyContext['populate_instance'] = $value;
-                }
-
-                if (!$this->shouldPopulate($value, $propertyContext)) {
-                    continue;
-                }
-            }
-
             if ($readInfo) {
                 $readReflector = match ($readInfo->getType()) {
                     PropertyReadInfo::TYPE_METHOD => new \ReflectionMethod($class, $readInfo->getName()),
                     default => new \ReflectionProperty($class, $readInfo->getName()),
                 };
 
-                yield new PropertySubject($propertyName, $readReflector, $propertyContext);
+                yield new PropertySubject($propertyName, $readReflector, $subject->getContext());
             }
 
             $writeInfo = $this->propertyReadWriteInfo->getWriteInfo($class, $propertyName);
@@ -120,7 +92,7 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
                 default => null,
             };
             if ($writeReflector) {
-                yield new PropertySubject($propertyName, $writeReflector, $propertyContext);
+                yield new PropertySubject($propertyName, $writeReflector, $subject->getContext());
             }
         }
     }
@@ -135,63 +107,5 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
         if ($description = $this->propertyDescriptionExtractor->getShortDescription($reflector->class, $subject->getName())) {
             $schema['description'] = $description;
         }
-    }
-
-    /**
-     * Reads the backing property through reflection, so a getter that would throw on an uninitialized property
-     * is never invoked; only a property without backing property falls back to its getter. Unreadable counts as missing.
-     *
-     * @param \ReflectionClass<covariant object> $class
-     */
-    private function readValue(object $instance, \ReflectionClass $class, string $propertyName, ?PropertyReadInfo $readInfo): mixed
-    {
-        if ($class->hasProperty($propertyName) && !$class->getProperty($propertyName)->isStatic()) {
-            $property = $class->getProperty($propertyName);
-
-            return $property->isInitialized($instance) ? $property->getValue($instance) : null;
-        }
-
-        if (PropertyReadInfo::TYPE_METHOD === $readInfo?->getType() && !$readInfo->isStatic()) {
-            try {
-                return $class->getMethod($readInfo->getName())->invoke($instance);
-            } catch (\Error) {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * A value is left to the model when it is uninitialized, `null` or an empty array; anything else, including
-     * `''`, `0` and `false`, is taken as given. A nested object is decided by its own properties instead.
-     *
-     * @param array<string, mixed> $context
-     */
-    private function shouldPopulate(mixed $value, array $context): bool
-    {
-        if (null === $value) {
-            return true;
-        }
-
-        if (\is_array($value)) {
-            return [] === $value;
-        }
-
-        if (!\is_object($value)) {
-            return false;
-        }
-
-        $reflection = new \ReflectionClass($value);
-        if ($value instanceof \UnitEnum || $value instanceof \DateTimeInterface || !$reflection->isUserDefined()) {
-            return false;
-        }
-
-        $schema = null;
-        foreach ($this->describeObject(new ObjectSubject($value::class, $reflection, $context), $schema) as $property) {
-            return true;
-        }
-
-        return false;
     }
 }
