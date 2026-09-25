@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Uid\UuidV7;
 
 class AssistantMessageNormalizerTest extends TestCase
 {
@@ -40,16 +41,24 @@ class AssistantMessageNormalizerTest extends TestCase
         $this->assertEquals($expected, $actual);
     }
 
+    public function testMessageItemIdIsDerivedFromTheMessageId()
+    {
+        $message = Message::ofAssistant('Foo')->withId(UuidV7::fromString('0198e1d6-1234-7abc-8def-0123456789ab'));
+
+        $normalizer = new AssistantMessageNormalizer();
+        $normalizer->setNormalizer(new Serializer([new ToolCallNormalizer()]));
+
+        $actual = $normalizer->normalize($message, null, [Contract::CONTEXT_MODEL => new Gpt('o3')]);
+
+        $this->assertSame('msg_0198e1d612347abc8def0123456789ab', $actual[0]['id']);
+    }
+
     public static function normalizeProvider(): \Generator
     {
         $message = Message::ofAssistant('Foo');
         yield 'without tool calls' => [
             $message,
-            [[
-                'role' => 'assistant',
-                'type' => 'message',
-                'content' => 'Foo',
-            ]],
+            [self::messageItem($message, 'Foo')],
         ];
 
         $toolCall = new ToolCall('some-id', 'roll-die', ['sides' => 24]);
@@ -84,34 +93,25 @@ class AssistantMessageNormalizerTest extends TestCase
             ],
         ];
 
+        $reasoningThenText = Message::ofAssistant(new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Foo'));
         yield 'reasoning items are replayed before the message' => [
-            Message::ofAssistant(new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Foo')),
+            $reasoningThenText,
             [
                 $reasoningItem,
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'Foo',
-                ],
+                self::messageItem($reasoningThenText, 'Foo'),
             ],
         ];
 
+        $unsignedThinking = Message::ofAssistant(new Thinking('Pondering.'), new Text('Foo'));
         yield 'thinking without signature is not replayed' => [
-            Message::ofAssistant(new Thinking('Pondering.'), new Text('Foo')),
-            [[
-                'role' => 'assistant',
-                'type' => 'message',
-                'content' => 'Foo',
-            ]],
+            $unsignedThinking,
+            [self::messageItem($unsignedThinking, 'Foo')],
         ];
 
+        $opaqueSignature = Message::ofAssistant(new Thinking('Pondering.', 'anthropic-opaque-signature'), new Text('Foo'));
         yield 'non-reasoning signature is ignored' => [
-            Message::ofAssistant(new Thinking('Pondering.', 'anthropic-opaque-signature'), new Text('Foo')),
-            [[
-                'role' => 'assistant',
-                'type' => 'message',
-                'content' => 'Foo',
-            ]],
+            $opaqueSignature,
+            [self::messageItem($opaqueSignature, 'Foo')],
         ];
 
         $normalizedToolCall = [
@@ -121,72 +121,67 @@ class AssistantMessageNormalizerTest extends TestCase
             'type' => 'function_call',
         ];
 
+        $textThenToolCall = Message::ofAssistant(new Text('Let me roll.'), $toolCall);
         yield 'text accompanying a tool call is replayed, not dropped' => [
-            Message::ofAssistant(new Text('Let me roll.'), $toolCall),
+            $textThenToolCall,
             [
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'Let me roll.',
-                ],
+                self::messageItem($textThenToolCall, 'Let me roll.'),
                 $normalizedToolCall,
             ],
         ];
 
+        $textAroundToolCall = Message::ofAssistant(new Text('Before. '), $toolCall, new Text('After.'));
         yield 'text on both sides of a tool call keeps its positions' => [
-            Message::ofAssistant(new Text('Before. '), $toolCall, new Text('After.')),
+            $textAroundToolCall,
             [
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'Before. ',
-                ],
+                self::messageItem($textAroundToolCall, 'Before. '),
                 $normalizedToolCall,
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'After.',
-                ],
+                self::messageItem($textAroundToolCall, 'After.', 1),
             ],
         ];
 
+        $reasoningBetweenText = Message::ofAssistant(new Text('Thinking about it. '), new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Done.'));
         yield 'a reasoning item after text stays after it' => [
-            Message::ofAssistant(new Text('Thinking about it. '), new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Done.')),
+            $reasoningBetweenText,
             [
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'Thinking about it. ',
-                ],
+                self::messageItem($reasoningBetweenText, 'Thinking about it. '),
                 $reasoningItem,
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'Done.',
-                ],
+                self::messageItem($reasoningBetweenText, 'Done.', 1),
             ],
         ];
 
+        $reasoningTextToolCall = Message::ofAssistant(new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Let me roll.'), $toolCall);
         yield 'reasoning, text and a tool call in the order the model produced them' => [
-            Message::ofAssistant(new Thinking('Pondering.', json_encode($reasoningItem)), new Text('Let me roll.'), $toolCall),
+            $reasoningTextToolCall,
             [
                 $reasoningItem,
-                [
-                    'role' => 'assistant',
-                    'type' => 'message',
-                    'content' => 'Let me roll.',
-                ],
+                self::messageItem($reasoningTextToolCall, 'Let me roll.'),
                 $normalizedToolCall,
             ],
         ];
 
-        yield 'an assistant turn with nothing replayable keeps the empty message' => [
-            Message::ofAssistant(new Thinking('Pondering.')),
+        $providerSignature = json_encode(['type' => 'message', 'id' => 'msg_from_provider']);
+        yield 'the provider message id is replayed instead of a generated one' => [
+            Message::ofAssistant(new Text('Foo', $providerSignature)),
             [[
                 'role' => 'assistant',
                 'type' => 'message',
-                'content' => null,
+                'id' => 'msg_from_provider',
+                'status' => 'completed',
+                'content' => [['type' => 'output_text', 'text' => 'Foo', 'annotations' => []]],
             ]],
+        ];
+
+        $opaqueTextSignature = Message::ofAssistant(new Text('Foo', 'gemini-opaque-signature'));
+        yield 'an opaque text signature from another provider is ignored' => [
+            $opaqueTextSignature,
+            [self::messageItem($opaqueTextSignature, 'Foo')],
+        ];
+
+        $nothingReplayable = Message::ofAssistant(new Thinking('Pondering.'));
+        yield 'an assistant turn with nothing replayable keeps the empty message' => [
+            $nothingReplayable,
+            [self::messageItem($nothingReplayable, null)],
         ];
     }
 
@@ -207,5 +202,23 @@ class AssistantMessageNormalizerTest extends TestCase
         yield 'supported' => [$assistantMessage, $gpt, true];
         yield 'unsupported model' => [$assistantMessage, new Model('foo'), false];
         yield 'unsupported data' => [new Text('foo'), $gpt, false];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function messageItem(AssistantMessage $message, ?string $text, int $index = 0): array
+    {
+        $id = 'msg_'.str_replace('-', '', $message->getId()->toRfc4122());
+
+        return [
+            'role' => 'assistant',
+            'type' => 'message',
+            'id' => 0 === $index ? $id : $id.\sprintf('%02d', $index),
+            'status' => 'completed',
+            'content' => null === $text ? [] : [
+                ['type' => 'output_text', 'text' => $text, 'annotations' => []],
+            ],
+        ];
     }
 }
