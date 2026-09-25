@@ -52,7 +52,10 @@ final class TranscriptCleaner
         );
 
         $result = $this->platform->invoke($this->model, $messages, [
-            'max_output_tokens' => 300,
+            // gpt-5-mini spends part of this budget on its own hidden reasoning before
+            // writing the answer, so 300 tokens (enough for gpt-4o-mini) was getting
+            // consumed by reasoning alone and truncating the actual output.
+            'max_output_tokens' => 2000,
         ]);
 
         $cleaned = trim($result->asText());
