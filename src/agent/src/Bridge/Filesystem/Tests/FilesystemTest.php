@@ -325,10 +325,104 @@ class FilesystemTest extends TestCase
         $filesystem->read('.hidden');
     }
 
+    public function testDeniedPatternPreventsReadInsideHiddenDirectory()
+    {
+        $this->symfonyFilesystem->dumpFile($this->tempPath.'/.git/config', 'secret');
+
+        $filesystem = $this->createFilesystem();
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path ".git/config" matches denied pattern ".*"');
+
+        $filesystem->read('.git/config');
+    }
+
+    public function testDeniedPatternPreventsWriteBelowDeniedDirectory()
+    {
+        $this->symfonyFilesystem->mkdir($this->tempPath.'/.git/hooks');
+
+        $filesystem = $this->createFilesystem(deniedPatterns: ['.git/*']);
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path ".git/hooks/pre-commit" matches denied pattern ".git/*"');
+
+        $filesystem->write('.git/hooks/pre-commit', 'malicious');
+    }
+
+    public function testDeniedPatternPreventsMovingDirectoryContainingDeniedPaths()
+    {
+        $filesystem = $this->createFilesystem(deniedPatterns: ['nested/*']);
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path "nested/file.txt" matches denied pattern "nested/*"');
+
+        $filesystem->move('nested', 'other');
+    }
+
+    public function testDeniedPatternPreventsMovingDirectoryIntoDeniedPaths()
+    {
+        $filesystem = $this->createFilesystem(deniedPatterns: ['hooks/*']);
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path "hooks/file.txt" matches denied pattern "hooks/*"');
+
+        $filesystem->move('nested', 'hooks');
+    }
+
+    public function testDeniedPatternPreventsMovingOntoDirectoryContainingDeniedPaths()
+    {
+        $this->symfonyFilesystem->dumpFile($this->tempPath.'/other/.env', 'SECRET=1');
+
+        $filesystem = $this->createFilesystem();
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path "other/.env" matches denied pattern ".*"');
+
+        $filesystem->move('nested', 'other');
+    }
+
+    public function testDeniedPatternPreventsDeletingDirectoryContainingDeniedPaths()
+    {
+        $filesystem = $this->createFilesystem(allowDelete: true, deniedPatterns: ['nested/*']);
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Path "nested/file.txt" matches denied pattern "nested/*"');
+
+        $filesystem->delete('nested');
+    }
+
+    public function testDeniedPatternPreventsDeletingDirectoryContainingHiddenPaths()
+    {
+        $this->symfonyFilesystem->dumpFile($this->tempPath.'/project/.git/config', 'secret');
+
+        $filesystem = $this->createFilesystem(allowDelete: true);
+
+        try {
+            $filesystem->delete('project');
+            $this->fail('Expected PathSecurityException was not thrown.');
+        } catch (PathSecurityException $e) {
+            $this->assertStringContainsString('matches denied pattern ".*"', $e->getMessage());
+        }
+
+        $this->assertFileExists($this->tempPath.'/project/.git/config');
+    }
+
+    public function testDeniedPathPatternDoesNotAffectUnrelatedPaths()
+    {
+        $filesystem = $this->createFilesystem(deniedPatterns: ['nested/*']);
+
+        $this->assertNotEmpty($filesystem->list('.'));
+        $this->assertStringContainsString('Successfully moved', $filesystem->move('sample.txt', 'moved.txt'));
+    }
+
+    /**
+     * @param list<string> $deniedPatterns
+     */
     private function createFilesystem(
         bool $allowWrite = true,
         bool $allowDelete = false,
         int $maxReadSize = 10485760,
+        array $deniedPatterns = ['.*', '*.env*'],
     ): Filesystem {
         return new Filesystem(
             $this->symfonyFilesystem,
@@ -337,7 +431,7 @@ class FilesystemTest extends TestCase
             $allowDelete,
             [],
             ['php', 'phar', 'sh', 'exe', 'bat'],
-            ['.*', '*.env*'],
+            $deniedPatterns,
             $maxReadSize,
         );
     }
