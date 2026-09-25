@@ -25,6 +25,8 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
    - Regex: `vendor/bin/mate tools:call monolog-search --term="user \d+ locked" --regex`. A bare pattern is wrapped as `/.../i`; pass your own `/.../` or `#...#` to control anchoring and flags.
 4. Pivot on a field: once you have an identifier (request id, user id, order id), follow it with `vendor/bin/mate tools:call monolog-context-search --key=request_id --value=abc123`. This is how you reconstruct one request or one user across many lines.
 
+**Messenger worker failures** (`messenger` channel, "Error thrown while handling message ... Removing from transport after N retries"): the failed messages are in the failure transport. Go to `symfony-messenger-failed` (skill `symfony-messenger-failures`), which groups all of them by cause in one call, instead of reading the log lines one by one.
+
 ## Reading
 
 - Correlate `channel` + `level` + `datetime`. The channel tells you the subsystem (`doctrine` = DB, `security` = auth, `request`/`php` = framework), the level tells you severity, the timestamp anchors it to a deploy or an incident.
