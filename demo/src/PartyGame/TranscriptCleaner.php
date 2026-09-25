@@ -51,9 +51,7 @@ final class TranscriptCleaner
             Message::ofUser($transcript),
         );
 
-        $result = $this->platform->invoke($this->model, $messages, [
-            'max_output_tokens' => 300,
-        ]);
+        $result = $this->platform->invoke($this->model, $messages);
 
         $cleaned = trim($result->asText());
 
