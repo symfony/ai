@@ -16,17 +16,18 @@ php minimax/chat-with-token-usage.php
 
 ## Text-to-speech
 
-Audio is returned as binary; pipe it to a player like [mpg123](https://www.mpg123.de/):
+The synchronous example returns audio as binary; pipe it to a player like [mpg123](https://www.mpg123.de/).
+The asynchronous example saves the audio to `minimax/minimax-speech.mp3`:
 
 ```bash
 php minimax/text-to-speech.php | mpg123 -
-php minimax/text-to-speech-async.php | mpg123 -
+php minimax/text-to-speech-async.php
 ```
 
 ## Image, music and video
 
 ```bash
-php minimax/text-to-image.php > minimax-image.jpg
+php minimax/text-to-image.php
 php minimax/music.php | mpg123 -
 php minimax/text-to-video.php
 ```

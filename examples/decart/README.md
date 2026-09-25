@@ -1,10 +1,10 @@
 # Decart Examples
 
-One use case of Decart is to convert text to image, which creates image files from text input.
+Decart generates and edits images and videos. Each example saves its result next to the script.
 
 ```bash
-php decart/text-to-image.php > cat.jpg
-php decart/text-to-video.php > sunset.mp4
-php decart/animated-image.php > animated-accordion.mp4
-php decart/image-editing.php > colorized-image.mp4
+php decart/text-to-image.php
+php decart/text-to-video.php
+php decart/animated-image.php
+php decart/image-editing.php
 ```

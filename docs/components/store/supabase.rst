@@ -136,7 +136,7 @@ Adding Documents
     use Symfony\Component\Uid\Uuid;
 
     $document = new VectorDocument(
-        Uuid::v4(),
+        Uuid::v4()->toRfc4122(),
         new Vector([0.1, 0.2, 0.3, /* ... 768 dimensions */]),
         new Metadata(['title' => 'My Document', 'category' => 'example'])
     );

@@ -53,7 +53,7 @@ The component provides a model base class :class:`Symfony\\AI\\Platform\\Model` 
 capabilities, and additional options. Usually, bridges to specific providers extend this base class to provide a quick
 start for vendor-specific models and their capabilities.
 
-Capabilities are a list of strings defined by :class:`Symfony\\AI\\Platform\\Capability`, which can be used to check if a model
+Capabilities are a list of enum cases defined by :class:`Symfony\\AI\\Platform\\Capability`, which can be used to check if a model
 supports a specific feature, like ``Capability::INPUT_AUDIO``, ``Capability::OUTPUT_IMAGE``, or ``Capability::THINKING``.
 
 Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_output_tokens``, and are
@@ -62,21 +62,22 @@ usually defined by the specific models and their documentation.
 Model Size Variants
 ~~~~~~~~~~~~~~~~~~~
 
-For providers like Ollama, you can specify model size variants using a colon notation (e.g., ``qwen3:32b``, ``llama3:7b``).
-If the exact model name with size variant is not found in the catalog, the system will automatically fall back to the base
-model name (``qwen3``, ``llama3``) and use its capabilities while preserving the full model name for the provider.
+For catalogs based on :class:`Symfony\\AI\\Platform\\ModelCatalog\\AbstractModelCatalog`, you can specify model size
+variants using a colon notation (e.g., ``ai/qwen3:32B-Q4_K_M``). If the exact model name with size variant is not found in
+the catalog, the system will automatically fall back to the base model name (``ai/qwen3``) and use its capabilities while
+preserving the full model name for the provider.
 
 You can also combine size variants with query parameters::
 
-    use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
+    use Symfony\AI\Platform\Bridge\DockerModelRunner\ModelCatalog;
 
     $catalog = new ModelCatalog();
 
     // Get model with size variant
-    $model = $catalog->getModel('qwen3:32b');
+    $model = $catalog->getModel('ai/qwen3:32B-Q4_K_M');
 
     // Get model with size variant and query parameters
-    $model = $catalog->getModel('qwen3:32b?temperature=0.5&top_p=0.9');
+    $model = $catalog->getModel('ai/qwen3:32B-Q4_K_M?temperature=0.5&top_p=0.9');
 
 Custom models
 ~~~~~~~~~~~~~

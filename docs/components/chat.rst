@@ -175,8 +175,8 @@ store and ``bin/console ai:message-store:drop`` to clean up the message store:
 
 .. code-block:: terminal
 
-    $ php bin/console ai:message-store:setup symfonycon
-    $ php bin/console ai:message-store:drop symfonycon
+    $ php bin/console ai:message-store:setup ai.message_store.cache.symfonycon
+    $ php bin/console ai:message-store:drop ai.message_store.cache.symfonycon --force
 
 .. _`Streaming Chat`: https://github.com/symfony/ai/blob/main/examples/chat/stream-chat.php
 .. _`External services storage with Cache`: https://github.com/symfony/ai/blob/main/examples/chat/persistent-chat-cache.php
