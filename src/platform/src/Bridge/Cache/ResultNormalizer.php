@@ -25,18 +25,19 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 /**
+ * Normalizes and denormalizes {@see ResultInterface} instances for the cache.
+ *
+ * Object results rely on {@see get_debug_type()} to pick the denormalization type, which round-trips
+ * arrays and stdClass but may not fully restore objects with private or readonly properties.
+ *
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ResultNormalizer implements NormalizerInterface, DenormalizerInterface, NormalizerAwareInterface
+final class ResultNormalizer implements NormalizerInterface, DenormalizerInterface
 {
-    use NormalizerAwareTrait;
-
     public function __construct(
         private readonly ObjectNormalizer $objectNormalizer,
     ) {
@@ -74,9 +75,17 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                     'content' => \is_array($data->getContent()) ? $data->getContent() : $this->objectNormalizer->normalize($data->getContent(), $format, $context),
                 ],
                 StreamResult::class => throw new InvalidArgumentException(\sprintf('"%s" cannot be normalized.', StreamResult::class)),
-                TextResult::class => $data->getContent(),
+                TextResult::class => [
+                    'content' => $data->getContent(),
+                    'signature' => $data->getSignature(),
+                ],
                 ToolCallResult::class => array_map(
-                    fn (ToolCall $toolCall): array => $this->normalizer->normalize($toolCall, $format, $context),
+                    static fn (ToolCall $toolCall): array => [
+                        'id' => $toolCall->getId(),
+                        'name' => $toolCall->getName(),
+                        'arguments' => $toolCall->getArguments(),
+                        'signature' => $toolCall->getSignature(),
+                    ],
                     $data->getContent(),
                 ),
                 VectorResult::class => array_map(
@@ -110,12 +119,13 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
             )),
             ThinkingResult::class => new ThinkingResult($data['payload']['content'], $data['payload']['signature']),
             ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context)),
-            TextResult::class => new TextResult($data['payload']),
+            TextResult::class => new TextResult($data['payload']['content'], $data['payload']['signature'] ?? null),
             ToolCallResult::class => new ToolCallResult(array_map(
                 static fn (array $toolCall): ToolCall => new ToolCall(
                     $toolCall['id'],
-                    $toolCall['function']['name'],
-                    json_decode($toolCall['function']['arguments'], true),
+                    $toolCall['name'],
+                    $toolCall['arguments'],
+                    $toolCall['signature'] ?? null,
                 ),
                 $data['payload'],
             )),
