@@ -6,6 +6,17 @@ import { getComponent } from '@symfony/ux-live-component';
 const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
 const SUPPORTS_VOICE = !!SpeechRecognitionImpl;
 
+// SpeechRecognition reports failures only through its "error" event, followed by a plain "end".
+// Without surfacing them the mic just silently resets, so map the codes to something actionable.
+const VOICE_ERRORS = {
+    'not-allowed': 'Microphone access was blocked. Allow it in the browser settings or type your answer.',
+    'service-not-allowed': 'Speech recognition is disabled in this browser. Type your answer instead.',
+    'audio-capture': 'No microphone found. Type your answer instead.',
+    'network': 'The browser could not reach its speech service (Chromium forks like Brave do not ship one). Try Chrome or type your answer.',
+    'no-speech': 'Did not catch anything. Try again and speak right after clicking.',
+    'language-not-supported': 'Speech recognition does not support your browser language. Type your answer instead.',
+};
+
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const verdictClass = (p) => p >= 0.85 ? 'party-stamp-sold' : p >= 0.6 ? 'party-stamp-yes' : p >= 0.4 ? 'party-stamp-maybe' : p >= 0.15 ? 'party-stamp-no' : 'party-stamp-never';
@@ -48,7 +59,8 @@ export default class extends Controller {
     wireInputScreen() {
         const field = document.getElementById('party-answer');
         const count = document.getElementById('party-answer-count');
-        if (field && count) {
+        if (field && count && !field.dataset.wired) {
+            field.dataset.wired = '1';
             count.textContent = String(field.value.length);
             field.addEventListener('input', () => { count.textContent = String(field.value.length); });
             field.addEventListener('keydown', (e) => {
@@ -57,7 +69,9 @@ export default class extends Controller {
         }
 
         const micButton = document.getElementById('party-mic-btn');
-        if (!micButton) return;
+        // the morphing re-render keeps elements alive, a second listener would stop the recording right after starting it
+        if (!micButton || micButton.dataset.wired) return;
+        micButton.dataset.wired = '1';
 
         if (!SUPPORTS_VOICE) {
             micButton.closest('[data-party-game-target="voiceRow"]')?.remove();
@@ -85,8 +99,41 @@ export default class extends Controller {
         const status = document.getElementById('party-voice-status');
         const micButton = document.getElementById('party-mic-btn');
         let finalText = '';
+        let interimText = '';
+        let errorMessage = null;
+        let started = false;
+        let gaveUp = false;
+
+        const resetButton = () => {
+            if (!micButton) return;
+            micButton.disabled = false;
+            micButton.textContent = '🎙️ Speak instead';
+            micButton.classList.add('party-mint');
+            micButton.classList.remove('party-hot');
+            micButton.setAttribute('aria-pressed', 'false');
+        };
+
+        // Some Chromium forks (observed in Opera) advertise webkitSpeechRecognition but
+        // never fire a single event once started, since they ship no speech backend:
+        // no "start", no "error", nothing, so the mic just looks dead forever. Give up
+        // after a few seconds if we never even got a "start".
+        const startupTimeout = setTimeout(() => {
+            if (started) return;
+            gaveUp = true;
+            this.recognition = null;
+            try {
+                recognizer.abort();
+            } catch {
+                // best effort, the recognizer may not be listening to us at all
+            }
+            if (status) status.textContent = 'This browser did not respond to the microphone request. Type your answer instead.';
+            resetButton();
+        }, 4000);
 
         recognizer.addEventListener('start', () => {
+            if (gaveUp) return;
+            started = true;
+            clearTimeout(startupTimeout);
             micButton?.classList.add('party-hot');
             micButton?.classList.remove('party-mint');
             micButton?.setAttribute('aria-pressed', 'true');
@@ -95,6 +142,7 @@ export default class extends Controller {
         });
 
         recognizer.addEventListener('result', (event) => {
+            if (gaveUp) return;
             let interim = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
@@ -104,26 +152,41 @@ export default class extends Controller {
                     interim += transcript;
                 }
             }
+            interimText = interim;
             if (status) status.textContent = (finalText + interim).trim() || 'Listening…';
         });
 
+        recognizer.addEventListener('error', (event) => {
+            if (gaveUp || event.error === 'aborted') return;
+            errorMessage = VOICE_ERRORS[event.error] ?? `Speech recognition failed (${event.error}). Type your answer instead.`;
+        });
+
         recognizer.addEventListener('end', () => {
+            clearTimeout(startupTimeout);
+            if (gaveUp) return;
             this.recognition = null;
-            const text = finalText.trim();
+            // stopping manually can end the session before the last phrase was finalized
+            const text = (finalText + interimText).trim();
             if (text !== '') {
+                if (status) status.textContent = `Tidying up: “${text}”`;
+                if (micButton) {
+                    micButton.disabled = true;
+                    micButton.textContent = '⏳ Tidying up…';
+                }
                 this.component.action('requestCleanup', { transcript: text });
                 return;
             }
-            if (status) status.textContent = '';
-            if (micButton) {
-                micButton.textContent = '🎙️ Speak instead';
-                micButton.classList.add('party-mint');
-                micButton.classList.remove('party-hot');
-                micButton.setAttribute('aria-pressed', 'false');
-            }
+            if (status) status.textContent = errorMessage ?? '';
+            resetButton();
         });
 
-        recognizer.start();
+        try {
+            recognizer.start();
+        } catch (e) {
+            clearTimeout(startupTimeout);
+            this.recognition = null;
+            if (status) status.textContent = `Could not start the microphone (${e.message}). Type your answer instead.`;
+        }
     }
 
     // --- reveal screen animation --------------------------------------------
