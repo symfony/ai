@@ -24,7 +24,7 @@
     "require": {
         "php": ">=8.2",
         "mcp/sdk": "^0.8.1",
-        "symfony/ai-agent": "^0.13",
+        "symfony/ai-agent": "^0.14",
         "symfony/clock": "^7.3|^8.0"
     },
     "require-dev": {
@@ -32,7 +32,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/ai-platform": "^0.13",
+        "symfony/ai-platform": "^0.14",
         "symfony/event-dispatcher": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
