@@ -13,7 +13,11 @@ namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\MissingPropertiesSelector;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithAccessors;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
@@ -50,5 +54,23 @@ final class ResponseFormatFactoryTest extends TestCase
                 'strict' => true,
             ],
         ], (new ResponseFormatFactory())->create($class));
+    }
+
+    public function testCreateForwardsTheContextToTheSchemaFactory()
+    {
+        $responseFormat = (new ResponseFormatFactory())->create(City::class, [Factory::CONTEXT_SELECTOR => new MissingPropertiesSelector(new City(name: 'Berlin'))]);
+
+        $this->assertSame('City', $responseFormat['json_schema']['name']);
+        $this->assertSame(['population', 'country', 'mayor'], array_keys($responseFormat['json_schema']['schema']['properties']));
+    }
+
+    public function testCreateThrowsWhenTheSelectorLeavesNothingToDescribe()
+    {
+        $city = new City(name: 'Berlin', population: 3500000, country: 'Germany', mayor: 'Kai Wegner');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No property of "'.City::class.'" is left to describe.');
+
+        (new ResponseFormatFactory())->create(City::class, [Factory::CONTEXT_SELECTOR => new MissingPropertiesSelector($city)]);
     }
 }

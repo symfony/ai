@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
 
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\PropertySelectorInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -63,14 +65,41 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
 
     public function describeObject(ObjectSubject $subject, ?array &$schema): iterable
     {
-        $schema = $required = [];
+        $selector = $subject->getContext()[Factory::CONTEXT_SELECTOR] ?? null;
+        if (!$selector instanceof PropertySelectorInterface) {
+            $selector = null;
+        }
+
+        $schema = $required = $populatedInPlace = [];
         foreach ($this->objectDescribers as $describer) {
             foreach ($describer->describeObject($subject, $schema) as $property) {
+                if (null !== $selector) {
+                    if (!$selector->isOpen($subject, $property)) {
+                        continue;
+                    }
+
+                    // The selector for the object this property holds travels in the property's context
+                    $nestedSelector = $selector->forProperty($property);
+                    $property = $property->withContext([Factory::CONTEXT_SELECTOR => $nestedSelector] + $property->getContext());
+                    if (null !== $nestedSelector) {
+                        $populatedInPlace[$property->getName()] = true;
+                    }
+                }
+
                 $this->describeProperty($property, $schema['properties'][$property->getName()]);
                 if ($property->isRequired()) {
                     $required[$property->getName()] = true;
                 }
             }
+        }
+
+        foreach (array_keys($populatedInPlace) as $name) {
+            if (!$this->narrowPopulatedObject($schema['properties'][$name])) {
+                unset($schema['properties'][$name], $required[$name]);
+            }
+        }
+        if ([] === ($schema['properties'] ?? null)) {
+            unset($schema['properties']);
         }
 
         if (['type' => 'object'] === $schema) {
@@ -93,5 +122,30 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
         foreach ($this->propertyDescribers as $describer) {
             $describer->describeProperty($subject, $schema);
         }
+    }
+
+    /**
+     * An object populated in place is not worth describing when nothing on it is open, and must never be
+     * answered with `null`, as that would replace the instance and the values it already holds.
+     *
+     * @param array<string, mixed> $schema
+     *
+     * @return bool Whether the property is kept
+     */
+    private function narrowPopulatedObject(array &$schema): bool
+    {
+        if (!isset($schema['properties']) && !isset($schema['anyOf'])) {
+            return false;
+        }
+
+        if (isset($schema['type']) && \is_array($schema['type'])) {
+            $types = array_values(array_diff($schema['type'], ['null']));
+            $schema['type'] = 1 === \count($types) ? $types[0] : $types;
+        }
+        if (isset($schema['anyOf']) && \is_array($schema['anyOf'])) {
+            $schema['anyOf'] = array_values(array_filter($schema['anyOf'], static fn (mixed $variant): bool => ['type' => 'null'] !== $variant));
+        }
+
+        return true;
     }
 }

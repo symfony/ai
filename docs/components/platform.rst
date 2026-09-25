@@ -1613,6 +1613,38 @@ serialization groups::
         'response_format' => $product,
     ]);
 
+By default the schema describes every property of the class, even those the instance
+already holds, so the model is asked for everything. To only ask for what is still
+missing, add the ``missing_properties_only`` option::
+
+    $city = new City(name: 'Berlin');
+
+    $result = $platform->invoke($model, $messages, [
+        'response_format' => $city,
+        'missing_properties_only' => true,
+    ]);
+
+    // Only population, country and mayor were part of the schema and are filled in now
+    assert($city === $result->asObject());
+
+A property counts as missing when it is uninitialized, ``null`` or an empty array, and it
+can be written onto the instance; ``readonly`` and constructor-only properties are left out,
+since populating an existing instance never calls its constructor. Every other value,
+including ``''``, ``0`` and ``false``, is considered filled and left out of the schema.
+Nested objects are narrowed the same way and populated in place: one with nothing missing
+is left out entirely, a ``null`` one is described in full, and a partially filled one is
+described with only its own gaps and is no longer nullable. A non-empty collection is left
+out, an empty one is described with its full item schema.
+
+The option requires ``response_format`` to be the instance to populate and throws an
+:class:`Symfony\\AI\\Platform\\Exception\\InvalidArgumentException` otherwise, or when the
+instance has no missing properties at all. It is consumed by the ``PlatformSubscriber``,
+which wraps the instance in a
+:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Selector\\MissingPropertiesSelector` and hands it
+to :class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactoryInterface` as the
+describer context. The ``Describer`` consults the selector before describing each property,
+so the describers themselves stay a function of the class.
+
 Scoping the Schema to Serializer Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1655,7 +1687,7 @@ Passing ``serializer_groups`` limits the schema to the properties tagged with on
     // properties: name, price, slug
 
 The same context is accepted by ``buildParameters()`` for tool method arguments, and it is propagated into nested
-schemas, so discriminated sub-schemas (``anyOf``) are scoped the same way.
+schemas: plain object properties, collection items and discriminated sub-schemas (``anyOf``) are scoped the same way.
 
 Validating Structured Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -76,7 +76,7 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
                     default => new \ReflectionProperty($class, $readInfo->getName()),
                 };
 
-                yield new PropertySubject($propertyName, $readReflector);
+                yield new PropertySubject($propertyName, $readReflector, $subject->getContext());
             }
 
             $writeInfo = $this->propertyReadWriteInfo->getWriteInfo($class, $propertyName);
@@ -92,7 +92,7 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
                 default => null,
             };
             if ($writeReflector) {
-                yield new PropertySubject($propertyName, $writeReflector);
+                yield new PropertySubject($propertyName, $writeReflector, $subject->getContext());
             }
         }
     }

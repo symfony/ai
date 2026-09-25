@@ -41,6 +41,8 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
  *         maxProperties?: int,
  *         dependentRequired?: bool,
  *         anyOf?: list<mixed>,
+ *         properties?: array<string, mixed>,
+ *         items?: array<string, mixed>,
  *     }>,
  *     required: list<string>,
  *     additionalProperties: false,
@@ -51,6 +53,11 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
  */
 final class Factory
 {
+    /**
+     * Context key holding a `Selector\PropertySelectorInterface` that decides which properties are described.
+     */
+    public const CONTEXT_SELECTOR = 'selector';
+
     public function __construct(
         private readonly ObjectDescriberInterface $objectDescriber = new Describer(),
     ) {
@@ -70,7 +77,7 @@ final class Factory
     }
 
     /**
-     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]`
+     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]` or `[self::CONTEXT_SELECTOR => $selector]`
      *
      * @return JsonSchema|null
      */
