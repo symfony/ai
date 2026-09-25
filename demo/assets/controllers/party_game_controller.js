@@ -4,7 +4,14 @@ import { getComponent } from '@symfony/ux-live-component';
 // Chrome ships SpeechRecognition (prefixed), Firefox does not: feature-detect and hide
 // the mic entirely when it is missing, typing stays the baseline everywhere.
 const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
-const SUPPORTS_VOICE = !!SpeechRecognitionImpl;
+
+// Opera advertises webkitSpeechRecognition but ships no working speech backend behind it:
+// start() never fires a single event, not even an error, so it is unusable rather than
+// merely unreliable. Hide the mic there instead of offering a button that can only ever
+// time out.
+const IS_OPERA = /\bOPR\//.test(navigator.userAgent);
+
+const SUPPORTS_VOICE = !!SpeechRecognitionImpl && !IS_OPERA;
 
 // SpeechRecognition reports failures only through its "error" event, followed by a plain "end".
 // Without surfacing them the mic just silently resets, so map the codes to something actionable.
@@ -92,7 +99,10 @@ export default class extends Controller {
         const recognizer = new SpeechRecognitionImpl();
         this.recognition = recognizer;
         recognizer.lang = navigator.language || 'en-US';
-        recognizer.continuous = false;
+        // Continuous, so the browser's own silence detection never cuts a player off
+        // mid-thought: recording only ends when they click "Stop recording" themselves,
+        // which is what triggers the cleanup call.
+        recognizer.continuous = true;
         recognizer.interimResults = true;
         recognizer.maxAlternatives = 1;
 
