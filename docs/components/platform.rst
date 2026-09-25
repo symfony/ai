@@ -1638,12 +1638,11 @@ out, an empty one is described with its full item schema.
 The option requires ``response_format`` to be the instance to populate and throws an
 :class:`Symfony\\AI\\Platform\\Exception\\InvalidArgumentException` otherwise, or when the
 instance has no missing properties at all. It is consumed by the ``PlatformSubscriber``,
-which passes the instance to
-:class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactoryInterface` as its
-``$instanceToPopulate`` argument. The shipped factory wraps it in a
-:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Selector\\MissingPropertiesSelector`, which the
-``Describer`` consults before describing each property, so the describers themselves stay
-a function of the class.
+which wraps the instance in a
+:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Selector\\MissingPropertiesSelector` and hands it
+to :class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactoryInterface` as the
+describer context. The ``Describer`` consults the selector before describing each property,
+so the describers themselves stay a function of the class.
 
 Scoping the Schema to Serializer Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

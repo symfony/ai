@@ -96,15 +96,15 @@ Platform
    -$client = new Client($httpClient, $clock, $apiKey);
    +$client = new Client($httpClient, $apiKey);
    ```
- * `StructuredOutput\ResponseFormatFactoryInterface::create()` gained a `?object $instanceToPopulate = null`
-   parameter, the instance to populate when the new `missing_properties_only` option is set. Implementations must
-   add the parameter:
+ * `StructuredOutput\ResponseFormatFactoryInterface::create()` gained an `array $context = []` parameter, the
+   describer context forwarded to `Contract\JsonSchema\Factory::buildProperties()`, e.g. the property selector set
+   by the new `missing_properties_only` option. Implementations must add the parameter:
 
    ```diff
     final class MyResponseFormatFactory implements ResponseFormatFactoryInterface
     {
    -    public function create(string $responseClass): array
-   +    public function create(string $responseClass, ?object $instanceToPopulate = null): array
+   +    public function create(string $responseClass, array $context = []): array
         {
             // ...
         }

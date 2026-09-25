@@ -17,9 +17,10 @@ namespace Symfony\AI\Platform\StructuredOutput;
 interface ResponseFormatFactoryInterface
 {
     /**
-     * @param class-string $responseClass
-     * @param object|null  $instanceToPopulate An instance of $responseClass to describe only the properties it is
-     *                                         still missing, or null to describe the whole class
+     * @param class-string         $responseClass
+     * @param array<string, mixed> $context       Describer context forwarded to `Contract\JsonSchema\Factory::buildProperties()`,
+     *                                            e.g. `[Factory::CONTEXT_SELECTOR => $selector]` to describe only the properties
+     *                                            the selector opens, or `['serializer_groups' => ['write']]`
      *
      * @return array{
      *     type: 'json_schema',
@@ -30,5 +31,5 @@ interface ResponseFormatFactoryInterface
      *     }
      * }
      */
-    public function create(string $responseClass, ?object $instanceToPopulate = null): array;
+    public function create(string $responseClass, array $context = []): array;
 }

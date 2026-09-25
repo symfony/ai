@@ -15,7 +15,10 @@ use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 
 final class ConfigurableResponseFormatFactory implements ResponseFormatFactoryInterface
 {
-    private ?object $lastInstance = null;
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $lastContext = null;
 
     /**
      * @param array<mixed> $responseFormat
@@ -25,15 +28,18 @@ final class ConfigurableResponseFormatFactory implements ResponseFormatFactoryIn
     ) {
     }
 
-    public function create(string $responseClass, ?object $instanceToPopulate = null): array
+    public function create(string $responseClass, array $context = []): array
     {
-        $this->lastInstance = $instanceToPopulate;
+        $this->lastContext = $context;
 
         return $this->responseFormat;
     }
 
-    public function getLastInstance(): ?object
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getLastContext(): ?array
     {
-        return $this->lastInstance;
+        return $this->lastContext;
     }
 }

@@ -15,6 +15,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\MissingPropertiesSelector;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -298,7 +300,7 @@ final class PlatformSubscriberTest extends TestCase
         $processor->processInput($event);
 
         $this->assertSame(['response_format' => ['some' => 'format']], $event->getOptions());
-        $this->assertNull($factory->getLastInstance());
+        $this->assertSame([], $factory->getLastContext());
     }
 
     public function testMissingPropertiesOnlyIsForwardedToTheFactoryAndStrippedFromTheOptions()
@@ -313,7 +315,7 @@ final class PlatformSubscriberTest extends TestCase
 
         $processor->processInput($event);
 
-        $this->assertSame($city, $factory->getLastInstance());
+        $this->assertInstanceOf(MissingPropertiesSelector::class, $factory->getLastContext()[Factory::CONTEXT_SELECTOR] ?? null);
         $this->assertSame(['response_format' => ['some' => 'format']], $event->getOptions());
     }
 

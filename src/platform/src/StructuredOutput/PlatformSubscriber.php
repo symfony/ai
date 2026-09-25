@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\StructuredOutput;
 
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\MissingPropertiesSelector;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -98,7 +100,8 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
         $this->outputType = $className;
 
-        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className, $missingPropertiesOnly ? $responseFormat : null);
+        $context = $missingPropertiesOnly ? [Factory::CONTEXT_SELECTOR => new MissingPropertiesSelector($responseFormat)] : [];
+        $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className, $context);
 
         $event->setOptions($options);
     }
