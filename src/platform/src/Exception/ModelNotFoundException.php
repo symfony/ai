@@ -14,6 +14,6 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Mathieu Santostefano <msantostefano@proton.me>
  */
-class ModelNotFoundException extends \InvalidArgumentException implements ExceptionInterface
+class ModelNotFoundException extends UnrecoverableRuntimeException
 {
 }

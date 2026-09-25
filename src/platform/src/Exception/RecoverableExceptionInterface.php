@@ -12,8 +12,10 @@
 namespace Symfony\AI\Platform\Exception;
 
 /**
- * @author Mathieu Santostefano <msantostefano@proton.me>
+ * Marks failures that may succeed when retried later.
+ *
+ * @author Dezső Biczó <mxr576@gmail.com>
  */
-class ExceedContextSizeException extends UnrecoverableRuntimeException
+interface RecoverableExceptionInterface extends ExceptionInterface
 {
 }
