@@ -26,6 +26,7 @@ Which ``.env`` file sets a variable, is it resolved?     ``symfony-dotenv-check`
 Which requests failed or were slow?                      ``symfony-profiler-list``
 What happened in one request?                            ``symfony-profiler://profile/{token}``
 What did one collector record (``db``, ``exception``)?   ``symfony-profiler://profile/{token}/{collector}``
+Why do Messenger messages fail, which causes are there?  ``symfony-messenger-failed``
 Which log entries match a text, a level or a time?       ``monolog-search``
 Which log entries belong to one order or user?           ``monolog-context-search``
 What was logged last?                                    ``monolog-tail``
@@ -88,8 +89,8 @@ narrows the lookup to one kernel. The sections below name the field and the para
 Symfony Extension
 -----------------
 
-The Symfony extension (``symfony/ai-symfony-mate-extension``) reads the compiled container and the
-profiler from disk. The application is never booted.
+The Symfony extension (``symfony/ai-symfony-mate-extension``) reads the compiled container, the
+profiler and the Messenger failure transports from disk. The application is never booted.
 
 Container Introspection
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -292,6 +293,80 @@ without a formatter goes through the same kind of key-based redaction.
 
     $container->parameters()
         ->set('ai_mate_symfony.profiler_dir', '%mate.root_dir%/var/cache/dev/profiler');
+
+Messenger Failures
+~~~~~~~~~~~~~~~~~~
+
+``symfony-messenger-failed``
+    List the messages in the failure transports, grouped by cause: the exception class, the
+    exception message with its variable parts blanked (quoted values, paths, numbers) and the
+    first application frame of the trace, which is usually the handler. The largest group comes
+    first, and every group is listed however small, so a rare bug is not hidden behind a flood of
+    one transient failure.
+
+    =============  =====================================================================
+    Parameter      Description
+    =============  =====================================================================
+    ``transport``  Read only this transport. Default: every failure transport.
+    ``group``      List every message of this group (1-based, as numbered in the result).
+    =============  =====================================================================
+
+    Groups are numbered per transport: with several failure transports, pass ``transport``
+    together with ``group``.
+
+    Per group: ``count``, ``message_classes``, ``exception_class``, ``failed_in``,
+    ``sample_messages`` (up to 5 distinct exception messages), ``trace`` (the top frames),
+    ``retry_count`` (a number, or ``min``/``max`` when the messages differ), ``first_failed_at``,
+    ``last_failed_at``, ``original_transports`` and up to 20 ``ids``. Per transport it also
+    reports ``message_count``, the ``undecodable`` rows with the reason, and ``scan_truncated``
+    when the transport holds more than the 5,000 newest messages it reads.
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call symfony-messenger-failed
+    $ vendor/bin/mate tools:call symfony-messenger-failed --transport=failed --group=2
+
+The tool reads the storage of the transport directly, with plain ``SELECT`` statements. It never
+locks, acknowledges, retries or removes a message, never creates a table or a database file, and
+opens SQLite databases read-only. Use ``bin/console messenger:failed:retry`` or
+``messenger:failed:remove`` to act on the result.
+
+=====================================  ================================================================
+Transport                              Support
+=====================================  ================================================================
+Doctrine, PHP serializer (default)     Read.
+Doctrine, Symfony Serializer           Read. The failure details come from the ``X-Message-Stamp-*``
+                                       headers, the message body is not read.
+Redis                                  Not read. The tool returns an error that points at
+                                       ``messenger:failed:show``.
+AMQP, Amazon SQS                       Not read: a message cannot be read from the queue without
+                                       receiving it, which changes its state.
+Beanstalkd, in-memory, ``sync``        Not read. An in-memory transport only lives in the process
+                                       that sent the messages.
+=====================================  ================================================================
+
+The stored envelopes are never unserialized into objects. The tool calls ``unserialize()`` with
+``allowed_classes`` set to ``false``, so the envelope, its stamps and the message all come back as
+``__PHP_Incomplete_Class``, and it reads their properties as plain data. No constructor,
+``__wakeup()``, ``__unserialize()`` or ``__destruct()`` of a stored class runs, whatever the
+transport contains. The message itself only contributes its class name. Messenger's own
+``PhpSerializer::decode()`` is not used because it allows every class.
+
+**Configuration**
+
+The failure transports, their DSNs and options, and the Doctrine connections come from the
+compiled container, the same ``*DebugContainer.xml`` the container tools read. The container of
+the application's ``APP_ENV`` is preferred. ``%env()%`` placeholders are resolved from the real
+environment of the Mate process, then from the ``.env``, ``.env.local``, ``.env.$APP_ENV`` and
+``.env.$APP_ENV.local`` files in the order Symfony loads them (``symfony/dotenv`` is needed for the
+files). The ``resolve``, ``default``, ``string``, ``trim`` and ``base64`` processors are
+supported; any other processor is an error. ``%kernel.project_dir%`` is the directory Mate runs
+in, even if the container was compiled elsewhere. Reading a Doctrine transport needs
+``doctrine/dbal``.
+
+When something cannot be resolved, for example a missing environment variable, an unknown Doctrine
+connection or a database file that does not exist, that transport's entry carries an ``error``
+naming it, and the other transports are still read.
 
 Monolog Extension
 -----------------

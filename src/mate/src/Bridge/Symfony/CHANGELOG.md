@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
+ * Add `symfony-messenger-failed` tool and `symfony-messenger-failures` skill: lists the messages in the Messenger failure transports grouped by cause (exception class, message pattern, failing application frame), with counts, sample messages, trace, retry counts and first/last failure time, so a rare real bug is not hidden behind a flood of one transient failure. Reads Doctrine transports (PHP serializer or Symfony Serializer) directly and read-only, without booting the kernel, and never instantiates a stored class (`unserialize()` with `allowed_classes => false`); other transports report an error pointing at `messenger:failed:show`
 
 0.14
 ----

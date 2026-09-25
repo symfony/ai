@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Mate\Bridge\Symfony\Capability\DotenvTool;
+use Symfony\AI\Mate\Bridge\Symfony\Capability\MessengerFailedTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
@@ -57,6 +58,10 @@ return static function (ContainerConfigurator $configurator) {
         $services->set(DotenvTool::class)
             ->args(['%mate.root_dir%']);
     }
+
+    // Failed Messenger messages (reads the failure transport storage, never the kernel)
+    $services->set(MessengerFailedTool::class)
+        ->args(['%mate.root_dir%', '%ai_mate_symfony.cache_dir%']);
 
     // Profiler services (optional - only if profiler classes are available)
     if (class_exists(Profile::class)) {
