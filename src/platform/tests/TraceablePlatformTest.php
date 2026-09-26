@@ -49,6 +49,30 @@ final class TraceablePlatformTest extends TestCase
         $this->assertInstanceOf(\WeakMap::class, $traceablePlatform->getResultCache());
     }
 
+    public function testResetDoesNotBreakStreamBeingConsumed()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('first ');
+            yield new TextDelta('second');
+        })());
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($stream), $this->createStub(RawResultInterface::class)));
+
+        $generator = $traceablePlatform->invoke('gpt-4o', 'Hello', ['stream' => true])->asStream();
+        $this->assertEquals(new TextDelta('first '), $generator->current());
+
+        $traceablePlatform->reset();
+
+        $generator->next();
+        $this->assertEquals(new TextDelta('second'), $generator->current());
+
+        $generator->next();
+        $this->assertFalse($generator->valid());
+        $this->assertCount(0, $traceablePlatform->getResultCache());
+    }
+
     public function testInvokeWithModelInstanceRecordsModelName()
     {
         $platform = $this->createStub(PlatformInterface::class);
