@@ -145,7 +145,9 @@ final class Runner
             }
         }
 
-        $result->getMetadata()->merge($metadata);
+        // Merged in order, so mergeable values like the token usage add up and the final result's own values win
+        $metadata->merge($result->getMetadata());
+        $result->getMetadata()->set($metadata->all());
 
         if ($this->includeSources) {
             $result->getMetadata()->add('sources', $sources);

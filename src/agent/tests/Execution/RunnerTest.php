@@ -23,6 +23,8 @@ use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
+use Symfony\AI\Platform\FinishReason\FinishReason;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -660,6 +662,31 @@ final class RunnerTest extends TestCase
         $usage = $result->getMetadata()->get('token_usage');
         $this->assertInstanceOf(TokenUsageAggregation::class, $usage);
         $this->assertSame(20, $usage->getTotalTokens());
+    }
+
+    public function testFinalResultKeepsItsOwnMetadataOverTheToolCallRounds()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('finish_reason', new FinishReason(FinishReasonCase::TOOL_CALL, 'tool_calls'));
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('finish_reason', new FinishReason(FinishReasonCase::STOP, 'stop'));
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $result = $this->drive($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $finishReason = $result->getMetadata()->get('finish_reason');
+        $this->assertInstanceOf(FinishReason::class, $finishReason);
+        $this->assertTrue($finishReason->is(FinishReasonCase::STOP));
+        $this->assertSame(15, $result->getMetadata()->get('token_usage')->getTotalTokens());
     }
 
     public function testStreamedStructuredOutputEndsWithTheObjectResult()
