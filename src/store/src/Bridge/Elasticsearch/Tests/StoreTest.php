@@ -153,6 +153,123 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreThrowsExceptionWhenBulkIndexingFails()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'errors' => true,
+                'took' => 200,
+                'items' => [
+                    [
+                        'index' => [
+                            '_index' => 'foo',
+                            '_id' => 'a',
+                            '_version' => 1,
+                            'result' => 'created',
+                            'status' => 201,
+                        ],
+                    ],
+                    [
+                        'index' => [
+                            '_index' => 'foo',
+                            '_id' => 'b',
+                            'status' => 400,
+                            'error' => [
+                                'type' => 'document_parsing_exception',
+                                'reason' => '[1:21] failed to parse: The [dense_vector] field [_vectors] in doc [document with id \'b\'] has a different number of dimensions [2] than defined in the mapping [3]',
+                                'caused_by' => [
+                                    'type' => 'illegal_argument_exception',
+                                    'reason' => 'The [dense_vector] field [_vectors] in doc [document with id \'b\'] has a different number of dimensions [2] than defined in the mapping [3]',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'foo');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to process 1 of 2 bulk operation(s) on the "foo" index, first error for document "b": [document_parsing_exception] [1:21] failed to parse: The [dense_vector] field [_vectors] in doc [document with id \'b\'] has a different number of dimensions [2] than defined in the mapping [3] (caused by [illegal_argument_exception] The [dense_vector] field [_vectors] in doc [document with id \'b\'] has a different number of dimensions [2] than defined in the mapping [3])');
+
+        $store->add([
+            new VectorDocument('a', new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument('b', new Vector([0.1, 0.2])),
+        ]);
+    }
+
+    public function testStoreCanRemove()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'errors' => false,
+                'took' => 2,
+                'items' => [
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'a',
+                            '_version' => 2,
+                            'result' => 'deleted',
+                            'status' => 200,
+                        ],
+                    ],
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'b',
+                            '_version' => 1,
+                            'result' => 'not_found',
+                            'status' => 404,
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'foo');
+        $store->remove(['a', 'b']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreThrowsExceptionWhenBulkRemovalFails()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'errors' => true,
+                'took' => 0,
+                'items' => [
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'a',
+                            'status' => 403,
+                            'error' => [
+                                'type' => 'cluster_block_exception',
+                                'reason' => 'index [foo] blocked by: [FORBIDDEN/8/index write (api)];',
+                            ],
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'foo');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to process 1 of 1 bulk operation(s) on the "foo" index, first error for document "a": [cluster_block_exception] index [foo] blocked by: [FORBIDDEN/8/index write (api)];');
+
+        $store->remove('a');
+    }
+
     public function testStoreCanQuery()
     {
         $httpClient = new MockHttpClient([

@@ -99,11 +99,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
         ];
 
-        $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
+        $result = $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
             foreach ($documents as $document) {
                 yield json_encode($documentToIndex($document)).\PHP_EOL.json_encode($documentToPayload($document)).\PHP_EOL;
             }
         });
+
+        $this->assertBulkSucceeded($result);
     }
 
     public function remove(string|array $ids, array $options = []): void
@@ -123,11 +125,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
         ];
 
-        $this->request('POST', '_bulk', static function () use ($ids, $documentToDelete) {
+        $result = $this->request('POST', '_bulk', static function () use ($ids, $documentToDelete) {
             foreach ($ids as $id) {
                 yield json_encode($documentToDelete($id)).\PHP_EOL;
             }
         });
+
+        $this->assertBulkSucceeded($result);
     }
 
     public function clear(array $options = []): void
@@ -222,6 +226,52 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $response = $this->httpClient->request($method, $path, $finalOptions);
 
         return $response->toArray();
+    }
+
+    /**
+     * A bulk request is answered with 200 even when individual operations failed.
+     *
+     * @param array<mixed> $result
+     */
+    private function assertBulkSucceeded(array $result): void
+    {
+        if (true !== ($result['errors'] ?? false)) {
+            return;
+        }
+
+        $items = \is_array($result['items'] ?? null) ? $result['items'] : [];
+        $failures = [];
+        foreach ($items as $item) {
+            $operation = \is_array($item) ? current($item) : false;
+            if (\is_array($operation) && \is_array($operation['error'] ?? null)) {
+                $failures[] = $operation;
+            }
+        }
+
+        $message = \sprintf('Failed to process %d of %d bulk operation(s) on the "%s" index', \count($failures), \count($items), $this->indexName);
+
+        if ([] !== $failures) {
+            $id = $failures[0]['_id'] ?? '';
+            $message .= \sprintf(', first error for document "%s": %s', \is_string($id) ? $id : '', $this->describeError($failures[0]['error']));
+
+            $cause = $failures[0]['error']['caused_by'] ?? null;
+            if (\is_array($cause)) {
+                $message .= \sprintf(' (caused by %s)', $this->describeError($cause));
+            }
+        }
+
+        throw new RuntimeException($message);
+    }
+
+    /**
+     * @param array<mixed> $error
+     */
+    private function describeError(array $error): string
+    {
+        $type = $error['type'] ?? null;
+        $reason = $error['reason'] ?? null;
+
+        return \sprintf('[%s] %s', \is_string($type) ? $type : 'unknown', \is_string($reason) ? $reason : 'no reason given');
     }
 
     /**
