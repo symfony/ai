@@ -131,6 +131,38 @@ class DataCollectorTest extends TestCase
         $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
     }
 
+    public function testStreamSpanningServiceResetIsNotCollectedForNextRequest()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        $messageBag = new MessageBag(Message::ofUser(new Text('Hello')));
+        $result = new StreamResult(
+            (static function () {
+                yield new TextDelta('Assistant ');
+                yield new TextDelta('response');
+            })(),
+        );
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $this->createStub(RawResultInterface::class)));
+
+        $stream = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true])->asStream();
+        $stream->current();
+
+        // The services resetter runs between two units of work of a long-running process
+        $traceablePlatform->reset();
+
+        $text = '';
+        foreach ($stream as $chunk) {
+            $text .= $chunk instanceof TextDelta ? $chunk->getText() : '';
+        }
+        $this->assertSame('Assistant response', $text);
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $this->assertCount(0, $dataCollector->getPlatformCalls());
+    }
+
     public function testCollectsDataForToolCallResult()
     {
         $platform = $this->createMock(PlatformInterface::class);

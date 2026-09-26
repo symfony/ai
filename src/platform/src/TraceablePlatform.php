@@ -121,13 +121,16 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
      */
     private function createTraceableStreamResult(DeferredResult $originalStream, \Closure $stopEvent): StreamResult
     {
-        return $result = new StreamResult((function () use (&$result, $originalStream, $stopEvent) {
+        // Keep writing to the cache the stream started with, as reset() may swap it mid-stream
+        $resultCache = $this->resultCache;
+
+        return $result = new StreamResult((static function () use (&$result, $originalStream, $stopEvent, $resultCache) {
             try {
-                $this->resultCache[$result] = '';
+                $resultCache[$result] = '';
                 foreach ($originalStream->asStream() as $chunk) {
                     yield $chunk;
                     if ($chunk instanceof TextDelta) {
-                        $this->resultCache[$result] .= $chunk->getText();
+                        $resultCache[$result] .= $chunk->getText();
                     }
                 }
 
