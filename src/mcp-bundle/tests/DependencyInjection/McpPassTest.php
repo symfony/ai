@@ -15,6 +15,7 @@ use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Icon;
 use Mcp\Schema\ToolAnnotations;
 use PHPUnit\Framework\TestCase;
@@ -103,6 +104,52 @@ final class McpPassTest extends TestCase
         (new McpPass())->process($container);
 
         $this->assertCount(1, $this->callsNamed($container, 'addTool'));
+    }
+
+    public function testKeepsPercentSignsInToolMetadataLiteral()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition(PercentTool::class, (new Definition(PercentTool::class))->addTag('mcp.tool', ['method' => 'search']));
+
+        (new McpPass())->process($container);
+
+        $arguments = $this->resolved($container, $this->callsNamed($container, 'addTool')[0][1]);
+        $this->assertSame('discount', $arguments[1]);
+        $this->assertSame('Get 50%off% today', $arguments[2]);
+        $this->assertSame('Filter with "%" wildcards, 100% free', $arguments[3]);
+        $this->assertSame(['%title%', null, null, null, null], $arguments[4]);
+        $this->assertSame('Filter, "%" wildcard. Default "%" matches everything.', $arguments[5]['properties']['query']['description']);
+        $this->assertSame('%', $arguments[5]['properties']['query']['default']);
+        $this->assertSame([['https://example.com/icon%20one.png', null, null]], $arguments[6]);
+        $this->assertSame(['%key%' => '%value%'], $arguments[7]);
+        $this->assertSame(['type' => 'object', 'description' => 'Share in %percent%'], $arguments[8]);
+    }
+
+    public function testKeepsPercentSignsInPromptAndResourceMetadataLiteral()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition(PercentPrompt::class, (new Definition(PercentPrompt::class))->addTag('mcp.prompt', ['method' => 'discount']));
+        $container->setDefinition(PercentResource::class, (new Definition(PercentResource::class))->addTag('mcp.resource', ['method' => 'read']));
+        $container->setDefinition(PercentTemplate::class, (new Definition(PercentTemplate::class))->addTag('mcp.resource_template', ['method' => 'read']));
+
+        (new McpPass())->process($container);
+
+        $prompt = $this->resolved($container, $this->callsNamed($container, 'addPrompt')[0][1]);
+        $this->assertSame('%discount%', $prompt[1]);
+        $this->assertSame('50%off%', $prompt[2]);
+        $this->assertSame('Get 50% off', $prompt[3]);
+
+        $resource = $this->resolved($container, $this->callsNamed($container, 'addResource')[0][1]);
+        $this->assertSame('file:///my%20docs/%readme%', $resource[1]);
+        $this->assertSame('%readme%', $resource[2]);
+        $this->assertSame('%title%', $resource[3]);
+        $this->assertSame('100% up to date', $resource[4]);
+
+        $template = $this->resolved($container, $this->callsNamed($container, 'addResourceTemplate')[0][1]);
+        $this->assertSame('file:///my%20docs/{name}', $template[1]);
+        $this->assertSame('%docs%', $template[2]);
+        $this->assertSame('%title%', $template[3]);
+        $this->assertSame('100% of the docs', $template[4]);
     }
 
     public function testRegistersPrompt()
@@ -312,6 +359,29 @@ final class McpPassTest extends TestCase
     }
 
     /**
+     * Resolves the arguments the way the compiled container will see them, unwrapping inline definitions to their arguments.
+     */
+    private function resolved(ContainerBuilder $container, mixed $value): mixed
+    {
+        if ($value instanceof Definition) {
+            return $this->resolved($container, $value->getArguments());
+        }
+
+        if (\is_array($value)) {
+            $resolved = [];
+            foreach ($value as $key => $item) {
+                $resolved[$this->resolved($container, $key)] = $this->resolved($container, $item);
+            }
+
+            return $resolved;
+        }
+
+        $bag = $container->getParameterBag();
+
+        return $bag->unescapeValue($bag->resolveValue($value));
+    }
+
+    /**
      * @return list<array{0: string, 1: array<int, mixed>}>
      */
     private function callsNamed(ContainerBuilder $container, string $method, string $server = 'default'): array
@@ -438,5 +508,51 @@ class PlainService
     public function run(): string
     {
         return 'ok';
+    }
+}
+
+class PercentTool
+{
+    #[McpTool(
+        name: 'discount',
+        title: 'Get 50%off% today',
+        description: 'Filter with "%" wildcards, 100% free',
+        annotations: new ToolAnnotations(title: '%title%'),
+        icons: [new Icon('https://example.com/icon%20one.png')],
+        meta: ['%key%' => '%value%'],
+        outputSchema: ['type' => 'object', 'description' => 'Share in %percent%'],
+    )]
+    public function search(
+        #[Schema(description: 'Filter, "%" wildcard. Default "%" matches everything.')]
+        string $query = '%',
+    ): string {
+        return $query;
+    }
+}
+
+class PercentPrompt
+{
+    #[McpPrompt(name: '%discount%', title: '50%off%', description: 'Get 50% off')]
+    public function discount(): string
+    {
+        return 'Get 50% off';
+    }
+}
+
+class PercentResource
+{
+    #[McpResource(uri: 'file:///my%20docs/%readme%', name: '%readme%', title: '%title%', description: '100% up to date')]
+    public function read(): string
+    {
+        return '100%';
+    }
+}
+
+class PercentTemplate
+{
+    #[McpResourceTemplate(uriTemplate: 'file:///my%20docs/{name}', name: '%docs%', title: '%title%', description: '100% of the docs')]
+    public function read(string $name): string
+    {
+        return $name;
     }
 }

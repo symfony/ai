@@ -91,7 +91,7 @@ final class McpAppPass implements CompilerPassInterface
 
                 $descriptorMarker = (new Definition(\stdClass::class))->setFactory([McpApps::class, 'resourceMarker']);
 
-                $builder->addMethodCall('addResource', [
+                $builder->addMethodCall('addResource', LiteralArguments::escape([
                     $handler,
                     $uri,
                     $slug, // resource name, derived from the URI ($name is the tool's)
@@ -102,7 +102,7 @@ final class McpAppPass implements CompilerPassInterface
                     null, // annotations
                     null, // icons
                     ['ui' => $descriptorMarker],
-                ]);
+                ]));
 
                 $this->registerTool($container, $serviceId, $class, $app, $uri, $slug, $builder, $toolTemplates);
                 $this->registerAppToolMethods($container, $serviceId, $class, $app, $uri, $builder, $toolTemplates);
@@ -118,7 +118,7 @@ final class McpAppPass implements CompilerPassInterface
                 // and each server's locator must map that class to its own template set.
                 $rendererId = \sprintf('mcp.server.%s.app.resource_renderer', $server);
                 $container->register($rendererId, McpAppResourceRenderer::class)
-                    ->setArguments([new Reference(McpAppRenderer::SERVICE_ID), $templateApps]);
+                    ->setArguments([new Reference(McpAppRenderer::SERVICE_ID), LiteralArguments::escape($templateApps)]);
 
                 $handlers[$server][McpAppResourceRenderer::class] = $rendererId;
             }
@@ -224,7 +224,7 @@ final class McpAppPass implements CompilerPassInterface
     {
         $visibility = $appOnly ? [ToolVisibility::App] : [ToolVisibility::Model, ToolVisibility::App];
 
-        $builder->addMethodCall('addTool', [
+        $builder->addMethodCall('addTool', LiteralArguments::escape([
             [$serviceId, $method],
             $name,
             $title,
@@ -234,7 +234,7 @@ final class McpAppPass implements CompilerPassInterface
             null, // icons
             ['ui' => new Definition(UiToolMeta::class, [$uri, $visibility])],
             null, // outputSchema
-        ]);
+        ]));
 
         if (null !== $template) {
             $toolTemplates[$serviceId.'::'.$method] = $template;
