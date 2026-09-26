@@ -102,11 +102,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
         ];
 
-        $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
+        $result = $this->request('POST', '_bulk', static function () use ($documents, $documentToIndex, $documentToPayload) {
             foreach ($documents as $document) {
                 yield json_encode($documentToIndex($document)).\PHP_EOL.json_encode($documentToPayload($document)).\PHP_EOL;
             }
         });
+
+        $this->assertBulkSucceeded($result);
     }
 
     public function remove(string|array $ids, array $options = []): void
@@ -119,7 +121,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $this->request('POST', '_bulk', function () use ($ids) {
+        $result = $this->request('POST', '_bulk', function () use ($ids) {
             foreach ($ids as $id) {
                 yield json_encode([
                     'delete' => [
@@ -129,6 +131,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 ]).\PHP_EOL;
             }
         });
+
+        $this->assertBulkSucceeded($result);
     }
 
     public function clear(array $options = []): void
@@ -201,6 +205,46 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $response = $this->httpClient->request($method, $path, $finalOptions);
 
         return $response->toArray();
+    }
+
+    /**
+     * A bulk request is answered with 200 even when individual operations failed.
+     *
+     * @param array{
+     *     errors?: bool,
+     *     items?: list<array<string, array{
+     *         _id?: string,
+     *         error?: array{type?: string, reason?: string, caused_by?: array{type?: string, reason?: string}},
+     *     }>>,
+     * } $result
+     */
+    private function assertBulkSucceeded(array $result): void
+    {
+        if (true !== ($result['errors'] ?? false)) {
+            return;
+        }
+
+        $items = $result['items'] ?? [];
+        $failures = [];
+        foreach ($items as $item) {
+            $operation = current($item);
+            if (false !== $operation && isset($operation['error'])) {
+                $failures[] = $operation;
+            }
+        }
+
+        $message = \sprintf('Failed to process %d of %d bulk operation(s) on the "%s" index', \count($failures), \count($items), $this->indexName);
+
+        if ([] !== $failures) {
+            $error = $failures[0]['error'];
+            $message .= \sprintf(', first error for document "%s": [%s] %s', $failures[0]['_id'] ?? '', $error['type'] ?? 'unknown', $error['reason'] ?? 'no reason given');
+
+            if (isset($error['caused_by'])) {
+                $message .= \sprintf(' (caused by [%s] %s)', $error['caused_by']['type'] ?? 'unknown', $error['caused_by']['reason'] ?? 'no reason given');
+            }
+        }
+
+        throw new RuntimeException($message);
     }
 
     /**

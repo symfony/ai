@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\OpenSearch\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -150,6 +151,123 @@ final class StoreTest extends TestCase
         $store->add([new VectorDocument(Uuid::v7(), new Vector([0.1, 0.2, 0.3]))]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreThrowsExceptionWhenBulkIndexingFails()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'took' => 3,
+                'errors' => true,
+                'items' => [
+                    [
+                        'index' => [
+                            '_index' => 'foo',
+                            '_id' => 'a',
+                            '_version' => 1,
+                            'result' => 'created',
+                            'status' => 201,
+                        ],
+                    ],
+                    [
+                        'index' => [
+                            '_index' => 'foo',
+                            '_id' => 'b',
+                            'status' => 400,
+                            'error' => [
+                                'type' => 'mapper_parsing_exception',
+                                'reason' => 'failed to parse field [_vectors] of type [knn_vector] in document with id \'b\'. Preview of field\'s value: \'null\'',
+                                'caused_by' => [
+                                    'type' => 'illegal_argument_exception',
+                                    'reason' => 'Vector dimension mismatch. Expected: 3, Given: 2',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'foo');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to process 1 of 2 bulk operation(s) on the "foo" index, first error for document "b": [mapper_parsing_exception] failed to parse field [_vectors] of type [knn_vector] in document with id \'b\'. Preview of field\'s value: \'null\' (caused by [illegal_argument_exception] Vector dimension mismatch. Expected: 3, Given: 2)');
+
+        $store->add([
+            new VectorDocument('a', new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument('b', new Vector([0.1, 0.2])),
+        ]);
+    }
+
+    public function testStoreCanRemove()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'took' => 2,
+                'errors' => false,
+                'items' => [
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'a',
+                            '_version' => 2,
+                            'result' => 'deleted',
+                            'status' => 200,
+                        ],
+                    ],
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'b',
+                            '_version' => 1,
+                            'result' => 'not_found',
+                            'status' => 404,
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'foo');
+        $store->remove(['a', 'b']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreThrowsExceptionWhenBulkRemovalFails()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'took' => 2,
+                'errors' => true,
+                'items' => [
+                    [
+                        'delete' => [
+                            '_index' => 'foo',
+                            '_id' => 'a',
+                            'status' => 403,
+                            'error' => [
+                                'type' => 'cluster_block_exception',
+                                'reason' => 'index [foo] blocked by: [FORBIDDEN/8/index write (api)];',
+                            ],
+                        ],
+                    ],
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+        ]);
+
+        $store = new Store($httpClient, 'foo');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to process 1 of 1 bulk operation(s) on the "foo" index, first error for document "a": [cluster_block_exception] index [foo] blocked by: [FORBIDDEN/8/index write (api)];');
+
+        $store->remove('a');
     }
 
     public function testStoreCanQuery()
