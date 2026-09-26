@@ -149,6 +149,32 @@ final class McpAppPassTest extends TestCase
         (new McpAppPass())->process($container);
     }
 
+    public function testKeepsPercentSignsInAppMetadataLiteral()
+    {
+        $container = $this->containerWithBuilder(withRenderer: true);
+        $container->setDefinition(PercentApp::class, (new Definition(PercentApp::class))->addTag('mcp.app'));
+
+        (new McpAppPass())->process($container);
+
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
+        $bag = $container->getParameterBag();
+
+        $resource = $bag->unescapeValue($bag->resolveValue($this->callsNamed($calls, 'addResource')[0][1]));
+        $this->assertSame('ui://sale%20%banner%', $resource[1]);
+        $this->assertSame('sale%20%banner%', $resource[2]);
+        $this->assertSame('50%off% sale', $resource[3]);
+
+        $tools = $this->callsNamed($calls, 'addTool');
+        $primary = $bag->unescapeValue($bag->resolveValue($tools[0][1]));
+        $this->assertSame('50%off% sale', $primary[2]);
+        $this->assertSame('Shows a "%" banner, 100% free', $primary[3]);
+        $this->assertSame('ui://sale%20%banner%', $bag->unescapeValue($bag->resolveValue($tools[0][1][7]['ui']->getArgument(0))));
+
+        $detail = $bag->unescapeValue($bag->resolveValue($tools[1][1]));
+        $this->assertSame('%detail%', $detail[2]);
+        $this->assertSame('Details at 100%', $detail[3]);
+    }
+
     public function testRenderMethodRegistersLinkedTool()
     {
         $container = $this->containerWithBuilder(withRenderer: true);
@@ -385,6 +411,27 @@ class InvokeWithToolTemplateApp
      * @return array<string, mixed>
      */
     public function render(): array
+    {
+        return [];
+    }
+}
+
+#[AsMcpApp(uri: 'ui://sale%20%banner%', name: 'sale', title: '50%off% sale', description: 'Shows a "%" banner, 100% free', template: 'sale.html.twig')]
+class PercentApp
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function render(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[AsMcpAppTool(title: '%detail%', description: 'Details at 100%')]
+    public function detail(): array
     {
         return [];
     }

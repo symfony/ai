@@ -167,7 +167,7 @@ final class McpPass implements CompilerPassInterface
                     };
 
                     foreach ($targets as $server) {
-                        $builders[$server]->addMethodCall(self::TAG_CALLS[$tag], $this->copy($arguments));
+                        $builders[$server]->addMethodCall(self::TAG_CALLS[$tag], LiteralArguments::escape($arguments));
                     }
                 }
             }
@@ -218,51 +218,6 @@ final class McpPass implements CompilerPassInterface
         );
 
         throw new LogicException(\sprintf('The following MCP element patterns do not match any registered service: "%s". Elements are collected from container services carrying an MCP attribute, so check for a typo or make sure the class is registered as a service.', implode(', ', $messages)));
-    }
-
-    /**
-     * Deep-copies the inline definitions in a method call's arguments so two server builders
-     * never share the same Definition instance.
-     *
-     * @param list<mixed> $arguments
-     *
-     * @return list<mixed>
-     */
-    private function copy(array $arguments): array
-    {
-        foreach ($arguments as $key => $argument) {
-            if ($argument instanceof Definition) {
-                $copy = clone $argument;
-                $copy->setArguments($this->copy(array_values($argument->getArguments())));
-                $copy->setProperties($this->copyMap($argument->getProperties()));
-                $arguments[$key] = $copy;
-            } elseif (\is_array($argument)) {
-                $arguments[$key] = $this->copyMap($argument);
-            }
-        }
-
-        return $arguments;
-    }
-
-    /**
-     * @param array<array-key, mixed> $values
-     *
-     * @return array<array-key, mixed>
-     */
-    private function copyMap(array $values): array
-    {
-        foreach ($values as $key => $value) {
-            if ($value instanceof Definition) {
-                $copy = clone $value;
-                $copy->setArguments($this->copy(array_values($value->getArguments())));
-                $copy->setProperties($this->copyMap($value->getProperties()));
-                $values[$key] = $copy;
-            } elseif (\is_array($value)) {
-                $values[$key] = $this->copyMap($value);
-            }
-        }
-
-        return $values;
     }
 
     /**
