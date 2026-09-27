@@ -195,12 +195,16 @@ The profiler tools are registered when ``symfony/http-kernel`` is installed. The
 ``symfony/web-profiler-bundle`` to have profiles to read.
 
 ``symfony-profiler-list``
-    List profiles with summary data, most recent first.
+    List profiles with summary data, most recent first. The result starts with ``total`` (all
+    matching profiles), ``returned``, ``limit`` and ``has_more``, followed by the ``profiles``.
+    When ``has_more`` is true only the newest page was returned, and a ``more`` note gives the
+    ``--limit`` that lists all of them.
 
     ==============  =======================================================================
     Parameter       Description
     ==============  =======================================================================
-    ``limit``       Maximum number of profiles. Default ``20``. Use ``1`` for the latest.
+    ``limit``       Maximum number of profiles. Default ``20``. Use ``1`` for the latest, ``0``
+                    for the counts only.
     ``method``      HTTP method.
     ``url``         URL path. Partial match.
     ``ip``          Client IP address.

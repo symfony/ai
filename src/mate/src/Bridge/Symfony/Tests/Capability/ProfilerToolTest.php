@@ -56,6 +56,91 @@ final class ProfilerToolTest extends TestCase
         $this->assertCount(2, $result['profiles']);
     }
 
+    public function testListProfilesSaysWhenItReturnedOnlyAPage()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 2));
+
+        $this->assertSame(3, $result['total']);
+        $this->assertSame(2, $result['returned']);
+        $this->assertSame(2, $result['limit']);
+        $this->assertTrue($result['has_more']);
+        $this->assertSame('Showing the 2 most recent of 3 matching profiles. Pass --limit=3 to list all of them.', $result['more']);
+        $this->assertCount(2, $result['profiles']);
+    }
+
+    public function testListProfilesSaysWhenItReturnedEverything()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles());
+
+        $this->assertSame(3, $result['total']);
+        $this->assertSame(3, $result['returned']);
+        $this->assertSame(20, $result['limit']);
+        $this->assertFalse($result['has_more']);
+        $this->assertArrayNotHasKey('more', $result);
+    }
+
+    public function testListProfilesWithLimitEqualToTotalHasNoMore()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 3));
+
+        $this->assertSame(3, $result['returned']);
+        $this->assertFalse($result['has_more']);
+    }
+
+    public function testListProfilesPutsTheCountsBeforeTheProfiles()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1));
+
+        $this->assertSame(['total', 'returned', 'limit', 'has_more', 'more', 'profiles'], array_keys($result));
+    }
+
+    public function testListProfilesWithLimitZeroReturnsTheCountsOnly()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 0));
+
+        $this->assertSame(3, $result['total']);
+        $this->assertSame(0, $result['returned']);
+        $this->assertTrue($result['has_more']);
+        $this->assertSame([], $result['profiles']);
+    }
+
+    public function testListProfilesTreatsANegativeLimitAsZero()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: -1));
+
+        $this->assertSame(0, $result['limit']);
+        $this->assertSame(0, $result['returned']);
+        $this->assertSame([], $result['profiles']);
+    }
+
+    public function testListProfilesCountsTheFilteredTotal()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1, method: 'POST'));
+
+        $this->assertSame(1, $result['total']);
+        $this->assertSame(1, $result['returned']);
+        $this->assertFalse($result['has_more']);
+    }
+
+    public function testListProfilesCountsTheFilteredTotalWhenPaged()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1, method: 'GET'));
+
+        $this->assertSame(2, $result['total']);
+        $this->assertSame(1, $result['returned']);
+        $this->assertTrue($result['has_more']);
+    }
+
+    public function testListProfilesWithNoMatchIsNotPaged()
+    {
+        $result = $this->decodeUntrusted($this->tool->listProfiles(statusCode: 418));
+
+        $this->assertSame(0, $result['total']);
+        $this->assertSame(0, $result['returned']);
+        $this->assertFalse($result['has_more']);
+        $this->assertSame([], $result['profiles']);
+    }
+
     public function testListProfilesFilterByMethod()
     {
         $result = $this->decodeUntrusted($this->tool->listProfiles(method: 'POST'));
