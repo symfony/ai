@@ -31,7 +31,7 @@ final class ProfilerTool
     }
 
     /**
-     * @param int         $limit      Maximum number of profiles to return (use limit=1 to get the latest profile)
+     * @param int         $limit      Maximum number of profiles to return (use limit=1 to get the latest profile, limit=0 for the counts only)
      * @param string|null $method     Filter by HTTP method (GET, POST, PUT, DELETE, PATCH)
      * @param string|null $url        Filter by URL path (partial match supported)
      * @param string|null $ip         Filter by client IP address
@@ -40,7 +40,7 @@ final class ProfilerTool
      * @param string|null $from       Start date filter for profile creation time
      * @param string|null $to         End date filter for profile creation time
      */
-    #[MateTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
+    #[MateTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. The result starts with total (all matching profiles), returned, limit and has_more; when has_more is true only the newest page was returned, so raise limit to total before aggregating over all requests. limit=0 returns the counts only. Then the profiles, as summary data with resource_uri for fetching full details via the resource template.')]
     public function listProfiles(
         int $limit = 20,
         ?string $method = null,
@@ -62,14 +62,28 @@ final class ProfilerTool
             'to' => $to,
         ];
 
-        $profiles = $dataProvider->searchProfiles(array_filter($criteria), $limit);
+        $limit = max(0, $limit);
+        $page = $dataProvider->searchProfilesPage(array_filter($criteria), $limit);
+        $returned = \count($page['profiles']);
+        $hasMore = $page['total'] > $returned;
 
-        return ResponseEncoder::encodeUntrusted([
-            'profiles' => array_values(array_map(
-                static fn (ProfileIndex $profile): array => $profile->toArray(),
-                $profiles,
-            )),
-        ]);
+        // The counts come before the list: an agent that stops reading, or truncates the output,
+        // after the first page of profiles must still learn that it did not see all of them.
+        $result = [
+            'total' => $page['total'],
+            'returned' => $returned,
+            'limit' => $limit,
+            'has_more' => $hasMore,
+        ];
+        if ($hasMore) {
+            $result['more'] = \sprintf('Showing the %d most recent of %d matching profiles. Pass --limit=%d to list all of them.', $returned, $page['total'], $page['total']);
+        }
+        $result['profiles'] = array_values(array_map(
+            static fn (ProfileIndex $profile): array => $profile->toArray(),
+            $page['profiles'],
+        ));
+
+        return ResponseEncoder::encodeUntrusted($result);
     }
 
     /**

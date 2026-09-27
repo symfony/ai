@@ -148,6 +148,18 @@ final class ProfilerDataProvider
      */
     public function searchProfiles(array $criteria, int $limit = 20): array
     {
+        return $this->searchProfilesPage($criteria, $limit)['profiles'];
+    }
+
+    /**
+     * The newest $limit matching profiles, and how many match in total.
+     *
+     * @param array<string, mixed> $criteria
+     *
+     * @return array{profiles: list<ProfileIndex>, total: int}
+     */
+    public function searchProfilesPage(array $criteria, int $limit = 20): array
+    {
         $allResults = [];
 
         $start = isset($criteria['from']) ? strtotime($criteria['from']) : null;
@@ -185,7 +197,7 @@ final class ProfilerDataProvider
 
         usort($allResults, static fn ($a, $b) => $b->getTime() <=> $a->getTime());
 
-        return \array_slice($allResults, 0, $limit);
+        return ['profiles' => \array_slice($allResults, 0, $limit), 'total' => \count($allResults)];
     }
 
     /**
