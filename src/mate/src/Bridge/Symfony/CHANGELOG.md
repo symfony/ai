@@ -9,6 +9,7 @@ CHANGELOG
  * Add `HttpClientCollectorFormatter` to list traced outbound calls of the `http_client` profiler collector without headers, bodies or secret-looking URL parts
  * Add a "When the profile does not explain it" section to the `symfony-profiler-debugging` skill, so the Monolog tools are reached when a profile does not explain the symptom
  * Add an investigation loop with an explicit stop condition for slow requests to the `symfony-profiler-debugging` skill, replacing the reading order that read as a menu of single lookups
+ * Add `total` and `truncated` to `symfony-profiler-list`, ahead of the `profiles`; `limit` is capped at 500 (also for `limit=0`) and a negative `limit` is rejected
 
 0.14
 ----
