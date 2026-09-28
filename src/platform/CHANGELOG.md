@@ -1,11 +1,6 @@
 CHANGELOG
 =========
 
-0.15
-----
-
- * Accept the canonical `max_output_tokens` option on the Anthropic, Gemini (direct and Vertex AI), Mistral and generic OpenAI-compatible completions bridges, renaming it to each one's own wire field (`max_tokens`, or the camelCase `generationConfig.maxOutputTokens` on the Gemini bridges) instead of forwarding it unrecognized or silently ignoring it
-
 0.14
 ----
 
