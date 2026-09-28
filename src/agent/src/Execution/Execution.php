@@ -200,7 +200,7 @@ final class Execution implements \IteratorAggregate, ResultInterface
         }
 
         foreach ($this->consume() as $update) {
-            if ($update instanceof Progress && 'delta' === $update->getStage() && $update->getPayload() instanceof DeltaInterface) {
+            if ($update instanceof Progress && Progress::STAGE_DELTA === $update->getStage() && $update->getPayload() instanceof DeltaInterface) {
                 yield $update->getPayload();
             }
         }
