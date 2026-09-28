@@ -1,11 +1,6 @@
 CHANGELOG
 =========
 
-0.15
-----
-
- * `Bridge\Gemini\Gemini\ResultConverter::convertStream()` now yields a `TokenUsage` delta when a chunk carries `usageMetadata`, mirroring the Vertex AI Gemini bridge, so a streamed direct-Gemini answer's token usage is available through the generic `TokenUsage\StreamListener` instead of only the buffered path
-
 0.14
 ----
 
