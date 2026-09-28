@@ -106,7 +106,7 @@ final class MockAgent implements AgentInterface
                         $text .= $delta->getText();
                     }
 
-                    yield new Progress('delta', 'Received a streamed delta.', $delta);
+                    yield new Progress(Progress::STAGE_DELTA, 'Received a streamed delta.', $delta);
                 }
 
                 $final = new TextResult($text);

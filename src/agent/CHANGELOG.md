@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `Progress::STAGE_MODEL_REQUEST`, `Progress::STAGE_DELTA`, `Progress::STAGE_TOOL_CALL` and `Progress::STAGE_HANDOFF` constants for the stage names this package itself reports, used internally wherever a stage was matched or constructed with a raw string
+
 0.14
 ----
 
