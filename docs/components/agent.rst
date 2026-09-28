@@ -167,6 +167,12 @@ answer. See the
 `execution-cancellation.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-cancellation.php>`_
 example.
 
+A streamed execution's ``getMetadata()`` still reports what the rounds made so far cost, even a canceled one: each
+round yields its own result as a ``Progress`` update of the ``model_result`` stage before the loop decides whether
+to call another tool, and the execution accumulates it as it happens instead of only once a final result exists::
+
+    $usage = $execution->getMetadata()->get('token_usage'); // the tokens spent up to whatever point consumption stopped
+
 Once the stream is drained, the execution resolves to the assembled answer like a non-streamed one: ``getResult()``
 returns the final result, and a streamed structured output ends with the object, so ``asObject()`` works on it as
 well.

@@ -916,7 +916,34 @@ final class RunnerTest extends TestCase
             $updates,
         );
 
-        $this->assertSame(['model_request', 'tool_call', 'model_request', 'result'], $stages);
+        $this->assertSame(['model_request', 'model_result', 'tool_call', 'model_request', 'model_result', 'result'], $stages);
+    }
+
+    public function testEachRoundYieldsItsOwnResultAsAModelResultProgressUpdate()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $modelResults = array_values(array_filter(
+            $updates,
+            static fn (UpdateInterface $update): bool => $update instanceof Progress && 'model_result' === $update->getStage(),
+        ));
+
+        $this->assertCount(2, $modelResults);
+        $this->assertSame($round, $modelResults[0]->getPayload());
+        $this->assertSame($final, $modelResults[1]->getPayload());
     }
 
     public function testItYieldsEveryStreamedDeltaAsAProgressUpdate()

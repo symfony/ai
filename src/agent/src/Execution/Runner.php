@@ -110,6 +110,11 @@ final class Runner
                 return;
             }
 
+            // Carries this round's own result, so a consumer can read its metadata (e.g. token usage) as it
+            // happens instead of only once the loop produces a final ResultUpdate, which never happens for a
+            // canceled or otherwise abandoned execution.
+            yield new Progress('model_result', 'Model responded.', $result);
+
             $toolCallResult = $this->extractToolCallResult($result);
             if (null === $toolCallResult || null === $this->toolExecutor) {
                 break;

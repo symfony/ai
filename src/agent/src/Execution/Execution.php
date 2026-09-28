@@ -235,10 +235,18 @@ final class Execution implements \IteratorAggregate, ResultInterface
                     break;
                 }
 
+                if ($update instanceof Progress && 'model_result' === $update->getStage() && $update->getPayload() instanceof ResultInterface) {
+                    // Accumulated round by round, so it reflects what was actually spent even if the
+                    // execution never reaches a final result (canceled, or an abandoned iteration).
+                    $this->metadata->merge($update->getPayload()->getMetadata());
+                }
+
                 if ($update instanceof Result) {
-                    // the final result carries the metadata aggregated over all rounds, e.g. token usage
+                    // The final result already carries the metadata aggregated over all rounds (Runner
+                    // does that itself); replacing rather than merging avoids adding it a second time on
+                    // top of the running total above.
                     $this->result = $update->getResult();
-                    $this->metadata->merge($update->getResult()->getMetadata());
+                    $this->metadata->set($update->getResult()->getMetadata()->all());
 
                     foreach ($this->resultCallbacks as $callback) {
                         $callback($update);
