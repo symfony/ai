@@ -1,10 +1,14 @@
 CHANGELOG
 =========
 
-0.14
+0.15
 ----
 
  * Add `Progress::STAGE_MODEL_REQUEST`, `Progress::STAGE_DELTA`, `Progress::STAGE_TOOL_CALL` and `Progress::STAGE_HANDOFF` constants for the stage names this package itself reports, used internally wherever a stage was matched or constructed with a raw string
+
+0.14
+----
+
  * Add `Execution::cancel()` to stop an active execution and cancel its active HTTP response
  * `MultiAgent` and `SpeechAgent` now forward the `Progress` updates of the executions they delegate to, and `MultiAgent` reports its routing as a `Progress` update of the `handoff` stage carrying the orchestrator's `MultiAgent\Handoff\Decision` as payload
  * [BC BREAK] `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the retriever it reads from
