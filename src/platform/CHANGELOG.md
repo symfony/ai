@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `Exception\RetryableExceptionInterface`, implemented by `ServerException` and `RateLimitExceededException`, so a consumer wiring platform calls into a queue with a retry policy can tell a transient failure from a permanent one without enumerating every exception class itself
+
 0.14
 ----
 
