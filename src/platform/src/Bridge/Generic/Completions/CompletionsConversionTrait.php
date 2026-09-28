@@ -48,6 +48,7 @@ trait CompletionsConversionTrait
         $reasoning = '';
         $sawChunk = false;
         $finishReason = null;
+        $usage = null;
 
         foreach ($result->getDataStream() as $data) {
             if (isset($data['error'])) {
@@ -78,7 +79,8 @@ trait CompletionsConversionTrait
             }
 
             if (isset($data['usage'])) {
-                yield $this->convertStreamUsage($data['usage'], $data['model'] ?? null);
+                // Usage describes the whole request, even when reported on multiple chunks.
+                $usage = $this->convertStreamUsage($data['usage'], $data['model'] ?? null);
             }
 
             yield from $this->yieldChunkMetadata($data);
@@ -101,6 +103,10 @@ trait CompletionsConversionTrait
 
         if ($sawChunk && null === $finishReason) {
             throw new IncompleteStreamException('Completions stream ended before a finish reason was received.');
+        }
+
+        if (null !== $usage) {
+            yield $usage;
         }
 
         // Emitted last so the reason never precedes the visible deltas of the chunk that carried it:

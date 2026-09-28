@@ -15,9 +15,7 @@ use Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter as GenericRes
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
-use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * Albert reports the environmental footprint of a call next to the token usage, as an estimated
@@ -44,34 +42,6 @@ final class ResultConverter extends GenericResultConverter
         }
 
         return $converted;
-    }
-
-    /**
-     * Albert's gateway appends its own usage chunk after the one of the inference server it routes
-     * to, and the two disagree: only the gateway's is what a buffered response reports, and it is
-     * the one carrying the footprint. Aggregating both would roughly double the count, so only the
-     * last one survives - which costs nothing, as a streamed usage is metadata of the finished
-     * stream anyway.
-     *
-     * @return \Generator<DeltaInterface>
-     */
-    protected function convertStream(RawResultInterface $result): \Generator
-    {
-        $usage = null;
-
-        foreach (parent::convertStream($result) as $delta) {
-            if ($delta instanceof TokenUsage) {
-                $usage = $delta;
-
-                continue;
-            }
-
-            yield $delta;
-        }
-
-        if (null !== $usage) {
-            yield $usage;
-        }
     }
 
     protected function yieldChunkMetadata(array $data): \Generator
