@@ -591,19 +591,56 @@ final class ResultConverterTest extends TestCase
 
         $items = iterator_to_array($converter->convert($rawResult, ['stream' => true])->getContent(), false);
 
+        // The token usage is yielded once, after every text delta: Gemini repeats usageMetadata as a
+        // running total on each chunk, so only the last one seen is meaningful.
         $this->assertCount(3, $items);
         $this->assertInstanceOf(TextDelta::class, $items[0]);
         $this->assertSame('Hello', $items[0]->getText());
 
-        $this->assertInstanceOf(TokenUsageInterface::class, $items[1]);
-        $this->assertSame(15, $items[1]->getPromptTokens());
-        $this->assertSame(25, $items[1]->getCompletionTokens());
-        $this->assertSame(3, $items[1]->getThinkingTokens());
-        $this->assertSame(43, $items[1]->getTotalTokens());
-        $this->assertSame('gemini-2.5-pro', $items[1]->getModel());
+        $this->assertInstanceOf(TextDelta::class, $items[1]);
+        $this->assertSame(' world', $items[1]->getText());
 
-        $this->assertInstanceOf(TextDelta::class, $items[2]);
-        $this->assertSame(' world', $items[2]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[2]);
+        $this->assertSame(15, $items[2]->getPromptTokens());
+        $this->assertSame(25, $items[2]->getCompletionTokens());
+        $this->assertSame(3, $items[2]->getThinkingTokens());
+        $this->assertSame(43, $items[2]->getTotalTokens());
+        $this->assertSame('gemini-2.5-pro', $items[2]->getModel());
+    }
+
+    public function testStreamYieldsOnlyTheLastUsageMetadataWhenEveryChunkCarriesTheCumulativeTotal()
+    {
+        // Real Gemini traffic repeats usageMetadata on every chunk with the cumulative total so far,
+        // not a per-chunk delta (see examples/tests/fixtures/gemini/stream.json). Summing each of them
+        // would massively inflate the reported usage, so only the final total must survive.
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => 'Hello']]]]],
+                'usageMetadata' => ['promptTokenCount' => 10, 'candidatesTokenCount' => 5, 'totalTokenCount' => 15],
+            ];
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => ' world']]]]],
+                'usageMetadata' => ['promptTokenCount' => 10, 'candidatesTokenCount' => 12, 'totalTokenCount' => 22],
+            ];
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => '!']]]]],
+                'usageMetadata' => ['promptTokenCount' => 10, 'candidatesTokenCount' => 15, 'totalTokenCount' => 25],
+            ];
+        })());
+
+        $items = iterator_to_array($converter->convert($rawResult, ['stream' => true])->getContent(), false);
+
+        $tokenUsages = array_values(array_filter($items, static fn ($item) => $item instanceof TokenUsageInterface));
+
+        $this->assertCount(1, $tokenUsages, 'each chunk repeats the running total, not a delta - only the last one must be yielded');
+        $this->assertSame(25, $tokenUsages[0]->getTotalTokens());
+        $this->assertSame(15, $tokenUsages[0]->getCompletionTokens());
     }
 
     public function testStreamSkipsEmptyOrPartialUsageMetadataChunks()
@@ -648,10 +685,10 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Hello', $items[0]->getText());
         $this->assertInstanceOf(TextDelta::class, $items[1]);
         $this->assertSame(' world', $items[1]->getText());
-        $this->assertInstanceOf(TokenUsageInterface::class, $items[2]);
-        $this->assertSame(40, $items[2]->getTotalTokens());
-        $this->assertInstanceOf(TextDelta::class, $items[3]);
-        $this->assertSame('!', $items[3]->getText());
+        $this->assertInstanceOf(TextDelta::class, $items[2]);
+        $this->assertSame('!', $items[2]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[3]);
+        $this->assertSame(40, $items[3]->getTotalTokens());
     }
 
     public function testStreamSkipsCandidatesWithoutContentParts()
