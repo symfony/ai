@@ -96,6 +96,9 @@ class InMemoryPlatform implements PlatformInterface
 
                 return $event->getResult();
             });
+            $deferredResult->onError(function (\Throwable $error) use ($model, $options, $input): void {
+                $this->eventDispatcher->dispatch(new ResultErrorEvent($model, $error, $options, $input));
+            });
         }
 
         return $deferredResult;

@@ -16,8 +16,13 @@ use Symfony\AI\Platform\Event\ResultErrorEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\Test\InMemoryPlatform;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -123,5 +128,51 @@ class InMemoryPlatformTest extends TestCase
 
         $this->assertCount(1, $errors);
         $this->assertSame('Boom', $errors[0]->getError()->getMessage());
+    }
+
+    public function testADispatcherReceivesResultErrorWhenAResultEventListenerSwapsInAThrowingConverter()
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ResultEvent::class, static function (ResultEvent $event): void {
+            $throwingConverter = new class implements ResultConverterInterface {
+                public function supports(Model $model): bool
+                {
+                    return true;
+                }
+
+                public function convert(RawResultInterface $result, array $options = []): ResultInterface
+                {
+                    throw new RuntimeException('Conversion boom');
+                }
+
+                public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+                {
+                    return null;
+                }
+            };
+
+            $event->setDeferredResult(new DeferredResult(
+                $throwingConverter,
+                $event->getDeferredResult()->getRawResult(),
+                $event->getOptions(),
+            ));
+        });
+        $errors = [];
+        $dispatcher->addListener(ResultErrorEvent::class, static function (ResultErrorEvent $event) use (&$errors): void {
+            $errors[] = $event;
+        });
+        $platform = new InMemoryPlatform('Mocked result', $dispatcher);
+
+        $deferred = $platform->invoke('test', 'input');
+
+        try {
+            $deferred->getResult();
+            $this->fail('Expected the conversion failure to propagate.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Conversion boom', $exception->getMessage());
+        }
+
+        $this->assertCount(1, $errors, 'a listener swapping in a throwing converter must still surface ResultErrorEvent');
+        $this->assertSame('Conversion boom', $errors[0]->getError()->getMessage());
     }
 }
