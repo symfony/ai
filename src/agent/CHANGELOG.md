@@ -1,14 +1,10 @@
 CHANGELOG
 =========
 
-0.15
-----
-
- * `Runner` now yields a `Progress` update of the `model_result` stage carrying each round's own result, and `Execution` accumulates it into `getMetadata()` as it happens, so a canceled or otherwise abandoned streamed execution still reports the token usage of the rounds it actually made
-
 0.14
 ----
 
+ * `Runner` now yields a `Progress` update of the `model_result` stage carrying each round's own result, and `Execution` accumulates it into `getMetadata()` as it happens, so a canceled or otherwise abandoned streamed execution still reports the token usage of the rounds it actually made
  * Add `Execution::cancel()` to stop an active execution and cancel its active HTTP response
  * `MultiAgent` and `SpeechAgent` now forward the `Progress` updates of the executions they delegate to, and `MultiAgent` reports its routing as a `Progress` update of the `handoff` stage carrying the orchestrator's `MultiAgent\Handoff\Decision` as payload
  * [BC BREAK] `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` returns `Store\Document\VectorDocumentInterface[]` instead of `Store\Document\VectorDocument[]`, following the retriever it reads from
