@@ -112,8 +112,10 @@ final class Runner
 
             // Carries this round's own result, so a consumer can read its metadata (e.g. token usage) as it
             // happens instead of only once the loop produces a final ResultUpdate, which never happens for a
-            // canceled or otherwise abandoned execution.
-            yield new Progress('model_result', 'Model responded.', $result);
+            // canceled or otherwise abandoned execution. Cloned so that a consumer holding onto this payload
+            // keeps seeing this round's own metadata, not the aggregate the terminal round's $result is
+            // mutated into below once this is the last round.
+            yield new Progress('model_result', 'Model responded.', clone $result);
 
             $toolCallResult = $this->extractToolCallResult($result);
             if (null === $toolCallResult || null === $this->toolExecutor) {

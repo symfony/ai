@@ -941,9 +941,51 @@ final class RunnerTest extends TestCase
             static fn (UpdateInterface $update): bool => $update instanceof Progress && 'model_result' === $update->getStage(),
         ));
 
+        // Not assertSame(): the payload is a clone, so a consumer holding onto it keeps seeing this
+        // round's own metadata even after the terminal round's own $result is later mutated into the
+        // run's full aggregate (see testTheFinalRoundsModelResultPayloadKeepsItsOwnMetadataAfterTheRunAggregatesIt
+        // below, which is also why $final itself is not compared against here anymore: it is the very
+        // object mutated into that aggregate).
         $this->assertCount(2, $modelResults);
-        $this->assertSame($round, $modelResults[0]->getPayload());
-        $this->assertSame($final, $modelResults[1]->getPayload());
+        $this->assertInstanceOf(ToolCallResult::class, $modelResults[0]->getPayload());
+        $this->assertSame(10, $modelResults[0]->getPayload()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertInstanceOf(TextResult::class, $modelResults[1]->getPayload());
+        $this->assertSame('Final content after tool', $modelResults[1]->getPayload()->getContent());
+        $this->assertSame(5, $modelResults[1]->getPayload()->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testTheFinalRoundsModelResultPayloadKeepsItsOwnMetadataAfterTheRunAggregatesIt()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $modelResults = array_values(array_filter(
+            $updates,
+            static fn (UpdateInterface $update): bool => $update instanceof Progress && 'model_result' === $update->getStage(),
+        ));
+        /** @var ResultUpdate $resultUpdate */
+        $resultUpdate = array_values(array_filter(
+            $updates,
+            static fn (UpdateInterface $update): bool => $update instanceof ResultUpdate,
+        ))[0];
+
+        // The terminal round's own $result (captured by identity above, before the run finished)
+        // ends up carrying the run's full aggregate (10 + 5 = 15), but the earlier model_result
+        // update's clone must still report only its own round's usage (5).
+        $this->assertSame(15, $resultUpdate->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertSame(5, $modelResults[1]->getPayload()->getMetadata()->get('token_usage')->getTotalTokens());
     }
 
     public function testItYieldsEveryStreamedDeltaAsAProgressUpdate()

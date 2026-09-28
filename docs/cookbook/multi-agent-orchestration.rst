@@ -186,10 +186,11 @@ example for a runnable version of this loop.
 
 .. note::
 
-    The orchestrator's own routing round is machinery, not answer: its ``model_request`` and
-    ``tool_call`` updates are forwarded so you can show that a decision is being made, but the
-    deltas that spell out the ``Decision`` are not. With the ``stream`` option, the ``delta``
-    updates you receive are therefore only those of the agent that answers.
+    The orchestrator's own routing round is machinery, not answer: its ``model_request``,
+    ``model_result`` and ``tool_call`` updates are forwarded so you can show that a decision is
+    being made, but the deltas that spell out the ``Decision`` are not. With the ``stream``
+    option, the ``delta`` updates you receive are therefore only those of the agent that
+    answers.
 
 Learn More
 ----------
