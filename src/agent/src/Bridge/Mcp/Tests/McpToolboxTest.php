@@ -15,6 +15,7 @@ use Mcp\Schema\Content\ImageContent;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\Tool as McpTool;
+use Mcp\Schema\ToolAnnotations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ConnectionException;
@@ -71,6 +72,65 @@ final class McpToolboxTest extends TestCase
 
         // An empty "properties" object would reach the platform as "[]", which is not a JSON object.
         $this->assertNull((new McpToolbox($toolset))->getTools()[0]->getParameters());
+    }
+
+    public function testAnnotationsBecomeToolMetadata()
+    {
+        $toolset = new StaticToolset(tools: [
+            new McpTool(
+                name: 'delete',
+                title: null,
+                inputSchema: ['type' => 'object', 'properties' => new \stdClass(), 'required' => []],
+                description: null,
+                annotations: new ToolAnnotations(readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false),
+            ),
+        ]);
+
+        $metadata = (new McpToolbox($toolset))->getTools()[0]->getMetadata();
+
+        $this->assertSame([
+            'readOnlyHint' => false,
+            'destructiveHint' => true,
+            'idempotentHint' => false,
+            'openWorldHint' => false,
+        ], $metadata);
+    }
+
+    public function testOnlyTheHintsTheServerSentBecomeMetadata()
+    {
+        $toolset = new StaticToolset(tools: [
+            new McpTool(
+                name: 'search',
+                title: null,
+                inputSchema: ['type' => 'object', 'properties' => new \stdClass(), 'required' => []],
+                description: null,
+                annotations: new ToolAnnotations(readOnlyHint: true),
+            ),
+        ]);
+
+        $this->assertSame(['readOnlyHint' => true], (new McpToolbox($toolset))->getTools()[0]->getMetadata());
+    }
+
+    public function testNoAnnotationsMeansNoMetadata()
+    {
+        $toolbox = new McpToolbox(new StaticToolset(tools: [$this->remoteTool('echo')]));
+
+        $this->assertSame([], $toolbox->getTools()[0]->getMetadata());
+    }
+
+    public function testAnnotationsTitleIsNotMetadataSinceItIsDeprecatedInFavorOfToolTitle()
+    {
+        $toolset = new StaticToolset(tools: [
+            new McpTool(
+                name: 'search',
+                title: null,
+                inputSchema: ['type' => 'object', 'properties' => new \stdClass(), 'required' => []],
+                description: null,
+                annotations: new ToolAnnotations(title: 'Search', readOnlyHint: true),
+            ),
+        ]);
+
+        $this->assertSame(['readOnlyHint' => true], (new McpToolbox($toolset))->getTools()[0]->getMetadata());
     }
 
     public function testRemoteToolsAreListedOnlyOnce()
