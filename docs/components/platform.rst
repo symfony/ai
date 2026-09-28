@@ -1993,6 +1993,12 @@ The platform automatically uses the :method:`Symfony\\AI\\Platform\\Result\\Resu
 
 This allows fast and isolated testing of AI-powered features without relying on live providers or HTTP requests.
 
+Pass an ``EventDispatcherInterface`` as the second constructor argument to have ``InMemoryPlatform`` dispatch the
+same events a real :class:`Symfony\\AI\\Platform\\Provider` does (``InvocationEvent``, ``ResultEvent``,
+``ResultConvertedEvent`` and ``ResultErrorEvent``), so listener-based code can be exercised against it too::
+
+    $platform = new InMemoryPlatform('Fake result', $eventDispatcher);
+
 .. note::
 
     This requires `cURL` and the `ext-curl` extension to be installed.
