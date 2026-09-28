@@ -137,6 +137,10 @@ final class ResultConverter implements ResultConverterInterface
         $toolCalls = [];
 
         foreach ($result->getDataStream() as $data) {
+            if (isset($data['usageMetadata']['totalTokenCount']) && 0 < $data['usageMetadata']['totalTokenCount']) {
+                yield $this->getTokenUsageExtractor()->fromUsageMetadata($data['usageMetadata'], $data['modelVersion'] ?? null);
+            }
+
             // Gemini repeats the reason on every candidate of the terminal chunk; the leading one wins,
             // matching the buffered path.
             if (null !== ($data['candidates'][0]['finishReason'] ?? null)) {

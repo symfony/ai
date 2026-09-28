@@ -38,6 +38,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -558,6 +559,99 @@ final class ResultConverterTest extends TestCase
         $this->assertCount(1, $items);
         $this->assertInstanceOf(ToolCallComplete::class, $items[0]);
         $this->assertSame('', $items[0]->getToolCalls()[0]->getId());
+    }
+
+    public function testStreamYieldsTokenUsageWhenUsageMetadataIsPresent()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'Hello']]],
+                ]],
+            ];
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => ' world']]],
+                ]],
+                'modelVersion' => 'gemini-2.5-pro',
+                'usageMetadata' => [
+                    'promptTokenCount' => 15,
+                    'candidatesTokenCount' => 25,
+                    'thoughtsTokenCount' => 3,
+                    'totalTokenCount' => 43,
+                ],
+            ];
+        })());
+
+        $items = iterator_to_array($converter->convert($rawResult, ['stream' => true])->getContent(), false);
+
+        $this->assertCount(3, $items);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Hello', $items[0]->getText());
+
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[1]);
+        $this->assertSame(15, $items[1]->getPromptTokens());
+        $this->assertSame(25, $items[1]->getCompletionTokens());
+        $this->assertSame(3, $items[1]->getThinkingTokens());
+        $this->assertSame(43, $items[1]->getTotalTokens());
+        $this->assertSame('gemini-2.5-pro', $items[1]->getModel());
+
+        $this->assertInstanceOf(TextDelta::class, $items[2]);
+        $this->assertSame(' world', $items[2]->getText());
+    }
+
+    public function testStreamSkipsEmptyOrPartialUsageMetadataChunks()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'Hello']]],
+                ]],
+                'usageMetadata' => [],
+            ];
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => ' world']]],
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 15,
+                ],
+            ];
+            yield [
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => '!']]],
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 15,
+                    'candidatesTokenCount' => 25,
+                    'totalTokenCount' => 40,
+                ],
+            ];
+        })());
+
+        $items = iterator_to_array($converter->convert($rawResult, ['stream' => true])->getContent(), false);
+
+        $this->assertCount(4, $items);
+        $this->assertInstanceOf(TextDelta::class, $items[0]);
+        $this->assertSame('Hello', $items[0]->getText());
+        $this->assertInstanceOf(TextDelta::class, $items[1]);
+        $this->assertSame(' world', $items[1]->getText());
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[2]);
+        $this->assertSame(40, $items[2]->getTotalTokens());
+        $this->assertInstanceOf(TextDelta::class, $items[3]);
+        $this->assertSame('!', $items[3]->getText());
     }
 
     public function testStreamSkipsCandidatesWithoutContentParts()
