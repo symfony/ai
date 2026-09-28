@@ -20,7 +20,7 @@ final class ProgressTest extends TestCase
      * The constants are part of the public API contract now; changing a value would silently
      * change the wire stage every existing consumer matches on.
      */
-    public function testTheStageConstantsMatchTheStagesThisPackageActuallyReports(): void
+    public function testTheStageConstantsMatchTheStagesThisPackageActuallyReports()
     {
         $this->assertSame('model_request', Progress::STAGE_MODEL_REQUEST);
         $this->assertSame('delta', Progress::STAGE_DELTA);
@@ -28,7 +28,7 @@ final class ProgressTest extends TestCase
         $this->assertSame('handoff', Progress::STAGE_HANDOFF);
     }
 
-    public function testGetStageReturnsWhateverWasConstructedWith(): void
+    public function testGetStageReturnsWhateverWasConstructedWith()
     {
         $progress = new Progress(Progress::STAGE_TOOL_CALL, 'Executing tool "search".', 'payload');
 
