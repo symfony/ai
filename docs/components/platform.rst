@@ -411,8 +411,9 @@ model and platform, like ``temperature`` or ``max_output_tokens``::
 
     ``max_output_tokens`` is a canonical option: the Anthropic, Gemini (direct and Vertex AI),
     Mistral and generic OpenAI-compatible completions bridges rename it to whatever their own
-    wire format expects (``max_tokens``, or Gemini's camelCase ``maxOutputTokens``), so it works
-    the same way regardless of provider.
+    wire format expects (``max_tokens``, or Gemini's camelCase ``maxOutputTokens``), instead of
+    forwarding it unrecognized or ignoring it silently. A bridge not listed here does not yet
+    translate it.
 
 Language Models and Messages
 ----------------------------
