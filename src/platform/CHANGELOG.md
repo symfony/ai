@@ -1,10 +1,14 @@
 CHANGELOG
 =========
 
-0.14
+0.15
 ----
 
  * Add an optional `EventDispatcherInterface` to `Test\InMemoryPlatform`, dispatching `InvocationEvent`, `ResultEvent`, `ResultConvertedEvent` and `ResultErrorEvent` the same way `Provider` does, so listener-based code can be exercised against the in-memory fake instead of only against a real provider
+
+0.14
+----
+
  * Add the Eden AI bridge, covering the gateway's OpenAI-compatible chat and embeddings endpoints and its expert models: OCR, document parsing, text-to-speech, asynchronous speech-to-text, image analysis and image generation
  * Add the TypeSafe bridge, evaluating typed questions (noul, choice and score) against a state with the Jev models
  * Add `Result\BatchResult`, `Result\BatchItem` and `Result\BatchItemCase`, the outcome of a batch of requests as one item per request, reached through `DeferredResult::asBatch()`; a successful item carries the ordinary result its request would have produced synchronously, and one without a result states whether it errored or was never sent because the batch was canceled or expired
