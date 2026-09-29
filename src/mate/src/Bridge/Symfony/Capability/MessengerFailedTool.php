@@ -12,7 +12,6 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Capability;
 
 use Symfony\AI\Mate\Attribute\MateTool;
-use Symfony\AI\Mate\Bridge\Symfony\Exception\ContainerNotDumpedException;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\FailureTransportNotReadableException;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\UndecodableMessageException;
 use Symfony\AI\Mate\Bridge\Symfony\Messenger\ContainerConfiguration;
@@ -20,6 +19,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Messenger\DoctrineTransportReader;
 use Symfony\AI\Mate\Bridge\Symfony\Messenger\EnvelopeDecoder;
 use Symfony\AI\Mate\Bridge\Symfony\Messenger\FailedMessageGrouper;
 use Symfony\AI\Mate\Bridge\Symfony\Messenger\ProjectEnvironment;
+use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
 
@@ -38,39 +38,34 @@ final class MessengerFailedTool
     private const MAX_UNDECODABLE = 10;
 
     /**
-     * @var list<string>
+     * @var array<string|int, string>
      */
     private readonly array $cacheDirs;
 
     /**
-     * @param string|array<string, string> $cacheDir A single cache directory, or a map of context name to cache directory
+     * @param string|array<string, string> $cacheDir A single cache directory, or a map of context name to cache
+     *                                               directory for multi-kernel (APP_ID) applications
      */
     public function __construct(
         private readonly string $projectDir,
         string|array $cacheDir,
+        private readonly ContainerProvider $provider = new ContainerProvider(),
         private readonly EnvelopeDecoder $decoder = new EnvelopeDecoder(),
         private readonly DoctrineTransportReader $doctrine = new DoctrineTransportReader(),
     ) {
-        $this->cacheDirs = \is_string($cacheDir) ? [$cacheDir] : array_values($cacheDir);
+        $this->cacheDirs = \is_string($cacheDir) ? [0 => $cacheDir] : $cacheDir;
     }
 
     /**
-     * @param string|null $transport Read this transport only (any configured transport name). Default: every failure transport.
-     * @param int|null    $group     List every message of this group (1-based, as numbered in the grouped result)
+     * @param string|null $transport Read only this transport (any configured transport name); default: every failure transport
+     * @param string|null $group     List the messages of this group (its group_id from the summary)
+     * @param string|null $context   Kernel context, required when several cache directories are configured
      */
-    #[MateTool(name: 'symfony-messenger-failed', title: 'Symfony Messenger Failed Messages', description: 'List the messages in the Messenger failure transports grouped by cause (exception class, message pattern, failing application frame), largest group first. Per group: count, message classes, the frame that threw, sample exception messages, trace, retry counts, first and last failure time, message ids. Every cause is listed however small, so a rare real bug is not hidden behind a flood of one transient failure. Reads the storage directly and read-only (works when the kernel does not boot; never locks, acks or removes a message). Supported: Doctrine transports, with the PHP serializer or the Symfony Serializer. Redis, AMQP, SQS, Beanstalkd and in-memory transports return an error pointing at messenger:failed:show. Pass group to list every message of one group, transport to read one transport.')]
-    public function failed(?string $transport = null, ?int $group = null): string
+    #[MateTool(name: 'symfony-messenger-failed', title: 'Symfony Messenger Failed Messages', description: 'List the messages in the Messenger failure transports grouped by cause (exception class, message pattern, failing application frame), largest group first (at most 50 groups, each with a group_id for the group parameter), read from the Doctrine transport storage without booting the kernel. Other transports return an error pointing at messenger:failed:show.')]
+    public function failed(?string $transport = null, ?string $group = null, ?string $context = null): string
     {
-        if (null !== $group && $group < 1) {
-            throw new InvalidArgumentException('The "group" parameter is 1-based.');
-        }
-
         $environment = new ProjectEnvironment($this->projectDir);
-        try {
-            $configuration = ContainerConfiguration::load($this->cacheDirs, $environment, $this->projectDir);
-        } catch (ContainerNotDumpedException $e) {
-            throw new ContainerNotDumpedException($e->getMessage().' Without it, use "bin/console messenger:failed:show".', 0, $e);
-        }
+        $configuration = ContainerConfiguration::load($this->cacheDir($context), $this->provider, $environment, $this->projectDir);
 
         $receivers = $configuration->receivers();
         $selected = array_values(array_filter($receivers, static fn (array $r): bool => null === $transport ? $r['failure'] : $r['name'] === $transport));
@@ -79,7 +74,7 @@ final class MessengerFailedTool
             throw new InvalidArgumentException(null === $transport ? \sprintf('No failure transport is configured (framework.messenger.failure_transport). Configured transports: "%s".', implode('", "', $names)) : \sprintf('Transport "%s" not found. Configured transports: "%s".', $transport, implode('", "', $names)));
         }
         if (null !== $group && \count($selected) > 1) {
-            throw new InvalidArgumentException(\sprintf('Groups are numbered per transport and there are several failure transports ("%s"); pass "transport" together with "group".', implode('", "', array_map(static fn (array $r): string => $r['name'], $selected))));
+            throw new InvalidArgumentException(\sprintf('Group ids are per transport and there are several failure transports ("%s"); pass "transport" together with "group".', implode('", "', array_map(static fn (array $r): string => $r['name'], $selected))));
         }
 
         $result = [];
@@ -91,15 +86,37 @@ final class MessengerFailedTool
             }
         }
 
-        return ResponseEncoder::encodeUntrusted(['transports' => $result]);
+        return ResponseEncoder::encodeUntrusted(['container' => $this->containerInfo($configuration), 'transports' => $result]);
+    }
+
+    /**
+     * @return array{path: string, skipped: list<string>}
+     */
+    private function containerInfo(ContainerConfiguration $configuration): array
+    {
+        $path = str_starts_with($configuration->path, $this->projectDir.'/') ? substr($configuration->path, \strlen($this->projectDir) + 1) : $configuration->path;
+
+        return ['path' => $path, 'skipped' => $configuration->skipped];
+    }
+
+    private function cacheDir(?string $context): string
+    {
+        if (null !== $context && '' !== $context) {
+            return $this->cacheDirs[$context] ?? throw new InvalidArgumentException(\sprintf('Unknown context "%s". Known contexts: "%s".', $context, implode('", "', array_map(strval(...), array_keys($this->cacheDirs)))));
+        }
+        if (\count($this->cacheDirs) > 1) {
+            throw new InvalidArgumentException(\sprintf('Several kernel contexts are configured; pass "context" (one of "%s").', implode('", "', array_map(strval(...), array_keys($this->cacheDirs)))));
+        }
+
+        return $this->cacheDirs[array_key_first($this->cacheDirs)] ?? '';
     }
 
     /**
      * @param array<string, string> $options
      *
-     * @return array<string, mixed>
+     * @return array{storage: string, message_count: int, scanned: int, scan_truncated: bool, scan_truncated_reason?: string, group_count: int, groups_truncated: bool, omitted_groups: int, omitted_messages: int, undecodable: array{count: int, messages: list<array{id: string, reason: string}>}, groups: list<array<string, mixed>>}
      */
-    private function read(string $name, string $dsn, array $options, ContainerConfiguration $configuration, ?int $group): array
+    private function read(string $name, string $dsn, array $options, ContainerConfiguration $configuration, ?string $group): array
     {
         $scheme = strtolower((string) strtok($dsn, ':'));
         $showCommand = \sprintf('Use "bin/console messenger:failed:show --transport=%s" instead.', $name);
@@ -118,31 +135,41 @@ final class MessengerFailedTool
             throw new FailureTransportNotReadableException($unsupported.' '.$showCommand);
         }
 
-        $data = $this->doctrine->read($dsn, $options, $configuration, self::MAX_SCAN);
-
         $messages = [];
         $undecodable = [];
-        foreach ($data['rows'] as $row) {
+        $data = $this->doctrine->read($dsn, $options, $configuration, self::MAX_SCAN, function (string $id, string $body, array $headers, ?\DateTimeImmutable $storedAt) use (&$messages, &$undecodable): void {
             try {
-                $messages[] = $this->decoder->decode($row['id'], $row['body'], $row['headers'], $row['created_at']);
+                $messages[] = $this->decoder->decode($id, $body, $headers, $storedAt);
             } catch (UndecodableMessageException $e) {
-                $undecodable[] = ['id' => $row['id'], 'reason' => $e->getMessage()];
+                $undecodable[] = ['id' => $id, 'reason' => $e->getMessage()];
             }
+        });
+        $undecodable = array_merge($data['skipped'], $undecodable);
+        usort($undecodable, static fn (array $a, array $b): int => [(int) $a['id'], $a['id']] <=> [(int) $b['id'], $b['id']]);
+
+        // Read newest first; listed oldest first.
+        $grouped = (new FailedMessageGrouper(array_values(array_unique(array_filter([$this->projectDir, $configuration->compiledProjectDir()])))))->group(array_reverse($messages), $group);
+        if (null !== $group && [] === $grouped['groups']) {
+            throw new InvalidArgumentException(\sprintf('Transport "%s" has no group "%s".', $name, $group));
         }
 
-        $groups = (new FailedMessageGrouper(array_values(array_unique(array_filter([$this->projectDir, $configuration->compiledProjectDir()])))))->group($messages, $group);
-        if (null !== $group && [] === $groups) {
-            throw new InvalidArgumentException(\sprintf('Transport "%s" has no group %d.', $name, $group));
-        }
-
-        return [
+        $result = [
             'storage' => $data['storage'],
             'message_count' => $data['total'],
-            'scanned' => \count($data['rows']),
-            'scan_truncated' => $data['total'] > \count($data['rows']),
-            'group_count' => null === $group ? \count($groups) : null,
+            'scanned' => $data['scanned'],
+            'scan_truncated' => null !== $data['truncated'],
+        ];
+        if (null !== $data['truncated']) {
+            $result['scan_truncated_reason'] = $data['truncated'];
+        }
+
+        return $result + [
+            'group_count' => $grouped['group_count'],
+            'groups_truncated' => $grouped['groups_truncated'],
+            'omitted_groups' => $grouped['omitted_groups'],
+            'omitted_messages' => $grouped['omitted_messages'],
             'undecodable' => ['count' => \count($undecodable), 'messages' => \array_slice($undecodable, 0, self::MAX_UNDECODABLE)],
-            'groups' => $groups,
+            'groups' => $grouped['groups'],
         ];
     }
 }

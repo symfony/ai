@@ -299,37 +299,53 @@ Messenger Failures
 
 ``symfony-messenger-failed``
     List the messages in the failure transports, grouped by cause: the exception class, the
-    exception message with its variable parts blanked (quoted values, paths, numbers) and the
-    first application frame of the trace, which is usually the handler. The largest group comes
-    first, and every group is listed however small, so a rare bug is not hidden behind a flood of
-    one transient failure.
+    exception message with its variable parts blanked (quoted values, paths and all numbers except
+    an HTTP status code) and the first application frame of the trace, which is usually the
+    handler. The largest group comes first. At most 50 groups are listed: when there are more,
+    ``groups_truncated`` is set and ``omitted_groups`` and ``omitted_messages`` count the rest.
+    Registered when ``symfony/messenger`` is installed.
 
     =============  =====================================================================
     Parameter      Description
     =============  =====================================================================
     ``transport``  Read only this transport. Default: every failure transport.
-    ``group``      List every message of this group (1-based, as numbered in the result).
+    ``group``      List the messages of this group (its ``group_id`` from the summary).
+    ``context``    Kernel context. Required with several cache directories.
     =============  =====================================================================
 
-    Groups are numbered per transport: with several failure transports, pass ``transport``
-    together with ``group``.
+    A ``group_id`` is a short hash of the cause, stable while messages arrive. It is per
+    transport: with several failure transports, pass ``transport`` together with ``group``.
 
-    Per group: ``count``, ``message_classes``, ``exception_class``, ``failed_in``,
-    ``sample_messages`` (up to 5 distinct exception messages), ``trace`` (the top frames),
+    Per group: ``group_id``, ``count``, ``message_classes``, ``exception_class``, ``failed_in``,
+    ``sample_messages`` (up to 5 distinct exception messages, with tokens and credentials masked), ``trace`` (the top frames, without call arguments),
     ``retry_count`` (a number, or ``min``/``max`` when the messages differ), ``first_failed_at``,
-    ``last_failed_at``, ``original_transports`` and up to 20 ``ids``. Per transport it also
-    reports ``message_count``, the ``undecodable`` rows with the reason, and ``scan_truncated``
-    when the transport holds more than the 5,000 newest messages it reads.
+    ``last_failed_at``, ``original_transports`` and up to 20 ``ids``. With ``group``, up to 100
+    ``messages`` are listed, with ``messages_truncated`` set when there are more. Per transport it
+    also reports ``message_count``, ``scanned``, the ``undecodable`` rows with the reason, and
+    ``scan_truncated`` with a ``scan_truncated_reason`` when not every message was read. The
+    result names the compiled ``container`` it was read from. A transport that cannot be read
+    (for example a malformed DSN) carries an ``error`` and does not affect the others.
 
 .. code-block:: terminal
 
     $ vendor/bin/mate tools:call symfony-messenger-failed
-    $ vendor/bin/mate tools:call symfony-messenger-failed --transport=failed --group=2
+    $ vendor/bin/mate tools:call symfony-messenger-failed --transport=failed --group=3f2a9c1e
 
-The tool reads the storage of the transport directly, with plain ``SELECT`` statements. It never
-locks, acknowledges, retries or removes a message, never creates a table or a database file, and
-opens SQLite databases read-only. Use ``bin/console messenger:failed:retry`` or
-``messenger:failed:remove`` to act on the result.
+The tool reads the storage of the transport directly and only with ``SELECT`` statements: it never
+locks, acknowledges, retries or removes a message and never creates a table or a database file.
+Beyond that, the connection itself is made read-only where the driver allows it:
+
+* SQLite (``pdo_sqlite``, ``sqlite3``): ``PRAGMA query_only``, and with ``pdo_sqlite`` the file is
+  also opened with the read-only flag;
+* MySQL and MariaDB (``pdo_mysql``, ``mysqli``): ``SET SESSION TRANSACTION READ ONLY``;
+* PostgreSQL (``pdo_pgsql``, ``pgsql``): ``SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY``;
+* other platforms: nothing beyond the ``SELECT`` statements.
+
+Use ``bin/console messenger:failed:retry`` or ``messenger:failed:remove`` to act on the result.
+
+It reads at most the 5,000 newest messages of a transport, skips a message larger than 1 MB (it
+is listed under ``undecodable``) and stops after 32 MB of stored messages; ``scan_truncated_reason``
+says which limit applied.
 
 =====================================  ================================================================
 Transport                              Support
@@ -345,28 +361,33 @@ Beanstalkd, in-memory, ``sync``        Not read. An in-memory transport only liv
                                        that sent the messages.
 =====================================  ================================================================
 
-The stored envelopes are never unserialized into objects. The tool calls ``unserialize()`` with
-``allowed_classes`` set to ``false``, so the envelope, its stamps and the message all come back as
-``__PHP_Incomplete_Class``, and it reads their properties as plain data. No constructor,
-``__wakeup()``, ``__unserialize()`` or ``__destruct()`` of a stored class runs, whatever the
-transport contains. The message itself only contributes its class name. Messenger's own
-``PhpSerializer::decode()`` is not used because it allows every class.
+The stored envelopes are never unserialized into objects, and no class is loaded for them. The
+tool calls ``unserialize()`` with ``allowed_classes`` set to ``false``, so the envelope, its stamps
+and the message all come back as ``__PHP_Incomplete_Class``, and it reads their properties as
+plain data. Enum cases, which PHP would still autoload, are rewritten into such objects first. No
+constructor, ``__wakeup()``, ``__unserialize()`` or ``__destruct()`` of a stored class runs,
+whatever the transport contains. The message itself only contributes its class name. Messenger's
+own ``PhpSerializer::decode()`` is not used because it allows every class.
 
 **Configuration**
 
 The failure transports, their DSNs and options, and the Doctrine connections come from the
-compiled container, the same ``*DebugContainer.xml`` the container tools read. The container of
-the application's ``APP_ENV`` is preferred. ``%env()%`` placeholders are resolved from the real
-environment of the Mate process, then from the ``.env``, ``.env.local``, ``.env.$APP_ENV`` and
-``.env.$APP_ENV.local`` files in the order Symfony loads them (``symfony/dotenv`` is needed for the
-files). The ``resolve``, ``default``, ``string``, ``trim`` and ``base64`` processors are
-supported; any other processor is an error. ``%kernel.project_dir%`` is the directory Mate runs
-in, even if the container was compiled elsewhere. Reading a Doctrine transport needs
-``doctrine/dbal``.
+compiled container, the same ``*DebugContainer.xml`` the container tools read; with several cache
+directories, pass ``context``. The container of the application's ``APP_ENV`` is preferred.
 
-When something cannot be resolved, for example a missing environment variable, an unknown Doctrine
-connection or a database file that does not exist, that transport's entry carries an ``error``
-naming it, and the other transports are still read.
+``%env()%`` placeholders are resolved the way the application would: the tool runs Symfony's own
+``Dotenv::bootEnv()`` on the project's ``.env`` (so ``.env.local.php``, ``.env.local``,
+``.env.$APP_ENV``, ``${VAR}`` references and ``APP_ENV`` set in ``.env.local`` all apply, and a
+real environment variable of the Mate process wins), then restores the Mate process's environment.
+Without ``symfony/dotenv`` only the real environment is used. The ``resolve``, ``default``,
+``string``, ``trim``, ``base64`` and ``file`` processors are supported; any other processor is an
+error. Container parameters under the directory the container was compiled in (such as
+``%kernel.project_dir%`` and ``%kernel.cache_dir%``) point into the directory Mate runs in. Reading a
+Doctrine transport needs ``doctrine/dbal``.
+
+When something cannot be resolved, for example a missing environment variable, a syntax error in a
+``.env`` file, an unknown Doctrine connection or a database file that does not exist, that
+transport's entry carries an ``error`` naming it, and the other transports are still read.
 
 Monolog Extension
 -----------------
