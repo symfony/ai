@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
@@ -209,7 +210,7 @@ final class ExecutionTest extends TestCase
         ]));
 
         $execution = new Execution(static function () use ($round, $final): \Generator {
-            yield new Progress('model_result', 'Model responded.', $round);
+            yield new ModelResult($round);
             yield new ResultUpdate($final);
         }, streamed: true);
 
@@ -228,8 +229,8 @@ final class ExecutionTest extends TestCase
         $round2->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 7));
 
         $execution = new Execution(static function () use ($round1, $round2): \Generator {
-            yield new Progress('model_result', 'Model responded.', $round1);
-            yield new Progress('model_result', 'Model responded.', $round2);
+            yield new ModelResult($round1);
+            yield new ModelResult($round2);
             // A real Runner would go on to a final ResultUpdate; this factory never reaches one,
             // mirroring an execution the caller stops consuming (e.g. an agent turn paused to ask
             // the user something) without ever calling cancel().

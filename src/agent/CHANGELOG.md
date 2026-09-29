@@ -4,7 +4,7 @@ CHANGELOG
 0.15
 ----
 
- * `Runner` now yields a `Progress` update of the `model_result` stage carrying each round's own result, and `Execution` accumulates it into `getMetadata()` as it happens, so a canceled or otherwise abandoned streamed execution still reports the token usage of the rounds it actually made
+ * Add `Execution\Update\ModelResult`, yielded by `Runner` right after each round's own result, and accumulated by `Execution` into `getMetadata()` as it happens, so a canceled or otherwise abandoned streamed execution still reports the token usage of the rounds it actually made
 
 0.14
 ----

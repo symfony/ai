@@ -18,10 +18,6 @@ trait MetadataAwareTrait
 {
     private ?Metadata $metadata = null;
 
-    /**
-     * Without this, a clone would still share the original's Metadata instance, so mutating
-     * either one's metadata after cloning would affect both.
-     */
     public function __clone(): void
     {
         if (null !== $this->metadata) {

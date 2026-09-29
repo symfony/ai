@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\RuntimeException as AgentRuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -326,6 +327,7 @@ final class SpeechAgentTest extends TestCase
             ->method('call')
             ->willReturn(new Execution(static function (): \Generator {
                 yield new Progress('model_request', 'Invoking model.');
+                yield new ModelResult(new TextResult('hello'));
                 yield new Progress('delta', 'Received a streamed delta.');
                 yield new ResultUpdate(new TextResult('hello'));
             }));
@@ -334,13 +336,16 @@ final class SpeechAgentTest extends TestCase
 
         $updates = iterator_to_array($agent->call(new MessageBag(Message::ofUser('Hello'))));
 
-        $this->assertCount(3, $updates);
+        $this->assertCount(4, $updates);
         $this->assertInstanceOf(Progress::class, $updates[0]);
         $this->assertSame('model_request', $updates[0]->getStage());
-        $this->assertInstanceOf(Progress::class, $updates[1]);
-        $this->assertSame('delta', $updates[1]->getStage());
-        $this->assertInstanceOf(ResultUpdate::class, $updates[2]);
-        $this->assertSame('hello', $updates[2]->getResult()->getContent());
+        // Forwarded even though it is not a Progress update
+        $this->assertInstanceOf(ModelResult::class, $updates[1]);
+        $this->assertSame('hello', $updates[1]->getResult()->getContent());
+        $this->assertInstanceOf(Progress::class, $updates[2]);
+        $this->assertSame('delta', $updates[2]->getStage());
+        $this->assertInstanceOf(ResultUpdate::class, $updates[3]);
+        $this->assertSame('hello', $updates[3]->getResult()->getContent());
     }
 
     private function execution(ResultInterface $result): Execution

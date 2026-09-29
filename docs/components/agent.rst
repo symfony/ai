@@ -168,8 +168,8 @@ answer. See the
 example.
 
 A streamed execution's ``getMetadata()`` still reports what the rounds made so far cost, even a canceled one: each
-round yields its own result as a ``Progress`` update of the ``model_result`` stage before the loop decides whether
-to call another tool, and the execution accumulates it as it happens instead of only once a final result exists::
+round yields its own result as a ``ModelResult`` update before the loop decides whether to call another tool, and
+the execution accumulates it as it happens instead of only once a final result exists::
 
     $usage = $execution->getMetadata()->get('token_usage'); // the tokens spent up to whatever point consumption stopped
 

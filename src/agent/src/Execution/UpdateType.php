@@ -19,5 +19,6 @@ namespace Symfony\AI\Agent\Execution;
 enum UpdateType: string
 {
     case Progress = 'progress';
+    case ModelResult = 'model_result';
     case Result = 'result';
 }
