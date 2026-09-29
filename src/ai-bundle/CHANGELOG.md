@@ -4,6 +4,8 @@ CHANGELOG
 0.14
 ----
 
+ * Show the calls collected for agents, chats, message stores and stores in the profiler panel
+ * Show the configured platforms, toolboxes, agents, chats, message stores and stores with their service ids in the profiler panel
  * Add `edenai` platform configuration for the Eden AI bridge, including the `ai.platform.job_client.edenai` service for its asynchronous speech-to-text jobs
  * Add `typesafe` platform configuration for the TypeSafe bridge
  * Register the OpenAI job client as `ai.platform.job_client.openai`, tagged and autowired by argument name, so a stored batch handle can be resolved from a worker
