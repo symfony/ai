@@ -17,6 +17,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
@@ -61,10 +62,7 @@ final class ProfilerToolTest extends TestCase
         $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 2));
 
         $this->assertSame(3, $result['total']);
-        $this->assertSame(2, $result['returned']);
-        $this->assertSame(2, $result['limit']);
-        $this->assertTrue($result['has_more']);
-        $this->assertSame('Showing the 2 most recent of 3 matching profiles. Pass --limit=3 to list all of them.', $result['more']);
+        $this->assertTrue($result['truncated']);
         $this->assertCount(2, $result['profiles']);
     }
 
@@ -73,44 +71,40 @@ final class ProfilerToolTest extends TestCase
         $result = $this->decodeUntrusted($this->tool->listProfiles());
 
         $this->assertSame(3, $result['total']);
-        $this->assertSame(3, $result['returned']);
-        $this->assertSame(20, $result['limit']);
-        $this->assertFalse($result['has_more']);
-        $this->assertArrayNotHasKey('more', $result);
+        $this->assertFalse($result['truncated']);
+        $this->assertCount(3, $result['profiles']);
     }
 
-    public function testListProfilesWithLimitEqualToTotalHasNoMore()
+    public function testListProfilesWithLimitEqualToTotalIsNotTruncated()
     {
         $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 3));
 
-        $this->assertSame(3, $result['returned']);
-        $this->assertFalse($result['has_more']);
+        $this->assertFalse($result['truncated']);
+        $this->assertCount(3, $result['profiles']);
     }
 
     public function testListProfilesPutsTheCountsBeforeTheProfiles()
     {
         $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1));
 
-        $this->assertSame(['total', 'returned', 'limit', 'has_more', 'more', 'profiles'], array_keys($result));
+        $this->assertSame(['total', 'truncated', 'profiles'], array_keys($result));
     }
 
-    public function testListProfilesWithLimitZeroReturnsTheCountsOnly()
+    public function testListProfilesWithLimitZeroReturnsEveryProfile()
     {
         $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 0));
 
         $this->assertSame(3, $result['total']);
-        $this->assertSame(0, $result['returned']);
-        $this->assertTrue($result['has_more']);
-        $this->assertSame([], $result['profiles']);
+        $this->assertFalse($result['truncated']);
+        $this->assertCount(3, $result['profiles']);
     }
 
-    public function testListProfilesTreatsANegativeLimitAsZero()
+    public function testListProfilesRejectsANegativeLimit()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: -1));
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('limit must be 0 or greater.');
 
-        $this->assertSame(0, $result['limit']);
-        $this->assertSame(0, $result['returned']);
-        $this->assertSame([], $result['profiles']);
+        $this->tool->listProfiles(limit: -1);
     }
 
     public function testListProfilesCountsTheFilteredTotal()
@@ -118,26 +112,25 @@ final class ProfilerToolTest extends TestCase
         $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1, method: 'POST'));
 
         $this->assertSame(1, $result['total']);
-        $this->assertSame(1, $result['returned']);
-        $this->assertFalse($result['has_more']);
+        $this->assertFalse($result['truncated']);
+        $this->assertCount(1, $result['profiles']);
     }
 
-    public function testListProfilesCountsTheFilteredTotalWhenPaged()
+    public function testListProfilesCountsTheFilteredTotalWhenTruncated()
     {
         $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1, method: 'GET'));
 
         $this->assertSame(2, $result['total']);
-        $this->assertSame(1, $result['returned']);
-        $this->assertTrue($result['has_more']);
+        $this->assertTrue($result['truncated']);
+        $this->assertCount(1, $result['profiles']);
     }
 
-    public function testListProfilesWithNoMatchIsNotPaged()
+    public function testListProfilesWithNoMatchIsNotTruncated()
     {
         $result = $this->decodeUntrusted($this->tool->listProfiles(statusCode: 418));
 
         $this->assertSame(0, $result['total']);
-        $this->assertSame(0, $result['returned']);
-        $this->assertFalse($result['has_more']);
+        $this->assertFalse($result['truncated']);
         $this->assertSame([], $result['profiles']);
     }
 
