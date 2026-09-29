@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add an optional `EventDispatcherInterface` to `Test\InMemoryPlatform`, dispatching `InvocationEvent`, `ResultEvent`, `ResultConvertedEvent` and `ResultErrorEvent` the same way `Provider` does, so listener-based code can be exercised against the in-memory fake instead of only against a real provider
+
 0.14
 ----
 
