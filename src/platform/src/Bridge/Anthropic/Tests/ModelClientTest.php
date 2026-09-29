@@ -377,6 +377,39 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    public function testCanonicalMaxOutputTokensIsRenamedToMaxTokens()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertSame(500, $body['max_tokens']);
+            $this->assertArrayNotHasKey('max_output_tokens', $body);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['max_output_tokens' => 500];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    public function testCanonicalMaxOutputTokensOverridesTheModelsDefaultMaxTokens()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertSame(500, $body['max_tokens']);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        // Claude::__construct() already put its own default (1000) under "max_tokens";
+        // the canonical option, given explicitly at call time, must win.
+        $options = ['max_tokens' => 1000, 'max_output_tokens' => 500];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
     public function testStringPayloadThrowsException()
     {
         $this->modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');

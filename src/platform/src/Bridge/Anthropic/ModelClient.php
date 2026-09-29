@@ -81,6 +81,14 @@ final class ModelClient implements ModelClientInterface
             'content-type' => 'application/json',
         ];
 
+        // The canonical option every bridge accepts; Anthropic's own wire field is "max_tokens"
+        // (required on every request), so an explicit canonical value always wins over whatever
+        // default a Model class (e.g. Claude) already put there.
+        if (isset($options['max_output_tokens'])) {
+            $options['max_tokens'] = $options['max_output_tokens'];
+            unset($options['max_output_tokens']);
+        }
+
         $cacheControl = $this->getCacheControl($this->cacheRetention);
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);
         $payload = $this->injectSystemCacheControl($payload, $cacheControl);
