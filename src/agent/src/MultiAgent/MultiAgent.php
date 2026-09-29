@@ -121,7 +121,7 @@ final class MultiAgent implements AgentInterface
             if (!$decision->hasAgent()) {
                 $this->logger->debug('MultiAgent: Using fallback agent', ['reason' => 'no_agent_selected']);
 
-                yield new Progress('handoff', \sprintf('Routing to fallback agent "%s".', $this->fallback->getName()), $decision);
+                yield new Progress(Progress::STAGE_HANDOFF, \sprintf('Routing to fallback agent "%s".', $this->fallback->getName()), $decision);
 
                 yield from $this->answerWith($this->fallback, $messages, $options, $cancellation);
 
@@ -143,7 +143,7 @@ final class MultiAgent implements AgentInterface
                     'reason' => 'agent_not_found',
                 ]);
 
-                yield new Progress('handoff', \sprintf('Routing to fallback agent "%s".', $this->fallback->getName()), $decision);
+                yield new Progress(Progress::STAGE_HANDOFF, \sprintf('Routing to fallback agent "%s".', $this->fallback->getName()), $decision);
 
                 yield from $this->answerWith($this->fallback, $messages, $options, $cancellation);
 
@@ -152,7 +152,7 @@ final class MultiAgent implements AgentInterface
 
             $this->logger->debug('MultiAgent: Delegating to agent', ['agent_name' => $decision->getAgentName()]);
 
-            yield new Progress('handoff', \sprintf('Routing to agent "%s".', $targetAgent->getName()), $decision);
+            yield new Progress(Progress::STAGE_HANDOFF, \sprintf('Routing to agent "%s".', $targetAgent->getName()), $decision);
 
             // Call the selected agent with the original user question
             yield from $this->answerWith($targetAgent, new MessageBag($userMessage), $options, $cancellation);
@@ -198,7 +198,7 @@ final class MultiAgent implements AgentInterface
                 continue;
             }
 
-            if (!$forwardDeltas && 'delta' === $update->getStage()) {
+            if (!$forwardDeltas && Progress::STAGE_DELTA === $update->getStage()) {
                 continue;
             }
 

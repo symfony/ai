@@ -22,7 +22,30 @@ use Symfony\AI\Agent\Execution\UpdateType;
 final class Progress implements UpdateInterface
 {
     /**
-     * @param non-empty-string $stage   machine-readable stage, e.g. "model_request", "tool_call", "delta"
+     * The model is about to be invoked; the payload is the model name.
+     */
+    public const STAGE_MODEL_REQUEST = 'model_request';
+
+    /**
+     * A streamed delta was received; the payload is the {@see \Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface}.
+     */
+    public const STAGE_DELTA = 'delta';
+
+    /**
+     * A tool call is about to be executed; the payload is the {@see \Symfony\AI\Platform\Result\ToolCall}.
+     */
+    public const STAGE_TOOL_CALL = 'tool_call';
+
+    /**
+     * A {@see \Symfony\AI\Agent\MultiAgent\MultiAgent} routed the input to another agent; the payload is its
+     * {@see \Symfony\AI\Agent\MultiAgent\Handoff\Decision}.
+     */
+    public const STAGE_HANDOFF = 'handoff';
+
+    /**
+     * @param non-empty-string $stage   machine-readable stage, one of the STAGE_* constants for a stage this
+     *                                  package itself reports, or any other string a decorator or a custom
+     *                                  agent chooses for its own
      * @param string           $message human-readable description
      * @param mixed            $payload stage-specific payload (e.g. the ToolCall, a streamed delta, the handoff Decision, ...)
      */

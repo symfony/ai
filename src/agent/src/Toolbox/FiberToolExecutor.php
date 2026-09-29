@@ -44,7 +44,7 @@ final class FiberToolExecutor implements ToolExecutorInterface
     public function execute(array $toolCalls): \Generator
     {
         foreach ($toolCalls as $toolCall) {
-            yield new Progress('tool_call', \sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
+            yield new Progress(Progress::STAGE_TOOL_CALL, \sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
         }
 
         $fibers = [];

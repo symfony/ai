@@ -36,7 +36,7 @@ final class SequentialToolExecutor implements ToolExecutorInterface
     {
         $results = [];
         foreach ($toolCalls as $toolCall) {
-            yield new Progress('tool_call', \sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
+            yield new Progress(Progress::STAGE_TOOL_CALL, \sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
 
             $results[] = $this->toolbox->execute($toolCall);
         }

@@ -175,10 +175,13 @@ Iterating the execution instead reports each delta as a ``Progress`` update of t
 model-request and tool-call updates::
 
     foreach ($agent->call('Tell me a story.', ['stream' => true]) as $update) {
-        if ($update instanceof Progress && 'delta' === $update->getStage() && $update->getPayload() instanceof TextDelta) {
+        if ($update instanceof Progress && Progress::STAGE_DELTA === $update->getStage() && $update->getPayload() instanceof TextDelta) {
             echo $update->getPayload()->getText();
         }
     }
+
+The stages this package itself reports are available as ``Progress::STAGE_MODEL_REQUEST``, ``Progress::STAGE_DELTA``,
+``Progress::STAGE_TOOL_CALL`` and ``Progress::STAGE_HANDOFF``, so matching on one does not need its raw string.
 
 Streaming and tool calling compose: when the model streams a tool call, the agent executes it and streams the next
 round into the very same execution.
@@ -892,7 +895,7 @@ You can implement your own executor by implementing
         {
             $results = [];
             foreach ($toolCalls as $toolCall) {
-                yield new Progress('tool_call', sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
+                yield new Progress(Progress::STAGE_TOOL_CALL, sprintf('Executing tool "%s".', $toolCall->getName()), $toolCall);
 
                 $results[] = $this->toolbox->execute($toolCall);
             }
