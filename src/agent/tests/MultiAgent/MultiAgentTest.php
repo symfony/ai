@@ -19,6 +19,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
@@ -429,6 +430,7 @@ class MultiAgentTest extends TestCase
         $technicalAgent->method('getName')->willReturn('technical');
         $technicalAgent->method('call')->willReturn(new Execution(static function (): \Generator {
             yield new Progress('tool_call', 'Executing tool.');
+            yield new ModelResult(new TextResult('Technical response'));
             yield new Progress('delta', 'Streaming answer.');
             yield new ResultUpdate(new TextResult('Technical response'));
         }));
@@ -441,7 +443,7 @@ class MultiAgentTest extends TestCase
 
         $updates = iterator_to_array($multiAgent->call(new MessageBag(Message::ofUser('Help with code'))));
 
-        $this->assertCount(5, $updates);
+        $this->assertCount(6, $updates);
 
         // 1. Orchestrator progress
         $this->assertInstanceOf(Progress::class, $updates[0]);
@@ -458,13 +460,17 @@ class MultiAgentTest extends TestCase
         $this->assertInstanceOf(Progress::class, $updates[2]);
         $this->assertSame('tool_call', $updates[2]->getStage());
 
-        // 4. Technical agent delta progress
-        $this->assertInstanceOf(Progress::class, $updates[3]);
-        $this->assertSame('delta', $updates[3]->getStage());
+        // 4. Technical agent model result, also forwarded even though it is not a Progress update
+        $this->assertInstanceOf(ModelResult::class, $updates[3]);
+        $this->assertSame('Technical response', $updates[3]->getResult()->getContent());
 
-        // 5. Final result update
-        $this->assertInstanceOf(ResultUpdate::class, $updates[4]);
-        $this->assertSame('Technical response', $updates[4]->getResult()->getContent());
+        // 5. Technical agent delta progress
+        $this->assertInstanceOf(Progress::class, $updates[4]);
+        $this->assertSame('delta', $updates[4]->getStage());
+
+        // 6. Final result update
+        $this->assertInstanceOf(ResultUpdate::class, $updates[5]);
+        $this->assertSame('Technical response', $updates[5]->getResult()->getContent());
     }
 
     public function testCallDropsTheOrchestratorDeltasButForwardsTheAnsweringOnes()

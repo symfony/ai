@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests\Execution;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Runner;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Execution\UpdateInterface;
@@ -916,7 +917,70 @@ final class RunnerTest extends TestCase
             $updates,
         );
 
-        $this->assertSame(['model_request', 'tool_call', 'model_request', 'result'], $stages);
+        $this->assertSame(['model_request', 'model_result', 'tool_call', 'model_request', 'model_result', 'result'], $stages);
+    }
+
+    public function testEachRoundYieldsItsOwnResultAsAModelResultUpdate()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $modelResults = array_values(array_filter($updates, static fn (UpdateInterface $update): bool => $update instanceof ModelResult));
+
+        // Not assertSame(): the result is a clone, so a consumer holding onto it keeps seeing this
+        // round's own metadata even after the terminal round's own $result is later mutated into the
+        // run's full aggregate (see testTheFinalRoundsModelResultKeepsItsOwnMetadataAfterTheRunAggregatesIt
+        // below, which is also why $final itself is not compared against here anymore: it is the very
+        // object mutated into that aggregate).
+        $this->assertCount(2, $modelResults);
+        $this->assertInstanceOf(ToolCallResult::class, $modelResults[0]->getResult());
+        $this->assertSame(10, $modelResults[0]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertInstanceOf(TextResult::class, $modelResults[1]->getResult());
+        $this->assertSame('Final content after tool', $modelResults[1]->getResult()->getContent());
+        $this->assertSame(5, $modelResults[1]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testTheFinalRoundsModelResultKeepsItsOwnMetadataAfterTheRunAggregatesIt()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $modelResults = array_values(array_filter($updates, static fn (UpdateInterface $update): bool => $update instanceof ModelResult));
+        /** @var ResultUpdate $resultUpdate */
+        $resultUpdate = array_values(array_filter(
+            $updates,
+            static fn (UpdateInterface $update): bool => $update instanceof ResultUpdate,
+        ))[0];
+
+        // The terminal round's own $result (captured by identity above, before the run finished)
+        // ends up carrying the run's full aggregate (10 + 5 = 15), but the earlier model_result
+        // update's clone must still report only its own round's usage (5).
+        $this->assertSame(15, $resultUpdate->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertSame(5, $modelResults[1]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
     }
 
     public function testItYieldsEveryStreamedDeltaAsAProgressUpdate()

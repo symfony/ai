@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Execution;
 
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
@@ -109,6 +110,8 @@ final class Runner
             if ($cancellation?->isRequested()) {
                 return;
             }
+
+            yield new ModelResult(clone $result);
 
             $toolCallResult = $this->extractToolCallResult($result);
             if (null === $toolCallResult || null === $this->toolExecutor) {

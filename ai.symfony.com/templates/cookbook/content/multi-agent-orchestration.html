@@ -403,9 +403,10 @@ example for a runnable version of this loop.</p>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 <span>Note</span>
     </p><p>The orchestrator's own routing round is machinery, not answer: its <code translate="no" class="notranslate">model_request</code> and
-<code translate="no" class="notranslate">tool_call</code> updates are forwarded so you can show that a decision is being made, but the
-deltas that spell out the <code translate="no" class="notranslate">Decision</code> are not. With the <code translate="no" class="notranslate">stream</code> option, the <code translate="no" class="notranslate">delta</code>
-updates you receive are therefore only those of the agent that answers.</p>
+<code translate="no" class="notranslate">tool_call</code> progress updates, and its <code translate="no" class="notranslate">ModelResult</code> update, are forwarded so you can show
+that a decision is being made, but the deltas that spell out the <code translate="no" class="notranslate">Decision</code> are not. With
+the <code translate="no" class="notranslate">stream</code> option, the <code translate="no" class="notranslate">delta</code> updates you receive are therefore only those of the
+agent that answers.</p>
 </div>
 </div>
 <div class="section">

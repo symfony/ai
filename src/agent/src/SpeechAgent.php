@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -59,7 +60,7 @@ final class SpeechAgent implements AgentInterface
                     continue;
                 }
 
-                if ($update instanceof Progress) {
+                if ($update instanceof Progress || $update instanceof ModelResult) {
                     yield $update;
                 }
             }

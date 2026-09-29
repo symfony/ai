@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `Execution\Update\ModelResult`, yielded by `Runner` right after each round's own result, and accumulated by `Execution` into `getMetadata()` as it happens, so a canceled or otherwise abandoned streamed execution still reports the token usage of the rounds it actually made
+
 0.14
 ----
 

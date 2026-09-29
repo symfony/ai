@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Fix `MetadataAwareTrait` clones sharing the original's `Metadata` instance, so mutating either one's metadata after cloning affected both
+
 0.14
 ----
 

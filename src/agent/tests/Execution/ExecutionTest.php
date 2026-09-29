@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
@@ -25,6 +26,8 @@ use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\PartialObjectDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 
 final class ExecutionTest extends TestCase
 {
@@ -191,6 +194,57 @@ final class ExecutionTest extends TestCase
         $this->expectExceptionMessage('The agent execution was canceled.');
 
         $execution->getResult();
+    }
+
+    public function testStreamedMetadataAccumulatesPerRoundWithoutDoublingTheFinalTotal()
+    {
+        // Mirrors what Runner does: a tool-calling round's own usage, then a final result whose
+        // metadata already carries the aggregate Runner computed over every round.
+        $round = new TextResult('...');
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Done');
+        $final->getMetadata()->add('token_usage', new TokenUsageAggregation([
+            new TokenUsage(totalTokens: 10),
+            new TokenUsage(totalTokens: 5),
+        ]));
+
+        $execution = new Execution(static function () use ($round, $final): \Generator {
+            yield new ModelResult($round);
+            yield new ResultUpdate($final);
+        }, streamed: true);
+
+        iterator_to_array($execution, false);
+
+        $usage = $execution->getMetadata()->get('token_usage');
+        $this->assertSame(15, $usage->getTotalTokens());
+    }
+
+    public function testStreamedMetadataReflectsRoundsProcessedBeforeTheExecutionIsAbandoned()
+    {
+        $round1 = new TextResult('...');
+        $round1->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $round2 = new TextResult('...');
+        $round2->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 7));
+
+        $execution = new Execution(static function () use ($round1, $round2): \Generator {
+            yield new ModelResult($round1);
+            yield new ModelResult($round2);
+            // A real Runner would go on to a final ResultUpdate; this factory never reaches one,
+            // mirroring an execution the caller stops consuming (e.g. an agent turn paused to ask
+            // the user something) without ever calling cancel().
+        }, streamed: true);
+
+        $seen = 0;
+        foreach ($execution as $update) {
+            if (2 === ++$seen) {
+                break;
+            }
+        }
+
+        $usage = $execution->getMetadata()->get('token_usage');
+        $this->assertSame(17, $usage->getTotalTokens());
     }
 
     public function testCancelAfterCompletionKeepsTheResult()

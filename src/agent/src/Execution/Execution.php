@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Execution;
 
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
 use Symfony\AI\Platform\Metadata\Metadata;
@@ -235,10 +236,18 @@ final class Execution implements \IteratorAggregate, ResultInterface
                     break;
                 }
 
-                if ($update instanceof Result) {
-                    // the final result carries the metadata aggregated over all rounds, e.g. token usage
-                    $this->result = $update->getResult();
+                if ($update instanceof ModelResult) {
+                    // Accumulated round by round, so it reflects what was actually spent even if the
+                    // execution never reaches a final result (canceled, or an abandoned iteration).
                     $this->metadata->merge($update->getResult()->getMetadata());
+                }
+
+                if ($update instanceof Result) {
+                    // The final result already carries the metadata aggregated over all rounds (Runner
+                    // does that itself); replacing rather than merging avoids adding it a second time on
+                    // top of the running total above.
+                    $this->result = $update->getResult();
+                    $this->metadata->set($update->getResult()->getMetadata()->all());
 
                     foreach ($this->resultCallbacks as $callback) {
                         $callback($update);
