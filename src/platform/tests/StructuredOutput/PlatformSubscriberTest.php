@@ -15,6 +15,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\Selector\MissingPropertiesSelector;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -36,6 +38,7 @@ use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListItem
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SomeStructure;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Trip;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\HumanReadableTimeUnion;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnixTimestampUnion;
@@ -287,7 +290,8 @@ final class PlatformSubscriberTest extends TestCase
 
     public function testProcessInputWithObjectInstance()
     {
-        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $factory = new ConfigurableResponseFormatFactory(['some' => 'format']);
+        $processor = new PlatformSubscriber($factory);
         $city = new City(name: 'Berlin');
         $event = new InvocationEvent(new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]), new MessageBag(), [
             'response_format' => $city,
@@ -296,6 +300,73 @@ final class PlatformSubscriberTest extends TestCase
         $processor->processInput($event);
 
         $this->assertSame(['response_format' => ['some' => 'format']], $event->getOptions());
+        $this->assertSame([], $factory->getLastContext());
+    }
+
+    public function testMissingPropertiesOnlyIsForwardedToTheFactoryAndStrippedFromTheOptions()
+    {
+        $factory = new ConfigurableResponseFormatFactory(['some' => 'format']);
+        $processor = new PlatformSubscriber($factory);
+        $city = new City(name: 'Berlin');
+        $event = new InvocationEvent(new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]), new MessageBag(), [
+            'response_format' => $city,
+            'missing_properties_only' => true,
+        ]);
+
+        $processor->processInput($event);
+
+        $this->assertInstanceOf(MissingPropertiesSelector::class, $factory->getLastContext()[Factory::CONTEXT_SELECTOR] ?? null);
+        $this->assertSame(['response_format' => ['some' => 'format']], $event->getOptions());
+    }
+
+    public function testObjectInstancePopulatesNestedObjectsInPlace()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $model = new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]);
+
+        $berlin = new City(name: 'Berlin');
+        $trip = new Trip(destination: $berlin);
+        $invocationEvent = new InvocationEvent($model, new MessageBag(), ['response_format' => $trip]);
+        $processor->processInput($invocationEvent);
+
+        $converter = new PlainConverter(new TextResult('{"title": "City trip", "destination": {"population": 3500000}}'));
+        $resultEvent = new ResultEvent($model, new DeferredResult($converter, new InMemoryRawResult()), $invocationEvent->getOptions());
+        $processor->processResult($resultEvent);
+
+        $this->assertSame($trip, $resultEvent->getDeferredResult()->asObject());
+        $this->assertSame($berlin, $trip->destination);
+        $this->assertSame('Berlin', $berlin->name);
+        $this->assertSame(3500000, $berlin->population);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    #[TestWith([['missing_properties_only' => true]])]
+    #[TestWith([['response_format' => City::class, 'missing_properties_only' => true]])]
+    #[TestWith([['response_format' => 'url', 'missing_properties_only' => true]])]
+    #[TestWith([['response_format' => ['type' => 'json_schema'], 'missing_properties_only' => true]])]
+    public function testMissingPropertiesOnlyRequiresAnInstanceAsResponseFormat(array $options)
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $event = new InvocationEvent(new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]), new MessageBag(), $options);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "missing_properties_only" option requires the "response_format" option to be the instance to populate.');
+
+        $processor->processInput($event);
+    }
+
+    public function testMissingPropertiesOnlyIsStrippedFromTheOptionsWhenDisabled()
+    {
+        $processor = new PlatformSubscriber(new ConfigurableResponseFormatFactory(['some' => 'format']));
+        $event = new InvocationEvent(new Model('gpt-4', [Capability::OUTPUT_STRUCTURED]), new MessageBag(), [
+            'missing_properties_only' => false,
+        ]);
+
+        $processor->processInput($event);
+
+        $this->assertSame([], $event->getOptions());
     }
 
     public function testProcessOutputWithObjectInstance()

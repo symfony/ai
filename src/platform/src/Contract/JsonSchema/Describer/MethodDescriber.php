@@ -25,7 +25,7 @@ final class MethodDescriber implements ObjectDescriberInterface, PropertyDescrib
         }
 
         foreach ($reflection->getParameters() as $reflector) {
-            yield new PropertySubject($reflector->name, $reflector);
+            yield new PropertySubject($reflector->name, $reflector, $subject->getContext());
         }
     }
 

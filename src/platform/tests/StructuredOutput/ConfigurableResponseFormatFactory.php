@@ -13,18 +13,33 @@ namespace Symfony\AI\Platform\Tests\StructuredOutput;
 
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 
-final readonly class ConfigurableResponseFormatFactory implements ResponseFormatFactoryInterface
+final class ConfigurableResponseFormatFactory implements ResponseFormatFactoryInterface
 {
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $lastContext = null;
+
     /**
      * @param array<mixed> $responseFormat
      */
     public function __construct(
-        private array $responseFormat = [],
+        private readonly array $responseFormat = [],
     ) {
     }
 
-    public function create(string $responseClass): array
+    public function create(string $responseClass, array $context = []): array
     {
+        $this->lastContext = $context;
+
         return $this->responseFormat;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getLastContext(): ?array
+    {
+        return $this->lastContext;
     }
 }
