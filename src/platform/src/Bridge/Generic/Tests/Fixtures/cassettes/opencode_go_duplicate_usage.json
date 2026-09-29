@@ -1,0 +1,49 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://opencode.ai/zen/go/v1/chat/completions",
+                "signature": "9c165ad0e45aba51075ab68a81be1eb8",
+                "signature_v2": "1755e5b787399b4d7afc2455f487909e",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"stream\":true,\"max_tokens\":32,\"stream_options\":{\"include_usage\":true},\"messages\":[{\"role\":\"user\",\"content\":\"Reply with the word hello.\"}],\"model\":\"deepseek-v4.1-flash\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "text/event-stream"
+                    ],
+                    "cache-control": [
+                        "no-cache"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "cf-placement": [
+                        "remote-ORD"
+                    ],
+                    "x-opencode-endpoint-id": [
+                        "novita-deepseek"
+                    ],
+                    "x-opencode-upstream-model-id": [
+                        "deepseek/deepseek-v4.1-flash"
+                    ],
+                    "x-zen-model": [
+                        "deepseek-v4.1-flash"
+                    ]
+                },
+                "body_format": "sse",
+                "body": "data: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"The\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" user is\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" asking me to reply with the\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" word \\\"hello\\\". This is\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" a simple,\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" direct request. I should just\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" say \\\"hello\\\" as\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":null,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\" instructed\"}}]}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[{\"index\":0,\"finish_reason\":\"length\",\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\". No\"}}],\"usage\":{\"prompt_tokens\":36,\"completion_tokens\":32,\"total_tokens\":68,\"prompt_tokens_details\":{\"audio_tokens\":0,\"cached_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_write_tokens\":0},\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"audio_tokens\":0,\"reasoning_tokens\":32,\"rejected_prediction_tokens\":0}}}\n\ndata: {\"id\":\"8067c86aabc52a9197db4a31c2595108\",\"object\":\"chat.completion.chunk\",\"created\":1790633136,\"model\":\"deepseek-v4.1-flash\",\"choices\":[],\"usage\":{\"prompt_tokens\":36,\"completion_tokens\":32,\"total_tokens\":68,\"prompt_tokens_details\":{\"audio_tokens\":0,\"cached_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_write_tokens\":0},\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"audio_tokens\":0,\"reasoning_tokens\":32,\"rejected_prediction_tokens\":0}}}\n\ndata: [DONE]\n\n"
+            }
+        }
+    ]
+}
