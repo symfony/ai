@@ -94,46 +94,113 @@ final class ProfilerDataProviderTest extends TestCase
 
     public function testSearchProfilesWithoutCriteria()
     {
-        $profiles = $this->provider->searchProfiles([]);
+        $result = $this->provider->searchProfiles([]);
 
-        $this->assertCount(3, $profiles);
+        $this->assertCount(3, $result['profiles']);
+        $this->assertSame(3, $result['total']);
     }
 
     public function testSearchProfilesByMethod()
     {
-        $profiles = $this->provider->searchProfiles(['method' => 'POST']);
+        $result = $this->provider->searchProfiles(['method' => 'POST']);
 
-        $this->assertCount(1, $profiles);
-        $this->assertSame('def456', $profiles[0]->getToken());
+        $this->assertCount(1, $result['profiles']);
+        $this->assertSame('def456', $result['profiles'][0]->getToken());
+        $this->assertSame(1, $result['total']);
     }
 
     public function testSearchProfilesByStatusCode()
     {
-        $profiles = $this->provider->searchProfiles(['statusCode' => 404]);
+        $result = $this->provider->searchProfiles(['statusCode' => 404]);
 
-        $this->assertCount(1, $profiles);
-        $this->assertSame('ghi789', $profiles[0]->getToken());
+        $this->assertCount(1, $result['profiles']);
+        $this->assertSame('ghi789', $result['profiles'][0]->getToken());
     }
 
     public function testSearchProfilesByUrl()
     {
-        $profiles = $this->provider->searchProfiles(['url' => 'users']);
-
-        $this->assertCount(2, $profiles);
+        $this->assertCount(2, $this->provider->searchProfiles(['url' => 'users'])['profiles']);
     }
 
     public function testSearchProfilesByIp()
     {
-        $profiles = $this->provider->searchProfiles(['ip' => '127.0.0.1']);
-
-        $this->assertCount(2, $profiles);
+        $this->assertCount(2, $this->provider->searchProfiles(['ip' => '127.0.0.1'])['profiles']);
     }
 
     public function testSearchProfilesWithLimit()
     {
-        $profiles = $this->provider->searchProfiles(['method' => 'GET'], 1);
+        $result = $this->provider->searchProfiles(['method' => 'GET'], 1);
 
-        $this->assertCount(1, $profiles);
+        $this->assertCount(1, $result['profiles']);
+        $this->assertSame(2, $result['total']);
+    }
+
+    public function testSearchProfilesWithZeroLimitUsesTheMaximum()
+    {
+        $result = $this->provider->searchProfiles([], 0);
+
+        $this->assertCount(3, $result['profiles']);
+        $this->assertSame(3, $result['total']);
+    }
+
+    public function testSearchProfilesTotalCountsEveryProfilerDirectory()
+    {
+        $dir = sys_get_temp_dir().'/mate_profiler_total_'.uniqid();
+        mkdir($dir);
+
+        try {
+            $storage = new FileProfilerStorage('file:'.$dir);
+            foreach (['aaa111', 'bbb222'] as $i => $token) {
+                $profile = new Profile($token);
+                $profile->setMethod('GET');
+                $profile->setUrl('http://localhost/website/'.$i);
+                $profile->setIp('127.0.0.1');
+                $profile->setStatusCode(200);
+                $profile->setTime(2000000000 + $i);
+                $storage->write($profile);
+            }
+
+            $provider = new ProfilerDataProvider(['admin' => $this->fixtureDir, 'website' => $dir], new CollectorRegistry([]));
+
+            $result = $provider->searchProfiles([], 2);
+            $this->assertSame(5, $result['total']);
+            $this->assertSame(['bbb222', 'aaa111'], array_map(static fn ($p) => $p->getToken(), $result['profiles']));
+
+            $website = $provider->searchProfiles(['context' => 'website'], 1);
+            $this->assertSame(2, $website['total']);
+            $this->assertCount(1, $website['profiles']);
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testSearchProfilesNeverReturnsMoreThanTheMaximum()
+    {
+        $dir = sys_get_temp_dir().'/mate_profiler_max_'.uniqid();
+        mkdir($dir);
+
+        try {
+            $storage = new FileProfilerStorage('file:'.$dir);
+            for ($i = 0; $i < ProfilerDataProvider::MAX_LIMIT + 5; ++$i) {
+                $profile = new Profile(\sprintf('tok%05d', $i));
+                $profile->setMethod('GET');
+                $profile->setUrl('http://localhost/'.$i);
+                $profile->setIp('127.0.0.1');
+                $profile->setStatusCode(200);
+                $profile->setTime(2000000000 + $i);
+                $storage->write($profile);
+            }
+
+            $provider = new ProfilerDataProvider($dir, new CollectorRegistry([]));
+
+            foreach ([0, 10000] as $limit) {
+                $result = $provider->searchProfiles([], $limit);
+                $this->assertCount(ProfilerDataProvider::MAX_LIMIT, $result['profiles']);
+                $this->assertSame(ProfilerDataProvider::MAX_LIMIT + 5, $result['total']);
+            }
+        } finally {
+            $this->removeDirectory($dir);
+        }
     }
 
     public function testGetCollectorDataThrowsExceptionForNonExistentProfile()

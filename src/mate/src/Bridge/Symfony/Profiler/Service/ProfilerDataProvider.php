@@ -35,6 +35,8 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class ProfilerDataProvider
 {
+    public const MAX_LIMIT = 500;
+
     /**
      * Key-name substrings (case-insensitive) used to redact values in the raw
      * fallback dump of collectors that have no dedicated formatter. Best-effort:
@@ -142,23 +144,13 @@ final class ProfilerDataProvider
     }
 
     /**
-     * @param array<string, mixed> $criteria
-     *
-     * @return array<ProfileIndex>
-     */
-    public function searchProfiles(array $criteria, int $limit = 20): array
-    {
-        return $this->searchProfilesPage($criteria, $limit)['profiles'];
-    }
-
-    /**
-     * The newest $limit matching profiles, and how many match in total.
+     * The newest matching profiles (at most MAX_LIMIT, which also applies when $limit <= 0), and how many match in total.
      *
      * @param array<string, mixed> $criteria
      *
      * @return array{profiles: list<ProfileIndex>, total: int}
      */
-    public function searchProfilesPage(array $criteria, int $limit = 20): array
+    public function searchProfiles(array $criteria, int $limit = 20): array
     {
         $allResults = [];
 
@@ -166,6 +158,7 @@ final class ProfilerDataProvider
         $end = isset($criteria['to']) ? strtotime($criteria['to']) : null;
 
         foreach ($this->storages as $context => $storage) {
+            // Reading each storage in full keeps "total" exact across profiler directories.
             $profiles = $storage->find(
                 ip: $criteria['ip'] ?? null,
                 url: $criteria['url'] ?? null,
@@ -197,7 +190,10 @@ final class ProfilerDataProvider
 
         usort($allResults, static fn ($a, $b) => $b->getTime() <=> $a->getTime());
 
-        return ['profiles' => \array_slice($allResults, 0, $limit), 'total' => \count($allResults)];
+        return [
+            'profiles' => \array_slice($allResults, 0, $limit > 0 ? min($limit, self::MAX_LIMIT) : self::MAX_LIMIT),
+            'total' => \count($allResults),
+        ];
     }
 
     /**
