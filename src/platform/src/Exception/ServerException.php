@@ -21,7 +21,7 @@ namespace Symfony\AI\Platform\Exception;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ServerException extends RuntimeException
+class ServerException extends RuntimeException implements RetryableExceptionInterface
 {
     public function __construct(
         private readonly ?int $statusCode = null,
