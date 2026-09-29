@@ -24,6 +24,7 @@
         "symfony/ai-postgres-store": "^0.14",
         "symfony/ai-similarity-search-tool": "^0.14",
         "symfony/ai-store": "^0.14",
+        "symfony/ai-type-safe-platform": "^0.14",
         "symfony/ai-wikipedia-tool": "^0.14",
         "symfony/asset": "^8.1",
         "symfony/asset-mapper": "^8.1",

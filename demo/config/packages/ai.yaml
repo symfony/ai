@@ -6,6 +6,8 @@ ai:
             api_key: '%env(HUGGINGFACE_API_KEY)%'
         mistral:
             api_key: '%env(MISTRAL_API_KEY)%'
+        typesafe:
+            api_key: '%env(TYPESAFE_API_KEY)%'
     agent:
         document:
             platform: 'ai.platform.mistral'

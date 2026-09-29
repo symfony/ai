@@ -1,0 +1,290 @@
+{% set badges = this.badges %}
+{% set vibes = this.vibeLabels %}
+{% set screen = this.screen %}
+
+<section class="chat party-game-panel" data-screen="{{ screen }}" {{ attributes.defaults(stimulus_controller('party_game')) }}>
+    {{ include('_chat_header.html.twig', { demo: demos.party_game, reset_label: 'New crew' }) }}
+
+    <div id="chat-body" class="chat-body party-game-body">
+
+        {% if screen == 'setup' %}
+            <div class="party-card party-card-center">
+                <h1 class="party-hero-title">Will the <em>AI</em> buy it?</h1>
+                <p class="party-tagline">A pass-and-play party game. Make your case. Face the judge. Collect badges.</p>
+                <ol class="party-rules">
+                    <li>Everyone gets the same ridiculous scenario.</li>
+                    <li>Pass the device around. Each player types their case in secret.</li>
+                    <li>The AI judge scores every answer live: believable, creative, unhinged.</li>
+                </ol>
+            </div>
+            <div class="party-card">
+                <span class="party-kicker party-grape">Who's playing?</span>
+                <form {{ live_action('addPlayer:prevent') }} class="party-name-row" autocomplete="off">
+                    <input class="party-field" name="nameInput" data-model="norender|nameInput" maxlength="20"
+                           placeholder="{{ this.isFull ? 'Table is full (8)' : 'Type a name, press Enter' }}"
+                           {{ this.isFull ? 'disabled' : '' }} aria-label="Player name">
+                    <button class="party-btn party-grape" type="submit" {{ this.isFull ? 'disabled' : '' }}>Add</button>
+                </form>
+                {% if this.nameError %}<p class="party-hint party-error-text">{{ this.nameError }}</p>{% endif %}
+                <div class="party-chips">
+                    {% if this.players is empty %}
+                        <span class="party-muted">2 to 8 players. Add at least two.</span>
+                    {% endif %}
+                    {% for player in this.players %}
+                        <span class="party-chip" data-color="{{ loop.index0 % 8 }}">
+                            {{ player }}
+                            <button type="button" {{ live_action('removePlayer', { name: player }) }} aria-label="Remove {{ player }}">&times;</button>
+                        </span>
+                    {% endfor %}
+                </div>
+                <span class="party-label">How many rounds?</span>
+                <div class="party-seg" role="group" aria-label="Rounds">
+                    {% for n in [3, 5, 7] %}
+                        <button type="button" {{ live_action('setRounds', { rounds: n }) }} aria-pressed="{{ this.totalRounds == n ? 'true' : 'false' }}">{{ n }}</button>
+                    {% endfor %}
+                </div>
+                <div class="party-actions">
+                    <button class="party-btn party-hot" {{ live_action('startGame') }} {{ this.canStart ? '' : 'disabled' }}>
+                        {{ this.canStart ? 'Start the show' : 'Need at least 2 players' }}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if screen == 'round-intro' %}
+            {% set prompt = this.prompt %}
+            <div class="party-card">
+                <span class="party-kicker">Round {{ this.round }} of {{ this.totalRounds }}</span>
+                <span class="party-kicker party-hot" style="margin-left:6px">{{ prompt.category }}</span>
+                <p class="party-prompt-text">{{ prompt.text }}</p>
+                <p class="party-hint">Read it out loud. Then pass the device around. Answer in any language. The judge reads everything.</p>
+                <p class="party-hint">Order this round: {{ this.order|join(' → ') }}</p>
+                <div class="party-actions">
+                    <button class="party-btn party-mint" {{ live_action('beginPassing') }}>Pass to {{ this.order[0] }}</button>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if screen == 'handoff' %}
+            <div class="party-card party-handoff">
+                <span class="party-big-emoji">📱</span>
+                <h2>Pass the device to <span class="party-who">{{ this.currentPlayer }}</span></h2>
+                <p>Everyone else: eyes on the ceiling.</p>
+                <span class="party-eyes-off">🙈 Answers stay secret until the reveal</span>
+                <div class="party-actions">
+                    <button class="party-btn party-hot" {{ live_action('imHere') }}>I'm {{ this.currentPlayer }}, show me</button>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if screen == 'input' %}
+            {% set prompt = this.prompt %}
+            <div class="party-card" data-loading="action(submitAnswer)|action(voiceConfirm)|action(retryJudging)|hide">
+                <span class="party-kicker party-grape">{{ this.currentPlayer }}, make your case</span>
+                <div class="party-prompt-mini"><strong>{{ prompt.text }}</strong></div>
+
+                {% if this.voicePhase == 'confirm' %}
+                    <p class="party-voice-heard">&ldquo;{{ this.voiceText }}&rdquo;{% if this.voiceUnedited %} <span class="party-tag-unedited">(unedited)</span>{% endif %}</p>
+                    {% if this.voiceUnedited %}
+                        <p class="party-hint">Could not clean it up ({{ this.voiceError ?? 'unknown error' }}). Showing the raw transcript instead.</p>
+                    {% endif %}
+                    <div class="party-actions party-actions-row">
+                        <button class="party-btn party-hot" {{ live_action('voiceConfirm') }}>Confirm</button>
+                        <button class="party-btn party-mint" {{ live_action('voiceEdit') }}>Edit</button>
+                        <button class="party-btn party-ghost" {{ live_action('voiceRerecord') }}>Re-record</button>
+                    </div>
+                {% else %}
+                    <form {{ live_action('submitAnswer:prevent') }}>
+                        <textarea class="party-field" id="party-answer" name="answerInput" data-model="norender|answerInput" maxlength="600"
+                                  placeholder="Go on, convince the judge..." aria-label="Your answer" required>{{ this.answerInput }}</textarea>
+                        <p class="party-hint"><span id="party-answer-count">0</span>/600 · Ctrl/Cmd + Enter to submit</p>
+                        <div class="party-voice-row" data-party-game-target="voiceRow">
+                            <button type="button" class="party-btn party-mint party-btn-small" id="party-mic-btn" aria-pressed="false">🎙️ Speak instead</button>
+                            <span class="party-hint" id="party-voice-status"></span>
+                        </div>
+                        <div class="party-actions">
+                            <button class="party-btn party-hot" type="submit">Lock it in</button>
+                        </div>
+                    </form>
+                {% endif %}
+                <p class="party-hint">Turn {{ this.turn + 1 }} of {{ this.order|length }}. Nothing you type is shown to the others until the judge speaks.</p>
+            </div>
+            <div class="party-card party-judging" data-loading="action(submitAnswer)|action(voiceConfirm)|action(retryJudging)|show">
+                <span class="party-judge-emoji">🧑‍⚖️</span>
+                <h2>The judge is deliberating<span class="party-dots"></span></h2>
+                <div class="party-progress"><div style="width:100%"></div></div>
+            </div>
+        {% endif %}
+
+        {% if screen == 'judging' %}
+            <div class="party-card party-judging">
+                <span class="party-judge-emoji">🧑‍⚖️</span>
+                <h2>The judge is deliberating<span class="party-dots"></span></h2>
+                <p class="party-muted">Reading {{ this.answers|length }} answers. Four questions each: believable, creative, chaotic, and what's the vibe.</p>
+                {% if this.error %}
+                    <div class="party-error-box"><strong>Objection!</strong> {{ this.error }}</div>
+                    <div class="party-actions"><button class="party-btn party-mint" {{ live_action('retryJudging') }}>Ask the judge again</button></div>
+                {% else %}
+                    <div class="party-progress"><div style="width:100%"></div></div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if screen == 'reveal' %}
+            {% set v = this.verdicts[this.revealIndex] %}
+            <div class="party-card" id="party-reveal-card"
+                 data-player="{{ v.player }}" data-index="{{ this.revealIndex }}"
+                 data-convincing="{{ v.convincing }}" data-verdict="{{ v.verdict }}"
+                 data-creativity="{{ v.creativity }}" data-creativity-level="{{ v.creativityLevel }}"
+                 data-chaos="{{ v.chaos }}" data-chaos-level="{{ v.chaosLevel }}"
+                 data-vibe="{{ vibes[v.vibe] ?? v.vibe }}">
+                <div class="party-reveal-head">
+                    <span class="party-kicker">Verdict</span>
+                    <span class="party-reveal-count">{{ this.revealIndex + 1 }} / {{ this.verdicts|length }}</span>
+                </div>
+                <div class="party-speaker">
+                    <span class="party-avatar party-chip" data-color="{{ this.colorFor(v.player) }}" style="padding:0;border-radius:50%">{{ v.player|slice(0, 1)|upper }}</span>
+                    <h3>{{ v.player }}</h3>
+                </div>
+                <p class="party-quote">{{ v.text|default('') }}</p>
+                <div class="party-verdict-zone">
+                    <div class="party-judge-face party-thinking" id="party-judge-face">🧑‍⚖️</div>
+                    <div id="party-gauge-slot"></div>
+                    <div class="party-stamp" id="party-stamp"></div>
+                    <div class="party-pct" id="party-pct"></div>
+                </div>
+                <div class="party-meters">
+                    <div class="party-meter party-creative" id="party-meter-creative">
+                        <div class="party-m-title">Creativity</div>
+                        <div class="party-m-level">{{ v.creativityLevel }}</div>
+                        <div class="party-m-bar">{% for level in this.creativityLevels %}<span></span>{% endfor %}</div>
+                        <div class="party-m-sub">{{ this.creativityLevels|join(' · ') }}</div>
+                    </div>
+                    <div class="party-meter party-chaos" id="party-meter-chaos">
+                        <div class="party-m-title">Chaos factor</div>
+                        <div class="party-m-level">{{ v.chaosLevel }}</div>
+                        <div class="party-m-bar">{% for level in this.chaosLevels %}<span></span>{% endfor %}</div>
+                        <div class="party-m-sub">{{ this.chaosLevels|join(' · ') }}</div>
+                    </div>
+                </div>
+                <span class="party-vibe" id="party-vibe"></span>
+                <div class="party-next-zone" id="party-next-zone">
+                    {% if this.revealIndex < this.verdicts|length - 1 %}
+                        <button class="party-btn party-mint" {{ live_action('advanceReveal') }}>Next up: {{ this.verdicts[this.revealIndex + 1].player }}</button>
+                    {% else %}
+                        <button class="party-btn party-hot" {{ live_action('advanceReveal') }}>Hand out the badges</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <template id="party-tpl-gauge">
+                <svg class="party-gauge" viewBox="0 0 200 118" role="img" aria-label="Buy-o-meter">
+                    <defs>
+                        <linearGradient id="party-gauge-grad" x1="0" x2="1" y1="0" y2="0">
+                            <stop offset="0" stop-color="var(--party-tomato)"/>
+                            <stop offset="0.5" stop-color="var(--party-sun)"/>
+                            <stop offset="1" stop-color="var(--party-mint)"/>
+                        </linearGradient>
+                    </defs>
+                    <path class="party-gauge-track" d="M 20 100 A 80 80 0 0 1 180 100"/>
+                    <path class="party-gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100"/>
+                    <g class="party-gauge-ticks">
+                        <line x1="100" y1="20" x2="100" y2="30"/>
+                        <line x1="43.4" y1="43.4" x2="50.5" y2="50.5"/>
+                        <line x1="156.6" y1="43.4" x2="149.5" y2="50.5"/>
+                    </g>
+                    <text class="party-gauge-label" x="18" y="116">NOPE</text>
+                    <text class="party-gauge-label" x="182" y="116" text-anchor="end">SOLD</text>
+                    <g class="party-gauge-needle" style="transform: rotate(-90deg)">
+                        <polygon points="100,100 96,96 100,28 104,96"/>
+                    </g>
+                    <circle class="party-gauge-pin" cx="100" cy="100" r="7"/>
+                </svg>
+            </template>
+        {% endif %}
+
+        {% if screen == 'round-summary' %}
+            {% set awards = this.lastAwards %}
+            <div class="party-card">
+                <span class="party-kicker party-hot">Round {{ this.round }} badges</span>
+                <h2 class="party-summary-title">The jury has spoken</h2>
+                <div class="party-badge-grid">
+                    {% for key, badge in badges %}
+                        {% set award = awards[key] %}
+                        {% set nobody = award.winners is empty %}
+                        <div class="party-badge party-badge-{{ key }}{{ nobody ? ' party-badge-nobody' : '' }}">
+                            <div class="party-b-icon">{{ nobody ? '🚫' : badge.icon }}</div>
+                            <div>
+                                <div class="party-b-title">{{ badge.title }}{{ award.winners|length > 1 ? ' · shared' : '' }}</div>
+                                <div class="party-b-who">
+                                    {% if nobody %}No badge{% else %}{{ award.winners|map(w => w.player)|join(' & ') }}{% endif %}
+                                </div>
+                                <div class="party-b-val">
+                                    {% if nobody %}
+                                        {{ {
+                                            'convincing': 'Everyone was equally unconvincing. The judge bought none of it.',
+                                            'creative': 'All answers landed on the same level. No spark to reward.',
+                                            'unhinged': 'Same chaos level all round. Nobody stood out.',
+                                        }[key] }}
+                                    {% elseif key == 'convincing' %}
+                                        {{ (award.value * 100)|round }}% sold
+                                    {% elseif key == 'creative' %}
+                                        {{ award.winners[0].creativityLevel }} ({{ award.value|number_format(2) }} / {{ this.creativityLevels|length - 1 }})
+                                    {% else %}
+                                        {{ award.winners[0].chaosLevel }} ({{ award.value|number_format(2) }} / {{ this.chaosLevels|length - 1 }})
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="party-card">
+                <span class="party-kicker">Standings</span>
+                {% include 'components/_party_game_tally.html.twig' with { rows: this.tallyRows, highlight: true } %}
+                <div class="party-actions">
+                    <button class="party-btn {{ this.round >= this.totalRounds ? 'party-hot' : 'party-mint' }}" {{ live_action('nextRound') }}>
+                        {{ this.round >= this.totalRounds ? 'Crown the champion' : 'Round ' ~ (this.round + 1) ~ ': next scenario' }}
+                    </button>
+                </div>
+                {% if this.round < this.totalRounds %}
+                    <button class="party-link-btn" {{ live_action('endNow') }}>End the game now and see the results</button>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if screen == 'final' %}
+            {% set champs = this.champions %}
+            {% set shared = champs|length > 1 %}
+            <div class="party-card party-final-hero">
+                <span class="party-crown">👑</span>
+                <span class="party-kicker party-grape">{{ shared ? "It's a tie" : 'Your champion' }}</span>
+                <h2 class="party-winner">{{ champs|map(c => c.player)|join(' & ') }}</h2>
+                <span class="party-title">{{ shared ? 'Co-Champions of Chaos' : this.titleFor(champs[0].tally) }}</span>
+                <p>{{ champs[0].total }} badge{{ champs[0].total == 1 ? '' : 's' }} over {{ this.history|length }} round{{ this.history|length == 1 ? '' : 's' }}.</p>
+            </div>
+            <div class="party-card">
+                <span class="party-kicker">Final tally</span>
+                {% include 'components/_party_game_tally.html.twig' with { rows: this.tallyRows, highlight: true } %}
+                <p class="party-hint">🤝 Most Convincing · 💡 Most Creative · 🌪️ Most Unhinged</p>
+            </div>
+            <div class="party-card">
+                <span class="party-kicker party-mint">Hall of fame</span>
+                {% for h in this.history %}
+                    <p class="party-hof-entry">
+                        <strong>R{{ h.round }}:</strong> <span class="party-muted">{{ h.prompt.text }}</span><br>
+                        🤝 {{ h.awards.convincing.winners is empty ? 'nobody' : h.awards.convincing.winners|map(w => w.player)|join(' & ') }} ·
+                        💡 {{ h.awards.creative.winners is empty ? 'nobody' : h.awards.creative.winners|map(w => w.player)|join(' & ') }} ·
+                        🌪️ {{ h.awards.unhinged.winners is empty ? 'nobody' : h.awards.unhinged.winners|map(w => w.player)|join(' & ') }}
+                    </p>
+                {% endfor %}
+                <div class="party-actions">
+                    <button class="party-btn party-hot" {{ live_action('playAgain') }}>Play again with this crew</button>
+                    <button class="party-btn party-ghost" {{ live_action('newCrew') }}>New players</button>
+                </div>
+            </div>
+            <div class="party-confetti" id="party-confetti" aria-hidden="true"></div>
+        {% endif %}
+
+    </div>
+</section>

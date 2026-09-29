@@ -1,0 +1,360 @@
+/*
+ * "Will the AI Buy It?" keeps its own bold, high-contrast look (thick borders, hard
+ * shadows, playful pops) instead of the chat bubble styling every other demo page uses,
+ * since it is a pass-and-play party game, not a chat. Everything here is scoped under
+ * .party-game so it never leaks into the rest of the app.
+ */
+
+.party-game {
+    --party-paper: #fff4dc;
+    --party-paper-2: #ffe9b8;
+    --party-ink: #1c1633;
+    --party-ink-soft: #4b4569;
+    --party-hot: #ff3d7f;
+    --party-sun: #ffd23f;
+    --party-grape: #5b2a86;
+    --party-mint: #26d0a8;
+    --party-tomato: #ff5a36;
+    --party-sky: #58b6ff;
+    --party-white: #fffdf8;
+    --party-border: 3px solid var(--party-ink);
+    --party-shadow: 6px 6px 0 var(--party-ink);
+    --party-shadow-sm: 4px 4px 0 var(--party-ink);
+    --party-radius: 18px;
+
+    .party-game-body {
+        max-width: 620px;
+        margin: 0 auto;
+    }
+
+    .party-card {
+        background: var(--party-white);
+        color: var(--party-ink);
+        border: var(--party-border);
+        border-radius: var(--party-radius);
+        box-shadow: var(--party-shadow);
+        padding: 22px 20px;
+        animation: party-pop-in .45s cubic-bezier(.2, 1.4, .4, 1) both;
+    }
+
+    .party-card + .party-card, .party-card + .party-actions {
+        margin-top: 20px;
+    }
+
+    .party-card-center {
+        text-align: center;
+    }
+
+    h1.party-hero-title, h2, h3 {
+        font-family: var(--font-display);
+        font-weight: 800;
+        line-height: 1.05;
+        margin: 0;
+    }
+
+    .party-hero-title {
+        font-size: clamp(38px, 10vw, 60px);
+        text-transform: uppercase;
+        text-shadow: 3px 3px 0 var(--party-hot);
+        margin-bottom: 8px;
+    }
+
+    .party-hero-title em {
+        font-style: normal;
+        color: var(--party-sun);
+        -webkit-text-stroke: 2px var(--party-ink);
+        text-shadow: 3px 3px 0 var(--party-grape);
+    }
+
+    .party-tagline {
+        font-size: 17px;
+        color: var(--party-ink-soft);
+        margin: 0 0 16px;
+        font-weight: 600;
+    }
+
+    .party-rules {
+        text-align: left;
+        margin: 0 auto;
+        max-width: 420px;
+        padding-left: 22px;
+        font-weight: 600;
+        color: var(--party-ink-soft);
+    }
+
+    .party-kicker {
+        display: inline-block;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 12px;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        background: var(--party-ink);
+        color: var(--party-sun);
+        padding: 6px 12px;
+        border-radius: 999px;
+        margin-bottom: 14px;
+    }
+
+    .party-hot { background: var(--party-hot); color: var(--party-white); }
+    .party-grape { background: var(--party-grape); color: var(--party-white); }
+    .party-mint { background: var(--party-mint); color: var(--party-ink); }
+
+    .party-prompt-text {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(24px, 6vw, 34px);
+        line-height: 1.1;
+        margin: 0;
+    }
+
+    .party-prompt-mini {
+        font-size: 14px;
+        color: var(--party-ink-soft);
+        background: var(--party-paper);
+        border: 2px dashed var(--party-ink);
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 18px;
+    }
+
+    .party-btn {
+        appearance: none;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--party-ink);
+        background: var(--party-sun);
+        border: var(--party-border);
+        border-radius: 14px;
+        box-shadow: var(--party-shadow-sm);
+        padding: 14px 20px;
+        cursor: pointer;
+        width: 100%;
+        transition: transform .08s ease, box-shadow .08s ease;
+    }
+
+    .party-btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--party-ink); }
+    .party-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--party-ink); }
+    .party-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .party-btn.party-ghost { background: var(--party-white); font-size: 15px; padding: 10px 16px; }
+    .party-btn-small { font-size: 14px; padding: 8px 12px; width: auto; }
+
+    .party-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+    .party-actions-row { flex-direction: row; }
+    .party-actions-row .party-btn { flex: 1; }
+
+    .party-link-btn {
+        background: none;
+        border: 0;
+        font-weight: 700;
+        color: var(--party-ink-soft);
+        text-decoration: underline;
+        cursor: pointer;
+        padding: 8px;
+        margin: 6px auto 0;
+        display: block;
+    }
+
+    .party-field {
+        width: 100%;
+        font: inherit;
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--party-ink);
+        background: var(--party-white);
+        border: var(--party-border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        outline: none;
+    }
+
+    .party-field:focus { border-color: var(--party-hot); box-shadow: 0 0 0 4px rgba(255, 61, 127, .2); }
+    textarea.party-field { min-height: 150px; resize: vertical; }
+
+    .party-hint { font-size: 13px; color: var(--party-ink-soft); margin: 10px 0 0; font-weight: 500; }
+    .party-error-text { color: var(--party-tomato); font-weight: 700; }
+    .party-muted { color: var(--party-ink-soft); }
+
+    .party-name-row { display: flex; gap: 10px; }
+    .party-name-row .party-field { flex: 1; min-width: 0; }
+    .party-name-row .party-btn { width: auto; padding: 10px 16px; }
+
+    .party-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; min-height: 40px; }
+
+    .party-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        padding: 7px 7px 7px 12px;
+        border: var(--party-border);
+        border-radius: 999px;
+        background: var(--party-paper);
+        box-shadow: 3px 3px 0 var(--party-ink);
+    }
+
+    .party-chip button {
+        border: 2px solid var(--party-ink);
+        background: var(--party-white);
+        border-radius: 999px;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+    }
+
+    .party-chip[data-color="0"] { background: #ffd6e5; }
+    .party-chip[data-color="1"] { background: #fff1b3; }
+    .party-chip[data-color="2"] { background: #c9f5ea; }
+    .party-chip[data-color="3"] { background: #e3d3f5; }
+    .party-chip[data-color="4"] { background: #d3ebff; }
+    .party-chip[data-color="5"] { background: #ffd9cc; }
+    .party-chip[data-color="6"] { background: #e6f5c9; }
+    .party-chip[data-color="7"] { background: #f5d3d3; }
+
+    .party-seg { display: flex; border: var(--party-border); border-radius: 14px; overflow: hidden; background: var(--party-white); }
+    .party-seg button {
+        flex: 1;
+        font-weight: 700;
+        padding: 10px 6px;
+        border: 0;
+        border-right: 3px solid var(--party-ink);
+        background: transparent;
+        color: var(--party-ink);
+        cursor: pointer;
+    }
+    .party-seg button:last-child { border-right: 0; }
+    .party-seg button[aria-pressed="true"] { background: var(--party-grape); color: var(--party-white); }
+
+    .party-label { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--party-ink-soft); margin: 16px 0 8px; }
+
+    .party-handoff { text-align: center; padding: 30px 20px; }
+    .party-big-emoji { font-size: 60px; display: block; margin-bottom: 8px; animation: party-wiggle 1.6s ease-in-out infinite; }
+    .party-who { color: var(--party-hot); font-size: clamp(30px, 10vw, 46px); display: block; margin-top: 6px; }
+    .party-eyes-off { display: inline-flex; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--party-grape); }
+
+    .party-judging { text-align: center; padding: 34px 20px; }
+    .party-judge-emoji { font-size: 80px; display: block; margin-bottom: 8px; animation: party-gavel 1.1s ease-in-out infinite; }
+    .party-dots::after { content: ""; animation: party-dots 1.4s steps(4, end) infinite; }
+    .party-progress { height: 12px; border: var(--party-border); border-radius: 999px; overflow: hidden; background: var(--party-white); margin-top: 16px; }
+    .party-progress > div { height: 100%; background: repeating-linear-gradient(45deg, var(--party-hot) 0 12px, var(--party-sun) 12px 24px); animation: party-stripes .7s linear infinite; }
+    .party-error-box { background: #ffe1dc; border: var(--party-border); border-radius: 12px; padding: 12px 14px; margin-top: 16px; font-size: 14px; text-align: left; }
+
+    .party-reveal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .party-speaker { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .party-avatar { width: 44px; height: 44px; display: grid; place-items: center; font-weight: 800; font-size: 20px; box-shadow: 3px 3px 0 var(--party-ink); }
+
+    .party-quote {
+        font-size: 16px;
+        font-weight: 500;
+        background: var(--party-paper);
+        border-left: 6px solid var(--party-grape);
+        border-radius: 6px 14px 14px 6px;
+        padding: 12px 16px;
+        margin: 0 0 16px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .party-verdict-zone { display: grid; gap: 10px; justify-items: center; }
+    .party-gauge { width: min(100%, 280px); }
+    .party-gauge-track { fill: none; stroke: var(--party-paper-2); stroke-width: 22; stroke-linecap: round; }
+    .party-gauge-arc { fill: none; stroke: url(#party-gauge-grad); stroke-width: 22; stroke-linecap: round; }
+    .party-gauge-ticks line { stroke: var(--party-ink); stroke-width: 3; }
+    .party-gauge-label { font-family: var(--font-display); font-weight: 700; font-size: 13px; fill: var(--party-ink); }
+    .party-gauge-needle { transform-origin: 100px 100px; transition: transform 1.5s cubic-bezier(.25, 1.6, .35, 1); }
+    .party-gauge-needle polygon { fill: var(--party-ink); }
+    .party-gauge-pin { fill: var(--party-hot); stroke: var(--party-ink); stroke-width: 3; }
+
+    .party-judge-face { font-size: 52px; transition: transform .35s; }
+    .party-thinking { animation: party-think 1s ease-in-out infinite; }
+    .party-react { animation: party-react .6s cubic-bezier(.2, 1.6, .4, 1) both; }
+
+    .party-stamp {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(22px, 7vw, 32px);
+        text-transform: uppercase;
+        padding: 8px 16px;
+        border: 4px solid currentColor;
+        border-radius: 10px;
+        transform: rotate(-6deg) scale(0);
+        opacity: 0;
+        background: var(--party-white);
+    }
+    .party-stamp.party-show { animation: party-stamp .55s cubic-bezier(.2, 1.7, .4, 1) forwards; }
+    .party-stamp-sold { color: #0f8b6d; }
+    .party-stamp-yes { color: #1b7dd6; }
+    .party-stamp-maybe { color: #b47a00; }
+    .party-stamp-no { color: var(--party-tomato); }
+    .party-stamp-never { color: #b3123a; }
+
+    .party-pct { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--party-ink-soft); opacity: 0; transition: opacity .4s; }
+    .party-pct.party-show { opacity: 1; }
+
+    .party-meters { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .party-meter { border: var(--party-border); border-radius: 14px; padding: 12px 14px; background: var(--party-white); opacity: 0; transform: translateY(10px); transition: opacity .4s, transform .4s; }
+    .party-meter.party-show { opacity: 1; transform: none; }
+    .party-m-title { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--party-ink-soft); font-weight: 700; }
+    .party-m-level { font-family: var(--font-display); font-weight: 800; font-size: 22px; margin: 2px 0 8px; }
+    .party-m-bar { display: flex; gap: 4px; }
+    .party-m-bar span { flex: 1; height: 12px; border: 2px solid var(--party-ink); border-radius: 4px; background: var(--party-white); transition: background .3s; }
+    .party-creative .party-m-bar span.party-on { background: var(--party-sky); }
+    .party-chaos .party-m-bar span.party-on { background: var(--party-hot); }
+    .party-m-sub { font-size: 11px; color: var(--party-ink-soft); margin-top: 6px; }
+
+    .party-vibe { display: inline-block; margin-top: 14px; font-size: 13px; font-weight: 700; padding: 6px 12px; border: 2px solid var(--party-ink); border-radius: 999px; background: var(--party-paper); opacity: 0; transition: opacity .4s; }
+    .party-vibe.party-show { opacity: 1; }
+    .party-next-zone { margin-top: 16px; opacity: 0; transition: opacity .35s; pointer-events: none; }
+    .party-next-zone.party-show { opacity: 1; pointer-events: auto; }
+
+    .party-badge-grid { display: grid; gap: 12px; margin-top: 16px; }
+    .party-badge { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; border: var(--party-border); border-radius: 16px; padding: 12px 14px; }
+    .party-badge-convincing { background: #c9f5ea; }
+    .party-badge-creative { background: #d3ebff; }
+    .party-badge-unhinged { background: #ffd6e5; }
+    .party-badge-nobody { background: var(--party-paper); border-style: dashed; }
+    .party-b-icon { font-size: 36px; text-align: center; }
+    .party-b-title { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--party-ink-soft); }
+    .party-b-who { font-family: var(--font-display); font-weight: 800; font-size: 22px; overflow-wrap: anywhere; }
+    .party-b-val { font-size: 13px; color: var(--party-ink-soft); margin-top: 2px; }
+
+    .party-tally { width: 100%; border-collapse: separate; margin-top: 12px; font-size: 14px; }
+    .party-tally th, .party-tally td { padding: 10px 8px; text-align: center; border-bottom: 2px solid var(--party-paper-2); }
+    .party-tally th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--party-ink-soft); }
+    .party-tally td:first-child, .party-tally th:first-child { text-align: left; font-weight: 700; }
+    .party-tally tr.party-lead td { background: var(--party-paper); }
+    .party-total { font-family: var(--font-display); font-weight: 800; font-size: 18px; }
+    .party-pip { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--party-ink); border-radius: 3px; margin: 0 1px; }
+    .party-pip-c { background: var(--party-mint); }
+    .party-pip-k { background: var(--party-sky); }
+    .party-pip-u { background: var(--party-hot); }
+
+    .party-final-hero { text-align: center; padding: 30px 20px 24px; background: linear-gradient(160deg, #fff1b3, #ffd6e5 60%, #e3d3f5); }
+    .party-crown { font-size: 68px; display: block; animation: party-wiggle 2.2s ease-in-out infinite; }
+    .party-winner { font-size: clamp(32px, 10vw, 50px); margin-top: 6px; overflow-wrap: anywhere; }
+    .party-title { display: inline-block; margin-top: 10px; font-family: var(--font-display); font-weight: 700; font-size: 16px; background: var(--party-ink); color: var(--party-sun); padding: 7px 14px; border-radius: 999px; }
+
+    .party-confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+    .party-confetti i { position: absolute; top: -20px; width: 10px; height: 16px; border: 2px solid var(--party-ink); animation: party-fall linear forwards; }
+
+    .party-hof-entry { margin: 12px 0 0; font-size: 14px; }
+}
+
+@keyframes party-pop-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes party-wiggle { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes party-gavel { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-8px) rotate(-6deg); } 60% { transform: translateY(0) rotate(4deg); } }
+@keyframes party-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+@keyframes party-stripes { to { background-position: 34px 0; } }
+@keyframes party-think { 0%, 100% { transform: rotate(-6deg) scale(1); } 50% { transform: rotate(6deg) scale(1.06); } }
+@keyframes party-react { 0% { transform: scale(.4) rotate(-20deg); } 60% { transform: scale(1.3) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes party-stamp { 0% { transform: rotate(-6deg) scale(2.2); opacity: 0; } 60% { transform: rotate(-6deg) scale(.92); opacity: 1; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }
+@keyframes party-fall { to { transform: translateY(110vh) rotate(720deg); opacity: .9; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .party-game *, .party-game *::before, .party-game *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
