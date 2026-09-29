@@ -14,23 +14,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Messenger;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\UndecodableMessageException;
 
 /**
- * Reads the failure details of a stored Messenger envelope without instantiating any class.
- *
- * Two formats, told apart by their content, not by the configured serializer:
- *
- *  - PhpSerializer (the default): the body is a serialized Envelope. It is unserialized with
- *    `allowed_classes => false`, so every object, the envelope and its stamps included, comes back
- *    as `__PHP_Incomplete_Class`: no constructor, `__wakeup()`, `__unserialize()` or `__destruct()`
- *    of any class runs and no class is autoloaded, whatever the stored payload contains (only an
- *    enum case in the payload loads its enum through the project's autoloader; enums cannot run
- *    code on unserialize). The stamps are then read as plain property arrays. The message itself
- *    only contributes its class name.
- *  - Symfony Serializer (JSON, XML, ...): the failure details are in the `X-Message-Stamp-*`
- *    headers as JSON and the message class in the `type` header; they are read with json_decode()
- *    and the body is not touched.
- *
- * Messenger's own decoders are deliberately not used: PhpSerializer::decode() unserializes with
- * `allowed_classes => true`, which would run gadget code stored in the transport.
+ * Reads the failure details of a stored envelope without instantiating any class (PhpSerializer or Symfony Serializer JSON).
  *
  * @internal
  *
@@ -43,6 +27,9 @@ final class EnvelopeDecoder
     private const REDELIVERY = 'Symfony\Component\Messenger\Stamp\RedeliveryStamp';
     private const SENT_TO_FAILURE = 'Symfony\Component\Messenger\Stamp\SentToFailureTransportStamp';
     private const STAMP_HEADER_PREFIX = 'X-Message-Stamp-';
+    // An envelope is shallow: envelope, stamps, stamp, FlattenException and its previous chain.
+    private const MAX_DEPTH = 64;
+    private const MAX_TRACE_LINES = 64;
 
     /**
      * @param array<mixed> $headers
@@ -94,8 +81,7 @@ final class EnvelopeDecoder
 
     private function fromPhpSerialized(string $id, string $body, ?\DateTimeImmutable $storedAt): FailedMessage
     {
-        // The reverse of PhpSerializer::encode(): base64 when the serialized string was not valid
-        // UTF-8, addslashes() always.
+        // Reverses PhpSerializer::encode(): optional base64, always addslashes().
         if (!str_ends_with($body, '}')) {
             $body = base64_decode($body, true);
             if (false === $body) {
@@ -108,14 +94,21 @@ final class EnvelopeDecoder
         }
 
         $warning = null;
+        $body = $this->enumsToObjects($body);
         set_error_handler(static function (int $level, string $message) use (&$warning): bool {
             $warning = $message;
 
             return true;
         });
+        $guard = static function (string $class): never {
+            throw new UndecodableMessageException(\sprintf('The message contains an enum ("%s") that is not loadable here.', $class));
+        };
+        spl_autoload_register($guard, true, true);
         try {
-            $envelope = unserialize($body, ['allowed_classes' => false]);
+            // No class is allowed or loaded, so no code of a stored payload runs.
+            $envelope = unserialize($body, ['allowed_classes' => false, 'max_depth' => self::MAX_DEPTH]);
         } finally {
+            spl_autoload_unregister($guard);
             restore_error_handler();
         }
         if (!$envelope instanceof \__PHP_Incomplete_Class) {
@@ -153,6 +146,37 @@ final class EnvelopeDecoder
     }
 
     /**
+     * Rewrites enum case tokens into empty objects, which unserialize() turns into incomplete classes, keeping one value slot.
+     */
+    private function enumsToObjects(string $serialized): string
+    {
+        $out = '';
+        $length = \strlen($serialized);
+        $copied = 0;
+        for ($i = 0; $i < $length - 1; ++$i) {
+            $type = $serialized[$i];
+            if (('s' !== $type && 'E' !== $type) || ':' !== $serialized[$i + 1]) {
+                continue;
+            }
+            $colon = strpos($serialized, ':', $i + 2);
+            $digits = false === $colon ? '' : substr($serialized, $i + 2, $colon - $i - 2);
+            if (false === $colon || !ctype_digit($digits)) {
+                continue;
+            }
+            $end = $colon + (int) $digits + 3;
+            if ('E' === $type) {
+                $class = strstr(substr($serialized, $colon + 2, (int) $digits), ':', true) ?: 'Enum';
+                $out .= substr($serialized, $copied, $i - $copied).\sprintf('O:%d:"%s":0:{}', \strlen($class), $class);
+                $copied = $end + 1;
+            }
+            // Skip `:"<content>";`; the loop's ++$i then lands on the next token.
+            $i = $end;
+        }
+
+        return $out.substr($serialized, $copied);
+    }
+
+    /**
      * @param list<array{retryCount: mixed, at: mixed}> $redeliveries
      */
     private function message(string $id, string $messageClass, mixed $exceptionClass, mixed $exceptionMessage, mixed $file, mixed $line, mixed $trace, array $redeliveries, mixed $originalTransport, ?\DateTimeImmutable $storedAt): FailedMessage
@@ -176,7 +200,8 @@ final class EnvelopeDecoder
             \is_string($exceptionMessage) ? $exceptionMessage : null,
             \is_string($file) ? $file : null,
             \is_int($line) ? $line : null,
-            \is_string($trace) ? $trace : '',
+            // Kept small: only the top frames are ever shown, and thousands of messages are held at once.
+            \is_string($trace) ? implode("\n", \array_slice(explode("\n", $trace, self::MAX_TRACE_LINES + 1), 0, self::MAX_TRACE_LINES)) : '',
             $retryCount,
             $first ?? $storedAt,
             $storedAt,

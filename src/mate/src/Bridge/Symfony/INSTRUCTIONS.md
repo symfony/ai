@@ -44,7 +44,7 @@ When `symfony/dotenv` is installed, `symfony-dotenv-check` becomes available:
 | `bin/console messenger:failed:show`    | `symfony-messenger-failed`  |
 
 - Groups every message in the failure transports by cause (exception class, message pattern,
-  failing application frame), with counts, sample messages, retry counts and first/last failure
+  failing application frame), with counts, masked sample messages, retry counts and first/last failure; at most 50 groups, `group_id` selects one
 - Reads the transport storage directly and read-only, so it works when the kernel does not boot
 - Doctrine transports only (PHP serializer or Symfony Serializer); other transports report an
   error pointing at `messenger:failed:show`

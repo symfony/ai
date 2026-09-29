@@ -13,11 +13,12 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Messenger;
 
 use Symfony\AI\Mate\Bridge\Symfony\Exception\ContainerNotDumpedException;
 use Symfony\AI\Mate\Bridge\Symfony\Exception\FailureTransportNotReadableException;
+use Symfony\AI\Mate\Bridge\Symfony\Exception\XmlContainerCouldNotBeLoadedException;
+use Symfony\AI\Mate\Bridge\Symfony\Model\Container;
+use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 
 /**
- * The Messenger and Doctrine configuration of the application, read from the compiled container
- * (`var/cache/<env>/*DebugContainer.xml`) with `%env()%` and `%parameter%` placeholders resolved
- * against {@see ProjectEnvironment}. The application is never booted.
+ * The Messenger and Doctrine configuration read from the compiled container, placeholders resolved, without booting the kernel.
  *
  * @internal
  *
@@ -26,43 +27,51 @@ use Symfony\AI\Mate\Bridge\Symfony\Exception\FailureTransportNotReadableExceptio
 final class ContainerConfiguration
 {
     private const MAX_DEPTH = 10;
+    private const PROCESSORS = ['resolve', 'default', 'string', 'trim', 'base64', 'file'];
 
     /**
      * @var array<string, string>
      */
-    private array $parameters = [];
+    private readonly array $parameters;
 
+    private readonly ?string $compiledProjectDir;
+
+    /**
+     * @param list<string> $skipped containers that were tried first and could not be loaded
+     */
     private function __construct(
-        private readonly \SimpleXMLElement $xml,
+        private readonly Container $container,
         private readonly ProjectEnvironment $environment,
         private readonly string $projectDir,
         public readonly string $path,
+        public readonly array $skipped = [],
     ) {
-        foreach ($xml->parameters->parameter ?? [] as $parameter) {
-            $this->parameters[(string) $parameter['key']] = (string) $parameter;
-        }
+        $this->parameters = $container->getParameters();
+        $this->compiledProjectDir = $this->parameters['kernel.project_dir'] ?? null;
     }
 
     /**
-     * Prefers the container of the application's APP_ENV, then dev, test and prod.
-     *
-     * @param list<string> $cacheDirs
+     * Prefers the container of APP_ENV, then dev, test and prod.
      *
      * @throws ContainerNotDumpedException
      */
-    public static function load(array $cacheDirs, ProjectEnvironment $environment, string $projectDir): self
+    public static function load(string $cacheDir, ContainerProvider $provider, ProjectEnvironment $environment, string $projectDir): self
     {
-        foreach ($cacheDirs as $cacheDir) {
-            foreach (array_unique([$environment->appEnv(), 'dev', 'test', 'prod']) as $env) {
-                $files = glob($cacheDir.'/'.$env.'/*DebugContainer.xml') ?: [];
-                sort($files);
-                if ([] !== $files && false !== $xml = @simplexml_load_file($files[0])) {
-                    return new self($xml, $environment, $projectDir, $files[0]);
-                }
+        $skipped = [];
+        foreach (array_unique([$environment->appEnv(), 'dev', 'test', 'prod']) as $env) {
+            $files = glob($cacheDir.'/'.$env.'/*DebugContainer.xml') ?: [];
+            sort($files);
+            if ([] === $files) {
+                continue;
+            }
+            try {
+                return new self($provider->getContainer($files[0]), $environment, $projectDir, $files[0], $skipped);
+            } catch (XmlContainerCouldNotBeLoadedException $e) {
+                $skipped[] = \sprintf('%s: %s', $files[0], $e->getMessage());
             }
         }
 
-        throw new ContainerNotDumpedException(\sprintf('No compiled container found under "%s". The Messenger configuration is read from the container a debug kernel dumps: run "bin/console cache:warmup" once (APP_DEBUG=1), then run this tool again.', implode('", "', $cacheDirs)));
+        throw new ContainerNotDumpedException(\sprintf('No usable compiled container found under "%s".%s The Messenger configuration is read from the container a debug kernel dumps: run "bin/console cache:warmup" once (APP_DEBUG=1), then run this tool again, or use "bin/console messenger:failed:show".', $cacheDir, [] === $skipped ? '' : ' Could not load: '.implode('; ', $skipped).'.'));
     }
 
     /**
@@ -70,7 +79,7 @@ final class ContainerConfiguration
      */
     public function compiledProjectDir(): ?string
     {
-        return $this->parameters['kernel.project_dir'] ?? null;
+        return $this->compiledProjectDir;
     }
 
     /**
@@ -81,22 +90,30 @@ final class ContainerConfiguration
     public function receivers(): array
     {
         $receivers = [];
-        foreach ($this->xml->services->service ?? [] as $service) {
-            foreach ($service->tag ?? [] as $tag) {
-                if ('messenger.receiver' !== (string) $tag['name'] || !isset($service->argument[0])) {
+        foreach ($this->container->getServices() as $service) {
+            foreach ($service->getTags() as $tag) {
+                if ('messenger.receiver' !== $tag->getName()) {
+                    continue;
+                }
+                $arguments = $service->getArguments();
+                if (!\is_string($arguments[0]['value'] ?? null)) {
                     continue;
                 }
                 $options = [];
-                foreach ($service->argument[1]->argument ?? [] as $option) {
-                    if (isset($option['key']) && 0 === \count($option->children())) {
-                        $options[(string) $option['key']] = (string) $option;
+                if ('collection' === ($arguments[1]['type'] ?? null) && \is_array($arguments[1]['value'])) {
+                    foreach ($arguments[1]['value'] as $option) {
+                        if (null !== $option['key'] && 'scalar' === $option['type'] && \is_scalar($option['value'])) {
+                            $options[$option['key']] = (string) $option['value'];
+                        }
                     }
                 }
+                $attributes = $tag->getAttributes();
                 $receivers[] = [
-                    'name' => (string) $tag['alias'],
-                    'dsn' => (string) $service->argument[0],
+                    'name' => (string) ($attributes['alias'] ?? $service->getId()),
+                    'dsn' => $arguments[0]['value'],
                     'options' => $options,
-                    'failure' => 'true' === (string) $tag['is_failure_transport'],
+                    // Dumped as "true"/"false" by newer XML dumpers, as "1"/"" by DI 7.3.0.
+                    'failure' => filter_var($attributes['is_failure_transport'] ?? '', \FILTER_VALIDATE_BOOL),
                 ];
             }
         }
@@ -105,40 +122,42 @@ final class ContainerConfiguration
     }
 
     /**
-     * The scalar parameters of a DoctrineBundle connection (url, driver, host, dbname, path, ...),
-     * placeholders resolved.
+     * The scalar parameters of a DoctrineBundle connection (url, driver, host, dbname, path, ...)
+     * and its driverOptions, placeholders resolved.
      *
      * @return array<string, mixed>|null null when there is no such connection
      */
     public function doctrineConnection(string $name): ?array
     {
-        foreach ($this->xml->services->service ?? [] as $service) {
-            if (\sprintf('doctrine.dbal.%s_connection', $name) !== (string) $service['id']) {
-                continue;
-            }
-            $params = [];
-            foreach ($service->argument[0]->argument ?? [] as $argument) {
-                if (!isset($argument['key']) || 0 !== \count($argument->children())) {
-                    continue;
-                }
-                $value = $this->resolve((string) $argument);
-                $params[(string) $argument['key']] = match (true) {
-                    'null' === $value => null,
-                    'true' === $value => true,
-                    'false' === $value => false,
-                    default => $value,
-                };
-            }
-
-            return $params;
+        $service = $this->container->getServices()[\sprintf('doctrine.dbal.%s_connection', $name)] ?? null;
+        if (null === $service) {
+            return null;
         }
 
-        return null;
+        $params = [];
+        $collection = $service->getArguments()[0] ?? null;
+        foreach (\is_array($collection['value'] ?? null) ? $collection['value'] : [] as $argument) {
+            if (null === $argument['key']) {
+                continue;
+            }
+            if ('driverOptions' === $argument['key'] && \is_array($argument['value'])) {
+                foreach ($argument['value'] as $option) {
+                    if (null !== $option['key'] && 'scalar' === $option['type']) {
+                        $params['driverOptions'][is_numeric($option['key']) ? (int) $option['key'] : $option['key']] = $this->value($option['value']);
+                    }
+                }
+                continue;
+            }
+            if ('scalar' === $argument['type']) {
+                $params[$argument['key']] = $this->value($argument['value']);
+            }
+        }
+
+        return $params;
     }
 
     /**
-     * Resolves `%env(...)%` (processors: resolve, default, string, trim, base64) and
-     * `%parameter%` placeholders.
+     * Resolves `%env(...)%` and `%parameter%` placeholders.
      *
      * @throws FailureTransportNotReadableException when a placeholder cannot be resolved
      */
@@ -154,11 +173,12 @@ final class ContainerConfiguration
             }
             if ('' !== $m[1]) {
                 $env = $this->env($m[1], $depth);
-                if (null === $env) {
-                    throw new FailureTransportNotReadableException(\sprintf('Environment variable not found: "%s". It is set neither in the real environment nor in the project\'s .env files (APP_ENV=%s).', $this->envName($m[1]), $this->environment->appEnv()));
+                if (null === $env && !str_starts_with($m[1], 'default:')) {
+                    $error = $this->environment->error();
+                    throw new FailureTransportNotReadableException(\sprintf('Environment variable not found: "%s".%s', $this->envName($m[1]), null === $error ? '' : ' The .env files could not be loaded: '.$error));
                 }
 
-                return $env;
+                return (string) $env;
             }
 
             return $this->parameter($m[2], $depth);
@@ -167,20 +187,31 @@ final class ContainerConfiguration
         return (string) $resolved;
     }
 
+    private function value(mixed $value): mixed
+    {
+        return \is_string($value) ? $this->resolve($value) : $value;
+    }
+
     private function parameter(string $name, int $depth): string
     {
-        // The container may have been compiled elsewhere (a CI or Docker path): the project is
-        // where Mate runs.
-        if ('kernel.project_dir' === $name) {
-            return $this->projectDir;
-        }
         if (!isset($this->parameters[$name])) {
             throw new FailureTransportNotReadableException(\sprintf('Container parameter "%s" not found.', $name));
         }
 
-        return $this->resolve($this->parameters[$name], $depth + 1);
+        $value = $this->resolve($this->parameters[$name], $depth + 1);
+
+        // The container may be compiled elsewhere (CI, Docker): remap its project dir to this one.
+        $compiled = rtrim((string) $this->compiledProjectDir, '/');
+        if ('' !== $compiled && ($value === $compiled || str_starts_with($value, $compiled.'/'))) {
+            return $this->projectDir.substr($value, \strlen($compiled));
+        }
+
+        return $value;
     }
 
+    /**
+     * Returns null when the variable is not set (for "default:" with an empty fallback, too).
+     */
     private function env(string $expression, int $depth): ?string
     {
         if (!str_contains($expression, ':')) {
@@ -196,7 +227,11 @@ final class ContainerConfiguration
                 return $value;
             }
 
-            return '' === $fallback ? '' : $this->parameter($fallback, $depth);
+            return '' === $fallback ? null : $this->parameter($fallback, $depth);
+        }
+
+        if (!\in_array($processor, self::PROCESSORS, true)) {
+            throw new FailureTransportNotReadableException(\sprintf('The env processor "%s" in "%%env(%s)%%" is not supported here (supported: "%s"); use "bin/console messenger:failed:show" instead.', $processor, $expression, implode('", "', self::PROCESSORS)));
         }
 
         $value = $this->env($rest, $depth);
@@ -206,10 +241,10 @@ final class ContainerConfiguration
 
         return match ($processor) {
             'resolve' => $this->resolve($value, $depth + 1),
-            'string' => $value,
             'trim' => trim($value),
             'base64' => (string) base64_decode(strtr($value, '-_', '+/'), true),
-            default => throw new FailureTransportNotReadableException(\sprintf('The env processor "%s" in "%%env(%s)%%" is not supported here; run "bin/console messenger:failed:show" instead.', $processor, $expression)),
+            'file' => is_file($value) ? (string) file_get_contents($value) : throw new FailureTransportNotReadableException(\sprintf('File "%s" of "%%env(%s)%%" not found.', $value, $expression)),
+            default => $value,
         };
     }
 
