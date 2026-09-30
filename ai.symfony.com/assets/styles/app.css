@@ -152,6 +152,8 @@ section.section-secondary {
 .feature-tab.active,
 .cookbook-card-icon,
 .cookbook-filter.is-active,
+.platform-preset.is-active,
+.platform-filter.is-active,
 .logo-icon, .logo-ai {
     animation: colorShift 60s ease-in-out infinite;
 }
@@ -162,6 +164,8 @@ section.section-secondary {
     .feature-tab.active,
     .cookbook-card-icon,
     .cookbook-filter.is-active,
+    .platform-preset.is-active,
+    .platform-filter.is-active,
     .logo-icon, .logo-ai {
         animation: none;
     }
@@ -980,3 +984,602 @@ header {
     margin-bottom: 0.25rem;
 }
 
+
+/* Platform bridges page */
+.platform-hero-breadcrumb a {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.platform-hero-breadcrumb a:hover {
+    color: #fff;
+}
+
+.platform-hero-breadcrumb li:last-child {
+    color: #fff;
+}
+
+/* Hero figures, on the glass recipe of the call to action cards */
+.platform-stats {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+}
+
+.platform-stats li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    font-size: 0.95rem;
+}
+
+.platform-stats strong {
+    font-family: var(--font-family-title), sans-serif;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* Common needs, on the feature tabs recipe */
+.platform-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 767.98px) {
+    .platform-presets {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: 0.25rem 0 0.75rem;
+    }
+
+    .platform-presets > * {
+        flex-shrink: 0;
+    }
+}
+
+.platform-preset,
+.platform-filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.55rem 1.1rem;
+    background: var(--sf-ai-card-bg);
+    color: var(--sf-ai-text-color);
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.platform-preset:hover,
+.platform-filters-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    color: var(--sf-ai-text-color);
+    text-decoration: none;
+}
+
+.platform-preset svg {
+    opacity: 0.7;
+}
+
+.platform-preset.is-active {
+    background-color: var(--sf-ai-brand-1);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(90, 85, 165, 0.4);
+}
+
+.platform-preset.is-active svg {
+    opacity: 1;
+}
+
+.platform-filters-toggle {
+    margin-bottom: 1rem;
+}
+
+/* Filters */
+@media (min-width: 992px) {
+    .platform-filters {
+        position: sticky;
+        top: 92px;
+        max-height: calc(100vh - 108px);
+        overflow-y: auto;
+        border-radius: var(--sf-ai-card-radius);
+        scrollbar-width: thin;
+        scrollbar-color: var(--sf-ai-card-border) transparent;
+    }
+}
+
+.platform-filters-panel {
+    padding: 0.5rem 1.25rem;
+    border: 1px solid var(--sf-ai-card-border);
+    border-radius: var(--sf-ai-card-radius);
+    background: var(--sf-ai-card-bg);
+}
+
+.platform-facet {
+    padding: 1rem 0;
+}
+
+.platform-facet + .platform-facet {
+    border-top: 1px solid var(--sf-ai-card-border);
+}
+
+.platform-facet summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.platform-facet:not([open]) summary {
+    margin-bottom: 0;
+}
+
+.platform-facet summary::-webkit-details-marker {
+    display: none;
+}
+
+.platform-facet-title {
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.platform-facet-chevron {
+    margin-left: auto;
+    opacity: 0.5;
+    transition: transform 0.15s ease;
+}
+
+.platform-facet[open] .platform-facet-chevron {
+    transform: rotate(180deg);
+}
+
+.platform-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+/* Options and active filters, on the cookbook filters recipe */
+.platform-filter,
+.platform-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.1;
+    padding: 0.4rem 0.75rem;
+    border-radius: 2rem;
+    border: 1px solid var(--sf-ai-card-border);
+    background: var(--sf-ai-card-bg);
+    color: var(--sf-ai-text-color);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.platform-filter:hover:not(:disabled),
+.platform-chip:hover {
+    border-color: var(--sf-ai-link-color);
+}
+
+.platform-filter.is-active {
+    background-color: var(--sf-ai-brand-1);
+    border-color: transparent;
+    color: #fff;
+}
+
+.platform-filter:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.platform-filter-count,
+.platform-count {
+    min-width: 1.5em;
+    padding: 0.1em 0.45em;
+    border-radius: 1rem;
+    background: var(--sf-ai-bg-secondary);
+    color: var(--sf-ai-text-color);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.platform-filter.is-active .platform-filter-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.platform-clear {
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--sf-ai-link-color);
+    cursor: pointer;
+}
+
+.platform-clear:hover {
+    text-decoration: underline;
+}
+
+/* Results toolbar */
+.platform-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.platform-results {
+    margin: 0;
+}
+
+.platform-results strong {
+    font-family: var(--font-family-title), sans-serif;
+    font-size: 1.25rem;
+}
+
+.platform-search {
+    position: relative;
+    flex: 1 1 12rem;
+    max-width: 18rem;
+    margin-left: auto;
+}
+
+@media (max-width: 575.98px) {
+    .platform-search {
+        order: -1;
+        flex-basis: 100%;
+        max-width: none;
+    }
+}
+
+.platform-search > svg {
+    position: absolute;
+    top: 50%;
+    left: 0.8rem;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.platform-search input {
+    width: 100%;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.45rem 2rem 0.45rem 2.2rem;
+    border-radius: 2rem;
+    border: 1px solid var(--sf-ai-card-border);
+    background: var(--sf-ai-card-bg);
+    color: var(--sf-ai-text-color);
+}
+
+.platform-search input:focus {
+    outline: 2px solid var(--sf-ai-link-color);
+    outline-offset: 1px;
+}
+
+/* the clear button below replaces the native one, which not every browser shows */
+.platform-search input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.platform-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 0.45rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    padding: 0.2rem;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--sf-ai-text-color);
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.platform-search-clear:hover {
+    opacity: 1;
+    background: var(--sf-ai-bg-secondary);
+}
+
+.platform-search input:placeholder-shown + .platform-search-clear {
+    display: none;
+}
+
+.platform-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.82rem;
+}
+
+.platform-sort-label {
+    opacity: 0.65;
+    margin-right: 0.25rem;
+}
+
+.platform-sort-option {
+    font: inherit;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: none;
+    color: var(--sf-ai-text-color);
+    cursor: pointer;
+}
+
+.platform-sort-option.is-active {
+    background: var(--sf-ai-card-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 600;
+}
+
+.platform-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.platform-active-filters .platform-clear {
+    margin-left: 0.25rem;
+}
+
+.platform-chip-facet {
+    opacity: 0.55;
+}
+
+.platform-grid {
+    transition: opacity 0.15s ease;
+}
+
+.platform-grid.is-loading {
+    opacity: 0.5;
+}
+
+/* Cards, on the cookbook cards recipe */
+.platform-card {
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+.platform-card.is-unclassified {
+    border-style: dashed;
+}
+
+.platform-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.platform-card-logo {
+    flex-shrink: 0;
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+}
+
+.platform-card-heading {
+    min-width: 0;
+}
+
+.platform-card-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+.platform-card-kind {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    opacity: 0.6;
+    margin: 0;
+}
+
+.platform-card-downloads {
+    white-space: nowrap;
+}
+
+.platform-card-summary {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.platform-card-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem 1rem;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sf-ai-card-border);
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.platform-card-facts dt {
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 0.15rem;
+}
+
+.platform-card-facts dd {
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Capabilities, on the cookbook badges recipe */
+.platform-card-capabilities {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding: 0;
+    margin: 0;
+}
+
+.platform-card-capabilities li {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.15em 0.55em;
+    border-radius: 0.375rem;
+    border: 1px solid var(--sf-ai-card-border);
+    background: var(--sf-ai-bg-secondary);
+    color: var(--sf-ai-text-color);
+}
+
+/* Notes, on the cookbook callout recipe */
+.platform-card-note {
+    display: flex;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border-left: 3px solid var(--sf-ai-accent);
+    border-radius: 0 0.75rem 0.75rem 0;
+    background: var(--sf-ai-bg-secondary);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.platform-card-note svg {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    color: var(--sf-ai-accent);
+}
+
+.platform-card-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Install command, on the terminal and copy button recipes */
+.platform-card-install {
+    position: relative;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #151028;
+    box-shadow: 0 8px 32px rgba(127, 91, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.platform-card-install code {
+    display: block;
+    font-family: JetBrainsMono, ui-monospace, monospace;
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: oklch(87% 0 0);
+}
+
+.platform-card-prompt {
+    color: #8b949e;
+}
+
+.platform-card-package {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.platform-copy {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    display: inline-flex;
+    padding: 0.35rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.platform-copy:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.platform-copy .platform-copy-done,
+.platform-copy.copied .platform-copy-idle {
+    display: none;
+}
+
+.platform-copy.copied .platform-copy-done {
+    display: inline;
+    color: #34d399;
+}
+
+/* Links, on the "See all models" recipe of the homepage bridge cards */
+.platform-card-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.platform-card-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.platform-empty {
+    align-items: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.platform-source {
+    display: flex;
+    gap: 0.5rem;
+    margin: 2rem 0 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.platform-source svg {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+
+.platform-source a {
+    text-decoration: underline;
+}

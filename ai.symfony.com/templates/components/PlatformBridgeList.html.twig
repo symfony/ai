@@ -1,0 +1,185 @@
+{% import _self as ui %}
+
+{% macro option(facet, option, count, selected) %}
+    <button
+        type="button"
+        class="platform-filter{{ selected ? ' is-active' }}"
+        data-action="live#action"
+        data-live-action-param="toggle"
+        data-live-facet-param="{{ facet.value }}"
+        data-live-value-param="{{ option.value }}"
+        aria-pressed="{{ selected ? 'true' : 'false' }}"
+        title="{{ option.description }}"
+        {% if 0 == count and not selected %}disabled{% endif %}
+    >
+        {% if option.icon is defined %}
+            {{ ux_icon(option.icon, {width: 14, height: 14, 'aria-hidden': 'true'}) }}
+        {% endif %}
+        <span>{{ option.label }}</span>
+        <span class="platform-filter-count">{{ count }}</span>
+    </button>
+{% endmacro %}
+
+<div{{ attributes.defaults({class: 'platform-bridges'}) }}>
+    {% set bridges = this.bridges %}
+    {% set active_filters = this.activeFilters %}
+
+    <div class="platform-presets" role="group" aria-label="Start from a need">
+        {% for preset in this.presets %}
+            {% set preset_active = this.isPresetActive(preset) %}
+            <a
+                href="{{ path('platform_bridges', this.presetParameters(preset)) }}"
+                class="platform-preset{{ preset_active ? ' is-active' }}"
+                data-action="live#action:prevent"
+                data-live-action-param="applyPreset"
+                data-live-preset-param="{{ preset.value }}"
+                title="{{ preset.description }}"
+                {% if preset_active %}aria-current="true"{% endif %}
+            >
+                {{ ux_icon(preset.icon, {width: 18, height: 18, 'aria-hidden': 'true'}) }}
+                {{ preset.label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="row g-4">
+        <aside class="col-lg-3" aria-label="Filters">
+            <button
+                type="button"
+                class="platform-filters-toggle d-lg-none"
+                data-bs-toggle="collapse"
+                data-bs-target="#platform-filters"
+                aria-expanded="false"
+                aria-controls="platform-filters"
+            >
+                {{ ux_icon('tabler:adjustments-horizontal', {width: 18, height: 18, 'aria-hidden': 'true'}) }}
+                Filters
+                {% if active_filters|length > 0 %}
+                    <span class="platform-count">{{ active_filters|length }}</span>
+                {% endif %}
+            </button>
+
+            <div id="platform-filters" class="collapse d-lg-block platform-filters">
+                <div class="platform-filters-panel">
+                    {% for facet in this.facets %}
+                        {% set counts = this.counts(facet) %}
+                        {% set selected_count = this.selectedCount(facet) %}
+                        <details class="platform-facet" data-facet="{{ facet.value }}" open>
+                            <summary>
+                                <span class="platform-facet-title">{{ facet.label }}</span>
+                                {% if selected_count > 0 %}
+                                    <span class="platform-count">{{ selected_count }}</span>
+                                {% endif %}
+                                {{ ux_icon('tabler:chevron-down', {width: 16, height: 16, class: 'platform-facet-chevron', 'aria-hidden': 'true'}) }}
+                            </summary>
+                            <div class="platform-options" role="group" aria-label="{{ facet.label }}">
+                                {% for option in facet.options %}
+                                    {{ ui.option(facet, option, counts[option.value], this.isSelected(facet, option.value)) }}
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endfor %}
+                </div>
+            </div>
+        </aside>
+
+        <div class="col-lg-9">
+            <div class="platform-toolbar">
+                <p class="platform-results" aria-live="polite">
+                    <strong>{{ bridges|length }}</strong> of {{ this.totalCount }} bridges
+                </p>
+                <div class="platform-search" role="search" data-controller="search-clear">
+                    <label for="platform-search-input" class="visually-hidden">Search the bridges by name or description</label>
+                    {{ ux_icon('tabler:search', {width: 16, height: 16, 'aria-hidden': 'true'}) }}
+                    <input
+                        id="platform-search-input"
+                        type="search"
+                        placeholder="Search by name or description"
+                        autocomplete="off"
+                        value="{{ query }}"
+                        data-model="debounce(250)|query"
+                        data-search-clear-target="input"
+                    >
+                    <button type="button" class="platform-search-clear" data-action="search-clear#clear" aria-label="Clear the search">
+                        {{ ux_icon('tabler:x', {width: 14, height: 14, 'aria-hidden': 'true'}) }}
+                    </button>
+                </div>
+                <div class="platform-sort" role="group" aria-label="Sort by">
+                    <span class="platform-sort-label">Sort by</span>
+                    {% for item in this.sorts %}
+                        <button
+                            type="button"
+                            class="platform-sort-option{{ item == sort ? ' is-active' }}"
+                            data-action="live#action"
+                            data-live-action-param="sortBy"
+                            data-live-sort-param="{{ item.value }}"
+                            aria-pressed="{{ item == sort ? 'true' : 'false' }}"
+                        >{{ item.label }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if this.hasActiveFilters %}
+                <div class="platform-active-filters" aria-label="Active filters">
+                    {% if query is not empty %}
+                        <button
+                            type="button"
+                            class="platform-chip"
+                            data-action="live#action"
+                            data-live-action-param="clearQuery"
+                            aria-label="Remove the search {{ query }}"
+                        >
+                            <span class="platform-chip-facet">Search</span>
+                            {{ query }}
+                            {{ ux_icon('tabler:x', {width: 14, height: 14, 'aria-hidden': 'true'}) }}
+                        </button>
+                    {% endif %}
+                    {% for active in active_filters %}
+                        <button
+                            type="button"
+                            class="platform-chip"
+                            data-action="live#action"
+                            data-live-action-param="toggle"
+                            data-live-facet-param="{{ active.facet.value }}"
+                            data-live-value-param="{{ active.option.value }}"
+                            aria-label="Remove the filter {{ active.facet.label }}: {{ active.option.label }}"
+                        >
+                            <span class="platform-chip-facet">{{ active.facet.label }}</span>
+                            {{ active.option.label }}
+                            {{ ux_icon('tabler:x', {width: 14, height: 14, 'aria-hidden': 'true'}) }}
+                        </button>
+                    {% endfor %}
+                    <button type="button" class="platform-clear" data-action="live#action" data-live-action-param="clearAll">Clear all</button>
+                </div>
+            {% endif %}
+
+            <div class="row g-4 platform-grid" data-loading="addClass(is-loading)">
+                {% for bridge in bridges %}
+                    <div class="col-md-6 col-xl-4" id="{{ bridge.slug }}">
+                        <twig:PlatformBridgeCard :bridge="bridge" />
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <div class="platform-empty sf-ai-card">
+                            <span class="cookbook-card-icon mb-3" aria-hidden="true">{{ ux_icon('tabler:search', {width: 22, height: 22}) }}</span>
+                            <p class="ff-title fw-bold mb-2">No bridge matches all these filters.</p>
+                            <p class="text-muted mb-3">
+                                Remove a filter, or connect any OpenAI-compatible server with the
+                                <a href="{{ path('platform_bridges', {q: 'generic'}) }}">Generic bridge</a>.
+                            </p>
+                            <button type="button" class="platform-clear" data-action="live#action" data-live-action-param="clearAll">Clear all filters</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <p class="platform-source">
+                {{ ux_icon('simple-icons:github', {width: 16, height: 16, 'aria-hidden': 'true'}) }}
+                <span>
+                    Bridges of <a href="https://github.com/symfony/ai/tree/main/src/platform/src/Bridge" target="_blank" rel="noopener noreferrer">symfony/ai on GitHub</a>, downloads from Packagist, updated every day
+                    {%- if this.updatedAt %} (last update on {{ this.updatedAt|date('F j, Y', 'UTC') }}){% endif %}.
+                </span>
+            </p>
+        </div>
+    </div>
+</div>

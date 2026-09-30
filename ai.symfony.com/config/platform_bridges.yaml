@@ -1,0 +1,523 @@
+# Classification of the platform bridges listed on /bridges/platforms.
+#
+# The list of bridges and their Packagist downloads are refreshed every morning by
+# "bin/console app:platform-bridges:update". This file adds what GitHub cannot tell,
+# keyed by the directory of the bridge in src/platform/src/Bridge. A bridge missing
+# here is still listed, as "Not classified yet".
+#
+# Keys (see the enums in src/PlatformBridge/Taxonomy for the allowed values):
+#   name, summary   display name and one-line pitch (default: directory name, no summary)
+#   kind            model-provider, inference-platform, cloud-platform, gateway, local-runtime, coding-agent, building-block
+#   deployment      where models run: cloud, local
+#   hosting         who operates the service: saas, self-hosted
+#   regions         where requests can be processed: worldwide, us, europe, asia, and anywhere for self-hosted software
+#   model_access    multi-vendor or single-vendor
+#   capabilities    chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings,
+#                   speech-to-text, text-to-speech, image-generation, video-generation
+#   note            one short sentence, only when it tells something the rest does not
+#   website, icon, symfony_docs
+#
+# Capabilities summarize the model catalogs and model clients of each bridge: only list
+# what the bridge supports, not everything the provider offers. Regions must come from
+# the documentation of the provider: leave them out rather than guess.
+
+bridges:
+    AiMlApi:
+        name: AI/ML API
+        summary: One API key for hundreds of models from OpenAI, Anthropic, Google, Meta, Mistral and more.
+        kind: gateway
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings]
+        website: https://aimlapi.com
+
+    Albert:
+        name: Albert
+        summary: The sovereign AI API of the French State, serving open-weight models to public services.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas, self-hosted]
+        regions: [europe, anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, embeddings]
+        symfony_docs: components/platform/albert
+        note: Reserved to French State agents.
+
+    AmazeeAi:
+        name: amazee.ai
+        summary: Private AI gateway built on LiteLLM, giving access to models from OpenAI, Anthropic, Google, Mistral and more.
+        kind: gateway
+        deployment: [cloud]
+        hosting: [saas, self-hosted]
+        regions: [europe, us, asia, anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings]
+        website: https://amazee.ai
+        note: Also works with any LiteLLM proxy you run.
+
+    Anthropic:
+        name: Anthropic
+        summary: Claude models through the Anthropic Messages API, with prompt caching and server-side tools.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us]
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision]
+        website: https://www.anthropic.com
+        icon: simple-icons:anthropic
+        symfony_docs: components/platform/anthropic-server-tools
+
+    Azure:
+        name: Microsoft Azure
+        summary: OpenAI and Meta Llama models deployed in your own Azure resources, in the data zone or region of your choice.
+        kind: cloud-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [worldwide, us, europe, asia]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings, speech-to-text]
+        website: https://azure.microsoft.com/en-us/products/ai-foundry
+        icon: simple-icons:microsoftazure
+
+    Bedrock:
+        name: Amazon Bedrock
+        summary: Claude, Amazon Nova, Llama and open-weight models inside your AWS account and regions.
+        kind: cloud-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [worldwide, us, europe, asia]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision]
+        website: https://aws.amazon.com/bedrock/
+        icon: simple-icons:amazonwebservices
+        symfony_docs: components/platform/bedrock
+
+    Cache:
+        summary: Caches the results of any other platform with Symfony Cache, to save time and money on repeated calls.
+        kind: building-block
+        icon: tabler:database
+
+    Cartesia:
+        name: Cartesia
+        summary: Low-latency voice with the Sonic text-to-speech and Ink speech-to-text models.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [speech-to-text, text-to-speech]
+        website: https://cartesia.ai
+
+    Cerebras:
+        name: Cerebras
+        summary: Very fast inference of open-weight models such as Llama, Qwen, gpt-oss and GLM on wafer-scale chips.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision]
+        website: https://www.cerebras.ai
+
+    ClaudeCode:
+        name: Claude Code
+        summary: Drives the Claude Code CLI installed on the machine, reusing its login or subscription.
+        kind: coding-agent
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [chat]
+        website: https://www.claude.com/product/claude-code
+        icon: simple-icons:claudecode
+        note: Needs the claude CLI on the machine running PHP.
+
+    Codex:
+        name: OpenAI Codex
+        summary: Drives the OpenAI Codex CLI installed on the machine, reusing its ChatGPT login or API key.
+        kind: coding-agent
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [chat]
+        website: https://developers.openai.com/codex
+        icon: simple-icons:openai
+        note: Needs the codex CLI on the machine running PHP.
+
+    Cohere:
+        name: Cohere
+        summary: Command models for chat and agents, along with renowned embedding, reranking and transcription models.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us]
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings, speech-to-text]
+        website: https://cohere.com
+
+    Decart:
+        name: Decart
+        summary: Lucy models to generate and edit images and videos, from text, images or videos.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [image-generation, video-generation]
+        website: https://decart.ai
+
+    Deepgram:
+        name: Deepgram
+        summary: Speech-to-text and text-to-speech APIs, with the model list discovered from your account.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas, self-hosted]
+        regions: [us, europe, asia, anywhere]
+        model_access: multi-vendor
+        capabilities: [speech-to-text, text-to-speech]
+        website: https://deepgram.com
+        icon: simple-icons:deepgram
+        symfony_docs: components/platform/deepgram
+
+    DeepSeek:
+        name: DeepSeek
+        summary: DeepSeek chat and reasoning models, straight from their maker and at a very low price.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [asia]
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision]
+        website: https://www.deepseek.com
+        icon: simple-icons:deepseek
+
+    DockerModelRunner:
+        name: Docker Model Runner
+        summary: Pull and run open-weight models locally with Docker, behind an OpenAI-compatible API.
+        kind: local-runtime
+        deployment: [local]
+        hosting: [self-hosted]
+        regions: [anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, embeddings]
+        website: https://docs.docker.com/ai/model-runner/
+        icon: simple-icons:docker
+
+    EdenAi:
+        name: Eden AI
+        summary: One API for language models, OCR, document parsing, speech and image analysis from many providers.
+        kind: gateway
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [europe]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings, speech-to-text, text-to-speech, image-generation]
+        website: https://www.edenai.co
+        symfony_docs: components/platform/edenai
+
+    ElevenLabs:
+        name: ElevenLabs
+        summary: Lifelike text-to-speech voices and the Scribe speech-to-text models.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us, europe, asia]
+        model_access: single-vendor
+        capabilities: [speech-to-text, text-to-speech]
+        website: https://elevenlabs.io
+        icon: simple-icons:elevenlabs
+
+    Failover:
+        summary: Chains several platforms and switches to the next one when a call fails or a rate limit is hit.
+        kind: building-block
+        icon: tabler:route
+
+    Fireworks:
+        name: Fireworks AI
+        summary: Fast inference of open-weight models and your fine-tunes, with the model list discovered from your account.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us, europe, asia]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings, image-generation]
+        website: https://fireworks.ai
+
+    Gemini:
+        name: Google Gemini
+        summary: Gemini models through the Gemini API, natively multimodal and grounded with Google Search.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, text-to-speech, image-generation]
+        website: https://ai.google.dev
+        icon: simple-icons:googlegemini
+        symfony_docs: components/platform/gemini-server-tools
+
+    Generic:
+        name: Generic (OpenAI-compatible)
+        summary: Connects to any server speaking the OpenAI API, such as vLLM, llama.cpp, LocalAI, LiteLLM, Groq or DeepInfra.
+        kind: building-block
+        deployment: [cloud, local]
+        hosting: [saas, self-hosted]
+        regions: [anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings]
+        icon: tabler:plug
+        note: What you get depends on the server you connect to.
+
+    Higgsfield:
+        name: Higgsfield
+        summary: Image and video generation with Higgsfield Soul and third-party models such as Kling, Seedance or Wan.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: multi-vendor
+        capabilities: [image-generation, video-generation]
+        website: https://higgsfield.ai
+
+    HuggingFace:
+        name: Hugging Face
+        summary: Thousands of open models through Hugging Face Inference Providers, for 40+ tasks from chat to object detection.
+        kind: gateway
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: multi-vendor
+        capabilities: [chat, embeddings, speech-to-text, image-generation]
+        website: https://huggingface.co
+        icon: simple-icons:huggingface
+
+    LmStudio:
+        name: LM Studio
+        summary: Run open-weight models on your desktop with LM Studio and its OpenAI-compatible local server.
+        kind: local-runtime
+        deployment: [local]
+        hosting: [self-hosted]
+        regions: [anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, vision, embeddings]
+        website: https://lmstudio.ai
+        icon: simple-icons:lmstudio
+
+    Meta:
+        name: Meta Llama
+        summary: Llama prompt format and catalog, used by the Azure, Bedrock and Replicate bridges to run Llama models.
+        kind: building-block
+        model_access: single-vendor
+        capabilities: [chat, vision]
+        website: https://www.llama.com
+        icon: simple-icons:meta
+
+    MiniMax:
+        name: MiniMax
+        summary: MiniMax language models along with Hailuo video, speech, image and music generation.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [chat, text-to-speech, image-generation, video-generation]
+        website: https://www.minimax.io
+        icon: simple-icons:minimax
+
+    Mistral:
+        name: Mistral AI
+        summary: Mistral, Magistral, Devstral and Voxtral models, plus document OCR, from the French AI lab.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [europe, us]
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings, speech-to-text, text-to-speech]
+        website: https://mistral.ai
+        icon: simple-icons:mistralai
+
+    ModelsDev:
+        name: models.dev
+        summary: Up-to-date model catalogs for many providers from the models.dev registry, e.g. to reach Groq, xAI or DeepInfra with the Generic bridge.
+        kind: building-block
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings]
+        website: https://models.dev
+        icon: tabler:books
+        symfony_docs: components/platform/models-dev
+
+    Ollama:
+        name: Ollama
+        summary: The easiest way to run open-weight models on your own machine, with optional Ollama Cloud models.
+        kind: local-runtime
+        deployment: [local, cloud]
+        hosting: [self-hosted, saas]
+        regions: [anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings]
+        website: https://ollama.com
+        icon: simple-icons:ollama
+        note: Also runs Ollama Cloud models with an API key.
+
+    OpenAi:
+        name: OpenAI
+        summary: GPT and reasoning models, embeddings, image generation, Whisper, text-to-speech and realtime voice.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us, europe]
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, speech-to-text, text-to-speech, image-generation]
+        website: https://openai.com/api/
+        icon: simple-icons:openai
+        symfony_docs: components/platform/openai-server-tools
+
+    OpenResponses:
+        name: Open Responses
+        summary: Talks to any server implementing Open Responses, the open specification derived from the OpenAI Responses API.
+        kind: building-block
+        deployment: [cloud, local]
+        hosting: [saas, self-hosted]
+        regions: [anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision]
+        website: https://www.openresponses.org
+        icon: tabler:api
+
+    OpenRouter:
+        name: OpenRouter
+        summary: Hundreds of models from every major lab behind one API, with provider routing and fallbacks.
+        kind: gateway
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us, europe]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, text-to-speech, image-generation]
+        website: https://openrouter.ai
+        icon: simple-icons:openrouter
+
+    Ovh:
+        name: OVHcloud AI Endpoints
+        summary: Open-weight models such as Qwen, Llama, Mistral and gpt-oss, served from OVHcloud data centers.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [europe]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings]
+        website: https://www.ovhcloud.com/en/public-cloud/ai-endpoints/
+        icon: simple-icons:ovh
+
+    Perplexity:
+        name: Perplexity
+        summary: Sonar models answering with fresh web search results and their sources.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us]
+        model_access: single-vendor
+        capabilities: [chat, structured-output, reasoning, web-search, vision]
+        website: https://www.perplexity.ai
+        icon: simple-icons:perplexity
+        note: Perplexity announced the end of its Sonar API, set for September 27, 2026.
+
+    Replicate:
+        name: Replicate
+        summary: Run Llama models through the prediction API of Replicate.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us]
+        model_access: single-vendor
+        capabilities: [chat]
+        website: https://replicate.com
+        icon: simple-icons:replicate
+
+    Scaleway:
+        name: Scaleway Generative APIs
+        summary: Serverless open-weight models such as Llama, Mistral, Qwen, Gemma and gpt-oss.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [europe]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings]
+        website: https://www.scaleway.com/en/generative-apis/
+        icon: simple-icons:scaleway
+
+    Together:
+        name: Together AI
+        summary: Open-weight models for chat, embeddings, reranking, images and speech, with the model list discovered from your account.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us, europe]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, embeddings, speech-to-text, text-to-speech, image-generation]
+        website: https://www.together.ai
+
+    TransformersPhp:
+        name: TransformersPHP
+        summary: Runs Hugging Face models inside PHP with ONNX Runtime, no server and no network once the model is downloaded.
+        kind: local-runtime
+        deployment: [local]
+        hosting: [self-hosted]
+        regions: [anywhere]
+        model_access: multi-vendor
+        capabilities: [chat, embeddings]
+        website: https://transformers.codewithkyrian.com
+        icon: simple-icons:php
+        note: Requires the FFI extension of PHP.
+
+    TypeSafe:
+        name: TypeSafe
+        summary: 'A decision API: Jev models return calibrated, typed answers (choices, scores, yes or no) for classification and evaluation.'
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [us]
+        model_access: single-vendor
+        capabilities: []
+        website: https://typesafe.ai
+        symfony_docs: components/platform/typesafe
+
+    Venice:
+        name: Venice AI
+        summary: Private and uncensored open-weight models for text, images, video, speech and music, plus anonymized access to proprietary ones.
+        kind: inference-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, reasoning, vision, embeddings, speech-to-text, text-to-speech, image-generation, video-generation]
+        website: https://venice.ai
+        symfony_docs: components/platform/venice
+
+    VertexAi:
+        name: Google Vertex AI
+        summary: Gemini and Google embedding models in your Google Cloud project, in the region of your choice.
+        kind: cloud-platform
+        deployment: [cloud]
+        hosting: [saas]
+        regions: [worldwide, us, europe, asia]
+        model_access: single-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, image-generation]
+        website: https://cloud.google.com/vertex-ai
+        icon: simple-icons:googlecloud
+        symfony_docs: components/platform/vertexai
+
+    Voyage:
+        name: Voyage AI
+        summary: State-of-the-art embedding models, including domain-specific ones for code, law and finance, and multimodal ones.
+        kind: model-provider
+        deployment: [cloud]
+        hosting: [saas]
+        regions: []
+        model_access: single-vendor
+        capabilities: [embeddings]
+        website: https://www.voyageai.com
+        symfony_docs: components/platform/voyage

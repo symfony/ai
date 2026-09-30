@@ -26,6 +26,8 @@ const COLOR_SHIFT_SELECTOR = [
     '.feature-tab',
     '.cookbook-card-icon',
     '.cookbook-filter',
+    '.platform-preset',
+    '.platform-filter',
     '.logo-icon', '.logo-ai',
 ].join(', ');
 
@@ -44,7 +46,7 @@ function alignColorShift(element) {
 /**
  * Keep all brand-color-shift elements in phase: align the ones present at load,
  * then re-align any added later (Live Component re-renders) or toggled active
- * (feature tabs, cookbook filters) via a MutationObserver.
+ * (feature tabs, cookbook and platform bridge filters) via a MutationObserver.
  */
 function initColorShiftSync() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

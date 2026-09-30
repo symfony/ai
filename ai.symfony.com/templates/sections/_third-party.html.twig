@@ -22,7 +22,7 @@
                     </div>
 
                     <hr class="mt-4 mb-3 opacity-10">
-                    <a href="https://symfony.com/doc/current/ai/components/platform.html#supported-models-platforms" class="small fw-semibold d-flex align-items-center justify-content-center gap-1" target="_blank" rel="noopener noreferrer">
+                    <a href="{{ path('platform_bridges', {kind: 'model-provider'}) }}" class="small fw-semibold d-flex align-items-center justify-content-center gap-1">
                         <span>See all models</span>
                         {{ ux_icon('tabler:arrow-right', {width: 14, height: 14}) }}
                     </a>
@@ -49,7 +49,7 @@
                     </div>
 
                     <hr class="mt-4 mb-3 opacity-10">
-                    <a href="https://symfony.com/doc/current/ai/components/platform.html#supported-models-platforms" class="small fw-semibold d-flex align-items-center justify-content-center gap-1" target="_blank" rel="noopener noreferrer">
+                    <a href="{{ path('platform_bridges') }}" class="small fw-semibold d-flex align-items-center justify-content-center gap-1">
                         <span>See all platforms</span>
                         {{ ux_icon('tabler:arrow-right', {width: 14, height: 14}) }}
                     </a>
