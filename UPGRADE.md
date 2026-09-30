@@ -1,3 +1,53 @@
+UPGRADE FROM 0.14 to 0.15
+=========================
+
+Platform
+--------
+
+ * The Perplexity bridge talks to the Agent API (`POST /v1/agent`) instead of Sonar Chat Completions
+   (`POST /chat/completions`), whose support ended on September 27, 2026. Invoke a preset (`fast`, `low`,
+   `medium`, `high`, `xhigh`) or the `perplexity/sonar` model. The Sonar model names are deprecated and
+   sent as the preset Perplexity recommends in their place:
+
+   | Sonar model                              | Preset |
+   |------------------------------------------|--------|
+   | `sonar`, `sonar-pro`                     | `fast` |
+   | `sonar-reasoning`, `sonar-reasoning-pro` | `low`  |
+   | `sonar-deep-research`                    | `high` |
+
+   The Agent API rejects the Sonar-only options with a `BadRequestException`. The search filters
+   (`search_domain_filter`, `search_recency_filter`, `search_*_date_filter`, `last_updated_*_filter`) move
+   into the `filters` of the `web_search` tool, which a model needs to search the web:
+
+   ```diff
+   -$result = $platform->invoke('sonar', $messages, [
+   -    'search_domain_filter' => ['wikipedia.org'],
+   -    'search_recency_filter' => 'month',
+   -]);
+   +$result = $platform->invoke('perplexity/sonar', $messages, [
+   +    'tools' => [[
+   +        'type' => 'web_search',
+   +        'filters' => [
+   +            'search_domain_filter' => ['wikipedia.org'],
+   +            'search_recency_filter' => 'month',
+   +        ],
+   +    ]],
+   +]);
+   ```
+
+   `web_search_options.search_context_size`, `web_search_options.user_location` and `num_search_results`
+   become the `search_context_size`, `user_location` and `max_results` settings of the tool. Replace
+   `disable_search` with a model invoked without the `web_search` tool. `search_mode`,
+   `enable_search_classifier`, `search_language_filter`, `return_images` and `return_related_questions`
+   have no equivalent.
+
+   The `citations` metadata is derived from the web search results, the first URL being the source of the
+   `[1]` marker, and each `search_results` entry carries an `id` matching its marker. A system message
+   replaces the system prompt of a preset. Document inputs are no longer supported:
+   `Contract\FileUrlNormalizer` is removed and no model has the `input-pdf` capability anymore.
+   `FinishReasonMapper` is removed as well, the finish reason being mapped by the OpenResponses bridge
+   that the Perplexity classes now extend.
+
 UPGRADE FROM 0.13 to 0.14
 =========================
 

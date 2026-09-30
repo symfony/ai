@@ -18,14 +18,17 @@ require_once __DIR__.'/bootstrap.php';
 $platform = Factory::createPlatform(env('PERPLEXITY_API_KEY'), http_client());
 
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
-$result = $platform->invoke('sonar', $messages, [
-    'search_domain_filter' => [
-        // Perplexity expects bare domains here, not full URLs with a path.
-        'wikipedia.org',
-    ],
-    'search_mode' => 'web',
-    'enable_search_classifier' => true,
-    'search_recency_filter' => 'month',
+$result = $platform->invoke('perplexity/sonar', $messages, [
+    'tools' => [[
+        'type' => 'web_search',
+        'filters' => [
+            // Perplexity expects bare domains here, not full URLs with a path.
+            'search_domain_filter' => ['wikipedia.org'],
+            'search_recency_filter' => 'month',
+        ],
+    ]],
+    // Offering the tool lets the model decide whether to search; this forces it
+    'tool_choice' => ['type' => 'web_search'],
 ]);
 
 echo $result->asText().\PHP_EOL;

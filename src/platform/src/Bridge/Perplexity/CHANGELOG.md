@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * [BC BREAK] Move to the Perplexity Agent API (`POST /v1/agent`), replacing Sonar Chat Completions, and remove `Contract\FileUrlNormalizer` and `FinishReasonMapper`
+ * Add the `fast`, `low`, `medium`, `high` and `xhigh` presets and the `perplexity/sonar` model to the model catalog
+ * Add tool calling and streamed token usage
+ * Deprecate the `sonar`, `sonar-pro`, `sonar-reasoning`, `sonar-reasoning-pro` and `sonar-deep-research` models, sent as their replacement preset
+
 0.14
 ----
 

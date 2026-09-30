@@ -227,6 +227,9 @@ Eden AI pairs its OpenAI-compatible chat and embeddings endpoints with expert mo
 document parsing, speech and images, which are addressed as ``feature/subfeature/provider``.
 See :doc:`platform/edenai` for the full setup and usage guide.
 
+Perplexity's Agent API grounds answers in real-time web search, through presets or the models of
+several providers. See :doc:`platform/perplexity` for the full setup and usage guide.
+
 Providers and Multi-Provider Platforms
 --------------------------------------
 
@@ -810,10 +813,11 @@ result metadata, a deduplicated list of strings::
     The metadata is only set when the provider reports citations for the response, so
     guard against ``null``.
 
-The Perplexity bridge always reports its own ``citations`` response field this way. The
-OpenResponses bridge reports it too, extracted from ``url_citation`` annotations on the
-assistant message -- for example when a model uses a citation-grounded built-in tool such
-as xAI's ``x_search``.
+The Perplexity bridge derives it from the web search results of the run: the first URL is
+the source of the ``[1]`` marker in the answer, and so on. The full results are available as
+``search_results`` metadata. The OpenResponses bridge reports it too, extracted from
+``url_citation`` annotations on the assistant message -- for example when a model uses a
+citation-grounded built-in tool such as xAI's ``x_search``.
 
 Streaming in a Symfony Controller
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

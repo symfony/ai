@@ -110,12 +110,6 @@ $modelsDevBridges = [
             [static fn (array $m): bool => str_contains($m['id'], 'rerank'), BRIDGE_NS.'Cohere\\Reranker'],
         ],
     ],
-    'Perplexity' => [
-        'provider' => 'perplexity',
-        'default' => BRIDGE_NS.'Perplexity\\Perplexity',
-        'single' => true,
-        'rules' => [],
-    ],
     'Cerebras' => [
         'provider' => 'cerebras',
         'default' => BRIDGE_NS.'Cerebras\\Model',

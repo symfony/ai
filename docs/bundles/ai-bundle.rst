@@ -133,7 +133,7 @@ Advanced Example with Multiple Agents
                 exclude_tool_messages: true # Drops tool call and tool result messages from the conversation history, default is false
             search_agent:
                 platform: 'ai.platform.perplexity'
-                model: 'sonar'
+                model: 'fast'
                 tools: false
             audio:
                 platform: 'ai.platform.elevenlabs'
