@@ -18,6 +18,80 @@ use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
 final class FirecrawlTest extends TestCase
 {
+    public function testSearch()
+    {
+        $response = JsonMockResponse::fromFile(__DIR__.'/Fixtures/search.json');
+        $httpClient = new MockHttpClient($response);
+
+        $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');
+
+        $results = $firecrawl->search('symfony messenger');
+
+        $this->assertCount(3, $results);
+        $this->assertSame([
+            'title' => 'Messenger: Sync & Queued Message Handling (Symfony Docs)',
+            'url' => 'https://symfony.com/doc/current/messenger.html',
+            'description' => 'Messenger provides a message bus with the ability to send messages and then handle them immediately in your application or send them through transports (e.g. queues) to be handled later.',
+        ], $results[0]);
+        $this->assertSame(1, $httpClient->getRequestsCount());
+
+        $sources = $firecrawl->getSourceCollection()->all();
+        $this->assertCount(3, $sources);
+        $this->assertSame('Messenger: Sync & Queued Message Handling (Symfony Docs)', $sources[0]->getName());
+        $this->assertSame('https://symfony.com/doc/current/messenger.html', $sources[0]->getReference());
+    }
+
+    public function testSearchPassesCorrectParametersToApi()
+    {
+        $response = JsonMockResponse::fromFile(__DIR__.'/Fixtures/search.json');
+        $httpClient = new MockHttpClient($response);
+
+        $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');
+
+        $firecrawl->search('symfony messenger', 3);
+
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('https://127.0.0.1:3002/v2/search', $response->getRequestUrl());
+
+        $requestOptions = $response->getRequestOptions();
+        $this->assertContains('Authorization: Bearer test', $requestOptions['headers']);
+        $this->assertSame([
+            'query' => 'symfony messenger',
+            'limit' => 3,
+            'sources' => ['web'],
+            'origin' => 'symfony-ai',
+        ], json_decode($requestOptions['body'], true));
+    }
+
+    public function testSearchHandlesEmptyResults()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse(['success' => true, 'data' => ['web' => []]]));
+
+        $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');
+
+        $this->assertSame([], $firecrawl->search('this should return nothing'));
+        $this->assertCount(0, $firecrawl->getSourceCollection());
+    }
+
+    public function testSearchHandlesMissingTitleAndDescription()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'success' => true,
+            'data' => [
+                'web' => [
+                    ['url' => 'https://example.com'],
+                ],
+            ],
+        ]));
+
+        $firecrawl = new Firecrawl($httpClient, 'test', 'https://127.0.0.1:3002');
+
+        $results = $firecrawl->search('test query');
+
+        $this->assertSame([['title' => '', 'url' => 'https://example.com', 'description' => '']], $results);
+        $this->assertSame('https://example.com', $firecrawl->getSourceCollection()->all()[0]->getReference());
+    }
+
     public function testScrape()
     {
         $httpClient = new MockHttpClient([

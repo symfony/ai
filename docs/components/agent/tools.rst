@@ -58,13 +58,13 @@ Loads the visible text and title of a webpage. No API key required.
 Firecrawl
 ~~~~~~~~~
 
-Scrapes, crawls, and maps websites using the `Firecrawl`_ service.
+Searches the web and scrapes, crawls, and maps websites using the `Firecrawl`_ service.
 
 .. code-block:: terminal
 
     $ composer require symfony/ai-firecrawl-tool
 
-`Firecrawl Scrape Example`_ | `Firecrawl Crawl Example`_ | `Firecrawl Map Example`_
+`Firecrawl Search Example`_ | `Firecrawl Scrape Example`_ | `Firecrawl Crawl Example`_ | `Firecrawl Map Example`_
 
 Wikipedia
 ~~~~~~~~~
@@ -225,6 +225,7 @@ See :doc:`/components/agent` for a full RAG integration example.
 .. _`Tavily`: https://tavily.com/
 .. _`Tavily Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/tavily.php
 .. _`Firecrawl`: https://www.firecrawl.dev/
+.. _`Firecrawl Search Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-search.php
 .. _`Firecrawl Scrape Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-scrape.php
 .. _`Firecrawl Crawl Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-crawl.php
 .. _`Firecrawl Map Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-map.php
