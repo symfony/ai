@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
+
 0.14
 ----
 
@@ -9,7 +14,6 @@ CHANGELOG
  * Register the OpenAI job client as `ai.platform.job_client.openai`, tagged and autowired by argument name, so a stored batch handle can be resolved from a worker
  * Show agent calls, platform invocations and tool executions in the performance timeline of the profiler
  * Add support for configuring a tool execution strategy per agent via the `execution_strategy` option under `tools` (`sequential`, `fiber`, or a custom service ID)
- * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
  * Add an `mcp_server` tool entry to `ai.agent.<name>.tools`, exposing the tools of a remote MCP server to an agent by referencing a connection configured under `mcp.clients`
  * Add an `api` option to the `bedrock` platform configuration, selecting the SDK-based InvokeModel API or one of the Bedrock Mantle routes (Chat Completions, Responses, Anthropic Messages)
  * Add `fireworks` platform configuration for OpenAI-compatible chat, embeddings and reranking
