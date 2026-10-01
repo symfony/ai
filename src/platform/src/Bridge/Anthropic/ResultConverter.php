@@ -11,9 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Bridge\Anthropic\Batch\JobClient;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
@@ -21,9 +23,11 @@ use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
+use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -52,6 +56,14 @@ use Symfony\AI\Platform\ResultConverterInterface;
 class ResultConverter implements ResultConverterInterface
 {
     use FinishReasonAwareTrait;
+
+    /**
+     * @param string $provider the name stamped onto the handles of the batches this converter starts
+     */
+    public function __construct(
+        private readonly string $provider = 'anthropic',
+    ) {
+    }
 
     public function supports(Model $model): bool
     {
@@ -89,6 +101,11 @@ class ResultConverter implements ResultConverterInterface
             throw new ServerException($code, $errorMessage);
         }
 
+        // A batched invocation is answered with the batch Anthropic created, not with what it will produce.
+        if ($options[ModelClient::BATCH] ?? false) {
+            return self::startBatch($result->getData(), $this->provider);
+        }
+
         if ($options['stream'] ?? false) {
             if (($code = $response->getStatusCode()) >= 400) {
                 throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $response->getContent(false)));
@@ -97,8 +114,18 @@ class ResultConverter implements ResultConverterInterface
             return new StreamResult($this->convertStream($result));
         }
 
-        $data = $result->getData();
+        return $this->convertData($result->getData());
+    }
 
+    /**
+     * Converts an already decoded response body, e.g. one line of a finished batch's result file.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws ExceptionInterface
+     */
+    public function convertData(array $data): ResultInterface
+    {
         if (isset($data['type']) && 'error' === $data['type']) {
             $type = $data['error']['type'] ?? 'Unknown';
             $message = $data['error']['message'] ?? 'An unknown error occurred.';
@@ -202,6 +229,49 @@ class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractor
     {
         return new TokenUsageExtractor();
+    }
+
+    /**
+     * Anthropic accepted the batch, so the invocation produces a reference to it rather than a
+     * result; resolving it is the job of {@see JobClient}.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function startBatch(array $data, string $provider): JobResult
+    {
+        $id = $data['id'] ?? null;
+
+        if (!\is_string($id) || '' === $id) {
+            throw new RuntimeException('The Anthropic response does not contain a batch identifier.');
+        }
+
+        return new JobResult(new JobHandle(
+            $id,
+            ['kind' => JobClient::KIND],
+            $provider,
+            self::toMaxDuration($data['created_at'] ?? null, $data['expires_at'] ?? null),
+            JobClient::DEFAULT_POLL_INTERVAL,
+        ));
+    }
+
+    /**
+     * The longest the batch may take, carried on the handle so nobody has to guess: Anthropic states
+     * it as the moment the batch expires, which is 24 hours after it was created.
+     */
+    private static function toMaxDuration(mixed $createdAt, mixed $expiresAt): int
+    {
+        if (!\is_string($createdAt) || !\is_string($expiresAt)) {
+            return JobClient::DEFAULT_MAX_DURATION;
+        }
+
+        $created = strtotime($createdAt);
+        $expires = strtotime($expiresAt);
+
+        if (false === $created || false === $expires || $expires <= $created) {
+            return JobClient::DEFAULT_MAX_DURATION;
+        }
+
+        return $expires - $created;
     }
 
     /**

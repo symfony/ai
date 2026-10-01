@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Anthropic\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
@@ -25,6 +26,7 @@ use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -173,6 +175,69 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('max_tokens is required');
 
         $converter->convert(new RawHttpResult($response));
+    }
+
+    public function testItConvertsABatchSubmissionIntoAJob()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn([
+            'id' => 'msgbatch_123',
+            'type' => 'message_batch',
+            'processing_status' => 'in_progress',
+            'created_at' => '2024-09-24T18:37:24.100435Z',
+            'expires_at' => '2024-09-25T18:37:24.100435Z',
+        ]);
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+
+        $handle = $result->getContent();
+
+        $this->assertSame('msgbatch_123', $handle->getId());
+        $this->assertSame('anthropic', $handle->getProvider());
+        $this->assertSame(JobClient::KIND, $handle->get('kind'));
+        // Anthropic states the longest the batch may take as the moment it expires, so a caller
+        // need not know it.
+        $this->assertSame(86400, $handle->getMaxDuration());
+        $this->assertSame(JobClient::DEFAULT_POLL_INTERVAL, $handle->getPollInterval());
+    }
+
+    public function testItFallsBackToTheDocumentedWindowWhenTheBatchStatesNoExpiry()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn(['id' => 'msgbatch_123', 'processing_status' => 'in_progress']);
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+        $this->assertSame(JobClient::DEFAULT_MAX_DURATION, $result->getContent()->getMaxDuration());
+    }
+
+    public function testItStampsTheProviderNameOnTheHandle()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn(['id' => 'msgbatch_123']);
+
+        $result = (new ResultConverter('my-gateway'))->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+        $this->assertSame('my-gateway', $result->getContent()->getProvider());
+    }
+
+    public function testItFailsWhenTheBatchSubmissionHasNoIdentifier()
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+        $httpResponse->method('toArray')->willReturn(['processing_status' => 'in_progress']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The Anthropic response does not contain a batch identifier.');
+
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
     }
 
     public function testStreamingToolCallsYieldsToolCallResult()
