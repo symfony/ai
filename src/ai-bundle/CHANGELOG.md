@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
+
 0.14
 ----
 

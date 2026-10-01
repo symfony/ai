@@ -196,6 +196,10 @@ To offer them next to local tools, put both toolboxes behind a
 :class:`Symfony\\AI\\Agent\\Toolbox\\ChainToolbox`. A server that cannot be reached contributes no
 tools and is asked again after ``retryAfter`` seconds (60 by default).
 
+The tool list is fetched on first use and kept. Call ``reset()`` on the toolbox to fetch it again on
+the next use, e.g. between the messages of a long-running worker. In a Symfony application the bundle
+tags the toolbox with ``kernel.reset``, so this happens after every request and message.
+
 `MCP Example`_
 
 .. note::

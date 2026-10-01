@@ -25,7 +25,8 @@
         "php": ">=8.2",
         "mcp/sdk": "^0.8.1",
         "symfony/ai-agent": "^0.14",
-        "symfony/clock": "^7.3|^8.0"
+        "symfony/clock": "^7.3|^8.0",
+        "symfony/service-contracts": "^2.5|^3"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
