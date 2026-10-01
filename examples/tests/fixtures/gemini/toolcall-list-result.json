@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-                "signature": "84dc82fb89864311f453df35cf349270",
-                "signature_v2": "bf35b6de0625c54508a51fa45390cf1d",
+                "signature": "411f4b5c8cb1ec81c273e9f7d55a07d2",
+                "signature_v2": "b9d51ed2294f02d342d7a916ac81016c",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -14,7 +14,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns the capitals of a few European countries.\",\"name\":\"list_european_capitals\",\"parameters\":null}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"List a few European capitals.\"}]}],\"system_instruction\":{\"parts\":[{\"text\":\"Use the available tool to answer.\"}]}}"
+                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns the capitals of a few European countries.\",\"name\":\"list_european_capitals\"}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"List a few European capitals.\"}]}],\"system_instruction\":{\"parts\":[{\"text\":\"Use the available tool to answer.\"}]}}"
             },
             "response": {
                 "status": 200,
@@ -57,8 +57,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-                "signature": "a51b9e8f4a27d5968b4e5ee54609cdc9",
-                "signature_v2": "94f12499e4714bbc018a79a8a1c3d7ff",
+                "signature": "a4c670e95a1e14aab81d4cbbca0ca059",
+                "signature_v2": "bf30f7876c57397fa8fb9c1c15144843",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -67,7 +67,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns the capitals of a few European countries.\",\"name\":\"list_european_capitals\",\"parameters\":null}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"List a few European capitals.\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"\",\"name\":\"list_european_capitals\"},\"thoughtSignature\":\"CtEBARFNMg9LdKh7c5cHLtUWNQ4\\/mp5Pn0bhmh4GN0njOQXdll4vFWViNr8JtkqXoriNq8L4Q8MAAOtqFy2Xe8PU9\\/joiucY5nNxATHMBSBNh1VHgsk+NvFz9HsyCOfpMdNEvkh5g4Ya31\\/g+mEOAiGcwraCgw9VV0bg1dQ+qe5k9pB3t7ZF4i1TXKarHi4+jSHPmciBkCoD+r11gr9AWtYh86B00ehYrfmqE5xnHuiBV5D9xJ7KgzRh6YuHTOrhUhKeTKXqGdtucbM\\/hkTLRLGsWsA=\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"list_european_capitals\",\"response\":{\"result\":[\"Paris\",\"Berlin\",\"Madrid\",\"Rome\"]}}}]}],\"system_instruction\":{\"parts\":[{\"text\":\"Use the available tool to answer.\"}]}}"
+                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns the capitals of a few European countries.\",\"name\":\"list_european_capitals\"}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"List a few European capitals.\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"\",\"name\":\"list_european_capitals\"},\"thoughtSignature\":\"CtEBARFNMg9LdKh7c5cHLtUWNQ4\\/mp5Pn0bhmh4GN0njOQXdll4vFWViNr8JtkqXoriNq8L4Q8MAAOtqFy2Xe8PU9\\/joiucY5nNxATHMBSBNh1VHgsk+NvFz9HsyCOfpMdNEvkh5g4Ya31\\/g+mEOAiGcwraCgw9VV0bg1dQ+qe5k9pB3t7ZF4i1TXKarHi4+jSHPmciBkCoD+r11gr9AWtYh86B00ehYrfmqE5xnHuiBV5D9xJ7KgzRh6YuHTOrhUhKeTKXqGdtucbM\\/hkTLRLGsWsA=\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"list_european_capitals\",\"response\":{\"result\":[\"Paris\",\"Berlin\",\"Madrid\",\"Rome\"]}}}]}],\"system_instruction\":{\"parts\":[{\"text\":\"Use the available tool to answer.\"}]}}"
             },
             "response": {
                 "status": 200,
