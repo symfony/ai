@@ -206,7 +206,8 @@ final class McpToolbox extends AbstractToolbox
     /**
      * The server's hints, keyed by the MCP spec's own field names so a consumer (e.g. to decide
      * whether a call needs approval) reads the same names the protocol documents. Every hint is
-     * optional on the wire; only the ones the server actually sent are set.
+     * optional on the wire; only the ones the server actually sent are set. `title` is dropped: it's
+     * deprecated in favor of `Tool::$title` and not one of the spec's hints.
      *
      * @return array<string, bool>
      */
@@ -216,19 +217,10 @@ final class McpToolbox extends AbstractToolbox
             return [];
         }
 
-        $metadata = [];
-        foreach ([
-            'readOnlyHint' => $annotations->readOnlyHint,
-            'destructiveHint' => $annotations->destructiveHint,
-            'idempotentHint' => $annotations->idempotentHint,
-            'openWorldHint' => $annotations->openWorldHint,
-        ] as $hint => $value) {
-            if (null !== $value) {
-                $metadata[$hint] = $value;
-            }
-        }
+        $hints = $annotations->jsonSerialize();
+        unset($hints['title']);
 
-        return $metadata;
+        return $hints;
     }
 
     /**

@@ -118,6 +118,21 @@ final class McpToolboxTest extends TestCase
         $this->assertSame([], $toolbox->getTools()[0]->getMetadata());
     }
 
+    public function testAnnotationsTitleIsNotMetadataSinceItIsDeprecatedInFavorOfToolTitle()
+    {
+        $toolset = new StaticToolset(tools: [
+            new McpTool(
+                name: 'search',
+                title: null,
+                inputSchema: ['type' => 'object', 'properties' => new \stdClass(), 'required' => []],
+                description: null,
+                annotations: new ToolAnnotations(title: 'Search', readOnlyHint: true),
+            ),
+        ]);
+
+        $this->assertSame(['readOnlyHint' => true], (new McpToolbox($toolset))->getTools()[0]->getMetadata());
+    }
+
     public function testRemoteToolsAreListedOnlyOnce()
     {
         $toolset = new StaticToolset(tools: [$this->remoteTool('echo')]);
