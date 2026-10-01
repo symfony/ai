@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Bridge\Mcp;
 use Mcp\Schema\Content\Content;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ToolAnnotations;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolErrorException;
@@ -91,6 +92,7 @@ final class McpToolbox extends AbstractToolbox
                 $prefix.$remote->name,
                 $remote->description ?? '',
                 $inputSchema,
+                $this->annotationsToMetadata($remote->annotations),
             );
         }
 
@@ -199,6 +201,26 @@ final class McpToolbox extends AbstractToolbox
         }
 
         return $value;
+    }
+
+    /**
+     * The server's hints, keyed by the MCP spec's own field names so a consumer (e.g. to decide
+     * whether a call needs approval) reads the same names the protocol documents. Every hint is
+     * optional on the wire; only the ones the server actually sent are set. `title` is dropped: it's
+     * deprecated in favor of `Tool::$title` and not one of the spec's hints.
+     *
+     * @return array<string, bool>
+     */
+    private function annotationsToMetadata(?ToolAnnotations $annotations): array
+    {
+        if (null === $annotations) {
+            return [];
+        }
+
+        $hints = $annotations->jsonSerialize();
+        unset($hints['title']);
+
+        return $hints;
     }
 
     /**
