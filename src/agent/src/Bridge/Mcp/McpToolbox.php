@@ -25,13 +25,17 @@ use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * The tools of one remote MCP server, as a toolbox.
  *
+ * The tool list is fetched once and kept until reset(), so a long-running process sees the tools a server
+ * adds or removes after its next reset.
+ *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class McpToolbox extends AbstractToolbox
+final class McpToolbox extends AbstractToolbox implements ResetInterface
 {
     /**
      * @var Tool[]
@@ -97,6 +101,15 @@ final class McpToolbox extends AbstractToolbox
         }
 
         return $this->toolsMetadata = $toolsMetadata;
+    }
+
+    /**
+     * Forgets the tool list, the next listing asks the server again. A server found unreachable is still
+     * skipped until its retry delay elapsed, so a reset per request does not pay its connect timeout each time.
+     */
+    public function reset(): void
+    {
+        unset($this->toolsMetadata);
     }
 
     protected function getExecutable(Tool $metadata): object

@@ -1738,7 +1738,8 @@ final class AiBundle extends AbstractBundle
                 $server['prefix'] ?? '',
                 new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-            ]));
+            ]))
+                ->addTag('kernel.reset', ['method' => 'reset']);
 
             // The agent reaches the server through this, so the profiler reads the same instance.
             $deferredId = $toolboxId.'.deferred';
