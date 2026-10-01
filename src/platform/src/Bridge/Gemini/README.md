@@ -11,6 +11,7 @@ Gemini Documentation
  * [Embeddings (`batchEmbedContents`, task types)](https://ai.google.dev/api/embeddings)
  * [Text generation guide](https://ai.google.dev/gemini-api/docs/text-generation)
  * [Priority inference (`service_tier`)](https://ai.google.dev/gemini-api/docs/generate-content/priority-inference)
+ * [Function calling](https://ai.google.dev/gemini-api/docs/function-calling)
 
 Test Fixtures
 -------------

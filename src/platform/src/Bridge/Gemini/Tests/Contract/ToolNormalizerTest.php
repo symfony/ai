@@ -49,7 +49,7 @@ final class ToolNormalizerTest extends TestCase
     }
 
     /**
-     * @param array{name: string, description: string, parameters: JsonSchema|array{type: 'object'}} $expected
+     * @param array{name: string, description: string, parametersJsonSchema?: JsonSchema|array{type: 'object'}} $expected
      */
     #[DataProvider('normalizeDataProvider')]
     public function testNormalize(Tool $tool, array $expected)
@@ -58,7 +58,7 @@ final class ToolNormalizerTest extends TestCase
 
         $normalized = $normalizer->normalize($tool);
 
-        $this->assertEquals($expected, $normalized);
+        $this->assertSame($expected, $normalized);
     }
 
     /**
@@ -66,196 +66,82 @@ final class ToolNormalizerTest extends TestCase
      */
     public static function normalizeDataProvider(): iterable
     {
-        yield 'call with params' => [
-            new Tool(
-                new ExecutionReference(ToolRequiredParams::class, 'bar'),
-                'tool_required_params',
-                'A tool with required parameters',
-                [
+        $schema = [
+            'type' => 'object',
+            'properties' => [
+                'text' => [
+                    'type' => 'string',
+                    'description' => 'Text parameter',
+                ],
+                'number' => [
+                    'type' => 'integer',
+                    'description' => 'Number parameter',
+                ],
+                'nestedObject' => [
                     'type' => 'object',
-                    'properties' => [
-                        'text' => [
-                            'type' => 'string',
-                            'description' => 'Text parameter',
-                        ],
-                        'number' => [
-                            'type' => 'integer',
-                            'description' => 'Number parameter',
-                        ],
-                        'nestedObject' => [
-                            'type' => 'object',
-                            'description' => 'bar',
-                            'additionalProperties' => false,
-                        ],
-                    ],
-                    'required' => ['text', 'number'],
+                    'description' => 'bar',
                     'additionalProperties' => false,
                 ],
-            ),
+            ],
+            'required' => ['text', 'number'],
+            'additionalProperties' => false,
+        ];
+
+        yield 'call with params' => [
+            new Tool(new ExecutionReference(ToolRequiredParams::class, 'bar'), 'tool_required_params', 'A tool with required parameters', $schema),
             [
                 'description' => 'A tool with required parameters',
                 'name' => 'tool_required_params',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'text' => [
-                            'type' => 'string',
-                            'description' => 'Text parameter',
-                        ],
-                        'number' => [
-                            'type' => 'integer',
-                            'description' => 'Number parameter',
-                        ],
-                        'nestedObject' => [
-                            'type' => 'object',
-                            'description' => 'bar',
-                        ],
-                    ],
-                    'required' => ['text', 'number'],
-                ],
+                'parametersJsonSchema' => $schema,
             ],
         ];
 
         yield 'call without params' => [
-            new Tool(
-                new ExecutionReference(ToolNoParams::class, 'bar'),
-                'tool_no_params',
-                'A tool without parameters',
-                null,
-            ),
+            new Tool(new ExecutionReference(ToolNoParams::class, 'bar'), 'tool_no_params', 'A tool without parameters', null),
             [
                 'description' => 'A tool without parameters',
                 'name' => 'tool_no_params',
-                'parameters' => null,
             ],
         ];
 
-        yield 'call with nullable parameter' => [
-            new Tool(
-                new ExecutionReference(ToolRequiredParams::class, 'bar'),
-                'tool_nullable_param',
-                'A tool with nullable parameter',
-                // @phpstan-ignore argument.type (testing array-style nullable types that get normalized)
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => [
-                            'type' => ['string', 'null'],
-                            'description' => 'A nullable name',
-                        ],
-                    ],
-                    'additionalProperties' => false,
-                ],
-            ),
+        yield 'call with empty params' => [
+            // @phpstan-ignore argument.type (an empty array is outside the generated JsonSchema shape but rejected by Gemini)
+            new Tool(new ExecutionReference(ToolNoParams::class, 'bar'), 'tool_no_params', 'A tool without parameters', []),
             [
-                'description' => 'A tool with nullable parameter',
-                'name' => 'tool_nullable_param',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => [
-                            'type' => 'string',
-                            'nullable' => true,
-                            'description' => 'A nullable name',
-                        ],
-                    ],
-                ],
+                'description' => 'A tool without parameters',
+                'name' => 'tool_no_params',
             ],
         ];
 
-        yield 'call with $schema meta-key' => [
-            new Tool(
-                new ExecutionReference(ToolRequiredParams::class, 'bar'),
-                'tool_with_schema_meta_key',
-                'A tool whose schema carries the JSON-Schema $schema meta-key (e.g. produced by an MCP server)',
-                // @phpstan-ignore argument.type (testing JSON-Schema meta-keys that get stripped)
-                [
-                    '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => [
-                            'type' => 'string',
-                            'description' => 'Name parameter',
-                        ],
-                        'nested' => [
-                            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-                            'type' => 'object',
-                            'properties' => [
-                                'inner' => [
-                                    'type' => 'string',
-                                ],
-                            ],
-                        ],
-                    ],
-                    'required' => ['name'],
-                    'additionalProperties' => false,
+        $schema = [
+            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'type' => ['string', 'null'],
+                    'description' => 'A nullable name',
                 ],
-            ),
-            [
-                'description' => 'A tool whose schema carries the JSON-Schema $schema meta-key (e.g. produced by an MCP server)',
-                'name' => 'tool_with_schema_meta_key',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => [
-                            'type' => 'string',
-                            'description' => 'Name parameter',
-                        ],
-                        'nested' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'inner' => [
-                                    'type' => 'string',
-                                ],
+                'fields' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'value' => [
+                                'type' => ['string', 'number', 'boolean'],
                             ],
                         ],
                     ],
-                    'required' => ['name'],
                 ],
             ],
         ];
 
-        yield 'call with nested nullable parameter' => [
-            new Tool(
-                new ExecutionReference(ToolRequiredParams::class, 'bar'),
-                'tool_nested_nullable',
-                'A tool with nested nullable parameter',
-                // @phpstan-ignore argument.type (testing array-style nullable types that get normalized)
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'user' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'age' => [
-                                    'type' => ['integer', 'null'],
-                                    'description' => 'User age',
-                                ],
-                            ],
-                            'additionalProperties' => false,
-                        ],
-                    ],
-                    'additionalProperties' => false,
-                ],
-            ),
+        yield 'call with JSON Schema keywords unknown to the OpenAPI subset (e.g. produced by an MCP server)' => [
+            // @phpstan-ignore argument.type (testing type unions and meta-keys outside of the generated JsonSchema shape)
+            new Tool(new ExecutionReference(ToolRequiredParams::class, 'bar'), 'tool_json_schema', 'A tool with a raw JSON Schema', $schema),
             [
-                'description' => 'A tool with nested nullable parameter',
-                'name' => 'tool_nested_nullable',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'user' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'age' => [
-                                    'type' => 'integer',
-                                    'nullable' => true,
-                                    'description' => 'User age',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
+                'description' => 'A tool with a raw JSON Schema',
+                'name' => 'tool_json_schema',
+                'parametersJsonSchema' => $schema,
             ],
         ];
     }
