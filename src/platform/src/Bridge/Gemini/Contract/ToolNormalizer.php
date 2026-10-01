@@ -30,16 +30,22 @@ final class ToolNormalizer extends ModelContractNormalizer
      * @return array{
      *     name: string,
      *     description: string,
-     *     parameters: JsonSchema|array{type: 'object'}
+     *     parametersJsonSchema?: JsonSchema|array{type: 'object'}
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        return [
+        $declaration = [
             'description' => $data->getDescription(),
             'name' => $data->getName(),
-            'parameters' => $data->getParameters() ? $this->normalizeSchema($data->getParameters()) : null,
         ];
+
+        // Unlike the OpenAPI-subset "parameters" field, "parametersJsonSchema" accepts any JSON Schema
+        if (null !== $data->getParameters()) {
+            $declaration['parametersJsonSchema'] = $data->getParameters();
+        }
+
+        return $declaration;
     }
 
     protected function supportedDataClass(): string
@@ -50,46 +56,5 @@ final class ToolNormalizer extends ModelContractNormalizer
     protected function supportsModel(Model $model): bool
     {
         return $model instanceof Gemini;
-    }
-
-    /**
-     * Normalizes a JSON Schema for Gemini compatibility.
-     *
-     * - Removes 'additionalProperties' (not supported by Gemini)
-     * - Removes '$schema' (Gemini's strict OpenAPI-flavored parser rejects this JSON-Schema meta-key)
-     * - Converts array-style nullable types ['string', 'null'] to ['type' => 'string', 'nullable' => true]
-     *
-     * @template T of array
-     *
-     * @phpstan-param T $data
-     *
-     * @phpstan-return T
-     */
-    private function normalizeSchema(array $data): array
-    {
-        unset($data['additionalProperties'], $data['$schema']);
-
-        // Convert array-style nullable types to Gemini format
-        if (isset($data['type']) && \is_array($data['type'])) {
-            $nullIndex = array_search('null', $data['type'], true);
-            if (false !== $nullIndex) {
-                $types = $data['type'];
-                unset($types[$nullIndex]);
-                $types = array_values($types);
-
-                if (1 === \count($types)) {
-                    $data['type'] = $types[0];
-                    $data['nullable'] = true;
-                }
-            }
-        }
-
-        foreach ($data as &$value) {
-            if (\is_array($value)) {
-                $value = $this->normalizeSchema($value);
-            }
-        }
-
-        return $data;
     }
 }
