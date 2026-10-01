@@ -10,6 +10,7 @@ Gemini Documentation
  * [Generate content (`generateContent` / streaming)](https://ai.google.dev/api/generate-content)
  * [Embeddings (`batchEmbedContents`, task types)](https://ai.google.dev/api/embeddings)
  * [Text generation guide](https://ai.google.dev/gemini-api/docs/text-generation)
+ * [Function calling](https://ai.google.dev/gemini-api/docs/function-calling)
 
 Test Fixtures
 -------------
