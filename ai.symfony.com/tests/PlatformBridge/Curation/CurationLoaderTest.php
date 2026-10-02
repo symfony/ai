@@ -139,7 +139,7 @@ final class CurationLoaderTest extends TestCase
             }
 
             [$prefix, $name] = explode(':', $curation->icon, 2);
-            $this->assertFileExists(\sprintf('%s/%s/%s.svg', self::ICONS, $prefix, $name), \sprintf('The icon of the "%s" bridge is missing, import it with "bin/console ux:icons:import %s".', $directory, $curation->icon));
+            $this->assertFileExists(\sprintf('%s/%s/%s.svg', self::ICONS, $prefix, $name), \sprintf('The icon of the "%s" bridge is missing, add the logo to assets/icons/brands or import the icon with "bin/console ux:icons:import %s".', $directory, $curation->icon));
         }
     }
 

@@ -27,7 +27,7 @@
                             </h1>
                             <p class="text-balance fs-5 mb-4 opacity-75">
                                 One PHP API for every model provider, inference platform and local runtime.
-                                Find the ones matching your needs: capabilities, data region, hosting, vendor lock-in.
+                                Find the ones matching your needs: capabilities, server location, hosting, vendor lock-in.
                             </p>
                             <ul class="platform-stats">
                                 <li><strong>{{ total }}</strong> bridges</li>
@@ -56,8 +56,25 @@
             </section>
         </div>
 
-        <section class="section-secondary py-5">
-            <div class="container" data-aos="fade-up">
+        {# the track holds the logos twice and slides by one copy, which loops seamlessly #}
+        <div class="platform-marquee">
+            <div class="platform-marquee-track">
+                {% for copy in [false, true] %}
+                    <ul class="platform-marquee-list" {% if copy %}aria-hidden="true"{% else %}aria-label="Platforms with a bridge"{% endif %}>
+                        {% for bridge in logos %}
+                            <li class="platform-marquee-item platform-logo">
+                                {{ platform_bridge_icon(bridge.icon, {width: 28, height: 28}) }}
+                                <span>{{ bridge.name }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </div>
+        </div>
+
+        <section class="section-secondary platform-bridges-section py-5">
+            {# outside of the Live Component, whose re-renders would reset the measured height #}
+            <div class="container" data-aos="fade-up" {{ stimulus_controller('sticky-offset', {property: '--platform-presets-height'}) }}>
                 <div class="mb-4">
                     <h2 class="ff-title fw-bold h3 mb-1 section-heading">Find your bridge</h2>
                     <p class="text-muted mb-0">Start from a need or combine the filters, the list narrows down as you go.</p>

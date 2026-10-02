@@ -67,6 +67,14 @@ final readonly class PlatformBridge
     }
 
     /**
+     * Whether the icon is the logo of the provider, see assets/icons/brands, rather than a generic icon.
+     */
+    public function hasLogo(): bool
+    {
+        return null !== $this->icon && str_starts_with($this->icon, 'brands:');
+    }
+
+    /**
      * The total number of downloads on Packagist, abbreviated, e.g. "9.8k", "734k" or "1.2M".
      */
     public function getFormattedDownloads(): ?string

@@ -3,9 +3,9 @@
 {#- Icons reference the sprite rendered once by the page, see App\Twig\PlatformBridgeIcons -#}
 <article{{ attributes.defaults({class: 'platform-card sf-ai-card sf-ai-card-hover sf-ai-card-glow h-100' ~ (bridge.classified ? '' : ' is-unclassified')}) }}>
     <div class="platform-card-header">
-        <span class="platform-card-logo cookbook-card-icon" aria-hidden="true">
+        <span class="platform-card-logo platform-logo" aria-hidden="true">
             {%- if bridge.icon -%}
-                {{ platform_bridge_icon(bridge.icon, {width: 22, height: 22}) }}
+                {{ platform_bridge_icon(bridge.icon, {width: 26, height: 26}) }}
             {%- else -%}
                 {{ bridge.name|slice(0, 2)|upper }}
             {%- endif -%}
@@ -28,7 +28,7 @@
     <dl class="platform-card-facts">
         <div><dt>Runs</dt><dd>{{ bridge.deployments|map(item => item.label)|join(' & ') }}</dd></div>
         <div><dt>Hosting</dt><dd>{{ bridge.hostings|map(item => item.label)|join(' & ') }}</dd></div>
-        <div><dt>Data region</dt><dd>{{ (bridge.regions|filter(item => 'worldwide' == item.value) is not empty ? 'Worldwide' : bridge.regions|map(item => item.label)|join(', '))|default('Not documented') }}</dd></div>
+        <div><dt>Server location</dt><dd>{{ (bridge.regions|filter(item => 'worldwide' == item.value) is not empty ? 'Worldwide' : bridge.regions|map(item => item.label)|join(', '))|default('Not documented') }}</dd></div>
         <div><dt>Models</dt><dd>{{ bridge.modelAccess ? bridge.modelAccess.label : 'Not documented' }}</dd></div>
     </dl>
     {%- endif %}
@@ -57,7 +57,7 @@
 
         <div class="platform-card-links">
             {%- if bridge.symfonyDocsUrl %}
-            <a href="{{ bridge.symfonyDocsUrl }}" target="_blank" rel="noopener noreferrer">Guide{{ platform_bridge_icon('tabler:arrow-up-right', {width: 14, height: 14}) }}</a>
+            <a href="{{ bridge.symfonyDocsUrl }}" target="_blank" rel="noopener noreferrer">Docs{{ platform_bridge_icon('tabler:arrow-up-right', {width: 14, height: 14}) }}</a>
             {%- endif %}
             {%- if bridge.websiteUrl %}
             <a href="{{ bridge.websiteUrl }}" target="_blank" rel="noopener noreferrer">Website{{ platform_bridge_icon('tabler:arrow-up-right', {width: 14, height: 14}) }}</a>

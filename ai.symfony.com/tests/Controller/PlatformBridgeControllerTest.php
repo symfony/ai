@@ -11,6 +11,7 @@
 
 namespace App\Tests\Controller;
 
+use App\PlatformBridge\PlatformBridge;
 use App\PlatformBridge\PlatformBridgeCatalog;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -31,6 +32,24 @@ final class PlatformBridgeControllerTest extends WebTestCase
         // the icons are rendered once, outside of the Live Component
         $this->assertCount(1, $crawler->filter('svg symbol#pb-icon-tabler-copy'));
         $this->assertCount(0, $crawler->filter('[data-controller~="live"] symbol'));
+        // the presets measured for the sticky bars, by a controller that re-renders cannot reset
+        $this->assertCount(1, $crawler->filter('[data-controller~="sticky-offset"] > [data-controller~="live"] .platform-presets[data-sticky-offset-target="source"]'));
+    }
+
+    public function testTheLogosOfTheProvidersScrollUnderTheHero()
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/bridges/platforms');
+
+        $logos = array_filter(static::getContainer()->get(PlatformBridgeCatalog::class)->getBridges(), static fn (PlatformBridge $bridge): bool => $bridge->hasLogo());
+        $lists = $crawler->filter('.platform-marquee-list');
+
+        $this->assertCount(2, $lists, 'The logos are repeated to loop seamlessly.');
+        $this->assertNull($lists->eq(0)->attr('aria-hidden'));
+        $this->assertSame('true', $lists->eq(1)->attr('aria-hidden'));
+        $this->assertCount(\count($logos), $lists->eq(0)->filter('li'));
+        $this->assertSame('OpenAI', trim($lists->eq(0)->filter('li')->first()->text()), 'The most downloaded bridges come first.');
+        $this->assertCount(0, $lists->eq(0)->filter('use[href="#pb-icon-tabler-database"]'), 'Generic icons are not logos.');
     }
 
     public function testFiltersAreReadFromTheQueryString()
@@ -45,7 +64,7 @@ final class PlatformBridgeControllerTest extends WebTestCase
         $this->assertNotContains('Anthropic', $names);
         $this->assertNotContains('Voyage AI', $names, 'Voyage does not chat.');
         // active filters follow the order of the facets, then the order of the query string
-        $this->assertSame(['Capabilities Embeddings', 'Capabilities Chat', 'Data region Europe'], $crawler->filter('.platform-chip')->each(static fn (Crawler $node): string => preg_replace('/\s+/', ' ', trim($node->text()))));
+        $this->assertSame(['Capabilities Embeddings', 'Capabilities Chat', 'Server location Europe'], $crawler->filter('.platform-chip')->each(static fn (Crawler $node): string => preg_replace('/\s+/', ' ', trim($node->text()))));
     }
 
     public function testRemovedFiltersOfOldLinksAreIgnored()

@@ -28,6 +28,7 @@ const COLOR_SHIFT_SELECTOR = [
     '.cookbook-filter',
     '.platform-preset',
     '.platform-filter',
+    '.platform-menu-toggle',
     '.logo-icon', '.logo-ai',
 ].join(', ');
 

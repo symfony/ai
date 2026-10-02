@@ -38,6 +38,10 @@ final class BridgeFilterTest extends TestCase
         $filter = new BridgeFilter(['kind' => ['local-runtime', 'model-provider']]);
 
         $this->assertSame(['Mistral', 'Ollama', 'OpenAI', 'Voyage'], $this->names($filter->apply($this->bridges())));
+
+        $filter = new BridgeFilter(['region' => ['asia', 'us']]);
+
+        $this->assertSame(['Ollama', 'OpenAI', 'Voyage'], $this->names($filter->apply($this->bridges())));
     }
 
     public function testFacetsAreCombined()
@@ -56,6 +60,12 @@ final class BridgeFilterTest extends TestCase
         $filter = new BridgeFilter(['capability' => ['chat', 'embeddings', 'speech-to-text']]);
 
         $this->assertSame(['OpenAI'], $this->names($filter->apply($this->bridges())));
+    }
+
+    public function testWhereABridgeRunsAndIsHostedMustAllBeSupported()
+    {
+        $this->assertSame(['Ollama'], $this->names((new BridgeFilter(['runs' => ['cloud', 'local']]))->apply($this->bridges())));
+        $this->assertSame(['Ollama'], $this->names((new BridgeFilter(['hosting' => ['saas', 'self-hosted']]))->apply($this->bridges())));
     }
 
     public function testSelfHostedBridgesMatchEveryRegion()
@@ -93,11 +103,11 @@ final class BridgeFilterTest extends TestCase
         $filter = new BridgeFilter(['runs' => ['cloud'], 'region' => ['us']]);
         $bridges = $this->bridges();
 
-        // counts of a facet ignore the selection of that facet, Ollama runs locally
-        $this->assertSame(['worldwide' => 1, 'us' => 2, 'europe' => 2, 'asia' => 0], $filter->count($bridges, Facet::Region));
-        // Ollama matches every region
-        $this->assertSame(['cloud' => 2, 'local' => 1], $filter->count($bridges, Facet::Deployment));
-        $this->assertSame(1, $filter->count($bridges, Facet::Capability)['chat']);
+        // counts of a facet of alternatives ignore the selection of that facet, Ollama matches every region
+        $this->assertSame(['worldwide' => 2, 'us' => 3, 'europe' => 3, 'asia' => 1], $filter->count($bridges, Facet::Region));
+        // counts of a facet requiring all the options include its selection, only Ollama runs both in the cloud and locally
+        $this->assertSame(['cloud' => 3, 'local' => 1], $filter->count($bridges, Facet::Deployment));
+        $this->assertSame(2, $filter->count($bridges, Facet::Capability)['chat']);
     }
 
     public function testCountsOfCapabilitiesIncludeTheSelectedOnes()
@@ -146,7 +156,7 @@ final class BridgeFilterTest extends TestCase
             ),
             new PlatformBridge(
                 directory: 'Ollama', slug: 'ollama', name: 'Ollama', summary: 'Open-weight models on your machine.', package: 'symfony/ai-ollama-platform', sourceUrl: 'https://github.com',
-                kind: Kind::LocalRuntime, deployments: [Deployment::Local], hostings: [Hosting::SelfHosted], regions: [Region::Anywhere],
+                kind: Kind::LocalRuntime, deployments: [Deployment::Local, Deployment::Cloud], hostings: [Hosting::SelfHosted, Hosting::Saas], regions: [Region::Anywhere],
                 capabilities: [Capability::Chat, Capability::Embeddings], modelAccess: ModelAccess::MultiVendor,
             ),
             new PlatformBridge(

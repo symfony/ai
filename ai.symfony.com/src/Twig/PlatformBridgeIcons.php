@@ -57,7 +57,8 @@ final readonly class PlatformBridgeIcons
             $symbols .= (string) preg_replace(['/^<svg\b/', '/<\/svg>$/'], ['<symbol id="'.self::id($name).'"', '</symbol>'], trim($svg));
         }
 
-        return '<svg xmlns="http://www.w3.org/2000/svg" class="d-none" aria-hidden="true">'.$symbols.'</svg>';
+        // hidden without display: none, which would keep the gradients of the logos from painting
+        return '<svg xmlns="http://www.w3.org/2000/svg" class="platform-icon-sprite" aria-hidden="true">'.$symbols.'</svg>';
     }
 
     /**

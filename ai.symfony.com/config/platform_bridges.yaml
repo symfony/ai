@@ -15,7 +15,8 @@
 #   capabilities    chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings,
 #                   speech-to-text, text-to-speech, image-generation, video-generation
 #   note            one short sentence, only when it tells something the rest does not
-#   website, icon, symfony_docs
+#   icon            brands:<name> for the logo of the provider, see assets/icons/brands, or any UX icon
+#   website, symfony_docs
 #
 # Capabilities summarize the model catalogs and model clients of each bridge: only list
 # what the bridge supports, not everything the provider offers. Regions must come from
@@ -55,6 +56,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, vision, embeddings]
         website: https://amazee.ai
+        icon: brands:amazee-ai
         note: Also works with any LiteLLM proxy you run.
 
     Anthropic:
@@ -67,7 +69,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision]
         website: https://www.anthropic.com
-        icon: simple-icons:anthropic
+        icon: brands:anthropic
         symfony_docs: components/platform/anthropic-server-tools
 
     Azure:
@@ -80,7 +82,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings, speech-to-text]
         website: https://azure.microsoft.com/en-us/products/ai-foundry
-        icon: simple-icons:microsoftazure
+        icon: brands:azure
 
     Bedrock:
         name: Amazon Bedrock
@@ -92,7 +94,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision]
         website: https://aws.amazon.com/bedrock/
-        icon: simple-icons:amazonwebservices
+        icon: brands:bedrock
         symfony_docs: components/platform/bedrock
 
     Cache:
@@ -110,6 +112,7 @@ bridges:
         model_access: single-vendor
         capabilities: [speech-to-text, text-to-speech]
         website: https://cartesia.ai
+        icon: brands:cartesia
 
     Cerebras:
         name: Cerebras
@@ -121,6 +124,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision]
         website: https://www.cerebras.ai
+        icon: brands:cerebras
 
     ClaudeCode:
         name: Claude Code
@@ -132,7 +136,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat]
         website: https://www.claude.com/product/claude-code
-        icon: simple-icons:claudecode
+        icon: brands:claude-code
         note: Needs the claude CLI on the machine running PHP.
 
     Codex:
@@ -145,7 +149,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat]
         website: https://developers.openai.com/codex
-        icon: simple-icons:openai
+        icon: brands:codex
         note: Needs the codex CLI on the machine running PHP.
 
     Cohere:
@@ -158,6 +162,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings, speech-to-text]
         website: https://cohere.com
+        icon: brands:cohere
 
     Decart:
         name: Decart
@@ -169,6 +174,7 @@ bridges:
         model_access: single-vendor
         capabilities: [image-generation, video-generation]
         website: https://decart.ai
+        icon: brands:decart
 
     Deepgram:
         name: Deepgram
@@ -180,7 +186,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [speech-to-text, text-to-speech]
         website: https://deepgram.com
-        icon: simple-icons:deepgram
+        icon: brands:deepgram
         symfony_docs: components/platform/deepgram
 
     DeepSeek:
@@ -193,7 +199,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision]
         website: https://www.deepseek.com
-        icon: simple-icons:deepseek
+        icon: brands:deepseek
 
     DockerModelRunner:
         name: Docker Model Runner
@@ -205,7 +211,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, embeddings]
         website: https://docs.docker.com/ai/model-runner/
-        icon: simple-icons:docker
+        icon: brands:docker
 
     EdenAi:
         name: Eden AI
@@ -217,6 +223,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, vision, embeddings, speech-to-text, text-to-speech, image-generation]
         website: https://www.edenai.co
+        icon: brands:eden-ai
         symfony_docs: components/platform/edenai
 
     ElevenLabs:
@@ -229,7 +236,7 @@ bridges:
         model_access: single-vendor
         capabilities: [speech-to-text, text-to-speech]
         website: https://elevenlabs.io
-        icon: simple-icons:elevenlabs
+        icon: brands:elevenlabs
 
     Failover:
         summary: Chains several platforms and switches to the next one when a call fails or a rate limit is hit.
@@ -246,6 +253,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, vision, embeddings, image-generation]
         website: https://fireworks.ai
+        icon: brands:fireworks
 
     Gemini:
         name: Google Gemini
@@ -257,7 +265,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, text-to-speech, image-generation]
         website: https://ai.google.dev
-        icon: simple-icons:googlegemini
+        icon: brands:gemini
         symfony_docs: components/platform/gemini-server-tools
 
     Generic:
@@ -293,7 +301,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, embeddings, speech-to-text, image-generation]
         website: https://huggingface.co
-        icon: simple-icons:huggingface
+        icon: brands:hugging-face
 
     LmStudio:
         name: LM Studio
@@ -305,7 +313,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, vision, embeddings]
         website: https://lmstudio.ai
-        icon: simple-icons:lmstudio
+        icon: brands:lm-studio
 
     Meta:
         name: Meta Llama
@@ -314,7 +322,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, vision]
         website: https://www.llama.com
-        icon: simple-icons:meta
+        icon: brands:meta
 
     MiniMax:
         name: MiniMax
@@ -326,7 +334,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, text-to-speech, image-generation, video-generation]
         website: https://www.minimax.io
-        icon: simple-icons:minimax
+        icon: brands:minimax
 
     Mistral:
         name: Mistral AI
@@ -338,7 +346,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings, speech-to-text, text-to-speech]
         website: https://mistral.ai
-        icon: simple-icons:mistralai
+        icon: brands:mistral
 
     ModelsDev:
         name: models.dev
@@ -360,7 +368,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings]
         website: https://ollama.com
-        icon: simple-icons:ollama
+        icon: brands:ollama
         note: Also runs Ollama Cloud models with an API key.
 
     OpenAi:
@@ -373,7 +381,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, speech-to-text, text-to-speech, image-generation]
         website: https://openai.com/api/
-        icon: simple-icons:openai
+        icon: brands:openai
         symfony_docs: components/platform/openai-server-tools
 
     OpenResponses:
@@ -398,7 +406,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, text-to-speech, image-generation]
         website: https://openrouter.ai
-        icon: simple-icons:openrouter
+        icon: brands:openrouter
 
     Ovh:
         name: OVHcloud AI Endpoints
@@ -410,7 +418,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, vision, embeddings]
         website: https://www.ovhcloud.com/en/public-cloud/ai-endpoints/
-        icon: simple-icons:ovh
+        icon: brands:ovh
 
     Perplexity:
         name: Perplexity
@@ -422,7 +430,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, structured-output, reasoning, web-search, vision]
         website: https://www.perplexity.ai
-        icon: simple-icons:perplexity
+        icon: brands:perplexity
         note: Perplexity announced the end of its Sonar API, set for September 27, 2026.
 
     Replicate:
@@ -435,7 +443,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat]
         website: https://replicate.com
-        icon: simple-icons:replicate
+        icon: brands:replicate
 
     Scaleway:
         name: Scaleway Generative APIs
@@ -447,7 +455,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, vision, embeddings]
         website: https://www.scaleway.com/en/generative-apis/
-        icon: simple-icons:scaleway
+        icon: brands:scaleway
 
     Together:
         name: Together AI
@@ -459,6 +467,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, embeddings, speech-to-text, text-to-speech, image-generation]
         website: https://www.together.ai
+        icon: brands:together
 
     TransformersPhp:
         name: TransformersPHP
@@ -495,6 +504,7 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, reasoning, vision, embeddings, speech-to-text, text-to-speech, image-generation, video-generation]
         website: https://venice.ai
+        icon: brands:venice
         symfony_docs: components/platform/venice
 
     VertexAi:
@@ -507,7 +517,7 @@ bridges:
         model_access: single-vendor
         capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision, embeddings, image-generation]
         website: https://cloud.google.com/vertex-ai
-        icon: simple-icons:googlecloud
+        icon: brands:vertex-ai
         symfony_docs: components/platform/vertexai
 
     Voyage:
@@ -520,4 +530,5 @@ bridges:
         model_access: single-vendor
         capabilities: [embeddings]
         website: https://www.voyageai.com
+        icon: brands:voyage
         symfony_docs: components/platform/voyage

@@ -34,7 +34,7 @@ vendor/bin/phpunit
 
 - **Routes**: `DefaultController` serves `/` rendering `homepage.html.twig`, `CookbookController` the cookbook articles and `PlatformBridgeController` the platform bridges page
 - **Asset Mapper** (not Webpack): Frontend assets managed via Symfony's importmap system (`importmap.php`). No npm/node required.
-- **Stimulus controllers** in `assets/controllers/`: `typed_controller.js` (typing animation for hero code example), `hero_slider_controller.js`, `feature_tabs_controller.js`, `clipboard_controller.js`, `csrf_protection_controller.js`
+- **Stimulus controllers** in `assets/controllers/`: `typed_controller.js` (typing animation for hero code example), `hero_slider_controller.js`, `feature_tabs_controller.js`, `clipboard_controller.js`, `csrf_protection_controller.js`, `search_clear_controller.js` and `sticky_offset_controller.js` (platform bridges page)
 - **Bootstrap 5** for layout/styling, with custom CSS variables in `assets/styles/app.css` supporting light/dark theme toggle
 - **Templates**: `templates/base.html.twig` (layout), `templates/homepage.html.twig` (page content), `templates/_header.html.twig` (navigation partial)
 
@@ -44,6 +44,7 @@ vendor/bin/phpunit
 
 - `var/share/platform_bridges.json`: the bridges listed in `splitsh.json` on GitHub and their downloads on Packagist, written every morning by the `app:platform-bridges:update` cron (see `.upsun/config.yaml`). Run the command once locally to get download counts; without the file, the bridges come from the curation only.
 - `config/platform_bridges.yaml` classifies each bridge (kind, regions, hosting, capabilities...). Add an entry for every new bridge, only with facts documented by the provider; a test checks that every bridge of `splitsh.json` has one.
+- `assets/icons/brands/` holds the logos of the providers, referenced as `brands:<name>` in the curation, see its README for their sources and licences.
 
 ## Key Files
 

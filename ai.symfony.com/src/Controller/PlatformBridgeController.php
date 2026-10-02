@@ -11,6 +11,7 @@
 
 namespace App\Controller;
 
+use App\PlatformBridge\Filter\Sort;
 use App\PlatformBridge\PlatformBridge;
 use App\PlatformBridge\PlatformBridgeCatalog;
 use App\PlatformBridge\Taxonomy\Deployment;
@@ -36,6 +37,7 @@ final class PlatformBridgeController extends AbstractController
             'total' => \count($bridges),
             'local' => \count(array_filter($bridges, static fn (PlatformBridge $bridge): bool => \in_array(Deployment::Local, $bridge->deployments, true))),
             'agnostic' => \count(array_filter($bridges, static fn (PlatformBridge $bridge): bool => ModelAccess::MultiVendor === $bridge->modelAccess)),
+            'logos' => array_values(array_filter(Sort::Popularity->apply($bridges), static fn (PlatformBridge $bridge): bool => $bridge->hasLogo())),
         ]);
     }
 }

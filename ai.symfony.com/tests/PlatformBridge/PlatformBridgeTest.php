@@ -40,4 +40,11 @@ final class PlatformBridgeTest extends TestCase
 
         $this->assertSame($expected, $bridge->getFormattedDownloads());
     }
+
+    public function testOnlyBrandIconsAreLogos()
+    {
+        $this->assertTrue((new PlatformBridge('OpenAi', 'open-ai', 'OpenAI', '', 'symfony/ai-open-ai-platform', 'https://github.com', icon: 'brands:openai'))->hasLogo());
+        $this->assertFalse((new PlatformBridge('Cache', 'cache', 'Cache', '', 'symfony/ai-cache-platform', 'https://github.com', icon: 'tabler:database'))->hasLogo());
+        $this->assertFalse((new PlatformBridge('Albert', 'albert', 'Albert', '', 'symfony/ai-albert-platform', 'https://github.com'))->hasLogo());
+    }
 }

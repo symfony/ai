@@ -170,11 +170,6 @@ final class PlatformBridgeList
         return $this->getFilter()->isSelected($facet, $value);
     }
 
-    public function getSelectedCount(Facet $facet): int
-    {
-        return \count($this->getFilter()->getSelected($facet));
-    }
-
     /**
      * @return list<array{facet: Facet, option: Option}>
      */

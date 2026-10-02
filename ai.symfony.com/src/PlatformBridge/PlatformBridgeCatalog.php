@@ -124,8 +124,8 @@ final class PlatformBridgeCatalog
         return new PlatformBridge(
             directory: $directory,
             slug: $slug,
-            name: $curation?->name ?? $directory,
-            summary: $curation?->summary ?? '',
+            name: $curation->name ?? $directory,
+            summary: $curation->summary ?? '',
             package: $data['package'] ?? 'symfony/ai-'.$slug.'-platform',
             sourceUrl: 'https://github.com/symfony/ai/tree/main/src/platform/src/Bridge/'.$directory,
             kind: $curation?->kind,
