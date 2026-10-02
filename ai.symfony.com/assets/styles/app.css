@@ -152,6 +152,9 @@ section.section-secondary {
 .feature-tab.active,
 .cookbook-card-icon,
 .cookbook-filter.is-active,
+.platform-preset.is-active,
+.platform-filter.is-active,
+.platform-menu-toggle.is-active,
 .logo-icon, .logo-ai {
     animation: colorShift 60s ease-in-out infinite;
 }
@@ -162,6 +165,9 @@ section.section-secondary {
     .feature-tab.active,
     .cookbook-card-icon,
     .cookbook-filter.is-active,
+    .platform-preset.is-active,
+    .platform-filter.is-active,
+    .platform-menu-toggle.is-active,
     .logo-icon, .logo-ai {
         animation: none;
     }
@@ -980,3 +986,791 @@ header {
     margin-bottom: 0.25rem;
 }
 
+
+/* Platform bridges page */
+.platform-hero-breadcrumb a {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.platform-hero-breadcrumb a:hover {
+    color: #fff;
+}
+
+.platform-hero-breadcrumb li:last-child {
+    color: #fff;
+}
+
+/* Hero figures, on the glass recipe of the call to action cards */
+.platform-stats {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+}
+
+.platform-stats li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    font-size: 0.95rem;
+}
+
+.platform-stats strong {
+    font-family: var(--font-family-title), sans-serif;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* Logos, see assets/icons/brands: the brand colors too dark for the dark theme follow the text color */
+.platform-icon-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+[data-bs-theme="dark"] .platform-logo {
+    --platform-logo-dark-fill: currentColor;
+}
+
+/* Logos band, the track slides by one of its two copies of the logos */
+.platform-marquee {
+    overflow: hidden;
+    padding: 1.5rem 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.platform-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: platformMarquee 120s linear infinite;
+}
+
+.platform-marquee:hover .platform-marquee-track {
+    animation-play-state: paused;
+}
+
+.platform-marquee-list {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    margin: 0;
+    /* the trailing gap, so that both copies have the same width */
+    padding: 0 2.5rem 0 0;
+    list-style: none;
+}
+
+.platform-marquee-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.platform-marquee-item svg {
+    flex-shrink: 0;
+}
+
+@keyframes platformMarquee {
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .platform-marquee {
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+
+    .platform-marquee-track {
+        width: auto;
+        animation: none;
+    }
+
+    .platform-marquee-list {
+        flex-wrap: wrap;
+        justify-content: center;
+        row-gap: 1rem;
+        padding: 0 1rem;
+    }
+
+    .platform-marquee-list[aria-hidden="true"] {
+        display: none;
+    }
+}
+
+/* Common needs, on the feature tabs recipe */
+.platform-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 767.98px) {
+    .platform-presets {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: 0.25rem 0 0.75rem;
+    }
+
+    .platform-presets > * {
+        flex-shrink: 0;
+    }
+}
+
+.platform-preset {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.55rem 1.1rem;
+    background: var(--sf-ai-card-bg);
+    color: var(--sf-ai-text-color);
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.platform-preset:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    color: var(--sf-ai-text-color);
+    text-decoration: none;
+}
+
+.platform-preset svg {
+    opacity: 0.7;
+}
+
+.platform-preset.is-active {
+    background-color: var(--sf-ai-brand-1);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(90, 85, 165, 0.4);
+}
+
+.platform-preset.is-active svg {
+    opacity: 1;
+}
+
+/*
+ * On large screens, the presets and the search block stick under the site header. The height
+ * of the presets, which wrap on some widths, is measured by the sticky-offset controller. The
+ * section has a flat background, which the bars share to stay invisible while the cards slide
+ * under them.
+ */
+section.platform-bridges-section,
+[data-bs-theme="dark"] section.platform-bridges-section {
+    background: var(--sf-ai-bg-secondary);
+}
+
+@media (min-width: 992px) {
+    .platform-bridges {
+        /* the height of the sticky site header, as scroll-padding-top on html */
+        --platform-header-height: 77px;
+        --platform-sticky-top: calc(var(--platform-header-height) + var(--platform-presets-height, 3.75rem));
+    }
+
+    .platform-presets,
+    .platform-toolbar {
+        position: sticky;
+        padding: 0.75rem 0;
+        background: var(--sf-ai-bg-secondary);
+    }
+
+    /* the negative margins compensate the paddings, which keep the cards out of sight once stuck */
+    .platform-presets {
+        top: var(--platform-header-height);
+        z-index: 4;
+        margin: -0.75rem 0 1.25rem;
+    }
+
+    /* 1px under the presets, so that no card shows through the seam of their fractional edges */
+    .platform-toolbar {
+        top: calc(var(--platform-sticky-top) - 1px);
+        z-index: 3;
+        margin: -0.75rem 0 0.5rem;
+    }
+}
+
+/* Options, one per row: icon, label and number of bridges */
+.platform-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.platform-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: none;
+    color: var(--sf-ai-text-color);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.platform-filter svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.platform-filter:hover:not(:disabled) {
+    background: var(--sf-ai-bg-secondary);
+}
+
+.platform-filter.is-active {
+    background-color: var(--sf-ai-brand-1);
+    color: #fff;
+}
+
+.platform-filter.is-active svg {
+    opacity: 1;
+}
+
+.platform-filter:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.platform-filter-count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.6;
+}
+
+.platform-filter.is-active .platform-filter-count {
+    color: #fff;
+    opacity: 0.85;
+}
+
+/* Active filters, on the cookbook filters recipe */
+.platform-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.1;
+    padding: 0.4rem 0.75rem;
+    border-radius: 2rem;
+    border: 1px solid var(--sf-ai-card-border);
+    background: var(--sf-ai-card-bg);
+    color: var(--sf-ai-text-color);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.platform-chip:hover {
+    border-color: var(--sf-ai-link-color);
+}
+
+.platform-clear {
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--sf-ai-link-color);
+    cursor: pointer;
+}
+
+.platform-clear:hover {
+    text-decoration: underline;
+}
+
+/* Search block: a card, whose rows share the same left edge */
+.platform-toolbar {
+    margin-bottom: 1rem;
+}
+
+.platform-bar {
+    border: 1px solid var(--sf-ai-card-border);
+    border-radius: 1rem;
+    background: var(--sf-ai-card-bg);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -20px rgba(15, 23, 42, 0.25);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.platform-bar:has(.platform-search input:focus) {
+    border-color: var(--sf-ai-link-color);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--sf-ai-link-color) 18%, transparent);
+}
+
+.platform-bar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 3.25rem;
+    padding: 0.375rem 0.5rem;
+}
+
+.platform-bar-row + .platform-bar-row {
+    border-top: 1px solid var(--sf-ai-card-border);
+}
+
+/* the icon sits where the labels of the buttons below start: 0.5rem of row and 0.75rem of button */
+.platform-search {
+    position: relative;
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+
+.platform-search > svg {
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.platform-search input {
+    width: 100%;
+    height: 2.5rem;
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0 2.25rem 0 2.6rem;
+    border: 0;
+    background: none;
+    color: var(--sf-ai-text-color);
+}
+
+.platform-search input:focus {
+    outline: none;
+}
+
+.platform-search input::placeholder {
+    color: var(--bs-secondary-color);
+}
+
+/* the clear button below replaces the native one, which not every browser shows */
+.platform-search input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.platform-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--sf-ai-text-color);
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.platform-search-clear:hover {
+    opacity: 1;
+    background: var(--sf-ai-bg-secondary);
+}
+
+.platform-search input:placeholder-shown + .platform-search-clear {
+    display: none;
+}
+
+.platform-results {
+    margin: 0;
+    padding: 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--bs-secondary-color);
+    white-space: nowrap;
+}
+
+.platform-results strong {
+    font-family: var(--font-family-title), sans-serif;
+    font-size: 1rem;
+    color: var(--sf-ai-text-color);
+}
+
+.platform-sort {
+    padding-left: 0.25rem;
+    border-left: 1px solid var(--sf-ai-card-border);
+}
+
+.platform-sort-label {
+    font-weight: 400;
+    color: var(--bs-secondary-color);
+}
+
+@media (max-width: 575.98px) {
+    .platform-search {
+        flex-basis: 100%;
+    }
+
+    .platform-results {
+        margin-right: auto;
+    }
+
+    .platform-sort {
+        border-left: 0;
+    }
+}
+
+/* Buttons of the search block, which open the filter and sort menus */
+.platform-bar-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: 0.6rem;
+    background: none;
+    color: var(--sf-ai-text-color);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.platform-bar-button:not(.is-active):hover,
+.platform-bar-button:not(.is-active)[aria-expanded="true"] {
+    background: var(--sf-ai-bg-secondary);
+}
+
+.platform-bar-button:focus-visible {
+    outline: 2px solid var(--sf-ai-link-color);
+    outline-offset: 1px;
+}
+
+.platform-bar-chevron {
+    opacity: 0.55;
+    transition: transform 0.15s ease;
+}
+
+.platform-bar-button[aria-expanded="true"] .platform-bar-chevron {
+    transform: rotate(180deg);
+}
+
+.platform-menu-toggle.is-active {
+    background-color: var(--sf-ai-brand-1);
+    color: #fff;
+}
+
+.platform-menu-toggle.is-active .platform-bar-chevron {
+    opacity: 0.9;
+}
+
+.platform-menu {
+    min-width: 15rem;
+    padding: 0.4rem;
+    border: 1px solid var(--sf-ai-card-border);
+    border-radius: 1rem;
+    background: var(--sf-ai-card-bg);
+    box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.25);
+}
+
+.platform-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    font: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: none;
+    color: var(--sf-ai-text-color);
+    cursor: pointer;
+}
+
+.platform-menu-item:hover {
+    background: var(--sf-ai-bg-secondary);
+}
+
+.platform-menu-item[aria-pressed="true"] {
+    font-weight: 600;
+}
+
+.platform-menu-item svg {
+    color: var(--sf-ai-link-color);
+}
+
+.platform-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.platform-active-filters .platform-clear {
+    margin-left: 0.25rem;
+}
+
+.platform-chip-facet {
+    opacity: 0.55;
+}
+
+.platform-grid {
+    transition: opacity 0.15s ease;
+}
+
+.platform-grid.is-loading {
+    opacity: 0.5;
+}
+
+/* Cards, on the cookbook cards recipe */
+.platform-card {
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+.platform-card.is-unclassified {
+    border-style: dashed;
+}
+
+.platform-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+/* Logo tile, on the logo pills of the home page */
+.platform-card-logo {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sf-ai-card-border);
+    border-radius: 0.75rem;
+    background: var(--sf-ai-logo-pill-bg);
+    color: var(--sf-ai-logo-pill-color);
+    font-family: var(--font-family-title), sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+}
+
+.platform-card-heading {
+    min-width: 0;
+}
+
+.platform-card-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+.platform-card-kind {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    opacity: 0.6;
+    margin: 0;
+}
+
+.platform-card-downloads {
+    white-space: nowrap;
+}
+
+.platform-card-summary {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.platform-card-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem 1rem;
+    margin: 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sf-ai-card-border);
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.platform-card-facts dt {
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 0.15rem;
+}
+
+.platform-card-facts dd {
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Capabilities, outlined to stay discreet */
+.platform-card-capabilities {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding: 0;
+    margin: 0;
+}
+
+.platform-card-capabilities li {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.15em 0.55em;
+    border-radius: 0.375rem;
+    border: 1px solid var(--bs-border-color);
+    color: var(--bs-secondary-color);
+}
+
+/* Notes, on the cookbook callout recipe */
+.platform-card-note {
+    display: flex;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border-left: 3px solid var(--sf-ai-accent);
+    border-radius: 0 0.75rem 0.75rem 0;
+    background: var(--sf-ai-bg-secondary);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.platform-card-note svg {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    color: var(--sf-ai-accent);
+}
+
+.platform-card-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Install command, on the terminal and copy button recipes */
+.platform-card-install {
+    position: relative;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #151028;
+    box-shadow: 0 8px 32px rgba(127, 91, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.platform-card-install code {
+    display: block;
+    font-family: JetBrainsMono, ui-monospace, monospace;
+    font-size: 0.72rem;
+    line-height: 1.7;
+    color: oklch(87% 0 0);
+}
+
+.platform-card-prompt {
+    color: #8b949e;
+}
+
+.platform-card-package {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.platform-copy {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    display: inline-flex;
+    padding: 0.35rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.platform-copy:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.platform-copy .platform-copy-done,
+.platform-copy.copied .platform-copy-idle {
+    display: none;
+}
+
+.platform-copy.copied .platform-copy-done {
+    display: inline;
+    color: #34d399;
+}
+
+/* Links, on the "See all models" recipe of the homepage bridge cards */
+.platform-card-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.platform-card-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.platform-empty {
+    align-items: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.platform-source {
+    display: flex;
+    gap: 0.5rem;
+    margin: 2rem 0 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.platform-source svg {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+
+.platform-source a {
+    text-decoration: underline;
+}

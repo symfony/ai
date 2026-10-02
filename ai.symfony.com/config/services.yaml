@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # written every morning by bin/console app:platform-bridges:update, var/share is a persistent mount
+    platform_bridges.data_path: '%kernel.project_dir%/var/share/platform_bridges.json'
 
 services:
     # default configuration for services in *this* file
@@ -14,6 +16,8 @@ services:
             $projectDir: '%kernel.project_dir%'
             $manifestPath: '%kernel.project_dir%/config/cookbook.json'
             $contentDir: '%kernel.project_dir%/templates/cookbook/content'
+            $dataPath: '%platform_bridges.data_path%'
+            $curationPath: '%kernel.project_dir%/config/platform_bridges.yaml'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -22,3 +26,7 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@test:
+    parameters:
+        platform_bridges.data_path: '%kernel.project_dir%/tests/fixtures/platform_bridges.json'
