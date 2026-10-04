@@ -13,8 +13,10 @@ namespace Symfony\AI\Platform\Tests\Contract\Normalizer;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolArray;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolException;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolObjectFloat;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Contract\Normalizer\ToolNormalizer;
@@ -118,6 +120,102 @@ class ToolNormalizerTest extends TestCase
                             ],
                         ],
                         'required' => ['text'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'array params' => [
+            new Tool(
+                new ExecutionReference(ToolArray::class),
+                'tool_array',
+                'A tool with array parameters',
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'urls' => [
+                            'type' => 'array',
+                            'description' => 'The URLs given to the tool',
+                            'items' => ['type' => 'string'],
+                        ],
+                        'ids' => [
+                            'type' => 'array',
+                            'description' => 'The IDs given to the tool',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    'required' => ['urls', 'ids'],
+                    'additionalProperties' => false,
+                ],
+            ),
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'tool_array',
+                    'description' => 'A tool with array parameters',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'urls' => [
+                                'type' => 'array',
+                                'description' => 'The URLs given to the tool',
+                                'items' => ['type' => 'string'],
+                            ],
+                            'ids' => [
+                                'type' => 'array',
+                                'description' => 'The IDs given to the tool',
+                                'items' => ['type' => 'integer'],
+                            ],
+                        ],
+                        'required' => ['urls', 'ids'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+            ],
+        ];
+
+        yield 'object param' => [
+            new Tool(
+                new ExecutionReference(ToolObjectFloat::class),
+                'tool_object_float',
+                'A tool with object parameter with float property',
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'person' => [
+                            'type' => 'object',
+                            'description' => 'The person given to the tool',
+                            'properties' => [
+                                'height' => ['type' => 'number'],
+                            ],
+                            'required' => ['height'],
+                            'additionalProperties' => false,
+                        ],
+                    ],
+                    'required' => ['person'],
+                    'additionalProperties' => false,
+                ],
+            ),
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'tool_object_float',
+                    'description' => 'A tool with object parameter with float property',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'person' => [
+                                'type' => 'object',
+                                'description' => 'The person given to the tool',
+                                'properties' => [
+                                    'height' => ['type' => 'number'],
+                                ],
+                                'required' => ['height'],
+                                'additionalProperties' => false,
+                            ],
+                        ],
+                        'required' => ['person'],
                         'additionalProperties' => false,
                     ],
                 ],
