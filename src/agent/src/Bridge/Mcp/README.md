@@ -12,7 +12,10 @@ turns the server's tool list into `Symfony\AI\Platform\Tool\Tool` definitions an
 forwards every call, without reflecting on them the way local `#[AsTool]` services
 are handled. Tool names are prefixed with the server's short name — a `read_file`
 tool on a server named `filesystem` becomes `filesystem_read_file` — so several
-servers can be attached to the same agent without their names colliding.
+servers can be attached to the same agent without their names colliding. A tool's
+MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`)
+reach `Tool::getMetadata()` under their own spec field names, so a listener can decide
+things like whether a call needs approval without asking the server again.
 
 Standalone, a toolset is reached through the official `mcp/sdk` client:
 
