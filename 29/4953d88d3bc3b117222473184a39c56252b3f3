@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-09-28T18:51:19Z
+
+Related: #1747 covers similar ground (a `RecoverableExceptionInterface`, making `RateLimitExceededException` recoverable), but as part of a much broader exception taxonomy rewrite. It's been a draft since March, stalled since April on an open design question about whether platform-level recoverable/unrecoverable classification is the right call at all, and it predates `ServerException` so it doesn't cover that one.
+
+This PR is narrower on purpose: one small interface, applied to the two exceptions that are already undocumented-transient today, no renames or BC breaks. Flagging the overlap so it's visible during review, whichever direction is preferred.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-09-30T08:07:43Z
+
+Are you planning to revisit #1747 step-by-step? maybe easier to go per case than the entire set :thinking:
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-01T19:00:04Z
+
+Yes, that's the idea. #2624 is a first step. Going case by case, like this one, seems more tractable than tackling the whole taxonomy in one PR.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-04T20:06:32Z
+
+Yes, great idea - thanks for taking care! :pray:
