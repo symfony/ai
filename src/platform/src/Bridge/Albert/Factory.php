@@ -50,7 +50,7 @@ final class Factory
 
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        // The completions result converter is Albert's own, to expose the carbon footprint it
+        // The completions result converter is Albert's own, to expose the environmental impacts it
         // reports alongside the token usage; everything else follows the OpenAI-compatible schema.
         return new Provider(
             $name,

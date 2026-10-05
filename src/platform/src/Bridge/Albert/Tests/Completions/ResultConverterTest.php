@@ -23,25 +23,25 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 final class ResultConverterTest extends TestCase
 {
-    private const CARBON = [
-        'kWh' => ['min' => 5.7095659415205885e-06, 'max' => 5.7095659415205885e-06],
-        'kgCO2eq' => ['min' => 4.5809521528648614e-07, 'max' => 4.5809521528648614e-07],
+    private const IMPACTS = [
+        'kWh' => 5.7095659415205885e-06,
+        'kgCO2eq' => 4.5809521528648614e-07,
     ];
 
-    public function testCarbonFootprintIsExposedAsResultMetadata()
+    public function testImpactsAreExposedAsResultMetadata()
     {
         $result = (new ResultConverter())->convert(new InMemoryRawResult([
             'choices' => [
                 ['message' => ['role' => 'assistant', 'content' => 'Bonjour'], 'finish_reason' => 'stop'],
             ],
-            'usage' => ['prompt_tokens' => 7, 'completion_tokens' => 4, 'total_tokens' => 11, 'carbon' => self::CARBON],
+            'usage' => ['prompt_tokens' => 7, 'completion_tokens' => 4, 'total_tokens' => 11, 'impacts' => self::IMPACTS],
         ], [], $this->httpResponseStub()));
 
         $this->assertInstanceOf(TextResult::class, $result);
-        $this->assertSame(self::CARBON, $result->getMetadata()->get('carbon'));
+        $this->assertSame(self::IMPACTS, $result->getMetadata()->get('impacts'));
     }
 
-    public function testResultMetadataHasNoCarbonWhenNotReported()
+    public function testResultMetadataHasNoImpactsWhenNotReported()
     {
         $result = (new ResultConverter())->convert(new InMemoryRawResult([
             'choices' => [
@@ -50,10 +50,10 @@ final class ResultConverterTest extends TestCase
             'usage' => ['prompt_tokens' => 7, 'completion_tokens' => 4, 'total_tokens' => 11],
         ], [], $this->httpResponseStub()));
 
-        $this->assertNull($result->getMetadata()->get('carbon'));
+        $this->assertNull($result->getMetadata()->get('impacts'));
     }
 
-    public function testStreamedCarbonFootprintIsYieldedAsMetadataDelta()
+    public function testStreamedImpactsAreYieldedAsMetadataDelta()
     {
         $result = (new ResultConverter())->convert($this->streamedRawResult(), ['stream' => true]);
 
@@ -61,14 +61,14 @@ final class ResultConverterTest extends TestCase
 
         $metadataDeltas = array_values(array_filter(
             iterator_to_array($result->getContent()),
-            static fn (DeltaInterface $delta) => $delta instanceof MetadataDelta && 'carbon' === $delta->getKey(),
+            static fn (DeltaInterface $delta) => $delta instanceof MetadataDelta && 'impacts' === $delta->getKey(),
         ));
 
         $this->assertCount(1, $metadataDeltas);
-        $this->assertSame(self::CARBON, $metadataDeltas[0]->getValue());
+        $this->assertSame(self::IMPACTS, $metadataDeltas[0]->getValue());
     }
 
-    public function testStreamedCarbonFootprintIsPromotedToResultMetadata()
+    public function testStreamedImpactsArePromotedToResultMetadata()
     {
         $deferredResult = new DeferredResult(new ResultConverter(), $this->streamedRawResult(), ['stream' => true]);
 
@@ -76,7 +76,7 @@ final class ResultConverterTest extends TestCase
             $this->assertNotInstanceOf(MetadataDelta::class, $delta);
         }
 
-        $this->assertSame(self::CARBON, $deferredResult->getMetadata()->get('carbon'));
+        $this->assertSame(self::IMPACTS, $deferredResult->getMetadata()->get('impacts'));
     }
 
     public function testOnlyTheLastStreamedUsageIsReported()
@@ -101,7 +101,7 @@ final class ResultConverterTest extends TestCase
             // Albert appends its own usage-only chunk, carrying the footprint, after the one of
             // the inference server it routes to
             ['choices' => [], 'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 4, 'total_tokens' => 14]],
-            ['choices' => [], 'usage' => ['prompt_tokens' => 7, 'completion_tokens' => 4, 'total_tokens' => 11, 'carbon' => self::CARBON]],
+            ['choices' => [], 'usage' => ['prompt_tokens' => 7, 'completion_tokens' => 4, 'total_tokens' => 11, 'impacts' => self::IMPACTS]],
         ], $this->httpResponseStub());
     }
 

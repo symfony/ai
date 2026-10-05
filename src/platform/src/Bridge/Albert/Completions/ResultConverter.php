@@ -20,11 +20,11 @@ use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
- * Albert reports the environmental footprint of a call next to the token usage, as an estimated
- * energy consumption ("kWh") and greenhouse gas emission ("kgCO2eq") range. It is exposed as the
- * "carbon" result metadata, in the shape the API returns it:
+ * Albert reports the environmental impacts of a call next to the token usage, as estimated
+ * energy consumption ("kWh") and greenhouse gas emission ("kgCO2eq"). It is exposed as the
+ * "impacts" result metadata, in the shape the API returns it:
  *
- *     ['kWh' => ['min' => float, 'max' => float], 'kgCO2eq' => ['min' => float, 'max' => float]]
+ *     ['kWh' => float, 'kgCO2eq' => float]
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -39,8 +39,8 @@ final class ResultConverter extends GenericResultConverter
             return $converted;
         }
 
-        if (null !== $carbon = $result->getData()['usage']['carbon'] ?? null) {
-            $converted->getMetadata()->add('carbon', $carbon);
+        if (null !== $impacts = $result->getData()['usage']['impacts'] ?? null) {
+            $converted->getMetadata()->add('impacts', $impacts);
         }
 
         return $converted;
@@ -76,8 +76,8 @@ final class ResultConverter extends GenericResultConverter
 
     protected function yieldChunkMetadata(array $data): \Generator
     {
-        if (isset($data['usage']['carbon'])) {
-            yield new MetadataDelta('carbon', $data['usage']['carbon']);
+        if (isset($data['usage']['impacts'])) {
+            yield new MetadataDelta('impacts', $data['usage']['impacts']);
         }
     }
 }

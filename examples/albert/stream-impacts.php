@@ -38,10 +38,10 @@ echo \PHP_EOL.\PHP_EOL;
 print_token_usage($result->getMetadata()->get('token_usage'));
 
 // Next to the token usage, Albert reports the environmental footprint of the call as an
-// estimated range of energy consumption and greenhouse gas emission.
-$carbon = $result->getMetadata()->get('carbon');
+// estimated energy consumption and greenhouse gas emission.
+$impacts = $result->getMetadata()->get('impacts');
 
 echo \PHP_EOL;
-echo 'Carbon footprint'.\PHP_EOL;
-echo sprintf('  Energy:    %.3e - %.3e kWh', $carbon['kWh']['min'], $carbon['kWh']['max']).\PHP_EOL;
-echo sprintf('  Emission:  %.3e - %.3e kgCO2eq', $carbon['kgCO2eq']['min'], $carbon['kgCO2eq']['max']).\PHP_EOL;
+echo 'Environmental impact'.\PHP_EOL;
+echo sprintf('  Energy:    %.3e kWh', $impacts['kWh']).\PHP_EOL;
+echo sprintf('  Emission:  %.3e kgCO2eq', $impacts['kgCO2eq']).\PHP_EOL;

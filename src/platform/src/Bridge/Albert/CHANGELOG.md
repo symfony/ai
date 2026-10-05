@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+* [BC BREAK] Replace the `carbon` result metadata with `impacts` for the environmental impacts
+  reported by Albert, on buffered and streamed results alike
+
 0.14
 ----
 
