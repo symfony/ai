@@ -587,6 +587,19 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_PDF,
                 ],
             ],
+            'gpt-6.1-sol' => [
+                'class' => Gpt::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                ],
+            ],
             'gpt-daybreak-blue-latest' => [
                 'class' => Gpt::class,
                 'capabilities' => [

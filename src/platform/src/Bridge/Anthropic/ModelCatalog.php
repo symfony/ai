@@ -368,6 +368,19 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_PDF,
                 ],
             ],
+            'claude-sonnet-5-5' => [
+                'class' => Claude::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                ],
+            ],
         ];
         // STATIC LIST END
 
