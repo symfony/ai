@@ -205,6 +205,14 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::THINKING,
                 ],
             ],
+            'north-small-translate-09-2026' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                ],
+            ],
             'rerank-english-v3.0' => [
                 'class' => Reranker::class,
                 'capabilities' => [
@@ -238,6 +246,42 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_MULTIPLE,
                     Capability::RERANKING,
+                ],
+            ],
+            'tiny-aya-earth' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'tiny-aya-fire' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'tiny-aya-global' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'tiny-aya-water' => [
+                'class' => Cohere::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
                 ],
             ],
         ];
