@@ -333,6 +333,10 @@ reads the standard Monolog line format and JSON.
     $ vendor/bin/mate tools:call monolog-context-search --key=order_id --value=4711
     $ vendor/bin/mate tools:call monolog-tail --limit=20 --channel=security
 
+Only ``*.log`` files are read. Compressed rotations (``*.log.gz``) are not listed or searched;
+``monolog-search``, ``monolog-context-search`` and ``monolog-list-files`` name them under
+``skipped_files``, so an empty result is not mistaken for an empty log. Use ``zgrep`` on them.
+
 With several log directories, entries and files carry a ``kernel_context`` field. The name differs
 from the ``context`` of the Symfony extension on purpose: a log record already has a context of its
 own.

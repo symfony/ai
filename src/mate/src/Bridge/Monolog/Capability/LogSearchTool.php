@@ -40,7 +40,7 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false.')]
+    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false. skipped_files lists the compressed rotations (*.log.gz) that were not searched; use zgrep on them.')]
     public function search(
         ?string $term = null,
         bool $regex = false,
@@ -92,7 +92,7 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false.')]
+    #[MateTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false. skipped_files lists the compressed rotations (*.log.gz) that were not searched; use zgrep on them.')]
     public function searchContext(
         string $key,
         string $value,
@@ -134,7 +134,7 @@ final class LogSearchTool
      * @param string|null $environment   Filter log files by Symfony environment (e.g. dev, prod, test)
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching. When multiple kernel contexts are configured, files carry a kernel_context field.')]
+    #[MateTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching. When multiple kernel contexts are configured, files carry a kernel_context field. Compressed rotations (*.log.gz) are not listed in files and not searched: skipped_files names them.')]
     public function listFiles(?string $environment = null, ?string $kernelContext = null): string
     {
         $files = null !== $environment
@@ -158,7 +158,7 @@ final class LogSearchTool
             $result[] = $entry;
         }
 
-        return ResponseEncoder::encodeUntrusted(['files' => $result]);
+        return ResponseEncoder::encodeUntrusted(['files' => $result, 'skipped_files' => $this->reader->getSkippedLogFiles($environment, $kernelContext)]);
     }
 
     /**
@@ -171,7 +171,7 @@ final class LogSearchTool
     }
 
     /**
-     * @return array{entries: list<array<string, mixed>>, total_matched: int, truncated: bool}
+     * @return array{entries: list<array<string, mixed>>, total_matched: int, truncated: bool, skipped_files: string[]}
      */
     private function collectResults(SearchCriteria $criteria, ?string $environment = null, ?string $kernelContext = null): array
     {
@@ -191,6 +191,7 @@ final class LogSearchTool
             'entries' => $entries,
             'total_matched' => \count($entries),
             'truncated' => \count($entries) === $criteria->getLimit(),
+            'skipped_files' => $this->reader->getSkippedLogFiles($environment, $kernelContext),
         ];
     }
 
