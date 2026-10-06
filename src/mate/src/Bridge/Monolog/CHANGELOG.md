@@ -1,10 +1,10 @@
 CHANGELOG
 =========
 
-0.15
+0.16
 ----
 
- * Add `skipped_files` to `monolog-search`, `monolog-context-search` and `monolog-list-files`, naming the compressed rotations (`*.log.gz`) that are not read, and correct the `symfony-log-investigation` skill to say so
+ * Read compressed rotations (`*.log.gz`) in `monolog-search`, `monolog-context-search` and `monolog-list-files`, after the plain files and up to 256 MB each, and name any that could not be read in full under `skipped_files`; `monolog-tail` still reads the newest plain file only
 
 0.14
 ----
