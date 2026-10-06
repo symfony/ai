@@ -45,6 +45,7 @@ trait CompletionsConversionTrait
     protected function convertStream(RawResultInterface $result): \Generator
     {
         $toolCalls = [];
+        $sawToolCallComplete = false;
         $reasoning = '';
         $sawChunk = false;
         $finishReason = null;
@@ -71,7 +72,7 @@ trait CompletionsConversionTrait
             $sawChunk = true;
 
             // A non-null finish_reason on the leading choice marks the terminal content chunk.
-            // It is null on every non-final chunk, and a trailing usage-only chunk has choices: [].
+            // It is null on every non-final chunk, yet OpenRouter repeats it on the trailing usage chunk.
             // With n > 1 every choice terminates in its own chunk; the leading one wins, matching
             // the buffered path where the metadata of the first choice surfaces on the result.
             if (null !== ($data['choices'][0]['finish_reason'] ?? null)) {
@@ -90,7 +91,8 @@ trait CompletionsConversionTrait
                 $toolCalls = $this->convertStreamToToolCalls($toolCalls, $data);
             }
 
-            if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
+            if (!$sawToolCallComplete && [] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
+                $sawToolCallComplete = true;
                 yield new ToolCallComplete(array_map($this->convertToolCall(...), $toolCalls));
             }
 
