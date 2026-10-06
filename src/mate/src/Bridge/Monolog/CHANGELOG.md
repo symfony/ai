@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `skipped_files` to `monolog-search`, `monolog-context-search` and `monolog-list-files`, naming the compressed rotations (`*.log.gz`) that are not read, and correct the `symfony-log-investigation` skill to say so
+
 0.14
 ----
 

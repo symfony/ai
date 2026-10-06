@@ -47,6 +47,22 @@ final class LogReader
     }
 
     /**
+     * The log files that are present but not read: compressed rotations (`*.log.gz`), as left by a
+     * nightly compression job. Relative to their log directory, like the `source_file` of an entry.
+     *
+     * @return string[]
+     */
+    public function getSkippedLogFiles(?string $environment = null, ?string $kernelContext = null): array
+    {
+        $files = $this->collectLogFiles($this->resolveLogDirs($kernelContext), ['/*.log.gz', '/*.log.*.gz']);
+        if (null !== $environment) {
+            $files = $this->filterForEnvironment($files, $environment);
+        }
+
+        return array_map($this->getRelativePath(...), $files);
+    }
+
+    /**
      * @return string[]
      */
     public function getLogFilesForEnvironment(string $environment, ?string $kernelContext = null): array
@@ -336,10 +352,11 @@ final class LogReader
 
     /**
      * @param array<string|int, string> $logDirs
+     * @param string[]                  $patterns
      *
      * @return string[]
      */
-    private function collectLogFiles(array $logDirs): array
+    private function collectLogFiles(array $logDirs, array $patterns = ['/*.log']): array
     {
         $allFiles = [];
 
@@ -348,13 +365,15 @@ final class LogReader
                 continue;
             }
 
-            $files = glob($dir.'/*.log');
-            if (false === $files) {
-                continue;
-            }
+            foreach ($patterns as $pattern) {
+                $found = glob($dir.$pattern);
+                if (false === $found) {
+                    continue;
+                }
 
-            foreach ($files as $file) {
-                $allFiles[] = $file;
+                foreach ($found as $file) {
+                    $allFiles[] = $file;
+                }
             }
         }
 
