@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\StructuredOutput;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 use function Symfony\Component\String\u;
 
@@ -25,9 +26,14 @@ final class ResponseFormatFactory implements ResponseFormatFactoryInterface
     ) {
     }
 
-    public function create(string $responseClass): array
+    public function create(string $responseClass, array $context = []): array
     {
-        $schema = $this->schemaFactory->buildProperties($responseClass);
+        $schema = $this->schemaFactory->buildProperties($responseClass, $context);
+
+        if (isset($context[Factory::CONTEXT_SELECTOR]) && !isset($schema['properties'])) {
+            throw new InvalidArgumentException(\sprintf('No property of "%s" is left to describe.', $responseClass));
+        }
+
         if (null !== $schema) {
             $this->requireAllProperties($schema);
         }

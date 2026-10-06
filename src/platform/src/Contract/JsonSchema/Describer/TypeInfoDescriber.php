@@ -71,7 +71,7 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
         }
         $type = $this->typeResolver->resolve($subject->getReflector());
 
-        $subSchema = $this->getTypeSchema($type);
+        $subSchema = $this->getTypeSchema($type, $subject->getContext());
         if ($type->isNullable()) {
             if (!isset($subSchema['anyOf'])) {
                 $subSchema['type'] = (array) $subSchema['type'];
@@ -85,11 +85,12 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
     }
 
     /**
-     * @param Type<*> $type
+     * @param Type<*>              $type
+     * @param array<string, mixed> $context
      *
      * @return array<string, mixed>
      */
-    private function getTypeSchema(Type $type): array
+    private function getTypeSchema(Type $type, array $context): array
     {
         // Handle BackedEnumType directly
         if ($type instanceof BackedEnumType) {
@@ -107,13 +108,13 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
         if ($type instanceof UnionType) {
             // Do not handle nullables as a union but directly return the wrapped type schema
             if (2 === \count($type->getTypes()) && $type->isNullable() && $type instanceof NullableType) {
-                return $this->getTypeSchema($type->getWrappedType());
+                return $this->getTypeSchema($type->getWrappedType(), $context);
             }
 
             $variants = [];
 
             foreach ($type->getTypes() as $variant) {
-                $variants[] = $this->getTypeSchema($variant);
+                $variants[] = $this->getTypeSchema($variant, $context);
             }
 
             return ['anyOf' => $variants];
@@ -132,7 +133,7 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
             case $type->isIdentifiedBy(TypeIdentifier::ARRAY):
                 \assert($type instanceof CollectionType);
 
-                $items = $this->getTypeSchema($type->getCollectionValueType());
+                $items = $this->getTypeSchema($type->getCollectionValueType(), $context);
 
                 return ['type' => 'array'] + ($items ? ['items' => $items] : []);
 
@@ -143,8 +144,8 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
                 \assert($type instanceof ObjectType);
 
                 $schema = null;
-                // Recursively build the schema for an object type
-                $this->objectDescriber->describeObject(new ObjectSubject($type->getClassName(), new \ReflectionClass($type->getClassName())), $schema);
+                // Recursively build the schema for an object type within the same context
+                $this->objectDescriber->describeObject(new ObjectSubject($type->getClassName(), new \ReflectionClass($type->getClassName()), $context), $schema);
 
                 return $schema ?? ['type' => 'object'];
 
