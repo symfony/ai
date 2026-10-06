@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by ineersa at 2026-10-04T03:27:08Z
+
+Removed Albert's `convertStream()` override, its docblock, and the unused imports. The existing Albert last-usage and carbon-metadata tests pass unchanged.
+
+Rebased onto current main and squashed to one signed commit, `6d5a1f65`.
