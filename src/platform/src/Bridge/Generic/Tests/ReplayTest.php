@@ -22,13 +22,15 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
+use Symfony\AI\Platform\Test\Replay\CassetteHttpClient;
+use Symfony\AI\Platform\Test\Replay\HttpCassette;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Replays the response shape of https://github.com/symfony/ai/issues/2542: a tool call reported with
  * a "stop" finish reason and a null message.content.
  *
- * The cassettes are hand-seeded from a stub OpenAI-compatible gateway rather than recorded against a
+ * The tool-call cassettes are hand-seeded from a stub OpenAI-compatible gateway rather than recorded against a
  * hosted provider - the managed gateways reachable from CI normalize the finish reason back to
  * "tool_calls", so none of them reproduces it, while self-hosted ones do. They replay offline like
  * any other cassette; the localhost URL they carry is the stub they were seeded from and is never
@@ -76,6 +78,26 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
 
         // StreamListener promotes the finish reason off the visible stream onto the result metadata.
         $this->assertSame('stop', $result->getResult()->getMetadata()->get('finish_reason')->getRaw());
+    }
+
+    public function testStreamingUsageIsNotCountedTwice()
+    {
+        // Recorded from OpenCode Go: usage appears on both the terminal choice and the trailing usage-only chunk.
+        $httpClient = new CassetteHttpClient(new HttpCassette($this->cassetteDirectory().'/opencode_go_duplicate_usage.json'), record: false);
+        $platform = Factory::createPlatform('https://opencode.ai/zen/go', 'test-api-key', $httpClient);
+
+        $result = $platform->invoke('deepseek-v4.1-flash', new MessageBag(Message::ofUser('Reply with the word hello.')), [
+            'stream' => true,
+            'max_tokens' => 32,
+        ]);
+
+        iterator_to_array($result->asStream(), false);
+
+        $usage = $result->getResult()->getMetadata()->get('token_usage');
+        $this->assertSame(36, $usage->getPromptTokens());
+        $this->assertSame(32, $usage->getCompletionTokens());
+        $this->assertSame(32, $usage->getThinkingTokens());
+        $this->assertSame(68, $usage->getTotalTokens());
     }
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface
