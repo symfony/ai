@@ -85,7 +85,7 @@ final class Runner
             $cancellation?->activate($deferredResult->getRawResult());
 
             try {
-                yield new Progress('model_request', 'Invoking model.', $model);
+                yield new Progress(Progress::STAGE_MODEL_REQUEST, 'Invoking model.', $model);
 
                 if ($cancellation?->isRequested()) {
                     return;
@@ -185,7 +185,7 @@ final class Runner
                 $text .= $delta->getText();
             }
 
-            yield new Progress('delta', 'Received a streamed delta.', $delta);
+            yield new Progress(Progress::STAGE_DELTA, 'Received a streamed delta.', $delta);
 
             if ($cancellation?->isRequested()) {
                 return null;
