@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Read compressed rotations (`*.log.gz`) in `monolog-search`, `monolog-context-search` and `monolog-list-files`, after the plain files and up to 256 MB each, and name any that could not be read in full under `skipped_files`; `monolog-tail` still reads the newest plain file only
+
 0.14
 ----
 
