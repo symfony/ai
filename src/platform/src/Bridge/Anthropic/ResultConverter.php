@@ -118,6 +118,12 @@ class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
+        // A cut tool call block still carries a well-formed partial input, so only stop_reason reveals the cut
+        $lastBlock = $data['content'][array_key_last($data['content'])];
+        if ('max_tokens' === ($data['stop_reason'] ?? null) && \in_array($lastBlock['type'] ?? null, ['tool_use', 'server_tool_use'], true)) {
+            throw self::maxOutputTokensException($data['usage']['output_tokens'] ?? null);
+        }
+
         $results = [];
         /** @var array<string, array{index: int, blocks: list<array<string, mixed>>}> $webSearchCalls */
         $webSearchCalls = [];
@@ -251,11 +257,37 @@ class ResultConverter implements ResultConverterInterface
         return \is_string($content['content']['error_code'] ?? null) ? $content['content']['error_code'] : null;
     }
 
+    private static function maxOutputTokensException(mixed $outputTokens): MaxOutputTokensException
+    {
+        $limit = \is_int($outputTokens) ? \sprintf('the maximum of %d output tokens', $outputTokens) : 'the output token limit';
+
+        return new MaxOutputTokensException(\sprintf('Anthropic truncated the response after reaching %s. Raise the output token budget (max_tokens) or reduce the request scope.', $limit));
+    }
+
+    /**
+     * @param array{id: string, name: string, input: string} $toolCall
+     *
+     * @throws MalformedToolCallException
+     */
+    private static function decodeToolCall(array $toolCall): ToolCall
+    {
+        $input = [];
+        if ('' !== $toolCall['input']) {
+            try {
+                $input = json_decode($toolCall['input'], true, flags: \JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "%s" tool: "%s"', $toolCall['name'], $e->getMessage()), 0, $e);
+            }
+        }
+
+        return new ToolCall($toolCall['id'], $toolCall['name'], $input);
+    }
+
     private function convertStream(RawResultInterface $result): \Generator
     {
+        /** @var list<array{id: string, name: string, input: string}> $toolCalls */
         $toolCalls = [];
         $currentToolCall = null;
-        $currentToolCallJson = '';
         /** @var array{id: string|null, block: array<string, mixed>}|null $currentWebSearch */
         $currentWebSearch = null;
         $currentWebSearchJson = '';
@@ -413,8 +445,8 @@ class ResultConverter implements ResultConverterInterface
                 $currentToolCall = [
                     'id' => $data['content_block']['id'],
                     'name' => $data['content_block']['name'],
+                    'input' => '',
                 ];
-                $currentToolCallJson = '';
                 yield new ToolCallStart($data['content_block']['id'], $data['content_block']['name']);
                 continue;
             }
@@ -426,7 +458,7 @@ class ResultConverter implements ResultConverterInterface
             ) {
                 $partialJson = $data['delta']['partial_json'] ?? '';
                 if (null !== $currentToolCall) {
-                    $currentToolCallJson .= $partialJson;
+                    $currentToolCall['input'] .= $partialJson;
                     yield new ToolInputDelta($currentToolCall['id'], $currentToolCall['name'], $partialJson);
                 } elseif (null !== $currentWebSearch) {
                     $currentWebSearchJson .= $partialJson;
@@ -444,21 +476,9 @@ class ResultConverter implements ResultConverterInterface
                 }
 
                 if (null !== $currentToolCall) {
-                    $input = [];
-                    if ('' !== $currentToolCallJson) {
-                        try {
-                            $input = json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR);
-                        } catch (\JsonException $e) {
-                            throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "%s" tool: "%s"', $currentToolCall['name'], $e->getMessage()), 0, $e);
-                        }
-                    }
-                    $toolCalls[] = new ToolCall(
-                        $currentToolCall['id'],
-                        $currentToolCall['name'],
-                        $input
-                    );
+                    // Decoded at message_stop, once stop_reason tells a max_tokens cut from malformed JSON
+                    $toolCalls[] = $currentToolCall;
                     $currentToolCall = null;
-                    $currentToolCallJson = '';
                     continue;
                 }
 
@@ -491,12 +511,7 @@ class ResultConverter implements ResultConverterInterface
                 $inMessage = false;
 
                 if ('max_tokens' === $stopReason) {
-                    $message = 'Anthropic truncated the response after reaching the output token limit. Raise the output token budget (max_tokens) or reduce the request scope.';
-                    if (null !== $outputTokens) {
-                        $message = \sprintf('Anthropic truncated the response after reaching the maximum of %d output tokens. Raise the output token budget (max_tokens) or reduce the request scope.', $outputTokens);
-                    }
-
-                    throw new MaxOutputTokensException($message);
+                    throw self::maxOutputTokensException($outputTokens);
                 }
 
                 // A turn stopping on `pause_turn` ends after the call block, its result arriving
@@ -507,7 +522,7 @@ class ResultConverter implements ResultConverterInterface
                 }
 
                 if ([] !== $toolCalls) {
-                    yield new ToolCallComplete($toolCalls);
+                    yield new ToolCallComplete(array_map(self::decodeToolCall(...), $toolCalls));
                 }
             }
         }

@@ -27,6 +27,7 @@ $messages = new MessageBag(
 
 $result = $agent->call($messages, [
     'server_tools' => ['code_execution' => true],
+    'max_tokens' => 4096,
 ]);
 
 foreach ($result->asMultiPart() as $part) {

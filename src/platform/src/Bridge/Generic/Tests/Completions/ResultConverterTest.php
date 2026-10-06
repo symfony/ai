@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MalformedToolCallException;
+use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -134,6 +135,48 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Model returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    #[DataProvider('provideToolCallArgumentsCutByLength')]
+    public function testConvertThrowsMaxOutputTokensExceptionWhenLengthFinishReasonCutsAToolCall(string $arguments)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'choices' => [
+                [
+                    'message' => [
+                        'role' => 'assistant',
+                        'content' => null,
+                        'tool_calls' => [
+                            [
+                                'id' => 'call_123',
+                                'type' => 'function',
+                                'function' => [
+                                    'name' => 'save_note',
+                                    'arguments' => $arguments,
+                                ],
+                            ],
+                        ],
+                    ],
+                    'finish_reason' => 'length',
+                ],
+            ],
+        ]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Model truncated the response inside a tool call after reaching the output token limit.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideToolCallArgumentsCutByLength(): iterable
+    {
+        yield 'mid-arguments' => ['{"title":"Test","body":"Call me Ishmael. Some years ago'];
+        yield 'before any arguments' => [''];
     }
 
     public function testConvertToolWithEmptyArgsCallResult()
@@ -959,16 +1002,33 @@ class ResultConverterTest extends TestCase
         $this->assertSame('stop', $chunks[2]->getValue()->getRaw());
     }
 
-    public function testStreamingSurfacesToolCallArgumentsTruncatedByALengthFinishReason()
+    #[DataProvider('provideToolCallArgumentsCutByLength')]
+    public function testStreamingThrowsMaxOutputTokensExceptionWhenLengthFinishReasonCutsAToolCall(string $arguments)
     {
         $converter = new ResultConverter();
 
-        // The model ran into the token limit mid-arguments, so the accumulated JSON is a fragment.
-        // Completing the tool call on any finish reason surfaces that as a malformed tool call
-        // instead of silently dropping the call and leaving the agent without a result.
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [['id' => 'call_1', 'function' => ['name' => 'get_weather', 'arguments' => $arguments]]]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'length']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Model truncated the response inside a tool call after reaching the output token limit.');
+
+        foreach ($streamResult->getContent() as $chunk) {
+            $this->assertNotInstanceOf(ToolCallComplete::class, $chunk);
+        }
+    }
+
+    public function testStreamingThrowsMalformedToolCallExceptionWhenArgumentsAreBrokenOnAToolCallsFinishReason()
+    {
+        $converter = new ResultConverter();
+
         $events = [
             ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [['id' => 'call_1', 'function' => ['name' => 'get_weather', 'arguments' => '{"city":"Ber']]]]]]],
-            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'length']]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
         ];
 
         $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);

@@ -715,8 +715,9 @@ from the visible deltas::
     treat a truncation at the output token limit as an error mid-stream and throw a
     :class:`Symfony\\AI\\Platform\\Exception\\MaxOutputTokensException` instead of emitting the reason,
     so the same ``max_tokens`` case that surfaces as ``LENGTH`` on a buffered result raises an exception
-    when streamed. Wrap the consumption loop in a ``try``/``catch`` when you need to handle truncation
-    of a streamed response.
+    when streamed. A limit reached inside a tool call throws in both modes, since a tool call with
+    partial arguments is never usable. Wrap the consumption loop in a ``try``/``catch`` when you need
+    to handle truncation of a streamed response.
 
 Token Usage
 ~~~~~~~~~~~

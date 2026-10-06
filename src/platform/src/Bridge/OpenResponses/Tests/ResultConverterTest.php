@@ -181,6 +181,27 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['arg1' => 'value1'], $toolCalls[0]->getArguments());
     }
 
+    public function testConvertKeepsOneToolCallWhenOutputRepeatsACallId()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $call = [
+            'type' => 'function_call',
+            'id' => 'fc_123',
+            'call_id' => 'call_123',
+            'name' => 'test_function',
+            'arguments' => '{"arg1": "value1"}',
+        ];
+        $httpResponse->method('toArray')->willReturn(['output' => [$call, $call]]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(ToolCallResult::class, $result);
+        $toolCalls = $result->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call_123', $toolCalls[0]->getId());
+    }
+
     public function testConvertThrowsClearExceptionForMalformedToolCallArguments()
     {
         $converter = new ResultConverter();
@@ -1023,6 +1044,80 @@ final class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    /**
+     * @param array<string, mixed> $item
+     */
+    #[DataProvider('provideToolCallItemsCutByMaxOutputTokens')]
+    public function testThrowsMaxOutputTokensExceptionWhenIncompleteResponseCutsAToolCall(array $item)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [$item],
+        ]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function provideToolCallItemsCutByMaxOutputTokens(): iterable
+    {
+        yield 'function_call' => [[
+            'type' => 'function_call',
+            'id' => 'fc_1',
+            'call_id' => 'call_1',
+            'name' => 'save_note',
+            'arguments' => '{"title":"Test","body":"Call me Ishmael. Some years ago',
+        ]];
+        yield 'custom_tool_call' => [[
+            'type' => 'custom_tool_call',
+            'id' => 'ctc_1',
+            'call_id' => 'call_1',
+            'name' => 'run_sql',
+            'input' => 'SELECT * FROM users WHERE id = 1 AND na',
+            'status' => 'incomplete',
+        ]];
+    }
+
+    public function testKeepsCompleteFunctionCallWhenTextAfterItIsCutByMaxOutputTokens()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [
+                [
+                    'type' => 'function_call',
+                    'id' => 'fc_1',
+                    'call_id' => 'call_1',
+                    'name' => 'save_note',
+                    'arguments' => '{"title":"Test"}',
+                ],
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => 'The note is saved and']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $toolCallResults = array_values(array_filter($result->getContent(), static fn ($part): bool => $part instanceof ToolCallResult));
+        $this->assertCount(1, $toolCallResults);
+        $this->assertSame(['title' => 'Test'], $toolCallResults[0]->getContent()[0]->getArguments());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
+    }
+
     public function testThrowsRuntimeExceptionWhenOutputYieldsNoContent()
     {
         $converter = new ResultConverter();
@@ -1415,6 +1510,46 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('call_456', $toolCalls[0]->getId());
         $this->assertSame('get_weather', $toolCalls[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $toolCalls[0]->getArguments());
+    }
+
+    public function testStreamKeepsOneToolCallWhenOutputItemDoneRepeatsACallId()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $done = [
+            'type' => 'response.output_item.done',
+            'item' => [
+                'type' => 'function_call',
+                'id' => 'fc_456',
+                'call_id' => 'call_456',
+                'name' => 'get_weather',
+                'arguments' => '{"city": "Berlin"}',
+            ],
+        ];
+        $events = [
+            $done,
+            $done,
+            [
+                'type' => 'response.completed',
+                'response' => [
+                    'output' => [],
+                ],
+            ],
+        ];
+
+        $raw = new InMemoryRawResult([], $events, $httpResponse);
+        $streamResult = $converter->convert($raw, ['stream' => true]);
+
+        $chunks = iterator_to_array($streamResult->getContent());
+
+        $this->assertCount(2, $chunks);
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[0]);
+        $toolCalls = $chunks[0]->getToolCalls();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call_456', $toolCalls[0]->getId());
     }
 
     public function testStreamAnnouncesToolCallsAndStreamsTheirArguments()
@@ -1837,6 +1972,48 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
 
         iterator_to_array($streamResult->getContent());
+    }
+
+    #[DataProvider('provideFunctionCallArgumentsCutByMaxOutputTokens')]
+    public function testStreamThrowsMaxOutputTokensExceptionWhenTheLimitCutsAFunctionCall(string $arguments)
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], [
+            [
+                'type' => 'response.output_item.done',
+                'item' => [
+                    'type' => 'function_call',
+                    'id' => 'fc_1',
+                    'call_id' => 'call_1',
+                    'name' => 'save_note',
+                    'arguments' => $arguments,
+                ],
+            ],
+            [
+                'type' => 'response.incomplete',
+                'response' => ['status' => 'incomplete', 'incomplete_details' => ['reason' => 'max_output_tokens']],
+            ],
+        ], $httpResponse), ['stream' => true]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
+
+        foreach ($streamResult->getContent() as $chunk) {
+            $this->assertNotInstanceOf(ToolCallComplete::class, $chunk);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideFunctionCallArgumentsCutByMaxOutputTokens(): iterable
+    {
+        yield 'mid-arguments' => ['{"title":"Test","body":"Call me'];
+        yield 'after parsable arguments' => ['{"title":"Test"}'];
     }
 
     public function testStreamThrowsRateLimitExceptionOnRateLimitEvent()

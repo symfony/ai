@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
@@ -331,6 +332,7 @@ final class ResultConverterTest extends TestCase
             ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
             ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'write_file']],
             ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"path":"foo.md","content":"partial']],
+            ['type' => 'content_block_stop', 'index' => 0],
             ['type' => 'message_delta', 'delta' => ['stop_reason' => 'max_tokens'], 'usage' => ['output_tokens' => 16000]],
             ['type' => 'message_stop'],
         ], $httpResponse);
@@ -355,12 +357,29 @@ final class ResultConverterTest extends TestCase
             ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'get_weather']],
             ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"city":Berlin}']],
             ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'tool_use'], 'usage' => ['output_tokens' => 20]],
+            ['type' => 'message_stop'],
         ], $httpResponse);
 
         $streamResult = $converter->convert($raw, ['stream' => true]);
 
         $this->expectException(MalformedToolCallException::class);
         $this->expectExceptionMessage('Anthropic returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+
+        iterator_to_array($streamResult->getContent(), false);
+    }
+
+    public function testStreamingReportsAnIncompleteStreamBeforeMalformedToolCallArguments()
+    {
+        $streamResult = (new ResultConverter())->convert($this->createRawResult([
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'content' => []]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'get_weather']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'input_json_delta', 'partial_json' => '{"city":"Ber']],
+            ['type' => 'content_block_stop', 'index' => 0],
+        ]), ['stream' => true]);
+
+        $this->expectException(IncompleteStreamException::class);
+        $this->expectExceptionMessage('Anthropic stream ended before message_stop.');
 
         iterator_to_array($streamResult->getContent(), false);
     }
@@ -788,6 +807,71 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(FinishReason::class, $finishReason);
         $this->assertTrue($finishReason->is(FinishReasonCase::LENGTH));
         $this->assertSame('max_tokens', $finishReason->getRaw());
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('provideResponsesTruncatedInsideAToolCall')]
+    public function testConvertThrowsWhenTruncatedAtMaxTokensInsideAToolCall(array $body, string $expectedMessage)
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse(['stop_reason' => 'max_tokens'] + $body));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function provideResponsesTruncatedInsideAToolCall(): iterable
+    {
+        yield 'tool call' => [
+            ['content' => [
+                ['type' => 'text', 'text' => 'Saving the note.'],
+                ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'save_note', 'input' => ['title' => 'Test']],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'tool call with output token count' => [
+            [
+                'content' => [
+                    ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'save_note', 'input' => ['title' => 'Test']],
+                ],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 4096],
+            ],
+            'Anthropic truncated the response after reaching the maximum of 4096 output tokens.',
+        ];
+
+        yield 'server tool call' => [
+            ['content' => [
+                ['type' => 'text', 'text' => 'Creating the file.'],
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'text_editor_code_execution', 'input' => ['command' => 'create', 'path' => '/tmp/notes.md']],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+    }
+
+    public function testConvertKeepsCompleteToolCallWhenTextAfterItIsTruncatedAtMaxTokens()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                ['type' => 'tool_use', 'id' => 'toolu_01ABC123', 'name' => 'save_note', 'input' => ['title' => 'Test']],
+                ['type' => 'text', 'text' => 'The note is saved and'],
+            ],
+            'stop_reason' => 'max_tokens',
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertInstanceOf(ToolCallResult::class, $result->getContent()[0]);
+        $this->assertSame(['title' => 'Test'], $result->getContent()[0]->getContent()[0]->getArguments());
     }
 
     public function testConvertWithoutStopReasonOmitsFinishReasonMetadata()

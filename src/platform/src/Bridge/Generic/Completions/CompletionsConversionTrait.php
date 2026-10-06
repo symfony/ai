@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MalformedToolCallException;
+use Symfony\AI\Platform\Exception\MaxOutputTokensException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -41,6 +42,8 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
 trait CompletionsConversionTrait
 {
     use FinishReasonAwareTrait;
+
+    private const TOOL_CALL_TRUNCATED_MESSAGE = 'Model truncated the response inside a tool call after reaching the output token limit. Raise the output token budget or reduce the request scope.';
 
     protected function convertStream(RawResultInterface $result): \Generator
     {
@@ -91,6 +94,10 @@ trait CompletionsConversionTrait
             }
 
             if ([] !== $toolCalls && $this->isToolCallsStreamFinished($data)) {
+                if ('length' === ($data['choices'][0]['finish_reason'] ?? null)) {
+                    throw new MaxOutputTokensException(self::TOOL_CALL_TRUNCATED_MESSAGE);
+                }
+
                 yield new ToolCallComplete(array_map($this->convertToolCall(...), $toolCalls));
             }
 
@@ -265,6 +272,10 @@ trait CompletionsConversionTrait
     protected function convertChoice(array $choice): ToolCallResult|TextResult
     {
         if ([] !== ($choice['message']['tool_calls'] ?? [])) {
+            if ('length' === $choice['finish_reason']) {
+                throw new MaxOutputTokensException(self::TOOL_CALL_TRUNCATED_MESSAGE);
+            }
+
             return $this->withFinishReason(new ToolCallResult(array_map([$this, 'convertToolCall'], $choice['message']['tool_calls'])), FinishReasonMapper::map($choice['finish_reason']));
         }
 

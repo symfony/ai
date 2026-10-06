@@ -11,6 +11,36 @@ Platform
    -$result->getMetadata()->get('carbon')['kWh']['min'];
    +$result->getMetadata()->get('impacts')['kWh'];
    ```
+   
+ * The Anthropic, Generic Completions and OpenResponses result converters throw `Exception\MaxOutputTokensException`
+   when the output token limit cuts a tool call, both for buffered and streamed results. Before:
+
+   - a cut leaving broken JSON arguments threw `Exception\MalformedToolCallException`, in both modes;
+   - a cut leaving parsable arguments returned a `Result\ToolCallResult` with the partial arguments
+     and the `LENGTH` finish reason from the buffered converters, and a completed tool call from the
+     streamed Generic Completions converter. The streamed Anthropic and OpenResponses converters
+     already threw `MaxOutputTokensException` in that case.
+
+   A cut inside a tool call no longer returns a `ToolCallResult` with the `LENGTH` finish reason. Code catching
+   `MalformedToolCallException` to handle a truncated tool call has to catch `MaxOutputTokensException` instead:
+
+   ```diff
+    try {
+        $result = $platform->invoke($model, $messages)->getResult();
+   -} catch (MalformedToolCallException $e) {
+   +} catch (MaxOutputTokensException $e) {
+        // raise the output token budget or reduce the request scope
+    }
+   ```
+
+   `MalformedToolCallException` is still thrown when a tool call the model finished carries broken
+   JSON arguments. Both extend `Exception\RuntimeException`, so a handler catching the base class is
+   unaffected.
+
+ * The OpenResponses result converter yields one `ToolCall` per call id. A buffered response whose
+   output lists the same `call_id` twice produced two tool calls before and produces one now, as the
+   streamed path already did. Tool results are addressed by the call id, so the second call could
+   never be answered separately.
 
 UPGRADE FROM 0.13 to 0.14
 =========================
