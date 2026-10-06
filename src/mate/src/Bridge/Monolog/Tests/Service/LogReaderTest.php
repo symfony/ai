@@ -378,6 +378,117 @@ final class LogReaderTest extends TestCase
         }
     }
 
+    public function testReadAllReadsCompressedRotationsAndTheEnvironmentFilterAppliesToThem()
+    {
+        $dir = $this->createCompressedDirectory();
+
+        try {
+            $reader = new LogReader(new LogParser(), $dir);
+
+            $this->assertCount(3, iterator_to_array($reader->readAll(), false));
+            $this->assertSame(['prod-2026-09-26.log.gz'], array_map('basename', $reader->getCompressedLogFiles('prod')));
+            $this->assertCount(1, iterator_to_array($reader->readForEnvironment('prod'), false));
+            $this->assertSame([], $reader->getSkippedLogFiles());
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testTailStillReadsOnlyTheNewestPlainFile()
+    {
+        $dir = $this->createCompressedDirectory();
+        touch($dir.'/dev-2026-09-25.log.gz', time() + 100);
+
+        try {
+            $result = (new LogReader(new LogParser(), $dir))->tail();
+
+            $this->assertSame(['dev.log'], array_unique(array_map(static fn ($e) => $e->getSourceFile(), $result['entries'])));
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testReadingACompressedFileStopsAtTheByteCapAndReportsIt()
+    {
+        $dir = sys_get_temp_dir().'/monolog_cap_'.uniqid();
+        mkdir($dir);
+        $line = "[2026-09-26 16:11:00] app.INFO: Line {} []\n";
+        file_put_contents($dir.'/dev.log.1.gz', (string) gzencode(str_repeat($line, 10)));
+
+        try {
+            $reader = new LogReader(new LogParser(), $dir, compressedBytes: 3 * \strlen($line));
+
+            $this->assertCount(3, iterator_to_array($reader->readAll(), false));
+            $this->assertSame(['dev.log.1.gz'], $reader->getSkippedLogFiles());
+            // The next read starts from scratch.
+            iterator_to_array($reader->readAll(new SearchCriteria(limit: 1)), false);
+            $this->assertSame([], $reader->getSkippedLogFiles());
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testDiscardedBytesOfAHugeLineCountTowardsTheByteCap()
+    {
+        $dir = sys_get_temp_dir().'/monolog_hugecap_'.uniqid();
+        mkdir($dir);
+        file_put_contents($dir.'/dev.log.1.gz', (string) gzencode('[2026-09-26 16:11:00] app.INFO: '.str_repeat('x', 6 * 1024 * 1024)." {} []\n"));
+
+        try {
+            $reader = new LogReader(new LogParser(), $dir, compressedBytes: 2 * 1024 * 1024);
+
+            $this->assertSame([], iterator_to_array($reader->readAll(), false));
+            $this->assertSame(['dev.log.1.gz'], $reader->getSkippedLogFiles());
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testALineAboveTheCapIsDiscardedWithoutShiftingLineNumbers()
+    {
+        $dir = sys_get_temp_dir().'/monolog_long_'.uniqid();
+        mkdir($dir);
+        $huge = '[2026-09-26 16:11:00] app.INFO: '.str_repeat('x', 3 * 1024 * 1024)." {} []\n";
+        $last = "[2026-09-26 16:12:00] app.ERROR: After {} []\n";
+        file_put_contents($dir.'/dev.log.1.gz', (string) gzencode($huge.$last));
+
+        try {
+            $entries = iterator_to_array((new LogReader(new LogParser(), $dir))->readAll(new SearchCriteria(term: 'After')), false);
+
+            $this->assertCount(1, $entries);
+            $this->assertSame(2, $entries[0]->getLineNumber());
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testATruncatedCompressedFileYieldsWhatWasReadWithoutFailing()
+    {
+        $dir = sys_get_temp_dir().'/monolog_trunc_'.uniqid();
+        mkdir($dir);
+        $data = (string) gzencode(str_repeat("[2026-09-26 16:11:00] app.INFO: Line {} []\n", 1000));
+        file_put_contents($dir.'/dev.log.1.gz', substr($data, 0, (int) (\strlen($data) / 2)));
+
+        try {
+            $entries = iterator_to_array((new LogReader(new LogParser(), $dir))->readAll(), false);
+
+            $this->assertNotEmpty($entries);
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    private function createCompressedDirectory(): string
+    {
+        $dir = sys_get_temp_dir().'/monolog_gz_'.uniqid();
+        mkdir($dir);
+        file_put_contents($dir.'/dev.log', "[2026-09-27 08:01:00] app.INFO: Today {} []\n");
+        file_put_contents($dir.'/dev-2026-09-25.log.gz', (string) gzencode("[2026-09-25 10:00:00] app.INFO: Older {} []\n"));
+        file_put_contents($dir.'/prod-2026-09-26.log.gz', (string) gzencode("[2026-09-26 10:00:00] app.INFO: Prod {} []\n"));
+
+        return $dir;
+    }
+
     private function createMultiKernelReader(): LogReader
     {
         return new LogReader(new LogParser(), [

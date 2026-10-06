@@ -7,17 +7,17 @@ description: Investigate an error or behavior across Monolog log files when ther
 
 Reads Monolog files through Mate's CLI. Entries come back as `{datetime, channel, level, message, context, extra, source_file, line_number}`. Sensitive context keys are redacted in the output but still matched when you search them.
 
-- `monolog-list-files` (opt `environment`): the plain `*.log` files, newest first. Compressed rotations (`*.log.gz`) are not listed; they are named under `skipped_files`.
+- `monolog-list-files` (opt `environment`): the log files, newest first, then the compressed rotations (`*.log.gz`). `skipped_files` names any that cannot be read.
 - `monolog-list-channels`: distinct channel names (`app`, `security`, `doctrine`, ...). Reads every file, so it is the slow one; skip it if you already know the channel.
 - `monolog-tail` (`limit`, `level`, `environment`, `channel`): most recent entries. Reads ONLY the single newest file.
-- `monolog-search` (`term`, `regex`, `level`, `channel`, `environment`, `from`, `to`, `limit`): searches across all `*.log` files, never the compressed ones. `term` is optional; omit it (or pass an empty string) to filter by `level`/`channel`/`from`/`to` only, e.g. "just show me the errors".
+- `monolog-search` (`term`, `regex`, `level`, `channel`, `environment`, `from`, `to`, `limit`): searches the `*.log` files, then the compressed rotations (`*.log.gz`), so with a small `limit` the older history can be left out. `term` is optional; omit it (or pass an empty string) to filter by `level`/`channel`/`from`/`to` only, e.g. "just show me the errors".
 - `monolog-context-search` (`key`, `value`, `level`, `environment`, `limit`): matches a structured context field. No channel or date filter here.
 
 These commands accept `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. A wide search returns many entries, so narrow with filters and a `limit` before widening the output format.
 
 ## Workflow
 
-1. Orient: `vendor/bin/mate tools:call monolog-list-files`. Confirm the environment you care about is present and recently modified, and check `skipped_files`: those compressed rotations hold older history that no `monolog-*` tool reads.
+1. Orient: `vendor/bin/mate tools:call monolog-list-files`. Confirm the environment you care about is present and recently modified, and check `skipped_files`.
 2. Latest state: `vendor/bin/mate tools:call monolog-tail --level=error --limit=50`. Good for "what just broke", nothing else.
 3. Narrow with search:
    - `vendor/bin/mate tools:call monolog-search --term="Timeout" --level=error`
@@ -36,5 +36,6 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
 - No matches: widen before concluding. Drop `--level`, widen the date window, try a shorter or partial `term`. `level` matches exactly (case-insensitive); `WARN` will not match `WARNING`.
 - Wrong channel: `--channel` is an exact (case-insensitive) name. Run `monolog-list-channels` if unsure rather than guessing.
 - `monolog-tail` looks empty or stale: it only reads the newest file. Rotated history that is still plain text (`prod-2026-07-01.log`) is invisible to tail; use `monolog-search` with a date range to reach it.
-- `skipped_files` is not empty: `monolog-search`, `monolog-context-search` and `monolog-tail` did not look in those compressed rotations, so a search that returns nothing, or a "first" or "since" answer that reaches back past the oldest plain file, may be missing entries. Read them with `zgrep` (`zgrep -h 'term' var/log/*.log.gz`) before you conclude.
+- `skipped_files` is not empty: those compressed rotations were not read in full (zlib is missing, or the file was cut at 256 MB), so a search that returns nothing, or a "first" or "since" answer, may be missing entries. Read them with `zgrep` (`zgrep -h 'term' var/log/*.log.gz`) before you conclude.
+- `monolog-tail` reads only the newest plain `*.log` file, never a compressed one.
 - Nothing logged at all: the app may log to stderr/syslog rather than a file, or the level threshold filters it out before it is written. The profiler `logger` collector still captures per-request logs even when file logging is quiet.
