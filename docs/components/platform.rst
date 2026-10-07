@@ -630,6 +630,7 @@ If you need access to all delta types (e.g. tool calls, thinking, metadata), use
 The following delta types are available:
 
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\TextDelta` -- a chunk of generated text
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingStart` -- signals the start of a thinking block
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingDelta` -- a chunk of model reasoning
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingComplete` -- signals thinking is complete, includes accumulated thinking text and optional signature
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingSignature` -- a cryptographic signature for a thinking block
@@ -641,6 +642,8 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\MetadataDelta` -- metadata associated with the stream
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ChoiceDelta` -- a choice delta (e.g. multiple completions)
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\BinaryDelta` -- a chunk of binary data
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\PartialObjectDelta` -- the partially populated object of a
+  streamed structured output
 
 Tool calls follow a fixed shape across bridges: every call is announced with a
 ``ToolCallStart`` at the position it appears in the response, its arguments follow as
@@ -761,8 +764,8 @@ only when every usage agrees on a model, so price a mixed run per call instead::
 .. note::
 
     Like the finish reason, a streamed usage is only known once the stream has been consumed, and
-    it is aggregated from the usage events the provider emits along the way. Register the
-    :class:`Symfony\\AI\\Platform\\TokenUsage\\StreamListener` on the stream result to collect them.
+    it is aggregated from the usage events the provider emits along the way. The platform registers
+    the :class:`Symfony\\AI\\Platform\\TokenUsage\\StreamListener` on every stream result to collect them.
 
 Custom Tool Calls (Provider Extensions)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1130,12 +1133,17 @@ result later. Those providers answer the invocation with a job identifier, so ``
 :class:`Symfony\\AI\\Platform\\Result\\JobResult` whose content is a
 :class:`Symfony\\AI\\Platform\\Job\\JobHandle`::
 
+    use Symfony\AI\Platform\Message\Content\Text;
+
     $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano'), [
         'duration' => 6,
     ])->asJob();
 
 The handle holds no connection and no client, only what is needed to ask the provider about that job
 again, so it can be stored and picked up somewhere else entirely::
+
+    use Symfony\AI\Platform\Job\JobHandle;
+    use Symfony\AI\Platform\Job\JobStateCase;
 
     // in the process that started the job
     $jobId = $handle->getId();
@@ -1157,7 +1165,9 @@ provider and id rather than by id alone.
 The client resolving a job comes from the bridge that started it, so a process that only resolves
 jobs needs neither a provider nor a platform::
 
-    $jobClient = MiniMaxFactory::createJobClient($apiKey);
+    use Symfony\AI\Platform\Bridge\MiniMax\Factory;
+
+    $jobClient = Factory::createJobClient($apiKey);
 
 The handle states the name of the provider that issued it,
 :method:`Symfony\\AI\\Platform\\Job\\JobHandle::getProvider`, so an application resolving handles
@@ -1168,6 +1178,8 @@ never sleeps. To simply block until the job is done, hand it to a
 
     use Symfony\AI\Platform\Job\JobRunner;
 
+    // waits as long and polls as often as the handle states,
+    // or 120 seconds with one poll per second if it states nothing
     $result = (new JobRunner())->wait($jobClient, $handle);
 
     $result->asFile('video.mp4');
@@ -1214,7 +1226,8 @@ would otherwise allow::
     $result = $runner->wait($jobClient, $handle, maxPolls: 3);
 
 A ceiling never buys polls the budget does not pay for: whichever of the two runs out first ends the
-wait, and the :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException` says which one it was.
+wait, and the message of the :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException` says which
+one it was.
 
 In a Symfony application a runner using the application clock is available as
 ``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It
@@ -1223,40 +1236,55 @@ in seconds and one running for minutes, each at the cadence its bridge states. E
 platform also registers its client as ``ai.platform.job_client.<name>``, autowired by the platform
 name as argument name - so the argument of a MiniMax job client has to be called ``$minimax``::
 
-    public function __construct(
-        private JobRunner $jobRunner,
-        private JobClientInterface $minimax,
-    ) {
-    }
+    use Symfony\AI\Platform\Job\JobClientInterface;
+    use Symfony\AI\Platform\Job\JobHandle;
+    use Symfony\AI\Platform\Job\JobRunner;
 
-    public function __invoke(JobHandle $handle): void
+    final class VideoJobHandler
     {
-        // trust the job
-        $this->jobRunner->wait($this->minimax, $handle);
+        public function __construct(
+            private JobRunner $jobRunner,
+            private JobClientInterface $minimax,
+        ) {
+        }
 
-        // or bound it to what a request can afford
-        $this->jobRunner->wait($this->minimax, $handle, maxDuration: 5);
+        public function __invoke(JobHandle $handle): void
+        {
+            // trust the job
+            $this->jobRunner->wait($this->minimax, $handle);
 
-        // or to what it may spend
-        $this->jobRunner->wait($this->minimax, $handle, maxPolls: 3);
+            // or bound it to what a request can afford
+            $this->jobRunner->wait($this->minimax, $handle, maxDuration: 5);
+
+            // or to what it may spend
+            $this->jobRunner->wait($this->minimax, $handle, maxPolls: 3);
+        }
     }
 
 An application holding handles of several providers picks the client by the name the handle carries,
 from a locator over the ``ai.platform.job_client`` tag::
 
-    public function __construct(
-        #[AutowireLocator('ai.platform.job_client', indexAttribute: 'key')]
-        private ContainerInterface $jobClients,
-        private JobRunner $jobRunner,
-    ) {
-    }
+    use Psr\Container\ContainerInterface;
+    use Symfony\AI\Platform\Job\JobHandle;
+    use Symfony\AI\Platform\Job\JobRunner;
+    use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
 
-    public function __invoke(JobHandle $handle): void
+    final class JobHandler
     {
-        // A handle only names a provider when the bridge that created it stated one.
-        $provider = $handle->getProvider() ?? throw new \InvalidArgumentException('The job handle does not name a provider.');
+        public function __construct(
+            #[AutowireLocator('ai.platform.job_client', indexAttribute: 'key')]
+            private ContainerInterface $jobClients,
+            private JobRunner $jobRunner,
+        ) {
+        }
 
-        $this->jobRunner->wait($this->jobClients->get($provider), $handle);
+        public function __invoke(JobHandle $handle): void
+        {
+            // A handle only names a provider when the bridge that created it stated one.
+            $provider = $handle->getProvider() ?? throw new \InvalidArgumentException('The job handle does not name a provider.');
+
+            $this->jobRunner->wait($this->jobClients->get($provider), $handle);
+        }
     }
 
 The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
@@ -1273,8 +1301,9 @@ non-terminal, so a provider adding a state does not abort a running job.
 .. note::
 
     Only bridges whose provider works this way return a ``JobResult``; everything else answers
-    synchronously as before. Currently these are:
+    synchronously. These bridges are:
 
+    * Eden AI, for speech-to-text jobs that are still running when the provider answers
     * MiniMax, for video generation and asynchronous speech synthesis
     * Higgsfield, for every image and video generation
     * Venice, for video generation
@@ -1287,6 +1316,9 @@ Batch Requests
 Providers charge about half as much for work they may schedule at their own convenience. Such a
 batch is an asynchronous job carrying many requests, so an invocation asking for one is given many
 inputs, keyed by the identifier each result is reported back under::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
 
     $handle = $platform->invoke('gpt-4o-mini', [
         'capital-fr' => new MessageBag(Message::ofUser('What is the capital of France?')),
@@ -1303,6 +1335,8 @@ are iterated - so the traversal is one-shot. Requests succeed and fail individua
 without a result says why: one the batch never sent, because it was canceled or expired, cost
 nothing and can be submitted again, where one that errored has to be fixed first::
 
+    use Symfony\AI\Platform\Result\BatchItemCase;
+
     foreach ($jobClient->getResult($handle)->getContent() as $item) {
         if ($item->isSuccess()) {
             echo $item->getId().': '.$item->getResult()->asText();
@@ -1316,6 +1350,12 @@ expired batch is terminal without having succeeded: the runner reports it as a
 :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException`, where the client still hands out
 the requests it did get through. On top of the interface, the OpenAI client reports a batch's
 progress in one request and cancels one that is no longer worth finishing.
+
+.. warning::
+
+    An OpenAI batch handle states the 24 hour window of the batch and one poll per minute. Without
+    a ``maxDuration``, ``JobRunner::wait()`` blocks for up to 24 hours, so never call it for a batch
+    in a web request.
 
 A successful item holds the ordinary result a synchronous invocation would have produced, except for
 structured output: the schema is sent with every request, but deserializing an answer happens when an
