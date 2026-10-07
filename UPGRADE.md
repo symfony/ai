@@ -1,3 +1,17 @@
+UPGRADE FROM 0.14 to 0.15
+=========================
+
+Platform
+--------
+
+ * The Albert bridge no longer exposes environmental impacts under the `carbon` result metadata.
+ * They are now available under `impacts`, with the energy consumption reported directly by Albert:
+
+   ```diff
+   -$result->getMetadata()->get('carbon')['kWh']['min'];
+   +$result->getMetadata()->get('impacts')['kWh'];
+   ```
+
 UPGRADE FROM 0.13 to 0.14
 =========================
 
