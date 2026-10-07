@@ -1,0 +1,19 @@
+# Sample PDF files for testing
+
+These files are from samplelib.com 
+Licence: https://samplelib.com/license.html
+> After downloading from the sample library, do whatever you want with the files (change, supplement, use as you like). All files are provided AS IS and, of course, without any guarantees. We cannot guarantee that all links will work.
+
+## File Descriptions
+
+sample-empty.pdf	Empty PDF Document
+sample1.pdf		PDF Document with text, 1 page
+sample5.pdf		PDF Document with text, 5 pages
+sample10.pdf		PDF Document with text, 10 pages
+sample-form.pdf		PDF document with form fields
+sample-heavy.pdf	PDF document with images
+sample-landscape.pdf	PDF document in landscape orientation
+sample-table.pdf	PDF document with tables
+sample-protected.pdf	PDF document protected with a password
+sample-scanned.pdf	PDF documents of scanned text
+
