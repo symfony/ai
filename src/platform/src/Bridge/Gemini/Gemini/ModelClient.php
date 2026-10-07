@@ -75,6 +75,7 @@ final class ModelClient implements ModelClientInterface
         unset($config['generationConfig']['stream']);
         unset($config['generationConfig']['tools']);
         unset($config['generationConfig']['tool_config']);
+        unset($config['generationConfig']['service_tier']);
         unset($config['generationConfig']['server_tools']);
 
         if ([] === $config['generationConfig']) {
@@ -89,6 +90,10 @@ final class ModelClient implements ModelClientInterface
         if (isset($options['tool_config'])) {
             $config['tool_config'] = $options['tool_config'];
             unset($options['tool_config']);
+        }
+
+        if (isset($options['service_tier'])) {
+            $config['service_tier'] = $options['service_tier'];
         }
 
         foreach ($options['server_tools'] ?? [] as $tool => $params) {

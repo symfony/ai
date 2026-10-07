@@ -64,6 +64,7 @@ final class ModelClientTest extends TestCase
             'topP' => 0.9,
             'tools' => [['name' => 'get_weather']],
             'tool_config' => ['function_calling_config' => ['mode' => 'ANY']],
+            'service_tier' => 'priority',
             'server_tools' => ['google_search' => true],
         ];
 
@@ -74,6 +75,8 @@ final class ModelClientTest extends TestCase
             $this->assertSame(0.9, $body['generationConfig']['topP']);
             $this->assertSame([['functionDeclarations' => [['name' => 'get_weather']]], ['google_search' => []]], $body['tools']);
             $this->assertSame(['function_calling_config' => ['mode' => 'ANY']], $body['tool_config']);
+            $this->assertSame('priority', $body['service_tier']);
+            $this->assertArrayNotHasKey('service_tier', $body['generationConfig']);
 
             return new JsonMockResponse(['candidates' => []]);
         });

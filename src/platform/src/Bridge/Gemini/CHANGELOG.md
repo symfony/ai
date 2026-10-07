@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add support for the `service_tier` option
+
 0.14
 ----
 
