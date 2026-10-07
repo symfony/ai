@@ -18,9 +18,10 @@ page linked from their section.
 .. note::
 
     Stores with an ``http_client`` option use the framework ``http_client`` service by default,
-    and accept another service ID. When the endpoint of the store is configured too, the store
-    scopes the client to it and adds the configured credentials. Otherwise, configure the base URI
-    and the credentials on the client itself.
+    and accept another service ID. When the address of the store is configured too (``endpoint``,
+    ``dsn`` for ClickHouse or ``account_id`` for Cloudflare), the store scopes the client to it and
+    adds the API key. Otherwise, configure the base URI and the API key on the client itself.
+    SurrealDB always needs its ``username`` and ``password``, because it uses them to sign in.
 
 Local Stores
 ------------
