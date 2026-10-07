@@ -1169,72 +1169,97 @@ jobs needs neither a provider nor a platform::
 
     $jobClient = Factory::createJobClient($apiKey);
 
-The handle states the name of the provider that issued it,
-:method:`Symfony\\AI\\Platform\\Job\\JobHandle::getProvider`, so an application resolving handles
-of several providers can pick the matching client.
-:method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` performs exactly one request and
-never sleeps. To simply block until the job is done, hand it to a
-:class:`Symfony\\AI\\Platform\\Job\\JobRunner`, which owns the polling loop::
+.. note::
+
+    Only bridges whose provider works this way return a ``JobResult``; everything else answers
+    synchronously. These bridges are:
+
+    * Eden AI, for speech-to-text jobs that are still running when the provider answers
+    * MiniMax, for video generation and asynchronous speech synthesis
+    * Higgsfield, for every image and video generation
+    * Venice, for video generation
+    * Replicate, for every prediction
+    * OpenAI, for batch requests
+
+.. _platform-job-runner:
+
+Waiting for a Job
+~~~~~~~~~~~~~~~~~
+
+:method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::getStatus` sends one request and returns
+the current state of the job. To wait until the job is done, use the
+:class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It checks the state of the job at regular intervals
+and returns the result when the job succeeds::
 
     use Symfony\AI\Platform\Job\JobRunner;
 
-    // waits as long and polls as often as the handle states,
-    // or 120 seconds with one poll per second if it states nothing
-    $result = (new JobRunner())->wait($jobClient, $handle);
+    $runner = new JobRunner();
+
+    // waits as long and checks as often as the bridge defines for this job
+    // (if the bridge defines nothing: 120 seconds, one check per second)
+    $result = $runner->wait($jobClient, $handle);
 
     $result->asFile('video.mp4');
 
-What the runner hands back is a :class:`Symfony\\AI\\Platform\\Result\\DeferredResult`, the same
-thing ``invoke()`` returns, so finishing a job reads like any other invocation instead of leaving
-you to narrow a bare ``ResultInterface`` yourself.
+The runner returns a :class:`Symfony\\AI\\Platform\\Result\\DeferredResult`, the same class that
+``invoke()`` returns. You read it with the same methods (e.g. ``asText()`` or ``asFile()``).
 
-How long the work takes and how long you are willing to wait for it are two different questions. The
-first is the provider's: a bridge that knows its timings (MiniMax video generation runs for minutes
-where speech synthesis takes seconds) states it on the handle, and the runner honours it, so a
-caller who knows nothing about the provider still waits the right amount.
+The bridge stores on the handle how long the job usually takes and how often to check it. For
+example, MiniMax video generation takes several minutes, while speech synthesis takes a few
+seconds. Pass your own limits when you can't wait that long, for example inside a web request::
 
-The second is yours, and it usually belongs to the call rather than to the runner: the same job may
-be given ten minutes in a worker and five seconds inside a web request. Say so per call, in seconds::
-
+    // stop waiting after 5 seconds
     $result = $runner->wait($jobClient, $handle, maxDuration: 5);
 
-A budget passed to the runner's constructor applies to every job it waits for and sits between the
-two: it overrules what a job asks for, and a single call overrules it in turn. Whichever wins, it is
-spent as wall clock rather than as a number of polls - asking the provider takes time too, so five
-seconds mean five seconds and not five requests that may each take one.
-
-Before polling, the runner asks the client whether the handle is one it can resolve
-(:method:`Symfony\\AI\\Platform\\Job\\JobClientInterface::supports`) - what that means is the
-bridge's own judgement. A handle the client turns down raises an ``InvalidArgumentException`` rather
-than a request that fails halfway.
-
-How *often* a job is worth asking about splits the same way, and for the same reason: a generation
-running for ten minutes is not answered any sooner by polling it every second, and the bridge is
-what knows that. So a handle states its interval too, and the runner honours it — one Higgsfield
-generation is polled every five seconds, one Replicate prediction every second, through the same
-runner and without the caller knowing either number. State a different one per call, or per runner,
-exactly as with the budget::
-
+    // check the state every half second
     $result = $runner->wait($jobClient, $handle, pollInterval: 0.5);
 
-Both of those are the provider's knowledge. How many requests a job is worth is not — that is a
-caller's concern (a rate limit, an API bill, a request that may spend three round trips and no
-more), so a job cannot state it and a ``maxPolls`` ceiling caps whatever the budget and the interval
-would otherwise allow::
-
-    // at most three requests, however much time they leave unspent
+    // send at most 3 status requests (e.g. because of a rate limit)
     $result = $runner->wait($jobClient, $handle, maxPolls: 3);
 
-A ceiling never buys polls the budget does not pay for: whichever of the two runs out first ends the
-wait, and the message of the :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException` says which
-one it was.
+``maxDuration`` counts real time, including the time each status request takes. When you set
+both ``maxDuration`` and ``maxPolls``, the runner stops at the first limit it reaches.
 
-In a Symfony application a runner using the application clock is available as
-``ai.platform.job_runner`` and autowired through :class:`Symfony\\AI\\Platform\\Job\\JobRunner`. It
-carries no budget, interval or ceiling of its own, so the same shared service serves a job finishing
-in seconds and one running for minutes, each at the cadence its bridge states. Each job-capable
-platform also registers its client as ``ai.platform.job_client.<name>``, autowired by the platform
-name as argument name - so the argument of a MiniMax job client has to be called ``$minimax``::
+To apply the same limits to every job, pass them to the constructor of the runner. The values you
+pass to ``wait()`` take priority over the values of the constructor, and both take priority over
+the values of the handle.
+
+When the job doesn't end with a result, the runner throws an exception::
+
+    use Symfony\AI\Platform\Exception\JobFailedException;
+    use Symfony\AI\Platform\Exception\JobTimeoutException;
+
+    try {
+        $result = $runner->wait($jobClient, $handle, maxDuration: 5);
+    } catch (JobTimeoutException $exception) {
+        // a limit was reached, but the job is still running: keep the handle and wait again later
+        $repository->save($handle->getId(), $handle->toString());
+    } catch (JobFailedException $exception) {
+        // the job ended without a result (e.g. it failed or expired);
+        // $exception->getStatus() returns its final state
+        $logger->error($exception->getMessage());
+    }
+
+The message of the ``JobTimeoutException`` says which limit was reached. If the job client can't
+handle the job (e.g. because another provider started it), the runner throws an
+``InvalidArgumentException`` before it sends any request.
+
+Each bridge converts the states of its provider to a :class:`Symfony\\AI\\Platform\\Job\\JobStateCase`
+(e.g. ``RUNNING`` or ``SUCCEEDED``). :method:`Symfony\\AI\\Platform\\Job\\JobStatus::getRaw` returns
+the original state of the provider. A state that the bridge doesn't know becomes ``UNKNOWN``, and
+the runner keeps waiting.
+
+Waiting for Jobs in a Symfony Application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The AI Bundle registers a runner as the ``ai.platform.job_runner`` service. You can autowire it
+with the ``JobRunner`` type. It uses the clock of your application and has no limits of its own,
+so each job uses the values of its bridge.
+
+Each platform that supports jobs also registers its job client as the
+``ai.platform.job_client.<name>`` service. To autowire it, type the argument with
+:class:`Symfony\\AI\\Platform\\Job\\JobClientInterface` and give it the name of the platform
+(e.g. ``$minimax``)::
 
     use Symfony\AI\Platform\Job\JobClientInterface;
     use Symfony\AI\Platform\Job\JobHandle;
@@ -1250,19 +1275,16 @@ name as argument name - so the argument of a MiniMax job client has to be called
 
         public function __invoke(JobHandle $handle): void
         {
-            // trust the job
-            $this->jobRunner->wait($this->minimax, $handle);
+            $result = $this->jobRunner->wait($this->minimax, $handle);
 
-            // or bound it to what a request can afford
-            $this->jobRunner->wait($this->minimax, $handle, maxDuration: 5);
-
-            // or to what it may spend
-            $this->jobRunner->wait($this->minimax, $handle, maxPolls: 3);
+            // ...
         }
     }
 
-An application holding handles of several providers picks the client by the name the handle carries,
-from a locator over the ``ai.platform.job_client`` tag::
+If your application handles jobs of several providers, get the job client from a service locator.
+All job clients have the ``ai.platform.job_client`` tag.
+:method:`Symfony\\AI\\Platform\\Job\\JobHandle::getProvider` returns the name of the platform that
+started the job, which is also the key of its job client in the locator::
 
     use Psr\Container\ContainerInterface;
     use Symfony\AI\Platform\Job\JobHandle;
@@ -1280,35 +1302,12 @@ from a locator over the ``ai.platform.job_client`` tag::
 
         public function __invoke(JobHandle $handle): void
         {
-            // A handle only names a provider when the bridge that created it stated one.
-            $provider = $handle->getProvider() ?? throw new \InvalidArgumentException('The job handle does not name a provider.');
+            // getProvider() returns null if the bridge didn't store a provider name
+            $provider = $handle->getProvider() ?? throw new \InvalidArgumentException('The job handle has no provider.');
 
             $this->jobRunner->wait($this->jobClients->get($provider), $handle);
         }
     }
-
-The runner throws a :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException` when the provider
-ends the job without a result, and a :class:`Symfony\\AI\\Platform\\Exception\\JobTimeoutException`
-when the budget runs out while the job is still going. The latter carries the handle, so the job can
-be handed on rather than lost.
-
-Providers spell their states differently, so a bridge maps them onto a
-:class:`Symfony\\AI\\Platform\\Job\\JobStateCase` while
-:method:`Symfony\\AI\\Platform\\Job\\JobStatus::getRaw` keeps the provider's own wording — the same
-split as ``FinishReason``. A state no bridge knows about is reported as ``UNKNOWN`` and treated as
-non-terminal, so a provider adding a state does not abort a running job.
-
-.. note::
-
-    Only bridges whose provider works this way return a ``JobResult``; everything else answers
-    synchronously. These bridges are:
-
-    * Eden AI, for speech-to-text jobs that are still running when the provider answers
-    * MiniMax, for video generation and asynchronous speech synthesis
-    * Higgsfield, for every image and video generation
-    * Venice, for video generation
-    * Replicate, for every prediction
-    * OpenAI, for batch requests
 
 Batch Requests
 ~~~~~~~~~~~~~~
