@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Bridge\Anthropic\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -47,11 +48,25 @@ final class Factory
         return new Provider(
             $name,
             [new ModelClient($httpClient, $apiKey, $cacheRetention, $baseUrl)],
-            [new ResultConverter()],
+            [new ResultConverter($name)],
             $modelCatalog,
             $contract ?? AnthropicContract::create(),
             $eventDispatcher,
         );
+    }
+
+    /**
+     * The client resolving the batches this bridge hands out - typically in a worker picking up a
+     * stored handle, without a provider or platform at hand.
+     *
+     * @param string $baseUrl Base URL of an Anthropic-compatible endpoint, without trailing slash
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        string $baseUrl = 'https://api.anthropic.com',
+    ): JobClient {
+        return new JobClient($httpClient ?? new EventSourceHttpClient(), $apiKey, $baseUrl);
     }
 
     /**
