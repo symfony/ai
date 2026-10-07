@@ -17,10 +17,11 @@ page linked from their section.
 
 .. note::
 
-    The HTTP-based stores (ClickHouse, Elasticsearch, ManticoreSearch, Milvus, Neo4j, OpenSearch
-    and Supabase) use the framework ``http_client`` service by default. Their ``http_client``
-    option accepts another service ID, which then replaces the endpoint and credentials, or is
-    scoped to the endpoint when both are configured. Credentials always require the endpoint.
+    Stores with an ``http_client`` option use the framework ``http_client`` service by default,
+    and accept another service ID. When the address of the store is configured too (``endpoint``,
+    ``dsn`` for ClickHouse or ``account_id`` for Cloudflare), the store scopes the client to it and
+    adds the API key. Otherwise, configure the base URI and the API key on the client itself.
+    SurrealDB always needs its ``username`` and ``password``, because it uses them to sign in.
 
 Local Stores
 ------------
@@ -221,12 +222,16 @@ search through the `sqlite-vec`_ extension.
             sqlite:
                 my_store:
                     dsn: 'sqlite:%kernel.project_dir%/var/store.db'
-                    # or a Doctrine DBAL connection service instead of a dsn:
-                    # connection: 'doctrine.dbal.default_connection'
+                    # or the name of a Doctrine DBAL connection instead of a dsn:
+                    # connection: 'default'
                     table_name: 'documents'
-                    vec: false
-                    distance: 'cosine'
-                    vector_dimension: 1536
+                    # cosine (default), angular, euclidean, manhattan or chebyshev
+                    strategy: 'cosine'
+
+                    # or with the sqlite-vec extension:
+                    # vec: true
+                    # distance: 'cosine' # or 'L2'
+                    # vector_dimension: 1536
 
 See :doc:`sqlite` for the differences between both stores and the ``sqlite-vec`` setup.
 
