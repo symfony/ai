@@ -27,16 +27,20 @@ use Symfony\Component\Serializer\SerializerInterface;
 final class PlatformSubscriber implements EventSubscriberInterface
 {
     public const RESPONSE_FORMAT = 'response_format';
+    public const MISSING_PROPERTIES_ONLY = 'missing_properties_only';
 
     private ?string $outputType = null;
 
     private ?object $objectToPopulate = null;
+
+    private bool $missingPropertiesOnly = false;
 
     private SerializerInterface&DenormalizerInterface $serializer;
 
     public function __construct(
         private readonly ResponseFormatFactoryInterface $responseFormatFactory = new ResponseFormatFactory(),
         (SerializerInterface&DenormalizerInterface)|null $serializer = null,
+        private readonly InstanceSchemaFilter $instanceSchemaFilter = new InstanceSchemaFilter(),
     ) {
         $this->serializer = $serializer ?? new Serializer();
     }
@@ -57,6 +61,17 @@ final class PlatformSubscriber implements EventSubscriberInterface
         $this->reset();
 
         $options = $event->getOptions();
+
+        // The option is consumed here and must never reach the provider
+        if (\array_key_exists(self::MISSING_PROPERTIES_ONLY, $options)) {
+            $this->missingPropertiesOnly = (bool) $options[self::MISSING_PROPERTIES_ONLY];
+            unset($options[self::MISSING_PROPERTIES_ONLY]);
+            $event->setOptions($options);
+        }
+
+        if ($this->missingPropertiesOnly && !\is_object($options[self::RESPONSE_FORMAT] ?? null)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" option requires the "%s" option to be the instance to populate.', self::MISSING_PROPERTIES_ONLY, self::RESPONSE_FORMAT));
+        }
 
         if (!isset($options[self::RESPONSE_FORMAT])) {
             return;
@@ -87,6 +102,10 @@ final class PlatformSubscriber implements EventSubscriberInterface
 
         $options[self::RESPONSE_FORMAT] = $this->responseFormatFactory->create($className);
 
+        if ($this->missingPropertiesOnly && null !== $this->objectToPopulate) {
+            $options[self::RESPONSE_FORMAT]['json_schema']['schema'] = $this->instanceSchemaFilter->filter($options[self::RESPONSE_FORMAT]['json_schema']['schema'], $this->objectToPopulate);
+        }
+
         $event->setOptions($options);
     }
 
@@ -103,7 +122,7 @@ final class PlatformSubscriber implements EventSubscriberInterface
             $deferred->getResultConverter(),
             $this->serializer,
             $this->outputType,
-            $this->objectToPopulate
+            $this->objectToPopulate,
         );
 
         $event->setDeferredResult(new DeferredResult($converter, $deferred->getRawResult(), $options));
@@ -115,5 +134,6 @@ final class PlatformSubscriber implements EventSubscriberInterface
     {
         $this->outputType = null;
         $this->objectToPopulate = null;
+        $this->missingPropertiesOnly = false;
     }
 }
