@@ -55,6 +55,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "smalot/pdfparser": "^2.12",
         "symfony/console": "^7.4|^8.0",
         "symfony/dom-crawler": "^7.4|^8.0",
         "symfony/dependency-injection": "^7.4|^8.0",
