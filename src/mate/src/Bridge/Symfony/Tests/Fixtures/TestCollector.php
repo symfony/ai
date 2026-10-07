@@ -25,14 +25,22 @@ class TestCollector extends DataCollector
     private string $collectorName = 'test';
 
     /**
-     * @param array<string, mixed> $data
+     * @var array<string, mixed>|null
+     */
+    private ?array $summary = null;
+
+    /**
+     * @param array<string, mixed>      $data
+     * @param array<string, mixed>|null $summary Triage view; defaults to $data when not given
      */
     public function __construct(
         string $name,
         array $data = [],
+        ?array $summary = null,
     ) {
         $this->collectorName = $name;
         $this->data = $data;
+        $this->summary = $summary;
     }
 
     /**
@@ -43,6 +51,7 @@ class TestCollector extends DataCollector
         return [
             'collectorName' => $this->collectorName,
             'data' => $this->data,
+            'summary' => $this->summary,
         ];
     }
 
@@ -53,6 +62,7 @@ class TestCollector extends DataCollector
     {
         $this->collectorName = $data['collectorName'];
         $this->data = $data['data'];
+        $this->summary = $data['summary'] ?? null;
     }
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
@@ -63,6 +73,24 @@ class TestCollector extends DataCollector
     public function getName(): string
     {
         return $this->collectorName;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getData(): array
+    {
+        \assert(\is_array($this->data));
+
+        return $this->data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getSummaryData(): array
+    {
+        return $this->summary ?? $this->getData();
     }
 
     public function reset(): void
