@@ -233,8 +233,7 @@ final class McpPass implements CompilerPassInterface
         $classes = [];
         foreach ((new \ReflectionMethod($class, $method))->getParameters() as $parameter) {
             foreach ($parameter->getAttributes(CompletionProvider::class, \ReflectionAttribute::IS_INSTANCEOF) as $attribute) {
-                $instance = $attribute->newInstance();
-                $provider = $instance->provider ?? $instance->providerClass;
+                $provider = $attribute->newInstance()->provider;
                 if (\is_string($provider) && class_exists($provider)) {
                     $classes[] = $provider;
                 }

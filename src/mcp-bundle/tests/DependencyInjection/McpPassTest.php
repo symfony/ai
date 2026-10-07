@@ -11,11 +11,13 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
+use Mcp\Capability\Attribute\CompletionProvider;
 use Mcp\Capability\Attribute\McpPrompt;
 use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
+use Mcp\Capability\Completion\ProviderInterface;
 use Mcp\Schema\Icon;
 use Mcp\Schema\ToolAnnotations;
 use PHPUnit\Framework\TestCase;
@@ -163,6 +165,18 @@ final class McpPassTest extends TestCase
         $this->assertCount(1, $calls);
         $this->assertSame([GreetingPrompt::class, 'greeting'], $calls[0][1][0]);
         $this->assertSame('greeting', $calls[0][1][1]);
+    }
+
+    public function testReferencesCompletionProviderServices()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition(TopicCompletionProvider::class, new Definition(TopicCompletionProvider::class));
+        $container->setDefinition(CompletingPrompt::class, (new Definition(CompletingPrompt::class))->addTag('mcp.prompt', ['method' => 'talk']));
+
+        (new McpPass())->process($container);
+
+        $this->assertCount(1, $this->callsNamed($container, 'addPrompt'));
+        $this->assertArrayHasKey(TopicCompletionProvider::class, $this->locatorServices($container));
     }
 
     public function testRegistersResource()
@@ -554,5 +568,24 @@ class PercentTemplate
     public function read(string $name): string
     {
         return $name;
+    }
+}
+
+class TopicCompletionProvider implements ProviderInterface
+{
+    public function getCompletions(string $currentValue): array
+    {
+        return ['mcp', 'symfony'];
+    }
+}
+
+class CompletingPrompt
+{
+    #[McpPrompt(name: 'talk')]
+    public function talk(
+        #[CompletionProvider(provider: TopicCompletionProvider::class)] string $topic,
+        #[CompletionProvider(values: ['short', 'long'])] string $length,
+    ): string {
+        return $topic.' '.$length;
     }
 }
