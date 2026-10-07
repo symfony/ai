@@ -21,8 +21,8 @@ $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework?'),
 );
-$result = $platform->invoke('sonar', $messages, [
-    'max_tokens' => 500, // specific options just for this call
+$result = $platform->invoke('fast', $messages, [
+    'max_output_tokens' => 500, // specific options just for this call
 ]);
 
 // wait for the result to be ready

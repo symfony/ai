@@ -24,65 +24,38 @@ final class ModelCatalog extends AbstractModelCatalog
      */
     public function __construct(array $additionalModels = [])
     {
-        // STATIC LIST START
-        // This list is generated from external metadata. Run dev/update-model-catalogs.php to refresh it.
-        $defaultModels = [
-            'sonar' => [
-                'class' => Perplexity::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'sonar-deep-research' => [
-                'class' => Perplexity::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
-            'sonar-pro' => [
-                'class' => Perplexity::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'sonar-reasoning' => [
-                'class' => Perplexity::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
-            'sonar-reasoning-pro' => [
-                'class' => Perplexity::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::INPUT_PDF,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
+        $presetCapabilities = [
+            Capability::INPUT_MESSAGES,
+            Capability::INPUT_IMAGE,
+            Capability::OUTPUT_TEXT,
+            Capability::OUTPUT_STREAMING,
+            Capability::OUTPUT_STRUCTURED,
+            Capability::TOOL_CALLING,
         ];
-        // STATIC LIST END
+
+        $defaultModels = [
+            'fast' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'low' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'medium' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'high' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'xhigh' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'perplexity/sonar' => [
+                'class' => Perplexity::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            // Deprecated Sonar Chat Completions models, sent as their replacement preset
+            'sonar' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'sonar-pro' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'sonar-reasoning' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'sonar-reasoning-pro' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+            'sonar-deep-research' => ['class' => Perplexity::class, 'capabilities' => $presetCapabilities],
+        ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
     }

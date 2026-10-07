@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Bridge\Perplexity;
+namespace Symfony\AI\Platform\Bridge\Perplexity\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Perplexity\TokenUsageExtractor;
@@ -32,12 +32,13 @@ final class TokenUsageExtractorTest extends TestCase
     {
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
-            'model' => 'sonar',
+            'model' => 'openai/gpt-6-luna',
             'usage' => [
-                'prompt_tokens' => 10,
-                'completion_tokens' => 20,
+                'input_tokens' => 10,
+                'input_tokens_details' => ['cached_tokens' => 5],
+                'output_tokens' => 20,
+                'output_tokens_details' => ['reasoning_tokens' => 20],
                 'total_tokens' => 50,
-                'reasoning_tokens' => 20,
             ],
         ]);
 
@@ -47,8 +48,9 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(20, $tokenUsage->getCompletionTokens());
         $this->assertSame(20, $tokenUsage->getThinkingTokens());
+        $this->assertSame(5, $tokenUsage->getCachedTokens());
         $this->assertSame(50, $tokenUsage->getTotalTokens());
-        $this->assertSame('sonar', $tokenUsage->getModel());
+        $this->assertSame('openai/gpt-6-luna', $tokenUsage->getModel());
     }
 
     public function testItHandlesMissingUsageFields()
@@ -56,8 +58,7 @@ final class TokenUsageExtractorTest extends TestCase
         $extractor = new TokenUsageExtractor();
         $result = new InMemoryRawResult([
             'usage' => [
-                // Missing some fields
-                'prompt_tokens' => 10,
+                'input_tokens' => 10,
             ],
         ]);
 

@@ -18,6 +18,6 @@ require_once __DIR__.'/bootstrap.php';
 $platform = Factory::createPlatform(env('PERPLEXITY_API_KEY'), http_client());
 
 $messages = new MessageBag(Message::ofUser('What is the best French cheese?'));
-$result = $platform->invoke('sonar', $messages);
+$result = $platform->invoke('fast', $messages);
 
 echo $result->asText().\PHP_EOL;
