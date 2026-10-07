@@ -231,9 +231,15 @@ final class AiBundle extends AbstractBundle
             $this->processModelConfig($platformName, $models, $builder);
         }
 
-        $platforms = array_keys($builder->findTaggedServiceIds('ai.platform'));
-        if (1 === \count($platforms)) {
-            $builder->setAlias(PlatformInterface::class, reset($platforms));
+        $taggedPlatforms = $builder->findTaggedServiceIds('ai.platform');
+        foreach ($taggedPlatforms as $serviceId => $tags) {
+            $tagName = $tags[0]['name'] ?? '';
+            if ('' !== $tagName) {
+                $builder->registerAliasForArgument($serviceId, PlatformInterface::class, str_replace('.', '_', $tagName));
+            }
+        }
+        if (1 === \count($taggedPlatforms)) {
+            $builder->setAlias(PlatformInterface::class, array_key_first($taggedPlatforms));
         }
 
         if ([] !== ($config['agent'] ?? [])) {
@@ -625,7 +631,6 @@ final class AiBundle extends AbstractBundle
                     ->addTag('ai.platform', ['name' => 'cache.'.$name]);
 
                 $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.platform.'.$type.'.'.$name, PlatformInterface::class, $type.'_'.$name);
             }
 
             return;
@@ -681,7 +686,6 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
-            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
 
             return;
         }
@@ -706,7 +710,6 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
-            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
 
             return;
         }
@@ -876,7 +879,6 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => $type]);
 
             $container->setDefinition('ai.platform.'.$type, $definition);
-            $container->registerAliasForArgument('ai.platform.'.$type, PlatformInterface::class, $type);
 
             $jobClientId = 'ai.platform.job_client.'.$type;
             $container->setDefinition($jobClientId, (new Definition(VeniceJobClient::class))
@@ -1160,7 +1162,6 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'minimax']);
 
             $container->setDefinition($platformId, $definition);
-            $container->registerAliasForArgument($platformId, PlatformInterface::class, 'minimax');
 
             $jobClientId = 'ai.platform.job_client.minimax';
             $container->setDefinition($jobClientId, (new Definition(MiniMaxJobClient::class))

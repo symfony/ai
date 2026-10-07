@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
@@ -133,6 +134,32 @@ class BridgeConfigCompilationTest extends TestCase
         ]);
 
         $this->assertTrue($container->has('ai.platform.failover.main'));
+    }
+
+    #[TestDox('Multiple platforms register alias for argument to support #[Target] injection')]
+    public function testMultiplePlatformsRegisterAliasForArgument()
+    {
+        $container = $this->loadContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => ['api_key' => 'k'],
+                    'anthropic' => ['api_key' => 'k'],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $container->hasAlias(PlatformInterface::class.' $openai'),
+            'Alias for #[Target("openai")] should be registered.'
+        );
+        $this->assertTrue(
+            $container->hasAlias(PlatformInterface::class.' $anthropic'),
+            'Alias for #[Target("anthropic")] should be registered.'
+        );
+        $this->assertFalse(
+            $container->hasAlias(PlatformInterface::class),
+            'No generic PlatformInterface alias should exist with multiple platforms.'
+        );
     }
 
     /**
