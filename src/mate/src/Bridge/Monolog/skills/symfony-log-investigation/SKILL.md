@@ -25,6 +25,12 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
    - Regex: `vendor/bin/mate tools:call monolog-search --term="user \d+ locked" --regex`. A bare pattern is wrapped as `/.../i`; pass your own `/.../` or `#...#` to control anchoring and flags.
 4. Pivot on a field: once you have an identifier (request id, user id, order id), follow it with `vendor/bin/mate tools:call monolog-context-search --key=request_id --value=abc123`. This is how you reconstruct one request or one user across many lines.
 
+Once you have a route and a rough time from a log entry, and the app has the profiler enabled (usually dev), the full request trace tells you more than the log line alone. Search the logs and list matching profiles together in one call instead of two separate `tools:call` round-trips (see the `tools-call-batch` skill):
+
+```bash
+vendor/bin/mate tools:call-batch --json='[{"tool": "monolog-search", "params": {"term": "Timeout", "level": "error"}}, {"tool": "symfony-profiler-list", "params": {"url": "/checkout", "from": "-5 minutes"}}]'
+```
+
 ## Reading
 
 - Correlate `channel` + `level` + `datetime`. The channel tells you the subsystem (`doctrine` = DB, `security` = auth, `request`/`php` = framework), the level tells you severity, the timestamp anchors it to a deploy or an incident.
