@@ -19,6 +19,7 @@ use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\JobResult;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Tool\Tool;
@@ -238,7 +239,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
                     // Jobs have no result yet other than a handle to follow up on.
                     $content = $result instanceof JobResult ? $result->getContent()->toArray() : $result->getContent();
 
-                    $call['result'] = $content instanceof \Generator ? null : $content;
+                    $call['result'] = $content instanceof \Generator ? null : $this->unwrapNestedResults($content);
                     $call['result_type'] = match (true) {
                         $result instanceof ToolCallResult => 'tool_calls',
                         $result instanceof VectorResult => 'vectors',
@@ -260,5 +261,21 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         }
 
         return $calls;
+    }
+
+    /**
+     * Nested parts carry the raw HTTP response, which cannot be serialized into the profile.
+     */
+    private function unwrapNestedResults(mixed $content): mixed
+    {
+        if ($content instanceof ResultInterface) {
+            return $this->unwrapNestedResults($content->getContent());
+        }
+
+        if (\is_array($content)) {
+            return array_map($this->unwrapNestedResults(...), $content);
+        }
+
+        return $content;
     }
 }
