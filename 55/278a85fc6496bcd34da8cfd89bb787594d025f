@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by gundesli at 2026-10-06T20:46:35Z
+
+@wachterjohannes Thanks for the review! I've pushed the requested changes.
+
+---------------------------------------------------------------------------
+
+by gundesli at 2026-10-07T20:02:49Z
+
+Hi @wachterjohannes
+
+Thanks for the review.
+
+impacts already exists in the current version of Albert, so this isn't introducing a new field on the Albert side. The current version already returns impacts; carbon is the deprecated field.
+
+https://albert.api.etalab.gouv.fr/reference#tag/Chat/operation/chat_completions_v1_chat_completions_post
+
+The change here is therefore to align Symfony AI with the current Albert API rather than supporting a new field that isn't available yet.
