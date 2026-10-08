@@ -73,8 +73,6 @@ trait TypedResultTrait
     {
         $result = $this->as(BinaryResult::class);
 
-        \assert($result instanceof BinaryResult);
-
         $result->asFile($path);
     }
 
@@ -84,8 +82,6 @@ trait TypedResultTrait
     public function asDataUri(?string $mimeType = null): string
     {
         $result = $this->as(BinaryResult::class);
-
-        \assert($result instanceof BinaryResult);
 
         return $result->toDataUri($mimeType);
     }
@@ -225,7 +221,11 @@ trait TypedResultTrait
     abstract public function asStream(): \Generator;
 
     /**
-     * @param class-string $type
+     * @template T of ResultInterface
+     *
+     * @param class-string<T> $type
+     *
+     * @return T
      *
      * @throws ExceptionInterface
      */
