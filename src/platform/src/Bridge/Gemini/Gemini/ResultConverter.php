@@ -135,8 +135,16 @@ final class ResultConverter implements ResultConverterInterface
         // Tool calls are collected across the whole stream and completed once at its end, so that
         // calls split over several parts or chunks arrive as a single batch.
         $toolCalls = [];
+        $usage = null;
+        $modelVersion = null;
 
         foreach ($result->getDataStream() as $data) {
+            // Every chunk carries the cumulative usage so far, and yielded usages are summed: keep the last one.
+            if (isset($data['usageMetadata']) && [] !== $data['usageMetadata']) {
+                $usage = $data['usageMetadata'];
+                $modelVersion = $data['modelVersion'] ?? $modelVersion;
+            }
+
             // Gemini repeats the reason on every candidate of the terminal chunk; the leading one wins,
             // matching the buffered path.
             if (null !== ($data['candidates'][0]['finishReason'] ?? null)) {
@@ -220,6 +228,10 @@ final class ResultConverter implements ResultConverterInterface
 
         if ([] !== $toolCalls) {
             yield new ToolCallComplete($toolCalls);
+        }
+
+        if (null !== $usage) {
+            yield $this->getTokenUsageExtractor()->fromUsageMetadata($usage, $modelVersion);
         }
 
         // Emitted last: the terminal chunk carries both the finish reason and its content parts.

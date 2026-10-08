@@ -38,6 +38,8 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\TokenUsage\StreamListener as TokenUsageStreamListener;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -603,15 +605,20 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(StreamResult::class, $result);
 
         $items = iterator_to_array($result->getContent());
-        $this->assertCount(2, $items);
+        $this->assertCount(3, $items);
         $this->assertInstanceOf(TextDelta::class, $items[0]);
         $this->assertSame('Hello', $items[0]->getText());
 
+        // The candidate-less usage chunk still reports its token usage.
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[1]);
+        $this->assertSame(10, $items[1]->getPromptTokens());
+        $this->assertSame(5, $items[1]->getCompletionTokens());
+
         // The content-less candidate is skipped, but still contributes its finish reason.
-        $this->assertInstanceOf(MetadataDelta::class, $items[1]);
-        $this->assertSame('finish_reason', $items[1]->getKey());
-        $this->assertTrue($items[1]->getValue()->is(FinishReasonCase::STOP));
-        $this->assertSame('STOP', $items[1]->getValue()->getRaw());
+        $this->assertInstanceOf(MetadataDelta::class, $items[2]);
+        $this->assertSame('finish_reason', $items[2]->getKey());
+        $this->assertTrue($items[2]->getValue()->is(FinishReasonCase::STOP));
+        $this->assertSame('STOP', $items[2]->getValue()->getRaw());
     }
 
     /**
@@ -736,6 +743,37 @@ final class ResultConverterTest extends TestCase
         ], ChoiceDelta::class, []];
     }
 
+    public function testStreamYieldsTokenUsageOnceFromTheLastChunk()
+    {
+        $items = iterator_to_array($this->createThinkingStreamResult()->getContent(), false);
+
+        $tokenUsages = array_values(array_filter($items, static fn (object $item): bool => $item instanceof TokenUsageInterface));
+        $this->assertCount(1, $tokenUsages);
+        $this->assertSame(13, $tokenUsages[0]->getPromptTokens());
+        $this->assertSame(40, $tokenUsages[0]->getCompletionTokens());
+        $this->assertSame(320, $tokenUsages[0]->getThinkingTokens());
+        $this->assertSame(373, $tokenUsages[0]->getTotalTokens());
+        $this->assertSame('gemini-3.7-flash', $tokenUsages[0]->getModel());
+
+        $this->assertInstanceOf(TokenUsageInterface::class, $items[\count($items) - 2]);
+        $this->assertInstanceOf(MetadataDelta::class, $items[\count($items) - 1]);
+    }
+
+    public function testStreamReportsTheFinalTokenUsageInTheResultMetadata()
+    {
+        $result = $this->createThinkingStreamResult();
+        $result->addListener(new TokenUsageStreamListener());
+
+        iterator_to_array($result->getContent(), false);
+
+        $tokenUsage = $result->getMetadata()->get('token_usage');
+        $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage);
+        $this->assertSame(13, $tokenUsage->getPromptTokens());
+        $this->assertSame(40, $tokenUsage->getCompletionTokens());
+        $this->assertSame(320, $tokenUsage->getThinkingTokens());
+        $this->assertSame(373, $tokenUsage->getTotalTokens());
+    }
+
     public function testThrowsServerExceptionOnServerErrorStatusBeforeStreaming()
     {
         $converter = new ResultConverter();
@@ -747,5 +785,44 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Server error (HTTP 500');
 
         $converter->convert(new RawHttpResult($httpResponse), ['stream' => true]);
+    }
+
+    /**
+     * Mirrors a live gemini-3.7-flash stream: every chunk repeats the cumulative usage so far.
+     */
+    private function createThinkingStreamResult(): StreamResult
+    {
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $rawResult = $this->createMock(RawResultInterface::class);
+        $rawResult->method('getObject')->willReturn($httpResponse);
+        $rawResult->method('getDataStream')->willReturn((static function (): \Generator {
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => 'Counting.', 'thought' => true]]]]],
+                'modelVersion' => 'gemini-3.7-flash',
+                'usageMetadata' => ['promptTokenCount' => 13, 'totalTokenCount' => 13],
+            ];
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => '391 is']]]]],
+                'modelVersion' => 'gemini-3.7-flash',
+                'usageMetadata' => ['promptTokenCount' => 13, 'candidatesTokenCount' => 8, 'thoughtsTokenCount' => 320, 'totalTokenCount' => 341],
+            ];
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => ' 17 times 23.']]]]],
+                'modelVersion' => 'gemini-3.7-flash',
+                'usageMetadata' => ['promptTokenCount' => 13, 'candidatesTokenCount' => 34, 'thoughtsTokenCount' => 320, 'totalTokenCount' => 367],
+            ];
+            yield [
+                'candidates' => [['content' => ['parts' => [['text' => ' It is odd.']]], 'finishReason' => 'STOP']],
+                'modelVersion' => 'gemini-3.7-flash',
+                'usageMetadata' => ['promptTokenCount' => 13, 'candidatesTokenCount' => 40, 'thoughtsTokenCount' => 320, 'totalTokenCount' => 373],
+            ];
+        })());
+
+        $result = (new ResultConverter())->convert($rawResult, ['stream' => true]);
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        return $result;
     }
 }
