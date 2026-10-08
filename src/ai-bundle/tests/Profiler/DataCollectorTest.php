@@ -36,12 +36,14 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\JobResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -281,6 +283,46 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    public function testUnwrapsMultiPartResultIntoSerializableContent()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+        // Anonymous classes cannot be serialized, like the HTTP response a RawHttpResult holds
+        $rawResult = new class implements RawResultInterface {
+            public function getData(): array
+            {
+                return [];
+            }
+
+            public function getDataStream(): iterable
+            {
+                return [];
+            }
+
+            public function getObject(): object
+            {
+                return new \stdClass();
+            }
+        };
+        $data = (object) ['key' => 'value'];
+        $objectResult = new ObjectResult($data);
+        $objectResult->setRawResult($rawResult);
+        $multiPart = new MultiPartResult([new ThinkingResult('reasoning'), $objectResult]);
+        $multiPart->setRawResult($rawResult);
+
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($multiPart), $rawResult));
+
+        $traceablePlatform->invoke('gpt-5', new MessageBag(Message::ofUser('Return structured data')))->getResult();
+
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector->lateCollect();
+
+        $call = $dataCollector->getPlatformCalls()[0];
+        $this->assertSame('text', $call['result_type']);
+        $this->assertEquals(['reasoning', $data], $call['result']);
+        $this->assertIsString(serialize($dataCollector));
     }
 
     public function testPropagatesMetadataForStreamingResponse()
