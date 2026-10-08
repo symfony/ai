@@ -144,6 +144,20 @@ class BridgeConfigCompilationTest extends TestCase
                 'platform' => [
                     'openai' => ['api_key' => 'k'],
                     'anthropic' => ['api_key' => 'k'],
+                    'azure' => [
+                        'inst' => [
+                            'api_key' => 'k',
+                            'base_url' => 'https://example.openai.azure.com',
+                            'deployment' => 'gpt-4o',
+                            'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                    'failover' => [
+                        'main' => [
+                            'platforms' => ['ai.platform.openai', 'ai.platform.anthropic'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
                 ],
             ],
         ]);
@@ -155,6 +169,14 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertTrue(
             $container->hasAlias(PlatformInterface::class.' $anthropic'),
             'Alias for #[Target("anthropic")] should be registered.'
+        );
+        $this->assertTrue(
+            $container->hasAlias(PlatformInterface::class.' $azureInst'),
+            'Alias for #[Target("azureInst")] should be registered.'
+        );
+        $this->assertTrue(
+            $container->hasAlias(PlatformInterface::class.' $main'),
+            'Alias for #[Target("main")] should be registered for failover instance.'
         );
         $this->assertFalse(
             $container->hasAlias(PlatformInterface::class),
