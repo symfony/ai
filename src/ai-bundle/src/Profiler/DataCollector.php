@@ -20,6 +20,7 @@ use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Tool\Tool;
@@ -236,10 +237,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
                     $call['result'] = $resultCache[$result];
                     $call['result_type'] = 'text';
                 } else {
-                    // Jobs have no result yet other than a handle to follow up on.
-                    $content = $result instanceof JobResult ? $result->getContent()->toArray() : $result->getContent();
-
-                    $call['result'] = $content instanceof \Generator ? null : $this->unwrapNestedResults($content);
+                    $call['result'] = $this->unwrapNestedResults($result);
                     $call['result_type'] = match (true) {
                         $result instanceof ToolCallResult => 'tool_calls',
                         $result instanceof VectorResult => 'vectors',
@@ -266,16 +264,25 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     /**
      * Nested parts carry the raw HTTP response, which cannot be serialized into the profile.
      */
-    private function unwrapNestedResults(mixed $content): mixed
+    private function unwrapNestedResults(mixed $result): mixed
     {
-        if ($content instanceof ResultInterface) {
-            return $this->unwrapNestedResults($content->getContent());
+        if ($result instanceof JobResult) {
+            // Jobs have no result yet other than a handle to follow up on.
+            return $result->getContent()->toArray();
         }
 
-        if (\is_array($content)) {
-            return array_map($this->unwrapNestedResults(...), $content);
+        if ($result instanceof StreamResult) {
+            return null;
         }
 
-        return $content;
+        if ($result instanceof ResultInterface) {
+            return $this->unwrapNestedResults($result->getContent());
+        }
+
+        if (\is_array($result)) {
+            return array_map($this->unwrapNestedResults(...), $result);
+        }
+
+        return $result;
     }
 }
