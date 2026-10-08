@@ -20,8 +20,8 @@ namespace Symfony\AI\Platform\Bridge\VertexAi;
  *   schema parser requires. Sent as-is, an array type triggers
  *   "Proto field is not repeating, cannot start list".
  * - Adds 'propertyOrdering' to object schemas, listing the properties in
- *   declaration order. Without it, VertexAI generates them alphabetically,
- *   required ones first.
+ *   declaration order. Without it, VertexAI does not keep that order and
+ *   generates required properties before optional ones.
  *
  * Used both for tool parameter schemas and for structured-output response
  * schemas so the two stay in sync.
