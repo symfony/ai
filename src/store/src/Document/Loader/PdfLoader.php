@@ -1,4 +1,4 @@
-f<?php
+<?php
 
 /*
  * This file is part of the Symfony package.
@@ -27,6 +27,8 @@ use Symfony\Component\Uid\Uuid;
  */
 final class PdfLoader implements LoaderInterface
 {
+    private const MAX_UNEXPECTED_CONTROL_RATIO = 0.05;
+
     private readonly Parser $parser;
 
     public function __construct(
@@ -52,17 +54,21 @@ final class PdfLoader implements LoaderInterface
 
         $path = Path::makeAbsolute($source, getcwd());
         $hasText = false;
+        $hasRejectedPages = false;
 
         try {
+            // Parse PDF and metadata
             $pdf = $this->parser->parseFile($source);
             $pages = $pdf->getPages();
             $details = $pdf->getDetails();
+
+            // PDF properties and XMP metadata use different names for the same fields.
+            // Determine which we have and use the appropriate fields
             $metadata = [
                 Metadata::KEY_SOURCE => $source,
-                Metadata::KEY_TITLE => $this->property($details, ['Title', 'dc:title']) ?? basename($path),
+                Metadata::KEY_TITLE => $this->resolveMetadataValue($details, ['Title', 'dc:title']) ?? basename($path),
                 'page_count' => \count($pages),
             ];
-
             foreach ([
                 'pdf_author' => ['Author', 'dc:creator'],
                 'pdf_subject' => ['Subject', 'dc:description'],
@@ -70,7 +76,7 @@ final class PdfLoader implements LoaderInterface
                 'pdf_creation_date' => ['CreationDate', 'xmp:createdate'],
                 'pdf_modification_date' => ['ModDate', 'xmp:modifydate'],
             ] as $key => $properties) {
-                if (null !== $value = $this->property($details, $properties)) {
+                if (null !== $value = $this->resolveMetadataValue($details, $properties)) {
                     $metadata[$key] = $value;
                 }
             }
@@ -82,11 +88,22 @@ final class PdfLoader implements LoaderInterface
         foreach ($pages as $page) {
             ++$pageNumber;
             try {
-                $text = trim($page->getText());
+                $text = $page->getText();
             } catch (\Throwable $exception) {
                 throw new RuntimeException(\sprintf('Unable to extract text from PDF file "%s": %s', $source, $exception->getMessage()), previous: $exception);
             }
 
+            if (null !== $rejection = $this->textRejection($text)) {
+                $hasRejectedPages = true;
+                $this->logger->warning(
+                    'PDF file "{source}" page {page_number} has unusable extracted text ({reason}); skipping.',
+                    ['source' => $source, 'page_number' => $pageNumber, ...$rejection],
+                );
+
+                continue;
+            }
+
+            $text = trim($text);
             if ('' === $text) {
                 continue;
             }
@@ -99,7 +116,7 @@ final class PdfLoader implements LoaderInterface
             );
         }
 
-        if (!$hasText) {
+        if (!$hasText && !$hasRejectedPages) {
             $this->logger->warning(
                 'PDF file "{source}" contains no extractable text; skipping.',
                 ['source' => $source],
@@ -108,10 +125,34 @@ final class PdfLoader implements LoaderInterface
     }
 
     /**
+     * @return array{reason: string, nul_count?: int, control_count?: int, character_count?: int}|null
+     */
+    private function textRejection(string $text): ?array
+    {
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            return ['reason' => 'invalid UTF-8'];
+        }
+
+        if (0 < $nulCount = substr_count($text, "\0")) {
+            return ['reason' => 'NUL characters', 'nul_count' => $nulCount];
+        }
+
+        $characterCount = mb_strlen($text, 'UTF-8');
+        $controlCount = preg_match_all('/[^\P{Cc}\x{0009}-\x{000D}\x{0085}]/u', $text);
+        if ($controlCount > $characterCount * self::MAX_UNEXPECTED_CONTROL_RATIO) {
+            return ['reason' => 'excessive control characters', 'control_count' => $controlCount, 'character_count' => $characterCount];
+        }
+
+        return null;
+    }
+
+    /**
+     * Return the first Metadata item that has values
+     * 
      * @param array<string, mixed> $details
      * @param list<string>         $properties
      */
-    private function property(array $details, array $properties): ?string
+    private function resolveMetadataValue(array $details, array $properties): ?string
     {
         foreach ($properties as $property) {
             $value = $details[$property] ?? null;
@@ -123,6 +164,7 @@ final class PdfLoader implements LoaderInterface
                 continue;
             }
 
+            // Turn multi-valued metadata, such as authors, into a single string.
             $values = [];
             foreach ($value as $item) {
                 if (\is_string($item) && '' !== trim($item)) {
