@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Message;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ComputerCall;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\CustomToolCall;
@@ -31,6 +32,7 @@ use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -149,6 +151,7 @@ final class MessageTest extends TestCase
     {
         $result = new MultiPartResult([
             new ThinkingResult('Reasoning...', 'sig'),
+            new CommentaryResult('I will run code.'),
             new TextResult('Visible answer.'),
             new ToolCallResult([new ToolCall('id1', 'fn', ['x' => 1])]),
             new ExecutableCodeResult('echo hi', 'bash', 'srvtoolu_1'),
@@ -158,18 +161,20 @@ final class MessageTest extends TestCase
         $message = Message::ofAssistant($result);
 
         $parts = $message->getContent();
-        $this->assertCount(5, $parts);
+        $this->assertCount(6, $parts);
         $this->assertInstanceOf(Thinking::class, $parts[0]);
-        $this->assertInstanceOf(Text::class, $parts[1]);
-        $this->assertInstanceOf(ToolCall::class, $parts[2]);
-        $this->assertInstanceOf(ExecutableCode::class, $parts[3]);
-        $this->assertSame('echo hi', $parts[3]->getCode());
-        $this->assertSame('bash', $parts[3]->getLanguage());
-        $this->assertSame('srvtoolu_1', $parts[3]->getId());
-        $this->assertInstanceOf(CodeExecution::class, $parts[4]);
-        $this->assertTrue($parts[4]->isSucceeded());
-        $this->assertSame('hi', $parts[4]->getOutput());
+        $this->assertInstanceOf(Commentary::class, $parts[1]);
+        $this->assertSame('I will run code.', $parts[1]->getContent());
+        $this->assertInstanceOf(Text::class, $parts[2]);
+        $this->assertInstanceOf(ToolCall::class, $parts[3]);
+        $this->assertInstanceOf(ExecutableCode::class, $parts[4]);
+        $this->assertSame('echo hi', $parts[4]->getCode());
+        $this->assertSame('bash', $parts[4]->getLanguage());
         $this->assertSame('srvtoolu_1', $parts[4]->getId());
+        $this->assertInstanceOf(CodeExecution::class, $parts[5]);
+        $this->assertTrue($parts[5]->isSucceeded());
+        $this->assertSame('hi', $parts[5]->getOutput());
+        $this->assertSame('srvtoolu_1', $parts[5]->getId());
     }
 
     public function testCreateAssistantMessageMapsServerToolResultTypes()
