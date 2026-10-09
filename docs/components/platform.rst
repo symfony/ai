@@ -1527,6 +1527,11 @@ To achieve this, the ``Symfony\AI\Platform\StructuredOutput\PlatformSubscriber``
 
     dump($result->asObject()); // returns an instance of `MathReasoning` class
 
+To let static analysis tools like PHPStan or Psalm know the type of the object, pass the class to ``asObject()``.
+It throws an ``UnexpectedResultTypeException`` if the structured output is not an instance of that class::
+
+    $reasoning = $result->asObject(MathReasoning::class); // typed as `MathReasoning`
+
 Array Structures as Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
