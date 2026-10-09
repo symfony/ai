@@ -16,11 +16,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\ComposerPlugin\MatePlugin;
 
 /**
- * MatePlugin resolves its project root via Composer\InstalledVersions, a process-wide static
- * that already reflects this PHPUnit process' own root (the composer-plugin package itself)
- * before any test runs, and always wins ties over anything reloaded in-process. So every
- * scenario here runs the plugin in a fresh PHP subprocess against a throwaway fixture project,
- * rather than mocking Composer/Config, which the plugin no longer consults for its root.
+ * Every scenario runs the plugin in a fresh PHP subprocess against a throwaway fixture project:
+ * the root is resolved from Composer\Factory::getComposerFile(), which depends on the process'
+ * working directory and COMPOSER env var, and the autoloader that process loads decides what
+ * Composer\InstalledVersions describes.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -67,35 +66,64 @@ final class MatePluginTest extends TestCase
     }
 
     /**
-     * Regression test for the bug where the plugin trusted getcwd() to find the project root.
-     * Composer's "vendor-dir" config is not guaranteed to sit directly under the project root
-     * either (a monorepo, CI running from a subfolder, `composer --working-dir=...`, or a
-     * "vendor-dir" pointed outside the project entirely, see #1857), so the plugin derives the
-     * root from Composer\InstalledVersions::getRootPackage() instead, which always resolves to
-     * wherever the root composer.json actually lives.
+     * Inside a real Composer run, the autoloader is Composer's own: InstalledVersions describes
+     * composer/composer, not the project. The plugin must still find the project from the
+     * working directory Composer moved into.
      */
-    public function testResolvesRootIndependentlyOfCurrentWorkingDirectory()
+    public function testResolvesRootWhenAutoloaderBelongsToAnotherPackage()
     {
-        $fixtureRoot = $this->createFixtureProject();
+        $hostRoot = $this->createFixtureProject();
+        $projectRoot = $this->createInitializedProject();
 
         try {
-            mkdir($fixtureRoot.'/mate', 0755, true);
-            file_put_contents($fixtureRoot.'/mate/extensions.php', "<?php\nreturn [];\n");
-            file_put_contents($fixtureRoot.'/vendor/bin/mate', "#!/usr/bin/env php\n<?php\necho 'MATE-DISCOVER-RAN';\n");
-
-            // Simulates the real-world shape from the bug report: Composer is invoked while the
-            // shell's cwd is nested somewhere below the actual project root, e.g. a Symfony
-            // project fixture nested inside an outer monorepo directory.
-            $unrelatedCwd = $fixtureRoot.'/nested/unrelated/cwd';
-            mkdir($unrelatedCwd, 0755, true);
-
-            $output = $this->runPluginInFixture($fixtureRoot, $unrelatedCwd);
+            $output = $this->runPluginInFixture($hostRoot, $projectRoot);
 
             $this->assertStringContainsString('MATE-DISCOVER-RAN', $output);
             $this->assertStringNotContainsString('vendor/bin/mate init', $output);
         } finally {
-            $this->removeDirectory($fixtureRoot);
+            $this->removeDirectory($hostRoot);
+            $this->removeDirectory($projectRoot);
         }
+    }
+
+    /**
+     * Composer can be pointed at a composer.json outside the working directory with the
+     * COMPOSER env var, without changing directory: the root follows that file, not getcwd().
+     */
+    public function testResolvesRootFromComposerEnvironmentVariable()
+    {
+        $hostRoot = $this->createFixtureProject();
+        $projectRoot = $this->createInitializedProject();
+
+        try {
+            $unrelatedCwd = $hostRoot.'/nested/unrelated/cwd';
+            mkdir($unrelatedCwd, 0755, true);
+
+            $output = $this->runPluginInFixture($hostRoot, $unrelatedCwd, $projectRoot.'/composer.json');
+
+            $this->assertStringContainsString('MATE-DISCOVER-RAN', $output);
+            $this->assertStringNotContainsString('vendor/bin/mate init', $output);
+        } finally {
+            $this->removeDirectory($hostRoot);
+            $this->removeDirectory($projectRoot);
+        }
+    }
+
+    /**
+     * An initialized project with a fake mate binary; it needs no installed dependencies, the
+     * plugin only looks for mate/extensions.php and vendor/bin/mate under the resolved root.
+     */
+    private function createInitializedProject(): string
+    {
+        $projectRoot = sys_get_temp_dir().'/mate-plugin-project-'.uniqid();
+        mkdir($projectRoot.'/mate', 0755, true);
+        mkdir($projectRoot.'/vendor/bin', 0755, true);
+
+        file_put_contents($projectRoot.'/composer.json', json_encode(['name' => 'fixture/mate-plugin-project']));
+        file_put_contents($projectRoot.'/mate/extensions.php', "<?php\nreturn [];\n");
+        file_put_contents($projectRoot.'/vendor/bin/mate', "#!/usr/bin/env php\n<?php\necho 'MATE-DISCOVER-RAN';\n");
+
+        return $projectRoot;
     }
 
     /**
@@ -131,7 +159,7 @@ final class MatePluginTest extends TestCase
         return $fixtureRoot;
     }
 
-    private function runPluginInFixture(string $fixtureRoot, string $cwd): string
+    private function runPluginInFixture(string $fixtureRoot, string $cwd, ?string $composerFile = null): string
     {
         $runner = $fixtureRoot.'/run-plugin.php';
         $pluginSource = realpath(__DIR__.'/../src/MatePlugin.php');
@@ -149,11 +177,18 @@ final class MatePluginTest extends TestCase
             echo \$io->getOutput();
             PHP);
 
+        $env = getenv();
+        unset($env['COMPOSER']);
+        if (null !== $composerFile) {
+            $env['COMPOSER'] = $composerFile;
+        }
+
         $process = proc_open(
             [\PHP_BINARY, $runner],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             $cwd,
+            $env,
         );
 
         $output = stream_get_contents($pipes[1]);
