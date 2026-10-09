@@ -40,6 +40,7 @@ class TokenUsageExtractor implements TokenUsageExtractorInterface
      *     input_tokens?: int,
      *     input_tokens_details?: array{
      *         cached_tokens?: int,
+     *         cache_write_tokens?: int,
      *     },
      *     output_tokens?: int,
      *     output_tokens_details?: array{
@@ -55,6 +56,7 @@ class TokenUsageExtractor implements TokenUsageExtractorInterface
             completionTokens: $data['usage']['output_tokens'] ?? null,
             thinkingTokens: $data['usage']['output_tokens_details']['reasoning_tokens'] ?? null,
             cachedTokens: $data['usage']['input_tokens_details']['cached_tokens'] ?? null,
+            cacheCreationTokens: $data['usage']['input_tokens_details']['cache_write_tokens'] ?? null,
             remainingTokens: $remainingTokens,
             totalTokens: $data['usage']['total_tokens'] ?? null,
             model: $data['model'] ?? null,

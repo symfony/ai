@@ -1220,12 +1220,18 @@ final class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
-    public function testStreamTransmitsUsageToResultMetadata()
+    #[DataProvider('provideCacheWriteTokens')]
+    public function testStreamTransmitsUsageToResultMetadata(?int $cacheWriteTokens)
     {
         $converter = new ResultConverter();
 
         $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $inputTokensDetails = ['cached_tokens' => 3];
+        if (null !== $cacheWriteTokens) {
+            $inputTokensDetails['cache_write_tokens'] = $cacheWriteTokens;
+        }
 
         $events = [
             [
@@ -1245,9 +1251,7 @@ final class ResultConverterTest extends TestCase
                         'output_tokens_details' => [
                             'reasoning_tokens' => 2,
                         ],
-                        'input_tokens_details' => [
-                            'cached_tokens' => 3,
-                        ],
+                        'input_tokens_details' => $inputTokensDetails,
                         'total_tokens' => 18,
                     ],
                     'output' => [],
@@ -1302,7 +1306,18 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(7, $chunks[2]->getCompletionTokens());
         $this->assertSame(2, $chunks[2]->getThinkingTokens());
         $this->assertSame(3, $chunks[2]->getCachedTokens());
+        $this->assertSame($cacheWriteTokens, $chunks[2]->getCacheCreationTokens());
         $this->assertSame(18, $chunks[2]->getTotalTokens());
+    }
+
+    /**
+     * @return iterable<string, array{int|null}>
+     */
+    public static function provideCacheWriteTokens(): iterable
+    {
+        yield 'positive' => [4];
+        yield 'zero' => [0];
+        yield 'missing' => [null];
     }
 
     public function testStreamWithToolCalls()
