@@ -82,6 +82,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 class ResultConverter implements ResultConverterInterface
 {
     private const KEY_OUTPUT = 'output';
+    private const MAX_OUTPUT_TOKENS_MESSAGE = 'Responses API truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.';
 
     public function supports(Model $model): bool
     {
@@ -153,20 +154,25 @@ class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain output.');
         }
 
+        $incompleteReason = null;
+        if ('incomplete' === ($data['status'] ?? null)) {
+            $incompleteReason = self::normalizeIncompleteReason($data['incomplete_details']['reason'] ?? null);
+        }
+
+        $lastItemType = $data[self::KEY_OUTPUT][array_key_last($data[self::KEY_OUTPUT])]['type'] ?? null;
+        if ('max_output_tokens' === $incompleteReason && \in_array($lastItemType, ['function_call', 'custom_tool_call'], true)) {
+            throw new MaxOutputTokensException(self::MAX_OUTPUT_TOKENS_MESSAGE);
+        }
+
         $results = $this->convertOutputArray($data[self::KEY_OUTPUT]);
 
         if (!$this->containsContent($results)) {
-            if ('incomplete' === ($data['status'] ?? null)) {
-                $reason = $data['incomplete_details']['reason'] ?? 'unknown';
-                if (!\is_string($reason) || '' === $reason) {
-                    $reason = 'unknown';
+            if (null !== $incompleteReason) {
+                if ('max_output_tokens' === $incompleteReason) {
+                    throw new MaxOutputTokensException(self::MAX_OUTPUT_TOKENS_MESSAGE);
                 }
 
-                if ('max_output_tokens' === $reason) {
-                    throw new MaxOutputTokensException('Responses API truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.');
-                }
-
-                throw new RuntimeException(\sprintf('Responses API response is incomplete (%s) and contains no content.', $reason));
+                throw new RuntimeException(\sprintf('Responses API response is incomplete (%s) and contains no content.', $incompleteReason));
             }
 
             throw new RuntimeException('Response does not contain any content.');
@@ -477,11 +483,17 @@ class ResultConverter implements ResultConverterInterface
         )];
     }
 
+    private static function normalizeIncompleteReason(mixed $reason): string
+    {
+        return \is_string($reason) && '' !== $reason ? $reason : 'unknown';
+    }
+
     private function convertStream(RawResultInterface|RawHttpResult $result): \Generator
     {
         $currentThinking = null;
-        /** @var array<string, ToolCall> $toolCalls */
-        $toolCalls = [];
+        // Decoded at response.completed, after a response.incomplete cut would have thrown
+        /** @var list<FunctionCall> $functionCallItems */
+        $functionCallItems = [];
         // Announced function calls, keyed by output item id, so the argument deltas of an item
         // can be attributed to the call id that ToolCallStart was emitted with
         /** @var array<string, array{id: string, name: string}> $announcedToolCalls */
@@ -526,13 +538,10 @@ class ResultConverter implements ResultConverterInterface
             }
 
             if ('response.incomplete' === $type) {
-                $reason = $event['response']['incomplete_details']['reason'] ?? 'unknown';
-                if (!\is_string($reason) || '' === $reason) {
-                    $reason = 'unknown';
-                }
+                $reason = self::normalizeIncompleteReason($event['response']['incomplete_details']['reason'] ?? null);
 
                 if ('max_output_tokens' === $reason) {
-                    throw new MaxOutputTokensException('Responses API truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.');
+                    throw new MaxOutputTokensException(self::MAX_OUTPUT_TOKENS_MESSAGE);
                 }
 
                 throw new RuntimeException(\sprintf('Responses API response is incomplete (%s).', $reason));
@@ -590,8 +599,7 @@ class ResultConverter implements ResultConverterInterface
             if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'function_call' === ($event['item']['type'] ?? null)) {
                 /** @var FunctionCall $item */
                 $item = $event['item'];
-                $toolCall = $this->convertFunctionCall($item);
-                $toolCalls[$toolCall->getId()] = $toolCall;
+                $functionCallItems[] = $item;
             }
 
             if ('response.output_item.done' === $type && \is_array($event['item'] ?? null) && 'web_search_call' === ($event['item']['type'] ?? null)) {
@@ -614,13 +622,13 @@ class ResultConverter implements ResultConverterInterface
 
             $sawResponseCompleted = true;
             [$toolCallResult] = $this->extractFunctionCalls($event['response'][self::KEY_OUTPUT] ?? []);
+            if (null === $toolCallResult) {
+                [$toolCallResult] = $this->extractFunctionCalls($functionCallItems);
+            }
 
-            if ($toolCallResult) {
+            if (null !== $toolCallResult) {
                 $sawToolCallComplete = true;
                 yield new ToolCallComplete($toolCallResult->getContent());
-            } elseif ([] !== $toolCalls) {
-                $sawToolCallComplete = true;
-                yield new ToolCallComplete(array_values($toolCalls));
             }
         }
 
@@ -642,19 +650,16 @@ class ResultConverter implements ResultConverterInterface
      */
     private function extractFunctionCalls(array $output): array
     {
-        $functionCalls = [];
+        $toolCalls = [];
         foreach ($output as $key => $item) {
             if ('function_call' === ($item['type'] ?? null)) {
-                $functionCalls[] = $item;
+                $toolCall = $this->convertFunctionCall($item);
+                $toolCalls[$toolCall->getId()] = $toolCall;
                 unset($output[$key]);
             }
         }
 
-        $toolCallResult = $functionCalls ? new ToolCallResult(
-            array_map($this->convertFunctionCall(...), $functionCalls)
-        ) : null;
-
-        return [$toolCallResult, $output];
+        return [[] !== $toolCalls ? new ToolCallResult(array_values($toolCalls)) : null, $output];
     }
 
     /**

@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "4a5faac74a00206d57ccd11831c3d98e",
-                "signature_v2": "41e9640257ef6df54d0631ba78dcfd05",
+                "signature": "42c1ccf75f5752bce8cfe5a735ddf0f2",
+                "signature_v2": "89c7cf32215ac238b041d2c4aeeb14eb",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -17,7 +17,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"max_tokens\":1000,\"tools\":[{\"type\":\"code_execution_20250825\",\"name\":\"code_execution\"}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Calculate total cost of a mortgage with 1% interest on 100k\\u20ac principal with 25 year maturity\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":4096,\"tools\":[{\"type\":\"code_execution_20250825\",\"name\":\"code_execution\"}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Calculate total cost of a mortgage with 1% interest on 100k\\u20ac principal with 25 year maturity\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -26,61 +26,61 @@
                         "application/json"
                     ],
                     "anthropic-ratelimit-input-tokens-limit": [
-                        "5000000"
+                        "10000000"
                     ],
                     "anthropic-ratelimit-input-tokens-remaining": [
-                        "4997000"
+                        "10000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-13T19:52:32Z"
+                        "2026-10-06T13:29:28Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
-                        "1000000"
+                        "2000000"
                     ],
                     "anthropic-ratelimit-output-tokens-remaining": [
-                        "1000000"
+                        "2000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-13T19:52:43Z"
+                        "2026-10-06T13:29:31Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
-                        "5000"
+                        "10000"
                     ],
                     "anthropic-ratelimit-requests-remaining": [
-                        "4994"
+                        "9999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-13T19:52:31Z"
+                        "2026-10-06T13:29:12Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
-                        "6000000"
+                        "12000000"
                     ],
                     "anthropic-ratelimit-tokens-remaining": [
-                        "5997000"
+                        "12000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-13T19:52:32Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-10-06T13:29:28Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
                     ],
+                    "traceresponse": [
+                        "00-5461fd86a542344e82bd0ee3fac4b1ea-b332aa82734edd88-01"
+                    ],
                     "anthropic-organization-id": [
-                        "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
+                        "67d743a6-d282-4eda-abc1-0a6c52646834"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-22ccaf438217c86012950a4c02759ff0-0bac46244e355595-01"
+                        "wrkspc_01FxLiHRt2EMrvitq9w1edXa"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
                     "content-security-policy": [
                         "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -90,7 +90,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011Cf22FykGJxfaN5eJuxVuv\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll help you calculate the total cost of a mortgage with the given parameters. Let me create a Python script to perform this calculation.\"},{\"type\":\"server_tool_use\",\"id\":\"srvtoolu_0184oNhBAfmBNgxUstfKp4nN\",\"name\":\"text_editor_code_execution\",\"input\":{\"command\":\"create\",\"path\":\"/tmp/mortgage_calculator.py\"}}],\"container\":null,\"stop_reason\":\"max_tokens\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":2265,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":2265,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1000,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011Cfm4djaDyTbKuqdiXoyqN\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll calculate the total cost of a mortgage with the given parameters using Python.\"},{\"type\":\"server_tool_use\",\"id\":\"srvtoolu_01AFHCiJyWARoZz1V93NzLjH\",\"name\":\"text_editor_code_execution\",\"input\":{\"command\":\"create\",\"path\":\"/tmp/mortgage_calculator.py\",\"file_text\":\"#!/usr/bin/env python3\\n\\\"\\\"\\\"\\nMortgage Calculator\\nCalculates total cost of a mortgage with given parameters\\n\\\"\\\"\\\"\\n\\n# Mortgage parameters\\nprincipal = 100000  # €100,000\\nannual_interest_rate = 0.01  # 1% per year\\nyears = 25\\nmonths = years * 12\\n\\n# Calculate monthly interest rate\\nmonthly_interest_rate = annual_interest_rate / 12\\n\\n# Calculate monthly payment using the mortgage formula:\\n# M = P * [r(1+r)^n] / [(1+r)^n - 1]\\n# Where:\\n# M = Monthly payment\\n# P = Principal loan amount\\n# r = Monthly interest rate\\n# n = Number of months\\n\\nif monthly_interest_rate > 0:\\n    monthly_payment = principal * (monthly_interest_rate * (1 + monthly_interest_rate)**months) / \\\\\\n                     ((1 + monthly_interest_rate)**months - 1)\\nelse:\\n    # If interest rate is 0, just divide principal by number of months\\n    monthly_payment = principal / months\\n\\n# Calculate total amount paid\\ntotal_paid = monthly_payment * months\\n\\n# Calculate total interest paid\\ntotal_interest = total_paid - principal\\n\\n# Display results\\nprint(\\\"=\\\" * 60)\\nprint(\\\"MORTGAGE CALCULATION RESULTS\\\")\\nprint(\\\"=\\\" * 60)\\nprint(f\\\"\\\\nLoan Details:\\\")\\nprint(f\\\"  Principal Amount:        €{principal:,.2f}\\\")\\nprint(f\\\"  Annual Interest Rate:    {annual_interest_rate * 100:.2f}%\\\")\\nprint(f\\\"  Loan Term:               {years} years ({months} months)\\\")\\nprint(f\\\"\\\\nPayment Information:\\\")\\nprint(f\\\"  Monthly Payment:         €{monthly_payment:,.2f}\\\")\\nprint(f\\\"\\\\nTotal Cost:\\\")\\nprint(f\\\"  Total Amount Paid:       €{total_paid:,.2f}\\\")\\nprint(f\\\"  Total Interest Paid:     €{total_interest:,.2f}\\\")\\nprint(f\\\"  Total Cost of Mortgage:  €{total_paid:,.2f}\\\")\\nprint(f\\\"\\\\nCost Breakdown:\\\")\\nprint(f\\\"  Principal:               €{principal:,.2f} ({principal/total_paid*100:.1f}%)\\\")\\nprint(f\\\"  Interest:                €{total_interest:,.2f} ({total_interest/total_paid*100:.1f}%)\\\")\\nprint(\\\"=\\\" * 60)\\n\"}},{\"type\":\"text_editor_code_execution_tool_result\",\"tool_use_id\":\"srvtoolu_01AFHCiJyWARoZz1V93NzLjH\",\"content\":{\"type\":\"text_editor_code_execution_create_result\",\"is_file_update\":false}},{\"type\":\"server_tool_use\",\"id\":\"srvtoolu_01Jzxrs4bvSSHDo9H7KkaHVT\",\"name\":\"bash_code_execution\",\"input\":{\"command\":\"python3 /tmp/mortgage_calculator.py\"}},{\"type\":\"bash_code_execution_tool_result\",\"tool_use_id\":\"srvtoolu_01Jzxrs4bvSSHDo9H7KkaHVT\",\"content\":{\"type\":\"bash_code_execution_result\",\"stdout\":\"============================================================\\nMORTGAGE CALCULATION RESULTS\\n============================================================\\n\\nLoan Details:\\n  Principal Amount:        €100,000.00\\n  Annual Interest Rate:    1.00%\\n  Loan Term:               25 years (300 months)\\n\\nPayment Information:\\n  Monthly Payment:         €376.87\\n\\nTotal Cost:\\n  Total Amount Paid:       €113,061.74\\n  Total Interest Paid:     €13,061.74\\n  Total Cost of Mortgage:  €113,061.74\\n\\nCost Breakdown:\\n  Principal:               €100,000.00 (88.4%)\\n  Interest:                €13,061.74 (11.6%)\\n============================================================\\n\",\"stderr\":\"\",\"return_code\":0,\"content\":[]}},{\"type\":\"text\",\"text\":\"## Summary\\n\\nFor a mortgage with:\\n- **Principal**: €100,000\\n- **Interest Rate**: 1% per year\\n- **Term**: 25 years\\n\\n**The results are:**\\n- **Monthly Payment**: €376.87\\n- **Total Cost of Mortgage**: €113,061.74\\n- **Total Interest Paid**: €13,061.74\\n\\nThis means you'll pay approximately €13,062 in interest over the life of the loan, which represents about 11.6% of the total amount paid. The relatively low interest cost is due to the very favorable 1% annual interest rate.\"}],\"container\":{\"id\":\"container_01UbmvENzS9UX7Tg6SQ44vuL\",\"expires_at\":\"2026-10-06T14:29:27.789495Z\"},\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":14,\"cache_creation_input_tokens\":3214,\"cache_read_input_tokens\":5238,\"cache_creation\":{\"ephemeral_5m_input_tokens\":3214,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":899,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0}},\"diagnostics\":null}"
             }
         }
     ]

@@ -1,5 +1,99 @@
-I'll help you calculate the total cost of a mortgage with the given parameters. Let me create a Python script to perform this calculation.
+I'll calculate the total cost of a mortgage with the given parameters using Python.
 <code>
-create
+#!/usr/bin/env python3
+"""
+Mortgage Calculator
+Calculates total cost of a mortgage with given parameters
+"""
+
+# Mortgage parameters
+principal = 100000  # €100,000
+annual_interest_rate = 0.01  # 1% per year
+years = 25
+months = years * 12
+
+# Calculate monthly interest rate
+monthly_interest_rate = annual_interest_rate / 12
+
+# Calculate monthly payment using the mortgage formula:
+# M = P * [r(1+r)^n] / [(1+r)^n - 1]
+# Where:
+# M = Monthly payment
+# P = Principal loan amount
+# r = Monthly interest rate
+# n = Number of months
+
+if monthly_interest_rate > 0:
+    monthly_payment = principal * (monthly_interest_rate * (1 + monthly_interest_rate)**months) / \
+                     ((1 + monthly_interest_rate)**months - 1)
+else:
+    # If interest rate is 0, just divide principal by number of months
+    monthly_payment = principal / months
+
+# Calculate total amount paid
+total_paid = monthly_payment * months
+
+# Calculate total interest paid
+total_interest = total_paid - principal
+
+# Display results
+print("=" * 60)
+print("MORTGAGE CALCULATION RESULTS")
+print("=" * 60)
+print(f"\nLoan Details:")
+print(f"  Principal Amount:        €{principal:,.2f}")
+print(f"  Annual Interest Rate:    {annual_interest_rate * 100:.2f}%")
+print(f"  Loan Term:               {years} years ({months} months)")
+print(f"\nPayment Information:")
+print(f"  Monthly Payment:         €{monthly_payment:,.2f}")
+print(f"\nTotal Cost:")
+print(f"  Total Amount Paid:       €{total_paid:,.2f}")
+print(f"  Total Interest Paid:     €{total_interest:,.2f}")
+print(f"  Total Cost of Mortgage:  €{total_paid:,.2f}")
+print(f"\nCost Breakdown:")
+print(f"  Principal:               €{principal:,.2f} ({principal/total_paid*100:.1f}%)")
+print(f"  Interest:                €{total_interest:,.2f} ({total_interest/total_paid*100:.1f}%)")
+print("=" * 60)
+
 </code>
 
+
+<code>
+python3 /tmp/mortgage_calculator.py
+</code>
+
+============================================================
+MORTGAGE CALCULATION RESULTS
+============================================================
+
+Loan Details:
+  Principal Amount:        €100,000.00
+  Annual Interest Rate:    1.00%
+  Loan Term:               25 years (300 months)
+
+Payment Information:
+  Monthly Payment:         €376.87
+
+Total Cost:
+  Total Amount Paid:       €113,061.74
+  Total Interest Paid:     €13,061.74
+  Total Cost of Mortgage:  €113,061.74
+
+Cost Breakdown:
+  Principal:               €100,000.00 (88.4%)
+  Interest:                €13,061.74 (11.6%)
+============================================================
+
+## Summary
+
+For a mortgage with:
+- **Principal**: €100,000
+- **Interest Rate**: 1% per year
+- **Term**: 25 years
+
+**The results are:**
+- **Monthly Payment**: €376.87
+- **Total Cost of Mortgage**: €113,061.74
+- **Total Interest Paid**: €13,061.74
+
+This means you'll pay approximately €13,062 in interest over the life of the loan, which represents about 11.6% of the total amount paid. The relatively low interest cost is due to the very favorable 1% annual interest rate.
