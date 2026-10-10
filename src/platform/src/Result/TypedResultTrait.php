@@ -49,13 +49,17 @@ trait TypedResultTrait
      * A `response_format` given as a plain JSON schema has no class to deserialize into,
      * so the structured output stays the decoded array.
      *
-     * @return object|array<string, mixed>
+     * @template T of object
+     *
+     * @param class-string<T>|null $class The class the structured output is expected to be an instance of
+     *
+     * @return ($class is null ? object|array<string, mixed> : T)
      *
      * @throws ExceptionInterface
      */
-    public function asObject(): object|array
+    public function asObject(?string $class = null): object|array
     {
-        return $this->as(ObjectResult::class)->getContent();
+        return $this->assertObjectType($this->as(ObjectResult::class)->getContent(), $class);
     }
 
     /**
@@ -223,6 +227,29 @@ trait TypedResultTrait
      * Yields the deltas of a streamed result.
      */
     abstract public function asStream(): \Generator;
+
+    /**
+     * @template T of object
+     *
+     * @param object|array<string, mixed> $content
+     * @param class-string<T>|null        $class
+     *
+     * @return ($class is null ? object|array<string, mixed> : T)
+     *
+     * @throws UnexpectedResultTypeException
+     */
+    private function assertObjectType(object|array $content, ?string $class): object|array
+    {
+        if (null === $class) {
+            return $content;
+        }
+
+        if (!$content instanceof $class) {
+            throw new UnexpectedResultTypeException($class, get_debug_type($content));
+        }
+
+        return $content;
+    }
 
     /**
      * @param class-string $type

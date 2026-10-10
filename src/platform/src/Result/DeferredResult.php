@@ -183,11 +183,15 @@ final class DeferredResult
     }
 
     /**
-     * @return object|array<string, mixed>
+     * @template T of object
+     *
+     * @param class-string<T>|null $class The class the structured output is expected to be an instance of
+     *
+     * @return ($class is null ? object|array<string, mixed> : T)
      *
      * @throws ExceptionInterface
      */
-    public function asObject(): object|array
+    public function asObject(?string $class = null): object|array
     {
         $result = $this->getResult();
 
@@ -216,10 +220,10 @@ final class DeferredResult
                 throw new UnexpectedResultTypeException(ObjectResult::class, StreamResult::class);
             }
 
-            return $finalResult->getContent();
+            return $this->assertObjectType($finalResult->getContent(), $class);
         }
 
-        return $this->as(ObjectResult::class)->getContent();
+        return $this->assertObjectType($this->as(ObjectResult::class)->getContent(), $class);
     }
 
     /**
