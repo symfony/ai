@@ -59,10 +59,7 @@ final class MatePlugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostInstallOrUpdate(Event $event): void
     {
-        // The directory of the composer.json this run loaded: Composer has already moved into
-        // the project (--working-dir, parent-directory lookup) and honours the COMPOSER env var
-        // there. Neither "vendor-dir" (it may point outside the project) nor InstalledVersions
-        // (inside a Composer run it describes Composer itself, not the project) can tell.
+        // vendor-dir may lie outside the project and InstalledVersions describes Composer itself in a run.
         $composerFile = Factory::getComposerFile();
         $rootDir = \dirname(realpath($composerFile) ?: $composerFile);
         $extensionsFile = $rootDir.'/mate/extensions.php';

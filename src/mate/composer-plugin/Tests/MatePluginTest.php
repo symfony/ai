@@ -16,10 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\ComposerPlugin\MatePlugin;
 
 /**
- * Every scenario runs the plugin in a fresh PHP subprocess against a throwaway fixture project:
- * the root is resolved from Composer\Factory::getComposerFile(), which depends on the process'
- * working directory and COMPOSER env var, and the autoloader that process loads decides what
- * Composer\InstalledVersions describes.
+ * Each scenario runs in a fresh PHP subprocess, because the root depends on cwd, COMPOSER and the autoloader.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -66,9 +63,7 @@ final class MatePluginTest extends TestCase
     }
 
     /**
-     * Inside a real Composer run, the autoloader is Composer's own: InstalledVersions describes
-     * composer/composer, not the project. The plugin must still find the project from the
-     * working directory Composer moved into.
+     * Inside a Composer run InstalledVersions describes Composer, so the root must come from the working directory.
      */
     public function testResolvesRootWhenAutoloaderBelongsToAnotherPackage()
     {
@@ -87,8 +82,7 @@ final class MatePluginTest extends TestCase
     }
 
     /**
-     * Composer can be pointed at a composer.json outside the working directory with the
-     * COMPOSER env var, without changing directory: the root follows that file, not getcwd().
+     * The COMPOSER env var can point outside the working directory, and the root follows that file.
      */
     public function testResolvesRootFromComposerEnvironmentVariable()
     {
@@ -110,8 +104,7 @@ final class MatePluginTest extends TestCase
     }
 
     /**
-     * An initialized project with a fake mate binary; it needs no installed dependencies, the
-     * plugin only looks for mate/extensions.php and vendor/bin/mate under the resolved root.
+     * The plugin only looks for mate/extensions.php and vendor/bin/mate under the root.
      */
     private function createInitializedProject(): string
     {
@@ -127,9 +120,7 @@ final class MatePluginTest extends TestCase
     }
 
     /**
-     * Builds a throwaway project requiring only composer/composer, so the fixture's own
-     * generated autoloader is the first (and only) one InstalledVersions ever sees in the
-     * subprocess that runs against it.
+     * Requires only composer/composer, so the fixture's own autoloader is the one InstalledVersions sees.
      */
     private function createFixtureProject(): string
     {
