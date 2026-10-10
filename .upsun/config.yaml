@@ -52,3 +52,7 @@ applications:
             clean-expired-sessions:
                 spec: '17,47 * * * *'
                 cmd: croncape php-session-clean
+            platform-bridges:
+                # Refresh the platform bridges and their Packagist downloads, read by /bridges/platforms
+                spec: '0 5 * * *'
+                cmd: croncape php bin/console app:platform-bridges:update
