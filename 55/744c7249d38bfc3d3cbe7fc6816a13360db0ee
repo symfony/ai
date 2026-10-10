@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by vbcherepanov at 2026-10-04T06:15:43Z
+
+Dropped the comment, thanks for the review.
+
+---------------------------------------------------------------------------
+
+by vbcherepanov at 2026-10-09T07:09:41Z
+
+Rebased on main after the conflict in the MCP bridge CHANGELOG (both 0.15 entries kept). The inline change from the review is in, ready for another look.
