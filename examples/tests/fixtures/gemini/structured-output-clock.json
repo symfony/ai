@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent",
-                "signature": "baa2dd0a845bc157f9444de64ade8124",
-                "signature_v2": "87b606f0ab3bb5c35425df81acc75b82",
+                "signature": "70ccdb4562228021f89df2c6d45c14dd",
+                "signature_v2": "66543b86734cfcaa7a11e5c37ddf2972",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -14,7 +14,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"generationConfig\":{\"responseMimeType\":\"application\\/json\",\"responseJsonSchema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}},\"tools\":[{\"functionDeclarations\":[{\"description\":\"Provides the current date and time.\",\"name\":\"clock\",\"parameters\":null}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"What date and time is it?\"}]}]}"
+                "body": "{\"generationConfig\":{\"responseMimeType\":\"application\\/json\",\"responseJsonSchema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}},\"tools\":[{\"functionDeclarations\":[{\"description\":\"Provides the current date and time.\",\"name\":\"clock\"}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"What date and time is it?\"}]}]}"
             },
             "response": {
                 "status": 200,
@@ -57,8 +57,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent",
-                "signature": "82d7fe35de35d1cdd5893b49ff2fc62a",
-                "signature_v2": "61ba33bf00f924fef95b7a77155a81cb",
+                "signature": "a04128dc8e86bd8b313f7541b6f2f1d1",
+                "signature_v2": "aa19d815ea028eb7106afe7a45caede7",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -67,7 +67,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"generationConfig\":{\"responseMimeType\":\"application\\/json\",\"responseJsonSchema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}},\"tools\":[{\"functionDeclarations\":[{\"description\":\"Provides the current date and time.\",\"name\":\"clock\",\"parameters\":null}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"What date and time is it?\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"call_3534268\",\"name\":\"clock\"},\"thoughtSignature\":\"EtcDCtQDARFNMg\\/\\/m2o961lfc1SoZx8f9MhJymh+GMWtwKZhS9ThqEya6s9xETABO0RRG+EenBjBHIbrY\\/qDeSP8JpCwAtzlGexD75lyDrDrR8Xsv\\/sZ4wxMYIi3zqnrzMg0WQKDcBXlx1lupZAxXjwZpZFxYfh1PCs6itTnhc38MZXaL89h0PBbh4\\/JeTUVNor22khjIcxJDkij+fdm11ZWbRA7s3j6sQcqT8t8iYiM45MSuSRnJDWZeP9gGeTQ6cgEGzRVJFcZte2FaMF0usdCaiaNtRzNmw5NbFe6ZhHLHBS0q+d8Hb\\/s3LEzX3bqKd\\/s0bTD8jwW9w4wVrNhlZWNxnC5g5iaIyW98Qw9UMAU3\\/TQGPzsyNYHzGkG+X7\\/2IxbcKhv6tmkX\\/uxyOnM6X47RsuWlSOr4kXMtW04NVZP2lJecPPMDb4u8kHSyhJLsCp8yvvS2gT0qnPMFeo4AFmRxuNl9KCdDgyqmJ4oijIOrV7xGI8w37nxhIr1x2NIodjLLwTZHkg4PaoFQcbE9XcecPUcd\\/stZna0lZvcfbPwi5mm2cURtbhAgxWSQbvvPYeCVc4XHIn1bU982AZxXpw\\/P2yR30wykje\\/tf1iGUm6yn9ul+YKDSLJ\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"clock\",\"response\":{\"result\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 19:53:43 (HH:MM:SS).\"},\"id\":\"call_3534268\"}}]}]}"
+                "body": "{\"generationConfig\":{\"responseMimeType\":\"application\\/json\",\"responseJsonSchema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}},\"tools\":[{\"functionDeclarations\":[{\"description\":\"Provides the current date and time.\",\"name\":\"clock\"}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"What date and time is it?\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"call_3534268\",\"name\":\"clock\"},\"thoughtSignature\":\"EtcDCtQDARFNMg\\/\\/m2o961lfc1SoZx8f9MhJymh+GMWtwKZhS9ThqEya6s9xETABO0RRG+EenBjBHIbrY\\/qDeSP8JpCwAtzlGexD75lyDrDrR8Xsv\\/sZ4wxMYIi3zqnrzMg0WQKDcBXlx1lupZAxXjwZpZFxYfh1PCs6itTnhc38MZXaL89h0PBbh4\\/JeTUVNor22khjIcxJDkij+fdm11ZWbRA7s3j6sQcqT8t8iYiM45MSuSRnJDWZeP9gGeTQ6cgEGzRVJFcZte2FaMF0usdCaiaNtRzNmw5NbFe6ZhHLHBS0q+d8Hb\\/s3LEzX3bqKd\\/s0bTD8jwW9w4wVrNhlZWNxnC5g5iaIyW98Qw9UMAU3\\/TQGPzsyNYHzGkG+X7\\/2IxbcKhv6tmkX\\/uxyOnM6X47RsuWlSOr4kXMtW04NVZP2lJecPPMDb4u8kHSyhJLsCp8yvvS2gT0qnPMFeo4AFmRxuNl9KCdDgyqmJ4oijIOrV7xGI8w37nxhIr1x2NIodjLLwTZHkg4PaoFQcbE9XcecPUcd\\/stZna0lZvcfbPwi5mm2cURtbhAgxWSQbvvPYeCVc4XHIn1bU982AZxXpw\\/P2yR30wykje\\/tf1iGUm6yn9ul+YKDSLJ\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"clock\",\"response\":{\"result\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 19:53:43 (HH:MM:SS).\"},\"id\":\"call_3534268\"}}]}]}"
             },
             "response": {
                 "status": 200,

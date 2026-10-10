@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:streamGenerateContent?alt=sse",
-                "signature": "b7a8d18ee3d5589409b174a8e6bd6585",
-                "signature_v2": "9eb503881533bf66768a1478feeef45c",
+                "signature": "097941b5565cead643e43b4a698270bb",
+                "signature_v2": "a21ec4080cb7ccfc3214c3c5dd19c0bd",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -14,7 +14,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Provides the current date and time.\",\"name\":\"clock\",\"parameters\":null},{\"description\":\"Returns the capitals of a few European countries.\",\"name\":\"list_european_capitals\",\"parameters\":null}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"    What time is it right now, and which European capitals do you know about via your tools?\\n    Please tell me before you call tools.\"}]}]}"
+                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Provides the current date and time.\",\"name\":\"clock\"},{\"description\":\"Returns the capitals of a few European countries.\",\"name\":\"list_european_capitals\"}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"    What time is it right now, and which European capitals do you know about via your tools?\\n    Please tell me before you call tools.\"}]}]}"
             },
             "response": {
                 "status": 200,
