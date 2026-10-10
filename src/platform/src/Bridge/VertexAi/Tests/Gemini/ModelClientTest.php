@@ -218,6 +218,39 @@ final class ModelClientTest extends TestCase
         ]);
     }
 
+    public function testCanonicalMaxOutputTokensIsNestedUnderGenerationConfigAsCamelCase()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertSame(500, $body['generationConfig']['maxOutputTokens']);
+            $this->assertArrayNotHasKey('max_output_tokens', $body);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'global', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], ['max_output_tokens' => 500]);
+    }
+
+    public function testCanonicalMaxOutputTokensIsMergedIntoAnExistingGenerationConfig()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertSame(500, $body['generationConfig']['maxOutputTokens']);
+            $this->assertSame(0.7, $body['generationConfig']['temperature']);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'global', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], [
+            'generationConfig' => ['temperature' => 0.7],
+            'max_output_tokens' => 500,
+        ]);
+    }
+
     public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {

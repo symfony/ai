@@ -57,6 +57,13 @@ class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        // The canonical option every bridge accepts; the OpenAI-compatible chat completions
+        // endpoint this client talks to expects it as "max_tokens".
+        if (isset($options['max_output_tokens'])) {
+            $options['max_tokens'] = $options['max_output_tokens'];
+            unset($options['max_output_tokens']);
+        }
+
         // Request usage stats for streamed responses by default,
         // but preserve explicit stream_options when provided.
         if ($options['stream'] ?? false) {

@@ -53,6 +53,13 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        // The canonical option every bridge accepts; Mistral's chat completions endpoint expects
+        // it as "max_tokens".
+        if (isset($options['max_output_tokens'])) {
+            $options['max_tokens'] = $options['max_output_tokens'];
+            unset($options['max_output_tokens']);
+        }
+
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'headers' => [

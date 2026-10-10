@@ -82,6 +82,21 @@ final class ModelClientTest extends TestCase
         $client->request(new Gemini('gemini-1.5-flash'), $payload, $options);
     }
 
+    public function testCanonicalMaxOutputTokensIsRenamedToMaxOutputTokensCamelCase()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $body = json_decode($options['body'], true);
+
+            $this->assertSame(500, $body['generationConfig']['maxOutputTokens']);
+            $this->assertArrayNotHasKey('max_output_tokens', $body['generationConfig']);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key');
+        $client->request(new Gemini('gemini-1.5-flash'), ['contents' => []], ['max_output_tokens' => 500]);
+    }
+
     public function testRequestWithStreamUsesDifferentEndpoint()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {
