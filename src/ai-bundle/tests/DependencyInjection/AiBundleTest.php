@@ -578,6 +578,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(McpToolbox::class, $localToolbox->getClass());
         $this->assertSame('ai.toolbox.research.mcp_toolset.filesystem.local', (string) $localToolbox->getArgument(0));
         $this->assertSame('', $localToolbox->getArgument(1));
+        $this->assertSame([['method' => 'reset']], $localToolbox->getTag('kernel.reset'));
 
         $searchToolset = $container->getDefinition('ai.toolbox.research.mcp_toolset.web.search');
         $this->assertSame('mcp.client.web.server.search', (string) $searchToolset->getArgument(0));

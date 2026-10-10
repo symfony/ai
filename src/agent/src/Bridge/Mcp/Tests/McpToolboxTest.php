@@ -144,6 +144,45 @@ final class McpToolboxTest extends TestCase
         $this->assertSame(1, $toolset->listCalls);
     }
 
+    public function testResetListsTheRemoteToolsAgain()
+    {
+        $toolset = new StaticToolset(tools: [$this->remoteTool('echo')]);
+        $toolbox = new McpToolbox($toolset);
+
+        $toolbox->getTools();
+        $toolbox->reset();
+        $toolbox->getTools();
+
+        $this->assertSame(2, $toolset->listCalls);
+    }
+
+    public function testResetBeforeAnyListingIsHarmless()
+    {
+        $toolset = new StaticToolset(tools: [$this->remoteTool('echo')]);
+        $toolbox = new McpToolbox($toolset);
+
+        $toolbox->reset();
+
+        $this->assertCount(1, $toolbox->getTools());
+        $this->assertSame(1, $toolset->listCalls);
+    }
+
+    public function testResetKeepsTheRetryDelayOfAnUnreachableServer()
+    {
+        $clock = new MockClock();
+        $toolset = new StaticToolset(tools: [$this->remoteTool('echo')], listFailure: $this->unreachable());
+        $toolbox = new McpToolbox($toolset, retryAfter: 60, clock: $clock);
+
+        $this->assertSame([], $toolbox->getTools());
+
+        $toolset->listFailure = null;
+        $toolbox->reset();
+        $clock->sleep(30);
+
+        $this->assertSame([], $toolbox->getTools());
+        $this->assertSame(1, $toolset->listCalls);
+    }
+
     public function testExecuteForwardsTheRemoteToolNameAndArguments()
     {
         $toolset = $this->toolset('echo', new CallToolResult([new TextContent('echoed: hello')]));
