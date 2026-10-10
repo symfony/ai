@@ -10,6 +10,7 @@ Gemini Documentation
  * [Generate content (`generateContent` / streaming)](https://ai.google.dev/api/generate-content)
  * [Embeddings (`batchEmbedContents`, task types)](https://ai.google.dev/api/embeddings)
  * [Text generation guide](https://ai.google.dev/gemini-api/docs/text-generation)
+ * [Priority inference (`service_tier`)](https://ai.google.dev/gemini-api/docs/generate-content/priority-inference)
 
 Test Fixtures
 -------------
