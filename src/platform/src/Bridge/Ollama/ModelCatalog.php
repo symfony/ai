@@ -70,6 +70,7 @@ final class ModelCatalog implements ModelCatalogInterface
                 'vision' => Capability::INPUT_IMAGE,
                 'audio' => Capability::INPUT_AUDIO,
                 'insert' => Capability::FILL_IN_THE_MIDDLE,
+                'decision' => Capability::DECISION,
                 default => throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $capability)),
             },
             $payload['capabilities'],

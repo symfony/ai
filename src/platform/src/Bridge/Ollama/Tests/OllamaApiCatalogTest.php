@@ -163,6 +163,41 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
+    public function testModelCatalogCanReturnDecisionModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    [
+                        'name' => 'nimble:9b',
+                        'details' => [],
+                    ],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['decision', 'tools', 'thinking', 'completion'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $models = $modelCatalog->getModels();
+
+        $this->assertCount(1, $models);
+        $this->assertArrayHasKey('nimble:9b', $models);
+
+        $model = $models['nimble:9b'];
+        $this->assertSame(Ollama::class, $model['class']);
+        $this->assertSame([
+            Capability::DECISION,
+            Capability::TOOL_CALLING,
+            Capability::THINKING,
+            Capability::INPUT_MESSAGES,
+            Capability::OUTPUT_STRUCTURED,
+        ], $model['capabilities']);
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
     #[TestDox('Returns empty array when Ollama has no models')]
     public function testGetModelsReturnsEmptyArrayWhenNoModels()
     {
