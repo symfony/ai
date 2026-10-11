@@ -20,18 +20,21 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
 use Symfony\AI\Platform\Test\Replay\CassetteHttpClient;
 use Symfony\AI\Platform\Test\Replay\HttpCassette;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Replays the response shape of https://github.com/symfony/ai/issues/2542: a tool call reported with
  * a "stop" finish reason and a null message.content.
  *
- * The tool-call cassettes are hand-seeded from a stub OpenAI-compatible gateway rather than recorded against a
- * hosted provider - the managed gateways reachable from CI normalize the finish reason back to
+ * The "stop" finish reason cassettes are hand-seeded from a stub OpenAI-compatible gateway rather than recorded
+ * against a hosted provider - the managed gateways reachable from CI normalize the finish reason back to
  * "tool_calls", so none of them reproduces it, while self-hosted ones do. They replay offline like
  * any other cassette; the localhost URL they carry is the stub they were seeded from and is never
  * dialed.
@@ -98,6 +101,31 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $this->assertSame(32, $usage->getCompletionTokens());
         $this->assertSame(32, $usage->getThinkingTokens());
         $this->assertSame(68, $usage->getTotalTokens());
+    }
+
+    public function testStreamingToolCallIsCompletedOnceWhenTheUsageChunkRepeatsTheFinishReason()
+    {
+        // Recorded from OpenRouter: the trailing usage chunk repeats the terminal choice, finish_reason included.
+        $httpClient = new CassetteHttpClient(new HttpCassette($this->cassetteDirectory().'/openrouter_repeated_finish_reason.json'), record: false);
+        $platform = Factory::createPlatform('https://openrouter.ai/api', 'test-api-key', $httpClient);
+
+        $result = $platform->invoke('openai/gpt-4o-mini', new MessageBag(Message::ofUser('What time is it right now?')), [
+            'stream' => true,
+            'tools' => [new Tool(new ExecutionReference(self::class), 'clock', 'Provides the current date and time.')],
+        ]);
+
+        $deltas = iterator_to_array($result->asStream(), false);
+
+        $completed = array_values(array_filter($deltas, static fn ($delta): bool => $delta instanceof ToolCallComplete));
+        $this->assertCount(1, $completed, 'the repeated finish reason does not complete the tool call again');
+        $this->assertCount(1, $completed[0]->getToolCalls());
+
+        $streamResult = $result->getResult();
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $toolCalls = $streamResult->getAssistantMessage()->getToolCalls();
+        $this->assertCount(1, $toolCalls, 'the assistant turn replays the tool call once');
+        $this->assertSame('clock', $toolCalls[0]->getName());
     }
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface

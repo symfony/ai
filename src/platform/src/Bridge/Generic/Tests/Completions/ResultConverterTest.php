@@ -959,6 +959,40 @@ class ResultConverterTest extends TestCase
         $this->assertSame('stop', $chunks[2]->getValue()->getRaw());
     }
 
+    public function testStreamingCompletesToolCallsOnceWhenTheFinishReasonIsRepeated()
+    {
+        $converter = new ResultConverter();
+
+        // OpenRouter repeats the terminal choice, finish_reason included, on the trailing usage chunk.
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'id' => 'call_a', 'type' => 'function', 'function' => ['name' => 'get_weather', 'arguments' => '{"city":"Paris"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 1, 'id' => 'call_b', 'type' => 'function', 'function' => ['name' => 'get_time', 'arguments' => '{"tz":"CET"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['role' => 'assistant', 'content' => ''], 'finish_reason' => 'tool_calls']]],
+            [
+                'choices' => [['index' => 0, 'delta' => ['role' => 'assistant', 'content' => ''], 'finish_reason' => 'tool_calls']],
+                'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5, 'total_tokens' => 15],
+            ],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = iterator_to_array($streamResult->getContent(), false);
+
+        $toolCallCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallComplete));
+        $this->assertCount(1, $toolCallCompletes);
+
+        $completed = $toolCallCompletes[0]->getToolCalls();
+        $this->assertCount(2, $completed);
+        $this->assertSame('call_a', $completed[0]->getId());
+        $this->assertSame(['city' => 'Paris'], $completed[0]->getArguments());
+        $this->assertSame('call_b', $completed[1]->getId());
+        $this->assertSame(['tz' => 'CET'], $completed[1]->getArguments());
+    }
+
     public function testStreamingSurfacesToolCallArgumentsTruncatedByALengthFinishReason()
     {
         $converter = new ResultConverter();
