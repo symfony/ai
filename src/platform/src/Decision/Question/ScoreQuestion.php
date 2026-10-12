@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Question;
+namespace Symfony\AI\Platform\Decision\Question;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 

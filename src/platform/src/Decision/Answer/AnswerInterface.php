@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Answer;
+namespace Symfony\AI\Platform\Decision\Answer;
 
 /**
- * The typed answer Jev gives to a question.
+ * The typed answer a decision model gives to a question.
  *
  * @author Yoan Bernabeu <yoan.bernabeu@gmail.com>
  */

@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests\Question;
+namespace Symfony\AI\Platform\Tests\Decision\Question;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\ScoreQuestion;
+use Symfony\AI\Platform\Decision\Question\ScoreQuestion;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 final class ScoreQuestionTest extends TestCase

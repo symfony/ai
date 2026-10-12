@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Question;
+namespace Symfony\AI\Platform\Decision\Question;
 
 /**
  * A yes/no question, answered with the probability that the answer is yes.

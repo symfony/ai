@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Question;
+namespace Symfony\AI\Platform\Decision\Question;
 
 /**
- * A typed question Jev evaluates against the state of an evaluation.
+ * A typed question a decision model evaluates against the state of an evaluation.
  *
  * @author Yoan Bernabeu <yoan.bernabeu@gmail.com>
  */

@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\Answers;
-use Symfony\AI\Platform\Bridge\TypeSafe\Evaluation;
 use Symfony\AI\Platform\Bridge\TypeSafe\Factory;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\ChoiceQuestion;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\NoulQuestion;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\ScoreQuestion;
+use Symfony\AI\Platform\Decision\Answer\Answers;
+use Symfony\AI\Platform\Decision\Evaluation;
+use Symfony\AI\Platform\Decision\Question\ChoiceQuestion;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Decision\Question\ScoreQuestion;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
