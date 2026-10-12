@@ -733,10 +733,9 @@ final class AiBundle extends AbstractBundle
                         new Reference(LoggerInterface::class),
                     ])
                     ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->addTag('ai.platform', ['name' => $type]);
+                    ->addTag('ai.platform', ['name' => $name]);
 
                 $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
-                $container->registerAliasForArgument('ai.platform.'.$type.'.'.$name, PlatformInterface::class, $name);
             }
 
             return;

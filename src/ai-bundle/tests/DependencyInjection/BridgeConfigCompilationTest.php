@@ -179,8 +179,48 @@ class BridgeConfigCompilationTest extends TestCase
             'Alias for #[Target("main")] should be registered for failover instance.'
         );
         $this->assertFalse(
+            $container->hasAlias(PlatformInterface::class.' $failover'),
+            'No $failover alias should be registered.'
+        );
+        $this->assertFalse(
             $container->hasAlias(PlatformInterface::class),
             'No generic PlatformInterface alias should exist with multiple platforms.'
+        );
+    }
+
+    #[TestDox('Multiple failover instances each register their own alias')]
+    public function testMultipleFailoverInstancesRegisterDistinctAliases()
+    {
+        $container = $this->loadContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => ['api_key' => 'k'],
+                    'anthropic' => ['api_key' => 'k'],
+                    'failover' => [
+                        'main' => [
+                            'platforms' => ['ai.platform.openai', 'ai.platform.anthropic'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                        'backup' => [
+                            'platforms' => ['ai.platform.anthropic', 'ai.platform.openai'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $container->hasAlias(PlatformInterface::class.' $main'),
+            'Alias for #[Target("main")] should be registered.'
+        );
+        $this->assertTrue(
+            $container->hasAlias(PlatformInterface::class.' $backup'),
+            'Alias for #[Target("backup")] should be registered.'
+        );
+        $this->assertFalse(
+            $container->hasAlias(PlatformInterface::class.' $failover'),
+            'No $failover alias should be registered.'
         );
     }
 
