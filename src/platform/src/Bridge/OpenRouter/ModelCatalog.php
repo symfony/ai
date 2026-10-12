@@ -278,6 +278,30 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'anthropic/claude-haiku-5.5' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'anthropic/claude-haiku-5.5:batch' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'anthropic/claude-opus-4' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
@@ -1656,6 +1680,18 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                     Capability::EMBEDDINGS,
                 ],
             ],
+            'google/gemini-nano-banana-2.1' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'google/gemma-2-27b-it' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
@@ -1890,6 +1926,15 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                 ],
             ],
             'inclusionai/ling-3.0-flash-fin:free' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'inclusionai/ling-3.0-flash-sante' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
@@ -2652,6 +2697,17 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                     Capability::INPUT_TEXT,
                     Capability::INPUT_IMAGE,
                     Capability::INPUT_PDF,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'mistralai/mistral-large-4-0' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::OUTPUT_STRUCTURED,
@@ -4352,6 +4408,30 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'openai/gpt-6.1-sol-pro:batch' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
+            'openai/gpt-6.1-sol:batch' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                ],
+            ],
             'openai/gpt-audio' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
@@ -5751,6 +5831,17 @@ final class ModelCatalog extends AbstractOpenRouterModelCatalog
                 ],
             ],
             'stepfun/step-3.7-flash' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_VIDEO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
+            'stepfun/step-5-preview' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
