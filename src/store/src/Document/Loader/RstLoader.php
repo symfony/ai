@@ -164,6 +164,10 @@ final class RstLoader implements LoaderInterface
             return false;
         }
 
+        if (ltrim($nextLine) !== $nextLine) {
+            return false;
+        }
+
         if (!$this->isAdornmentLine($trimmedNext)) {
             return false;
         }
