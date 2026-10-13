@@ -13,12 +13,16 @@ namespace Symfony\AI\Platform\Tests\Result\Stream;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\AssistantMessageStreamListener;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
@@ -71,6 +75,26 @@ final class AssistantMessageStreamListenerTest extends TestCase
         yield 'empty text deltas carry no content' => [
             [new TextDelta(''), new TextDelta('Hi'), new TextDelta('')],
             [new Text('Hi')],
+        ];
+
+        yield 'commentary is kept next to the answer' => [
+            [
+                new CommentaryStart(),
+                new CommentaryDelta('I will '),
+                new CommentaryDelta('run code.'),
+                new CommentaryComplete('I will run code.'),
+                new TextDelta('425'),
+            ],
+            [new Commentary('I will run code.'), new Text('425')],
+        ];
+
+        yield 'commentary closed by the answer alone' => [
+            [
+                new CommentaryDelta('I will run code.'),
+                new TextDelta('425'),
+                new CommentaryDelta('And again.'),
+            ],
+            [new Commentary('I will run code.'), new Text('425'), new Commentary('And again.')],
         ];
 
         yield 'anthropic thinking with an inline signature' => [

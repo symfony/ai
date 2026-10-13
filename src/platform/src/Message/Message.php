@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Message;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ComputerCall;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\CustomToolCall;
@@ -28,6 +29,7 @@ use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -122,6 +124,10 @@ final class Message
 
         if ($part instanceof ThinkingResult) {
             return [new Thinking($part->getContent() ?? '', $part->getSignature())];
+        }
+
+        if ($part instanceof CommentaryResult) {
+            return [new Commentary($part->getContent())];
         }
 
         if ($part instanceof ToolCallResult) {
