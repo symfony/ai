@@ -28,18 +28,13 @@ use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
-use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
+use Symfony\AI\Agent\Toolbox\MapToolArgumentsSchemaFactory;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -290,18 +285,14 @@ class MapToolArgumentsTest extends TestCase
         }
     }
 
-    private function factoryWithProviders(): Factory
+    private function factoryWithProviders(): MapToolArgumentsSchemaFactory
     {
-        return new Factory(new MapToolArgumentsDescriber(new Describer([
-            new SerializerDescriber(),
-            new TypeInfoDescriber(),
-            new MethodDescriber(),
-            new PropertyInfoDescriber(),
-            new ValidatorConstraintsDescriber(),
-            new SchemaAttributeDescriber([
+        return new MapToolArgumentsSchemaFactory(new Factory([
+            new ValidatorConstraintsEnricher(),
+            new SchemaAttributeEnricher([
                 StatusProvider::class => new StatusProvider(),
             ]),
-        ])));
+        ]));
     }
 
     private function serializerWithSerializedNames(): Serializer

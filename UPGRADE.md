@@ -4,6 +4,13 @@ UPGRADE FROM 0.15 to 1.0
 Agent
 -----
 
+ * `Toolbox\MapToolArgumentsDescriber` is replaced by `Toolbox\MapToolArgumentsSchemaFactory`, which decorates the schema factory instead of its describer:
+
+   ```diff
+   -$factory = new Factory(new MapToolArgumentsDescriber(new Describer()));
+   +$factory = new MapToolArgumentsSchemaFactory(new Factory());
+   ```
+
  * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` is removed. The retrieved documents are added as
    `Bridge\SimilaritySearch\DocumentSource` sources of the tool instead, enable `includeSources` on the agent to read
    them from the result metadata:
@@ -65,6 +72,11 @@ Agent
 
 AI Bundle
 ---------
+
+ * The `ai.platform.json_schema.describer` tag is removed. Tag a `Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchemaEnricherInterface`
+   with `ai.platform.json_schema.enricher`, a `ClassSchemaResolverInterface` with `ai.platform.json_schema.class_resolver` or a
+   `DefinitionProcessorInterface` with `ai.platform.json_schema.definition_processor` instead.
+ * The `ai.platform.json_schema.describer.*` and `ai.toolbox.json_schema.describer` services are removed.
 
  * The `client` option of the `pinecone` store is removed, the store uses the `http_client` option and the new required
    `api_key` option instead:
@@ -348,6 +360,25 @@ Chat
 
 Platform
 --------
+
+ * `Contract\JsonSchema\Factory` is built on the `symfony/json-schema` component. The `Contract\JsonSchema\Describer`
+   and `Contract\JsonSchema\Subject` namespaces are removed: implement the component's `PropertySchemaEnricherInterface`,
+   `ClassSchemaResolverInterface` or `DefinitionProcessorInterface` instead of a describer, and pass them to the factory:
+
+   ```diff
+   -$factory = new Factory(new Describer([
+   -    new SerializerDescriber(),
+   -    new TypeInfoDescriber(),
+   -    new MethodDescriber(),
+   -    new PropertyInfoDescriber(),
+   -    new SchemaAttributeDescriber($providers),
+   -]));
+   +$factory = new Factory([
+   +    new ValidatorConstraintsEnricher(),
+   +    new SchemaAttributeEnricher($providers),
+   +]);
+   ```
+ * An untyped `array` property no longer gets an `items` keyword.
 
  * `MessageBag` is immutable. `add()`, `prepend()` and `removeSystemMessage()` have been removed, use the methods
    returning a copy instead, and `replace()` returns a copy as well:

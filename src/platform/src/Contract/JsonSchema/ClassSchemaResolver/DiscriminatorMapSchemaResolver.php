@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\JsonSchema\Generator;
+namespace Symfony\AI\Platform\Contract\JsonSchema\ClassSchemaResolver;
 
 use Symfony\Component\JsonSchema\ClassSchemaResolver\ClassSchemaResolverInterface;
 use Symfony\Component\JsonSchema\Configuration;
@@ -27,11 +27,12 @@ use Symfony\Component\TypeInfo\Type;
  */
 final class DiscriminatorMapSchemaResolver implements ClassSchemaResolverInterface
 {
+    private readonly ClassMetadataFactoryInterface $classMetadataFactory;
     private SchemaGeneratorInterface $generator;
 
-    public function __construct(
-        private readonly ClassMetadataFactoryInterface $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader()),
-    ) {
+    public function __construct(?ClassMetadataFactoryInterface $classMetadataFactory = null)
+    {
+        $this->classMetadataFactory = $classMetadataFactory ?? new ClassMetadataFactory(new AttributeLoader());
     }
 
     // The resolver API has no handle to describe nested classes, so it calls back into the generator.

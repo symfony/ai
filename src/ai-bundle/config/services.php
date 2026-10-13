@@ -15,7 +15,7 @@ use Symfony\AI\Agent\Command\DropMessageStoreCommand;
 use Symfony\AI\Agent\Command\SetupMessageStoreCommand;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
-use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
+use Symfony\AI\Agent\Toolbox\MapToolArgumentsSchemaFactory;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
@@ -23,7 +23,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
-use Symfony\AI\AiBundle\Mcp\McpSchemaAttributeDescriber;
+use Symfony\AI\AiBundle\Mcp\McpSchemaAttributeEnricher;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
@@ -70,13 +70,9 @@ use Symfony\AI\Platform\Bridge\VertexAi\Contract\GeminiContract as VertexAiGemin
 use Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog as VertexAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog as VoyageModelCatalog;
 use Symfony\AI\Platform\Contract;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\ClassSchemaResolver\DiscriminatorMapSchemaResolver;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
@@ -98,6 +94,7 @@ use Symfony\AI\Store\Command\IndexCommand;
 use Symfony\AI\Store\Command\RetrieveCommand;
 use Symfony\AI\Store\Command\SetupStoreCommand;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+use Symfony\Component\JsonSchema\ClassSchemaResolver\NativeClassSchemaResolver;
 
 return static function (ContainerConfigurator $container): void {
     $container->services()
@@ -200,46 +197,34 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('ai.platform.json_schema_factory'),
             ])
-        ->set('ai.platform.json_schema.describer.type_info', TypeInfoDescriber::class)
-            ->args([
-                service('type_info.resolver')->nullOnInvalid(),
-            ])
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.method', MethodDescriber::class)
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.property_info', PropertyInfoDescriber::class)
-            ->args([
-                service('property_info')->ignoreOnInvalid(),
-                service('property_info')->ignoreOnInvalid(),
-                service('property_info.reflection_extractor')->ignoreOnInvalid(),
-                service('property_info')->ignoreOnInvalid(),
-            ])
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.serializer', SerializerDescriber::class)
-            ->args([
-                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
-            ])
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.validator', ValidatorConstraintsDescriber::class)
+        ->set('ai.platform.json_schema.enricher.validator', ValidatorConstraintsEnricher::class)
             ->args([
                 service('validator')->nullOnInvalid(),
             ])
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.schema_attribute', SchemaAttributeDescriber::class)
+            ->tag('ai.platform.json_schema.enricher')
+        ->set('ai.platform.json_schema.enricher.schema_attribute', SchemaAttributeEnricher::class)
             ->args([
                 tagged_iterator('ai.platform.json_schema.provider', indexAttribute: 'key'),
             ])
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer.mcp_schema', McpSchemaAttributeDescriber::class)
-            ->args([service('ai.platform.json_schema.describer.schema_attribute')])
-            ->tag('ai.platform.json_schema.describer')
-        ->set('ai.platform.json_schema.describer', Describer::class)
+            ->tag('ai.platform.json_schema.enricher', ['priority' => -10])
+        ->set('ai.platform.json_schema.enricher.mcp_schema', McpSchemaAttributeEnricher::class)
+            ->args([service('ai.platform.json_schema.enricher.schema_attribute')])
+            ->tag('ai.platform.json_schema.enricher', ['priority' => -10])
+        ->set('ai.platform.json_schema.class_resolver.discriminator_map', DiscriminatorMapSchemaResolver::class)
             ->args([
-                tagged_iterator('ai.platform.json_schema.describer'),
+                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
             ])
+            ->tag('ai.platform.json_schema.class_resolver')
+        ->set('ai.platform.json_schema.class_resolver.native', NativeClassSchemaResolver::class)
+            ->tag('ai.platform.json_schema.class_resolver', ['priority' => -100])
         ->set('ai.platform.json_schema_factory', SchemaFactory::class)
             ->args([
-                service('ai.platform.json_schema.describer'),
+                tagged_iterator('ai.platform.json_schema.enricher'),
+                tagged_iterator('ai.platform.json_schema.class_resolver'),
+                tagged_iterator('ai.platform.json_schema.definition_processor'),
+                service('property_info')->ignoreOnInvalid(),
+                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
+                service('type_info.resolver')->ignoreOnInvalid(),
             ])
         ->alias(ResponseFormatFactoryInterface::class, 'ai.platform.response_format_factory')
         ->set('ai.platform.structured_output_serializer', StructuredOutputSerializer::class)
@@ -265,10 +250,8 @@ return static function (ContainerConfigurator $container): void {
                 service('logger')->ignoreOnInvalid(),
                 service('event_dispatcher')->nullOnInvalid(),
             ])
-        ->set('ai.toolbox.json_schema.describer', MapToolArgumentsDescriber::class)
-            ->args([service('ai.platform.json_schema.describer')])
-        ->set('ai.toolbox.json_schema_factory', SchemaFactory::class)
-            ->args([service('ai.toolbox.json_schema.describer')])
+        ->set('ai.toolbox.json_schema_factory', MapToolArgumentsSchemaFactory::class)
+            ->args([service('ai.platform.json_schema_factory')])
         ->set('ai.tool_factory', ReflectionToolFactory::class)
             ->args([
                 service('ai.toolbox.json_schema_factory'),

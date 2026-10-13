@@ -455,7 +455,7 @@ final class AiBundle extends AbstractBundle
         }
 
         if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
-            $builder->removeDefinition('ai.platform.json_schema.describer.validator');
+            $builder->removeDefinition('ai.platform.json_schema.enricher.validator');
         }
     }
 

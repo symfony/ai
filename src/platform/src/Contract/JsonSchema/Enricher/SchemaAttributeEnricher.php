@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\JsonSchema\Generator;
+namespace Symfony\AI\Platform\Contract\JsonSchema\Enricher;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;

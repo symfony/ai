@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * [BC BREAK] Replace `Toolbox\MapToolArgumentsDescriber` with `Toolbox\MapToolArgumentsSchemaFactory`, a decorator of `Platform\Contract\JsonSchema\SchemaFactoryInterface`; `ReflectionToolFactory` and `MemoryToolFactory` accept any `SchemaFactoryInterface`
  * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation

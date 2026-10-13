@@ -224,10 +224,10 @@ configurations and reference each one by its service ID:
 Using the Components Directly
 -----------------------------
 
-Without the AI Bundle, build a ``Describer`` chain that includes
-:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Describer\\SchemaAttributeDescriber` and pass
+Without the AI Bundle, create a
+:class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Enricher\\SchemaAttributeEnricher` and pass
 it an iterable of providers indexed by the identifier referenced from ``#[Schema(provider: ...)]``
-(FQCN by default). The :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Factory` is then handed
+(FQCN by default). Pass it to the :class:`Symfony\\AI\\Platform\\Contract\\JsonSchema\\Factory`, which is then handed
 to :class:`Symfony\\AI\\Agent\\Toolbox\\ToolFactory\\ReflectionToolFactory` for tool parameters or
 to :class:`Symfony\\AI\\Platform\\StructuredOutput\\ResponseFormatFactory` for structured output.
 See ``examples/toolbox/schema-provider.php`` and
@@ -247,7 +247,7 @@ Caveats
 
 .. note::
 
-    The describer does not validate the shape of the fragment returned by ``getSchemaFragment()``.
+    The enricher does not validate the shape of the fragment returned by ``getSchemaFragment()``.
     Returning a malformed JSON Schema produces a malformed schema sent to the LLM — stick to
     documented JSON Schema keys.
 
@@ -255,5 +255,5 @@ Learn More
 ----------
 
 * :doc:`../components/agent` - Tools, processors, and structured output
-* :doc:`../components/platform` - The JSON Schema factory and describer chain
+* :doc:`../components/platform` - The JSON Schema factory
 * :doc:`../bundles/ai-bundle` - Auto-wiring providers as Symfony services

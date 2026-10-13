@@ -9,10 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
+namespace Symfony\AI\Platform\Contract\JsonSchema\Enricher;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
+use Symfony\Component\JsonSchema\Configuration;
+use Symfony\Component\JsonSchema\Enricher\PropertySchema;
+use Symfony\Component\JsonSchema\Enricher\PropertySchemaEnricherInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
@@ -24,7 +26,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * @author Valtteri R <valtzu@gmail.com>
  */
-final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
+final class ValidatorConstraintsEnricher implements PropertySchemaEnricherInterface
 {
     private readonly ValidatorInterface $validator;
 
@@ -34,22 +36,19 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
         $this->validator = $validator ?? Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
     }
 
-    public function describeProperty(PropertySubject $subject, ?array &$schema): void
+    public function enrich(PropertySchema $property, Configuration $config): PropertySchema
     {
-        $reflector = $subject->getReflector();
-        if ($reflector instanceof \ReflectionParameter) {
-            return;
-        }
-
         /** @var ClassMetadataInterface $classMetadata */
-        $classMetadata = $this->validator->getMetadataFor($reflector->class);
-        $propertyMetadata = $classMetadata->getPropertyMetadata($subject->getName());
+        $classMetadata = $this->validator->getMetadataFor($property->class);
 
-        foreach ($propertyMetadata as $metadata) {
+        $schema = $property->schema;
+        foreach ($classMetadata->getPropertyMetadata($property->property) as $metadata) {
             foreach ($metadata->getConstraints() as $constraint) {
-                $this->applyConstraints($constraint, $schema, $reflector->class);
+                $this->applyConstraints($constraint, $schema, $property->class);
             }
         }
+
+        return $property->withSchema($schema ?? []);
     }
 
     /**

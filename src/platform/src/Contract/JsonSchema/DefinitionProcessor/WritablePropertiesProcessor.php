@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Contract\JsonSchema\Generator;
+namespace Symfony\AI\Platform\Contract\JsonSchema\DefinitionProcessor;
 
 use Symfony\Component\JsonSchema\Configuration;
 use Symfony\Component\JsonSchema\DefinitionPolicy\DefinitionParent;

@@ -9,18 +9,19 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Describer;
+namespace Symfony\AI\Platform\Tests\Contract\JsonSchema\Enricher;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\ValidatorConstraintsDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ValidatorConstraintsFixture;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ValidatorConstraintsIntlFixture;
 use Symfony\Component\Intl\Countries;
+use Symfony\Component\JsonSchema\Configuration;
+use Symfony\Component\JsonSchema\Enricher\PropertySchema;
 use Symfony\Component\Validator\Constraints\Xml;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Yaml\Yaml;
@@ -28,7 +29,7 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * @phpstan-import-type JsonSchema from Factory
  */
-final class ValidatorConstraintsDescriberTest extends TestCase
+final class ValidatorConstraintsEnricherTest extends TestCase
 {
     /**
      * @param JsonSchema|array<string, mixed>|null $initialSchema
@@ -39,11 +40,9 @@ final class ValidatorConstraintsDescriberTest extends TestCase
     public function testDescribe(string $property, ?array $initialSchema, array $expectedSchema)
     {
         $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
-        $describer = new ValidatorConstraintsDescriber($validator);
-        $propertyReflection = new \ReflectionProperty(ValidatorConstraintsFixture::class, $property);
+        $enricher = new ValidatorConstraintsEnricher($validator);
 
-        $schema = $initialSchema;
-        $describer->describeProperty(new PropertySubject($property, $propertyReflection), $schema);
+        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsFixture::class, $property, null, $initialSchema ?? [], false), new Configuration())->schema;
 
         $this->assertSame($expectedSchema, $schema);
     }
@@ -53,11 +52,9 @@ final class ValidatorConstraintsDescriberTest extends TestCase
     public function testDescribeXml()
     {
         $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
-        $describer = new ValidatorConstraintsDescriber($validator);
-        $propertyReflection = new \ReflectionProperty(ValidatorConstraintsFixture::class, 'xml');
+        $enricher = new ValidatorConstraintsEnricher($validator);
 
-        $schema = null;
-        $describer->describeProperty(new PropertySubject('xml', $propertyReflection), $schema);
+        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsFixture::class, 'xml', null, [], false), new Configuration())->schema;
 
         $this->assertSame(['contentMediaType' => 'application/xml'], $schema);
     }
@@ -135,11 +132,9 @@ final class ValidatorConstraintsDescriberTest extends TestCase
     public function testDescribeIntl(string $property, ?array $initialSchema, array $expectedSchema)
     {
         $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
-        $describer = new ValidatorConstraintsDescriber($validator);
-        $propertyReflection = new \ReflectionProperty(ValidatorConstraintsIntlFixture::class, $property);
+        $enricher = new ValidatorConstraintsEnricher($validator);
 
-        $schema = $initialSchema;
-        $describer->describeProperty(new PropertySubject($property, $propertyReflection), $schema);
+        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsIntlFixture::class, $property, null, $initialSchema ?? [], false), new Configuration())->schema;
 
         $this->assertSame($expectedSchema, $schema);
     }

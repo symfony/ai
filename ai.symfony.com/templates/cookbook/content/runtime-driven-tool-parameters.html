@@ -505,10 +505,10 @@ configurations and reference each one by its service ID:</p>
     Using the Components Directly
     
 </h2>
-<p>Without the AI Bundle, build a <code translate="no" class="notranslate">Describer</code> chain that includes
-<a href="https://github.com/symfony/ai/blob/main/src/platform/src/Contract/JsonSchema/Describer/SchemaAttributeDescriber.php" class="reference external" title="Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber" rel="external noopener noreferrer" target="_blank">SchemaAttributeDescriber</a> and pass
+<p>Without the AI Bundle, create a
+<a href="https://github.com/symfony/ai/blob/main/src/platform/src/Contract/JsonSchema/Enricher/SchemaAttributeEnricher.php" class="reference external" title="Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher" rel="external noopener noreferrer" target="_blank">SchemaAttributeEnricher</a> and pass
 it an iterable of providers indexed by the identifier referenced from <code translate="no" class="notranslate">#[Schema(provider: ...)]</code>
-(FQCN by default). The <a href="https://github.com/symfony/ai/blob/main/src/platform/src/Contract/JsonSchema/Factory.php" class="reference external" title="Symfony\AI\Platform\Contract\JsonSchema\Factory" rel="external noopener noreferrer" target="_blank">Factory</a> is then handed
+(FQCN by default). Pass it to the <a href="https://github.com/symfony/ai/blob/main/src/platform/src/Contract/JsonSchema/Factory.php" class="reference external" title="Symfony\AI\Platform\Contract\JsonSchema\Factory" rel="external noopener noreferrer" target="_blank">Factory</a>, which is then handed
 to <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Toolbox/ToolFactory/ReflectionToolFactory.php" class="reference external" title="Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory" rel="external noopener noreferrer" target="_blank">ReflectionToolFactory</a> for tool parameters or
 to <a href="https://github.com/symfony/ai/blob/main/src/platform/src/StructuredOutput/ResponseFormatFactory.php" class="reference external" title="Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory" rel="external noopener noreferrer" target="_blank">ResponseFormatFactory</a> for structured output.
 See <code translate="no" class="notranslate">examples/toolbox/schema-provider.php</code> and
@@ -534,7 +534,7 @@ picked up until the worker restarts.</p>
     <p class="admonition-title">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 <span>Note</span>
-    </p><p>The describer does not validate the shape of the fragment returned by <code translate="no" class="notranslate">getSchemaFragment()</code>.
+    </p><p>The enricher does not validate the shape of the fragment returned by <code translate="no" class="notranslate">getSchemaFragment()</code>.
 Returning a malformed JSON Schema produces a malformed schema sent to the LLM — stick to
 documented JSON Schema keys.</p>
 </div>
@@ -546,7 +546,7 @@ documented JSON Schema keys.</p>
 </h2>
 <ul>
     <li><a href="https://symfony.com/doc/current/ai/components/agent.html" class="reference internal">Symfony AI - Agent Component</a> - Tools, processors, and structured output</li>
-<li><a href="https://symfony.com/doc/current/ai/components/platform.html" class="reference internal">Symfony AI - Platform Component</a> - The JSON Schema factory and describer chain</li>
+<li><a href="https://symfony.com/doc/current/ai/components/platform.html" class="reference internal">Symfony AI - Platform Component</a> - The JSON Schema factory</li>
 <li><a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> - Auto-wiring providers as Symfony services</li>
 </ul>
 </div>
