@@ -52,7 +52,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final class Factory
+final class Factory implements SchemaFactoryInterface
 {
     public function __construct(
         private readonly ObjectDescriberInterface $objectDescriber = new Describer(),

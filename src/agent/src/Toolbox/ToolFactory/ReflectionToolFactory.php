@@ -17,6 +17,7 @@ use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
 use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\SchemaFactoryInterface;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
@@ -28,7 +29,7 @@ use Symfony\AI\Platform\Tool\Tool;
 final class ReflectionToolFactory implements ToolFactoryInterface
 {
     public function __construct(
-        private readonly Factory $factory = new Factory(new MapToolArgumentsDescriber()),
+        private readonly SchemaFactoryInterface $factory = new Factory(new MapToolArgumentsDescriber()),
     ) {
     }
 

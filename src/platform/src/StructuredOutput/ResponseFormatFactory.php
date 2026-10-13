@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\StructuredOutput;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Contract\JsonSchema\SchemaFactoryInterface;
 
 use function Symfony\Component\String\u;
 
@@ -21,7 +22,7 @@ use function Symfony\Component\String\u;
 final class ResponseFormatFactory implements ResponseFormatFactoryInterface
 {
     public function __construct(
-        private readonly Factory $schemaFactory = new Factory(),
+        private readonly SchemaFactoryInterface $schemaFactory = new Factory(),
     ) {
     }
 
