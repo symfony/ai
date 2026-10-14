@@ -1636,7 +1636,7 @@ section.platform-bridges-section,
     margin: 0;
 }
 
-/* Capabilities, outlined to stay discreet */
+/* Capabilities, outlined to stay in the background */
 .platform-card-capabilities {
     list-style: none;
     display: flex;

@@ -27,14 +27,16 @@
     <div class="platform-presets" role="group" aria-label="Start from a need" data-sticky-offset-target="source">
         {% for preset in this.presets %}
             {% set preset_active = this.isPresetActive(preset) %}
+            {#- a link for browsers without JavaScript, a toggle button otherwise -#}
             <a
-                href="{{ path('platform_bridges', this.presetParameters(preset)) }}"
+                href="{{ preset_active ? path('platform_bridges') : path('platform_bridges', this.presetParameters(preset)) }}"
                 class="platform-preset{{ preset_active ? ' is-active' }}"
-                data-action="live#action:prevent"
+                role="button"
+                data-action="live#action:prevent keydown.space->live#action:prevent"
                 data-live-action-param="applyPreset"
                 data-live-preset-param="{{ preset.value }}"
                 title="{{ preset.description }}"
-                {% if preset_active %}aria-current="true"{% endif %}
+                aria-pressed="{{ preset_active ? 'true' : 'false' }}"
             >
                 {{ ux_icon(preset.icon, {width: 18, height: 18, 'aria-hidden': 'true'}) }}
                 {{ preset.label }}

@@ -124,6 +124,13 @@ final class PlatformBridgeList
             return;
         }
 
+        // a second click on the active preset turns it off
+        if ($this->isPresetActive($preset)) {
+            $this->clearAll();
+
+            return;
+        }
+
         $this->clearAll();
         foreach ($preset->getSelection() as $facet => $values) {
             $this->select(Facet::from($facet), $values);

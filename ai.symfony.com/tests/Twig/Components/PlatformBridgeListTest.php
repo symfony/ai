@@ -115,6 +115,19 @@ final class PlatformBridgeListTest extends KernelTestCase
         }
     }
 
+    public function testTheActivePresetTurnsOffOnASecondClick()
+    {
+        $component = $this->createLiveComponent(PlatformBridgeList::class);
+        $component->call('applyPreset', ['preset' => 'offline']);
+        $component->call('applyPreset', ['preset' => 'offline']);
+
+        $this->assertSame([], $component->component()->deployments);
+
+        $crawler = $component->render()->crawler();
+        $this->assertCount(0, $crawler->filter('.platform-preset.is-active'));
+        $this->assertSame('false', $crawler->filter('.platform-preset[data-live-preset-param="offline"]')->attr('aria-pressed'));
+    }
+
     public function testClearAllResetsFiltersAndQuery()
     {
         $component = $this->createLiveComponent(PlatformBridgeList::class);

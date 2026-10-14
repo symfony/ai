@@ -94,6 +94,16 @@ final class PlatformBridgeControllerTest extends WebTestCase
         $this->assertSame('/bridges/platforms?runs=local', $crawler->filter('a.platform-preset[data-live-preset-param="offline"]')->attr('href'));
     }
 
+    public function testTheActivePresetLinksToTheUnfilteredPage()
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/bridges/platforms?runs=local');
+
+        $preset = $crawler->filter('a.platform-preset[data-live-preset-param="offline"]');
+        $this->assertSame('/bridges/platforms', $preset->attr('href'));
+        $this->assertSame('true', $preset->attr('aria-pressed'));
+    }
+
     public function testTheHomepageLinksToThePage()
     {
         $client = static::createClient();

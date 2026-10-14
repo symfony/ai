@@ -270,7 +270,7 @@ bridges:
 
     Generic:
         name: Generic (OpenAI-compatible)
-        summary: Connects to any server speaking the OpenAI API, such as vLLM, llama.cpp, LocalAI, LiteLLM, Groq or DeepInfra.
+        summary: Connects to any server speaking the OpenAI API, such as vLLM, llama.cpp, LocalAI, LiteLLM, Groq or DeepInfra. Capabilities depend on the server.
         kind: building-block
         deployment: [cloud, local]
         hosting: [saas, self-hosted]
@@ -278,7 +278,6 @@ bridges:
         model_access: multi-vendor
         capabilities: [chat, tool-calling, structured-output, vision, embeddings]
         icon: tabler:plug
-        note: What you get depends on the server you connect to.
 
     Higgsfield:
         name: Higgsfield
@@ -431,7 +430,7 @@ bridges:
         capabilities: [chat, structured-output, reasoning, web-search, vision]
         website: https://www.perplexity.ai
         icon: brands:perplexity
-        note: Perplexity announced the end of its Sonar API, set for September 27, 2026.
+        note: Perplexity ended support for its Sonar API on September 27, 2026, in favor of its Agent API.
 
     Replicate:
         name: Replicate
