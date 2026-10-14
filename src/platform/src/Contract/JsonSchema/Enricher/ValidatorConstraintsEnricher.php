@@ -13,8 +13,9 @@ namespace Symfony\AI\Platform\Contract\JsonSchema\Enricher;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\Component\JsonSchema\Configuration;
-use Symfony\Component\JsonSchema\Enricher\PropertySchema;
-use Symfony\Component\JsonSchema\Enricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchema;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\SchemaDocument;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
@@ -36,7 +37,7 @@ final class ValidatorConstraintsEnricher implements PropertySchemaEnricherInterf
         $this->validator = $validator ?? Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
     }
 
-    public function enrich(PropertySchema $property, Configuration $config): PropertySchema
+    public function enrich(PropertySchema $property, Configuration $config, SchemaDocument $document): PropertySchema
     {
         /** @var ClassMetadataInterface $classMetadata */
         $classMetadata = $this->validator->getMetadataFor($property->class);

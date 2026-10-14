@@ -16,8 +16,9 @@ use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\Exception\IOException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\Component\JsonSchema\Configuration;
-use Symfony\Component\JsonSchema\Enricher\PropertySchema;
-use Symfony\Component\JsonSchema\Enricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchema;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\SchemaDocument;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyWriteInfo;
 
@@ -43,7 +44,7 @@ final class SchemaAttributeEnricher implements PropertySchemaEnricherInterface
         $this->providers = $providers instanceof \Traversable ? iterator_to_array($providers) : $providers;
     }
 
-    public function enrich(PropertySchema $property, Configuration $config): PropertySchema
+    public function enrich(PropertySchema $property, Configuration $config, SchemaDocument $document): PropertySchema
     {
         foreach ($this->getReflectors($property->class, $property->property) as $reflector) {
             $schema = $this->apply($reflector, $property->schema);

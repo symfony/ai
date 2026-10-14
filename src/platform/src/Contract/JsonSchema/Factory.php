@@ -12,7 +12,6 @@
 namespace Symfony\AI\Platform\Contract\JsonSchema;
 
 use Symfony\AI\Platform\Contract\JsonSchema\ClassSchemaResolver\DiscriminatorMapSchemaResolver;
-use Symfony\AI\Platform\Contract\JsonSchema\DefinitionProcessor\WritablePropertiesProcessor;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\RequiredPropertyEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher;
@@ -22,8 +21,10 @@ use Symfony\Component\JsonSchema\Configuration;
 use Symfony\Component\JsonSchema\DefinitionPolicy\ShortNameDefinitionPolicy;
 use Symfony\Component\JsonSchema\DefinitionProcessor\DefinitionProcessorInterface;
 use Symfony\Component\JsonSchema\Dialect;
-use Symfony\Component\JsonSchema\Enricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\Direction;
 use Symfony\Component\JsonSchema\NullSyntax;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\Schema;
 use Symfony\Component\JsonSchema\SchemaGenerator;
 use Symfony\Component\PropertyInfo\Extractor\PhpStanExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
@@ -34,7 +35,6 @@ use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\TypeInfo\Type;
-use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolverInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -74,94 +74,76 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Oskar Stark <oskarstark@googlemail.com>
- * @author Christopher Hertel <mail@christopher-hertel.de>
- * @author Oskar Stark <oskarstark@googlemail.com>
  */
 final class Factory implements SchemaFactoryInterface
 {
     private readonly SchemaGenerator $generator;
-    private readonly ShortNameDefinitionPolicy $definitionPolicy;
     private readonly ?SchemaAttributeEnricher $schemaAttributeEnricher;
-    private readonly TypeResolverInterface $typeResolver;
-    private readonly Dialect $dialect;
+    private readonly Configuration $config;
 
     /**
      * @param iterable<PropertySchemaEnricherInterface>|null $propertySchemaEnrichers null for the validator constraints and #[Schema] enrichers
      * @param iterable<ClassSchemaResolverInterface>|null    $classSchemaResolvers    null for the discriminator map and native class resolvers
-     * @param iterable<DefinitionProcessorInterface>         $definitionProcessors
+     * @param iterable<DefinitionProcessorInterface>|null    $definitionProcessors    null for the discriminator map processor
      */
     public function __construct(
         ?iterable $propertySchemaEnrichers = null,
         ?iterable $classSchemaResolvers = null,
-        iterable $definitionProcessors = [],
+        ?iterable $definitionProcessors = null,
         ?PropertyInfoExtractorInterface $propertyInfoExtractor = null,
         ?ClassMetadataFactoryInterface $classMetadataFactory = null,
         ?TypeResolverInterface $typeResolver = null,
     ) {
         $classMetadataFactory ??= new ClassMetadataFactory(new AttributeLoader());
-        $this->typeResolver = $typeResolver ?? TypeResolver::create();
-        $this->dialect = new Dialect('#/$defs/', NullSyntax::Union);
-        $this->definitionPolicy = new ShortNameDefinitionPolicy();
+        $discriminatorMap = new DiscriminatorMapSchemaResolver($classMetadataFactory);
 
         $propertySchemaEnrichers = null === $propertySchemaEnrichers ? self::getDefaultEnrichers() : iterator_to_array($propertySchemaEnrichers, false);
-        $classSchemaResolvers = null === $classSchemaResolvers
-            ? [new DiscriminatorMapSchemaResolver($classMetadataFactory), new NativeClassSchemaResolver()]
-            : iterator_to_array($classSchemaResolvers, false);
-
         $this->schemaAttributeEnricher = array_find($propertySchemaEnrichers, static fn (PropertySchemaEnricherInterface $enricher): bool => $enricher instanceof SchemaAttributeEnricher);
 
         $this->generator = new SchemaGenerator(
             $propertyInfoExtractor ?? self::createPropertyInfoExtractor($classMetadataFactory),
-            $this->definitionPolicy,
-            $classSchemaResolvers,
+            new ShortNameDefinitionPolicy(),
+            $classSchemaResolvers ?? [$discriminatorMap, new NativeClassSchemaResolver()],
             propertySchemaEnrichers: [...$propertySchemaEnrichers, new RequiredPropertyEnricher()],
-            definitionProcessors: [new WritablePropertiesProcessor(), ...$definitionProcessors],
+            definitionProcessors: $definitionProcessors ?? [$discriminatorMap],
+            typeResolver: $typeResolver,
         );
-
-        foreach ($classSchemaResolvers as $resolver) {
-            if ($resolver instanceof DiscriminatorMapSchemaResolver) {
-                $resolver->setGenerator($this->generator);
-            }
-        }
+        $this->config = new Configuration(new Dialect('#/$defs/', NullSyntax::Union), allowExtraAttributes: false, direction: Direction::Input);
     }
 
     public function buildParameters(string $className, string $methodName, array $context = []): ?array
     {
-        $this->definitionPolicy->reset();
-        $config = $this->createConfiguration($context);
+        $parameters = (new \ReflectionMethod($className, $methodName))->getParameters();
+        $schema = $this->generator->generateForParameters($parameters, $this->createConfiguration($context))->flatten();
+        $root = self::normalize($schema->getRoot());
 
-        $properties = $required = [];
-        foreach ((new \ReflectionMethod($className, $methodName))->getParameters() as $parameter) {
-            $schema = $this->generator->generate($this->typeResolver->resolve($parameter), $config)->flatten()->getRoot();
-
-            if ('' !== $description = self::getParameterDescription($parameter)) {
-                $schema['description'] = $description;
-            }
-
-            $properties[$parameter->name] = self::removeEmptyItems($this->schemaAttributeEnricher?->apply($parameter, $schema) ?? $schema);
-            if (!$parameter->isOptional()) {
-                $required[] = $parameter->name;
-            }
-        }
-
-        if ([] === $properties) {
+        if (!isset($root['properties'])) {
             return null;
         }
 
-        return ['type' => 'object', 'properties' => $properties, 'required' => $required, 'additionalProperties' => false];
+        foreach ($parameters as $parameter) {
+            if (!isset($root['properties'][$parameter->name])) {
+                continue;
+            }
+
+            $property = $root['properties'][$parameter->name];
+            unset($property['default']);
+            $root['properties'][$parameter->name] = $this->schemaAttributeEnricher?->apply($parameter, $property) ?? $property;
+        }
+
+        return self::withDefinitions(['type' => 'object', 'properties' => $root['properties'], 'required' => $root['required'] ?? [], 'additionalProperties' => false], $schema);
     }
 
     public function buildProperties(string $className, array $context = []): ?array
     {
-        $this->definitionPolicy->reset();
         $schema = $this->generator->generate(Type::object($className), $this->createConfiguration($context))->flatten();
-        $root = self::removeEmptyItems($schema->getRoot());
+        $root = self::normalize($schema->getRoot());
 
-        if ([] !== $schema->getDefinitions()) {
-            return [...$root, '$defs' => array_map(self::removeEmptyItems(...), $schema->getDefinitions())];
+        if ([] === $schema->getDefinitions() && !isset($root['properties'])) {
+            return null;
         }
 
-        return isset($root['properties']) ? $root : null;
+        return self::withDefinitions($root, $schema);
     }
 
     /**
@@ -197,48 +179,56 @@ final class Factory implements SchemaFactoryInterface
      */
     private function createConfiguration(array $context): Configuration
     {
-        return new Configuration(
-            dialect: $this->dialect,
-            groups: $context['serializer_groups'] ?? [],
-            allowExtraAttributes: false,
-        );
+        if ([] === $groups = $context['serializer_groups'] ?? []) {
+            return $this->config;
+        }
+
+        return new Configuration($this->config->dialect, $groups, allowExtraAttributes: false, direction: Direction::Input);
     }
 
     /**
-     * Untyped array items come back as an empty PHP array, which would be encoded as an invalid JSON list.
-     *
-     * @param array<string, mixed> $schema
+     * @param array<string, mixed> $root
      *
      * @return array<string, mixed>
      */
-    private static function removeEmptyItems(array $schema): array
+    private static function withDefinitions(array $root, Schema $schema): array
     {
-        if ([] === ($schema['items'] ?? null)) {
-            unset($schema['items']);
+        if ([] === $definitions = $schema->getDefinitions()) {
+            return $root;
         }
 
+        return [...$root, '$defs' => array_map(self::normalize(...), $definitions)];
+    }
+
+    /**
+     * Unwraps the empty schemas into arrays and drops the empty items schema of untyped arrays.
+     *
+     * @param array<string, mixed>|\ArrayObject<string, mixed> $schema
+     *
+     * @return array<string, mixed>
+     */
+    private static function normalize(array|\ArrayObject $schema): array
+    {
+        $schema = (array) $schema;
+
         foreach ($schema as $keyword => $value) {
+            if ($value instanceof \ArrayObject) {
+                $schema[$keyword] = $value = (array) $value;
+            }
+
+            if ('items' === $keyword && [] === $value) {
+                unset($schema['items']);
+
+                continue;
+            }
+
             if (\is_array($value) && !\in_array($keyword, ['type', 'enum', 'const', 'required', 'examples'], true)) {
                 $schema[$keyword] = array_is_list($value) || \in_array($keyword, ['properties', '$defs'], true)
-                    ? array_map(static fn (mixed $item): mixed => \is_array($item) ? self::removeEmptyItems($item) : $item, $value)
-                    : self::removeEmptyItems($value);
+                    ? array_map(static fn (mixed $item): mixed => \is_array($item) || $item instanceof \ArrayObject ? self::normalize($item) : $item, $value)
+                    : self::normalize($value);
             }
         }
 
         return $schema;
-    }
-
-    private static function getParameterDescription(\ReflectionParameter $parameter): string
-    {
-        $comment = $parameter->getDeclaringFunction()->getDocComment();
-        if (false === $comment) {
-            return '';
-        }
-
-        if (preg_match('/@param\s+\S+\s+\$'.preg_quote($parameter->getName(), '/').'\s+((.*)(?=\*)|.*)/', $comment, $matches)) {
-            return trim($matches[1]);
-        }
-
-        return '';
     }
 }

@@ -21,7 +21,8 @@ use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ValidatorConstraintsFixt
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ValidatorConstraintsIntlFixture;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\JsonSchema\Configuration;
-use Symfony\Component\JsonSchema\Enricher\PropertySchema;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchema;
+use Symfony\Component\JsonSchema\SchemaDocument;
 use Symfony\Component\Validator\Constraints\Xml;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Yaml\Yaml;
@@ -42,7 +43,7 @@ final class ValidatorConstraintsEnricherTest extends TestCase
         $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
         $enricher = new ValidatorConstraintsEnricher($validator);
 
-        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsFixture::class, $property, null, $initialSchema ?? [], false), new Configuration())->schema;
+        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsFixture::class, $property, null, $initialSchema ?? [], false), new Configuration(), new SchemaDocument())->schema;
 
         $this->assertSame($expectedSchema, $schema);
     }
@@ -54,7 +55,7 @@ final class ValidatorConstraintsEnricherTest extends TestCase
         $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
         $enricher = new ValidatorConstraintsEnricher($validator);
 
-        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsFixture::class, 'xml', null, [], false), new Configuration())->schema;
+        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsFixture::class, 'xml', null, [], false), new Configuration(), new SchemaDocument())->schema;
 
         $this->assertSame(['contentMediaType' => 'application/xml'], $schema);
     }
@@ -134,7 +135,7 @@ final class ValidatorConstraintsEnricherTest extends TestCase
         $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
         $enricher = new ValidatorConstraintsEnricher($validator);
 
-        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsIntlFixture::class, $property, null, $initialSchema ?? [], false), new Configuration())->schema;
+        $schema = $enricher->enrich(new PropertySchema(ValidatorConstraintsIntlFixture::class, $property, null, $initialSchema ?? [], false), new Configuration(), new SchemaDocument())->schema;
 
         $this->assertSame($expectedSchema, $schema);
     }

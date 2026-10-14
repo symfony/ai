@@ -13,52 +13,58 @@ namespace Symfony\AI\Platform\Contract\JsonSchema\ClassSchemaResolver;
 
 use Symfony\Component\JsonSchema\ClassSchemaResolver\ClassSchemaResolverInterface;
 use Symfony\Component\JsonSchema\Configuration;
-use Symfony\Component\JsonSchema\DefinitionPolicy\DefinitionParent;
-use Symfony\Component\JsonSchema\SchemaGeneratorInterface;
+use Symfony\Component\JsonSchema\DefinitionParent;
+use Symfony\Component\JsonSchema\DefinitionProcessor\DefinitionProcessorInterface;
+use Symfony\Component\JsonSchema\SchemaDocument;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\TypeInfo\Type;
 
 /**
- * Describes a class carrying a serializer discriminator map as the union of its mapped classes.
+ * Describes a class carrying a serializer discriminator map as the union of its mapped classes,
+ * each of them restricting the type property to its discriminator values.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class DiscriminatorMapSchemaResolver implements ClassSchemaResolverInterface
+final class DiscriminatorMapSchemaResolver implements ClassSchemaResolverInterface, DefinitionProcessorInterface
 {
-    private readonly ClassMetadataFactoryInterface $classMetadataFactory;
-    private SchemaGeneratorInterface $generator;
+    private readonly ClassDiscriminatorFromClassMetadata $discriminator;
 
     public function __construct(?ClassMetadataFactoryInterface $classMetadataFactory = null)
     {
-        $this->classMetadataFactory = $classMetadataFactory ?? new ClassMetadataFactory(new AttributeLoader());
+        $this->discriminator = new ClassDiscriminatorFromClassMetadata($classMetadataFactory ?? new ClassMetadataFactory(new AttributeLoader()));
     }
 
-    // The resolver API has no handle to describe nested classes, so it calls back into the generator.
-    public function setGenerator(SchemaGeneratorInterface $generator): void
+    public function resolve(string $class, Configuration $config, SchemaDocument $document, ?DefinitionParent $parent = null): ?array
     {
-        $this->generator = $generator;
-    }
-
-    public function resolve(string $class, Configuration $config, ?DefinitionParent $parent = null): ?array
-    {
-        $mapping = $this->classMetadataFactory->getMetadataFor($class)->getClassDiscriminatorMapping();
+        $mapping = $this->discriminator->getMappingForClass($class);
         if (null === $mapping || \in_array($class, $mapping->getTypesMapping(), true)) {
             return null;
         }
 
-        $typeProperty = $mapping->getTypeProperty();
         $anyOf = [];
-        foreach ($mapping->getTypesMapping() as $value => $mappedClass) {
-            $schema = $this->generator->generate(Type::object($mappedClass), $config)->flatten()->getRoot();
-            $schema['properties'][$typeProperty]['enum'] = [$value];
-            if (!\in_array($typeProperty, $schema['required'] ?? [], true)) {
-                $schema['required'][] = $typeProperty;
-            }
-            $anyOf[] = $schema;
+        foreach (array_unique($mapping->getTypesMapping()) as $mappedClass) {
+            $anyOf[] = $document->describe(Type::object($mappedClass), $config, $parent);
         }
 
         return ['anyOf' => $anyOf];
+    }
+
+    public function process(array $definition, string $class, Configuration $config, SchemaDocument $document, ?DefinitionParent $parent): array
+    {
+        $mapping = $this->discriminator->getMappingForMappedObject($class);
+        if (null === $mapping || [] === $values = array_keys($mapping->getTypesMapping(), $class, true)) {
+            return $definition;
+        }
+
+        $typeProperty = $mapping->getTypeProperty();
+        $definition['properties'][$typeProperty]['enum'] = $values;
+        if (!\in_array($typeProperty, $definition['required'] ?? [], true)) {
+            $definition['required'][] = $typeProperty;
+        }
+
+        return $definition;
     }
 }

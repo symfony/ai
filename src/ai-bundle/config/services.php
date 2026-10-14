@@ -210,11 +210,12 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.json_schema.enricher.mcp_schema', McpSchemaAttributeEnricher::class)
             ->args([service('ai.platform.json_schema.enricher.schema_attribute')])
             ->tag('ai.platform.json_schema.enricher', ['priority' => -10])
-        ->set('ai.platform.json_schema.class_resolver.discriminator_map', DiscriminatorMapSchemaResolver::class)
+        ->set('ai.platform.json_schema.discriminator_map', DiscriminatorMapSchemaResolver::class)
             ->args([
                 service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
             ])
             ->tag('ai.platform.json_schema.class_resolver')
+            ->tag('ai.platform.json_schema.definition_processor')
         ->set('ai.platform.json_schema.class_resolver.native', NativeClassSchemaResolver::class)
             ->tag('ai.platform.json_schema.class_resolver', ['priority' => -100])
         ->set('ai.platform.json_schema_factory', SchemaFactory::class)
