@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -47,10 +48,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
      *
      * Good configuration $options are:
      * - For Mistral: ['vector_size' => 1024]
-     * - For Gemini: ['vector_type' => 'halfvec', 'vector_size' => 3072, 'index_method' => 'hnsw', 'index_opclass' => 'halfvec_cosine_ops']
+     * - For Gemini: ['vector_type' => 'halfvec', 'vector_size' => 3072]
      */
     public function setup(array $options = []): void
     {
+        $vectorType = $options['vector_type'] ?? 'vector';
+        // Unlike ivfflat, hnsw needs no data to build a good index, and supports every distance
+        $indexMethod = $options['index_method'] ?? 'hnsw';
+
+        // Documents are written and read in the "[x,y,z]" format, which other pgvector types reject
+        if (!\in_array($vectorType, ['halfvec', 'vector'], true)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" vector type is not supported, use "vector" or "halfvec".', $vectorType));
+        }
+
+        $indexOpclass = $options['index_opclass'] ?? $this->getIndexOpclass($vectorType, $indexMethod);
+
         $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
 
         $this->connection->exec(
@@ -62,7 +74,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 )',
                 $this->tableName,
                 $this->vectorFieldName,
-                $options['vector_type'] ?? 'vector',
+                $vectorType,
                 $options['vector_size'] ?? 1536,
             ),
         );
@@ -72,9 +84,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->tableName,
-                $options['index_method'] ?? 'ivfflat',
+                $indexMethod,
                 $this->vectorFieldName,
-                $options['index_opclass'] ?? 'vector_cosine_ops',
+                $indexOpclass,
             ),
         );
     }
@@ -352,6 +364,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 score: $result['score'],
             );
         }
+    }
+
+    private function getIndexOpclass(string $vectorType, string $indexMethod): string
+    {
+        if ('ivfflat' === $indexMethod && Distance::L1 === $this->distance) {
+            throw new InvalidArgumentException('The "ivfflat" index method does not support the L1 distance, use "hnsw".');
+        }
+
+        return \sprintf('%s_%s_ops', $vectorType, match ($this->distance) {
+            Distance::Cosine => 'cosine',
+            Distance::InnerProduct => 'ip',
+            Distance::L1 => 'l1',
+            Distance::L2 => 'l2',
+        });
     }
 
     private function toPgvector(VectorInterface $vector): string

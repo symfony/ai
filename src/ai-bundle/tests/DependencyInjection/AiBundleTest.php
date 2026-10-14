@@ -282,7 +282,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([
             'ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024],
             'ai.store.mongodb.my_mongo_store' => ['fields' => [['path' => 'metadata.store_code', 'type' => 'filter']]],
-            'ai.store.postgres.my_postgres_store' => ['vector_type' => 'vector', 'vector_size' => 1536, 'index_method' => 'ivfflat', 'index_opclass' => 'vector_cosine_ops'],
+            'ai.store.postgres.my_postgres_store' => ['vector_type' => 'vector', 'vector_size' => 1536, 'index_method' => 'hnsw', 'index_opclass' => 'vector_l2_ops'],
             'ai.store.redis.my_redis_store' => ['vector_size' => 1536],
             'ai.store.redis.my_redis_store_with_custom_client' => [],
             'ai.store.redis.my_redis_store_with_custom_key_prefix' => [],
@@ -3429,6 +3429,30 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testPostgresStoreSetupOptionsLetTheStoreChooseTheIndex()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'postgres' => [
+                        'db' => [
+                            'dbal_connection' => 'my_connection',
+                            'distance' => PostgresDistance::Cosine->value,
+                            'setup_options' => [
+                                'vector_size' => 1024,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(
+            ['ai.store.postgres.db' => ['vector_size' => 1024, 'vector_type' => 'vector']],
+            $container->getDefinition('ai.command.setup_store')->getArgument(1),
+        );
     }
 
     public function testQdrantStoreCanBeConfigured()
@@ -10917,8 +10941,8 @@ class AiBundleTest extends TestCase
                             'setup_options' => [
                                 'vector_type' => 'vector',
                                 'vector_size' => 1536,
-                                'index_method' => 'ivfflat',
-                                'index_opclass' => 'vector_cosine_ops',
+                                'index_method' => 'hnsw',
+                                'index_opclass' => 'vector_l2_ops',
                             ],
                         ],
                     ],

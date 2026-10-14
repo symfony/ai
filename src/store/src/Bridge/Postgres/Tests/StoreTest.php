@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Postgres\Tests;
 
 use Doctrine\DBAL\Connection;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Postgres\Distance;
@@ -19,6 +20,7 @@ use Symfony\AI\Store\Bridge\Postgres\Store;
 use Symfony\AI\Store\Bridge\Postgres\StoreFactory;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
@@ -457,6 +459,69 @@ final class StoreTest extends TestCase
             });
 
         $store->setup(['vector_size' => 768]);
+    }
+
+    /**
+     * @param array{vector_type?: string, index_method?: string, index_opclass?: string} $options
+     */
+    #[DataProvider('provideIndexes')]
+    public function testSetupCreatesIndexMatchingTheDistance(Distance $distance, array $options, string $expectedIndex)
+    {
+        $pdo = $this->createMock(\PDO::class);
+
+        $statements = [];
+        $pdo->expects($this->exactly(3))
+            ->method('exec')
+            ->willReturnCallback(static function (string $sql) use (&$statements): int {
+                $statements[] = $sql;
+
+                return 0;
+            });
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding', $distance);
+        $store->setup($options);
+
+        $this->assertSame($expectedIndex, $statements[2]);
+    }
+
+    /**
+     * @return iterable<string, array{Distance, array<string, string>, string}>
+     */
+    public static function provideIndexes(): iterable
+    {
+        yield 'cosine' => [Distance::Cosine, [], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING hnsw ("embedding" vector_cosine_ops)'];
+        yield 'inner product' => [Distance::InnerProduct, [], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING hnsw ("embedding" vector_ip_ops)'];
+        yield 'l1' => [Distance::L1, [], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING hnsw ("embedding" vector_l1_ops)'];
+        yield 'l2' => [Distance::L2, [], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING hnsw ("embedding" vector_l2_ops)'];
+        yield 'halfvec' => [Distance::Cosine, ['vector_type' => 'halfvec'], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING hnsw ("embedding" halfvec_cosine_ops)'];
+        yield 'ivfflat' => [Distance::InnerProduct, ['index_method' => 'ivfflat'], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING ivfflat ("embedding" vector_ip_ops)'];
+        yield 'explicit index' => [Distance::L2, ['index_method' => 'ivfflat', 'index_opclass' => 'vector_cosine_ops'], 'CREATE INDEX IF NOT EXISTS "embeddings_table_embedding_idx" ON "embeddings_table" USING ivfflat ("embedding" vector_cosine_ops)'];
+    }
+
+    public function testSetupRejectsUnsupportedVectorType()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->expects($this->never())->method('exec');
+
+        $store = new Store($pdo, 'embeddings_table');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "bit" vector type is not supported, use "vector" or "halfvec".');
+
+        $store->setup(['vector_type' => 'bit']);
+    }
+
+    public function testSetupRejectsIvfflatIndexForL1Distance()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->expects($this->never())->method('exec');
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding', Distance::L1);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "ivfflat" index method does not support the L1 distance, use "hnsw".');
+
+        $store->setup(['index_method' => 'ivfflat']);
     }
 
     public function testFromPdo()

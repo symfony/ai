@@ -116,7 +116,8 @@ Vector storage using `pgvector`_, the PostgreSQL extension for vector similarity
 
     $ composer require symfony/ai-postgres-store
 
-**Requirements:** ``pgvector`` extension, PHP ``ext-pdo``
+**Requirements:** ``pgvector`` extension 0.5.0 or later (0.7.0 for ``halfvec`` and ``Distance::L1``),
+PHP ``ext-pdo``
 
 The table and index are created by ``setup()``::
 
@@ -130,6 +131,11 @@ The table and index are created by ``setup()``::
     $store = StoreFactory::createStoreFromDbal($connection, 'documents', vectorFieldName: 'embedding', distance: Distance::Cosine);
 
 **Available distances:** ``Distance::Cosine``, ``Distance::InnerProduct``, ``Distance::L1``, ``Distance::L2`` (default)
+
+``setup()`` creates an HNSW index with the operator class of the distance (e.g. ``vector_cosine_ops``
+for ``Distance::Cosine``): queries can only use an index built for their distance. The
+``index_method`` and ``index_opclass`` setup options override them. The ``vector_type`` setup option
+accepts ``vector`` (default) and ``halfvec``, which can index up to 2,000 and 4,000 dimensions.
 
 .. code-block:: yaml
 
@@ -146,8 +152,6 @@ The table and index are created by ``setup()``::
                     distance: 'cosine'
                     setup_options:
                         vector_size: 1536
-                        index_method: 'hnsw'
-                        index_opclass: 'vector_cosine_ops'
 
 This store also supports hybrid vector and full-text search via
 :class:`Symfony\\AI\\Store\\Query\\HybridQuery`, which uses the configured ``lang`` for the
