@@ -214,6 +214,59 @@ final class SearchStoreTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
     }
 
+    public function testQuerySendsAnApproximateVectorQueryByDefault()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame([
+                    'vectorQueries' => [
+                        [
+                            'kind' => 'vector',
+                            'vector' => [0.1, 0.2, 0.3],
+                            'fields' => 'vector',
+                            'k' => 5,
+                        ],
+                    ],
+                ], json_decode($options['body'], true));
+
+                return new JsonMockResponse(['value' => []]);
+            },
+        ]);
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testQueryWithLimitAndExhaustiveOptions()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame([
+                    'vectorQueries' => [
+                        [
+                            'kind' => 'vector',
+                            'vector' => [0.1, 0.2, 0.3],
+                            'fields' => 'vector',
+                            'k' => 20,
+                            'exhaustive' => true,
+                        ],
+                    ],
+                ], json_decode($options['body'], true));
+
+                return new JsonMockResponse(['value' => []]);
+            },
+        ]);
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20, 'exhaustive' => true]));
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testQueryFailure()
     {
         $httpClient = new MockHttpClient([

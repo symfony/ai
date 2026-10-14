@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Read the `limit` option in `SearchStore::query()` and run an approximate vector query by default; pass the `exhaustive` option to run an exhaustive KNN
+
 0.14
 ----
 
