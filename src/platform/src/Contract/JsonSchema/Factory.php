@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema;
 
-use Symfony\AI\Platform\Contract\JsonSchema\ClassSchemaResolver\DiscriminatorMapSchemaResolver;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\RequiredPropertyEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher;
@@ -31,6 +30,7 @@ use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\Extractor\SerializerExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -83,8 +83,8 @@ final class Factory implements SchemaFactoryInterface
 
     /**
      * @param iterable<PropertySchemaEnricherInterface>|null $propertySchemaEnrichers null for the validator constraints and #[Schema] enrichers
-     * @param iterable<ClassSchemaResolverInterface>|null    $classSchemaResolvers    null for the discriminator map and native class resolvers
-     * @param iterable<DefinitionProcessorInterface>|null    $definitionProcessors    null for the discriminator map processor
+     * @param iterable<ClassSchemaResolverInterface>|null    $classSchemaResolvers    null for the native class resolver
+     * @param iterable<DefinitionProcessorInterface>|null    $definitionProcessors    null for none
      */
     public function __construct(
         ?iterable $propertySchemaEnrichers = null,
@@ -95,7 +95,6 @@ final class Factory implements SchemaFactoryInterface
         ?TypeResolverInterface $typeResolver = null,
     ) {
         $classMetadataFactory ??= new ClassMetadataFactory(new AttributeLoader());
-        $discriminatorMap = new DiscriminatorMapSchemaResolver($classMetadataFactory);
 
         $propertySchemaEnrichers = null === $propertySchemaEnrichers ? self::getDefaultEnrichers() : iterator_to_array($propertySchemaEnrichers, false);
         $this->schemaAttributeEnricher = array_find($propertySchemaEnrichers, static fn (PropertySchemaEnricherInterface $enricher): bool => $enricher instanceof SchemaAttributeEnricher);
@@ -103,9 +102,10 @@ final class Factory implements SchemaFactoryInterface
         $this->generator = new SchemaGenerator(
             $propertyInfoExtractor ?? self::createPropertyInfoExtractor($classMetadataFactory),
             new ShortNameDefinitionPolicy(),
-            $classSchemaResolvers ?? [$discriminatorMap, new NativeClassSchemaResolver()],
+            $classSchemaResolvers ?? [new NativeClassSchemaResolver()],
             propertySchemaEnrichers: [...$propertySchemaEnrichers, new RequiredPropertyEnricher()],
-            definitionProcessors: $definitionProcessors ?? [$discriminatorMap],
+            definitionProcessors: $definitionProcessors ?? [],
+            classDiscriminatorResolver: new ClassDiscriminatorFromClassMetadata($classMetadataFactory),
             typeResolver: $typeResolver,
         );
         $this->config = new Configuration(new Dialect('#/$defs/', NullSyntax::Union), allowExtraAttributes: false, direction: Direction::Input);
@@ -201,7 +201,7 @@ final class Factory implements SchemaFactoryInterface
     }
 
     /**
-     * Unwraps the empty schemas into arrays and drops the empty items schema of untyped arrays.
+     * Unwraps the empty schemas into arrays and drops the empty items and additionalProperties schemas, which allow any value.
      *
      * @param array<string, mixed>|\ArrayObject<string, mixed> $schema
      *
@@ -216,8 +216,8 @@ final class Factory implements SchemaFactoryInterface
                 $schema[$keyword] = $value = (array) $value;
             }
 
-            if ('items' === $keyword && [] === $value) {
-                unset($schema['items']);
+            if (\in_array($keyword, ['items', 'additionalProperties'], true) && [] === $value) {
+                unset($schema[$keyword]);
 
                 continue;
             }
