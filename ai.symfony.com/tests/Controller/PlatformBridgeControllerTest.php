@@ -102,6 +102,9 @@ final class PlatformBridgeControllerTest extends WebTestCase
         $preset = $crawler->filter('a.platform-preset[data-live-preset-param="offline"]');
         $this->assertSame('/bridges/platforms', $preset->attr('href'));
         $this->assertSame('true', $preset->attr('aria-pressed'));
+        // only the active preset shows how to turn it off
+        $this->assertCount(1, $crawler->filter('.platform-preset .platform-preset-off'));
+        $this->assertCount(1, $preset->filter('.platform-preset-off'));
     }
 
     public function testTheHomepageLinksToThePage()

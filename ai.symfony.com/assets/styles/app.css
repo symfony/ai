@@ -1170,6 +1170,23 @@ header {
     opacity: 1;
 }
 
+/* The active preset shows that a click turns it off */
+.platform-preset-off {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: -0.4rem;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: background-color 0.2s ease;
+}
+
+.platform-preset:hover .platform-preset-off {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
 /*
  * On large screens, the presets and the search block stick under the site header. The height
  * of the presets, which wrap on some widths, is measured by the sticky-offset controller. The
