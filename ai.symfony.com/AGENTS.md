@@ -43,7 +43,7 @@ vendor/bin/phpunit
 `/bridges/platforms` lists every platform bridge of `src/platform/src/Bridge` with faceted filters (Live Component `PlatformBridgeList`, filters kept in the query string). It only reads local files:
 
 - `var/share/platform_bridges.json`: the bridges listed in `splitsh.json` on GitHub and their downloads on Packagist, written every morning by the `app:platform-bridges:update` cron (see `.upsun/config.yaml`). Run the command once locally to get download counts; without the file, the bridges come from the curation only.
-- `config/platform_bridges.yaml` classifies each bridge (kind, regions, hosting, capabilities...). Add an entry for every new bridge, only with facts documented by the provider; a test checks that every bridge of `splitsh.json` has one.
+- `config/platform_bridges.yaml` classifies each bridge (kind, regions, hosting, capabilities...). Add an entry for every new bridge, only with facts documented by the provider; a test, run on pull requests by the `Platform Bridges` workflow, checks that every bridge of `splitsh.json` has one.
 - `assets/icons/brands/` holds the logos of the providers, referenced as `brands:<name>` in the curation, see its README for their sources and licences.
 
 ## Key Files
