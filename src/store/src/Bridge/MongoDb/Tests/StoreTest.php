@@ -15,10 +15,12 @@ use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\CursorInterface;
 use MongoDB\Driver\Exception\CommandException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\MongoDb\Similarity;
 use Symfony\AI\Store\Bridge\MongoDb\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -421,6 +423,89 @@ final class StoreTest extends TestCase
                 [
                     'path' => 'title',
                     'type' => 'string',
+                ],
+            ],
+        ]);
+    }
+
+    #[DataProvider('provideSimilarities')]
+    public function testInitializeCreatesIndexWithStoreSimilarity(Similarity $similarity, string $expectedSimilarity)
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('createSearchIndex')
+            ->with(
+                [
+                    'fields' => [
+                        [
+                            'numDimensions' => 768,
+                            'path' => 'vector',
+                            'similarity' => $expectedSimilarity,
+                            'type' => 'vector',
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'test-index',
+                    'type' => 'vectorSearch',
+                ],
+            );
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+            embeddingsDimension: 768,
+            similarity: $similarity,
+        );
+
+        $store->setup();
+    }
+
+    /**
+     * @return iterable<string, array{Similarity, string}>
+     */
+    public static function provideSimilarities(): iterable
+    {
+        yield 'euclidean' => [Similarity::Euclidean, 'euclidean'];
+        yield 'cosine' => [Similarity::Cosine, 'cosine'];
+        yield 'dot product' => [Similarity::DotProduct, 'dotProduct'];
+    }
+
+    public function testInitializeRejectsFieldOnVectorPath()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->method('getCollection')->willReturn($collection);
+        $collection->expects($this->never())->method('createSearchIndex');
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+            'embedding',
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "fields" option cannot define the vector field "embedding"');
+
+        $store->setup([
+            'fields' => [
+                [
+                    'numDimensions' => 1536,
+                    'path' => 'embedding',
+                    'similarity' => 'cosine',
+                    'type' => 'vector',
                 ],
             ],
         ]);
