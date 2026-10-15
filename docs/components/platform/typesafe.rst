@@ -29,8 +29,8 @@ An invocation takes an :class:`Symfony\\AI\\Platform\\Decision\\Evaluation`, mad
 to answer about it, keyed by an identifier of your choice. Jev reads the state once and answers every question
 against it, so asking several questions at once is both faster and cheaper than one invocation per question::
 
-    use Symfony\AI\Platform\Decision\Evaluation;
     use Symfony\AI\Platform\Bridge\TypeSafe\Factory;
+    use Symfony\AI\Platform\Decision\Evaluation;
     use Symfony\AI\Platform\Decision\Question\ChoiceQuestion;
     use Symfony\AI\Platform\Decision\Question\NoulQuestion;
     use Symfony\AI\Platform\Decision\Question\ScoreQuestion;
