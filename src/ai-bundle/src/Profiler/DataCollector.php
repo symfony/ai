@@ -19,6 +19,7 @@ use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\JobResult;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Tool\Tool;
@@ -235,10 +236,7 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
                     $call['result'] = $resultCache[$result];
                     $call['result_type'] = 'text';
                 } else {
-                    // Jobs have no result yet other than a handle to follow up on.
-                    $content = $result instanceof JobResult ? $result->getContent()->toArray() : $result->getContent();
-
-                    $call['result'] = $content instanceof \Generator ? null : $content;
+                    $call['result'] = $this->getResultContent($result);
                     $call['result_type'] = match (true) {
                         $result instanceof ToolCallResult => 'tool_calls',
                         $result instanceof VectorResult => 'vectors',
@@ -260,5 +258,28 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         }
 
         return $calls;
+    }
+
+    /**
+     * @return string|iterable<mixed>|object|null
+     */
+    private function getResultContent(ResultInterface $result): string|iterable|object|null
+    {
+        // Jobs have no result yet other than a handle to follow up on.
+        $content = $result instanceof JobResult ? $result->getContent()->toArray() : $result->getContent();
+
+        if ($content instanceof \Generator) {
+            return null;
+        }
+
+        if (\is_array($content)) {
+            foreach ($content as $key => $part) {
+                if ($part instanceof ResultInterface) {
+                    $content[$key] = $this->getResultContent($part);
+                }
+            }
+        }
+
+        return $content;
     }
 }

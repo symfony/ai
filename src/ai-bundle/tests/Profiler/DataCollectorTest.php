@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Tests\Profiler;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Execution\Execution;
@@ -25,6 +26,7 @@ use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Chat\TraceableMessageStore;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -34,18 +36,23 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\JobResult;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\AI\Platform\TraceablePlatform;
@@ -56,6 +63,10 @@ use Symfony\AI\Store\InMemory\Store;
 use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
 
 class DataCollectorTest extends TestCase
@@ -281,6 +292,87 @@ class DataCollectorTest extends TestCase
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
+    }
+
+    #[DataProvider('provideReasoningContent')]
+    public function testSerializesStructuredResponseWithReasoning(?string $summary, ?string $encryptedContent)
+    {
+        $response = [
+            'id' => 'resp_1',
+            'status' => 'completed',
+            'model' => 'gpt-5-mini',
+            'output' => [
+                [
+                    'type' => 'reasoning',
+                    'id' => 'rs_1',
+                    'summary' => null === $summary ? [] : [['type' => 'summary_text', 'text' => $summary]],
+                    'encrypted_content' => $encryptedContent,
+                ],
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => '{"answer":"7 hours."}', 'annotations' => []]],
+                ],
+            ],
+        ];
+        $httpClient = new MockHttpClient(new MockResponse(json_encode($response, \JSON_THROW_ON_ERROR)));
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new PlatformSubscriber());
+        $platform = new TraceablePlatform(Factory::createPlatform('sk-placeholder', $httpClient, eventDispatcher: $dispatcher));
+
+        $result = $platform->invoke('gpt-5-mini', new MessageBag(Message::ofUser('What are the planned hours?')), ['response_format' => ['type' => 'json_object']]);
+        $this->assertInstanceOf(MultiPartResult::class, $result->getResult());
+        $result->getResult()->getMetadata()->add('request_id', 'req-123');
+
+        $collector = new DataCollector([$platform], [], [], [], [], [], []);
+        $collector->lateCollect();
+
+        $restored = unserialize(serialize($collector));
+        $this->assertInstanceOf(DataCollector::class, $restored);
+        $calls = $restored->getPlatformCalls();
+        $this->assertCount(1, $calls);
+        $this->assertSame([$summary, ['answer' => '7 hours.']], $calls[0]['result']);
+        $this->assertSame('text', $calls[0]['result_type']);
+        $this->assertSame('req-123', $calls[0]['metadata']->get('request_id'));
+        $this->assertInstanceOf(ObjectResult::class, $result->getResult()->getContent()[1]);
+        $this->assertSame($result->getRawResult(), $result->getResult()->getContent()[1]->getRawResult());
+    }
+
+    /**
+     * @return iterable<string, array{?string, ?string}>
+     */
+    public static function provideReasoningContent(): iterable
+    {
+        yield 'summary' => ['Calculating the planned hours.', null];
+        yield 'encrypted content with empty summary' => [null, 'mock-encrypted-reasoning'];
+    }
+
+    public function testSerializesNestedResults()
+    {
+        $data = (object) ['answer' => '7 hours.'];
+        $httpClient = new EventSourceHttpClient(new MockHttpClient(new MockResponse('{}')));
+        $rawResult = new RawHttpResult($httpClient->request('POST', 'https://example.com'));
+        $rawResult->getData();
+        $objectResult = new ObjectResult($data);
+        $objectResult->setRawResult($rawResult);
+        $result = new ChoiceResult([
+            new MultiPartResult([new ThinkingResult('Calculating.'), $objectResult]),
+            new TextResult('Another answer.'),
+        ]);
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $rawResult));
+        $traceablePlatform = new TraceablePlatform($platform);
+        $traceablePlatform->invoke('test-model', 'What are the planned hours?');
+
+        $collector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $collector->lateCollect();
+
+        $restored = unserialize(serialize($collector));
+        $this->assertInstanceOf(DataCollector::class, $restored);
+        $this->assertEquals([['Calculating.', $data], 'Another answer.'], $restored->getPlatformCalls()[0]['result']);
+        $this->assertSame($data, $objectResult->getContent());
+        $this->assertSame($rawResult, $objectResult->getRawResult());
     }
 
     public function testPropagatesMetadataForStreamingResponse()
