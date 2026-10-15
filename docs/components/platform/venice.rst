@@ -44,7 +44,7 @@ Streaming
 ~~~~~~~~~
 
 Chat completions can be streamed by passing the ``stream`` option. Token usage is automatically requested from the
-API at the end of the stream and yielded as the last chunk::
+API at the end of the stream and available as ``token_usage`` metadata once the stream is consumed::
 
     use Symfony\AI\Platform\Bridge\Venice\Factory;
     use Symfony\AI\Platform\Message\Message;

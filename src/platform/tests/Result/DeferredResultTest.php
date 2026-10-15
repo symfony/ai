@@ -14,11 +14,13 @@ namespace Symfony\AI\Platform\Tests\Result;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\BaseResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -454,6 +456,45 @@ final class DeferredResultTest extends TestCase
         $city = $deferred->asObject();
         $this->assertInstanceOf(City::class, $city);
         $this->assertSame('Berlin', $city->name);
+    }
+
+    public function testAsObjectWithClassReturnsInstanceOfThatClass()
+    {
+        $city = new City(name: 'Berlin');
+        $deferred = new DeferredResult(new PlainConverter(new ObjectResult($city)), new InMemoryRawResult());
+
+        $this->assertSame($city, $deferred->asObject(City::class));
+    }
+
+    public function testAsObjectWithClassThrowsOnOtherObject()
+    {
+        $deferred = new DeferredResult(new PlainConverter(new ObjectResult(new \stdClass())), new InMemoryRawResult());
+
+        $this->expectException(UnexpectedResultTypeException::class);
+        $this->expectExceptionMessage(\sprintf('Unexpected response type: expected "%s", got "stdClass".', City::class));
+
+        $deferred->asObject(City::class);
+    }
+
+    public function testAsObjectWithClassThrowsOnArray()
+    {
+        $deferred = new DeferredResult(new PlainConverter(new ObjectResult(['name' => 'Berlin'])), new InMemoryRawResult());
+
+        $this->expectException(UnexpectedResultTypeException::class);
+        $this->expectExceptionMessage(\sprintf('Unexpected response type: expected "%s", got "array".', City::class));
+
+        $deferred->asObject(City::class);
+    }
+
+    public function testAsObjectWithClassAfterStreaming()
+    {
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('{"name":"Berlin"}');
+        })(), [new PartialObjectStreamListener(new Serializer(), City::class)]);
+
+        $deferred = new DeferredResult(new PlainConverter($stream), new InMemoryRawResult());
+
+        $this->assertSame('Berlin', $deferred->asObject(City::class)->name);
     }
 
     public function testAsObjectFinishesStreamAfterEarlyBreak()

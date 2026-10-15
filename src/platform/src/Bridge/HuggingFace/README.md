@@ -1,6 +1,6 @@
 # HuggingFace Bridge
 
-The HuggingFace bridge provides integration with the [HuggingFace Inference API](https://huggingface.co/docs/inference-api/index),
+The HuggingFace bridge provides integration with [Hugging Face Inference Providers](https://huggingface.co/docs/inference-providers/index),
 enabling access to thousands of pre-trained models for various AI tasks including natural language processing, computer
 vision, audio processing, and more.
 
@@ -36,16 +36,21 @@ composer require symfony/ai-hugging-face-platform
 
 ### Initialize the Platform
 
+Create a [Hugging Face access token](https://huggingface.co/settings/tokens) with the
+**Make calls to Inference Providers** permission and use it as the API key.
+
 ```php
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 
 $platform = Factory::createPlatform(
     apiKey: 'hf_your_api_key_here',
-    provider: Provider::CEREBRAS, // or other providers
-    httpClient: $httpClient  // optional, uses default if not provided
+    provider: Provider::FEATHERLESS_AI,
 );
 ```
+
+The HTTP client is optional; a default client is used when none is provided. Choose a provider that serves the model
+and task you want to use.
 
 ### Chat Completion Example
 
@@ -75,6 +80,7 @@ $image = Image::fromFile('/path/to/image.jpg');
 
 $result = $platform->invoke('google/vit-base-patch16-224', $image, [
     'task' => Task::IMAGE_CLASSIFICATION,
+    'provider' => Provider::HF_INFERENCE,
 ]);
 
 $classifications = $result->asObject()->getClassifications();
@@ -88,6 +94,7 @@ foreach ($classifications as $classification) {
 ```php
 $result = $platform->invoke('sentence-transformers/all-MiniLM-L6-v2', 'Hello world', [
     'task' => Task::FEATURE_EXTRACTION,
+    'provider' => Provider::HF_INFERENCE,
 ]);
 
 $vectors = $result->asVectors();
@@ -139,10 +146,10 @@ ai:huggingface:model-list [options]
 ```
 
 Options:
-- `--provider, -p`: Filter by inference provider (e.g., `inference`)
+- `--provider, -p`: Filter by inference provider (e.g., `hf-inference`)
 - `--task, -t`: Filter by task type (e.g., `text-generation`)
 - `--search, -s`: Search term to filter models
-- `--warm, -w`: Only list models with warm inference (ready without cold start)
+- `--warm, -w`: Only list models with warm inference status (served by an inference provider)
 
 Examples:
 ```bash
@@ -174,7 +181,7 @@ ai:huggingface:model-info gpt2
 Output includes:
 - Model ID, downloads, and community likes
 - Task type (pipeline tag)
-- Inference status (warm/cold)
+- Whether the model has warm inference status (served by an inference provider); an absent status does not indicate a cold model
 - Inference provider mappings and availability
 
 ## Options and Configuration

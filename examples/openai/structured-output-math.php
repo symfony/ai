@@ -29,4 +29,4 @@ $messages = new MessageBag(
 
 $result = $platform->invoke('gpt-5-mini', $messages, ['response_format' => MathReasoning::class]);
 
-dump($result->asObject());
+dump($result->asObject(MathReasoning::class));
