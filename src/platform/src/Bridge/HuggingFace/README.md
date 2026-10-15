@@ -9,6 +9,7 @@ vision, audio processing, and more.
 - [Inference Providers overview](https://huggingface.co/docs/inference-providers/index)
 - [Tasks reference](https://huggingface.co/docs/inference-providers/tasks/index)
 - [Authentication / access tokens](https://huggingface.co/docs/hub/en/security-tokens)
+- [Function calling](https://huggingface.co/docs/inference-providers/guides/function-calling)
 
 ## Features
 
@@ -23,6 +24,7 @@ vision, audio processing, and more.
 - **Model Discovery**: Built-in API client to discover and query available models
 - **Flexible Input/Output**: Support for text, images, audio, and binary data
 - **Type-Safe Results**: Structured result objects for each task type
+- **Tool Calling**: Non-streaming chat tool calls with compatible models and inference providers
 
 ## Installation
 
@@ -64,6 +66,45 @@ $result = $platform->invoke('HuggingFaceH4/zephyr-7b-beta', $messages, [
 
 echo $result->asText();
 ```
+
+### Tool Calling
+
+Chat completion supports tool calling when the selected model and inference provider support it.
+Symfony AI's Agent component can execute tools and send their results back to the model automatically.
+Install `symfony/ai-agent` and `symfony/ai-clock-tool` to try this example:
+
+```php
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\Clock\Clock;
+use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
+use Symfony\AI\Platform\Bridge\HuggingFace\Task;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\Component\Clock\NativeClock;
+
+$platform = Factory::createPlatform('hf_your_api_key_here', Provider::CEREBRAS);
+$agent = new Agent($platform, 'openai/gpt-oss-120b', toolbox: new Toolbox([
+    new Clock(new NativeClock()),
+]));
+
+$result = $agent->call(new MessageBag(Message::ofUser('What is the current date and time?')), [
+    'task' => Task::CHAT_COMPLETION,
+]);
+
+echo $result->asText();
+```
+
+Choose a model available through your provider that supports tools. Availability can change.
+Always pass `Task::CHAT_COMPLETION`, including on subsequent requests containing tool results.
+
+When using the platform directly, pass Symfony AI `Tool` objects in the `tools` option and,
+optionally, `tool_choice` (subject to provider support). Tool-call responses are returned as a
+`ToolCallResult` containing call IDs, function names, and decoded arguments. Execute only known,
+allowed tools, then append `Message::ofAssistant($result)` and a `Message::ofToolCall($call, $output)`
+for each call before invoking the model again. Malformed arguments raise `MalformedToolCallException`.
+Streaming tool calls are not supported by this bridge.
 
 ### Image Classification Example
 

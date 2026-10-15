@@ -227,6 +227,52 @@ Eden AI pairs its OpenAI-compatible chat and embeddings endpoints with expert mo
 document parsing, speech and images, which are addressed as ``feature/subfeature/provider``.
 See :doc:`platform/edenai` for the full setup and usage guide.
 
+Hugging Face Tool Calling
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The HuggingFace bridge supports non-streaming tool calling with compatible models
+and inference providers. Use ``Task::CHAT_COMPLETION`` on every invocation,
+including follow-up requests containing tool results::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Bridge\Clock\Clock;
+    use Symfony\AI\Agent\Toolbox\Toolbox;
+    use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
+    use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
+    use Symfony\AI\Platform\Bridge\HuggingFace\Task;
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+    use Symfony\Component\Clock\NativeClock;
+
+    $platform = Factory::createPlatform('hf_your_api_key_here', Provider::CEREBRAS);
+    $toolbox = new Toolbox([new Clock(new NativeClock())]);
+    $agent = new Agent($platform, 'openai/gpt-oss-120b', toolbox: $toolbox);
+
+    $result = $agent->call(new MessageBag(Message::ofUser('What is the current date and time?')), [
+        'task' => Task::CHAT_COMPLETION,
+    ]);
+
+    echo $result->asText();
+
+This example requires ``symfony/ai-hugging-face-platform``, ``symfony/ai-agent``
+and ``symfony/ai-clock-tool``. Choose a model available through your provider that
+supports tools; availability and support for ``tool_choice`` vary by provider.
+See Hugging Face's `function calling guide`_ for provider-specific details.
+
+When invoking the platform directly, pass Symfony AI ``Tool`` objects in the
+``tools`` option. A tool-call response produces a
+:class:`Symfony\\AI\\Platform\\Result\\ToolCallResult` containing call IDs, function
+names and decoded arguments. Execute only known, allowed tools, then append
+``Message::ofAssistant($result)`` and ``Message::ofToolCall($call, $output)`` for
+each call before invoking the model again. Invalid JSON arguments raise
+:class:`Symfony\\AI\\Platform\\Exception\\MalformedToolCallException`.
+
+See the `Hugging Face tool calling example`_ for a runnable agent integration.
+Streaming tool calls are not supported by this bridge.
+
+.. _`function calling guide`: https://huggingface.co/docs/inference-providers/guides/function-calling
+.. _`Hugging Face tool calling example`: https://github.com/symfony/ai/blob/main/examples/huggingface/toolcall.php
+
 Providers and Multi-Provider Platforms
 --------------------------------------
 

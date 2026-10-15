@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add non-streaming tool calling support for chat completion
+
 0.11
 ----
 
