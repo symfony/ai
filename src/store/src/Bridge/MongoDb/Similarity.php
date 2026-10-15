@@ -14,7 +14,7 @@ namespace Symfony\AI\Store\Bridge\MongoDb;
 /**
  * @see https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-type/#about-the-similarity-functions
  *
- * @author Alejandro Borrego <210245044+abp002@users.noreply.github.com>
+ * @author Alejandro Borrego
  */
 enum Similarity: string
 {
