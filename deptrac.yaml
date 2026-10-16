@@ -411,6 +411,7 @@ deptrac:
       - AgentComponent
     FirecrawlTool:
       - AgentComponent
+      - PlatformComponent
     MapboxTool:
       - AgentComponent
       - PlatformComponent

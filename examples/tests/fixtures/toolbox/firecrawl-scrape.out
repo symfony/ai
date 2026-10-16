@@ -1,9 +1,0 @@
-Symfony setup overview:
-
-- Requirements: PHP 8.4+ and common extensions (ctype, iconv, PCRE, Session, SimpleXML, Tokenizer). Install Composer. Symfony CLI is optional but recommended (symfony check:requirements).
-- Create projects: use Symfony CLI (symfony new my_project --version="8.1.*" [--webapp|--demo]) or Composer (composer create-project symfony/skeleton:"8.1.*" ... ; composer require webapp).
-- Existing projects: git clone, composer install, adjust .env, ensure var/cache and var/log are writable; run php bin/console about to inspect the app.
-- Run apps: production with Nginx/Apache; for development use Symfony local server (symfony server:start / symfony serve -d; symfony open:local). Docker integration available.
-- Packages: use Symfony Flex (recipes automate install/config). Packs bundle related deps.
-- Security: check dependencies with symfony check:security (or composer audit in CI).
-- Versions: choose LTS or specific versions via --version. Learn via the Symfony Demo and docs to start coding.
