@@ -1,0 +1,233 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.anthropic.com/v1/messages",
+                "signature": "98a23fcee0b44ddf44cff65b34d5e763",
+                "signature_v2": "675e37f35c437993657e7762de404d1e",
+                "headers": {
+                    "x-api-key": [
+                        "[redacted]"
+                    ],
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"firecrawl_search\",\"description\":\"Search the web and return matching pages with title, url and excerpt\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"The search query\",\"maxLength\":500},\"limit\":{\"type\":\"integer\",\"description\":\"The maximum number of results to return\",\"minimum\":1,\"maximum\":20}},\"required\":[\"query\"],\"additionalProperties\":false}},{\"name\":\"firecrawl_scrape\",\"description\":\"Allow to scrape website using url\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"],\"additionalProperties\":false}},{\"name\":\"firecrawl_crawl\",\"description\":\"Allow to crawl website using url\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"],\"additionalProperties\":false}},{\"name\":\"firecrawl_map\",\"description\":\"Allow to retrieve all urls from a website using url\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Search the web for the Symfony Messenger component documentation and list the three most relevant pages with one sentence each.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-ratelimit-input-tokens-limit": [
+                        "30000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-remaining": [
+                        "29999000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-reset": [
+                        "2026-10-16T17:06:59Z"
+                    ],
+                    "anthropic-ratelimit-output-tokens-limit": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-remaining": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-reset": [
+                        "2026-10-16T17:06:59Z"
+                    ],
+                    "anthropic-ratelimit-requests-limit": [
+                        "20000"
+                    ],
+                    "anthropic-ratelimit-requests-remaining": [
+                        "19998"
+                    ],
+                    "anthropic-ratelimit-requests-reset": [
+                        "2026-10-16T17:06:58Z"
+                    ],
+                    "anthropic-ratelimit-tokens-limit": [
+                        "35000000"
+                    ],
+                    "anthropic-ratelimit-tokens-remaining": [
+                        "34999000"
+                    ],
+                    "anthropic-ratelimit-tokens-reset": [
+                        "2026-10-16T17:06:59Z"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-5520271bc365c7d4447c6b67866af477-064b3d3884f2ecaf-01"
+                    ],
+                    "anthropic-organization-id": [
+                        "[redacted]"
+                    ],
+                    "anthropic-workspace-id": [
+                        "[redacted]"
+                    ],
+                    "vary": [
+                        "Accept-Encoding"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "x-robots-tag": [
+                        "none"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011Cg6HL2gxFLhzXCpfwa3qN\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_019PaUJVQ97vme9jVPKjQdsW\",\"name\":\"firecrawl_search\",\"input\":{\"query\":\"Symfony Messenger component documentation\",\"limit\":10},\"caller\":{\"type\":\"direct\"}}],\"container\":null,\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":846,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":78,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.firecrawl.dev/v2/search",
+                "signature": "53a8debb7233d9cbb8b5491a691f194b",
+                "signature_v2": "b2de39ff4ebd0fd2005d22e2b4afebc3",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "query": "Symfony Messenger component documentation",
+                    "limit": 10,
+                    "sources": [
+                        "web"
+                    ],
+                    "origin": "symfony-ai"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "content-type": [
+                        "application/json; charset=utf-8"
+                    ],
+                    "etag": [
+                        "W/\"19cf-KllvPVVhhZ0I3ArGDBiYUYILLqo\""
+                    ],
+                    "x-response-time": [
+                        "803.566ms"
+                    ],
+                    "content-length": [
+                        "6607"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"success\":true,\"data\":{\"web\":[{\"url\":\"https://symfony.com/doc/current/messenger.html\",\"title\":\"Messenger: Sync & Queued Message Handling (Symfony Docs)\",\"description\":\"# Messenger: Sync & Queued Message Handling\\n## [Extending Messenger](https://symfony.com/doc/current/messenger.html#extending-messenger)\\n### [Envelopes & Stamps](https://symfony.com/doc/current/messenger.html#envelopes-stamps)\\n[Envelope](https://github.com/symfony/symfony/blob/8.1/src/Symfony/Component/Messenger/Envelope.php) class and add stamps.\\n\\n- [DispatchAfterCurrentBusStamp](https://github.com/symfony/symfony/blob/8.1/src/Symfony/Component/Messenger/Stamp/DispatchAfterCurrentBusStamp.php),\\nto make the message be handled after the current bus has executed. Read more\\nat [Messenger: Sync & Queued Message Handling](https://symfony.com/doc/current/messenger.html#messenger-transactional-messages).\\n- [SerializerStamp](https://github.com/symfony/symfony/blob/8.1/src/Symfony/Component/Messenger/Stamp/SerializerStamp.php),\\nto configure the serialization groups used by the transport.\\n\\n### [Middleware](https://symfony.com/doc/current/messenger.html#middleware)\\n```\\n1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\n12\\n13\\n14\\n15\\n```\\n\\n```\\n1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\n12\\n13\\n14\\n15\\n16\\n17\\n18\\n19\\n20\\n21\\n22\\n```\\n\\n### [Middleware for Doctrine](https://symfony.com/doc/current/messenger.html#middleware-for-doctrine)\\n```\\n1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\n12\\n13\\n14\\n15\\n16\\n17\\n18\\n19\\n20\\n21\\n22\\n23\\n24\\n25\\n26\\n27\\n```\\n\\n```\\n1\\n2\\n3\\n4\\n5\\n6\\n7\\n8\\n9\\n10\\n11\\n12\\n13\\n14\\n15\\n16\\n17\\n18\\n19\\n20\\n21\\n22\\n23\\n24\\n25\\n26\\n27\\n28\\n29\\n30\\n31\\n32\\n33\\n34\\n35\\n36\\n```\\n\\n## [Learn more](https://symfony.com/doc/current/messenger.html#learn-more)\\nTOC\",\"position\":1},{\"url\":\"https://symfony.com/packages/messenger\",\"title\":\"Messenger component (Symfony Packages)\",\"description\":\"# Messenger Component\\n[Documentation](https://symfony.com/doc/current/components/messenger.html) [Source Code](https://github.com/symfony/messenger) [Packagist](https://packagist.org/packages/symfony/messenger)\\n\\n```\\n$ composer require symfony/messenger\\n```\\n\\n[145 million](https://packagist.org/packages/symfony/messenger/stats)\\n\\n[1,111](https://github.com/symfony/messenger/stargazers)\\n\\n## [Main OSS Projects Using Symfony Messenger](https://symfony.com/packages/messenger#main-oss-projects-using-symfony-messenger)\\n![Logo of the Symfony project, which uses Symfony packages](https://symfony.com/uploads/projects/symfonyfs.png)[Symfony](https://symfony.com/projects/symfonyfs)\\n\\nSearch Symfony Docs\",\"position\":2},{\"url\":\"https://symfony.com/doc/7.3/components/messenger.html\",\"title\":\"The Messenger Component (Symfony 7.3 Docs)\",\"description\":\"The Messenger component helps applications send and receive messages to/from other applications or via message queues. This article explains how to use the ...\",\"position\":3},{\"url\":\"https://symfonycasts.com/screencast/messenger\",\"title\":\"Messenger! Queue work for Later Video Tutorial Screencast\",\"description\":\"Symfony's Messenger component to build an async app. Learn message dispatching, transport configurations, and worker-process execution.\",\"position\":4},{\"url\":\"https://medium.com/@skowron.dev/mastering-message-brokering-in-symfony-a-practical-guide-to-three-essential-patterns-c09bd56ce4e8\",\"title\":\"Mastering Message Brokering in Symfony: A Practical Guide to Three ...\",\"description\":\"The Messenger component in Symfony offers powerful tools for implementing various message broker patterns. This allows us to easily scale our ...\",\"position\":5},{\"url\":\"https://symfony.com/blog/new-in-symfony-4-1-messenger-component\",\"title\":\"New in Symfony 4.1: Messenger component\",\"description\":\"Symfony 4.1 adds a new Messenger component that helps applications send and receive messages to/from other applications or via message ...\",\"position\":6},{\"url\":\"https://aksymfony.readthedocs.io/en/5.4/messenger.html\",\"title\":\"Messenger: Sync & Queued Message Handling — aksymfony 5.4 ...\",\"description\":\"Messenger provides a message bus with the ability to send messages and then handle them immediately in your application or send them through transports (e.g. ...\",\"position\":7},{\"url\":\"https://github.com/symfony/symfony/blob/master/src/Symfony/Component/Messenger/CHANGELOG.md\",\"title\":\"CHANGELOG.md - GitHub\",\"description\":\"The Symfony PHP framework. Add MessengerBundle , which provides the messenger configuration and the services\",\"position\":8,\"category\":\"github\"},{\"url\":\"https://dev.to/patryk/symfony-messenger-component-for-cqrs-applications-884\",\"title\":\"Symfony Messenger component for CQRS applications - DEV Community\",\"description\":\"At the point — in this post, I'd like to describe how I'm managing the configuration of the Symfony Messenger component to work with a pure CQRS ...\",\"position\":9},{\"url\":\"https://api-platform.com/docs/symfony/messenger/\",\"title\":\"Symfony Messenger Integration: CQRS and Async Message ...\",\"description\":\"# Symfony Messenger Integration: CQRS and Async Message Processing\\n## Table of Contents\\n[Symfony Messenger Component](https://symfony.com/doc/current/messenger.html).\\n\\nKafka, Amazon SQS and Google Pub/Sub.\\n\\n## [#](https://api-platform.com/docs/symfony/messenger/#installing-symfony-messenger) Installing Symfony Messenger\\n```console\\ncomposer require symfony/messenger\\n```\\n\\n## [#](https://api-platform.com/docs/symfony/messenger/#registering-a-message-handler) Registering a Message Handler\\n```php\\n<?php\\n// api/src/Handler/PersonHandler.php\\n\\nnamespace App\\\\Handler;\\n\\nuse App\\\\Entity\\\\Person;\\nuse Symfony\\\\Component\\\\Messenger\\\\Attribute\\\\AsMessageHandler;\\n\\n#[AsMessageHandler]\\nfinal class PersonHandler\\n{\\n    public function __invoke(Person $person)\\n    {\\n        // do something with the resource\\n    }\\n}\\n```\\n\\n## [#](https://api-platform.com/docs/symfony/messenger/#using-messenger-with-an-input-object) Using Messenger with an Input Object\\n```php\\n<?php\\n// api/src/Handler/ResetPasswordRequestHandler.php\\n\\nnamespace App\\\\Handler;\\n\\nuse App\\\\Dto\\\\ResetPasswordRequest;\\nuse Symfony\\\\Component\\\\Messenger\\\\Attribute\\\\AsMessageHandler;\\n\\n#[AsMessageHandler]\\nfinal class ResetPasswordRequestHandler\\n{\\n    public function __invoke(ResetPasswordRequest $forgotPassword)\\n    {\\n        // do something with the resource\\n    }\\n}\\n```\\n\\nCode licensed under [MIT](https://github.com/api-platform/api-platform/blob/main/LICENSE), documentation under [CC by 3.0](https://creativecommons.org/licenses/by/3.0/)\",\"position\":10}]},\"creditsUsed\":2,\"id\":\"01a145ae-695a-730f-b996-fd97c1c5a3b1\"}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.anthropic.com/v1/messages",
+                "signature": "b10164b329cb3e8f9934bcd09dc5a296",
+                "signature_v2": "0caa3a74a29939050d8e3dd8accfc9ca",
+                "headers": {
+                    "x-api-key": [
+                        "[redacted]"
+                    ],
+                    "anthropic-version": [
+                        "2023-06-01"
+                    ],
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"firecrawl_search\",\"description\":\"Search the web and return matching pages with title, url and excerpt\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"The search query\",\"maxLength\":500},\"limit\":{\"type\":\"integer\",\"description\":\"The maximum number of results to return\",\"minimum\":1,\"maximum\":20}},\"required\":[\"query\"],\"additionalProperties\":false}},{\"name\":\"firecrawl_scrape\",\"description\":\"Allow to scrape website using url\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"],\"additionalProperties\":false}},{\"name\":\"firecrawl_crawl\",\"description\":\"Allow to crawl website using url\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"],\"additionalProperties\":false}},{\"name\":\"firecrawl_map\",\"description\":\"Allow to retrieve all urls from a website using url\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"Search the web for the Symfony Messenger component documentation and list the three most relevant pages with one sentence each.\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_019PaUJVQ97vme9jVPKjQdsW\",\"name\":\"firecrawl_search\",\"input\":{\"query\":\"Symfony Messenger component documentation\",\"limit\":10}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_019PaUJVQ97vme9jVPKjQdsW\",\"content\":\"[{\\u0022title\\u0022:\\u0022Messenger: Sync \\u0026 Queued Message Handling (Symfony Docs)\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html\\u0022,\\u0022description\\u0022:\\u0022# Messenger: Sync \\u0026 Queued Message Handling\\\\n## [Extending Messenger](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html#extending-messenger)\\\\n### [Envelopes \\u0026 Stamps](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html#envelopes-stamps)\\\\n[Envelope](https:\\\\\\/\\\\\\/github.com\\\\\\/symfony\\\\\\/symfony\\\\\\/blob\\\\\\/8.1\\\\\\/src\\\\\\/Symfony\\\\\\/Component\\\\\\/Messenger\\\\\\/Envelope.php) class and add stamps.\\\\n\\\\n- [DispatchAfterCurrentBusStamp](https:\\\\\\/\\\\\\/github.com\\\\\\/symfony\\\\\\/symfony\\\\\\/blob\\\\\\/8.1\\\\\\/src\\\\\\/Symfony\\\\\\/Component\\\\\\/Messenger\\\\\\/Stamp\\\\\\/DispatchAfterCurrentBusStamp.php),\\\\nto make the message be handled after the current bus has executed. Read more\\\\nat [Messenger: Sync \\u0026 Queued Message Handling](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html#messenger-transactional-messages).\\\\n- [SerializerStamp](https:\\\\\\/\\\\\\/github.com\\\\\\/symfony\\\\\\/symfony\\\\\\/blob\\\\\\/8.1\\\\\\/src\\\\\\/Symfony\\\\\\/Component\\\\\\/Messenger\\\\\\/Stamp\\\\\\/SerializerStamp.php),\\\\nto configure the serialization groups used by the transport.\\\\n\\\\n### [Middleware](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html#middleware)\\\\n```\\\\n1\\\\n2\\\\n3\\\\n4\\\\n5\\\\n6\\\\n7\\\\n8\\\\n9\\\\n10\\\\n11\\\\n12\\\\n13\\\\n14\\\\n15\\\\n```\\\\n\\\\n```\\\\n1\\\\n2\\\\n3\\\\n4\\\\n5\\\\n6\\\\n7\\\\n8\\\\n9\\\\n10\\\\n11\\\\n12\\\\n13\\\\n14\\\\n15\\\\n16\\\\n17\\\\n18\\\\n19\\\\n20\\\\n21\\\\n22\\\\n```\\\\n\\\\n### [Middleware for Doctrine](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html#middleware-for-doctrine)\\\\n```\\\\n1\\\\n2\\\\n3\\\\n4\\\\n5\\\\n6\\\\n7\\\\n8\\\\n9\\\\n10\\\\n11\\\\n12\\\\n13\\\\n14\\\\n15\\\\n16\\\\n17\\\\n18\\\\n19\\\\n20\\\\n21\\\\n22\\\\n23\\\\n24\\\\n25\\\\n26\\\\n27\\\\n```\\\\n\\\\n```\\\\n1\\\\n2\\\\n3\\\\n4\\\\n5\\\\n6\\\\n7\\\\n8\\\\n9\\\\n10\\\\n11\\\\n12\\\\n13\\\\n14\\\\n15\\\\n16\\\\n17\\\\n18\\\\n19\\\\n20\\\\n21\\\\n22\\\\n23\\\\n24\\\\n25\\\\n26\\\\n27\\\\n28\\\\n29\\\\n30\\\\n31\\\\n32\\\\n33\\\\n34\\\\n35\\\\n36\\\\n```\\\\n\\\\n## [Learn more](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html#learn-more)\\\\nTOC\\u0022},{\\u0022title\\u0022:\\u0022Messenger component (Symfony Packages)\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/symfony.com\\\\\\/packages\\\\\\/messenger\\u0022,\\u0022description\\u0022:\\u0022# Messenger Component\\\\n[Documentation](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/components\\\\\\/messenger.html) [Source Code](https:\\\\\\/\\\\\\/github.com\\\\\\/symfony\\\\\\/messenger) [Packagist](https:\\\\\\/\\\\\\/packagist.org\\\\\\/packages\\\\\\/symfony\\\\\\/messenger)\\\\n\\\\n```\\\\n$ composer require symfony\\\\\\/messenger\\\\n```\\\\n\\\\n[145 million](https:\\\\\\/\\\\\\/packagist.org\\\\\\/packages\\\\\\/symfony\\\\\\/messenger\\\\\\/stats)\\\\n\\\\n[1,111](https:\\\\\\/\\\\\\/github.com\\\\\\/symfony\\\\\\/messenger\\\\\\/stargazers)\\\\n\\\\n## [Main OSS Projects Using Symfony Messenger](https:\\\\\\/\\\\\\/symfony.com\\\\\\/packages\\\\\\/messenger#main-oss-projects-using-symfony-messenger)\\\\n![Logo of the Symfony project, which uses Symfony packages](https:\\\\\\/\\\\\\/symfony.com\\\\\\/uploads\\\\\\/projects\\\\\\/symfonyfs.png)[Symfony](https:\\\\\\/\\\\\\/symfony.com\\\\\\/projects\\\\\\/symfonyfs)\\\\n\\\\nSearch Symfony Docs\\u0022},{\\u0022title\\u0022:\\u0022The Messenger Component (Symfony 7.3 Docs)\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/7.3\\\\\\/components\\\\\\/messenger.html\\u0022,\\u0022description\\u0022:\\u0022The Messenger component helps applications send and receive messages to\\\\\\/from other applications or via message queues. This article explains how to use the ...\\u0022},{\\u0022title\\u0022:\\u0022Messenger! Queue work for Later Video Tutorial Screencast\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/symfonycasts.com\\\\\\/screencast\\\\\\/messenger\\u0022,\\u0022description\\u0022:\\u0022Symfony\\u0027s Messenger component to build an async app. Learn message dispatching, transport configurations, and worker-process execution.\\u0022},{\\u0022title\\u0022:\\u0022Mastering Message Brokering in Symfony: A Practical Guide to Three ...\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/medium.com\\\\\\/@skowron.dev\\\\\\/mastering-message-brokering-in-symfony-a-practical-guide-to-three-essential-patterns-c09bd56ce4e8\\u0022,\\u0022description\\u0022:\\u0022The Messenger component in Symfony offers powerful tools for implementing various message broker patterns. This allows us to easily scale our ...\\u0022},{\\u0022title\\u0022:\\u0022New in Symfony 4.1: Messenger component\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/symfony.com\\\\\\/blog\\\\\\/new-in-symfony-4-1-messenger-component\\u0022,\\u0022description\\u0022:\\u0022Symfony 4.1 adds a new Messenger component that helps applications send and receive messages to\\\\\\/from other applications or via message ...\\u0022},{\\u0022title\\u0022:\\u0022Messenger: Sync \\u0026 Queued Message Handling \\\\u2014 aksymfony 5.4 ...\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/aksymfony.readthedocs.io\\\\\\/en\\\\\\/5.4\\\\\\/messenger.html\\u0022,\\u0022description\\u0022:\\u0022Messenger provides a message bus with the ability to send messages and then handle them immediately in your application or send them through transports (e.g. ...\\u0022},{\\u0022title\\u0022:\\u0022CHANGELOG.md - GitHub\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/github.com\\\\\\/symfony\\\\\\/symfony\\\\\\/blob\\\\\\/master\\\\\\/src\\\\\\/Symfony\\\\\\/Component\\\\\\/Messenger\\\\\\/CHANGELOG.md\\u0022,\\u0022description\\u0022:\\u0022The Symfony PHP framework. Add MessengerBundle , which provides the messenger configuration and the services\\u0022},{\\u0022title\\u0022:\\u0022Symfony Messenger component for CQRS applications - DEV Community\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/dev.to\\\\\\/patryk\\\\\\/symfony-messenger-component-for-cqrs-applications-884\\u0022,\\u0022description\\u0022:\\u0022At the point \\\\u2014 in this post, I\\u0027d like to describe how I\\u0027m managing the configuration of the Symfony Messenger component to work with a pure CQRS ...\\u0022},{\\u0022title\\u0022:\\u0022Symfony Messenger Integration: CQRS and Async Message ...\\u0022,\\u0022url\\u0022:\\u0022https:\\\\\\/\\\\\\/api-platform.com\\\\\\/docs\\\\\\/symfony\\\\\\/messenger\\\\\\/\\u0022,\\u0022description\\u0022:\\u0022# Symfony Messenger Integration: CQRS and Async Message Processing\\\\n## Table of Contents\\\\n[Symfony Messenger Component](https:\\\\\\/\\\\\\/symfony.com\\\\\\/doc\\\\\\/current\\\\\\/messenger.html).\\\\n\\\\nKafka, Amazon SQS and Google Pub\\\\\\/Sub.\\\\n\\\\n## [#](https:\\\\\\/\\\\\\/api-platform.com\\\\\\/docs\\\\\\/symfony\\\\\\/messenger\\\\\\/#installing-symfony-messenger) Installing Symfony Messenger\\\\n```console\\\\ncomposer require symfony\\\\\\/messenger\\\\n```\\\\n\\\\n## [#](https:\\\\\\/\\\\\\/api-platform.com\\\\\\/docs\\\\\\/symfony\\\\\\/messenger\\\\\\/#registering-a-message-handler) Registering a Message Handler\\\\n```php\\\\n\\u003C?php\\\\n\\\\\\/\\\\\\/ api\\\\\\/src\\\\\\/Handler\\\\\\/PersonHandler.php\\\\n\\\\nnamespace App\\\\\\\\Handler;\\\\n\\\\nuse App\\\\\\\\Entity\\\\\\\\Person;\\\\nuse Symfony\\\\\\\\Component\\\\\\\\Messenger\\\\\\\\Attribute\\\\\\\\AsMessageHandler;\\\\n\\\\n#[AsMessageHandler]\\\\nfinal class PersonHandler\\\\n{\\\\n    public function __invoke(Person $person)\\\\n    {\\\\n        \\\\\\/\\\\\\/ do something with the resource\\\\n    }\\\\n}\\\\n```\\\\n\\\\n## [#](https:\\\\\\/\\\\\\/api-platform.com\\\\\\/docs\\\\\\/symfony\\\\\\/messenger\\\\\\/#using-messenger-with-an-input-object) Using Messenger with an Input Object\\\\n```php\\\\n\\u003C?php\\\\n\\\\\\/\\\\\\/ api\\\\\\/src\\\\\\/Handler\\\\\\/ResetPasswordRequestHandler.php\\\\n\\\\nnamespace App\\\\\\\\Handler;\\\\n\\\\nuse App\\\\\\\\Dto\\\\\\\\ResetPasswordRequest;\\\\nuse Symfony\\\\\\\\Component\\\\\\\\Messenger\\\\\\\\Attribute\\\\\\\\AsMessageHandler;\\\\n\\\\n#[AsMessageHandler]\\\\nfinal class ResetPasswordRequestHandler\\\\n{\\\\n    public function __invoke(ResetPasswordRequest $forgotPassword)\\\\n    {\\\\n        \\\\\\/\\\\\\/ do something with the resource\\\\n    }\\\\n}\\\\n```\\\\n\\\\nCode licensed under [MIT](https:\\\\\\/\\\\\\/github.com\\\\\\/api-platform\\\\\\/api-platform\\\\\\/blob\\\\\\/main\\\\\\/LICENSE), documentation under [CC by 3.0](https:\\\\\\/\\\\\\/creativecommons.org\\\\\\/licenses\\\\\\/by\\\\\\/3.0\\\\\\/)\\u0022}]\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "anthropic-ratelimit-input-tokens-limit": [
+                        "30000000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-remaining": [
+                        "29995000"
+                    ],
+                    "anthropic-ratelimit-input-tokens-reset": [
+                        "2026-10-16T17:07:02Z"
+                    ],
+                    "anthropic-ratelimit-output-tokens-limit": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-remaining": [
+                        "5000000"
+                    ],
+                    "anthropic-ratelimit-output-tokens-reset": [
+                        "2026-10-16T17:07:05Z"
+                    ],
+                    "anthropic-ratelimit-requests-limit": [
+                        "20000"
+                    ],
+                    "anthropic-ratelimit-requests-remaining": [
+                        "19998"
+                    ],
+                    "anthropic-ratelimit-requests-reset": [
+                        "2026-10-16T17:07:01Z"
+                    ],
+                    "anthropic-ratelimit-tokens-limit": [
+                        "35000000"
+                    ],
+                    "anthropic-ratelimit-tokens-remaining": [
+                        "34995000"
+                    ],
+                    "anthropic-ratelimit-tokens-reset": [
+                        "2026-10-16T17:07:02Z"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-7389988d3147bfff61ee6a8f53ba0a44-5eedfb32ac7969c7-01"
+                    ],
+                    "anthropic-organization-id": [
+                        "[redacted]"
+                    ],
+                    "anthropic-workspace-id": [
+                        "[redacted]"
+                    ],
+                    "vary": [
+                        "Accept-Encoding"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "x-robots-tag": [
+                        "none"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011Cg6HLFjGpJzJnWF4B78Pa\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Based on the search results, here are the three most relevant pages for Symfony Messenger component documentation:\\n\\n1. **Messenger: Sync & Queued Message Handling** (https://symfony.com/doc/current/messenger.html) - The main official documentation page covering how to use Symfony Messenger for both synchronous and asynchronous message handling with queues.\\n\\n2. **The Messenger Component** (https://symfony.com/doc/7.3/components/messenger.html) - The component-specific documentation that explains how the Messenger component helps applications send and receive messages to/from other applications or via message queues.\\n\\n3. **Messenger component** (https://symfony.com/packages/messenger) - The official Symfony package page for Messenger that provides links to documentation, source code, and installation instructions via Composer.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":6,\"cache_creation_input_tokens\":3060,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":3060,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":187,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
+            }
+        }
+    ]
+}

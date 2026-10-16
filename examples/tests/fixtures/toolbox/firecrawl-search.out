@@ -1,0 +1,43 @@
+Based on the search results, here are the three most relevant pages for Symfony Messenger component documentation:
+
+1. **Messenger: Sync & Queued Message Handling** (https://symfony.com/doc/current/messenger.html) - The main official documentation page covering how to use Symfony Messenger for both synchronous and asynchronous message handling with queues.
+
+2. **The Messenger Component** (https://symfony.com/doc/7.3/components/messenger.html) - The component-specific documentation that explains how the Messenger component helps applications send and receive messages to/from other applications or via message queues.
+
+3. **Messenger component** (https://symfony.com/packages/messenger) - The official Symfony package page for Messenger that provides links to documentation, source code, and installation instructions via Composer.
+
++-------------------------------------------------------+----------------- Tool Sources --------------------------------------------------------------------------+
+| Name (Reference)                                      | Content                                                                                                 |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger: Sync & Queued Message Handling (Symfony... | # Messenger: Sync & Queued Message Handling                                                             |
+| https://symfony.com/doc/current/messenger.html        | ## [Extending Messenger](https://symfony.com/doc/current...                                             |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger component (Symfony Packages)                | # Messenger Component                                                                                   |
+| https://symfony.com/packages/messenger                | [Documentation](https://symfony.com/doc/current/components/messenger.html) [So...                       |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| The Messenger Component (Symfony 7.3 Docs)            | The Messenger component helps applications send and receive messages to/from other applications or v... |
+| https://symfony.com/doc/7.3/components/messenger.h... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger! Queue work for Later Video Tutorial Scr... | Symfony's Messenger component to build an async app. Learn message dispatching, transport configurat... |
+| https://symfonycasts.com/screencast/messenger         |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Mastering Message Brokering in Symfony: A Practica... | The Messenger component in Symfony offers powerful tools for implementing various message broker pat... |
+| https://medium.com/@skowron.dev/mastering-message-... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| New in Symfony 4.1: Messenger component               | Symfony 4.1 adds a new Messenger component that helps applications send and receive messages to/from... |
+| https://symfony.com/blog/new-in-symfony-4-1-messen... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger: Sync & Queued Message Handling — aksy...   | Messenger provides a message bus with the ability to send messages and then handle them immediately ... |
+| https://aksymfony.readthedocs.io/en/5.4/messenger.... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| CHANGELOG.md - GitHub                                 | The Symfony PHP framework. Add MessengerBundle , which provides the messenger configuration and the ... |
+| https://github.com/symfony/symfony/blob/master/src... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Symfony Messenger component for CQRS applications ... | At the point — in this post, I'd like to describe how I'm managing the configuration of the Symfon...   |
+| https://dev.to/patryk/symfony-messenger-component-... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Symfony Messenger Integration: CQRS and Async Mess... | # Symfony Messenger Integration: CQRS and Async Message Processing                                      |
+| https://api-platform.com/docs/symfony/messenger/      | ## Table of Contents                                                                                    |
+|                                                       | [Symfony Mes...                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+

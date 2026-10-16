@@ -1,0 +1,15 @@
+## Summary
+
+This Symfony documentation page covers the installation and setup of the Symfony framework. 
+
+**Technical Requirements:** PHP 8.4+ with specific extensions (Ctype, iconv, PCRE, Session, SimpleXML, Tokenizer), Composer, and optionally the Symfony CLI tool.
+
+**Creating Applications:** Use `symfony new` or `composer create-project` commands. Choose `--webapp` for traditional web applications or the standard version for microservices/APIs/console apps.
+
+**Running Applications:** Use Symfony's local web server (`symfony server:start`) for development, which supports HTTP/2, TLS/SSL, and automatic certificates. For production, configure Nginx or Apache.
+
+**Symfony Flex:** A Composer plugin that automates package installation through "recipes"—automated setup instructions for bundles. It simplifies adding features via commands like `composer require logger`.
+
+**Additional Features:** Security vulnerability checking (`symfony check:security`), LTS version support, Symfony Packs (metapackages bundling related dependencies), and the Symfony Demo application for learning best practices.
+
+The guide emphasizes ease of setup and includes options for existing projects, Docker integration, and various deployment scenarios.

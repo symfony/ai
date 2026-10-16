@@ -1,0 +1,26 @@
+Now I'll filter the links to find only those related to the Messenger component:
+
+Based on the retrieved links from https://symfony.com, here are the ones specifically related to the **Messenger component**:
+
+## Documentation Links:
+1. https://symfony.com/doc/7.4/messenger.html
+2. https://symfony.com/doc/current/messenger.html
+3. https://symfony.com/doc/6.4/messenger.html
+4. https://symfony.com/doc/current/messenger/custom-transport.html
+
+## Package Links:
+5. https://symfony.com/packages/messenger
+6. https://symfony.com/packages/amazon-sqs-messenger
+7. https://symfony.com/packages/amqp-messenger
+8. https://symfony.com/packages/doctrine-messenger
+9. https://symfony.com/packages/beanstalkd-messenger
+10. https://symfony.com/packages/mongodb-messenger
+11. https://symfony.com/packages/redis-messenger
+12. https://symfony.com/packages/amp-sql-messenger
+
+## Blog Posts:
+13. https://symfony.com/blog/new-in-symfony-8-1-messenger-improvements
+14. https://symfony.com/blog/new-in-symfony-8-2-messenger-outbox-and-claim-check
+15. https://symfony.com/blog/new-in-symfony-8-2-faster-messenger-workers
+
+These links cover the Messenger component documentation for different Symfony versions, various transport integrations (Amazon SQS, AMQP, Doctrine, Beanstalkd, MongoDB, Redis, AMP SQL), and blog posts about new features and improvements in recent Symfony versions.
