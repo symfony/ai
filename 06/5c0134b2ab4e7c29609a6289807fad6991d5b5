@@ -1,0 +1,52 @@
+---------------------------------------------------------------------------
+
+by benoitbauchet at 2026-09-30T17:32:53Z
+
+Tested against the live Gemini API with `gemini-3.7-flash`: `main` reports no token usage, this branch reports the final usage of the stream.
+
+<details>
+<summary>examples/gemini/stream-token-metadata.php on main</summary>
+
+```
+[...streamed answer...]
+No token usage information available.
+```
+
+</details>
+
+<details>
+<summary>examples/gemini/stream-token-metadata.php on this branch</summary>
+
+```
+[...streamed answer...]
++--------------- Token Usage ----------------+
+| Model                   | gemini-3.7-flash |
+| Prompt tokens           | 17               |
+| Completion tokens       | 665              |
+| Thinking tokens         | 673              |
+| Tool tokens             | n/a              |
+| Cached tokens           | n/a              |
+| Remaining tokens minute | n/a              |
+| Remaining tokens month  | n/a              |
+| Remaining tokens        | n/a              |
+| Total tokens            | 1355             |
++-------------------------+------------------+
+```
+
+</details>
+
+---------------------------------------------------------------------------
+
+by benoitbauchet at 2026-10-12T07:25:20Z
+
+Friendly ping @chr-hertel @OskarStark @wachterjohannes 🙂
+
+I re-ran examples/gemini/stream-token-metadata.php against current main (5ad77d94): it still ends with No token usage information available., so streamed Gemini calls still carry no token_usage metadata. The recent Gemini changes (#2633, #2645) and the Generic streaming usage fix (#2626) don’t cover this path.
+
+The branch still merges cleanly on main and CI is green. Happy to adjust anything if needed!
+
+---------------------------------------------------------------------------
+
+by benoitbauchet at 2026-10-16T12:44:15Z
+
+Thanks for the review! I recorded the cassette (and its golden) for `examples/gemini/stream-token-metadata.php` in a new commit, so the replay test now covers it.
