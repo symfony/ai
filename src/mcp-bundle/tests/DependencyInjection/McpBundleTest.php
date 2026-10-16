@@ -39,6 +39,7 @@ use Symfony\AI\McpBundle\Attribute\AsMcpApp;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
+use Symfony\AI\McpBundle\Server\Handler\Request\FilteredListToolsHandler;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -104,6 +105,25 @@ class McpBundleTest extends TestCase
 
         $this->assertSame([25], $this->callsNamed($container, 'setPaginationLimit')[0][1]);
         $this->assertSame(['This server provides weather and calendar tools'], $this->callsNamed($container, 'setInstructions')[0][1]);
+    }
+
+    public function testToolListFilterIsConfiguredPerServer()
+    {
+        $container = $this->buildContainer($this->config([
+            'public' => ['tool_list_filter' => 'app.public_tool_filter', 'pagination_limit' => 25],
+            'internal' => [],
+        ]));
+
+        $calls = $this->callsNamed($container, 'addRequestHandler', 'public');
+        $this->assertCount(1, $calls);
+        $this->assertInstanceOf(Definition::class, $calls[0][1][0]);
+        $this->assertSame(FilteredListToolsHandler::class, $calls[0][1][0]->getClass());
+        $this->assertEquals([
+            new Reference('mcp.server.public.registry'),
+            new Reference('app.public_tool_filter'),
+            25,
+        ], $calls[0][1][0]->getArguments());
+        $this->assertSame([], $this->callsNamed($container, 'addRequestHandler', 'internal'));
     }
 
     public function testIconsDefaultToNullInsteadOfAnEmptyList()

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add `servers.<name>.tool_list_filter` for request-time filtering of tools advertised by `tools/list`
+
 0.13
 ----
 

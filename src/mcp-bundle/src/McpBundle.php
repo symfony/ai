@@ -58,6 +58,7 @@ use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
+use Symfony\AI\McpBundle\Server\Handler\Request\FilteredListToolsHandler;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -363,7 +364,7 @@ final class McpBundle extends AbstractBundle
             ->setArguments([$this->registryDispatcher($name, $server['subscriptions']), new Reference('logger')])
             ->addTag('monolog.logger', ['channel' => 'mcp']);
 
-        $container->register($builderId, Builder::class)
+        $builderDefinition = $container->register($builderId, Builder::class)
             ->setFactory([Server::class, 'builder'])
             ->addMethodCall('setServerInfo', [
                 $server['name'] ?? $name,
@@ -376,7 +377,17 @@ final class McpBundle extends AbstractBundle
             ->addMethodCall('setInstructions', [$server['instructions']])
             ->addMethodCall('setEventDispatcher', [new Reference('event_dispatcher')])
             ->addMethodCall('setRegistry', [new Reference($registryId)])
-            ->addMethodCall('setSession', [new Reference($sessionId)])
+            ->addMethodCall('setSession', [new Reference($sessionId)]);
+
+        if (null !== $server['tool_list_filter']) {
+            $builderDefinition->addMethodCall('addRequestHandler', [new Definition(FilteredListToolsHandler::class, [
+                new Reference($registryId),
+                new Reference($server['tool_list_filter']),
+                $server['pagination_limit'],
+            ])]);
+        }
+
+        $builderDefinition
             ->addMethodCall('addRequestHandlers', [new TaggedIteratorArgument('mcp.request_handler')])
             ->addMethodCall('addNotificationHandlers', [new TaggedIteratorArgument('mcp.notification_handler')])
             ->addMethodCall('addLoaders', [new TaggedIteratorArgument('mcp.loader')])
