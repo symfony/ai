@@ -69,6 +69,9 @@ enum Capability: string
     // Fill-in-the-middle (insert)
     case FILL_IN_THE_MIDDLE = 'fill-in-the-middle';
 
+    // Decision (classification)
+    case DECISION = 'decision';
+
     // MUSIC
     case MUSIC = 'music';
 }
