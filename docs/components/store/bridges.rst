@@ -162,7 +162,7 @@ Vector storage using MariaDB's native ``VECTOR`` column type.
 
     $ composer require symfony/ai-maria-db-store
 
-**Requirements:** MariaDB 11.7+, PHP ``ext-pdo``
+**Requirements:** MariaDB 11.7+ (11.8+ for ``Distance::Distance``), PHP ``ext-pdo``
 
 ::
 

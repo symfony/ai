@@ -63,6 +63,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('You need MariaDB >=11.7 to use this feature.');
         }
 
+        if (Distance::Distance === $this->distance && version_compare($serverVersion, '11.8.0') < 0) {
+            throw new InvalidArgumentException('You need MariaDB >=11.8 to use "Distance::Distance", VEC_DISTANCE() does not exist before.');
+        }
+
         // MariaDB serves a query from the vector index only if both use the same distance
         $indexDistance = match ($this->distance) {
             Distance::Cosine => ' DISTANCE=cosine',
