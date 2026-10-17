@@ -123,24 +123,30 @@ final class SearchStore implements StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{limit?: positive-int, exhaustive?: bool} $options
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
-        $vector = $query->getVector();
+        $vectorQuery = [
+            'kind' => 'vector',
+            'vector' => $query->getVector()->getData(),
+            'fields' => $this->vectorFieldName,
+            'k' => $options['limit'] ?? 5,
+        ];
+
+        // an exhaustive KNN compares the vector with every document instead of using the HNSW graph,
+        // which is only worth it to measure the recall of the approximate search
+        if ($options['exhaustive'] ?? false) {
+            $vectorQuery['exhaustive'] = true;
+        }
+
         $result = $this->request('search', [
-            'vectorQueries' => [
-                [
-                    'kind' => 'vector',
-                    'vector' => $vector->getData(),
-                    'exhaustive' => true,
-                    'fields' => $this->vectorFieldName,
-                    'weight' => 0.5,
-                    'k' => 5,
-                ],
-            ],
+            'vectorQueries' => [$vectorQuery],
         ]);
 
         foreach ($result['value'] as $item) {

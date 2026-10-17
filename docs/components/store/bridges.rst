@@ -718,6 +718,14 @@ Vector storage using `Azure AI Search`_.
                     index_name: 'my-index'
                     vector_field: 'vector'
 
+Queries return 5 results unless the ``limit`` option is passed. They use the HNSW
+index of the vector field, so results are approximate; pass the ``exhaustive``
+option to compare the vector with every document of the index instead, for
+example to measure the recall of the approximate search::
+
+    $results = $store->query(new VectorQuery($vector), ['limit' => 20]);
+    $exact = $store->query(new VectorQuery($vector), ['limit' => 20, 'exhaustive' => true]);
+
 .. note::
 
     Like Supabase, this store does not implement
