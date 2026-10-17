@@ -42,6 +42,26 @@ Platform
    streamed path already did. Tool results are addressed by the call id, so the second call could
    never be answered separately.
 
+Store
+-----
+
+ * The Postgres `Store::setup()` creates an `hnsw` index instead of an `ivfflat` one, with the operator
+   class of the store distance instead of `vector_cosine_ops` (e.g. `vector_l2_ops` for the default
+   `Distance::L2`). The AI bundle no longer sets the `index_method` and `index_opclass` setup options,
+   so it gets the same defaults. HNSW requires pgvector 0.5.0 or later.
+
+   Existing indexes are kept, as `setup()` skips an index that already exists. To recreate one with
+   the operator class of the distance:
+
+   ```sql
+   DROP INDEX "documents_embedding_idx";
+   CREATE INDEX "documents_embedding_idx" ON "documents" USING hnsw ("embedding" vector_l2_ops);
+   ```
+
+ * The Postgres `Store::setup()` throws `Exception\InvalidArgumentException` instead of failing on a
+   PostgreSQL error for a `vector_type` other than `vector` and `halfvec`, and for the `ivfflat` index
+   method with `Distance::L1` when no `index_opclass` is given.
+
 UPGRADE FROM 0.13 to 0.14
 =========================
 
