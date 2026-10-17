@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `PdfLoader` for page-based PDF text extraction with normalized metadata
+ * Add `SourceUrlTransformer` for mapping local document paths to public URLs
+
 0.14
 ----
 
