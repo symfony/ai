@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral;
 
+use Symfony\AI\Platform\Bridge\Mistral\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\AudioNormalizer;
 use Symfony\AI\Platform\Bridge\Mistral\Contract\DocumentNormalizer;
@@ -50,7 +51,7 @@ final class Factory
         return new Provider(
             $name,
             [new Embeddings\ModelClient($httpClient, $apiKey, $baseUrl), new Llm\ModelClient($httpClient, $apiKey, $baseUrl), new Ocr\ModelClient($httpClient, $apiKey), new SpeechToText\ModelClient($httpClient, $apiKey, $baseUrl)],
-            [new Embeddings\ResultConverter(), new Llm\ResultConverter(), new Ocr\ResultConverter(), new SpeechToText\ResultConverter()],
+            [new Embeddings\ResultConverter(), new Llm\ResultConverter($name), new Ocr\ResultConverter(), new SpeechToText\ResultConverter()],
             $modelCatalog,
             $contract ?? Contract::create([
                 new AssistantMessageNormalizer(),
@@ -63,6 +64,18 @@ final class Factory
             ]),
             $eventDispatcher,
         );
+    }
+
+    /**
+     * The client resolving the batches this bridge hands out - typically in a worker picking up a
+     * stored handle, without a provider or platform at hand.
+     */
+    public static function createJobClient(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+        string $baseUrl = 'https://api.mistral.ai',
+    ): JobClient {
+        return new JobClient($httpClient ?? new EventSourceHttpClient(), $apiKey, $baseUrl);
     }
 
     /**
