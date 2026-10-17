@@ -53,11 +53,13 @@ use Symfony\AI\Store\StoreInterface;
 final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
-     * @param string $databaseName    The name of the database
-     * @param string $collectionName  The name of the collection
-     * @param string $indexName       The name of the Atlas Search index
-     * @param string $vectorFieldName The name of the field int the index that contains the vector
-     * @param bool   $bulkWrite       Use bulk write operations
+     * @param string     $databaseName        The name of the database
+     * @param string     $collectionName      The name of the collection
+     * @param string     $indexName           The name of the Atlas Search index
+     * @param string     $vectorFieldName     The name of the field int the index that contains the vector
+     * @param bool       $bulkWrite           Use bulk write operations
+     * @param int        $embeddingsDimension The number of dimensions of the vectors, used by setup()
+     * @param Similarity $similarity          The similarity function of the vector index, used by setup()
      */
     public function __construct(
         private readonly Client $client,
@@ -68,6 +70,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly bool $bulkWrite = false,
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly int $embeddingsDimension = 1536,
+        private readonly Similarity $similarity = Similarity::Euclidean,
     ) {
     }
 
@@ -78,6 +81,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         if ([] !== $options && !\array_key_exists('fields', $options)) {
             throw new InvalidArgumentException('The only supported option is "fields".');
+        }
+
+        // Atlas rejects an index definition that indexes the same path twice
+        foreach ($options['fields'] ?? [] as $field) {
+            if (\is_array($field) && ($field['path'] ?? null) === $this->vectorFieldName) {
+                throw new InvalidArgumentException(\sprintf('The "fields" option cannot define the vector field "%s", use the "embeddingsDimension" and "similarity" arguments of the store instead.', $this->vectorFieldName));
+            }
         }
 
         try {
@@ -93,7 +103,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                         [
                             'numDimensions' => $this->embeddingsDimension,
                             'path' => $this->vectorFieldName,
-                            'similarity' => 'euclidean',
+                            'similarity' => $this->similarity->value,
                             'type' => 'vector',
                         ],
                     ], $options['fields'] ?? []),

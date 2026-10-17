@@ -139,6 +139,7 @@ use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\Milvus\StoreFactory as MilvusStoreFactory;
+use Symfony\AI\Store\Bridge\MongoDb\Similarity as MongoDbSimilarity;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Neo4j\StoreFactory as Neo4jStoreFactory;
@@ -2085,6 +2086,14 @@ final class AiBundle extends AbstractBundle
 
                 if (\array_key_exists('bulk_write', $store)) {
                     $arguments[5] = $store['bulk_write'];
+                }
+
+                if (isset($store['dimensions'])) {
+                    $arguments['$embeddingsDimension'] = $store['dimensions'];
+                }
+
+                if (isset($store['similarity'])) {
+                    $arguments['$similarity'] = MongoDbSimilarity::from($store['similarity']);
                 }
 
                 $definition = new Definition(MongoDbStore::class);

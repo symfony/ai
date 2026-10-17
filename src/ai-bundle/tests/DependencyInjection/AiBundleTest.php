@@ -91,6 +91,7 @@ use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\Milvus\StoreFactory as MilvusStoreFactory;
+use Symfony\AI\Store\Bridge\MongoDb\Similarity as MongoDbSimilarity;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Neo4j\StoreFactory as Neo4jStoreFactory;
@@ -2619,6 +2620,29 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testMongoDbStoreWithDimensionsAndSimilarityCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'mongodb' => [
+                        'my_mongo_store' => [
+                            'database' => 'my_db',
+                            'index_name' => 'vector_index',
+                            'dimensions' => 768,
+                            'similarity' => 'cosine',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
+
+        $this->assertSame(768, $definition->getArgument('$embeddingsDimension'));
+        $this->assertSame(MongoDbSimilarity::Cosine, $definition->getArgument('$similarity'));
     }
 
     public function testNeo4jStoreCanBeConfigured()

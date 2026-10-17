@@ -41,9 +41,9 @@ The default index definition looks like this:
         ]
     }
 
-Adjust ``numDimensions`` to match your embedding model's output size,
-``path`` to match your ``vectorFieldName``, and ``similarity`` to the
-distance metric of your choice.
+``numDimensions`` comes from the ``embeddingsDimension`` argument of the store,
+``path`` from ``vectorFieldName`` and ``similarity`` from the ``similarity``
+argument (see `Similarity Metrics`_).
 
 Configuration
 -------------
@@ -54,6 +54,7 @@ Basic Configuration
 ::
 
     use MongoDB\Client;
+    use Symfony\AI\Store\Bridge\MongoDb\Similarity;
     use Symfony\AI\Store\Bridge\MongoDb\Store;
 
     $store = new Store(
@@ -64,6 +65,7 @@ Basic Configuration
         vectorFieldName: 'vector',        // default: 'vector'
         bulkWrite: false,                 // default: false
         embeddingsDimension: 1536,        // default: 1536
+        similarity: Similarity::Cosine,   // default: Similarity::Euclidean
     );
 
 Bundle Configuration
@@ -81,6 +83,8 @@ Bundle Configuration
                     index_name: 'vector_index'
                     vector_field: 'vector'        # optional, default: vector
                     bulk_write: false             # optional, default: false
+                    dimensions: 1536              # optional, default: 1536
+                    similarity: 'cosine'          # optional, default: euclidean
                     setup_options:
                         fields: []                # optional extra index fields
 
@@ -116,7 +120,8 @@ If either already exists the call is a no-op (existing resources are preserved):
 
     $store->setup();
 
-Pass additional field definitions to include extra fields in the search index:
+Pass additional field definitions to include extra fields in the search index.
+The vector field itself is defined by the store and cannot be part of ``fields``:
 
 ::
 
@@ -244,15 +249,16 @@ In the bundle configuration:
 Similarity Metrics
 ------------------
 
-The similarity metric is set on the Atlas Search index, not in the PHP code.
-Choose the metric that matches how your embedding model was trained:
+The similarity metric is set on the Atlas Search index. ``setup()`` creates the
+index with the ``similarity`` argument of the store. Choose the metric that
+matches how your embedding model was trained:
 
 * ``euclidean`` — Euclidean (L2) distance; good general-purpose default
 * ``cosine`` — Cosine similarity; recommended for most text embeddings
 * ``dotProduct`` — Dot product; use when vectors are already normalized
 
-Change the ``similarity`` field in the Atlas Search index definition to switch
-metrics. Refer to the `Atlas Vector Search field types documentation`_ for details.
+An existing index keeps its metric: drop it, or change its ``similarity`` field
+in Atlas, to switch metrics. Refer to the `Atlas Vector Search field types documentation`_ for details.
 
 Local Development
 -----------------
