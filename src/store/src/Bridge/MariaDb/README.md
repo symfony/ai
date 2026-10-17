@@ -3,7 +3,7 @@ MariaDB Store
 
 Provides [MariaDB](https://mariadb.org/) vector store integration for Symfony AI Store.
 
-Requires MariaDB >=11.7 for vector support.
+Requires MariaDB >=11.7 for vector support, and >=11.8 for `Distance::Distance`.
 
 MariaDB Documentation
 ---------------------

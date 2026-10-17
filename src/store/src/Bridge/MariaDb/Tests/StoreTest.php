@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\MariaDb\Distance;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -372,7 +373,7 @@ final class StoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $pdo->method('getAttribute')
             ->with(\PDO::ATTR_SERVER_VERSION)
-            ->willReturn('11.7.2-MariaDB-ubu2404');
+            ->willReturn('11.8.1-MariaDB-ubu2404');
 
         $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', $distance);
 
@@ -401,6 +402,34 @@ final class StoreTest extends TestCase
         yield 'cosine' => [Distance::Cosine, 'VECTOR INDEX embedding_index (`embedding`) DISTANCE=cosine'];
         yield 'euclidean' => [Distance::Euclidean, 'VECTOR INDEX embedding_index (`embedding`) DISTANCE=euclidean'];
         yield 'distance of the index' => [Distance::Distance, 'VECTOR INDEX embedding_index (`embedding`)'];
+    }
+
+    public function testSetupWithDistanceOfTheIndexRequiresMariaDb118()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->method('getAttribute')
+            ->with(\PDO::ATTR_SERVER_VERSION)
+            ->willReturn('11.7.2-MariaDB-ubu2404');
+        $pdo->expects($this->never())->method('exec');
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Distance);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('You need MariaDB >=11.8 to use "Distance::Distance"');
+
+        $store->setup();
+    }
+
+    public function testSetupWithCosineDistanceStillWorksOnMariaDb117()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->method('getAttribute')
+            ->with(\PDO::ATTR_SERVER_VERSION)
+            ->willReturn('11.7.2-MariaDB-ubu2404');
+        $pdo->expects($this->once())->method('exec')->willReturn(0);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Cosine);
+        $store->setup();
     }
 
     public function testItCanDrop()
