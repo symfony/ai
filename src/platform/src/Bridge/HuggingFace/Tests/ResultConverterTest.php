@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\HuggingFace\ResultConverter;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
@@ -24,6 +25,7 @@ use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -181,6 +183,70 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $convertedResult);
         $this->assertSame($expectedValue, $convertedResult->getContent());
+    }
+
+    #[TestDox('Converts chat completion with tool calls to ToolCallResult')]
+    public function testConvertChatCompletionWithToolCalls()
+    {
+        $response = new JsonMockResponse([
+            'choices' => [[
+                'message' => [
+                    'role' => 'assistant',
+                    'content' => null,
+                    'tool_calls' => [[
+                        'id' => 'call_123',
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'get_weather',
+                            'arguments' => '{"city":"Lyon"}',
+                        ],
+                    ]],
+                ],
+                'finish_reason' => 'tool_calls',
+            ]],
+        ]);
+        $httpClient = new MockHttpClient($response);
+        $httpResponse = $httpClient->request('GET', 'https://example.com');
+        $result = new RawHttpResult($httpResponse);
+
+        $convertedResult = (new ResultConverter())->convert($result, ['task' => Task::CHAT_COMPLETION]);
+
+        $this->assertInstanceOf(ToolCallResult::class, $convertedResult);
+        $toolCalls = $convertedResult->getContent();
+        $this->assertCount(1, $toolCalls);
+        $this->assertSame('call_123', $toolCalls[0]->getId());
+        $this->assertSame('get_weather', $toolCalls[0]->getName());
+        $this->assertSame(['city' => 'Lyon'], $toolCalls[0]->getArguments());
+    }
+
+    #[TestDox('Throws on malformed tool call arguments in chat completion')]
+    public function testConvertChatCompletionWithMalformedToolCallArguments()
+    {
+        $response = new JsonMockResponse([
+            'choices' => [[
+                'message' => [
+                    'role' => 'assistant',
+                    'content' => null,
+                    'tool_calls' => [[
+                        'id' => 'call_123',
+                        'type' => 'function',
+                        'function' => [
+                            'name' => 'get_weather',
+                            'arguments' => '{"city":',
+                        ],
+                    ]],
+                ],
+                'finish_reason' => 'tool_calls',
+            ]],
+        ]);
+        $httpClient = new MockHttpClient($response);
+        $httpResponse = $httpClient->request('GET', 'https://example.com');
+        $result = new RawHttpResult($httpResponse);
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('Model returned malformed JSON arguments for the "get_weather" tool');
+
+        (new ResultConverter())->convert($result, ['task' => Task::CHAT_COMPLETION]);
     }
 
     #[TestDox('Converts feature extraction response to VectorResult with correct data')]
