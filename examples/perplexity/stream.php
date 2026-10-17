@@ -21,7 +21,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant? Answer in a few sentences.'),
 );
-$result = $platform->invoke('sonar', $messages, [
+$result = $platform->invoke('fast', $messages, [
     'stream' => true,
 ]);
 

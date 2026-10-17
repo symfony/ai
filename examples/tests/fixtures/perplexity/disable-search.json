@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://api.perplexity.ai/chat/completions",
-                "signature": "c1d868311fd0226f6f7c489415076e94",
-                "signature_v2": "da11bb77a47cbd4ad2d08e2d715af7a1",
+                "url": "https://api.perplexity.ai/v1/agent",
+                "signature": "cc28274101690f132e0a76753176cef3",
+                "signature_v2": "9fb2e84e39bb5626efaabcfdb29e4e81",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"disable_search\":true,\"messages\":[{\"role\":\"user\",\"content\":\"What is 2 + 2?\"}],\"model\":\"sonar\"}"
+                "body": "{\"model\":\"perplexity\\/sonar\",\"input\":[{\"role\":\"user\",\"content\":\"What is 2 + 2?\"}]}"
             },
             "response": {
                 "status": 200,
@@ -32,10 +32,13 @@
                         "0"
                     ],
                     "x-ratelimit-reset": [
-                        "1789332522"
+                        "1790757782"
                     ],
                     "x-ratelimit-used": [
                         "1"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
                     ],
                     "set-cookie": [
                         "[redacted]"
@@ -48,7 +51,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"choices\":[{\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"2 + 2 = 4.\",\"role\":\"assistant\"}}],\"created\":1789332521,\"id\":\"384b71d2-8bae-477c-a1b2-d7ac22591bd5\",\"model\":\"sonar\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":8,\"cost\":{\"input_tokens_cost\":0.00001,\"output_tokens_cost\":0.00001,\"request_cost\":0.005,\"total_cost\":0.00502},\"prompt_tokens\":8,\"search_context_size\":\"low\",\"total_tokens\":16}}\n"
+                "body": "{\"background\":false,\"completed_at\":1790757780,\"created_at\":1790757780,\"error\":null,\"frequency_penalty\":0,\"id\":\"resp_c9024cb9-b9e4-4084-b3bc-c9a51b88dd7a\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"metadata\":{},\"model\":\"perplexity/sonar\",\"object\":\"response\",\"output\":[{\"content\":[{\"annotations\":[],\"text\":\"2 + 2 = 4.\",\"type\":\"output_text\"}],\"id\":\"msg_a71a4e9e-349e-4bfe-b3e2-612d1a94f289\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"reasoning\":null,\"safety_identifier\":null,\"service_tier\":\"default\",\"status\":\"completed\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"}},\"tool_choice\":\"auto\",\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"\",\"usage\":{\"cost\":{\"currency\":\"USD\",\"input_cost\":0.00001,\"output_cost\":0.00003,\"total_cost\":0.00004},\"input_tokens\":33,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":12,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":45},\"user\":null}\n"
             }
         }
     ]

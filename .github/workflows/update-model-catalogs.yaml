@@ -57,7 +57,6 @@ jobs:
                     src/platform/src/Bridge/Mistral/Tests/ModelCatalogTest.php \
                     src/platform/src/Bridge/DeepSeek/Tests/ModelCatalogTest.php \
                     src/platform/src/Bridge/Cohere/Tests/ModelCatalogTest.php \
-                    src/platform/src/Bridge/Perplexity/Tests/ModelCatalogTest.php \
                     src/platform/src/Bridge/Cerebras/Tests/ModelCatalogTest.php \
                     src/platform/src/Bridge/OpenRouter/Tests/ModelCatalogTest.php
 

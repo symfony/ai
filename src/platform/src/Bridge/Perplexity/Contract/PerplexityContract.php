@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Perplexity\Contract;
 
+use Symfony\AI\Platform\Bridge\OpenResponses\Contract\OpenResponsesContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
@@ -24,9 +25,6 @@ final class PerplexityContract extends Contract
      */
     public static function create(array $normalizers = []): Contract
     {
-        return parent::create([
-            new FileUrlNormalizer(),
-            ...$normalizers,
-        ]);
+        return OpenResponsesContract::create($normalizers);
     }
 }

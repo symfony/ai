@@ -18,8 +18,7 @@ require_once __DIR__.'/bootstrap.php';
 $platform = Factory::createPlatform(env('PERPLEXITY_API_KEY'), http_client());
 
 $messages = new MessageBag(Message::ofUser('What is 2 + 2?'));
-$result = $platform->invoke('sonar', $messages, [
-    'disable_search' => true,
-]);
+// A model without the web_search tool answers without searching the web
+$result = $platform->invoke('perplexity/sonar', $messages);
 
 echo $result->asText().\PHP_EOL;

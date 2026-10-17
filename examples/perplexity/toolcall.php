@@ -9,8 +9,10 @@
  * file that was distributed with this source code.
  */
 
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia;
+use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory;
-use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -18,15 +20,11 @@ require_once __DIR__.'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('PERPLEXITY_API_KEY'), http_client());
 
-$messages = new MessageBag(
-    Message::ofUser(
-        new DocumentUrl('https://upload.wikimedia.org/wikipedia/commons/2/20/Re_example.pdf'),
-        'What is this document about?',
-    ),
-);
-$result = $platform->invoke('sonar', $messages);
+$wikipedia = new Wikipedia(http_client());
+$toolbox = new Toolbox([$wikipedia], logger: logger());
+$agent = new Agent($platform, 'perplexity/sonar', toolbox: $toolbox);
+
+$messages = new MessageBag(Message::ofUser('Who is the current chancellor of Germany?'));
+$result = $agent->call($messages);
 
 echo $result->asText().\PHP_EOL;
-
-print_search_results($result->getMetadata()->get('search_results', []));
-print_citations($result->getMetadata()->get('citations', []));

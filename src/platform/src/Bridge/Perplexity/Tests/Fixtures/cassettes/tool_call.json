@@ -1,0 +1,31 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.perplexity.ai/v1/agent",
+                "signature": "c35fdcc022ee5058cd4a868f0adf06dd",
+                "signature_v2": "09b120e4690f09f286eb041d4fc8b8c0",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Get the current weather for a city\",\"parameters\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}],\"model\":\"perplexity\\/sonar\",\"input\":[{\"role\":\"user\",\"content\":\"What is the weather in Paris right now? Use the tool.\"}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"background\":false,\"completed_at\":1790757559,\"created_at\":1790757559,\"error\":null,\"frequency_penalty\":0,\"id\":\"resp_9e5f396c-300e-429c-851e-90d0aca32943\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"metadata\":{},\"model\":\"perplexity/sonar\",\"object\":\"response\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_fFbaGTeBsRXhBC4Hauv6DZxV\",\"id\":\"fc_42621d76-d94f-45a8-9201-45c239b4c760\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"reasoning\":null,\"safety_identifier\":null,\"service_tier\":\"default\",\"status\":\"completed\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"}},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"name\":\"get_weather\",\"description\":\"Get the current weather for a city\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":null}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"\",\"usage\":{\"cost\":{\"currency\":\"USD\",\"input_cost\":0.00002,\"output_cost\":0.00005,\"total_cost\":0.00007},\"input_tokens\":76,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":18,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":94},\"user\":null}\n"
+            }
+        }
+    ]
+}

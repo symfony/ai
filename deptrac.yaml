@@ -562,6 +562,7 @@ deptrac:
       - GenericPlatform
     PerplexityPlatform:
       - PlatformComponent
+      - OpenResponsesPlatform
     ReplicatePlatform:
       - PlatformComponent
       - MetaPlatform

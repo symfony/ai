@@ -25,7 +25,7 @@ $messages = new MessageBag(
         new ImageUrl('https://christopher-hertel.de/images/projects/llmchain.png'),
     ),
 );
-$result = $platform->invoke('sonar', $messages);
+$result = $platform->invoke('fast', $messages);
 
 echo $result->asText().\PHP_EOL;
 

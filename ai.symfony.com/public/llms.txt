@@ -59,6 +59,7 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [AWS Bedrock](https://symfony.com/doc/current/ai/components/platform/bedrock.html): AWS Bedrock bridge covering both the InvokeModel API and Bedrock Mantle (OpenAI-compatible and Anthropic Messages routes)
 - [Venice AI](https://symfony.com/doc/current/ai/components/platform/venice.html): Venice AI platform for chat, embeddings, speech, image and video generation
 - [Deepgram](https://symfony.com/doc/current/ai/components/platform/deepgram.html): Deepgram speech-to-text (STT) and text-to-speech (TTS) bridge over the Deepgram REST endpoints
+- [Perplexity](https://symfony.com/doc/current/ai/components/platform/perplexity.html): Perplexity Agent API for web-grounded answers through presets or the models of several providers
 - [Agent Component](https://symfony.com/doc/current/ai/components/agent.html): Framework for building AI agents with tool calling, memory, and multi-step reasoning
 - [Built-in Tools](https://symfony.com/doc/current/ai/components/agent/tools.html): Ready-made agent tool bridges (web search, content, MCP, and more) with install commands
 - [Store Component](https://symfony.com/doc/current/ai/components/store.html): Vector database abstraction for RAG with 20+ store backends

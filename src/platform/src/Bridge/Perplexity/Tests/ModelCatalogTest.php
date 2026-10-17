@@ -24,11 +24,17 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
-        yield 'sonar' => ['sonar', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE]];
-        yield 'sonar-pro' => ['sonar-pro', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE]];
-        yield 'sonar-reasoning' => ['sonar-reasoning', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE]];
-        yield 'sonar-reasoning-pro' => ['sonar-reasoning-pro', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE]];
-        yield 'sonar-deep-research' => ['sonar-deep-research', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_PDF, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED]];
+        yield 'fast' => ['fast', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'low' => ['low', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'medium' => ['medium', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'high' => ['high', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'xhigh' => ['xhigh', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'perplexity/sonar' => ['perplexity/sonar', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'sonar' => ['sonar', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'sonar-pro' => ['sonar-pro', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'sonar-reasoning' => ['sonar-reasoning', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'sonar-reasoning-pro' => ['sonar-reasoning-pro', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'sonar-deep-research' => ['sonar-deep-research', Perplexity::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

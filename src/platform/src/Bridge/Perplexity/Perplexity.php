@@ -11,11 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\Perplexity;
 
-use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 
 /**
  * @author Mathieu Santostefano <msantostefano@proton.me>
  */
-final class Perplexity extends Model
+final class Perplexity extends ResponsesModel
 {
 }
