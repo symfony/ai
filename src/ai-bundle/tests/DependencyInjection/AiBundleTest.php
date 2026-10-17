@@ -6205,7 +6205,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'failover']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'main']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $main'));
     }
