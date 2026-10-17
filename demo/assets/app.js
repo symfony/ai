@@ -6,3 +6,4 @@ import './styles/crop.css';
 import './styles/recipe.css';
 import './styles/movies.css';
 import './styles/mcp.css';
+import './styles/party_game.css';

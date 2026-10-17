@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block body_class 'chat-page party-game' %}
+
+{% block content %}
+    <div class="chat-page-content" style="--demo-gradient: {{ demos.party_game.gradient }}">
+        {{ component('party_game') }}
+    </div>
+{% endblock %}

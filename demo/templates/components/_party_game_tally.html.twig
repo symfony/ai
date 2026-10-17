@@ -1,0 +1,24 @@
+{# @var list<array{player: string, tally: array{convincing: int, creative: int, unhinged: int}, total: int}> rows #}
+{% set top = rows[0].total|default(0) %}
+<table class="party-tally">
+    <thead>
+        <tr>
+            <th>Player</th>
+            <th title="Most Convincing">🤝</th>
+            <th title="Most Creative">💡</th>
+            <th title="Most Unhinged">🌪️</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+            <tr class="{{ highlight and row.total == top and top > 0 ? 'party-lead' : '' }}">
+                <td>{{ row.player }}</td>
+                <td>{% if row.tally.convincing > 0 %}{% for i in 1..row.tally.convincing %}<i class="party-pip party-pip-c"></i>{% endfor %}{% else %}<span class="party-muted">–</span>{% endif %}</td>
+                <td>{% if row.tally.creative > 0 %}{% for i in 1..row.tally.creative %}<i class="party-pip party-pip-k"></i>{% endfor %}{% else %}<span class="party-muted">–</span>{% endif %}</td>
+                <td>{% if row.tally.unhinged > 0 %}{% for i in 1..row.tally.unhinged %}<i class="party-pip party-pip-u"></i>{% endfor %}{% else %}<span class="party-muted">–</span>{% endif %}</td>
+                <td class="party-total">{{ row.total }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
