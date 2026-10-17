@@ -356,8 +356,8 @@ Every store supports this operation and uses the native counting mechanism of it
 for Weaviate, or the exact count endpoint for Qdrant, which is asked instead of the estimated point count
 reported by the collection info.
 
-Two stores have to list their entries to count them, because their backend offers no count operation:
-S3 Vectors and Vektor.
+Three stores have to read all their entries to count them, because their backend offers no count operation:
+Symfony Cache, S3 Vectors and Vektor.
 
 Keep in mind that the number is as fresh as the backend makes it. Stores whose backend indexes documents
 asynchronously - Elasticsearch, OpenSearch, Meilisearch and Pinecone among them - can report a count that
