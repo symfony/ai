@@ -4,6 +4,7 @@ CHANGELOG
 0.14
 ----
 
+ * Add batch support: `invoke($model, $inputs, ['batch' => true])` submits the inputs as a batch and returns a `JobHandle`, resolved later through `Batch\JobClient` (`Factory::createJobClient()`), which also reports the batch's progress and can cancel it
  * Add model information to token usage extraction
  * Replay a hosted web search on the next turn, buffered and streamed, by keeping the `server_tool_use` call and its `web_search_tool_result` together; a search initiated from code execution throws instead, because its surrounding blocks are not converted
 
