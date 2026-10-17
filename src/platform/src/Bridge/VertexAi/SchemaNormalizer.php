@@ -19,6 +19,9 @@ namespace Symfony\AI\Platform\Bridge\VertexAi;
  *   ['type' => 'string', 'nullable' => true], which VertexAI's OpenAPI-flavored
  *   schema parser requires. Sent as-is, an array type triggers
  *   "Proto field is not repeating, cannot start list".
+ * - Adds 'propertyOrdering' to object schemas, listing the properties in
+ *   declaration order. Without it, VertexAI does not keep that order and
+ *   generates required properties before optional ones.
  *
  * Used both for tool parameter schemas and for structured-output response
  * schemas so the two stay in sync.
@@ -58,6 +61,12 @@ final class SchemaNormalizer
             if (\is_array($value)) {
                 $value = self::normalize($value);
             }
+        }
+
+        $properties = $schema['properties'] ?? null;
+        if ('object' === ($schema['type'] ?? null) && \is_array($properties) && [] !== $properties && !\array_key_exists('propertyOrdering', $schema)) {
+            // PHP turns numeric property names into int keys, Vertex requires strings
+            $schema['propertyOrdering'] = array_map(strval(...), array_keys($properties));
         }
 
         return $schema;
