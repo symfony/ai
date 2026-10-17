@@ -1,0 +1,39 @@
+name: Platform Bridges
+
+on:
+    pull_request:
+        paths:
+            - 'splitsh.json'
+            - 'ai.symfony.com/config/platform_bridges.yaml'
+            - 'ai.symfony.com/assets/icons/brands/**'
+            - 'ai.symfony.com/src/PlatformBridge/**'
+            - 'ai.symfony.com/tests/PlatformBridge/Curation/**'
+            - '.github/workflows/platform-bridges.yaml'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
+jobs:
+    classification:
+        name: Every platform bridge is classified
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.5
+
+            - name: Install website dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  working-directory: ai.symfony.com
+
+            # fails when a bridge of splitsh.json has no entry in ai.symfony.com/config/platform_bridges.yaml
+            - name: Check the classification of the platform bridges
+              working-directory: ai.symfony.com
+              run: vendor/bin/phpunit tests/PlatformBridge/Curation/CurationLoaderTest.php
