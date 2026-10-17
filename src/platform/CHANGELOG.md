@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add an optional class argument to `DeferredResult::asObject()`, asserting the structured output is an instance of that class and letting static analysis infer it as the return type
+ * Add the `Decision` namespace (`Decision\Evaluation`, `Decision\Question\*`, `Decision\Answer\*`, `Decision\AnswersConverter` and `Decision\TokenUsageExtractor`), the input and output types of models answering typed questions, moved out of the TypeSafe bridge (a BC break for its users, see UPGRADE.md) so that other providers can share them
  * Add `Exception\RetryableExceptionInterface`, implemented by `ServerException` and `RateLimitExceededException`, so a consumer wiring platform calls into a queue with a retry policy can tell a transient failure from a permanent one without enumerating every exception class itself
 
 0.14

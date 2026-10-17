@@ -4,6 +4,31 @@ UPGRADE FROM 0.14 to 0.15
 Platform
 --------
 
+ * [BC BREAK] The `Evaluation`, `Question\*`, `Answer\*` and `TokenUsageExtractor` classes of the TypeSafe bridge moved
+   to the `Symfony\AI\Platform\Decision` namespace of the Platform component, so that other bridges can share them.
+   The old names are gone, without aliases; update the imports:
+
+   | Before (`Symfony\AI\Platform\Bridge\TypeSafe\`) | After (`Symfony\AI\Platform\Decision\`) |
+   | --- | --- |
+   | `Evaluation` | `Evaluation` |
+   | `TokenUsageExtractor` | `TokenUsageExtractor` |
+   | `Question\QuestionInterface` | `Question\QuestionInterface` |
+   | `Question\NoulQuestion` | `Question\NoulQuestion` |
+   | `Question\ChoiceQuestion` | `Question\ChoiceQuestion` |
+   | `Question\ScoreQuestion` | `Question\ScoreQuestion` |
+   | `Answer\AnswerInterface` | `Answer\AnswerInterface` |
+   | `Answer\Answers` | `Answer\Answers` |
+   | `Answer\NoulAnswer` | `Answer\NoulAnswer` |
+   | `Answer\ChoiceAnswer` | `Answer\ChoiceAnswer` |
+   | `Answer\ScoreAnswer` | `Answer\ScoreAnswer` |
+
+   ```diff
+   -use Symfony\AI\Platform\Bridge\TypeSafe\Evaluation;
+   -use Symfony\AI\Platform\Bridge\TypeSafe\Question\NoulQuestion;
+   +use Symfony\AI\Platform\Decision\Evaluation;
+   +use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+   ```
+
  * The Albert bridge no longer exposes environmental impacts under the `carbon` result metadata.
  * They are now available under `impacts`, with the energy consumption reported directly by Albert:
 

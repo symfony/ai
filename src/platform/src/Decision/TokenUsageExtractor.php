@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe;
+namespace Symfony\AI\Platform\Decision;
 
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;

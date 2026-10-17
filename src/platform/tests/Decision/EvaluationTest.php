@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests;
+namespace Symfony\AI\Platform\Tests\Decision;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\TypeSafe\Evaluation;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\ChoiceQuestion;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\NoulQuestion;
+use Symfony\AI\Platform\Decision\Evaluation;
+use Symfony\AI\Platform\Decision\Question\ChoiceQuestion;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 final class EvaluationTest extends TestCase

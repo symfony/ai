@@ -9,15 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe;
+namespace Symfony\AI\Platform\Decision;
 
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\QuestionInterface;
+use Symfony\AI\Platform\Decision\Question\QuestionInterface;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 
 /**
- * The input of a Jev invocation: a state, and the questions to answer about it.
+ * The input of a decision invocation (e.g. a Jev or Ollama decision model): a state, and the questions to answer about it.
  *
- * Jev ingests the state once and answers every question against it in parallel,
+ * A decision model ingests the state once and answers every question against it,
  * which makes batching questions into a single evaluation both faster and cheaper.
  *
  * @author Yoan Bernabeu <yoan.bernabeu@gmail.com>

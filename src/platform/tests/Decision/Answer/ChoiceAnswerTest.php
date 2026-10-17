@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests\Answer;
+namespace Symfony\AI\Platform\Tests\Decision\Answer;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\ChoiceAnswer;
+use Symfony\AI\Platform\Decision\Answer\ChoiceAnswer;
 
 final class ChoiceAnswerTest extends TestCase
 {

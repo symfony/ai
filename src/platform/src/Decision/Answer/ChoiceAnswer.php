@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Platform\Bridge\TypeSafe\Answer;
+namespace Symfony\AI\Platform\Decision\Answer;
 
 /**
  * @author Yoan Bernabeu <yoan.bernabeu@gmail.com>
