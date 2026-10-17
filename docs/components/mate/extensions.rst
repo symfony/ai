@@ -22,6 +22,7 @@ Question                                                 Tool or resource
 =======================================================  ==================================================
 Which service handles this, is a listener registered?    ``symfony-services``
 How is one service wired?                                ``symfony-service-detail``
+Why was this request slow, or did it fail?               ``symfony-profiler-triage``
 Which requests failed or were slow?                      ``symfony-profiler-list``
 What happened in one request?                            ``symfony-profiler://profile/{token}``
 What did one collector record (``db``, ``exception``)?   ``symfony-profiler://profile/{token}/{collector}``
@@ -133,6 +134,28 @@ Profiler
 
 The profiler tools are registered when ``symfony/http-kernel`` is installed. They need
 ``symfony/web-profiler-bundle`` to have profiles to read.
+
+``symfony-profiler-triage``
+    Triage one request in a single call: query count, duplicate queries, the most expensive
+    statements, total duration, whether an exception occurred and the logger error/warning
+    counts. Start here instead of chaining ``symfony-profiler-list``, ``symfony-profiler-get``
+    and a collector resource read.
+
+    ==========  ===============================================================================
+    Parameter   Description
+    ==========  ===============================================================================
+    ``url``     URL path of the request to triage. Partial match. The newest matching profile is used.
+    ``token``   Exact profiler token to triage. Takes precedence over ``url``.
+    ==========  ===============================================================================
+
+    Without ``url`` or ``token`` it triages the most recent profile. Collectors the profile does
+    not have are omitted rather than guessed; the full grouped list stays behind the collector
+    resource.
+
+    The profiler is not HTTP-only: ``--profile`` is a standard Symfony option that
+    ``FrameworkBundle``'s console ``Application`` registers on every command, and
+    ``ConsoleProfilerListener`` writes an ordinary profile (``method: BATCH``) into the same
+    storage. Triage without arguments then picks up the command, worker or cron job that just ran.
 
 ``symfony-profiler-list``
     List profiles with summary data, most recent first.
