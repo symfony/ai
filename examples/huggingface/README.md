@@ -32,6 +32,12 @@ You can run an example by executing the following command:
 php huggingface/object-detection.php
 ```
 
+## Tool Calling
+
+Run `php huggingface/toolcall.php` to use a clock tool through Symfony AI's Agent component.
+The example uses Cerebras with `openai/gpt-oss-120b`; select another compatible provider/model
+if it is unavailable. Tool calling requires `Task::CHAT_COMPLETION` and is non-streaming.
+
 ## Available Models
 
 When running the examples, you might experience that some models are not available, and you encounter an error like:

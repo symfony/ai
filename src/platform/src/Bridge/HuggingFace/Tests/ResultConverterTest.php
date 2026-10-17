@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\HuggingFace\ResultConverter;
 use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
@@ -24,6 +25,7 @@ use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -181,6 +183,83 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $convertedResult);
         $this->assertSame($expectedValue, $convertedResult->getContent());
+    }
+
+    #[TestWith([null])]
+    #[TestWith(['Let me check both cities.'])]
+    public function testConvertChatCompletionWithToolCalls(?string $content)
+    {
+        $response = new JsonMockResponse(['choices' => [['message' => [
+            'content' => $content,
+            'tool_calls' => [
+                ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'weather', 'arguments' => '{"city":"Paris","options":{"unit":"celsius"}}']],
+                ['id' => 'call_2', 'type' => 'function', 'function' => ['name' => 'weather', 'arguments' => '{"city":"Berlin"}']],
+            ],
+        ]]]]);
+        $httpClient = new MockHttpClient($response);
+        $result = new RawHttpResult($httpClient->request('GET', 'https://example.com'));
+
+        $converted = (new ResultConverter())->convert($result, ['task' => Task::CHAT_COMPLETION]);
+
+        $this->assertInstanceOf(ToolCallResult::class, $converted);
+        $calls = $converted->getContent();
+        $this->assertCount(2, $calls);
+        $this->assertSame('call_1', $calls[0]->getId());
+        $this->assertSame('weather', $calls[0]->getName());
+        $this->assertSame(['city' => 'Paris', 'options' => ['unit' => 'celsius']], $calls[0]->getArguments());
+        $this->assertSame('call_2', $calls[1]->getId());
+        $this->assertSame(['city' => 'Berlin'], $calls[1]->getArguments());
+    }
+
+    /**
+     * @param array{arguments?: string} $function
+     */
+    #[TestWith([[]])]
+    #[TestWith([['arguments' => '']])]
+    #[TestWith([['arguments' => '{}']])]
+    public function testConvertToolCallWithoutArguments(array $function)
+    {
+        $response = new JsonMockResponse(['choices' => [['message' => ['tool_calls' => [
+            ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'clock', ...$function]],
+        ]]]]]);
+        $httpClient = new MockHttpClient($response);
+        $result = new RawHttpResult($httpClient->request('GET', 'https://example.com'));
+
+        $converted = (new ResultConverter())->convert($result, ['task' => Task::CHAT_COMPLETION]);
+
+        $this->assertInstanceOf(ToolCallResult::class, $converted);
+        $this->assertSame([], $converted->getContent()[0]->getArguments());
+    }
+
+    #[TestWith(['{"city":'])]
+    #[TestWith(['null'])]
+    #[TestWith(['42'])]
+    #[TestWith(['"Paris"'])]
+    #[TestWith(['[]'])]
+    public function testConvertToolCallWithMalformedArguments(string $arguments)
+    {
+        $response = new JsonMockResponse(['choices' => [['message' => ['tool_calls' => [
+            ['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'weather', 'arguments' => $arguments]],
+        ]]]]]);
+        $httpClient = new MockHttpClient($response);
+        $result = new RawHttpResult($httpClient->request('GET', 'https://example.com'));
+
+        $this->expectException(MalformedToolCallException::class);
+        $this->expectExceptionMessage('weather');
+
+        (new ResultConverter())->convert($result, ['task' => Task::CHAT_COMPLETION]);
+    }
+
+    public function testConvertChatCompletionWithEmptyToolCalls()
+    {
+        $response = new JsonMockResponse(['choices' => [['message' => ['content' => 'Hello', 'tool_calls' => []]]]]);
+        $httpClient = new MockHttpClient($response);
+        $result = new RawHttpResult($httpClient->request('GET', 'https://example.com'));
+
+        $converted = (new ResultConverter())->convert($result, ['task' => Task::CHAT_COMPLETION]);
+
+        $this->assertInstanceOf(TextResult::class, $converted);
+        $this->assertSame('Hello', $converted->getContent());
     }
 
     #[TestDox('Converts feature extraction response to VectorResult with correct data')]

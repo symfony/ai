@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Output\TableQuestionAnsweringResult;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\TokenClassificationResult;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\ZeroShotClassificationResult;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Reranking\RerankingEntry;
@@ -31,6 +32,8 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
@@ -81,7 +84,7 @@ final class ResultConverter implements ResultConverterInterface
         return match ($task) {
             Task::AUDIO_CLASSIFICATION, Task::IMAGE_CLASSIFICATION => new ObjectResult(ClassificationResult::fromArray($content)),
             Task::AUTOMATIC_SPEECH_RECOGNITION => new TextResult($content['text'] ?? ''),
-            Task::CHAT_COMPLETION => new TextResult($content['choices'][0]['message']['content'] ?? ''),
+            Task::CHAT_COMPLETION => self::convertChatCompletion($content),
             Task::FEATURE_EXTRACTION => new VectorResult(isset($content[0]) && \is_array($content[0])
                 ? array_map(static fn (array $v): Vector => new Vector($v), $content)
                 : [new Vector($content)]
@@ -108,6 +111,40 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
     {
         return null;
+    }
+
+    /**
+     * @param array<string, mixed> $content
+     */
+    private static function convertChatCompletion(array $content): TextResult|ToolCallResult
+    {
+        $message = $content['choices'][0]['message'] ?? [];
+        if ([] === ($message['tool_calls'] ?? [])) {
+            return new TextResult($message['content'] ?? '');
+        }
+
+        return new ToolCallResult(array_map(self::convertToolCall(...), $message['tool_calls']));
+    }
+
+    /**
+     * @param array{id: string, type: string, function: array{name: string, arguments?: string}} $toolCall
+     */
+    private static function convertToolCall(array $toolCall): ToolCall
+    {
+        $arguments = [];
+        if (isset($toolCall['function']['arguments']) && '' !== $toolCall['function']['arguments']) {
+            try {
+                $arguments = json_decode($toolCall['function']['arguments'], true, flags: \JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                throw new MalformedToolCallException(\sprintf('Model returned malformed JSON arguments for the "%s" tool: "%s".', $toolCall['function']['name'], $e->getMessage()), 0, $e);
+            }
+
+            if (!\is_array($arguments) || !str_starts_with(ltrim($toolCall['function']['arguments']), '{')) {
+                throw new MalformedToolCallException(\sprintf('Arguments for the "%s" tool must be a JSON object.', $toolCall['function']['name']));
+            }
+        }
+
+        return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
     }
 
     /**

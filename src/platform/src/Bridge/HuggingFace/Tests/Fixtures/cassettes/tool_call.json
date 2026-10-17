@@ -1,0 +1,18 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://router.huggingface.co/cerebras/v1/chat/completions"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": ["application/json"]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"chatcmpl-tool-call\",\"object\":\"chat.completion\",\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"finish_reason\":\"tool_calls\",\"message\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_clock\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]}}]}"
+            }
+        }
+    ]
+}
