@@ -12,10 +12,13 @@
 namespace Symfony\AI\Platform\Tests\Contract\Normalizer\Message;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\Normalizer\Message\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\WebSearch;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
@@ -127,6 +130,47 @@ final class AssistantMessageNormalizerTest extends TestCase
 
         $this->assertArrayNotHasKey('reasoning_content', $result);
         $this->assertSame('Just a normal response', $result['content']);
+    }
+
+    public function testNormalizeEmitsProviderSpecificPartsWhenNoModelIsBound()
+    {
+        $webSearch = new WebSearch('symfony ai', 'ws_1', 'completed');
+        $message = new AssistantMessage(new Text('Here is what I found'), $webSearch);
+
+        $normalizedPart = ['type' => 'web_search', 'query' => 'symfony ai'];
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->once())
+            ->method('normalize')
+            ->with($webSearch, null, [])
+            ->willReturn($normalizedPart);
+
+        $this->normalizer->setNormalizer($innerNormalizer);
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => 'Here is what I found',
+            'content_parts' => [$normalizedPart],
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message));
+    }
+
+    public function testNormalizeDropsProviderSpecificPartsWhenAModelIsBound()
+    {
+        $message = new AssistantMessage(new Text('Here is what I found'), new WebSearch('symfony ai'));
+
+        $innerNormalizer = $this->createMock(NormalizerInterface::class);
+        $innerNormalizer->expects($this->never())->method('normalize');
+
+        $this->normalizer->setNormalizer($innerNormalizer);
+
+        $expected = [
+            'role' => 'assistant',
+            'content' => 'Here is what I found',
+        ];
+
+        $this->assertSame($expected, $this->normalizer->normalize($message, context: [Contract::CONTEXT_MODEL => new Model('gpt-4o-mini')]));
     }
 
     public function testNormalizeWithThinkingContentAndToolCalls()
