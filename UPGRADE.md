@@ -42,6 +42,21 @@ Platform
    streamed path already did. Tool results are addressed by the call id, so the second call could
    never be answered separately.
 
+AI Bundle
+---------
+
+ * The failover platform is now tagged with its instance name (the key under
+   `ai.platform.failover`) instead of the hardcoded `failover`, aligning it with how
+   other platforms register their `#[Target]` alias from the tag name. Injecting a
+   failover instance through `#[Target]` is unchanged and keeps following the instance
+   name (`#[Target('main')]` for a `main` instance); only code that reads the `name`
+   attribute of the `ai.platform` tag on a failover service now sees the instance name:
+
+   ```diff
+   -$name = $definition->getTag('ai.platform')[0]['name']; // 'failover'
+   +$name = $definition->getTag('ai.platform')[0]['name']; // 'main'
+   ```
+
 UPGRADE FROM 0.13 to 0.14
 =========================
 
