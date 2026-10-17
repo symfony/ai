@@ -49,6 +49,20 @@ final class ModelClientTest extends TestCase
         $client->request(new Mistral('mistral-large-latest'), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
     }
 
+    public function testCanonicalMaxOutputTokensIsRenamedToMaxTokens()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame(500, $body['max_tokens']);
+            $this->assertArrayNotHasKey('max_output_tokens', $body);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-api-key');
+        $client->request(new Mistral('mistral-large-latest'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['max_output_tokens' => 500]);
+    }
+
     public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
     {
         $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {

@@ -160,6 +160,14 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new CompletionsModel('gpt-4o'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
 
+    public function testCanonicalMaxOutputTokensIsRenamedToMaxTokens()
+    {
+        $capturedBody = $this->captureRequestBody(['max_output_tokens' => 500]);
+
+        $this->assertSame(500, $capturedBody['max_tokens']);
+        $this->assertArrayNotHasKey('max_output_tokens', $capturedBody);
+    }
+
     public function testToolChoiceDefaultsToAutoWhenToolsAreProvided()
     {
         $capturedBody = $this->captureRequestBody(['tools' => $this->tools()]);

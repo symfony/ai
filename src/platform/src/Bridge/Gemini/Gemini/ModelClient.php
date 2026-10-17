@@ -71,6 +71,13 @@ final class ModelClient implements ModelClientInterface
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
         }
 
+        // The canonical option every bridge accepts; Gemini's own generationConfig field is the
+        // camelCase "maxOutputTokens" and rejects an unrecognized field with a 400.
+        if (isset($options['max_output_tokens'])) {
+            $options['maxOutputTokens'] = $options['max_output_tokens'];
+            unset($options['max_output_tokens']);
+        }
+
         $config = ['generationConfig' => $options];
         unset($config['generationConfig']['stream']);
         unset($config['generationConfig']['tools']);
