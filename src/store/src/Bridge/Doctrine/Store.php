@@ -11,6 +11,9 @@
 
 namespace Symfony\AI\Store\Bridge\Doctrine;
 
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformFactory;
@@ -230,8 +233,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $identifiers[] = $connection->convertToPHPValue($row['id'], $identifierType);
         }
 
+        // Raw values keep the IN list independent of how the ORM version converts identifier objects
+        $entities = $this->entityManager->createQueryBuilder()
+            ->select('e')
+            ->from($this->entityClass, 'e')
+            ->where(\sprintf('e.%s IN (:ids)', $identifierField))
+            ->setParameter('ids', array_column($rows, 'id'), match (Type::getType($identifierType)->getBindingType()) {
+                ParameterType::INTEGER => ArrayParameterType::INTEGER,
+                ParameterType::ASCII => ArrayParameterType::ASCII,
+                ParameterType::BINARY => ArrayParameterType::BINARY,
+                default => ArrayParameterType::STRING,
+            })
+            ->getQuery()
+            ->getResult();
+
         $entitiesById = [];
-        foreach ($this->entityManager->getRepository($this->entityClass)->findBy([$identifierField => $identifiers]) as $entity) {
+        foreach ($entities as $entity) {
             $entitiesById[$this->identifierAsString($metadata->getIdentifierValues($entity)[$identifierField])] = $entity;
         }
 
