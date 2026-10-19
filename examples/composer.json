@@ -6,6 +6,7 @@
     "require": {
         "async-aws/sso": "^1.0",
         "async-aws/sso-oidc": "^1.0",
+        "doctrine/orm": "^3.4",
         "php": ">=8.2",
         "symfony/ai-agent": "^0.14",
         "symfony/ai-ai-ml-api-platform": "^0.14",
@@ -35,6 +36,7 @@
         "symfony/ai-deepgram-platform": "^0.14",
         "symfony/ai-docker-model-runner-platform": "^0.14",
         "symfony/ai-doctrine-message-store": "^0.14",
+        "symfony/ai-doctrine-store": "^0.14",
         "symfony/ai-eden-ai-platform": "^0.14",
         "symfony/ai-elasticsearch-store": "^0.14",
         "symfony/ai-eleven-labs-platform": "^0.14",

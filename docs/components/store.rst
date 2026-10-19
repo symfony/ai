@@ -95,6 +95,7 @@ Similarity Search Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Similarity Search with Cloudflare (RAG)`_
+* `Similarity Search with Doctrine (RAG)`_
 * `Similarity Search with Manticore Search (RAG)`_
 * `Similarity Search with MariaDB (RAG)`_
 * `Similarity Search with Meilisearch (RAG)`_
@@ -378,6 +379,7 @@ does not include documents added moments ago::
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
+.. _`Similarity Search with Doctrine (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/doctrine-orm.php
 .. _`Similarity Search with Manticore Search (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php
 .. _`Similarity Search with Meilisearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
