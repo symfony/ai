@@ -24,7 +24,7 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 final class VectorTypeTest extends TestCase
 {
     #[DataProvider('providePlatforms')]
-    public function testDeclaresTheColumnWithoutASize(AbstractPlatform $platform, string $expected): void
+    public function testDeclaresTheColumnWithoutASize(AbstractPlatform $platform, string $expected)
     {
         $type = new VectorType();
 
@@ -44,7 +44,7 @@ final class VectorTypeTest extends TestCase
         yield 'sqlite' => [new SQLitePlatform(), 'TEXT'];
     }
 
-    public function testRoundTripsAVectorThroughTheDatabase(): void
+    public function testRoundTripsAVectorThroughTheDatabase()
     {
         $type = new VectorType();
         $platform = new PostgreSQL120Platform();
@@ -55,7 +55,7 @@ final class VectorTypeTest extends TestCase
         $this->assertSame([1.5, -0.5], $type->convertToPHPValue($stored, $platform)?->getData());
     }
 
-    public function testKeepsNullOnBothSides(): void
+    public function testKeepsNullOnBothSides()
     {
         $type = new VectorType();
         $platform = new PostgreSQL120Platform();
@@ -64,7 +64,7 @@ final class VectorTypeTest extends TestCase
         $this->assertNull($type->convertToPHPValue(null, $platform));
     }
 
-    public function testWrapsTheParameterOnlyWhereThePlatformNeedsIt(): void
+    public function testWrapsTheParameterOnlyWhereThePlatformNeedsIt()
     {
         $type = new VectorType();
 
@@ -75,14 +75,14 @@ final class VectorTypeTest extends TestCase
         $this->assertSame(':vector', $type->convertToDatabaseValueSQL(':vector', new SQLitePlatform()));
     }
 
-    public function testRefusesToStoreSomethingThatIsNotAVector(): void
+    public function testRefusesToStoreSomethingThatIsNotAVector()
     {
         $this->expectException(InvalidArgumentException::class);
 
         (new VectorType())->convertToDatabaseValue([1.0, 2.0], new PostgreSQL120Platform());
     }
 
-    public function testPassesAnAlreadyConvertedVectorThrough(): void
+    public function testPassesAnAlreadyConvertedVectorThrough()
     {
         $vector = new Vector([1.0]);
 

@@ -46,7 +46,7 @@ final class EntityLoaderTest extends TestCase
         (new SchemaTool($this->entityManager))->createSchema([$this->entityManager->getClassMetadata(Article::class)]);
     }
 
-    public function testWalksEveryEntityAcrossPageBoundaries(): void
+    public function testWalksEveryEntityAcrossPageBoundaries()
     {
         foreach (['First', 'Second', 'Third', 'Fourth', 'Fifth'] as $title) {
             $this->entityManager->persist(new Article($title));
@@ -64,7 +64,7 @@ final class EntityLoaderTest extends TestCase
         );
     }
 
-    public function testTakesTheEntityClassFromTheSource(): void
+    public function testTakesTheEntityClassFromTheSource()
     {
         $this->entityManager->persist(new Article('First'));
         $this->entityManager->flush();
@@ -74,7 +74,7 @@ final class EntityLoaderTest extends TestCase
         $this->assertCount(1, iterator_to_array($loader->load(Article::class), false));
     }
 
-    public function testNarrowsWhatItWalks(): void
+    public function testNarrowsWhatItWalks()
     {
         $this->entityManager->persist(new Article('First'));
         $this->entityManager->persist(new Article('Second'));
@@ -87,7 +87,7 @@ final class EntityLoaderTest extends TestCase
         $this->assertSame('Second', $documents[0]->getContent());
     }
 
-    public function testBuildsContentItselfWhenGivenAWayTo(): void
+    public function testBuildsContentItselfWhenGivenAWayTo()
     {
         $this->entityManager->persist(new Article('First'));
         $this->entityManager->flush();
@@ -105,14 +105,14 @@ final class EntityLoaderTest extends TestCase
         $this->assertSame('FIRST', iterator_to_array($loader->load(), false)[0]->getContent());
     }
 
-    public function testYieldsNothingForAnEmptyTable(): void
+    public function testYieldsNothingForAnEmptyTable()
     {
         $loader = new EntityLoader($this->entityManager, Article::class);
 
         $this->assertSame([], iterator_to_array($loader->load(), false));
     }
 
-    public function testRefusesToLoadWithoutAnEntityClass(): void
+    public function testRefusesToLoadWithoutAnEntityClass()
     {
         $loader = new EntityLoader($this->entityManager);
 

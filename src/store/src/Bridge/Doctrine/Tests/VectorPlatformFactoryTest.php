@@ -26,29 +26,29 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 final class VectorPlatformFactoryTest extends TestCase
 {
-    public function testPicksThePostgresDialect(): void
+    public function testPicksThePostgresDialect()
     {
         $this->assertInstanceOf(PostgresVectorPlatform::class, VectorPlatformFactory::create(new PostgreSQL120Platform()));
     }
 
-    public function testPicksTheSqliteDialect(): void
+    public function testPicksTheSqliteDialect()
     {
         $this->assertInstanceOf(SqliteVectorPlatform::class, VectorPlatformFactory::create(new SQLitePlatform()));
     }
 
-    public function testPicksTheMySqlDialect(): void
+    public function testPicksTheMySqlDialect()
     {
         $this->assertInstanceOf(MySqlVectorPlatform::class, VectorPlatformFactory::create(new MySQL84Platform()));
     }
 
-    public function testPrefersMariaDbOverMySql(): void
+    public function testPrefersMariaDbOverMySql()
     {
         // MariaDB's platform extends the MySQL one, so order decides this: matching MySQL first
         // would hand a MariaDB connection SQL functions it does not have.
         $this->assertInstanceOf(MariaDbVectorPlatform::class, VectorPlatformFactory::create(new MariaDB110700Platform()));
     }
 
-    public function testRefusesAPlatformItHasNoDialectFor(): void
+    public function testRefusesAPlatformItHasNoDialectFor()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/no vector support/');

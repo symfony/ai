@@ -25,7 +25,7 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 final class VectorPlatformTest extends TestCase
 {
     #[DataProvider('provideColumnDeclarations')]
-    public function testDeclaresItsVectorColumn(VectorPlatformInterface $platform, string $sized, string $unsized): void
+    public function testDeclaresItsVectorColumn(VectorPlatformInterface $platform, string $sized, string $unsized)
     {
         $this->assertSame($sized, $platform->getColumnDeclarationSql(1536));
         $this->assertSame($unsized, $platform->getUnsizedColumnDeclarationSql());
@@ -43,7 +43,7 @@ final class VectorPlatformTest extends TestCase
     }
 
     #[DataProvider('provideCosineDistances')]
-    public function testExpressesACosineDistance(VectorPlatformInterface $platform, string $expected): void
+    public function testExpressesACosineDistance(VectorPlatformInterface $platform, string $expected)
     {
         $parameter = $platform->getVectorParameterSql(':vector');
 
@@ -62,7 +62,7 @@ final class VectorPlatformTest extends TestCase
     }
 
     #[DataProvider('providePlatforms')]
-    public function testRoundTripsAVector(VectorPlatformInterface $platform): void
+    public function testRoundTripsAVector(VectorPlatformInterface $platform)
     {
         $vector = new Vector([0.25, -1.5, 3.0]);
 
@@ -70,7 +70,7 @@ final class VectorPlatformTest extends TestCase
     }
 
     #[DataProvider('providePlatforms')]
-    public function testWrapsParameterAndColumnConsistently(VectorPlatformInterface $platform): void
+    public function testWrapsParameterAndColumnConsistently(VectorPlatformInterface $platform)
     {
         // Whatever wraps the parameter on the way in has to be undone on the way out, otherwise a
         // stored vector cannot be read back as one.
@@ -79,7 +79,7 @@ final class VectorPlatformTest extends TestCase
     }
 
     #[DataProvider('providePlatforms')]
-    public function testRejectsAVectorLiteralItCannotRead(VectorPlatformInterface $platform): void
+    public function testRejectsAVectorLiteralItCannotRead(VectorPlatformInterface $platform)
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -98,7 +98,7 @@ final class VectorPlatformTest extends TestCase
     }
 
     #[DataProvider('providePlatformsWithoutInnerProduct')]
-    public function testRefusesADistanceItDoesNotImplement(VectorPlatformInterface $platform): void
+    public function testRefusesADistanceItDoesNotImplement(VectorPlatformInterface $platform)
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -114,7 +114,7 @@ final class VectorPlatformTest extends TestCase
         yield 'sqlite' => [new SqliteVectorPlatform()];
     }
 
-    public function testPostgresIndexesWithTheOpclassMatchingItsDistance(): void
+    public function testPostgresIndexesWithTheOpclassMatchingItsDistance()
     {
         $statements = (new PostgresVectorPlatform())->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine);
 
@@ -125,7 +125,7 @@ final class VectorPlatformTest extends TestCase
     }
 
     #[DataProvider('provideSizingPlatforms')]
-    public function testSetupSizesAColumnTheMappingAlreadyCreated(VectorPlatformInterface $platform, string $expected): void
+    public function testSetupSizesAColumnTheMappingAlreadyCreated(VectorPlatformInterface $platform, string $expected)
     {
         $statements = $platform->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine);
 
@@ -144,7 +144,7 @@ final class VectorPlatformTest extends TestCase
         yield 'mysql' => [new MySqlVectorPlatform(), 'MODIFY COLUMN embedding VECTOR(1536)'];
     }
 
-    public function testMySqlHasNoVectorIndexToCreate(): void
+    public function testMySqlHasNoVectorIndexToCreate()
     {
         $statements = (new MySqlVectorPlatform())->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine);
 
@@ -152,7 +152,7 @@ final class VectorPlatformTest extends TestCase
         $this->assertStringNotContainsString('INDEX', $statements[0]);
     }
 
-    public function testSqliteStoresVectorsWithoutTheExtension(): void
+    public function testSqliteStoresVectorsWithoutTheExtension()
     {
         $platform = new SqliteVectorPlatform();
 

@@ -21,7 +21,7 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 final class EntityDocumentTest extends TestCase
 {
-    public function testTakesItsContentFromTheEntity(): void
+    public function testTakesItsContentFromTheEntity()
     {
         $document = EntityDocument::fromEntity(new Article('Reality TV', 'A show about people.'), 1);
 
@@ -29,14 +29,14 @@ final class EntityDocumentTest extends TestCase
         $this->assertSame("Reality TV\nA show about people.", $document->getContent());
     }
 
-    public function testAcceptsContentBuiltElsewhere(): void
+    public function testAcceptsContentBuiltElsewhere()
     {
         $document = EntityDocument::fromEntity(new Article('Reality TV'), 1, 'something else entirely');
 
         $this->assertSame('something else entirely', $document->getContent());
     }
 
-    public function testRefusesAnEntityThatDoesNotSayWhatToEmbed(): void
+    public function testRefusesAnEntityThatDoesNotSayWhatToEmbed()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/Cannot derive indexable content/');
@@ -44,14 +44,14 @@ final class EntityDocumentTest extends TestCase
         EntityDocument::fromEntity(new \stdClass(), 1);
     }
 
-    public function testRefusesEmptyContent(): void
+    public function testRefusesEmptyContent()
     {
         $this->expectException(InvalidArgumentException::class);
 
         EntityDocument::fromEntity(new Article('Reality TV'), 1, '   ');
     }
 
-    public function testKeepsItsEntityAndMetadata(): void
+    public function testKeepsItsEntityAndMetadata()
     {
         $article = new Article('Reality TV');
         $metadata = new Metadata(['source' => 'test']);
@@ -62,7 +62,7 @@ final class EntityDocumentTest extends TestCase
         $this->assertSame($metadata, $document->getMetadata());
     }
 
-    public function testScoringKeepsEverythingElse(): void
+    public function testScoringKeepsEverythingElse()
     {
         $article = new Article('Reality TV');
         $document = new EntityVectorDocument($article, 42, new Vector([1.0]));

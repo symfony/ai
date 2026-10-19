@@ -59,7 +59,7 @@ final class StoreTest extends TestCase
         $schemaTool->createSchema([$this->entityManager->getClassMetadata(Article::class)]);
     }
 
-    public function testWritesTheVectorOntoTheRowOfItsEntity(): void
+    public function testWritesTheVectorOntoTheRowOfItsEntity()
     {
         $article = $this->persist(new Article('Reality TV', 'A show about people.'));
 
@@ -68,7 +68,7 @@ final class StoreTest extends TestCase
         $this->assertSame('[0.25,0.5]', $this->storedVector($article));
     }
 
-    public function testWritesAWholeBatchOfVectors(): void
+    public function testWritesAWholeBatchOfVectors()
     {
         $first = $this->persist(new Article('First'));
         $second = $this->persist(new Article('Second'));
@@ -82,7 +82,7 @@ final class StoreTest extends TestCase
         $this->assertSame('[2]', $this->storedVector($second));
     }
 
-    public function testRemovingAVectorLeavesTheEntityAlone(): void
+    public function testRemovingAVectorLeavesTheEntityAlone()
     {
         $article = $this->persist(new Article('Reality TV'));
         $store = $this->store();
@@ -94,7 +94,7 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $this->countArticles());
     }
 
-    public function testClearingDropsEveryVectorButNoEntity(): void
+    public function testClearingDropsEveryVectorButNoEntity()
     {
         $first = $this->persist(new Article('First'));
         $second = $this->persist(new Article('Second'));
@@ -111,7 +111,7 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $this->countArticles());
     }
 
-    public function testCountsOnlyEntitiesCarryingAVector(): void
+    public function testCountsOnlyEntitiesCarryingAVector()
     {
         $first = $this->persist(new Article('First'));
         $this->persist(new Article('Second'));
@@ -125,7 +125,7 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $this->countArticles());
     }
 
-    public function testAddingNothingTouchesNothing(): void
+    public function testAddingNothingTouchesNothing()
     {
         $article = $this->persist(new Article('Reality TV'));
 
@@ -134,7 +134,7 @@ final class StoreTest extends TestCase
         $this->assertNull($this->storedVector($article));
     }
 
-    public function testOnlyAnswersVectorQueries(): void
+    public function testOnlyAnswersVectorQueries()
     {
         $store = $this->store();
 
@@ -142,14 +142,14 @@ final class StoreTest extends TestCase
         $this->assertFalse($store->supports(TextQuery::class));
     }
 
-    public function testRefusesAQueryItCannotAnswer(): void
+    public function testRefusesAQueryItCannotAnswer()
     {
         $this->expectException(UnsupportedQueryTypeException::class);
 
         $this->store()->query(new TextQuery(['reality']));
     }
 
-    public function testRefusesAFieldTheEntityDoesNotHave(): void
+    public function testRefusesAFieldTheEntityDoesNotHave()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/has no field "nope"/');

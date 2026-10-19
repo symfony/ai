@@ -78,7 +78,7 @@ final class IntegrationTest extends TestCase
         $schemaTool->createSchema($metadata);
     }
 
-    public function testSetupSizesTheColumnAndIndexesIt(): void
+    public function testSetupSizesTheColumnAndIndexesIt()
     {
         $this->store()->setup(['dimensions' => 3]);
 
@@ -93,7 +93,7 @@ final class IntegrationTest extends TestCase
         ));
     }
 
-    public function testRanksEntitiesByDistanceToTheQueriedVector(): void
+    public function testRanksEntitiesByDistanceToTheQueriedVector()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
@@ -117,7 +117,7 @@ final class IntegrationTest extends TestCase
         $this->assertGreaterThan($documents[0]->getScore(), $documents[1]->getScore());
     }
 
-    public function testReadsBackTheVectorItStored(): void
+    public function testReadsBackTheVectorItStored()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
@@ -129,7 +129,7 @@ final class IntegrationTest extends TestCase
         $this->assertSame([0.25, -0.5, 0.75], $documents[0]->getVector()->getData());
     }
 
-    public function testNarrowsResultsWithAWhereClause(): void
+    public function testNarrowsResultsWithAWhereClause()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
@@ -151,7 +151,7 @@ final class IntegrationTest extends TestCase
         $this->assertSame('Other', $this->titleOf($documents[0]));
     }
 
-    public function testEntitiesWithoutAVectorAreNotCandidates(): void
+    public function testEntitiesWithoutAVectorAreNotCandidates()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
@@ -165,7 +165,7 @@ final class IntegrationTest extends TestCase
         $this->assertSame('Indexed', $this->titleOf($documents[0]));
     }
 
-    public function testClearingKeepsTheEntities(): void
+    public function testClearingKeepsTheEntities()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
@@ -178,7 +178,7 @@ final class IntegrationTest extends TestCase
         $this->assertSame(1, (int) $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM article'));
     }
 
-    public function testDropRemovesTheColumnAndItsIndex(): void
+    public function testDropRemovesTheColumnAndItsIndex()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
