@@ -37,6 +37,13 @@ final class RstLoaderTest extends TestCase
         $this->assertSame(['Controllers', 'The Request Object'], $this->titles($content));
     }
 
+    public function testSplitsSectionsOfContentWithWindowsLineEndings()
+    {
+        $content = "Controllers\r\n===========\r\n\r\nA controller is a PHP function.\r\n\r\nThe Request Object\r\n------------------\r\n\r\nType-hint the Request argument.\r\n";
+
+        $this->assertSame(['Controllers', 'The Request Object'], $this->titles($content));
+    }
+
     public function testIgnoresIndentedLinesInLiteralBlocks()
     {
         $content = <<<'RST'
