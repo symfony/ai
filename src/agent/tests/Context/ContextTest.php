@@ -22,7 +22,6 @@ final class ContextTest extends TestCase
     {
         $context = new Context();
 
-        $this->assertCount(0, $context);
         $this->assertSame([], $context->all());
     }
 
@@ -33,8 +32,7 @@ final class ContextTest extends TestCase
 
         $extended = $context->with($instruction);
 
-        $this->assertCount(0, $context);
-        $this->assertCount(1, $extended);
+        $this->assertSame([], $context->all());
         $this->assertSame([$instruction], $extended->all());
     }
 
@@ -72,14 +70,6 @@ final class ContextTest extends TestCase
         $stripped = $context->without(Instruction::class);
 
         $this->assertSame([$text], $stripped->all());
-        $this->assertCount(3, $context);
-    }
-
-    public function testItIsIterable()
-    {
-        $instruction = new Instruction('Be brief.');
-        $text = new Text('Some attachment');
-
-        $this->assertSame([$instruction, $text], iterator_to_array(new Context($instruction, $text)));
+        $this->assertCount(3, $context->all());
     }
 }

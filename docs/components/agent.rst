@@ -1100,9 +1100,6 @@ can mutate the model, the :class:`Symfony\\AI\\Platform\\Message\\MessageBag` an
 
             // mutate the MessageBag
             $request->getMessageBag()->add(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
-
-            // report progress to the consumer of the execution
-            $context->reportProgress('my_processor', 'Doing my thing.');
         }
     }
 

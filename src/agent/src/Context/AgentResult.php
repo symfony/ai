@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * Mutable result envelope passed through result-aware context processors after
- * the platform has been invoked. Replaces the former Output class.
+ * the platform has been invoked.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -31,7 +31,6 @@ final class AgentResult
         private ResultInterface $result,
         private readonly MessageBag $messageBag,
         private readonly array $options,
-        private readonly Context $context,
     ) {
     }
 
@@ -64,10 +63,5 @@ final class AgentResult
     public function getOptions(): array
     {
         return $this->options;
-    }
-
-    public function getContext(): Context
-    {
-        return $this->context;
     }
 }

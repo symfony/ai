@@ -18,10 +18,8 @@ namespace Symfony\AI\Agent\Context;
  * {@see ContextProcessorInterface::supportedTypes()} matches the item's type.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
- *
- * @implements \IteratorAggregate<int, object>
  */
-final class Context implements \Countable, \IteratorAggregate
+final class Context
 {
     /**
      * @var list<object>
@@ -77,18 +75,5 @@ final class Context implements \Countable, \IteratorAggregate
         }
 
         return false;
-    }
-
-    public function count(): int
-    {
-        return \count($this->items);
-    }
-
-    /**
-     * @return \ArrayIterator<int, object>
-     */
-    public function getIterator(): \ArrayIterator
-    {
-        return new \ArrayIterator($this->items);
     }
 }

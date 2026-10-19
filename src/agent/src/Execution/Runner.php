@@ -90,7 +90,6 @@ final class Runner
 
         foreach ($this->applicableProcessors($context) as $processor) {
             $processor->process($request, $agentContext);
-            yield from $agentContext->flushUpdates();
         }
 
         $model = $request->getModel();
@@ -280,7 +279,7 @@ final class Runner
      */
     private function complete(ResultInterface $result, AgentRequest $request, AgentContext $agentContext): \Generator
     {
-        $agentResult = new AgentResult($request->getModel(), $result, $request->getMessageBag(), $request->getOptions(), $request->getContext());
+        $agentResult = new AgentResult($request->getModel(), $result, $request->getMessageBag(), $request->getOptions());
 
         foreach ($this->applicableProcessors($request->getContext()) as $processor) {
             if (!$processor instanceof ResultAwareContextProcessorInterface) {
@@ -288,7 +287,6 @@ final class Runner
             }
 
             $processor->processResult($agentResult, $agentContext);
-            yield from $agentContext->flushUpdates();
         }
 
         yield new ResultUpdate($agentResult->getResult());

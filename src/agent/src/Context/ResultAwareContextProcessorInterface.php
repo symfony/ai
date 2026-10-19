@@ -13,8 +13,7 @@ namespace Symfony\AI\Agent\Context;
 
 /**
  * A {@see ContextProcessorInterface} that also inspects or mutates the result
- * after the platform has been invoked, superseding the former
- * OutputProcessorInterface.
+ * after the platform has been invoked.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */

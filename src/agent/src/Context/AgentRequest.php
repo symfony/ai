@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 /**
  * Mutable request envelope passed through the context processor chain before
- * the platform is invoked. Replaces the former Input class.
+ * the platform is invoked.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -29,7 +29,7 @@ final class AgentRequest
         private string $model,
         private MessageBag $messageBag,
         private array $options,
-        private Context $context,
+        private readonly Context $context,
     ) {
     }
 
@@ -78,10 +78,5 @@ final class AgentRequest
     public function getContext(): Context
     {
         return $this->context;
-    }
-
-    public function setContext(Context $context): void
-    {
-        $this->context = $context;
     }
 }

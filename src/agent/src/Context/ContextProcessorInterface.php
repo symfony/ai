@@ -13,8 +13,7 @@ namespace Symfony\AI\Agent\Context;
 
 /**
  * Strategy that processes the agent request based on the data objects present
- * in the {@see Context}. This is the primary extension point of the agent,
- * superseding the former InputProcessorInterface.
+ * in the {@see Context}. This is the primary extension point of the agent.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
