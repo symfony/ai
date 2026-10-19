@@ -79,7 +79,7 @@ Use a vectorizer to convert documents into embeddings and store them::
     $indexer->index($documents);
 
 The :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` accepts
-:class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances (or iterables of them) directly.
+:class:`Symfony\\AI\\Store\\Document\\DocumentInterface` instances (or iterables of them) directly.
 It handles:
 
 * Transforming and/or filtering documents (optional)

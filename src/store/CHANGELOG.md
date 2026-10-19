@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
+
 0.14
 ----
 

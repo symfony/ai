@@ -116,7 +116,7 @@ final class DocumentIndexerTest extends TestCase
         $indexer = new DocumentIndexer($processor);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('DocumentIndexer expects an EmbeddableDocumentInterface or iterable, got "string".');
+        $this->expectExceptionMessage('DocumentIndexer expects an DocumentInterface or iterable, got "string".');
 
         $indexer->index('source-path');
     }
@@ -129,7 +129,7 @@ final class DocumentIndexerTest extends TestCase
         $indexer = new DocumentIndexer($processor);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('DocumentIndexer expects an EmbeddableDocumentInterface or iterable');
+        $this->expectExceptionMessage('DocumentIndexer expects an DocumentInterface or iterable');
 
         $indexer->index(new \stdClass()); /* @phpstan-ignore argument.type */
     }

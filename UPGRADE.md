@@ -120,6 +120,16 @@ Store
  * `Bridge\AzureSearch\SearchStore::query()` runs an approximate vector query by default; pass the
    `exhaustive` option to get the previous exact search back.
 
+ * `Document\EmbeddableDocumentInterface` is renamed to `Document\DocumentInterface`:
+
+   ```diff
+   -use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+   +use Symfony\AI\Store\Document\DocumentInterface;
+
+   -final class ArticleDocument implements EmbeddableDocumentInterface
+   +final class ArticleDocument implements DocumentInterface
+   ```
+
 UPGRADE FROM 0.13 to 0.14
 =========================
 
