@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Bridge\Doctrine\IndexableEntityInterface;
 
 #[ORM\Entity]
+#[ORM\Index(name: 'article_embedding_idx', columns: ['embedding'])]
 #[ORM\Table(name: 'article')]
 class Article implements IndexableEntityInterface
 {

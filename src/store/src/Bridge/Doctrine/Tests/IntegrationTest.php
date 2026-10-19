@@ -178,17 +178,62 @@ final class IntegrationTest extends TestCase
         $this->assertSame(1, (int) $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM article'));
     }
 
-    public function testDropRemovesTheColumnAndItsIndex()
+    public function testSetupReplacesTheIndexTheSchemaToolCreated()
+    {
+        $this->store()->setup(['dimensions' => 3]);
+
+        $this->assertSame('CREATE INDEX article_embedding_idx ON public.article USING hnsw (embedding vector_cosine_ops)', $this->indexDefinition());
+    }
+
+    public function testSetupLeavesNothingForTheSchemaToolToChange()
+    {
+        $this->store()->setup(['dimensions' => 3]);
+
+        $schemaTool = new SchemaTool($this->entityManager);
+
+        $this->assertSame([], $schemaTool->getUpdateSchemaSql([$this->entityManager->getClassMetadata(Article::class)]));
+    }
+
+    public function testSetupCanRunAgain()
+    {
+        $this->store()->setup(['dimensions' => 3]);
+        $this->store()->setup(['dimensions' => 3]);
+
+        $this->assertSame('CREATE INDEX article_embedding_idx ON public.article USING hnsw (embedding vector_cosine_ops)', $this->indexDefinition());
+    }
+
+    public function testSetupRebuildsTheIndexForAnotherDistance()
+    {
+        $this->store()->setup(['dimensions' => 3]);
+
+        (new Store($this->entityManager, Article::class, 'embedding', Distance::Euclidean))->setup(['dimensions' => 3]);
+
+        $this->assertSame('CREATE INDEX article_embedding_idx ON public.article USING hnsw (embedding vector_l2_ops)', $this->indexDefinition());
+    }
+
+    public function testDropRemovesTheIndexAndTheVectorsButKeepsTheColumn()
     {
         $store = $this->store();
         $store->setup(['dimensions' => 3]);
+        $article = $this->persist(new Article('Reality TV'));
+        $store->add(new VectorDocument($article->getId(), new Vector([1.0, 0.0, 0.0])));
 
         $store->drop();
 
         $connection = $this->entityManager->getConnection();
-        $this->assertFalse($connection->fetchOne(
+        $this->assertFalse($this->indexDefinition());
+        $this->assertSame(0, $store->count());
+        $this->assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM article'));
+        $this->assertTrue($connection->fetchOne(
             "SELECT true FROM pg_attribute WHERE attrelid = 'article'::regclass AND attname = 'embedding' AND NOT attisdropped",
         ));
+    }
+
+    private function indexDefinition(): string|false
+    {
+        return $this->entityManager->getConnection()->fetchOne(
+            "SELECT indexdef FROM pg_indexes WHERE tablename = 'article' AND indexname = 'article_embedding_idx'",
+        );
     }
 
     private function titleOf(EntityVectorDocument $document): string

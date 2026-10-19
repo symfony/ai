@@ -110,27 +110,22 @@ final class VectorPlatformTest extends TestCase
         $statements = (new PostgresVectorPlatform())->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine);
 
         $this->assertSame('CREATE EXTENSION IF NOT EXISTS vector', $statements[0]);
-        $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS embedding vector(1536)', $statements[1]);
-        $this->assertStringContainsString('ALTER COLUMN embedding TYPE vector(1536)', $statements[2]);
-        $this->assertStringContainsString('USING hnsw (embedding vector_cosine_ops)', $statements[3]);
+        $this->assertStringContainsString("NOT LIKE '%USING hnsw (embedding vector_cosine_ops)') THEN DROP INDEX star_embedding_idx", $statements[1]);
+        $this->assertSame('ALTER TABLE star ALTER COLUMN embedding TYPE vector(1536)', $statements[2]);
+        $this->assertSame('CREATE INDEX IF NOT EXISTS star_embedding_idx ON star USING hnsw (embedding vector_cosine_ops)', $statements[3]);
     }
 
-    #[DataProvider('provideSizingPlatforms')]
-    public function testSetupSizesAColumnTheMappingAlreadyCreated(VectorPlatformInterface $platform, string $expected)
+    public function testPostgresDropsOnlyTheIndex()
     {
-        $statements = $platform->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine);
-
-        // The column normally exists already, created unsized from the entity mapping, and an
-        // unsized vector column cannot be indexed - so setup has to size it rather than assume.
-        $this->assertNotEmpty(array_filter($statements, static fn (string $sql): bool => str_contains($sql, $expected)));
+        $this->assertSame(['DROP INDEX IF EXISTS star_embedding_idx'], (new PostgresVectorPlatform())->getDropSql('star_embedding_idx'));
     }
 
-    /**
-     * @return iterable<string, array{VectorPlatformInterface, string}>
-     */
-    public static function provideSizingPlatforms(): iterable
+    public function testSqliteHasNothingToSetUpOrDrop()
     {
-        yield 'postgres' => [new PostgresVectorPlatform(), 'ALTER COLUMN embedding TYPE vector(1536)'];
+        $platform = new SqliteVectorPlatform();
+
+        $this->assertSame([], $platform->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine));
+        $this->assertSame([], $platform->getDropSql('star_embedding_idx'));
     }
 
     public function testSqliteStoresVectorsWithoutTheExtension()

@@ -69,7 +69,7 @@ interface VectorPlatformInterface
     public function toVector(string $value): VectorInterface;
 
     /**
-     * The statements adding a vector column and its index to an existing table.
+     * The statements sizing the mapped vector column and indexing it.
      *
      * @param positive-int $dimensions
      *
@@ -78,9 +78,9 @@ interface VectorPlatformInterface
     public function getSetupSql(string $table, string $column, string $indexName, int $dimensions, Distance $distance): array;
 
     /**
-     * The statements removing the vector column and its index again.
+     * The statements removing the vector index again.
      *
      * @return list<string>
      */
-    public function getDropSql(string $table, string $column, string $indexName): array;
+    public function getDropSql(string $indexName): array;
 }

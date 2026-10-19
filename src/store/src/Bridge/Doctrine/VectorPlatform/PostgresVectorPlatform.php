@@ -80,21 +80,26 @@ final class PostgresVectorPlatform implements VectorPlatformInterface
             Distance::InnerProduct => 'vector_ip_ops',
         };
 
+        $definition = \sprintf('USING hnsw (%s %s)', $column, $opclass);
+
         return [
             'CREATE EXTENSION IF NOT EXISTS vector',
-            \sprintf('ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s %s', $table, $column, $this->getColumnDeclarationSql($dimensions)),
-            // The column usually exists already, created unsized by the schema tooling from the
-            // entity mapping. An unsized vector column cannot be indexed, so size it either way.
+            // Replaces the btree index the schema tool creates for an index declared on the entity
+            \sprintf(
+                "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = '%s' AND indexdef NOT LIKE '%%%s') THEN DROP INDEX %s; END IF; END $$",
+                str_replace("'", "''", $indexName),
+                str_replace("'", "''", $definition),
+                $indexName,
+            ),
             \sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s', $table, $column, $this->getColumnDeclarationSql($dimensions)),
-            \sprintf('CREATE INDEX IF NOT EXISTS %s ON %s USING hnsw (%s %s)', $indexName, $table, $column, $opclass),
+            \sprintf('CREATE INDEX IF NOT EXISTS %s ON %s %s', $indexName, $table, $definition),
         ];
     }
 
-    public function getDropSql(string $table, string $column, string $indexName): array
+    public function getDropSql(string $indexName): array
     {
         return [
             \sprintf('DROP INDEX IF EXISTS %s', $indexName),
-            \sprintf('ALTER TABLE %s DROP COLUMN IF EXISTS %s', $table, $column),
         ];
     }
 }

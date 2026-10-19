@@ -79,15 +79,11 @@ final class SqliteVectorPlatform implements VectorPlatformInterface
 
     public function getSetupSql(string $table, string $column, string $indexName, int $dimensions, Distance $distance): array
     {
-        return [
-            \sprintf('ALTER TABLE %s ADD COLUMN %s %s', $table, $column, $this->getColumnDeclarationSql($dimensions)),
-        ];
+        return [];
     }
 
-    public function getDropSql(string $table, string $column, string $indexName): array
+    public function getDropSql(string $indexName): array
     {
-        return [
-            \sprintf('ALTER TABLE %s DROP COLUMN %s', $table, $column),
-        ];
+        return [];
     }
 }

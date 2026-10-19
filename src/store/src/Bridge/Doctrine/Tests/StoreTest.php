@@ -111,6 +111,19 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $this->countArticles());
     }
 
+    public function testDroppingKeepsTheColumnAndTheEntities()
+    {
+        $article = $this->persist(new Article('Reality TV'));
+        $store = $this->store();
+        $store->setup();
+        $store->add(new VectorDocument($article->getId(), new Vector([1.0])));
+
+        $store->drop();
+
+        $this->assertNull($this->storedVector($article));
+        $this->assertSame(1, $this->countArticles());
+    }
+
     public function testCountsOnlyEntitiesCarryingAVector()
     {
         $first = $this->persist(new Article('First'));

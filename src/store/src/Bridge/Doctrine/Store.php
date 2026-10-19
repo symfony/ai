@@ -60,10 +60,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * Adds the vector column and its index to the entity's table.
-     *
-     * Applications that keep their schema in migrations do not need this - declaring the field on
-     * the entity is enough for the regular Doctrine tooling to pick the column up.
+     * Sizes the vector column the entity mapping created and indexes it.
      *
      * @param array{dimensions?: positive-int} $options
      */
@@ -76,13 +73,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    /**
+     * Drops the vector index and clears the vectors, leaving the column to the schema tooling.
+     */
     public function drop(array $options = []): void
     {
         $connection = $this->entityManager->getConnection();
 
-        foreach ($this->vectorPlatform()->getDropSql($this->tableName(), $this->vectorColumn(), $this->indexName()) as $sql) {
+        foreach ($this->vectorPlatform()->getDropSql($this->indexName()) as $sql) {
             $connection->executeStatement($sql);
         }
+
+        $this->clear();
     }
 
     /**
