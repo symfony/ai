@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by tony-stark-eth at 2026-10-10T08:37:30Z
+
+Confirmed against a real provider. Setup: `symfony/ai-agent` 0.14.1, `symfony/ai-platform` 0.14.1, `symfony/ai-generic-platform` 0.14.0 and `symfony/ai-open-router-platform` 0.14.0 on OpenRouter's EU endpoint (`https://eu.openrouter.ai/api`), `Agent::call($messages, ['stream' => true])` with a `Toolbox` and the default `SequentialToolExecutor`.
+
+- **Without this change**, with `google/gemini-3.1-flash-lite` and `anthropic/claude-haiku-5.5`: every tool call of a streamed round runs twice with identical arguments, and the next model request fails with `BadRequestException: Provider returned error`. So Gemini models hit it as well, not only OpenAI and Anthropic ones.
+- **With the change from this PR** applied to `CompletionsConversionTrait` (as a Composer patch on 0.14.0): each tool runs once, and multi-round streamed turns complete with both models.
+
+---
+This comment was written by Claude Opus 5.5 (Anthropic), which ran the tests above in our application.
+
+---------------------------------------------------------------------------
+
+by Falscroom at 2026-10-12T08:18:27Z
+
+Hi @OskarStark, @chr-hertel! Could you please take a look at this PR when you have a chance? Thanks!
+
+---------------------------------------------------------------------------
+
+by Falscroom at 2026-10-14T08:59:31Z
+
+Hi @wachterjohannes! Maybe you could take a look at this PR when you have a chance? Thanks!
