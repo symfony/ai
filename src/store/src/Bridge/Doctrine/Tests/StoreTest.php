@@ -19,22 +19,19 @@ use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\SchemaTool;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\Doctrine\EntityVectorDocument;
 use Symfony\AI\Store\Bridge\Doctrine\Store;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\FirstDimensionVectorPlatform;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Note;
 use Symfony\AI\Store\Bridge\Doctrine\Type\VectorType;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
+use Symfony\Bridge\Doctrine\Types\UlidType;
 
-/**
- * Runs against a real (SQLite) entity manager: what this store does is almost entirely a matter of
- * addressing the right table and column, which mocks would only assert back at the test.
- *
- * Similarity queries are the exception - their distance functions come from sqlite-vec, which is not
- * loaded here - so they are covered by the dialect tests instead.
- */
 final class StoreTest extends TestCase
 {
     private EntityManagerInterface $entityManager;
@@ -43,6 +40,10 @@ final class StoreTest extends TestCase
     {
         if (!Type::hasType(VectorType::NAME)) {
             Type::addType(VectorType::NAME, VectorType::class);
+        }
+
+        if (!Type::hasType(UlidType::NAME)) {
+            Type::addType(UlidType::NAME, UlidType::class);
         }
 
         $configuration = ORMSetup::createAttributeMetadataConfiguration([__DIR__.'/Fixtures'], true);
@@ -56,7 +57,10 @@ final class StoreTest extends TestCase
         $this->entityManager = new EntityManager($connection, $configuration);
 
         $schemaTool = new SchemaTool($this->entityManager);
-        $schemaTool->createSchema([$this->entityManager->getClassMetadata(Article::class)]);
+        $schemaTool->createSchema([
+            $this->entityManager->getClassMetadata(Article::class),
+            $this->entityManager->getClassMetadata(Note::class),
+        ]);
     }
 
     public function testWritesTheVectorOntoTheRowOfItsEntity()
@@ -162,6 +166,56 @@ final class StoreTest extends TestCase
         $this->store()->query(new TextQuery(['reality']));
     }
 
+    public function testRanksEntitiesByDistance()
+    {
+        $near = $this->persist(new Article('Near'));
+        $far = $this->persist(new Article('Far'));
+        $this->persist(new Article('Not indexed'));
+        $store = $this->queryableStore(Article::class);
+        $store->add([
+            new VectorDocument($far->getId(), new Vector([5.0])),
+            new VectorDocument($near->getId(), new Vector([1.5])),
+        ]);
+
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([1.0]))), false);
+
+        $this->assertSame([(string) $near->getId(), (string) $far->getId()], array_map(static fn (EntityVectorDocument $document): string => (string) $document->getId(), $documents));
+        $this->assertSame($near, $documents[0]->getEntity());
+        $this->assertSame(0.5, $documents[0]->getScore());
+        $this->assertSame([5.0], $documents[1]->getVector()->getData());
+    }
+
+    public function testLeavesOutEntitiesBeyondTheMaxScore()
+    {
+        $near = $this->persist(new Article('Near'));
+        $far = $this->persist(new Article('Far'));
+        $store = $this->queryableStore(Article::class);
+        $store->add([
+            new VectorDocument($near->getId(), new Vector([1.5])),
+            new VectorDocument($far->getId(), new Vector([5.0])),
+        ]);
+
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([1.0])), ['maxScore' => 1.0]), false);
+
+        $this->assertCount(1, $documents);
+        $this->assertSame($near, $documents[0]->getEntity());
+    }
+
+    public function testFindsEntitiesWithABinaryIdentifier()
+    {
+        $note = new Note('Reality TV');
+        $this->entityManager->persist($note);
+        $this->entityManager->flush();
+        $store = $this->queryableStore(Note::class);
+        $store->add(new VectorDocument((string) $note->getId(), new Vector([1.0])));
+
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([1.0]))), false);
+
+        $this->assertCount(1, $documents);
+        $this->assertSame($note, $documents[0]->getEntity());
+        $this->assertSame((string) $note->getId(), $documents[0]->getId());
+    }
+
     public function testRefusesAFieldTheEntityDoesNotHave()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -173,6 +227,14 @@ final class StoreTest extends TestCase
     private function store(string $vectorField = 'embedding'): Store
     {
         return new Store($this->entityManager, Article::class, $vectorField);
+    }
+
+    /**
+     * @param class-string $entityClass
+     */
+    private function queryableStore(string $entityClass): Store
+    {
+        return new Store($this->entityManager, $entityClass, vectorPlatform: new FirstDimensionVectorPlatform());
     }
 
     private function persist(Article $article): Article

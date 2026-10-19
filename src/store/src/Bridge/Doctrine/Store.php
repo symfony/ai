@@ -203,7 +203,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $types = [];
 
         if (isset($options['maxScore'])) {
-            $whereClauses[] = \sprintf('%s <= :maxScore', $distanceSql);
+            // DBAL binds floats as strings, which SQLite compares as text
+            $whereClauses[] = \sprintf('%s <= CAST(:maxScore AS DOUBLE PRECISION)', $distanceSql);
             $params['maxScore'] = $options['maxScore'];
         }
 
@@ -257,8 +258,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $documents = [];
-        foreach ($rows as $row) {
-            $entity = $entitiesById[$this->identifierAsString($row['id'])] ?? null;
+        foreach ($rows as $i => $row) {
+            $id = $this->identifierAsString($identifiers[$i]);
+            $entity = $entitiesById[$id] ?? null;
 
             // A row can disappear between the similarity query and the hydration of its entity.
             if (null === $entity) {
@@ -267,7 +269,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
             $documents[] = new EntityVectorDocument(
                 entity: $entity,
-                id: $this->identifierAsString($row['id']),
+                id: $id,
                 vector: $vectorPlatform->toVector((string) $row['vector']),
                 score: (float) $row['score'],
             );

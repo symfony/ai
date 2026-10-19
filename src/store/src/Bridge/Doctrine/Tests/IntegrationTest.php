@@ -129,6 +129,24 @@ final class IntegrationTest extends TestCase
         $this->assertSame([0.25, -0.5, 0.75], $documents[0]->getVector()->getData());
     }
 
+    public function testLeavesOutEntitiesBeyondTheMaxScore()
+    {
+        $store = $this->store();
+        $store->setup(['dimensions' => 3]);
+        $near = $this->persist(new Article('Near'));
+        $far = $this->persist(new Article('Far'));
+
+        $store->add([
+            new VectorDocument($near->getId(), new Vector([1.0, 0.1, 0.0])),
+            new VectorDocument($far->getId(), new Vector([0.0, 1.0, 0.0])),
+        ]);
+
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['maxScore' => 0.5]), false);
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('Near', $this->titleOf($documents[0]));
+    }
+
     public function testNarrowsResultsWithAWhereClause()
     {
         $store = $this->store();

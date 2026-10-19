@@ -38,6 +38,7 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
         "symfony/cache": "^7.3|^8.0",
+        "symfony/doctrine-bridge": "^7.3|^8.0",
         "symfony/uid": "^7.3|^8.0"
     },
     "minimum-stability": "dev",
