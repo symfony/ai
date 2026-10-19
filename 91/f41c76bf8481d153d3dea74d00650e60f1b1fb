@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by carsonbot at 2026-10-07T23:22:41Z
+
+It looks like you unchecked the "Allow edits from maintainer" box. That is fine, but please note that if you have multiple commits, you'll need to squash your commits into one before this can be merged. Or, you can check the "Allow edits from maintainers" box and the maintainer can squash for you.
+
+Cheers!
+
+Carsonbot
+
+---------------------------------------------------------------------------
+
+by manzari at 2026-10-11T15:51:36Z
+
+> not sure if we can maybe limit impact more to the object result or is this safe either way? (didn't test yet)
+
+Its safe either way, this approach would keep the unwrapping general so it matches what single part calls would have stored and the next unexpected part type will not mess things up again. Both is good, let me know what you prefer (:
