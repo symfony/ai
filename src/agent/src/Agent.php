@@ -12,7 +12,6 @@
 namespace Symfony\AI\Agent;
 
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Context\ContextProcessorInterface;
 use Symfony\AI\Agent\Context\Instruction;
@@ -77,11 +76,7 @@ final class Agent implements AgentInterface
             $toolExecutor = new SequentialToolExecutor($toolbox);
         }
 
-        $processors = [
-            new InstructionProcessor($translator, $includeToolsInInstruction ? $toolbox : null, $logger ?? new NullLogger()),
-            new AttachmentProcessor(),
-        ];
-
+        $processors = [];
         foreach ($contextProcessors as $processor) {
             if (!$processor instanceof ContextProcessorInterface) {
                 throw new InvalidArgumentException(\sprintf('Context processor "%s" must implement "%s".', get_debug_type($processor), ContextProcessorInterface::class));
@@ -90,8 +85,17 @@ final class Agent implements AgentInterface
             $processors[] = $processor;
         }
 
-        // last, so the tools option a processor sets is exposed and enforced
-        if ($toolbox instanceof ToolboxInterface) {
+        // a built-in processor among the given ones keeps its position, otherwise it gets its default one
+        if (!$this->contains($processors, AttachmentProcessor::class)) {
+            array_unshift($processors, new AttachmentProcessor());
+        }
+
+        if (!$this->contains($processors, InstructionProcessor::class)) {
+            array_unshift($processors, new InstructionProcessor($translator, $includeToolsInInstruction ? $toolbox : null, $logger));
+        }
+
+        // last by default, so the tools option a processor sets is exposed and enforced
+        if ($toolbox instanceof ToolboxInterface && !$this->contains($processors, ToolProcessor::class)) {
             $processors[] = new ToolProcessor($toolbox);
         }
 
@@ -163,5 +167,20 @@ final class Agent implements AgentInterface
         }
 
         return $options['model'];
+    }
+
+    /**
+     * @param list<ContextProcessorInterface>         $processors
+     * @param class-string<ContextProcessorInterface> $class
+     */
+    private function contains(array $processors, string $class): bool
+    {
+        foreach ($processors as $processor) {
+            if ($processor instanceof $class) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

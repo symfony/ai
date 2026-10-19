@@ -12,10 +12,13 @@ CHANGELOG
    `ai.agent.context_processor` tag, collected into the agent's context processor argument. Services implementing
    `Context\ContextProcessorInterface` are autoconfigured with it, and the `AsInputProcessor`/`AsOutputProcessor`
    attributes are replaced by `AsContextProcessor`
- * [BC BREAK] The agent's system prompt is passed to the `Agent` as its `instruction` instead of being registered as
-   the `ai.agent.*.system_prompt_processor` service, and memory is wired as `ai.agent.*.memory_processor`
- * [BC BREAK] Remove the `ai.tool.agent_processor.*` services; the toolbox and its settings (`max_tool_calls`,
-   `exclude_tool_messages`, `include_sources`) are passed to the `Agent` directly
+ * [BC BREAK] The agent's system prompt is passed to the `Agent` as its `instruction` and injected by the
+   `ai.agent.*.instruction_processor` service instead of the `ai.agent.*.system_prompt_processor` service, and memory is
+   wired as `ai.agent.*.memory_processor`
+ * [BC BREAK] Replace the `ai.tool.agent_processor.*` services with `ai.agent.*.tool_processor`; the toolbox and its
+   settings (`max_tool_calls`, `exclude_tool_messages`, `include_sources`) are passed to the `Agent` directly
+ * Register the built-in instruction, attachment and tool processors of every agent as context processor services with
+   the priorities `100`, `90` and `-100`, so custom processors can be ordered around them
 
 0.14
 ----

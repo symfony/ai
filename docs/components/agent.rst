@@ -1113,6 +1113,13 @@ The agent runs the processors in this order:
    ``ai.agent.context_processor``, ordered by their priority;
 #. the built-in processor for the toolbox, so a ``tools`` option set by a processor is still exposed and enforced.
 
+A built-in processor passed among the processors keeps its position instead, so a processor can also run before the
+instruction is injected or after the tools are exposed::
+
+    use Symfony\AI\Agent\Context\Processor\InstructionProcessor;
+
+    $agent = new Agent($platform, $model, [$myProcessor, new InstructionProcessor()], instruction: '...');
+
 Result-aware Context Processors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

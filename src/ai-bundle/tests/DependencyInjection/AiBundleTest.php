@@ -6693,7 +6693,7 @@ class AiBundleTest extends TestCase
         $arguments = $container->getDefinition('ai.agent.test_agent')->getArguments();
 
         $this->assertEquals(new Reference('ai.agent.prompt.test_agent'), $arguments['$instruction']);
-        $this->assertFalse($arguments['$includeToolsInInstruction']); // include_tools is disabled
+        $this->assertNull($container->getDefinition('ai.agent.test_agent.instruction_processor')->getArgument('$toolbox')); // include_tools is disabled
     }
 
     #[TestDox('System prompt with include_tools enabled works correctly')]
@@ -6719,7 +6719,7 @@ class AiBundleTest extends TestCase
         $arguments = $container->getDefinition('ai.agent.test_agent')->getArguments();
 
         $this->assertSame('You are a helpful assistant.', $arguments['$instruction']);
-        $this->assertTrue($arguments['$includeToolsInInstruction']); // include_tools is enabled
+        $this->assertEquals(new Reference('ai.toolbox.test_agent'), $container->getDefinition('ai.agent.test_agent.instruction_processor')->getArgument('$toolbox')); // include_tools is enabled
         $this->assertSame('ai.toolbox.test_agent', (string) $arguments['$toolbox']);
     }
 
@@ -6745,7 +6745,7 @@ class AiBundleTest extends TestCase
         $arguments = $container->getDefinition('ai.agent.test_agent')->getArguments();
 
         $this->assertSame('You are a helpful assistant.', $arguments['$instruction']);
-        $this->assertFalse($arguments['$includeToolsInInstruction']); // include_tools defaults to false
+        $this->assertNull($container->getDefinition('ai.agent.test_agent.instruction_processor')->getArgument('$toolbox')); // include_tools defaults to false
     }
 
     public function testSystemPromptFileIsConfiguredAsTemplate()
@@ -6823,7 +6823,7 @@ class AiBundleTest extends TestCase
         $arguments = $container->getDefinition('ai.agent.test_agent')->getArguments();
 
         $this->assertSame('Valid prompt', $arguments['$instruction']);
-        $this->assertTrue($arguments['$includeToolsInInstruction']); // include_tools is enabled
+        $this->assertEquals(new Reference('ai.toolbox.test_agent'), $container->getDefinition('ai.agent.test_agent.instruction_processor')->getArgument('$toolbox')); // include_tools is enabled
         $this->assertSame('ai.toolbox.test_agent', (string) $arguments['$toolbox']);
     }
 
@@ -6905,7 +6905,7 @@ class AiBundleTest extends TestCase
         $arguments = $container->getDefinition('ai.agent.test_agent')->getArguments();
 
         $this->assertSame('You are a helpful assistant.', $arguments['$instruction']);
-        $this->assertFalse($arguments['$includeToolsInInstruction']); // include_tools not enabled with string format
+        $this->assertNull($container->getDefinition('ai.agent.test_agent.instruction_processor')->getArgument('$toolbox')); // include_tools not enabled with string format
     }
 
     #[TestDox('Memory provider configuration creates memory input processor')]

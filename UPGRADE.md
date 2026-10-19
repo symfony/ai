@@ -194,9 +194,9 @@ AI Bundle
    +final class MyProcessor implements ContextProcessorInterface
    ```
 
-   The `ai.agent.*.system_prompt_processor` and `ai.tool.agent_processor.*` services are gone: the system prompt and
-   the toolbox are passed to the `Agent` itself. The `ai.agent.*.memory_input_processor` service was renamed to
-   `ai.agent.*.memory_processor`. The `prompt`, `tools`, `max_tool_calls`, `exclude_tool_messages` and `include_sources`
+   The `ai.agent.*.system_prompt_processor` and `ai.tool.agent_processor.*` services were replaced by
+   `ai.agent.*.instruction_processor` (priority `100`) and `ai.agent.*.tool_processor` (priority `-100`), and the
+   `ai.agent.*.memory_input_processor` service was renamed to `ai.agent.*.memory_processor`. The `prompt`, `tools`, `max_tool_calls`, `exclude_tool_messages` and `include_sources`
    configuration keys are unchanged.
 
 Store

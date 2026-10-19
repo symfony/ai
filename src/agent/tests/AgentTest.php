@@ -20,11 +20,14 @@ use Symfony\AI\Agent\Context\AgentResult;
 use Symfony\AI\Agent\Context\Context;
 use Symfony\AI\Agent\Context\ContextProcessorInterface;
 use Symfony\AI\Agent\Context\Instruction;
+use Symfony\AI\Agent\Context\Processor\InstructionProcessor;
+use Symfony\AI\Agent\Context\Processor\ToolProcessor;
 use Symfony\AI\Agent\Context\ResultAwareContextProcessorInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Tests\Fixtures\MessageBagCapturingProcessor;
+use Symfony\AI\Agent\Tests\Fixtures\SystemMessageRecordingProcessor;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
@@ -376,6 +379,55 @@ final class AgentTest extends TestCase
         $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
 
         $agent->call(new MessageBag())->getResult();
+    }
+
+    public function testAGivenInstructionProcessorKeepsItsPosition()
+    {
+        $before = new SystemMessageRecordingProcessor();
+        $after = new SystemMessageRecordingProcessor();
+
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$before, new InstructionProcessor(), $after], instruction: 'You are a helpful assistant.');
+        $agent->call('Hello there')->getResult();
+
+        $this->assertFalse($before->hadSystemMessage);
+        $this->assertTrue($after->hadSystemMessage);
+    }
+
+    public function testAGivenToolProcessorKeepsItsPositionAndIsNotAddedTwice()
+    {
+        $clock = new Tool(new ExecutionReference('Clock', '__invoke'), 'clock', 'Tells the time', null);
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$clock]);
+
+        $seen = null;
+        $after = new class($seen) implements ContextProcessorInterface {
+            public function __construct(public mixed &$seen)
+            {
+            }
+
+            public static function supportedTypes(): array
+            {
+                return [];
+            }
+
+            public function process(AgentRequest $request, AgentContext $context): void
+            {
+                $this->seen = $request->getOptions()['tools'] ?? null;
+            }
+        };
+
+        $captured = null;
+        $platform = new InMemoryPlatform(static function (mixed $model, mixed $input, array $options) use (&$captured): TextResult {
+            $captured = $options;
+
+            return new TextResult('Hi');
+        });
+
+        $agent = new Agent($platform, 'gpt-4o', [new ToolProcessor($toolbox), $after], toolbox: $toolbox);
+        $agent->call('What time is it?')->getResult();
+
+        $this->assertSame([$clock], $seen);
+        $this->assertSame([$clock], $captured['tools'] ?? null);
     }
 
     public function testAToolsOptionSetByAProcessorIsExposedAsTools()

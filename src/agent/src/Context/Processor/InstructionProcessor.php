@@ -36,11 +36,14 @@ final class InstructionProcessor implements ContextProcessorInterface
     /**
      * @param ToolboxInterface|null $toolbox the toolbox whose tool definitions get appended to the instruction
      */
+    private readonly LoggerInterface $logger;
+
     public function __construct(
         private readonly ?TranslatorInterface $translator = null,
         private readonly ?ToolboxInterface $toolbox = null,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public static function supportedTypes(): array

@@ -962,6 +962,18 @@ attribute::
         }
     }
 
+Processors with a higher priority run first. The built-in processors of every agent are registered as services as
+well, so a custom processor can be placed around them:
+
+=========================================  ========  ===================================================
+Service                                    Priority  Purpose
+=========================================  ========  ===================================================
+``ai.agent.<name>.instruction_processor``  ``100``   injects the instruction as system message
+``ai.agent.<name>.attachment_processor``   ``90``    attaches context content to the user message
+``ai.agent.<name>.memory_processor``       ``-40``   adds the configured memory to the system message
+``ai.agent.<name>.tool_processor``         ``-100``  exposes the toolbox and enforces the tools option
+=========================================  ========  ===================================================
+
 Register Tools
 ~~~~~~~~~~~~~~
 

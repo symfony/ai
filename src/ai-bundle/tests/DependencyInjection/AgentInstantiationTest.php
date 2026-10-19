@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -79,6 +80,41 @@ final class AgentInstantiationTest extends TestCase
 
         $this->assertInstanceOf(Agent::class, $agent);
         $this->assertSame('my_agent', $agent->getName());
+    }
+
+    #[TestDox('The built-in context processors are ordered by priority, so custom ones can run in between')]
+    public function testTheBuiltInContextProcessorsAreOrderedByPriority()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', false);
+        $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', 'public');
+        $container->setDefinition('custom_processor', new Definition(\stdClass::class))
+            ->addTag('ai.agent.context_processor', ['agent' => 'ai.agent.my_agent', 'priority' => 150]);
+
+        (new AiBundle())->getContainerExtension()->load([
+            'ai' => [
+                'platform' => ['openai' => ['api_key' => 'sk-test']],
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => true,
+                        'memory' => 'The user likes brief answers.',
+                    ],
+                ],
+            ],
+        ], $container);
+        (new ProcessorCompilerPass())->process($container);
+
+        $processors = array_map('strval', $container->getDefinition('ai.agent.my_agent')->getArgument('$contextProcessors'));
+
+        $this->assertSame([
+            'custom_processor',
+            'ai.agent.my_agent.instruction_processor',
+            'ai.agent.my_agent.attachment_processor',
+            'ai.agent.my_agent.memory_processor',
+            'ai.agent.my_agent.tool_processor',
+        ], $processors);
     }
 
     /**

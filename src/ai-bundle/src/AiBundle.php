@@ -20,7 +20,10 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsContextProcessor;
 use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
 use Symfony\AI\Agent\Context\ContextProcessorInterface;
+use Symfony\AI\Agent\Context\Processor\AttachmentProcessor;
+use Symfony\AI\Agent\Context\Processor\InstructionProcessor;
 use Symfony\AI\Agent\Context\Processor\MemoryProcessor;
+use Symfony\AI\Agent\Context\Processor\ToolProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
@@ -1587,6 +1590,7 @@ final class AiBundle extends AbstractBundle
         }
 
         // SYSTEM PROMPT
+        $includeTools = false;
         if (isset($config['prompt'])) {
             $includeTools = isset($config['prompt']['include_tools']) && $config['prompt']['include_tools'];
 
@@ -1626,9 +1630,7 @@ final class AiBundle extends AbstractBundle
                 $prompt = '';
             }
 
-            $agentDefinition
-                ->setArgument('$instruction', $prompt)
-                ->setArgument('$includeToolsInInstruction', $includeTools);
+            $agentDefinition->setArgument('$instruction', $prompt);
         }
 
         // MEMORY PROVIDER
@@ -1655,14 +1657,28 @@ final class AiBundle extends AbstractBundle
             $container->setDefinition('ai.agent.'.$name.'.memory_processor', $memoryProcessorDefinition);
         }
 
+        // BUILT-IN CONTEXT PROCESSORS, registered as services so custom processors can be ordered around them
+        $container->setDefinition('ai.agent.'.$name.'.instruction_processor', new Definition(InstructionProcessor::class))
+            ->setArgument('$translator', new Reference('translator', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+            ->setArgument('$toolbox', $includeTools ? new Reference('ai.toolbox.'.$name) : null)
+            ->setArgument('$logger', new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
+            ->addTag('ai.agent.context_processor', ['agent' => $agentId, 'priority' => 100]);
+
+        $container->setDefinition('ai.agent.'.$name.'.attachment_processor', new Definition(AttachmentProcessor::class))
+            ->addTag('ai.agent.context_processor', ['agent' => $agentId, 'priority' => 90]);
+
+        if ($config['tools']['enabled']) {
+            $container->setDefinition('ai.agent.'.$name.'.tool_processor', new Definition(ToolProcessor::class))
+                ->setArgument('$toolbox', new Reference('ai.toolbox.'.$name))
+                ->addTag('ai.agent.context_processor', ['agent' => $agentId, 'priority' => -100]);
+        }
+
         // Named arguments on purpose: the Agent constructor grows over time, and positional indices would silently
         // shift onto the wrong parameter.
         $agentDefinition
             ->setArgument('$contextProcessors', []) // placeholder until ProcessorCompilerPass process.
             ->setArgument('$name', $name)
-            ->setArgument('$translator', new Reference('translator', ContainerInterface::NULL_ON_INVALID_REFERENCE))
             ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE))
-            ->setArgument('$logger', new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE))
         ;
 
         $container->setDefinition($agentId, $agentDefinition);
