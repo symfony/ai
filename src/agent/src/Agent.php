@@ -82,16 +82,17 @@ final class Agent implements AgentInterface
             new AttachmentProcessor(),
         ];
 
-        if ($toolbox instanceof ToolboxInterface) {
-            $processors[] = new ToolProcessor($toolbox);
-        }
-
         foreach ($contextProcessors as $processor) {
             if (!$processor instanceof ContextProcessorInterface) {
                 throw new InvalidArgumentException(\sprintf('Context processor "%s" must implement "%s".', get_debug_type($processor), ContextProcessorInterface::class));
             }
 
             $processors[] = $processor;
+        }
+
+        // last, so the tools option a processor sets is exposed and enforced
+        if ($toolbox instanceof ToolboxInterface) {
+            $processors[] = new ToolProcessor($toolbox);
         }
 
         $this->runner = new Runner(

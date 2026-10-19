@@ -25,6 +25,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Tests\Fixtures\MessageBagCapturingProcessor;
+use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Message\Content\Audio;
@@ -377,8 +378,92 @@ final class AgentTest extends TestCase
         $agent->call(new MessageBag())->getResult();
     }
 
+    public function testAToolsOptionSetByAProcessorIsExposedAsTools()
+    {
+        $clock = new Tool(new ExecutionReference('Clock', '__invoke'), 'clock', 'Tells the time', null);
+        $weather = new Tool(new ExecutionReference('Weather', '__invoke'), 'weather', 'Tells the weather', null);
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$clock, $weather]);
+
+        $captured = null;
+        $platform = new InMemoryPlatform(static function (mixed $model, mixed $input, array $options) use (&$captured): TextResult {
+            $captured = $options;
+
+            return new TextResult('Hi');
+        });
+
+        $agent = new Agent($platform, 'gpt-4o', [$this->toolsOptionProcessor(['clock'])], toolbox: $toolbox);
+        $agent->call('What time is it?')->getResult();
+
+        $this->assertSame([$clock], $captured['tools'] ?? null);
+    }
+
+    public function testAToolsOptionSetByAProcessorRestrictsTheToolCalls()
+    {
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([
+            new Tool(new ExecutionReference('Clock', '__invoke'), 'clock', 'Tells the time', null),
+            new Tool(new ExecutionReference('Weather', '__invoke'), 'weather', 'Tells the weather', null),
+        ]);
+        $toolbox->expects($this->never())->method('execute');
+
+        $platform = new InMemoryPlatform(static fn (): ToolCallResult => new ToolCallResult([new ToolCall('id1', 'weather')]));
+        $agent = new Agent($platform, 'gpt-4o', [$this->toolsOptionProcessor(['clock'])], toolbox: $toolbox);
+
+        $this->expectException(ToolNotFoundException::class);
+
+        $agent->call('What is the weather like?')->getResult();
+    }
+
+    public function testExcludedToolMessagesKeepTheInstructionInTheCallersMessageBag()
+    {
+        $toolCall = new ToolCall('id1', 'clock');
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([new Tool(new ExecutionReference('Clock', '__invoke'), 'clock', 'Tells the time', null)]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, '12:00'));
+
+        $invocation = 0;
+        $platform = new InMemoryPlatform(static function () use (&$invocation, $toolCall): ResultInterface {
+            return 0 === $invocation++ ? new ToolCallResult([$toolCall]) : new TextResult('It is noon.');
+        });
+
+        $agent = new Agent($platform, 'gpt-4o', instruction: 'You are a helpful assistant.', toolbox: $toolbox, excludeToolMessages: true);
+
+        $messages = new MessageBag(Message::ofUser('What time is it?'));
+        $agent->call($messages)->getResult();
+
+        $this->assertCount(2, $messages);
+        $this->assertInstanceOf(SystemMessage::class, $messages->getMessages()[0]);
+        $this->assertInstanceOf(UserMessage::class, $messages->getMessages()[1]);
+    }
+
     private function deferred(ResultInterface $result): DeferredResult
     {
         return new DeferredResult(new PlainConverter($result), $this->createMock(RawResultInterface::class), []);
+    }
+
+    /**
+     * @param list<string> $tools
+     */
+    private function toolsOptionProcessor(array $tools): ContextProcessorInterface
+    {
+        return new class($tools) implements ContextProcessorInterface {
+            /**
+             * @param list<string> $tools
+             */
+            public function __construct(private readonly array $tools)
+            {
+            }
+
+            public static function supportedTypes(): array
+            {
+                return [];
+            }
+
+            public function process(AgentRequest $request, AgentContext $context): void
+            {
+                $request->setOptions([...$request->getOptions(), 'tools' => $this->tools]);
+            }
+        };
     }
 }

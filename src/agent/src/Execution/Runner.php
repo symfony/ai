@@ -85,9 +85,6 @@ final class Runner
      */
     public function run(AgentInterface $agent, string $model, MessageBag $messages, Context $context, array $options, ?Cancellation $cancellation = null): \Generator
     {
-        $allowedTools = $this->allowedTools($options);
-        $messages = $this->excludeToolMessages ? clone $messages : $messages;
-
         $request = new AgentRequest($model, $messages, $options, $context);
         $agentContext = new AgentContext($agent);
 
@@ -97,8 +94,11 @@ final class Runner
         }
 
         $model = $request->getModel();
-        $messages = $request->getMessageBag();
         $options = $request->getOptions();
+        $allowedTools = $this->allowedTools($options);
+
+        // processors may mutate the caller's bag, only the tool calling rounds are kept out of it
+        $messages = $this->excludeToolMessages ? clone $request->getMessageBag() : $request->getMessageBag();
 
         $sources = new SourceCollection();
         $metadata = new Metadata();
@@ -335,7 +335,16 @@ final class Runner
             return null;
         }
 
-        $names = array_values(array_filter($options['tools'], static fn (mixed $tool): bool => \is_string($tool)));
+        $names = [];
+        foreach ($options['tools'] as $tool) {
+            if (\is_string($tool)) {
+                $names[] = $tool;
+            }
+
+            if ($tool instanceof Tool) {
+                $names[] = $tool->getName();
+            }
+        }
 
         // only restrict tools if tool names are provided as option, an empty option allows no tool at all
         if ([] !== $names || [] === $options['tools']) {
