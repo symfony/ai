@@ -11,13 +11,16 @@
 
 namespace Symfony\AI\Platform\Bridge\Mistral\Tests\Llm;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Mistral\Llm\ResultConverter;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
@@ -250,6 +253,77 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello world', $result->getContent());
+    }
+
+    public function testItConvertsABatchSubmissionIntoAJob()
+    {
+        $result = (new ResultConverter())->convert(self::batchResponse(), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+
+        $handle = $result->getContent();
+
+        $this->assertSame('batch_123', $handle->getId());
+        $this->assertSame('mistral', $handle->getProvider());
+        $this->assertSame('mistral_batch', $handle->get('kind'));
+        $this->assertSame('/v1/chat/completions', $handle->get('endpoint'));
+        // Mistral's own default, since neither the job nor the invocation stated a timeout.
+        $this->assertSame(86400, $handle->getMaxDuration());
+        $this->assertSame(60.0, $handle->getPollInterval());
+    }
+
+    #[TestWith([6, 21600])]
+    #[TestWith([24, 86400])]
+    #[TestWith([null, 86400])]
+    #[TestWith(['whenever', 86400])]
+    public function testItCarriesTheTimeoutOfTheInvocationOnTheHandle(mixed $timeoutHours, int $expected)
+    {
+        $result = (new ResultConverter())->convert(self::batchResponse(), ['batch' => true, 'timeout_hours' => $timeoutHours]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+        $this->assertSame($expected, $result->getContent()->getMaxDuration());
+    }
+
+    public function testTheBatchHandleCarriesTheProviderNameTheConverterWasCreatedWith()
+    {
+        $result = (new ResultConverter('mistral-eu'))->convert(self::batchResponse(), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+        $this->assertSame('mistral-eu', $result->getContent()->getProvider());
+    }
+
+    public function testItReportsABatchMistralRejects()
+    {
+        $response = (new MockHttpClient(new JsonMockResponse(['message' => 'Unsupported endpoint.'], ['http_code' => 422])))
+            ->request('POST', 'https://api.mistral.ai/v1/batch/jobs');
+
+        $this->expectException(RuntimeException::class);
+
+        (new ResultConverter())->convert(new RawHttpResult($response), ['batch' => true]);
+    }
+
+    public function testItFailsWhenTheBatchResponseCarriesNoIdentifier()
+    {
+        $response = (new MockHttpClient(new JsonMockResponse(['status' => 'QUEUED'])))
+            ->request('POST', 'https://api.mistral.ai/v1/batch/jobs');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The Mistral response does not contain a batch identifier.');
+
+        (new ResultConverter())->convert(new RawHttpResult($response), ['batch' => true]);
+    }
+
+    private static function batchResponse(): RawHttpResult
+    {
+        $response = (new MockHttpClient(new JsonMockResponse([
+            'id' => 'batch_123',
+            'object' => 'batch',
+            'endpoint' => '/v1/chat/completions',
+            'model' => 'mistral-large-latest',
+            'status' => 'QUEUED',
+        ])))->request('POST', 'https://api.mistral.ai/v1/batch/jobs');
+
+        return new RawHttpResult($response);
     }
 
     private function httpResponseStub(): ResponseInterface
