@@ -30,6 +30,7 @@ use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -58,7 +59,7 @@ final class Agent implements AgentInterface
         private readonly string $model,
         iterable $contextProcessors = [],
         private readonly string $name = 'agent',
-        string|\Stringable|TranslatableInterface|File|null $instruction = null,
+        string|\Stringable|TranslatableInterface|File|Template|null $instruction = null,
         Context $context = new Context(),
         ?ToolboxInterface $toolbox = null,
         ?ToolExecutorInterface $toolExecutor = null,

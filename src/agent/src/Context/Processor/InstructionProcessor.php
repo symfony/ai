@@ -21,6 +21,7 @@ use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -69,10 +70,28 @@ final class InstructionProcessor implements ContextProcessorInterface
         }
 
         // mutate the caller's bag in place, so the injected system message ends up in it
-        $messages->prepend(Message::forSystem($this->appendTools(implode(\PHP_EOL.\PHP_EOL, $rendered))));
+        $messages->prepend(Message::forSystem($this->appendTools($this->combine($rendered))));
     }
 
-    private function appendTools(string $instruction): string
+    /**
+     * @param list<string|Template> $rendered
+     */
+    private function combine(array $rendered): string|Template
+    {
+        if (1 === \count($rendered)) {
+            return $rendered[0];
+        }
+
+        foreach ($rendered as $instruction) {
+            if ($instruction instanceof Template) {
+                throw new RuntimeException('A template instruction cannot be combined with other instructions.');
+            }
+        }
+
+        return implode(\PHP_EOL.\PHP_EOL, $rendered);
+    }
+
+    private function appendTools(string|Template $instruction): string|Template
     {
         if (!$this->toolbox instanceof ToolboxInterface || [] === $this->toolbox->getTools()) {
             return $instruction;
@@ -88,6 +107,20 @@ final class InstructionProcessor implements ContextProcessorInterface
             $this->toolbox->getTools(),
         ));
 
+        if ($instruction instanceof Template) {
+            $toolsPrompt = \PHP_EOL.\PHP_EOL
+                .'# Tools'.\PHP_EOL.\PHP_EOL
+                ."The following tools are available to assist you in completing the user's request:".\PHP_EOL.\PHP_EOL
+                .$tools;
+
+            // an expression template is code, so the tools are concatenated as a string literal
+            $template = 'expression' === $instruction->getType()
+                ? '('.$instruction->getTemplate().') ~ '.json_encode($toolsPrompt, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)
+                : $instruction->getTemplate().$toolsPrompt;
+
+            return new Template($template, $instruction->getType());
+        }
+
         return <<<PROMPT
             {$instruction}
 
@@ -99,8 +132,12 @@ final class InstructionProcessor implements ContextProcessorInterface
             PROMPT;
     }
 
-    private function render(string|\Stringable|TranslatableInterface|File $content): string
+    private function render(string|\Stringable|TranslatableInterface|File|Template $content): string|Template
     {
+        if ($content instanceof Template) {
+            return $content;
+        }
+
         if ($content instanceof File) {
             return $content->asBinary();
         }

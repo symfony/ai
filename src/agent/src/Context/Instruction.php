@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Context;
 
 use Symfony\AI\Platform\Message\Content\File;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
@@ -22,11 +23,11 @@ use Symfony\Contracts\Translation\TranslatableInterface;
 final class Instruction
 {
     public function __construct(
-        private readonly string|\Stringable|TranslatableInterface|File $content,
+        private readonly string|\Stringable|TranslatableInterface|File|Template $content,
     ) {
     }
 
-    public function getContent(): string|\Stringable|TranslatableInterface|File
+    public function getContent(): string|\Stringable|TranslatableInterface|File|Template
     {
         return $this->content;
     }

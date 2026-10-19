@@ -28,6 +28,7 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\SystemMessage;
+use Symfony\AI\Platform\Message\Template;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
@@ -93,6 +94,65 @@ final class InstructionProcessorTest extends TestCase
         );
 
         $this->assertSame("Be brief.\n\nBe kind.", $messages->getMessages()[0]->getContent());
+    }
+
+    public function testItKeepsATemplateInstruction()
+    {
+        $messages = new MessageBag(Message::ofUser('This is a user message'));
+
+        $this->process(new InstructionProcessor(), $messages, new Instruction(Template::string('Hello {name}!')));
+
+        $content = $messages->getSystemMessage()?->getContent();
+        $this->assertInstanceOf(Template::class, $content);
+        $this->assertSame('Hello {name}!', $content->getTemplate());
+    }
+
+    public function testItAppendsTheToolsToATemplateInstruction()
+    {
+        $messages = new MessageBag(Message::ofUser('This is a user message'));
+        $processor = new InstructionProcessor(toolbox: $this->createToolbox(
+            new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'A tool', null),
+        ));
+
+        $this->process($processor, $messages, new Instruction(Template::string('Hello {name}!')));
+
+        $content = $messages->getSystemMessage()?->getContent();
+        $this->assertInstanceOf(Template::class, $content);
+        $this->assertStringStartsWith('Hello {name}!', $content->getTemplate());
+        $this->assertStringContainsString('# Tools', $content->getTemplate());
+    }
+
+    public function testItAppendsTheToolsToAnExpressionTemplateInstructionAsStringLiteral()
+    {
+        $messages = new MessageBag(Message::ofUser('This is a user message'));
+        $processor = new InstructionProcessor(toolbox: $this->createToolbox(
+            new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'A "helpful" tool', null),
+        ));
+
+        $this->process($processor, $messages, new Instruction(Template::expression('admin ? "ADMIN" : "USER"')));
+
+        $content = $messages->getSystemMessage()?->getContent();
+        $this->assertInstanceOf(Template::class, $content);
+
+        $prefix = '(admin ? "ADMIN" : "USER") ~ ';
+        $this->assertStringStartsWith($prefix, $content->getTemplate());
+
+        $toolsPrompt = json_decode(substr($content->getTemplate(), \strlen($prefix)), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsString($toolsPrompt);
+        $this->assertStringContainsString('A "helpful" tool', $toolsPrompt);
+    }
+
+    public function testItRefusesToCombineATemplateWithOtherInstructions()
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('A template instruction cannot be combined with other instructions.');
+
+        $this->process(
+            new InstructionProcessor(),
+            new MessageBag(Message::ofUser('This is a user message')),
+            new Instruction(Template::string('Hello {name}!')),
+            new Instruction('Be kind.'),
+        );
     }
 
     public function testItDoesNotIncludeToolsIfToolboxIsEmpty()
