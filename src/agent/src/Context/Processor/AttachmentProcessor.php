@@ -16,6 +16,8 @@ use Symfony\AI\Agent\Context\AgentRequest;
 use Symfony\AI\Agent\Context\ContextProcessorInterface;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\UserMessage;
 
 /**
  * Attaches platform content references (Document, Image, Audio, ...) supplied
@@ -38,12 +40,23 @@ final class AttachmentProcessor implements ContextProcessorInterface
         }
 
         $messages = $request->getMessageBag();
-        $userMessage = $messages->getUserMessage();
+        $userMessage = $this->latestUserMessage($messages);
         if (null === $userMessage) {
             return;
         }
 
         $merged = Message::ofUser(...$userMessage->getContent(), ...$contents);
         $request->setMessageBag($messages->replace($userMessage->getId(), $merged));
+    }
+
+    private function latestUserMessage(MessageBag $messages): ?UserMessage
+    {
+        foreach (array_reverse($messages->getMessages()) as $message) {
+            if ($message instanceof UserMessage) {
+                return $message;
+            }
+        }
+
+        return null;
     }
 }
