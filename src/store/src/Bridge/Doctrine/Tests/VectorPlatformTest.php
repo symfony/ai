@@ -15,7 +15,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Doctrine\Distance;
-use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\MariaDbVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\PostgresVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\SqliteVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformInterface;
@@ -36,7 +35,6 @@ final class VectorPlatformTest extends TestCase
     public static function provideColumnDeclarations(): iterable
     {
         yield 'postgres' => [new PostgresVectorPlatform(), 'vector(1536)', 'vector'];
-        yield 'mariadb' => [new MariaDbVectorPlatform(), 'VECTOR(1536)', 'VECTOR'];
         yield 'sqlite' => [new SqliteVectorPlatform(), 'TEXT', 'TEXT'];
     }
 
@@ -54,7 +52,6 @@ final class VectorPlatformTest extends TestCase
     public static function provideCosineDistances(): iterable
     {
         yield 'postgres' => [new PostgresVectorPlatform(), '(embedding <=> :vector)'];
-        yield 'mariadb' => [new MariaDbVectorPlatform(), 'VEC_DISTANCE_COSINE(embedding, VEC_FromText(:vector))'];
         yield 'sqlite' => [new SqliteVectorPlatform(), 'vec_distance_cosine(embedding, :vector)'];
     }
 
@@ -89,7 +86,6 @@ final class VectorPlatformTest extends TestCase
     public static function providePlatforms(): iterable
     {
         yield 'postgres' => [new PostgresVectorPlatform()];
-        yield 'mariadb' => [new MariaDbVectorPlatform()];
         yield 'sqlite' => [new SqliteVectorPlatform()];
     }
 
@@ -106,7 +102,6 @@ final class VectorPlatformTest extends TestCase
      */
     public static function providePlatformsWithoutInnerProduct(): iterable
     {
-        yield 'mariadb' => [new MariaDbVectorPlatform()];
         yield 'sqlite' => [new SqliteVectorPlatform()];
     }
 
@@ -136,7 +131,6 @@ final class VectorPlatformTest extends TestCase
     public static function provideSizingPlatforms(): iterable
     {
         yield 'postgres' => [new PostgresVectorPlatform(), 'ALTER COLUMN embedding TYPE vector(1536)'];
-        yield 'mariadb' => [new MariaDbVectorPlatform(), 'MODIFY COLUMN embedding VECTOR(1536)'];
     }
 
     public function testSqliteStoresVectorsWithoutTheExtension()

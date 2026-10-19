@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\Bridge\Doctrine\Tests;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -40,7 +39,6 @@ final class VectorTypeTest extends TestCase
     public static function providePlatforms(): iterable
     {
         yield 'postgres' => [new PostgreSQLPlatform(), 'vector'];
-        yield 'mariadb' => [new MariaDBPlatform(), 'VECTOR'];
         yield 'sqlite' => [new SQLitePlatform(), 'TEXT'];
     }
 
@@ -64,14 +62,11 @@ final class VectorTypeTest extends TestCase
         $this->assertNull($type->convertToPHPValue(null, $platform));
     }
 
-    public function testWrapsTheParameterOnlyWhereThePlatformNeedsIt()
+    public function testLeavesTheParameterUnwrapped()
     {
         $type = new VectorType();
 
-        // Postgres coerces the text literal in assignment context, MariaDB needs the function -
-        // and SQLite must stay untouched so that writing works without the sqlite-vec extension.
         $this->assertSame(':vector', $type->convertToDatabaseValueSQL(':vector', new PostgreSQLPlatform()));
-        $this->assertSame('VEC_FromText(:vector)', $type->convertToDatabaseValueSQL(':vector', new MariaDBPlatform()));
         $this->assertSame(':vector', $type->convertToDatabaseValueSQL(':vector', new SQLitePlatform()));
     }
 

@@ -18,7 +18,7 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 /**
  * Translates vector operations into the SQL dialect of a single database platform.
  *
- * Vector support is not standardized: pgvector overloads operators, MariaDB and sqlite-vec expose
+ * Vector support is not standardized: pgvector overloads operators, sqlite-vec exposes
  * functions, and each spells the column type, the conversion to and from text, and the index
  * differently. This interface isolates those differences from the store.
  *

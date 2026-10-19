@@ -8,7 +8,6 @@
         "bridge",
         "doctrine",
         "entity",
-        "mariadb",
         "orm",
         "pgvector",
         "postgres",

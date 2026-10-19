@@ -4,7 +4,7 @@ CHANGELOG
 0.15
 ----
 
- * Add `Bridge\Doctrine` store, keeping vectors in a column of the table a Doctrine entity already lives in and returning entities when queried, on PostgreSQL/pgvector, MariaDB and SQLite/sqlite-vec
+ * Add `Bridge\Doctrine` store, keeping vectors in a column of the table a Doctrine entity already lives in and returning entities when queried, on PostgreSQL/pgvector and SQLite/sqlite-vec
 
 0.14
 ----

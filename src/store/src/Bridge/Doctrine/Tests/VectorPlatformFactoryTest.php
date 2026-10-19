@@ -19,7 +19,6 @@ use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\MariaDbVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\PostgresVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\SqliteVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformFactory;
@@ -37,11 +36,6 @@ final class VectorPlatformFactoryTest extends TestCase
         $this->assertInstanceOf(SqliteVectorPlatform::class, VectorPlatformFactory::create(new SQLitePlatform()));
     }
 
-    public function testPicksTheMariaDbDialect()
-    {
-        $this->assertInstanceOf(MariaDbVectorPlatform::class, VectorPlatformFactory::create(new MariaDBPlatform()));
-    }
-
     #[DataProvider('provideUnsupportedPlatforms')]
     public function testRefusesAPlatformItHasNoDialectFor(AbstractPlatform $platform)
     {
@@ -56,6 +50,7 @@ final class VectorPlatformFactoryTest extends TestCase
      */
     public static function provideUnsupportedPlatforms(): iterable
     {
+        yield 'mariadb' => [new MariaDBPlatform()];
         yield 'mysql' => [new MySQLPlatform()];
         yield 'oracle' => [new OraclePlatform()];
     }

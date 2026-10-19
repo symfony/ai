@@ -15,7 +15,6 @@ Supported platforms
 | Platform               | Column      | Distances                        | Vector index     |
 | ---------------------- | ----------- | -------------------------------- | ---------------- |
 | PostgreSQL + pgvector  | `vector(n)` | cosine, euclidean, inner product | HNSW             |
-| MariaDB >= 11.7        | `VECTOR(n)` | cosine, euclidean                | `VECTOR INDEX`   |
 | SQLite + sqlite-vec    | `TEXT`      | cosine, euclidean                | none, exact scan |
 
 On SQLite only the distance functions come from the extension - the vectors themselves are stored as
