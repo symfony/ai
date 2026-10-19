@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Doctrine\Distance;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\MariaDbVectorPlatform;
-use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\MySqlVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\PostgresVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\SqliteVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformInterface;
@@ -38,7 +37,6 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform(), 'vector(1536)', 'vector'];
         yield 'mariadb' => [new MariaDbVectorPlatform(), 'VECTOR(1536)', 'VECTOR'];
-        yield 'mysql' => [new MySqlVectorPlatform(), 'VECTOR(1536)', 'VECTOR'];
         yield 'sqlite' => [new SqliteVectorPlatform(), 'TEXT', 'TEXT'];
     }
 
@@ -57,7 +55,6 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform(), '(embedding <=> :vector)'];
         yield 'mariadb' => [new MariaDbVectorPlatform(), 'VEC_DISTANCE_COSINE(embedding, VEC_FromText(:vector))'];
-        yield 'mysql' => [new MySqlVectorPlatform(), "DISTANCE(embedding, STRING_TO_VECTOR(:vector), 'COSINE')"];
         yield 'sqlite' => [new SqliteVectorPlatform(), 'vec_distance_cosine(embedding, :vector)'];
     }
 
@@ -93,7 +90,6 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform()];
         yield 'mariadb' => [new MariaDbVectorPlatform()];
-        yield 'mysql' => [new MySqlVectorPlatform()];
         yield 'sqlite' => [new SqliteVectorPlatform()];
     }
 
@@ -141,15 +137,6 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform(), 'ALTER COLUMN embedding TYPE vector(1536)'];
         yield 'mariadb' => [new MariaDbVectorPlatform(), 'MODIFY COLUMN embedding VECTOR(1536)'];
-        yield 'mysql' => [new MySqlVectorPlatform(), 'MODIFY COLUMN embedding VECTOR(1536)'];
-    }
-
-    public function testMySqlHasNoVectorIndexToCreate()
-    {
-        $statements = (new MySqlVectorPlatform())->getSetupSql('star', 'embedding', 'star_embedding_idx', 1536, Distance::Cosine);
-
-        $this->assertCount(1, $statements);
-        $this->assertStringNotContainsString('INDEX', $statements[0]);
     }
 
     public function testSqliteStoresVectorsWithoutTheExtension()

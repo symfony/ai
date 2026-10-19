@@ -9,7 +9,6 @@
         "doctrine",
         "entity",
         "mariadb",
-        "mysql",
         "orm",
         "pgvector",
         "postgres",
