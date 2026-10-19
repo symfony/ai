@@ -40,6 +40,23 @@ Agent
    and `AgentAwareInterface`/`AgentAwareTrait` are gone: the `AgentContext` handed to every processor exposes the
    running agent via `getAgent()`.
 
+   The `Agent` constructor takes a single `$contextProcessors` argument instead of `$inputProcessors` and
+   `$outputProcessors`, so `$name` moves up by one position:
+
+   ```diff
+   -$agent = new Agent($platform, $model, $inputProcessors, $outputProcessors, 'my_agent');
+   +$agent = new Agent($platform, $model, $contextProcessors, 'my_agent');
+   ```
+
+   Custom `AgentInterface` implementations must adopt the new signature of `call()`:
+
+   ```diff
+   -public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+   +public function call(string|MessageBag|UserMessage $input, Context $context = new Context(), array $options = []): Execution
+   ```
+
+   The processors passed to the `Agent` run after the system prompt is injected, and before the tools are exposed.
+
  * `SystemPromptInputProcessor` has been removed. The system prompt is now a `Context\Instruction`, passed to the
    `Agent` constructor:
 
@@ -49,8 +66,8 @@ Agent
    +$agent = new Agent($platform, $model, instruction: 'You are a helpful assistant.');
    ```
 
-   Its `include_tools` behaviour is preserved through the `includeToolsInInstruction` argument. The instruction can
-   also be set for a single call by passing it in the context: `$agent->call($input, new Context(new Instruction(...)))`.
+   Its `include_tools` behaviour is preserved through the `includeToolsInInstruction` argument. An instruction passed
+   in the context replaces it for a single call: `$agent->call($input, new Context(new Instruction(...)))`.
    `SystemPromptInputProcessor::getSystemPrompt()` has no replacement.
 
  * `Memory\MemoryInputProcessor` moved to `Context\Processor\MemoryProcessor`, and `MemoryProviderInterface::load()`

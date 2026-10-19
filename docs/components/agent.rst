@@ -1064,8 +1064,13 @@ extended per call::
     $result = $agent->call('Hello!', new Context(new Instruction('Answer in French.')));
 
 The built-in :class:`Symfony\\AI\\Agent\\Context\\Instruction` is what used to be the system prompt, and
-platform content objects (``Image``, ``Audio``, ``Document``, ...) passed as context items get attached to the user
-message.
+platform content objects (``Image``, ``Audio``, ``Document``, ...) passed as context items get attached to the latest
+user message. With ``includeToolsInInstruction: true``, the agent appends the name and description of every tool in
+its toolbox to the instruction.
+
+The ``model`` option replaces the model of the agent for a single call::
+
+    $result = $agent->call('Hello!', options: ['model' => 'gpt-4o-mini']);
 
 Context Processors
 ~~~~~~~~~~~~~~~~~~
@@ -1103,6 +1108,13 @@ can mutate the model, the :class:`Symfony\\AI\\Platform\\Message\\MessageBag` an
 
 ``supportedTypes()`` declares which context items a processor consumes: it only runs when the context carries at least
 one item of those types. Returning an empty list marks the processor as global, so it always runs.
+
+The agent runs the processors in this order:
+
+#. the built-in processors for the instruction and the attachments, so the system message is already in place;
+#. the processors passed to the agent, in the given order. In the AI Bundle, these are the services tagged with
+   ``ai.agent.context_processor``, ordered by their priority;
+#. the built-in processor for the toolbox, so a ``tools`` option set by a processor is still exposed and enforced.
 
 Result-aware Context Processors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
