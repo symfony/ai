@@ -399,7 +399,7 @@ does not include documents added moments ago::
 .. _`ChromaDB`: https://www.trychroma.com/
 .. _`ClickHouse`: https://clickhouse.com/
 .. _`Cloudflare Vectorize`: https://developers.cloudflare.com/vectorize/
-.. _`Doctrine`: https://github.com/symfony/ai/tree/main/src/store/src/Bridge/Doctrine
+.. _`Doctrine`: https://www.doctrine-project.org/projects/orm.html
 .. _`Elasticsearch`: https://www.elastic.co/elasticsearch
 .. _`ManticoreSearch`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
