@@ -150,6 +150,21 @@ final class AgentTest extends TestCase
         $this->assertSame('Be brief.', $processor->messageBag->getMessages()[0]->getContent());
     }
 
+    public function testAnInstructionPassedPerCallReplacesTheOneOfTheAgent()
+    {
+        $processor = new MessageBagCapturingProcessor();
+
+        $agent = new Agent(new InMemoryPlatform('Hi'), 'gpt-4o', [$processor], instruction: 'You are a helpful assistant.');
+        $agent->call('Hello there', new Context(new Instruction('Be brief.')))->getResult();
+
+        $this->assertInstanceOf(MessageBag::class, $processor->messageBag);
+        $this->assertSame('Be brief.', $processor->messageBag->getMessages()[0]->getContent());
+
+        $agent->call('Hello there')->getResult();
+
+        $this->assertSame('You are a helpful assistant.', $processor->messageBag->getMessages()[0]->getContent());
+    }
+
     public function testContextProcessorsRunOnEveryCall()
     {
         $processor = new class implements ContextProcessorInterface {

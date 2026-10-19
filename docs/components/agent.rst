@@ -1060,7 +1060,7 @@ extended per call::
 
     $agent = new Agent($platform, $model, $contextProcessors, instruction: 'You are a helpful assistant.');
 
-    // an instruction can also be passed for a single call
+    // an instruction passed for a single call replaces the one of the agent
     $result = $agent->call('Hello!', new Context(new Instruction('Answer in French.')));
 
 The built-in :class:`Symfony\\AI\\Agent\\Context\\Instruction` is what used to be the system prompt, and

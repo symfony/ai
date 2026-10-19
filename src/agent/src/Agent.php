@@ -132,7 +132,9 @@ final class Agent implements AgentInterface
     public function call(string|MessageBag|UserMessage $input, Context $context = new Context(), array $options = []): Execution
     {
         $messages = InputNormalizer::toMessageBag($input);
-        $mergedContext = $this->context->merge($context);
+        // an instruction given per call replaces the one of the agent
+        $defaults = $context->has(Instruction::class) ? $this->context->without(Instruction::class) : $this->context;
+        $mergedContext = $defaults->merge($context);
         $model = $this->resolveModel($options);
 
         $cancellation = new Cancellation();
