@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-10-17T20:46:05Z
+
+I re-ran the measurement: 2.9% recall@10 for `ivfflat` and 56.1% for `hnsw` (5,000 random 1536-dimension vectors, 100 queries, indexes created on the empty table). I fixed the PR body.
