@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-17T19:22:32Z
+
+@abp002 the docs comment on `dotProduct` is withdrawn. Please rebase onto `main`: `src/ai-bundle/CHANGELOG.md` conflicts with #2678, keep both lines.
