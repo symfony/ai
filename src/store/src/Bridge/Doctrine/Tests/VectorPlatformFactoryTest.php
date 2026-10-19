@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Store\Bridge\Doctrine\Tests;
 
-use Doctrine\DBAL\Platforms\MariaDB110700Platform;
-use Doctrine\DBAL\Platforms\MySQL84Platform;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSQL120Platform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\MariaDbVectorPlatform;
@@ -28,7 +28,7 @@ final class VectorPlatformFactoryTest extends TestCase
 {
     public function testPicksThePostgresDialect()
     {
-        $this->assertInstanceOf(PostgresVectorPlatform::class, VectorPlatformFactory::create(new PostgreSQL120Platform()));
+        $this->assertInstanceOf(PostgresVectorPlatform::class, VectorPlatformFactory::create(new PostgreSQLPlatform()));
     }
 
     public function testPicksTheSqliteDialect()
@@ -38,14 +38,14 @@ final class VectorPlatformFactoryTest extends TestCase
 
     public function testPicksTheMySqlDialect()
     {
-        $this->assertInstanceOf(MySqlVectorPlatform::class, VectorPlatformFactory::create(new MySQL84Platform()));
+        $this->assertInstanceOf(MySqlVectorPlatform::class, VectorPlatformFactory::create(new MySQLPlatform()));
     }
 
     public function testPrefersMariaDbOverMySql()
     {
         // MariaDB's platform extends the MySQL one, so order decides this: matching MySQL first
         // would hand a MariaDB connection SQL functions it does not have.
-        $this->assertInstanceOf(MariaDbVectorPlatform::class, VectorPlatformFactory::create(new MariaDB110700Platform()));
+        $this->assertInstanceOf(MariaDbVectorPlatform::class, VectorPlatformFactory::create(new MariaDBPlatform()));
     }
 
     public function testRefusesAPlatformItHasNoDialectFor()

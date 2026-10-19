@@ -12,8 +12,8 @@
 namespace Symfony\AI\Store\Bridge\Doctrine\Tests;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MariaDB110700Platform;
-use Doctrine\DBAL\Platforms\PostgreSQL120Platform;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -39,15 +39,15 @@ final class VectorTypeTest extends TestCase
      */
     public static function providePlatforms(): iterable
     {
-        yield 'postgres' => [new PostgreSQL120Platform(), 'vector'];
-        yield 'mariadb' => [new MariaDB110700Platform(), 'VECTOR'];
+        yield 'postgres' => [new PostgreSQLPlatform(), 'vector'];
+        yield 'mariadb' => [new MariaDBPlatform(), 'VECTOR'];
         yield 'sqlite' => [new SQLitePlatform(), 'TEXT'];
     }
 
     public function testRoundTripsAVectorThroughTheDatabase()
     {
         $type = new VectorType();
-        $platform = new PostgreSQL120Platform();
+        $platform = new PostgreSQLPlatform();
 
         $stored = $type->convertToDatabaseValue(new Vector([1.5, -0.5]), $platform);
 
@@ -58,7 +58,7 @@ final class VectorTypeTest extends TestCase
     public function testKeepsNullOnBothSides()
     {
         $type = new VectorType();
-        $platform = new PostgreSQL120Platform();
+        $platform = new PostgreSQLPlatform();
 
         $this->assertNull($type->convertToDatabaseValue(null, $platform));
         $this->assertNull($type->convertToPHPValue(null, $platform));
@@ -70,8 +70,8 @@ final class VectorTypeTest extends TestCase
 
         // Postgres coerces the text literal in assignment context, MariaDB needs the function -
         // and SQLite must stay untouched so that writing works without the sqlite-vec extension.
-        $this->assertSame(':vector', $type->convertToDatabaseValueSQL(':vector', new PostgreSQL120Platform()));
-        $this->assertSame('VEC_FromText(:vector)', $type->convertToDatabaseValueSQL(':vector', new MariaDB110700Platform()));
+        $this->assertSame(':vector', $type->convertToDatabaseValueSQL(':vector', new PostgreSQLPlatform()));
+        $this->assertSame('VEC_FromText(:vector)', $type->convertToDatabaseValueSQL(':vector', new MariaDBPlatform()));
         $this->assertSame(':vector', $type->convertToDatabaseValueSQL(':vector', new SQLitePlatform()));
     }
 
@@ -79,13 +79,13 @@ final class VectorTypeTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        (new VectorType())->convertToDatabaseValue([1.0, 2.0], new PostgreSQL120Platform());
+        (new VectorType())->convertToDatabaseValue([1.0, 2.0], new PostgreSQLPlatform());
     }
 
     public function testPassesAnAlreadyConvertedVectorThrough()
     {
         $vector = new Vector([1.0]);
 
-        $this->assertSame($vector, (new VectorType())->convertToPHPValue($vector, new PostgreSQL120Platform()));
+        $this->assertSame($vector, (new VectorType())->convertToPHPValue($vector, new PostgreSQLPlatform()));
     }
 }

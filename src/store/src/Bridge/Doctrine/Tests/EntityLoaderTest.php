@@ -36,7 +36,7 @@ final class EntityLoaderTest extends TestCase
 
         $configuration = ORMSetup::createAttributeMetadataConfiguration([__DIR__.'/Fixtures'], true);
 
-        if (\PHP_VERSION_ID >= 80400) {
+        if (\PHP_VERSION_ID >= 80400 && method_exists($configuration, 'enableNativeLazyObjects')) {
             $configuration->enableNativeLazyObjects(true);
         }
 
