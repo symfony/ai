@@ -16,10 +16,7 @@ use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 /**
- * Loads entities as embeddable documents, so an indexer can walk a table the way it walks a directory.
- *
- * Entities are read page by page and the pages are yielded lazily, so indexing a large table does
- * not depend on how much of it fits into memory at once.
+ * Loads entities page by page as embeddable documents.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -83,9 +80,7 @@ final class EntityLoader implements LoaderInterface
 
             $offset += $batchSize;
 
-            // Every entity read here, and everything its content pulled in behind it, would
-            // otherwise stay in the identity map until the whole table has been walked. The
-            // documents are already built by now, so nothing downstream needs them managed.
+            // Keeps the identity map from growing with the whole table
             if ($clearBatches) {
                 $this->entityManager->clear();
             }

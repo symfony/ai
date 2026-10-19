@@ -28,14 +28,6 @@ use Symfony\AI\Store\Bridge\Doctrine\Type\VectorType;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Query\VectorQuery;
 
-/**
- * Exercises the pgvector dialect against a real server.
- *
- * The unit tests assert the SQL this bridge generates; only a real server says whether pgvector
- * accepts it, orders by it, and gives the vectors back unchanged.
- *
- * @author Christopher Hertel <mail@christopher-hertel.de>
- */
 #[Group('integration')]
 final class IntegrationTest extends TestCase
 {
@@ -62,12 +54,9 @@ final class IntegrationTest extends TestCase
             'password' => $_SERVER['POSTGRES_PASSWORD'] ?? 'postgres',
         ], $configuration);
 
-        // Doctrine only learns what a "vector" column is once it is told, and without that the
-        // schema manager refuses to introspect a table carrying one.
         $connection->getDatabasePlatform()->registerDoctrineTypeMapping('vector', VectorType::NAME);
 
-        // The extension has to exist before any table carrying a vector column can be created,
-        // which is a step earlier than `Store::setup()` - the schema tool gets there first.
+        // The schema tool creates the vector column before Store::setup() runs
         $connection->executeStatement('CREATE EXTENSION IF NOT EXISTS vector');
 
         $this->entityManager = new EntityManager($connection, $configuration);
@@ -159,7 +148,6 @@ final class IntegrationTest extends TestCase
             new VectorDocument($other->getId(), new Vector([0.9, 0.1, 0.0])),
         ]);
 
-        // The "more like this" shape: everything close to me, except me.
         $documents = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), [
             'where' => 'id != :self',
             'params' => ['self' => $self->getId()],

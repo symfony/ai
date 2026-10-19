@@ -14,15 +14,9 @@ namespace Symfony\AI\Store\Bridge\Doctrine;
 /**
  * A Doctrine entity that knows which of its data goes into its embedding.
  *
- * Indexing and querying both go through this method, so the vector written to the row and the
- * vector a "find me something like this" query is built from describe the entity the same way.
- *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 interface IndexableEntityInterface
 {
-    /**
-     * The text representation of this entity that gets embedded.
-     */
     public function getIndexableContent(): string;
 }

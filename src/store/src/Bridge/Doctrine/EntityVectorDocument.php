@@ -18,9 +18,6 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 /**
  * A vector document that keeps the entity it belongs to.
  *
- * The Doctrine store hands these back, so a caller can render the matched entities right away
- * instead of collecting ids from the result and loading them in a second round trip.
- *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class EntityVectorDocument implements VectorDocumentInterface

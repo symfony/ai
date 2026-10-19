@@ -66,8 +66,6 @@ final class VectorPlatformTest extends TestCase
     #[DataProvider('providePlatforms')]
     public function testWrapsParameterAndColumnConsistently(VectorPlatformInterface $platform)
     {
-        // Whatever wraps the parameter on the way in has to be undone on the way out, otherwise a
-        // stored vector cannot be read back as one.
         $this->assertStringContainsString(':vector', $platform->getVectorParameterSql(':vector'));
         $this->assertStringContainsString('embedding', $platform->getVectorSelectSql('embedding'));
     }
@@ -132,8 +130,6 @@ final class VectorPlatformTest extends TestCase
     {
         $platform = new SqliteVectorPlatform();
 
-        // Only the distance functions come from sqlite-vec - writing and reading must work on
-        // stock SQLite, or a test suite running on it could not even insert a row.
         $this->assertSame(':vector', $platform->getVectorParameterSql(':vector'));
         $this->assertSame('embedding', $platform->getVectorSelectSql('embedding'));
     }

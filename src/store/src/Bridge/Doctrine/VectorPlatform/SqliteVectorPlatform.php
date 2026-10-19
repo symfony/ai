@@ -17,12 +17,7 @@ use Symfony\AI\Store\Bridge\Doctrine\Distance;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 /**
- * Stores vectors as JSON text in a plain SQLite column.
- *
- * Storage needs nothing but stock SQLite, so a schema carrying vectors can be created and written
- * against it - which is what a test suite running on SQLite needs. Only the distance functions come
- * from the sqlite-vec extension, and they read the same JSON text, so a similarity query is the one
- * operation that requires the extension to be loaded.
+ * Stores vectors as JSON text, so only similarity queries need the sqlite-vec extension.
  *
  * @see https://github.com/asg017/sqlite-vec
  *

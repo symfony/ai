@@ -18,10 +18,6 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 /**
  * Translates vector operations into the SQL dialect of a single database platform.
  *
- * Vector support is not standardized: pgvector overloads operators, sqlite-vec exposes
- * functions, and each spells the column type, the conversion to and from text, and the index
- * differently. This interface isolates those differences from the store.
- *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 interface VectorPlatformInterface
@@ -34,15 +30,12 @@ interface VectorPlatformInterface
     public function getColumnDeclarationSql(int $dimensions): string;
 
     /**
-     * The column type declaration for a vector of unknown size.
-     *
-     * No supported platform reports the size of a vector column during introspection, so this is
-     * what a column read back from the database declares itself as.
+     * The column type declaration for a vector of unknown size, as introspection reports it.
      */
     public function getUnsizedColumnDeclarationSql(): string;
 
     /**
-     * Wraps a bound parameter so the platform reads it as a vector, e.g. `VEC_FromText(:vector)`.
+     * Wraps a bound parameter so the platform reads it as a vector, e.g. `vec_f32(:vector)`.
      */
     public function getVectorParameterSql(string $parameter): string;
 

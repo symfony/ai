@@ -27,8 +27,6 @@ final class VectorTypeTest extends TestCase
     {
         $type = new VectorType();
 
-        // Both sides of a schema comparison have to produce the same declaration, and the column
-        // read back from the database has no size to report - so neither side may state one.
         $this->assertSame($expected, $type->getSQLDeclaration(['platformOptions' => ['dimensions' => 1536]], $platform));
         $this->assertSame($expected, $type->getSQLDeclaration([], $platform));
     }

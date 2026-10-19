@@ -19,24 +19,7 @@ use Symfony\AI\Store\Bridge\Doctrine\VectorPlatform\VectorPlatformInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 /**
- * Maps a vector column onto a VectorInterface, so an embedding can live as a plain field of an entity.
- *
- * Register the type and let Doctrine recognize the column when introspecting the database:
- *
- *     doctrine:
- *         dbal:
- *             types:
- *                 vector: Symfony\AI\Store\Bridge\Doctrine\Type\VectorType
- *             mapping_types:
- *                 vector: vector
- *
- * The field is declared without a size:
- *
- *     #[ORM\Column(type: 'vector', nullable: true)]
- *     private ?VectorInterface $embedding = null;
- *
- * The size belongs to the column, not to the mapping - see `getSQLDeclaration()` for why - and is
- * applied by `Store::setup()` or by the migration creating the column.
+ * Maps a vector column onto a VectorInterface.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -45,15 +28,7 @@ final class VectorType extends Type
     public const NAME = 'vector';
 
     /**
-     * The declaration deliberately carries no size.
-     *
-     * Doctrine decides whether a column changed by comparing the SQL both sides declare themselves
-     * as, and no supported platform reports the size of a vector column when introspecting one. A
-     * sized declaration would therefore never equal the column read back from the database, and
-     * every schema diff from then on would want to re-`ALTER` a column that is already correct.
-     *
-     * The size is applied where it can be stated once and kept: `Store::setup()`, or the migration
-     * that creates the column.
+     * Unsized, as introspection reports no size and a sized declaration would show up in every schema diff.
      *
      * @param array<string, mixed> $column
      */

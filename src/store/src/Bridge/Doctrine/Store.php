@@ -24,19 +24,7 @@ use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 /**
- * Stores vectors in a column of the table an entity already lives in, instead of in a table of its own.
- *
- * Every other store owns its storage: it creates a table of ids, metadata and vectors, and a hit has
- * to be resolved back to the domain object it stands for. Here the row *is* the domain object, so an
- * embedding is just another field of an entity, kept consistent by the same transaction that writes
- * the rest of it, and a query hands back entities.
- *
- * The column itself is declared on the entity and owned by the regular schema tooling:
- *
- *     #[ORM\Column(type: 'vector', nullable: true)]
- *     private ?VectorInterface $embedding = null;
- *
- * Its size is applied by `setup()` or by a migration rather than by the mapping - see `Type\VectorType`.
+ * Stores vectors in a column of the table an entity already lives in, and returns entities when queried.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -88,12 +76,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * Writes the vectors onto the rows of the entities they belong to.
-     *
-     * This updates the rows directly rather than through the unit of work: indexing walks over far
-     * more entities than a request usually touches, and only ever writes this one column. Entities
-     * already managed by the passed entity manager keep the vector they were loaded with until they
-     * are refreshed.
+     * Writes the vectors with DBAL, so managed entities keep their loaded vector until refreshed.
      */
     public function add(VectorDocumentInterface|array $documents): void
     {
@@ -168,9 +151,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
         );
     }
 
-    /**
-     * Counts the entities that carry a vector.
-     */
     public function count(): int
     {
         return max(0, (int) $this->entityManager->getConnection()->fetchOne(
@@ -208,8 +188,6 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $params['maxScore'] = $options['maxScore'];
         }
 
-        // An arbitrary SQL fragment on the entity's own columns, e.g. to exclude the entity a
-        // "more like this" query started from, or to hide unpublished rows.
         if (isset($options['where'])) {
             $whereClauses[] = \sprintf('(%s)', $options['where']);
             $params += $options['params'] ?? [];
