@@ -28,7 +28,7 @@
     "require": {
         "php": ">=8.2",
         "doctrine/dbal": "^4.0",
-        "doctrine/orm": "^3.0",
+        "doctrine/orm": "^3.4",
         "oskarstark/enum-helper": "^1.5",
         "symfony/ai-platform": "^0.14",
         "symfony/ai-store": "^0.14"
