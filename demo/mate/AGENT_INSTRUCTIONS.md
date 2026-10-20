@@ -109,6 +109,7 @@ When `symfony/http-kernel` is installed, profiler tools become available:
 |-----------------------------|---------------------------------------------------------|
 | `symfony-profiler-list`     | List and filter profiles by method, URL, IP, status, date range |
 | `symfony-profiler-get`      | Get profile by token                                    |
+| `symfony-profiler-summary`  | Count the latest requests and failures, failures grouped by method, status and URL |
 
 **Resources:**
 - `symfony-profiler://profile/{token}` - Full profile with collector list
