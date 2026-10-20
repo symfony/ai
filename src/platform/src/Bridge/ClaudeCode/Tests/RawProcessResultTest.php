@@ -205,6 +205,42 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame('result', $collected[2]['type']);
     }
 
+    public function testGetDataParsesLinesSeparatedByLineFeed()
+    {
+        $jsonOutput = implode("\n", [
+            json_encode(['type' => 'assistant', 'message' => ['content' => [['type' => 'text', 'text' => 'Hello']]]]),
+            json_encode(['type' => 'result', 'result' => 'Hello, World!']),
+        ])."\n";
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', var_export($jsonOutput, true))]);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame('result', $data['type']);
+        $this->assertSame('Hello, World!', $data['result']);
+    }
+
+    public function testGetDataStreamParsesLinesSeparatedByLineFeed()
+    {
+        $jsonOutput = implode("\n", [
+            json_encode(['type' => 'assistant', 'message' => ['content' => [['type' => 'text', 'text' => 'Hi']]]]),
+            json_encode(['type' => 'result', 'result' => 'Hi']),
+        ])."\n";
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', var_export($jsonOutput, true))]);
+        $process->start();
+
+        $collected = [];
+        foreach ((new RawProcessResult($process))->getDataStream() as $data) {
+            $collected[] = $data;
+        }
+
+        $this->assertCount(2, $collected);
+        $this->assertSame('assistant', $collected[0]['type']);
+        $this->assertSame('result', $collected[1]['type']);
+    }
+
     public function testGetDataStreamSkipsEmptyAndInvalidLines()
     {
         $jsonOutput = implode(\PHP_EOL, [
