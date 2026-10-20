@@ -176,10 +176,10 @@ trait CompletionsConversionTrait
     }
 
     /**
-     * @param array<string, mixed> $toolCalls
-     * @param array<string, mixed> $data
+     * @param array<int, array<string, mixed>> $toolCalls
+     * @param array<string, mixed>             $data
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     protected function convertStreamToToolCalls(array $toolCalls, array $data): array
     {
@@ -215,8 +215,8 @@ trait CompletionsConversionTrait
     }
 
     /**
-     * @param array<string, mixed> $toolCalls Already-accumulated tool calls (before this chunk)
-     * @param array<string, mixed> $data
+     * @param array<int, array<string, mixed>> $toolCalls Already-accumulated tool calls (before this chunk)
+     * @param array<string, mixed>             $data
      *
      * @return \Generator<ToolCallStart|ToolInputDelta>
      */
