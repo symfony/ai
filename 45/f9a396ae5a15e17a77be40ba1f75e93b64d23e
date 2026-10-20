@@ -1,0 +1,22 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-19T19:04:46Z
+
+Yup, like that very much - there might be even more candidates and it would be nice to have some kind of overview in an `OptionsInterface::MAX_OUTPUT_TOKEN` or `PlatformOptions::TEMPERATURE` so we introduce a harder contract of which options we try to streamline across all providers
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-20T12:51:41Z
+
+@chr-hertel Added `PlatformOptions::MAX_OUTPUT_TOKEN`. A `PlatformOptions::TEMPERATURE` PR follows right after this is merged.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-20T23:45:31Z
+
+Thanks @wachterjohannes - took the liberty to push a few changes on top:
+
+* rebased & switched to feature, with a CHANGELOG entry for `PlatformOptions`
+* renamed the constant to `MAX_OUTPUT_TOKENS` and cut the comments down to one line
+* Bedrock Claude, Mantle Messages & Nova translate the option as well
+* an explicit provider-specific limit like `max_tokens` now wins over the canonical one - `Claude` sets its 1000 default via `max_output_tokens` for that, so a call-time value still overrides it
