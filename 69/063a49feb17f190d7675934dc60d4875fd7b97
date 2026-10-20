@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-20T12:41:42Z
+
+@chr-hertel Thanks, now compares against `'11.8'` and the test covers `11.8.0-MariaDB-ubu2404`.
