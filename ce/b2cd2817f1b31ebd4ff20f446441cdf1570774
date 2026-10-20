@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by jmediatechnology at 2026-10-19T22:05:44Z
+
+Thanks for the review @chr-hertel!
+
+I added `examples/ollama/image-input-binary.php` (4cbaf53), mirroring the OpenAI and LM Studio image input examples with `fixtures/image.jpg`, and added `gemma3` to the models listed in the Ollama README.
+
+Tested locally against Ollama with `gemma3`: the model now correctly describes the fixture image, where before this fix the request failed with the 400 from `/api/chat`.
+
+Here is a screenshot:
+
+<img width="1032" height="512" alt="afbeelding" src="https://github.com/user-attachments/assets/81ce7cfa-d2c3-4593-bf17-25704fe4b9bc" />
