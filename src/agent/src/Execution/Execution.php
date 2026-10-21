@@ -237,15 +237,12 @@ final class Execution implements \IteratorAggregate, ResultInterface
                 }
 
                 if ($update instanceof ModelResult) {
-                    // Accumulated round by round, so it reflects what was actually spent even if the
-                    // execution never reaches a final result (canceled, or an abandoned iteration).
+                    // Merged per round so usage survives an execution that never reaches a final result.
                     $this->metadata->merge($update->getResult()->getMetadata());
                 }
 
                 if ($update instanceof Result) {
-                    // The final result already carries the metadata aggregated over all rounds (Runner
-                    // does that itself); replacing rather than merging avoids adding it a second time on
-                    // top of the running total above.
+                    // Set, not merged: the final result's metadata already aggregates all rounds.
                     $this->result = $update->getResult();
                     $this->metadata->set($update->getResult()->getMetadata()->all());
 

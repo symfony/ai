@@ -198,8 +198,6 @@ final class ExecutionTest extends TestCase
 
     public function testStreamedMetadataAccumulatesPerRoundWithoutDoublingTheFinalTotal()
     {
-        // Mirrors what Runner does: a tool-calling round's own usage, then a final result whose
-        // metadata already carries the aggregate Runner computed over every round.
         $round = new TextResult('...');
         $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
 
@@ -231,9 +229,6 @@ final class ExecutionTest extends TestCase
         $execution = new Execution(static function () use ($round1, $round2): \Generator {
             yield new ModelResult($round1);
             yield new ModelResult($round2);
-            // A real Runner would go on to a final ResultUpdate; this factory never reaches one,
-            // mirroring an execution the caller stops consuming (e.g. an agent turn paused to ask
-            // the user something) without ever calling cancel().
         }, streamed: true);
 
         $seen = 0;

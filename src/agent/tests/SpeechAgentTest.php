@@ -339,7 +339,6 @@ final class SpeechAgentTest extends TestCase
         $this->assertCount(4, $updates);
         $this->assertInstanceOf(Progress::class, $updates[0]);
         $this->assertSame('model_request', $updates[0]->getStage());
-        // Forwarded even though it is not a Progress update
         $this->assertInstanceOf(ModelResult::class, $updates[1]);
         $this->assertSame('hello', $updates[1]->getResult()->getContent());
         $this->assertInstanceOf(Progress::class, $updates[2]);

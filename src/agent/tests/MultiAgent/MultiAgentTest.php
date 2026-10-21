@@ -460,15 +460,12 @@ class MultiAgentTest extends TestCase
         $this->assertInstanceOf(Progress::class, $updates[2]);
         $this->assertSame('tool_call', $updates[2]->getStage());
 
-        // 4. Technical agent model result, also forwarded even though it is not a Progress update
         $this->assertInstanceOf(ModelResult::class, $updates[3]);
         $this->assertSame('Technical response', $updates[3]->getResult()->getContent());
 
-        // 5. Technical agent delta progress
         $this->assertInstanceOf(Progress::class, $updates[4]);
         $this->assertSame('delta', $updates[4]->getStage());
 
-        // 6. Final result update
         $this->assertInstanceOf(ResultUpdate::class, $updates[5]);
         $this->assertSame('Technical response', $updates[5]->getResult()->getContent());
     }

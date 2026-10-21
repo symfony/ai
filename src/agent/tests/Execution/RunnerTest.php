@@ -939,11 +939,6 @@ final class RunnerTest extends TestCase
 
         $modelResults = array_values(array_filter($updates, static fn (UpdateInterface $update): bool => $update instanceof ModelResult));
 
-        // Not assertSame(): the result is a clone, so a consumer holding onto it keeps seeing this
-        // round's own metadata even after the terminal round's own $result is later mutated into the
-        // run's full aggregate (see testTheFinalRoundsModelResultKeepsItsOwnMetadataAfterTheRunAggregatesIt
-        // below, which is also why $final itself is not compared against here anymore: it is the very
-        // object mutated into that aggregate).
         $this->assertCount(2, $modelResults);
         $this->assertInstanceOf(ToolCallResult::class, $modelResults[0]->getResult());
         $this->assertSame(10, $modelResults[0]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
@@ -976,9 +971,6 @@ final class RunnerTest extends TestCase
             static fn (UpdateInterface $update): bool => $update instanceof ResultUpdate,
         ))[0];
 
-        // The terminal round's own $result (captured by identity above, before the run finished)
-        // ends up carrying the run's full aggregate (10 + 5 = 15), but the earlier model_result
-        // update's clone must still report only its own round's usage (5).
         $this->assertSame(15, $resultUpdate->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
         $this->assertSame(5, $modelResults[1]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
     }

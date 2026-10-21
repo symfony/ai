@@ -16,9 +16,6 @@ use Symfony\AI\Agent\Execution\UpdateType;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
- * Carries a single round's own result, yielded right after the model responds and before the loop
- * decides whether to call another tool.
- *
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class ModelResult implements UpdateInterface
