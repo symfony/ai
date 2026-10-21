@@ -195,10 +195,11 @@ final class DistanceCalculator
             $against->getData(),
         );
 
-        return array_reduce(
-            $embeddingsAsPower,
-            static fn (float $value, float $current): float => max($value, $current),
-            0.0,
-        );
+        $distance = 0.0;
+        foreach ($embeddingsAsPower as $current) {
+            $distance = max($distance, $current);
+        }
+
+        return $distance;
     }
 }

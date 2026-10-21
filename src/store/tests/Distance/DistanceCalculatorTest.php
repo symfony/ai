@@ -189,6 +189,22 @@ final class DistanceCalculatorTest extends TestCase
         $this->assertNotNull($result[2]->getScore());
     }
 
+    public function testChebyshevDistancePreservesEqualDistanceOrder()
+    {
+        $calculator = new DistanceCalculator(DistanceStrategy::CHEBYSHEV_DISTANCE, 2);
+        $documents = [
+            new VectorDocument('first', new Vector([-3.0, 1.0])),
+            new VectorDocument('second', new Vector([1.0, 3.0])),
+            new VectorDocument('third', new Vector([3.0, -1.0])),
+        ];
+
+        $result = $calculator->calculate($documents, new Vector([0.0, 0.0]), 2);
+
+        $this->assertSame(['first', 'second'], array_map(static fn ($document) => $document->getId(), $result));
+        $this->assertSame(3.0, $result[0]->getScore());
+        $this->assertSame(3.0, $result[1]->getScore());
+    }
+
     #[TestDox('Returns empty array when no documents are provided')]
     public function testEmptyDocumentsArray()
     {
