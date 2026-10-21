@@ -109,4 +109,17 @@ final class ModelClientTest extends TestCase
             ['modalities' => ['text']]
         );
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame(['session' => ['model' => 'gpt-4o-realtime-preview', 'type' => 'realtime', 'output_modalities' => ['audio'], 'audio' => ['output' => ['voice' => 'alloy']]]], json_decode($options['body'], true));
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-test-key');
+        $modelClient->request(new Realtime('gpt-4o-realtime-preview'), [], ['http_options' => ['max_duration' => 30, 'json' => 'overridden']]);
+    }
 }

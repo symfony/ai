@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -44,12 +45,16 @@ final class DecartClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         return match (true) {
             \in_array(Capability::TEXT_TO_IMAGE, $model->getCapabilities(), true),
-            \in_array(Capability::TEXT_TO_VIDEO, $model->getCapabilities(), true) => $this->generate($model, $payload, $options),
+            \in_array(Capability::TEXT_TO_VIDEO, $model->getCapabilities(), true) => $this->generate($model, $payload, $options, $httpOptions),
             \in_array(Capability::IMAGE_TO_IMAGE, $model->getCapabilities(), true),
             \in_array(Capability::IMAGE_TO_VIDEO, $model->getCapabilities(), true),
-            \in_array(Capability::VIDEO_TO_VIDEO, $model->getCapabilities(), true) => $this->edit($model, $payload, $options),
+            \in_array(Capability::VIDEO_TO_VIDEO, $model->getCapabilities(), true) => $this->edit($model, $payload, $options, $httpOptions),
             default => throw new InvalidArgumentException(\sprintf('The "%s" model is not supported.', $model->getName())),
         };
     }
@@ -57,8 +62,9 @@ final class DecartClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function generate(Model $model, array|string $payload, array $options = []): RawResultInterface
+    private function generate(Model $model, array|string $payload, array $options, array $httpOptions): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/generate/%s', $this->baseUrl, $model->getName()), [
             'headers' => [
@@ -68,14 +74,15 @@ final class DecartClient implements ModelClientInterface
                 'prompt' => \is_string($payload) ? $payload : $payload['text'],
                 ...$options,
             ],
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function edit(Model $model, array|string $payload, array $options): RawResultInterface
+    private function edit(Model $model, array|string $payload, array $options, array $httpOptions): RawResultInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/generate/%s', $this->baseUrl, $model->getName()), [
             'headers' => [
@@ -86,6 +93,6 @@ final class DecartClient implements ModelClientInterface
                 'data' => fopen($payload['input_image']['path'] ?? $payload['input_video']['path'], 'r'),
                 ...$options,
             ],
-        ]));
+        ] + $httpOptions));
     }
 }

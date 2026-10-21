@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -36,15 +37,19 @@ final class ElevenLabsClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         return match (true) {
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload, [
                 ...$model->getOptions(),
                 ...$options,
-            ]),
+            ], $httpOptions),
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, [
                 ...$model->getOptions(),
                 ...$options,
-            ]),
+            ], $httpOptions),
             default => throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName())),
         };
     }
@@ -52,8 +57,9 @@ final class ElevenLabsClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function doSpeechToTextRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
+    private function doSpeechToTextRequest(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         if (!\is_array($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array for speech-to-text request, got "%s".', \gettype($payload)));
@@ -82,7 +88,7 @@ final class ElevenLabsClient implements ModelClientInterface
 
         return new RawHttpResult($this->httpClient->request('POST', 'speech-to-text', [
             'body' => $body,
-        ]));
+        ] + $httpOptions));
     }
 
     /**
@@ -118,8 +124,9 @@ final class ElevenLabsClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doTextToSpeechRequest(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         if (!\array_key_exists('voice', $options)) {
             throw new InvalidArgumentException('The voice option is required.');
@@ -142,6 +149,6 @@ final class ElevenLabsClient implements ModelClientInterface
                 'model_id' => $model->getName(),
                 ...$options,
             ],
-        ]));
+        ] + $httpOptions));
     }
 }

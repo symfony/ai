@@ -319,6 +319,17 @@ final class ModelClientTest extends TestCase
         $this->assertStringContainsString($expectedFlag, $result->getObject()->getCommandLine());
     }
 
+    public function testRequestDoesNotPassHttpOptionsAsFlags()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new ClaudeCode('sonnet');
+
+        $result = $client->request($model, 'Hello', ['http_options' => ['max_duration' => 30]]);
+        $commandLine = $result->getObject()->getCommandLine();
+
+        $this->assertStringNotContainsString('--http-options', $commandLine);
+    }
+
     /**
      * @return array<string, mixed>
      */

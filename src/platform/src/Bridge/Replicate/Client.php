@@ -43,10 +43,11 @@ final class Client
     }
 
     /**
-     * @param string               $model The model name on Replicate, e.g. "meta/meta-llama-3.1-405b-instruct"
+     * @param string               $model       The model name on Replicate, e.g. "meta/meta-llama-3.1-405b-instruct"
      * @param array<string, mixed> $body
+     * @param array<string, mixed> $httpOptions
      */
-    public function request(string $model, string $endpoint, array $body): ResponseInterface
+    public function request(string $model, string $endpoint, array $body, array $httpOptions = []): ResponseInterface
     {
         $url = \sprintf('%s/v1/models/%s/%s', $this->baseUrl, $model, $endpoint);
 
@@ -54,7 +55,7 @@ final class Client
             'headers' => ['Content-Type' => 'application/json'],
             'auth_bearer' => $this->apiKey,
             'body' => $this->encodeJsonBody(['input' => $body]),
-        ]);
+        ] + $httpOptions);
     }
 
     /**

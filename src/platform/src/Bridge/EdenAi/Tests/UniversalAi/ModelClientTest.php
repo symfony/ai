@@ -175,4 +175,38 @@ final class ModelClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $responses = [
+            new JsonMockResponse(['file_id' => 'file-42']),
+            new JsonMockResponse(['status' => 'success', 'output' => ['text' => '']]),
+        ];
+
+        $requests = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests, &$responses) {
+            $requests[] = $options;
+
+            return array_shift($responses);
+        });
+
+        $client = new ModelClient($httpClient, 'https://api.edenai.run', 'test-key');
+        $client->request(new Ocr('ocr/ocr/google'), [
+            'file_data' => [
+                'data' => base64_encode('binary-image'),
+                'filename' => 'scan.jpg',
+                'format' => 'image/jpeg',
+            ],
+        ], ['http_options' => ['max_duration' => 30, 'auth_bearer' => 'overridden']]);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(30.0, $requests[0]['max_duration']);
+        $this->assertSame('Authorization: Bearer test-key', $requests[0]['normalized_headers']['authorization'][0]);
+        $this->assertSame(30.0, $requests[1]['max_duration']);
+        $this->assertSame('Authorization: Bearer test-key', $requests[1]['normalized_headers']['authorization'][0]);
+        $this->assertSame([
+            'model' => 'ocr/ocr/google',
+            'input' => ['file' => 'file-42'],
+        ], json_decode($requests[1]['body'], true));
+    }
 }

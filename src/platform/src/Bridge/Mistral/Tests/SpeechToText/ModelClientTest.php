@@ -75,6 +75,23 @@ final class ModelClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertStringContainsString('Bearer test-key', $options['normalized_headers']['authorization'][0]);
+            $this->assertStringContainsString('multipart/form-data', $options['normalized_headers']['content-type'][0]);
+
+            return new MockResponse('{"text": "Hello world"}');
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new SpeechToText('voxtral-mini-latest'), ['file' => 'audio-data'], ['http_options' => ['max_duration' => 30, 'auth_bearer' => 'overridden', 'headers' => ['Content-Type' => 'application/json']]]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testStringPayloadThrowsException()
     {
         $client = new ModelClient(new MockHttpClient(), 'test-key');

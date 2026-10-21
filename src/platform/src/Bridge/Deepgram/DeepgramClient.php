@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -39,19 +40,24 @@ final class DeepgramClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $deepgramPayload = new DeepgramPayload($payload);
 
         return match (true) {
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $deepgramPayload, $options),
-            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $deepgramPayload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $deepgramPayload, $options, $httpOptions),
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $deepgramPayload, $options, $httpOptions),
             default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the Deepgram API.', $model->getName())),
         };
     }
 
     /**
      * @param array<string, mixed> $options
+     * @param array<string, mixed> $httpOptions
      */
-    private function doTextToSpeech(Model $model, DeepgramPayload $payload, array $options): RawResultInterface
+    private function doTextToSpeech(Model $model, DeepgramPayload $payload, array $options, array $httpOptions): RawResultInterface
     {
         // "stream" is an SDK-internal flag consumed by the result converter, not a Deepgram query param
         $stream = true === ($options['stream'] ?? false);
@@ -69,13 +75,14 @@ final class DeepgramClient implements ModelClientInterface
             'body' => $this->encodeJsonBody([
                 'text' => $payload->asTextToSpeechPayload(),
             ]),
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array<string, mixed> $options
+     * @param array<string, mixed> $httpOptions
      */
-    private function doSpeechToText(Model $model, DeepgramPayload $payload, array $options): RawResultInterface
+    private function doSpeechToText(Model $model, DeepgramPayload $payload, array $options, array $httpOptions): RawResultInterface
     {
         unset($options['stream']);
 
@@ -93,7 +100,7 @@ final class DeepgramClient implements ModelClientInterface
                 'body' => $this->encodeJsonBody([
                     'url' => $payload->getAudioUrl(),
                 ]),
-            ]));
+            ] + $httpOptions));
         }
 
         return new RawHttpResult($this->httpClient->request('POST', 'listen', [
@@ -102,7 +109,7 @@ final class DeepgramClient implements ModelClientInterface
                 'Content-Type' => $payload->getAudioMimeType(),
             ],
             'body' => $this->resolveAudioBody($payload),
-        ]));
+        ] + $httpOptions));
     }
 
     /**

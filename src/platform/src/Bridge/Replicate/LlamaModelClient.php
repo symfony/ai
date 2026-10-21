@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 
 /**
@@ -39,7 +40,7 @@ final class LlamaModelClient implements ModelClientInterface
         }
 
         return new RawHttpResult(
-            $this->client->request(\sprintf('meta/meta-%s', $model->getName()), 'predictions', $payload)
+            $this->client->request(\sprintf('meta/meta-%s', $model->getName()), 'predictions', $payload, $options[PlatformOptions::HTTP_OPTIONS] ?? [])
         );
     }
 }

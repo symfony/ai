@@ -115,6 +115,22 @@ final class ModelClientTest extends TestCase
         $client->request(new Gemini('gemini-1.5-flash'), ['contents' => []], ['maxOutputTokens' => 2000, 'max_output_tokens' => 500]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['generationConfig' => ['temperature' => 0.5], 'contents' => []], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'test-api-key');
+        $client->request(new Gemini('gemini-1.5-flash'), ['contents' => []], [
+            'temperature' => 0.5,
+            'http_options' => ['max_duration' => 30, 'body' => 'overridden'],
+        ]);
+    }
+
     public function testRequestWithStreamUsesDifferentEndpoint()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {
