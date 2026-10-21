@@ -78,6 +78,8 @@ final class ClaudeModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         unset($payload['model']);
 
         // Anthropic expects "max_tokens"; an explicit one wins over the canonical option

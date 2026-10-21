@@ -131,4 +131,17 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
         $modelClient->request(new Scaleway('deepseek-r1-distill-llama-70b'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"messages":[{"role":"user","content":"test message"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
+        $modelClient->request(new Scaleway('deepseek-r1-distill-llama-70b'), ['messages' => [['role' => 'user', 'content' => 'test message']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }
