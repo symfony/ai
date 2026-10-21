@@ -59,6 +59,23 @@ final class ModelClientTest extends TestCase
         $client->request(new Voyage('some-text-embedding-model', []), 'Hello, world!');
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"some-text-embedding-model","input":"Hello, world!","input_type":null,"truncation":true,"output_dimension":null,"encoding_format":null}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, '');
+
+        $client->request(new Voyage('some-text-embedding-model', []), 'Hello, world!', [
+            'http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]],
+        ]);
+    }
+
     public static function requestProvider(): \Generator
     {
         $textEmbeddingModel = new Voyage('some-text-embedding-model', []);

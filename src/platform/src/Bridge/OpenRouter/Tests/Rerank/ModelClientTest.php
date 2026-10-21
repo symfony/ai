@@ -132,4 +132,20 @@ final class ModelClientTest extends TestCase
 
         $client->request(new RerankModel('cohere/rerank-v3.5'), ['query' => 'test']);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['model' => 'cohere/rerank-v3.5', 'query' => 'What is AI?', 'documents' => ['Document about AI']], json_decode($options['body'], true));
+
+            return new MockResponse();
+        });
+
+        $client = new ModelClient($httpClient, 'test-key');
+        $client->request(new RerankModel('cohere/rerank-v3.5'), [
+            'query' => 'What is AI?',
+            'texts' => ['Document about AI'],
+        ], ['http_options' => ['max_duration' => 30, 'json' => 'overridden']]);
+    }
 }

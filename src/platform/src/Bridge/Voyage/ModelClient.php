@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Voyage;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -41,10 +42,14 @@ final class ModelClient implements ModelClientInterface
     }
 
     /**
-     * @param array{input_type?: 'query'|'document'|null, truncation?: bool, dimensions?: int, encoding?: string} $options
+     * @param array{input_type?: 'query'|'document'|null, truncation?: bool, dimensions?: int, encoding?: string, http_options?: array<string, mixed>} $options
      */
     public function request(Model $model, object|string|array $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         [$inputKey, $endpoint] = $model->supports(Capability::INPUT_MULTIMODAL)
             ? ['inputs', 'multimodalembeddings']
             : ['input', 'embeddings'];
@@ -65,6 +70,8 @@ final class ModelClient implements ModelClientInterface
             $body['json']['output_dimension'] = $options['dimensions'] ?? null;
             $body['json']['encoding_format'] = $options['encoding'] ?? null;
         }
+
+        $body += $httpOptions;
 
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/v1/%s', $this->baseUrl, $endpoint), $body));
     }

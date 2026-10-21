@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Embeddings;
 use Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -43,6 +44,10 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $url = self::getEndpoint($this->location, $this->projectId, $model->getName(), 'predict');
 
         $query = [];
@@ -75,7 +80,7 @@ final class ModelClient implements ModelClientInterface
                     ],
                     'json' => array_merge($payload, $modelOptions),
                     'query' => $query,
-                ]
+                ] + $httpOptions
             )
         );
     }

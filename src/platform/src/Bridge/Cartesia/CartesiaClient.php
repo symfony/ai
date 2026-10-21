@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -45,9 +46,13 @@ final class CartesiaClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         return match (true) {
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
-            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options, $httpOptions),
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, $options, $httpOptions),
             default => throw new RuntimeException(\sprintf('The model "%s" is not supported.', $model->getName())),
         };
     }
@@ -55,8 +60,9 @@ final class CartesiaClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function doTextToSpeech(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doTextToSpeech(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         $text = \is_string($payload) ? $payload : ($payload['text'] ?? throw new RuntimeException('The payload must contain a "text" key.'));
 
@@ -75,14 +81,15 @@ final class CartesiaClient implements ModelClientInterface
                 ],
                 'output_format' => $options['output_format'],
             ],
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function doSpeechToText(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doSpeechToText(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/stt', [
             'auth_bearer' => $this->apiKey,
@@ -95,6 +102,6 @@ final class CartesiaClient implements ModelClientInterface
                 'file' => fopen($payload['input_audio']['path'], 'r'),
                 'timestamp_granularities[]' => 'word',
             ],
-        ]));
+        ] + $httpOptions));
     }
 }

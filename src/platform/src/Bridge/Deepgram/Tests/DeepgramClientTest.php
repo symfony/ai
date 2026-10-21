@@ -246,4 +246,27 @@ final class DeepgramClientTest extends TestCase
         $this->assertStringContainsString('language=en', $capturedUrl);
         $this->assertStringContainsString('model=nova-3', $capturedUrl);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $capturedUrl = '';
+        $capturedOptions = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$capturedUrl, &$capturedOptions) {
+            $capturedUrl = $url;
+            $capturedOptions = $options;
+
+            return new MockResponse('audio');
+        }, 'https://api.deepgram.com/v1/');
+
+        $client = new DeepgramClient($httpClient);
+        $client->request(
+            new Deepgram('aura-2-thalia-en', [Capability::TEXT_TO_SPEECH]),
+            ['text' => 'Hello'],
+            ['http_options' => ['max_duration' => 30, 'body' => 'overridden']],
+        );
+
+        $this->assertSame(30.0, $capturedOptions['max_duration']);
+        $this->assertSame('{"text":"Hello"}', $capturedOptions['body']);
+        $this->assertStringNotContainsString('http_options', $capturedUrl);
+    }
 }

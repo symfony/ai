@@ -93,4 +93,18 @@ final class EmbeddingsModelClientTest extends TestCase
         $client = new EmbeddingsModelClient($httpClient, 'test.azure.com', 'embeddings-deployment', '2023-12-01', 'test-api-key');
         $client->request(new EmbeddingsModel('text-embedding-3-small'), 'Hello, world!');
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"text-embedding-3-small","input":"Hello, world!"}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new EmbeddingsModelClient($httpClient, 'test.azure.com', 'embeddings-deployment', '2023-12-01', 'test-api-key');
+        $client->request(new EmbeddingsModel('text-embedding-3-small'), 'Hello, world!', ['http_options' => ['max_duration' => 30, 'json' => 'overridden']]);
+    }
 }

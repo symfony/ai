@@ -70,6 +70,23 @@ final class MiniMaxClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['model' => 'MiniMax-M2', 'messages' => [['role' => 'user', 'content' => 'foo']]], json_decode($options['body'], true));
+
+            return new JsonMockResponse([]);
+        });
+
+        $client = new MiniMaxClient($httpClient, 'key');
+        $client->request(new MiniMax('MiniMax-M2', [Capability::INPUT_MESSAGES]), [
+            'messages' => [['role' => 'user', 'content' => 'foo']],
+        ], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testItGeneratesTextAsStream()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {

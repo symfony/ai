@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+* Add `PlatformOptions::HTTP_OPTIONS`, the options of the HTTP request sent to the provider for a single invocation, like `timeout` or `max_duration`, supported by every bridge calling its provider over HTTP
+
 0.15
 ----
 

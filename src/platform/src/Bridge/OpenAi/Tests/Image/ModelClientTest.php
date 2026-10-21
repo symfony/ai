@@ -142,4 +142,17 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
         $modelClient->request(new Image('gpt-image-1'), 'foo', ['n' => 1]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"gpt-image-1","prompt":"foo"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new Image('gpt-image-1'), 'foo', ['http_options' => ['max_duration' => 30, 'json' => 'overridden']]);
+    }
 }

@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -63,6 +64,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $body = \is_string($payload) ? $payload : $this->encodeJsonBody(array_merge($options, ['model' => $model->getName()], $payload));
         $url = $this->baseUrl.$this->path;
 
@@ -71,12 +76,12 @@ final class ModelClient implements ModelClientInterface
                 'auth_bearer' => $this->apiKey,
                 'headers' => ['Content-Type' => 'application/json'],
                 'body' => $body,
-            ]));
+            ] + $httpOptions));
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => $this->requestSigner?->sign($url, $this->path, $body),
             'body' => $body,
-        ]));
+        ] + $httpOptions));
     }
 }
