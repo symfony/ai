@@ -74,7 +74,7 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
         ) {
             $this->logger->debug('Append tool definitions to system prompt.');
 
-            $tools = implode(\PHP_EOL.\PHP_EOL, array_map(
+            $tools = implode("\n\n", array_map(
                 static fn (Tool $tool) => <<<TOOL
                     ## {$tool->getName()}
                     {$tool->getDescription()}
@@ -83,9 +83,9 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
             ));
 
             if ($message instanceof Template) {
-                $toolsPrompt = \PHP_EOL.\PHP_EOL
-                    .'# Tools'.\PHP_EOL.\PHP_EOL
-                    ."The following tools are available to assist you in completing the user's request:".\PHP_EOL.\PHP_EOL
+                $toolsPrompt = "\n\n"
+                    .'# Tools'."\n\n"
+                    ."The following tools are available to assist you in completing the user's request:\n\n"
                     .$tools;
                 $template = 'expression' === $message->getType()
                     ? '('.$message->getTemplate().') ~ '.json_encode($toolsPrompt, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)
