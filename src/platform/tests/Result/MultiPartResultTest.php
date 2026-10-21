@@ -31,6 +31,33 @@ final class MultiPartResultTest extends TestCase
         $this->assertSame('Hello world.', $result->asText());
     }
 
+    public function testAsTextReturnsEmptyStringWithoutTextParts()
+    {
+        $result = new MultiPartResult([
+            new ThinkingResult('Let me think.', 'sig_abc'),
+            new ToolCallResult([new ToolCall('id', 'tool')]),
+        ]);
+
+        $this->assertSame('', $result->asText());
+    }
+
+    public function testAsTextPreservesEmptyAndRepeatedPartsInOrder()
+    {
+        $text = new TextResult('Привет 👋');
+        $result = new MultiPartResult([
+            new TextResult(''),
+            $text,
+            new ToolCallResult([new ToolCall('id', 'tool')]),
+            new TextResult('世界'),
+            new ThinkingResult('Let me think.', 'sig_abc'),
+            $text,
+        ]);
+
+        $this->assertSame('Привет 👋世界Привет 👋', $result->asText());
+        $this->assertSame($text, $result->getContent()[1]);
+        $this->assertSame($text, $result->getContent()[5]);
+    }
+
     public function testAsToolCallResultReturnsNullWithoutToolCallParts()
     {
         $result = new MultiPartResult([
