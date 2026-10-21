@@ -476,6 +476,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'bedrock mantle messages' => ['bedrock', ['default' => ['api' => 'messages', 'api_key' => 'k']], 'ai.platform.bedrock.default'];
         yield 'cartesia' => ['cartesia', ['api_key' => 'k', 'version' => '2025-04-16'], 'ai.platform.cartesia'];
         yield 'cerebras' => ['cerebras', ['api_key' => 'k'], 'ai.platform.cerebras'];
+        yield 'cheaperinference' => ['cheaperinference', ['api_key' => 'k'], 'ai.platform.cheaperinference'];
         yield 'cohere' => ['cohere', ['api_key' => 'k'], 'ai.platform.cohere'];
         yield 'decart' => ['decart', ['api_key' => 'k'], 'ai.platform.decart'];
         yield 'deepgram' => ['deepgram', ['api_key' => 'k'], 'ai.platform.deepgram'];

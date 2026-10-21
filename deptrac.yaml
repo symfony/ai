@@ -149,6 +149,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Platform\\Bridge\\Cerebras\\.*
+    - name: CheaperInferencePlatform
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Platform\\Bridge\\CheaperInference\\.*
     - name: ClaudeCodePlatform
       collectors:
         - type: classLike
@@ -494,6 +498,9 @@ deptrac:
     CartesiaPlatform:
       - PlatformComponent
     CerebrasPlatform:
+      - PlatformComponent
+      - GenericPlatform
+    CheaperInferencePlatform:
       - PlatformComponent
       - GenericPlatform
     ClaudeCodePlatform:

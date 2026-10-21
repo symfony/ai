@@ -4,6 +4,7 @@ CHANGELOG
 0.15
 ----
 
+ * Add `cheaperinference` platform configuration for the Cheaper Inference bridge
  * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
  * Add `setup_options` configuration for Redis store to set the `vector_size` used by `ai:store:setup`
  * Register a `#[Target]` alias for every configured platform, including the failover instance name

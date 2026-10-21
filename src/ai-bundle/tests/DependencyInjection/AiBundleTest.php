@@ -46,6 +46,7 @@ use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
+use Symfony\AI\Platform\Bridge\CheaperInference\Factory as CheaperInferenceFactory;
 use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
 use Symfony\AI\Platform\Bridge\Deepgram\Factory as DeepgramFactory;
 use Symfony\AI\Platform\Bridge\EdenAi\EdenAiJobClient;
@@ -6390,6 +6391,46 @@ class AiBundleTest extends TestCase
         $this->assertSame([['name' => 'edenai']], $definition->getTag('ai.platform'));
     }
 
+    public function testCheaperInferencePlatformConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'cheaperinference' => [
+                        'api_key' => 'cheaperinference-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.cheaperinference'));
+
+        $definition = $container->getDefinition('ai.platform.cheaperinference');
+
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame([
+            CheaperInferenceFactory::class,
+            'createPlatform',
+        ], $definition->getFactory());
+
+        $arguments = $definition->getArguments();
+
+        $this->assertCount(5, $arguments);
+        $this->assertSame('cheaperinference-test-key', $arguments[0]);
+        $this->assertInstanceOf(Reference::class, $arguments[1]);
+        $this->assertSame('http_client', (string) $arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[2]);
+        $this->assertSame('ai.platform.model_catalog.cheaperinference', (string) $arguments[2]);
+        $this->assertNull($arguments[3]);
+        $this->assertInstanceOf(Reference::class, $arguments[4]);
+        $this->assertSame('event_dispatcher', (string) $arguments[4]);
+
+        $this->assertTrue($definition->hasTag('proxy'));
+        $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
+        $this->assertTrue($definition->hasTag('ai.platform'));
+        $this->assertSame([['name' => 'cheaperinference']], $definition->getTag('ai.platform'));
+    }
+
     public function testEdenAiPlatformRegistersItsJobClient()
     {
         $container = $this->buildContainer([
@@ -10657,6 +10698,9 @@ class AiBundleTest extends TestCase
                     ],
                     'edenai' => [
                         'api_key' => 'edenai_key_full',
+                    ],
+                    'cheaperinference' => [
+                        'api_key' => 'cheaperinference_key_full',
                     ],
                     'lmstudio' => [
                         'host_url' => 'http://127.0.0.1:1234',

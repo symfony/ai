@@ -37,6 +37,7 @@ use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\ModelCatalog as BedrockM
 use Symfony\AI\Platform\Bridge\Bedrock\ModelCatalog as BedrockModelCatalog;
 use Symfony\AI\Platform\Bridge\Cartesia\ModelCatalog as CartesiaModelCatalog;
 use Symfony\AI\Platform\Bridge\Cerebras\ModelCatalog as CerebrasModelCatalog;
+use Symfony\AI\Platform\Bridge\CheaperInference\ModelCatalog as CheaperInferenceModelCatalog;
 use Symfony\AI\Platform\Bridge\Cohere\ModelCatalog as CohereModelCatalog;
 use Symfony\AI\Platform\Bridge\Decart\ModelCatalog as DecartModelCatalog;
 use Symfony\AI\Platform\Bridge\Deepgram\Contract\DeepgramContract;
@@ -140,6 +141,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.bedrock.responses', BedrockMantleResponsesModelCatalog::class)
         ->set('ai.platform.model_catalog.cartesia', CartesiaModelCatalog::class)
         ->set('ai.platform.model_catalog.cerebras', CerebrasModelCatalog::class)
+        ->set('ai.platform.model_catalog.cheaperinference', CheaperInferenceModelCatalog::class)
         ->set('ai.platform.model_catalog.cohere', CohereModelCatalog::class)
         ->set('ai.platform.model_catalog.decart', DecartModelCatalog::class)
         ->set('ai.platform.model_catalog.deepseek', DeepSeekModelCatalog::class)

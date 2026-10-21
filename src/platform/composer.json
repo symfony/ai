@@ -12,6 +12,7 @@
         "azure",
         "bedrock",
         "cerebras",
+        "cheaperinference",
         "dockermodelrunner",
         "edenai",
         "elevenlabs",

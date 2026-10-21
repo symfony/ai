@@ -70,6 +70,7 @@ use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
 use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Bridge\Cartesia\Factory as CartesiaFactory;
 use Symfony\AI\Platform\Bridge\Cerebras\Factory as CerebrasFactory;
+use Symfony\AI\Platform\Bridge\CheaperInference\Factory as CheaperInferenceFactory;
 use Symfony\AI\Platform\Bridge\Cohere\Factory as CohereFactory;
 use Symfony\AI\Platform\Bridge\Decart\Factory as DecartFactory;
 use Symfony\AI\Platform\Bridge\Deepgram\Factory as DeepgramFactory;
@@ -1028,6 +1029,30 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'openrouter']);
+
+            $container->setDefinition($platformId, $definition);
+
+            return;
+        }
+
+        if ('cheaperinference' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cheaper-inference-platform', CheaperInferenceFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Cheaper Inference platform configuration requires "symfony/ai-cheaper-inference-platform" package. Try running "composer require symfony/ai-cheaper-inference-platform".');
+            }
+
+            $platformId = 'ai.platform.cheaperinference';
+            $definition = (new Definition(Platform::class))
+                ->setFactory(CheaperInferenceFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('ai.platform.model_catalog.cheaperinference'),
+                    null,
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => 'cheaperinference']);
 
             $container->setDefinition($platformId, $definition);
 

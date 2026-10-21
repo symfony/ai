@@ -227,6 +227,9 @@ Eden AI pairs its OpenAI-compatible chat and embeddings endpoints with expert mo
 document parsing, speech and images, which are addressed as ``feature/subfeature/provider``.
 See :doc:`platform/edenai` for the full setup and usage guide.
 
+`Cheaper Inference`_ is an OpenAI-compatible LLM gateway with its own bridge and model catalog.
+See :doc:`platform/cheaperinference` for the full setup and usage guide.
+
 Providers and Multi-Provider Platforms
 --------------------------------------
 
@@ -2376,6 +2379,7 @@ Code Examples
 .. _`Google`: https://ai.google.dev/
 .. _`OpenRouter`: https://www.openrouter.ai/
 .. _`Eden AI`: https://www.edenai.co/
+.. _`Cheaper Inference`: https://cheaperinference.com/
 .. _`DeepSeek's R1`: https://www.deepseek.com/
 .. _`Amazon's Nova`: https://nova.amazon.com
 .. _`Mistral's Mistral`: https://www.mistral.ai/

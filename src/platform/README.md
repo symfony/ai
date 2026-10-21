@@ -28,6 +28,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Cache               | `symfony/ai-cache-platform`               |
 | Cartesia            | `symfony/ai-cartesia-platform`            |
 | Cerebras            | `symfony/ai-cerebras-platform`            |
+| Cheaper Inference   | `symfony/ai-cheaper-inference-platform`   |
 | Claude Code         | `symfony/ai-claude-code-platform`         |
 | Codex               | `symfony/ai-codex-platform`               |
 | Cohere              | `symfony/ai-cohere-platform`              |
