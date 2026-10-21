@@ -62,9 +62,9 @@ final class MemoryInputProcessor implements InputProcessorInterface
                 continue;
             }
 
-            $memory .= \PHP_EOL.\PHP_EOL;
+            $memory .= "\n\n";
             $memory .= implode(
-                \PHP_EOL,
+                "\n",
                 array_map(static fn (Memory $memory): string => $memory->getContent(), $memoryMessages),
             );
         }
@@ -81,7 +81,7 @@ final class MemoryInputProcessor implements InputProcessorInterface
 
         $combinedMessage = self::MEMORY_PROMPT_MESSAGE.$memory;
         if ('' !== $originalSystemPrompt) {
-            $combinedMessage .= \PHP_EOL.\PHP_EOL.'# System Prompt'.\PHP_EOL.\PHP_EOL.$originalSystemPrompt;
+            $combinedMessage .= "\n\n".'# System Prompt'."\n\n".$originalSystemPrompt;
         }
 
         $combinedSystemMessage = Message::forSystem($combinedMessage);
