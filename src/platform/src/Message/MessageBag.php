@@ -93,12 +93,11 @@ class MessageBag implements \Countable, \IteratorAggregate
             return $systemMessages[0];
         }
 
-        $content = [];
-        foreach ($systemMessages as $message) {
-            $content[] = (string) $message->getContent();
+        foreach ($systemMessages as $index => $message) {
+            $systemMessages[$index] = (string) $message->getContent();
         }
 
-        return new SystemMessage(implode($separator, $content));
+        return new SystemMessage(implode($separator, $systemMessages));
     }
 
     public function getUserMessage(): ?UserMessage
