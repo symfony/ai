@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-22T20:40:42Z
+
+I pushed a commit on top: the option is now `distance_metric` to match the snake_case keys of the other stores' `setup_options`, it only accepts `cosine` or `euclidean` so a typo fails at container compile time, and there is a changelog entry since this adds config. That makes it a new feature rather than a bug fix, so the table should say so.
