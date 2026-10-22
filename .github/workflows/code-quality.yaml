@@ -15,6 +15,10 @@ env:
     REQUIRED_PHP_EXTENSIONS: 'mongodb, redis'
 
 jobs:
+    matrix:
+        name: Matrix
+        uses: ./.github/workflows/build-matrix.yaml
+
     # ===========================================
     # PHPStan
     # ===========================================
@@ -24,6 +28,7 @@ jobs:
     # .github/run-in-packages.sh and annotated inline via PHPStan's github error format.
     phpstan:
         name: PHPStan / ${{ matrix.shard.name }}
+        needs: matrix
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -45,21 +50,32 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v7
 
+            # -maxdepth 3 keeps the "src" shard to components and bundles; bridges live deeper
+            # and are covered by their own shards.
+            - name: Find affected packages
+              id: packages
+              env:
+                  AFFECTED_PACKAGES: ${{ needs.matrix.outputs.affected-packages }}
+              run: |
+                  find ${{ matrix.shard.path }} -maxdepth 3 -name phpstan.dist.neon -not -path '*/vendor/*' | sort | .github/filter-affected.sh > "$RUNNER_TEMP/packages.txt"
+                  echo "count=$(wc -l < "$RUNNER_TEMP/packages.txt")" >> $GITHUB_OUTPUT
+                  cat "$RUNNER_TEMP/packages.txt"
+
             - name: Install workspace
+              if: steps.packages.outputs.count != '0'
               uses: ./.github/actions/workspace
               with:
                   php-version: ${{ env.PHP_VERSION }}
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Run PHPStan
-              run: |
-                  # -maxdepth 3 keeps the "src" shard to components and bundles; bridges live deeper
-                  # and are covered by their own shards.
-                  find ${{ matrix.shard.path }} -maxdepth 3 -name phpstan.dist.neon -not -path '*/vendor/*' | sort \
-                      | .github/run-in-packages.sh vendor/bin/phpstan analyse --no-progress --error-format=github --memory-limit=1G -c '{}'
+              if: steps.packages.outputs.count != '0'
+              run: .github/run-in-packages.sh vendor/bin/phpstan analyse --no-progress --error-format=github --memory-limit=1G -c '{}' < "$RUNNER_TEMP/packages.txt"
 
     phpstan-demo:
         name: PHPStan / Demo
+        needs: matrix
+        if: contains(fromJson(needs.matrix.outputs.affected-packages), 'demo')
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -94,6 +110,8 @@ jobs:
 
     phpstan-examples:
         name: PHPStan / Examples
+        needs: matrix
+        if: contains(fromJson(needs.matrix.outputs.affected-packages), 'examples')
         runs-on: ubuntu-latest
         steps:
             - name: Checkout

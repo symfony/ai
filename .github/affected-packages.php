@@ -13,6 +13,7 @@
  * Changes outside of any package (CI config, shared fixtures, root composer.json, ...) affect everything.
  *
  * usage: git diff --name-only <base>...HEAD | php .github/affected-packages.php
+ *        php .github/affected-packages.php --all
  */
 
 $root = dirname(__DIR__);
@@ -134,9 +135,9 @@ foreach ($packages as $name => $package) {
 }
 
 // 4. Map changed files to packages
-$all = false;
+$all = in_array('--all', $argv, true);
 $changed = [];
-while (false !== $file = fgets(\STDIN)) {
+while (!$all && false !== $file = fgets(\STDIN)) {
     $file = trim($file);
     if ('' === $file) {
         continue;
