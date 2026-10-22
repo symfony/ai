@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`
+ * [BC BREAK] Remove the root-level `ai.model` option in favor of the `models` option of the platform's `model_catalog`
+ * [BC BREAK] Remove the `ai.platform.model_catalog.amazeeai` service
+ * [BC BREAK] Remove the unused `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and `ai.platform.model_catalog.replicate` services
+ * [BC BREAK] Remove the `api_catalog` option of the `huggingface` platform in favor of the `api` option of its `model_catalog`
+
 0.15
 ----
 

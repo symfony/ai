@@ -61,7 +61,6 @@ use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
-use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelApiCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\Factory as AzureOpenAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
@@ -83,22 +82,17 @@ use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Fireworks\Factory as FireworksFactory;
 use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
-use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
 use Symfony\AI\Platform\Bridge\Higgsfield\HiggsfieldJobClient;
-use Symfony\AI\Platform\Bridge\HuggingFace\ApiClient as HuggingFaceApiClient;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
-use Symfony\AI\Platform\Bridge\HuggingFace\ModelApiCatalog as HuggingFaceModelApiCatalog;
 use Symfony\AI\Platform\Bridge\LmStudio\Factory as LmStudioFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\MiniMaxJobClient;
 use Symfony\AI\Platform\Bridge\Mistral\Factory as MistralFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
-use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenAi\Batch\JobClient as OpenAiJobClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\Bridge\OpenResponses\Factory as OpenResponsesFactory;
-use Symfony\AI\Platform\Bridge\OpenResponses\FallbackModelCatalog as OpenResponsesFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory as OpenRouterFactory;
 use Symfony\AI\Platform\Bridge\Ovh\Factory as OvhFactory;
 use Symfony\AI\Platform\Bridge\Perplexity\Factory as PerplexityFactory;
@@ -116,6 +110,10 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Job\JobClientInterface;
 use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Template;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\InMemoryModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
@@ -227,11 +225,6 @@ final class AiBundle extends AbstractBundle
 
         foreach ($config['platform'] ?? [] as $type => $platform) {
             $this->processPlatformConfig($type, $platform, $builder);
-        }
-
-        // Process model configuration and pass to ModelCatalog services
-        foreach ($config['model'] ?? [] as $platformName => $models) {
-            $this->processModelConfig($platformName, $models, $builder);
         }
 
         $taggedPlatforms = $builder->findTaggedServiceIds('ai.platform');
@@ -469,7 +462,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     $platform['base_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.albert'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.albert')),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'albert']);
@@ -484,16 +477,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('amazee.ai platform configuration requires "symfony/ai-amazee-ai-platform" package. Try running "composer require symfony/ai-amazee-ai-platform".');
             }
 
-            $container->setDefinition('ai.platform.model_catalog.amazeeai', (new Definition(AmazeeAiModelApiCatalog::class))
-                ->setLazy(true)
-                ->setArguments([
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    $platform['base_url'],
-                    $platform['api_key'],
-                ])
-                ->addTag('proxy', ['interface' => ModelCatalogInterface::class])
-            );
-
             $platformId = 'ai.platform.amazeeai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AmazeeAiFactory::class.'::createPlatform')
@@ -503,7 +486,11 @@ final class AiBundle extends AbstractBundle
                     $platform['base_url'],
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.amazeeai'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(AmazeeAiFactory::class, [
+                        $platform['base_url'],
+                        $platform['api_key'],
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -527,7 +514,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.anthropic'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.anthropic')),
                     new Reference('ai.platform.contract.anthropic'),
                     new Reference('event_dispatcher'),
                     $platform['cache_retention'],
@@ -556,7 +543,7 @@ final class AiBundle extends AbstractBundle
                         $config['api_version'],
                         $config['api_key'],
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        new Reference('ai.platform.model_catalog.azure.openai'),
+                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.azure.openai')),
                         new Reference('ai.platform.contract.openai'),
                         new Reference('event_dispatcher'),
                     ])
@@ -570,6 +557,7 @@ final class AiBundle extends AbstractBundle
 
         if ('bedrock' === $type) {
             foreach ($platform as $name => $config) {
+                $platformId = 'ai.platform.bedrock.'.$name;
                 $isInvokeModel = 'invoke_model' === $config['api'];
                 $factory = $isInvokeModel ? BedrockFactory::class : BedrockMantleFactory::class;
 
@@ -580,7 +568,7 @@ final class AiBundle extends AbstractBundle
                 if ($isInvokeModel) {
                     $arguments = [
                         $config['bedrock_runtime_client'] ? new Reference($config['bedrock_runtime_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE) : null,
-                        $config['model_catalog'] ? new Reference($config['model_catalog']) : new Reference('ai.platform.model_catalog.bedrock'),
+                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.bedrock')),
                         null,
                         new Reference('event_dispatcher'),
                     ];
@@ -591,7 +579,7 @@ final class AiBundle extends AbstractBundle
                         $config['api'],
                         isset($config['credential_provider']) ? new Reference($config['credential_provider']) : null,
                         new Reference($config['http_client'] ?? 'http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $config['model_catalog'] ? new Reference($config['model_catalog']) : null,
+                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.bedrock.'.$config['api'])),
                         null, // $contract
                         new Reference('event_dispatcher'),
                         $config['cache_retention'] ?? null,
@@ -600,7 +588,6 @@ final class AiBundle extends AbstractBundle
                     ];
                 }
 
-                $platformId = 'ai.platform.bedrock.'.$name;
                 $definition = (new Definition(Platform::class))
                     ->setFactory($factory.'::createPlatform')
                     ->setLazy(true)
@@ -652,6 +639,7 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Cartesia platform configuration requires "symfony/ai-cartesia-platform" package. Try running "composer require symfony/ai-cartesia-platform".');
             }
 
+            $platformId = 'ai.platform.cartesia';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CartesiaFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -660,7 +648,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     $platform['version'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.cartesia'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.cartesia')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -668,12 +656,13 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'cartesia']);
 
-            $container->setDefinition('ai.platform.cartesia', $definition);
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
 
         if ('decart' === $type) {
+            $platformId = 'ai.platform.decart';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DecartFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -681,14 +670,14 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     $platform['host'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.'.$type),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.decart')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => $type]);
 
-            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -698,6 +687,7 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
             }
 
+            $platformId = 'ai.platform.elevenlabs';
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -708,11 +698,16 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
+                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(ElevenLabsFactory::class, [
+                    $platform['endpoint'],
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client']),
+                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => $type]);
 
-            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -757,7 +752,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.gemini'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.gemini')),
                     new Reference('ai.platform.contract.gemini'),
                     new Reference('event_dispatcher'),
                 ])
@@ -783,7 +778,7 @@ final class AiBundle extends AbstractBundle
                         $config['base_url'],
                         $config['api_key'] ?? null,
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        isset($config['model_catalog']) ? new Reference($config['model_catalog']) : new Definition(GenericFallbackModelCatalog::class),
+                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.generic')),
                         null, // $contract
                         new Reference('event_dispatcher'),
                         $config['supports_completions'],
@@ -814,7 +809,12 @@ final class AiBundle extends AbstractBundle
                     $platform['api_secret'],
                     $platform['base_url'] ?? null,
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    isset($platform['model_catalog']) ? new Reference($platform['model_catalog']) : null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(HiggsfieldFactory::class, [
+                        $platform['api_key'],
+                        $platform['api_secret'],
+                        $platform['base_url'] ?? null,
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                     new Reference('ai.platform.contract.higgsfield'),
                     new Reference('event_dispatcher'),
                 ])
@@ -842,21 +842,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('HuggingFace platform configuration requires "symfony/ai-hugging-face-platform" package. Try running "composer require symfony/ai-hugging-face-platform".');
             }
 
-            $modelCatalogId = 'ai.platform.model_catalog.huggingface';
-            if ($platform['api_catalog']) {
-                $modelCatalogId = 'ai.platform.model_catalog.huggingface.api';
-                $container->setDefinition($modelCatalogId, (new Definition(HuggingFaceModelApiCatalog::class))
-                    ->setLazy(true)
-                    ->setArguments([
-                        new Definition(HuggingFaceApiClient::class, [
-                            new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                            $platform['api_key'],
-                        ]),
-                        $platform['provider'],
-                    ])
-                    ->addTag('proxy', ['interface' => ModelCatalogInterface::class]));
-            }
-
             $platformId = 'ai.platform.huggingface';
             $definition = (new Definition(Platform::class))
                 ->setFactory(HuggingFaceFactory::class.'::createPlatform')
@@ -866,7 +851,11 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     $platform['provider'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference($modelCatalogId),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.huggingface'), $this->createApiModelCatalog(HuggingFaceFactory::class, [
+                        $platform['api_key'],
+                        $platform['provider'],
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                     new Reference('ai.platform.contract.huggingface'),
                     new Reference('event_dispatcher'),
                 ])
@@ -882,6 +871,7 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Venice platform configuration requires "symfony/ai-venice-platform" package. Try running "composer require symfony/ai-venice-platform".');
             }
 
+            $platformId = 'ai.platform.venice';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VeniceFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -892,10 +882,15 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
                 ])
+                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(VeniceFactory::class, [
+                    $platform['api_key'],
+                    $platform['endpoint'],
+                    new Reference($platform['http_client']),
+                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => $type]);
 
-            $container->setDefinition('ai.platform.'.$type, $definition);
+            $container->setDefinition($platformId, $definition);
 
             $jobClientId = 'ai.platform.job_client.'.$type;
             $container->setDefinition($jobClientId, (new Definition(VeniceJobClient::class))
@@ -952,7 +947,7 @@ final class AiBundle extends AbstractBundle
                     $platform['project_id'] ?? null,
                     $platform['api_key'] ?? null,
                     $httpClient,
-                    new Reference('ai.platform.model_catalog.vertexai.gemini'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.vertexai.gemini')),
                     new Reference('ai.platform.contract.vertexai.gemini'),
                     new Reference('event_dispatcher'),
                 ])
@@ -976,7 +971,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.openai'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.openai')),
                     new Reference('ai.platform.contract.openai'),
                     $platform['region'] ?? null,
                     new Reference('event_dispatcher'),
@@ -1014,7 +1009,7 @@ final class AiBundle extends AbstractBundle
                         $config['base_url'],
                         $config['api_key'] ?? null,
                         new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        isset($config['model_catalog']) ? new Reference($config['model_catalog']) : new Definition(OpenResponsesFallbackModelCatalog::class),
+                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.openresponses')),
                         null, // $contract
                         new Reference('event_dispatcher'),
                         $config['responses_path'],
@@ -1040,7 +1035,9 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.openrouter'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.openrouter'), $this->createApiModelCatalog(OpenRouterFactory::class, [
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1064,7 +1061,9 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.edenai'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.edenai'), $this->createApiModelCatalog(EdenAiFactory::class, [
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1100,7 +1099,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.mistral'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.mistral')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1124,7 +1123,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.lmstudio'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.lmstudio')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1140,6 +1139,7 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
             }
 
+            $platformId = 'ai.platform.ollama';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1150,10 +1150,15 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
                 ])
+                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(OllamaFactory::class, [
+                    $platform['endpoint'] ?? null,
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client']),
+                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => 'ollama']);
 
-            $container->setDefinition('ai.platform.ollama', $definition);
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -1172,7 +1177,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     $platform['endpoint'],
-                    new Reference('ai.platform.model_catalog.minimax'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.minimax')),
                     new Reference('ai.platform.contract.minimax'),
                     new Reference('event_dispatcher'),
                 ])
@@ -1207,7 +1212,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.cerebras'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.cerebras')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1231,7 +1236,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.cohere'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.cohere')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1247,6 +1252,7 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Deepgram platform configuration requires "symfony/ai-deepgram-platform" package. Try running "composer require symfony/ai-deepgram-platform".');
             }
 
+            $platformId = 'ai.platform.deepgram';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DeepgramFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1257,11 +1263,16 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.deepgram'),
                     new Reference('event_dispatcher'),
                 ])
+                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(DeepgramFactory::class, [
+                    $platform['endpoint'],
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client']),
+                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'deepgram']);
 
-            $container->setDefinition('ai.platform.deepgram', $definition);
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -1279,7 +1290,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.deepseek'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.deepseek')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1306,6 +1317,10 @@ final class AiBundle extends AbstractBundle
                     null, // $contract, defaults to Contract::create() inside the factory
                     new Reference('event_dispatcher'),
                 ])
+                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(FireworksFactory::class, [
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])))
                 ->addTag('ai.platform', ['name' => 'fireworks']);
 
             $container->setDefinition($platformId, $definition);
@@ -1326,7 +1341,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.typesafe'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.typesafe')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1350,7 +1365,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.voyage'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.voyage')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1374,7 +1389,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.perplexity'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.perplexity')),
                     new Reference('ai.platform.contract.perplexity'),
                     new Reference('event_dispatcher'),
                 ])
@@ -1398,7 +1413,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['host_url'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.dockermodelrunner'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.dockermodelrunner')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1422,7 +1437,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.scaleway'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.scaleway')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -1450,6 +1465,11 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.together'),
                     new Reference('event_dispatcher'),
                 ])
+                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(TogetherFactory::class, [
+                    $platform['endpoint'] ?? null,
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])))
                 ->addTag('ai.platform', ['name' => 'together']);
 
             $container->setDefinition($platformId, $definition);
@@ -1468,7 +1488,7 @@ final class AiBundle extends AbstractBundle
                 ->setLazy(true)
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
-                    new Reference('ai.platform.model_catalog.transformersphp'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.transformersphp')),
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('ai.platform', ['name' => 'transformersphp']);
@@ -1491,7 +1511,7 @@ final class AiBundle extends AbstractBundle
                 ->setArguments([
                     $platform['api_key'],
                     new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                    new Reference('ai.platform.model_catalog.ovh'),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.ovh')),
                     null,
                     new Reference('event_dispatcher'),
                 ])
@@ -3050,36 +3070,45 @@ final class AiBundle extends AbstractBundle
     }
 
     /**
-     * Process model configuration and pass it to ModelCatalog services.
-     *
-     * @param array<string, array{class: class-string, capabilities: list<Capability|string>}> $models
+     * @param array{service?: string, api?: bool, models: array<string, array{class: class-string<Model>, capabilities: list<Capability>}>, cache: array{enabled: bool, service: string, ttl: int}} $config
      */
-    private function processModelConfig(string $platformName, array $models, ContainerBuilder $builder): void
+    private function createModelCatalog(string $platformId, array $config, Reference|Definition $defaultCatalog, ?Definition $apiCatalog = null): Reference|Definition
     {
-        $modelCatalogId = 'ai.platform.model_catalog.'.$platformName;
-
-        // Handle special cases for platform name mapping
-        if ('vertexai' === $platformName) {
-            $modelCatalogId = 'ai.platform.model_catalog.vertexai.gemini';
+        if (isset($config['service'])) {
+            $modelCatalog = new Reference($config['service']);
+        } elseif (null !== $apiCatalog && ($config['api'] ?? false)) {
+            $modelCatalog = $apiCatalog;
+        } else {
+            $modelCatalog = $defaultCatalog;
         }
 
-        if (!$builder->hasDefinition($modelCatalogId)) {
-            return;
+        if ($config['cache']['enabled']) {
+            $modelCatalog = new Definition(CachedModelCatalog::class, [
+                $modelCatalog,
+                new Reference($config['cache']['service']),
+                $config['cache']['ttl'],
+                $platformId,
+            ]);
         }
 
-        $additionalModels = [];
-        foreach ($models as $modelName => $modelConfig) {
-            $additionalModels[$modelName] = [
-                'class' => $modelConfig['class'],
-                'capabilities' => $modelConfig['capabilities'],
-            ];
+        if ([] === $config['models']) {
+            return $modelCatalog;
         }
 
-        if ([] === $additionalModels) {
-            return;
-        }
+        return new Definition(CompositeModelCatalog::class, [[
+            new Definition(InMemoryModelCatalog::class, [$config['models']]),
+            $modelCatalog,
+        ]]);
+    }
 
-        $definition = $builder->getDefinition($modelCatalogId);
-        $definition->setArguments([$additionalModels]);
+    /**
+     * @param class-string $factory
+     * @param list<mixed>  $arguments
+     */
+    private function createApiModelCatalog(string $factory, array $arguments): Definition
+    {
+        return (new Definition(ModelCatalogInterface::class))
+            ->setFactory([$factory, 'createModelCatalog'])
+            ->setArguments($arguments);
     }
 }

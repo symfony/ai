@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('dockermodelrunner'))
     ->children()
         ->stringNode('host_url')->defaultValue('http://127.0.0.1:12434')->end()
@@ -20,4 +22,5 @@ return (new ArrayNodeDefinition('dockermodelrunner'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
+        ->append($modelCatalog('static'))
     ->end();
