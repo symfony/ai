@@ -80,7 +80,7 @@ class MessageBag implements \Countable, \IteratorAggregate
         return $this->messages;
     }
 
-    public function getSystemMessage(string $separator = \PHP_EOL.\PHP_EOL): ?SystemMessage
+    public function getSystemMessage(string $separator = "\n\n"): ?SystemMessage
     {
         $systemMessages = [];
         foreach ($this->messages as $message) {
