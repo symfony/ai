@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-22T20:35:40Z
+
+Thanks @welcoMattic - great work! Tested all examples against the live API, all green :+1:
+
+I pushed three small commits on top, mostly around citations:
+
+---
+
+* `2d4016f` removes the graft entries in `.gitignore` & `.ignore` - unrelated to this PR
+* `409ed6c` always derives `citations` from the search results - a `url_citation` annotation would have won on the buffered path only, so buffered & streamed results diverged and `citations[0]` was no longer the source of `[1]`
+* `68e1de0` sorts the search results by `id` - with `medium` the ids continue across searches, but not in output order (recorded run: 16-29, 1-15, 30-44) => every marker pointed at the wrong URL. Added a `multi_step_search` cassette for that
+* docs: `low`, `medium` & `high` cite with `[web:n]` instead of `[n]`
+
+Still open: ids covered 1..n without gaps in all my runs - if Perplexity ever skips one, position-based citations drift again. Keying them by id would avoid that, but changes the `citations` format - WDYT?
