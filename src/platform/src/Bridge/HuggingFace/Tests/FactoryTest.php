@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\HuggingFace\Completions;
 use Symfony\AI\Platform\Bridge\HuggingFace\Embeddings;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
+use Symfony\AI\Platform\Bridge\HuggingFace\ModelApiCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog;
 use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
 use Symfony\AI\Platform\Bridge\HuggingFace\Reranker;
@@ -35,6 +36,7 @@ use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -162,6 +164,27 @@ final class FactoryTest extends TestCase
         $this->assertSame('call_clock', $calls[0]->getId());
         $this->assertSame('clock', $calls[0]->getName());
         $this->assertSame([], $calls[0]->getArguments());
+    }
+
+    public function testCreateModelCatalogListsModelsWithApiKey()
+    {
+        $requestedUrls = [];
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrls, &$headers): ResponseInterface {
+            $requestedUrls[] = $url;
+            $headers = $options['normalized_headers'] ?? [];
+
+            return new JsonMockResponse([]);
+        });
+
+        $catalog = Factory::createModelCatalog('secret', Provider::NSCALE, $httpClient);
+
+        $this->assertInstanceOf(ModelApiCatalog::class, $catalog);
+        $this->assertSame([], $catalog->getModels());
+        $this->assertNotSame([], $requestedUrls);
+        $this->assertStringStartsWith('https://huggingface.co/api/models?', $requestedUrls[0]);
+        $this->assertStringContainsString('inference_provider=nscale', $requestedUrls[0]);
+        $this->assertSame(['Authorization: Bearer secret'], $headers['authorization'] ?? []);
     }
 
     private static function createModelCatalog(): ModelCatalog

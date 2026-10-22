@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Venice;
 
 use Symfony\AI\Platform\Bridge\Venice\Contract\VeniceContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
@@ -39,6 +40,7 @@ final class Factory
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'venice',
+        ?ModelCatalogInterface $modelCatalog = null,
     ): ProviderInterface {
         $httpClient = self::createScopedHttpClient($endpoint, $apiKey, $httpClient);
 
@@ -46,7 +48,7 @@ final class Factory
             $name,
             [new VeniceClient($httpClient)],
             [new VeniceResultConverter($name)],
-            new ModelCatalog($httpClient),
+            $modelCatalog ?? new ModelCatalog($httpClient),
             $contract ?? VeniceContract::create(),
             $eventDispatcher,
         );
@@ -74,12 +76,21 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'venice',
         ?ModelRouterInterface $modelRouter = null,
+        ?ModelCatalogInterface $modelCatalog = null,
     ): PlatformInterface {
         return new Platform(
-            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name)],
+            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name, $modelCatalog)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        #[\SensitiveParameter] ?string $apiKey = null,
+        string $endpoint = 'https://api.venice.ai/api/v1/',
+        ?HttpClientInterface $httpClient = null,
+    ): ModelCatalogInterface {
+        return new ModelCatalog(self::createScopedHttpClient($endpoint, $apiKey, $httpClient));
     }
 
     private static function createScopedHttpClient(

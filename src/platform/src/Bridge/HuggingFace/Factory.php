@@ -95,4 +95,15 @@ final class Factory
             $eventDispatcher,
         );
     }
+
+    /**
+     * @param ?string $provider Inference provider whose chat models the catalog returns
+     */
+    public static function createModelCatalog(
+        #[\SensitiveParameter] string $apiKey,
+        ?string $provider = null,
+        ?HttpClientInterface $httpClient = null,
+    ): ModelCatalogInterface {
+        return new ModelApiCatalog(new ApiClient($httpClient, $apiKey), $provider);
+    }
 }

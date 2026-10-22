@@ -139,6 +139,48 @@ AI Bundle
    +$ php bin/console ai:store:drop default --force
    ```
 
+ * The root-level `ai.model` option has been removed. Add the models to the `models` option of the
+   platform's `model_catalog` instead:
+
+   ```diff
+    ai:
+        platform:
+            lmstudio:
+                host_url: '%env(LMSTUDIO_HOST_URL)%'
+   -    model:
+   -        lmstudio:
+   -            qwen3-coder-next:
+   -                class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+   -                capabilities: ['input-messages', 'output-text']
+   +            model_catalog:
+   +                models:
+   +                    qwen3-coder-next:
+   +                        class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+   +                        capabilities: ['input-messages', 'output-text']
+   ```
+
+ * The `ai.platform.model_catalog.amazeeai` service has been removed. The amazee.ai platform always
+   uses the catalog that fetches its models from the API. To use your own catalog, set the
+   `model_catalog` option of the platform.
+
+ * The `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and
+   `ai.platform.model_catalog.replicate` services have been removed, no platform of the bundle uses
+   them. If you reference one of them, e.g. as `model_catalog` of a `generic` platform, register the
+   catalog class as your own service.
+
+ * The `api_catalog` option of the `huggingface` platform has been removed. Use the `api` option of the
+   platform's `model_catalog` instead:
+
+   ```diff
+    ai:
+        platform:
+            huggingface:
+                api_key: '%env(HUGGINGFACE_API_KEY)%'
+   -            api_catalog: true
+   +            model_catalog:
+   +                api: true
+   ```
+
 Store
 -----
 

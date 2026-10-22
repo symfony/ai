@@ -13,12 +13,15 @@ namespace Symfony\AI\Platform\Bridge\AmazeeAi\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory;
+use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class FactoryTest extends TestCase
 {
@@ -72,5 +75,24 @@ final class FactoryTest extends TestCase
         $model = $catalog->getModel('text-embedding-3-small');
 
         $this->assertInstanceOf(EmbeddingsModel::class, $model);
+    }
+
+    public function testCreateModelCatalogFetchesModelsWithApiKey()
+    {
+        $requestedUrl = '';
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$headers): ResponseInterface {
+            $requestedUrl = $url;
+            $headers = $options['normalized_headers'] ?? [];
+
+            return new MockResponse('{"data": [{"model_name": "gpt-4o", "model_info": {"mode": "chat"}}]}');
+        });
+
+        $catalog = Factory::createModelCatalog('https://llm.example.com', 'secret', $httpClient);
+
+        $this->assertInstanceOf(ModelApiCatalog::class, $catalog);
+        $this->assertInstanceOf(CompletionsModel::class, $catalog->getModel('gpt-4o'));
+        $this->assertSame('https://llm.example.com/model/info', $requestedUrl);
+        $this->assertSame(['Authorization: Bearer secret'], $headers['authorization'] ?? []);
     }
 }

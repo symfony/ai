@@ -4,6 +4,7 @@ CHANGELOG
 0.16
 ----
 
+ * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`
  * [BC BREAK] Replace the `setup_options` of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis` and `s3vectors` stores by store keys: `dimensions`, `metric`, `cloud`, `region`, `vector_type`, `index_method`, `index_opclass` and `index_fields`
  * [BC BREAK] Remove the `setup_options.force_database_creation` option of the `surrealdb` store, use `ai:store:setup --option forceDatabaseCreation=true` instead
  * [BC BREAK] Rename the `similarity` (`elasticsearch`, `manticoresearch`, `mongodb`), `metric_type` (`milvus`), `space_type` (`opensearch`), `strategy` (`surrealdb`) and `distance` (`mariadb`, `neo4j`, `postgres`, `qdrant`, `redis`, `sqlite`) store keys to `metric`, and the `vector_dimension` key of the `sqlite` and `supabase` stores to `dimensions`
@@ -11,6 +12,10 @@ CHANGELOG
  * [BC BREAK] Remove the type-prefixed `StoreInterface` and `MessageStoreInterface` aliases, e.g. `StoreInterface $chromadbDocuments`
  * Add a `doctrine` store, keeping vectors in an `#[Embedding]` field of a Doctrine entity, and embedding the entity on flush and through `ai:store:index` when a `vectorizer` is configured
  * [BC BREAK] Name stores by their configured name in the `ai:store:setup`, `ai:store:drop` and `ai:store:clear` commands instead of their service id
+ * [BC BREAK] Remove the root-level `ai.model` option in favor of the `models` option of the platform's `model_catalog`
+ * [BC BREAK] Remove the `ai.platform.model_catalog.amazeeai` service
+ * [BC BREAK] Remove the unused `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and `ai.platform.model_catalog.replicate` services
+ * [BC BREAK] Remove the `api_catalog` option of the `huggingface` platform in favor of the `api` option of its `model_catalog`
 
 0.15
 ----

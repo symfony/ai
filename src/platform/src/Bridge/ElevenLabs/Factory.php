@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\ElevenLabs;
 
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
@@ -38,27 +39,15 @@ final class Factory
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'elevenlabs',
+        ?ModelCatalogInterface $modelCatalog = null,
     ): ProviderInterface {
-        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-
-        // The endpoint carries a path prefix ("/v1"), against which the model clients resolve relative
-        // paths. A single trailing slash is required for that resolution, so normalize it here to
-        // tolerate an endpoint configured with or without it.
-        $endpoint = rtrim($endpoint, '/').'/';
-
-        if (null !== $apiKey) {
-            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, [
-                'headers' => [
-                    'xi-api-key' => $apiKey,
-                ],
-            ]);
-        }
+        $httpClient = self::createHttpClient($endpoint, $apiKey, $httpClient);
 
         return new Provider(
             $name,
             [new ElevenLabsClient($httpClient)],
             [new ElevenLabsResultConverter($httpClient)],
-            new ModelCatalog($httpClient),
+            $modelCatalog ?? new ModelCatalog($httpClient),
             $contract ?? ElevenLabsContract::create(),
             $eventDispatcher,
         );
@@ -75,11 +64,39 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'elevenlabs',
         ?ModelRouterInterface $modelRouter = null,
+        ?ModelCatalogInterface $modelCatalog = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name)],
+            [self::createProvider($endpoint, $apiKey, $httpClient, $contract, $eventDispatcher, $name, $modelCatalog)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        string $endpoint = 'https://api.elevenlabs.io/v1/',
+        #[\SensitiveParameter] ?string $apiKey = null,
+        ?HttpClientInterface $httpClient = null,
+    ): ModelCatalogInterface {
+        return new ModelCatalog(self::createHttpClient($endpoint, $apiKey, $httpClient));
+    }
+
+    private static function createHttpClient(
+        string $endpoint,
+        #[\SensitiveParameter] ?string $apiKey,
+        ?HttpClientInterface $httpClient,
+    ): HttpClientInterface {
+        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+
+        if (null === $apiKey) {
+            return $httpClient;
+        }
+
+        // a trailing slash is required for the relative paths to resolve under the "/v1" prefix
+        return ScopingHttpClient::forBaseUri($httpClient, rtrim($endpoint, '/').'/', [
+            'headers' => [
+                'xi-api-key' => $apiKey,
+            ],
+        ]);
     }
 }

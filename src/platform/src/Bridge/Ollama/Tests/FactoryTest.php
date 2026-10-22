@@ -24,6 +24,8 @@ use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class FactoryTest extends TestCase
 {
@@ -133,5 +135,22 @@ final class FactoryTest extends TestCase
         $platform = Factory::createPlatform('http://127.0.0.1:11434', httpClient: new MockHttpClient(), modelCatalog: $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('llama3.2'));
+    }
+
+    public function testCreateModelCatalogUsesScopedHttpClient()
+    {
+        $requestedUrl = '';
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$headers): ResponseInterface {
+            $requestedUrl = $url;
+            $headers = $options['normalized_headers'] ?? [];
+
+            return new MockResponse('{"models": []}');
+        });
+
+        Factory::createModelCatalog('http://127.0.0.1:11434', 'secret', $httpClient)->getModels();
+
+        $this->assertSame('http://127.0.0.1:11434/api/tags', $requestedUrl);
+        $this->assertSame(['Authorization: Bearer secret'], $headers['authorization'] ?? []);
     }
 }

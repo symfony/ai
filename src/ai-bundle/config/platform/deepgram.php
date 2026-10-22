@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('deepgram'))
     ->children()
         ->stringNode('api_key')->end()
@@ -24,4 +26,5 @@ return (new ArrayNodeDefinition('deepgram'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
+        ->append($modelCatalog('api'))
     ->end();

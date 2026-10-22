@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('generic'))
     ->useAttributeAsKey('name')
     ->arrayPrototype()
@@ -23,9 +25,7 @@ return (new ArrayNodeDefinition('generic'))
                 ->defaultValue('http_client')
                 ->info('Service ID of the HTTP client to use')
             ->end()
-            ->stringNode('model_catalog')
-                ->info('Service ID of the model catalog to use')
-            ->end()
+            ->append($modelCatalog('static'))
             ->booleanNode('supports_completions')->defaultTrue()->end()
             ->booleanNode('supports_embeddings')->defaultTrue()->end()
             ->stringNode('completions_path')->defaultValue('/v1/chat/completions')->end()

@@ -159,7 +159,8 @@ the catalog. It only returns chat models that the configured provider serves, wi
 features of this provider. If the Hub doesn't serve the model for a supported task, it throws
 a :class:`Symfony\\AI\\Platform\\Exception\\ModelNotFoundException`.
 
-In the AI Bundle, enable the ``api_catalog`` option:
+In the AI Bundle, enable the ``api`` option of the platform's ``model_catalog``, see
+:ref:`ai-bundle-model-catalog`:
 
 .. code-block:: yaml
 
@@ -170,8 +171,9 @@ In the AI Bundle, enable the ``api_catalog`` option:
                 api_key: '%env(HUGGINGFACE_API_KEY)%'
                 # Hugging Face picks the provider for each chat request when null
                 provider: null
-                # resolve models through the Hugging Face Hub API
-                api_catalog: true
+                model_catalog:
+                    # resolve models through the Hugging Face Hub API
+                    api: true
 
 .. _`Hugging Face Inference Providers`: https://huggingface.co/docs/inference-providers/index
 .. _`access token`: https://huggingface.co/docs/hub/en/security-tokens

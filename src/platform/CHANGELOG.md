@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `Result\CommentaryResult`, `Message\Content\Commentary` and the `Result\Stream\Delta\CommentaryStart`, `CommentaryDelta` and `CommentaryComplete` deltas for narration a model emits next to its answer
  * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
+ * Add `InMemoryModelCatalog` holding a fixed list of models, e.g. to put configured models in front of another catalog with `CompositeModelCatalog`
 
 0.15
 ----

@@ -20,6 +20,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\AiBundle\AiBundle;
+use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelOptionsParser;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -35,7 +37,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\NativeHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 use Symfony\Component\Serializer\Serializer;
@@ -415,15 +419,77 @@ class BridgeConfigCompilationTest extends TestCase
         $this->assertReferencesResolvable($definition, $container, $expectedServiceId);
     }
 
+    public function testCachedApiModelCatalogResolvesModelsOnce()
+    {
+        $container = $this->loadContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                        'http_client' => 'test_http_client',
+                        'model_catalog' => ['cache' => true],
+                    ],
+                ],
+            ],
+        ]);
+        $container->register('test_http_client')->setSynthetic(true)->setPublic(true);
+        $container->getDefinition('ai.platform.ollama')->setPublic(true);
+
+        (new AiBundle())->build($container);
+        $container->compile();
+
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['completion']]),
+        ]);
+        $container->set('test_http_client', $httpClient);
+
+        $modelCatalog = $container->get('ai.platform.ollama')->getModelCatalog();
+
+        $this->assertSame('llama3.2', $modelCatalog->getModel('llama3.2')->getName());
+        $this->assertSame('llama3.2', $modelCatalog->getModel('llama3.2')->getName());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogModelsAreAddedToBundledCatalog()
+    {
+        $container = $this->loadContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => [
+                                    'class' => Gpt::class,
+                                    'capabilities' => [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $container->getDefinition('ai.platform.openai')->setPublic(true);
+
+        (new AiBundle())->build($container);
+        $container->compile();
+
+        $model = $container->get('ai.platform.openai')->getModelCatalog()->getModel('my-custom-model');
+
+        $this->assertInstanceOf(Gpt::class, $model);
+        $this->assertSame([Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT], $model->getCapabilities());
+    }
+
     #[TestDox('All platform config files have corresponding test coverage')]
     public function testAllPlatformConfigFilesAreCovered()
     {
         $configFiles = $this->getConfigFileNames('platform');
         $providerKeys = array_keys(iterator_to_array(self::providePlatformConfigs()));
         $compoundPlatforms = ['cache', 'failover'];
+        $sharedNodes = ['model_catalog'];
 
         foreach ($configFiles as $file) {
-            if (\in_array($file, $compoundPlatforms, true)) {
+            if (\in_array($file, [...$compoundPlatforms, ...$sharedNodes], true)) {
                 continue;
             }
 

@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('openresponses'))
     ->useAttributeAsKey('name')
     ->arrayPrototype()
@@ -23,9 +25,7 @@ return (new ArrayNodeDefinition('openresponses'))
                 ->defaultValue('http_client')
                 ->info('Service ID of the HTTP client to use')
             ->end()
-            ->stringNode('model_catalog')
-                ->info('Service ID of the model catalog to use')
-            ->end()
+            ->append($modelCatalog('static'))
             ->stringNode('responses_path')->defaultValue('/v1/responses')->end()
         ->end()
     ->end();
