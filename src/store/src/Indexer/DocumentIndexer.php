@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Indexer;
 
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\IndexerInterface;
 
@@ -28,14 +28,14 @@ final class DocumentIndexer implements IndexerInterface
     }
 
     /**
-     * @param EmbeddableDocumentInterface|iterable<EmbeddableDocumentInterface> $input
+     * @param DocumentInterface|iterable<DocumentInterface> $input
      */
     public function index(string|iterable|object $input, array $options = []): void
     {
-        if (!$input instanceof EmbeddableDocumentInterface && !is_iterable($input)) {
-            throw new InvalidArgumentException(\sprintf('DocumentIndexer expects an EmbeddableDocumentInterface or iterable, got "%s".', get_debug_type($input)));
+        if (!$input instanceof DocumentInterface && !is_iterable($input)) {
+            throw new InvalidArgumentException(\sprintf('DocumentIndexer expects an DocumentInterface or iterable, got "%s".', get_debug_type($input)));
         }
 
-        $this->processor->process($input instanceof EmbeddableDocumentInterface ? [$input] : $input, $options);
+        $this->processor->process($input instanceof DocumentInterface ? [$input] : $input, $options);
     }
 }

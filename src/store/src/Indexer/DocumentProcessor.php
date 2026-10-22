@@ -13,7 +13,7 @@ namespace Symfony\AI\Store\Indexer;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\FilterInterface;
 use Symfony\AI\Store\Document\TransformerInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -46,7 +46,7 @@ final class DocumentProcessor
     /**
      * Process documents through the pipeline: filter → transform → vectorize → store.
      *
-     * @param iterable<EmbeddableDocumentInterface>                            $documents Documents to process
+     * @param iterable<DocumentInterface>                                      $documents Documents to process
      * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options   Processing options
      */
     public function process(iterable $documents, array $options = []): void
@@ -66,8 +66,8 @@ final class DocumentProcessor
         $chunk = [];
 
         foreach ($documents as $document) {
-            if (!$document instanceof EmbeddableDocumentInterface) {
-                throw new InvalidArgumentException(\sprintf('DocumentProcessor expects documents to be instances of EmbeddableDocumentInterface, got "%s".', get_debug_type($document)));
+            if (!$document instanceof DocumentInterface) {
+                throw new InvalidArgumentException(\sprintf('DocumentProcessor expects documents to be instances of DocumentInterface, got "%s".', get_debug_type($document)));
             }
 
             $chunk[] = $document;

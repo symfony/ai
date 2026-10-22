@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Document\Loader;
 
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
 
 /**
@@ -23,7 +23,7 @@ use Symfony\AI\Store\Document\LoaderInterface;
 final class InMemoryLoader implements LoaderInterface
 {
     /**
-     * @param EmbeddableDocumentInterface[] $documents
+     * @param DocumentInterface[] $documents
      */
     public function __construct(
         private readonly array $documents = [],

@@ -16,7 +16,7 @@ use Symfony\AI\Store\Exception\InvalidArgumentException;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class TextDocument implements EmbeddableDocumentInterface
+final class TextDocument implements DocumentInterface
 {
     public function __construct(
         private readonly int|string $id,

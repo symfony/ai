@@ -11,7 +11,10 @@
 
 namespace Symfony\AI\Store\Document;
 
-interface EmbeddableDocumentInterface
+/**
+ * A document to index, whose content gets vectorized into a VectorDocumentInterface.
+ */
+interface DocumentInterface
 {
     public function getId(): int|string;
 

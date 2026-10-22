@@ -29,7 +29,7 @@ pipeline: filter → transform → vectorize → store.
 
 There are three indexer implementations to choose from:
 
-**DocumentIndexer** accepts documents directly (as :class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances)::
+**DocumentIndexer** accepts documents directly (as :class:`Symfony\\AI\\Store\\Document\\DocumentInterface` instances)::
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Document\Vectorizer;
