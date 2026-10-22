@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-22T20:46:01Z
+
+Pushed a commit on top: `dimension` is now required once `setup_options` is set and `metric` only accepts `cosine`, `euclidean` or `dotproduct`, so a broken setup config fails when the container is built, not when running `ai:store:setup`. The docs also mention the defaults now.
