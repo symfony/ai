@@ -3,8 +3,11 @@ name: Build Matrix
 on:
     workflow_call:
         outputs:
+            affected-packages:
+                description: 'JSON list of the package directories affected by the pull request, or all of them outside of pull requests'
+                value: ${{ jobs.matrix.outputs.affected-packages }}
             store-bridges-integration:
-                description: 'List of store bridges with integration tests'
+                description: 'List of affected store bridges with integration tests'
                 value: ${{ jobs.matrix.outputs.store-bridges-integration }}
 
 jobs:
@@ -12,18 +15,37 @@ jobs:
         name: Build
         runs-on: ubuntu-latest
         outputs:
+            affected-packages: ${{ steps.affected.outputs.packages }}
             store-bridges-integration: ${{ steps.set-matrix.outputs.store-bridges-integration }}
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+              with:
+                  # The pull request merge commit, whose first parent is the base branch
+                  fetch-depth: 2
+
+            - name: Detect affected packages
+              id: affected
+              run: |
+                  set -o pipefail
+                  if [ '${{ github.event_name }}' = 'pull_request' ]; then
+                      git diff --name-only --no-renames HEAD^1 HEAD | php .github/affected-packages.php > affected.txt
+                  else
+                      php .github/affected-packages.php --all > affected.txt
+                  fi
+                  echo "packages=$(jq -R -s -c 'split("\n") | map(select(length > 0))' affected.txt)" >> $GITHUB_OUTPUT
+
+                  echo "::group::Affected packages"
+                  cat affected.txt
+                  echo "::endgroup::"
 
             - name: Set matrix
               id: set-matrix
               run: |
-                  # Store bridges with integration tests (detected via #[Group('integration')] attribute)
+                  # Affected store bridges with integration tests (detected via #[Group('integration')] attribute)
                   STORE_BRIDGES_INTEGRATION=$(for bridge in src/store/src/Bridge/*/; do
                       name=$(basename "$bridge")
-                      if grep -rl "#\[Group('integration')\]" "$bridge" --include="*.php" > /dev/null 2>&1; then
+                      if grep -qxF "${bridge%/}" affected.txt && grep -rl "#\[Group('integration')\]" "$bridge" --include="*.php" > /dev/null 2>&1; then
                           echo "$name"
                       fi
                   done | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
