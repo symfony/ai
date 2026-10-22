@@ -1,0 +1,29 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-15T21:31:14Z
+
+Follow-up: Ollama decision models (#2664) build on this. It is still on my fork and will go upstream once this is merged: https://github.com/wachterjohannes/symfony-ai/pull/106
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-16T09:30:53Z
+
+Let's discuss that first please - merging converter's for a specific API contract would be inconsistent with what we currently do. I see tho that we kind of slice a bit inconsistent with having some basic contracts in the platform core component, but matching converters only with `generic-bridge` for example ... 🤔
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-17T17:44:01Z
+
+Fair. The types (`Evaluation`, `Question\*`, `Answer\*`) are plain contracts, same as other core value objects. The converter is the part tied to one wire format. I can move `AnswersConverter` out of the core and keep only the types here. Would you prefer a shared bridge for the decision wire format, or keeping the converter in TypeSafe for now?
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-19T18:49:33Z
+
+would favor a decision-bridge right now i think
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-20T12:51:40Z
+
+@chr-hertel Reworked as a `Decision` bridge (`symfony/ai-decision-platform`), Platform core is untouched. TypeSafe depends on it now. Is the name fine?
