@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by krzysztofsurdy at 2026-10-22T10:24:47Z
+
+Could someone add the "BC Break" label? The UPGRADE.md entry covers the `MTREE` to `HNSW` switch for existing SurrealDB 2 indexes.
