@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-22T19:35:47Z
+
+Thanks @dudanogueira - pushed a small update: dropped the static cache and the `symfony/ai-store` fallback, the version now comes from `symfony/ai-weaviate-store` only.
