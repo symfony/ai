@@ -455,6 +455,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/chromadb'))
                     ->append($import('store/clickhouse'))
                     ->append($import('store/cloudflare'))
+                    ->append($import('store/doctrine'))
                     ->append($import('store/elasticsearch'))
                     ->append($import('store/manticoresearch'))
                     ->append($import('store/mariadb'))

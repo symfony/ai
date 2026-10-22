@@ -240,6 +240,41 @@ search through the `sqlite-vec`_ extension.
 
 See :doc:`sqlite` for the differences between both stores and the ``sqlite-vec`` setup.
 
+Doctrine
+~~~~~~~~
+
+Vector storage in a column of a Doctrine entity's own table, on PostgreSQL with `pgvector`_ or on
+SQLite with `sqlite-vec`_. Queries return the entities.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-doctrine-store
+
+::
+
+    use Symfony\AI\Store\Bridge\Doctrine\Distance;
+    use Symfony\AI\Store\Bridge\Doctrine\Store;
+
+    $store = new Store($entityManager, Article::class, 'embedding', Distance::Cosine);
+
+**Available distances:** ``Distance::Cosine`` (default), ``Distance::Euclidean``,
+``Distance::InnerProduct`` (PostgreSQL only)
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        store:
+            doctrine:
+                articles:
+                    entity: 'App\Entity\Article'
+                    vector_field: 'embedding'
+                    distance: 'cosine'
+                    setup_options:
+                        dimensions: 1536
+
+See :doc:`doctrine` for the entity mapping, the column setup and indexing entities.
+
 Supabase
 ~~~~~~~~
 
@@ -1002,6 +1037,7 @@ The table and index are created by ``setup()``::
     :hidden:
 
     local
+    doctrine
     sqlite
     supabase
     mongodb
