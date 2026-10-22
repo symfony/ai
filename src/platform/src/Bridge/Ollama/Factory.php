@@ -41,16 +41,7 @@ final class Factory
         string $name = 'ollama',
         ?ModelCatalogInterface $modelCatalog = null,
     ): ProviderInterface {
-        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
-
-        if (null !== $endpoint) {
-            $defaultOptions = [];
-            if (null !== $apiKey) {
-                $defaultOptions['auth_bearer'] = $apiKey;
-            }
-
-            $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
-        }
+        $httpClient = self::createHttpClient($endpoint, $apiKey, $httpClient);
 
         return new Provider(
             $name,
@@ -80,5 +71,32 @@ final class Factory
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        ?string $endpoint = null,
+        #[\SensitiveParameter] ?string $apiKey = null,
+        ?HttpClientInterface $httpClient = null,
+    ): ModelCatalogInterface {
+        return new ModelCatalog(self::createHttpClient($endpoint, $apiKey, $httpClient));
+    }
+
+    private static function createHttpClient(
+        ?string $endpoint,
+        #[\SensitiveParameter] ?string $apiKey,
+        ?HttpClientInterface $httpClient,
+    ): HttpClientInterface {
+        $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
+
+        if (null === $endpoint) {
+            return $httpClient;
+        }
+
+        $defaultOptions = [];
+        if (null !== $apiKey) {
+            $defaultOptions['auth_bearer'] = $apiKey;
+        }
+
+        return ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
     }
 }
