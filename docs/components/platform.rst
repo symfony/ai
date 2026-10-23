@@ -443,7 +443,9 @@ The options the bridge sets itself, like ``headers`` or ``auth_bearer``, cannot 
 overridden, and the request payload belongs to the bridge: passing ``body`` or ``json``
 is not supported. Bridges that do not call their provider over HTTP, like Amazon
 Bedrock through the AWS SDK, Claude Code, Codex or TransformersPHP, and the batch
-invocation of OpenAI ignore it.
+invocation of OpenAI ignore it. For asynchronous jobs, it only applies to the request
+starting the job: the requests of the job client polling its status and fetching its
+result are not affected.
 
 Language Models and Messages
 ----------------------------
