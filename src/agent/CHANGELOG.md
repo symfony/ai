@@ -10,6 +10,7 @@ CHANGELOG
  * [BC BREAK] The agent no longer changes the given `MessageBag`: input processors replace it with `Input::setMessageBag()`, and the tool loop runs on its own copy
  * [BC BREAK] Remove the `excludeToolMessages` argument of `Agent`, tool messages never reach the caller's `MessageBag`
  * Add a `$toolResultConverter` argument to `Agent` to customize how tool results are converted for the model
+ * Add tool effect hints to `AsTool` and the tool factories
 
 0.15
 ----
