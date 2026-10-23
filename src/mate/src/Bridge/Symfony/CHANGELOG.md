@@ -1,10 +1,10 @@
 CHANGELOG
 =========
 
-0.15
+0.16
 ----
 
- * Add `RouterCollectorFormatter` to report redirects, target route names and target hosts without exposing full target URLs
+ * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
 
 0.14
 ----

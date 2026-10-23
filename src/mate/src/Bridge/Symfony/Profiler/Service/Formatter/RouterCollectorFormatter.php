@@ -30,24 +30,27 @@ final class RouterCollectorFormatter implements CollectorFormatterInterface
     }
 
     /**
-     * @return array{redirect: bool, target_route: string|null, target_host: string|null}
+     * @return array{redirect: bool, route: string|null, target_host: string|null, target_path: string|null}
      */
     public function format(DataCollectorInterface $collector): array
     {
         \assert($collector instanceof RouterDataCollector);
 
         $targetHost = null;
+        $targetPath = null;
         if (null !== $targetUrl = $collector->getTargetUrl()) {
-            $host = parse_url($targetUrl, \PHP_URL_HOST);
-            if (\is_string($host)) {
-                $targetHost = $host;
+            $parts = parse_url($targetUrl);
+            if (false !== $parts) {
+                $targetHost = $parts['host'] ?? null;
+                $targetPath = $parts['path'] ?? null;
             }
         }
 
         return [
             'redirect' => $collector->getRedirect(),
-            'target_route' => $collector->getTargetRoute(),
+            'route' => 'n/a' === $collector->getTargetRoute() ? null : $collector->getTargetRoute(),
             'target_host' => $targetHost,
+            'target_path' => $targetPath,
         ];
     }
 

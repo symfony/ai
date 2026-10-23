@@ -15,6 +15,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RouterCollectorFormatter;
+use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
+use Symfony\Bundle\FrameworkBundle\DataCollector\RouterDataCollector as FrameworkRouterDataCollector;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
@@ -22,6 +24,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\RouterDataCollector;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * @author Andrey Bolonin <andreybolonin1989@gmail.com>
@@ -40,48 +44,65 @@ final class RouterCollectorFormatterTest extends TestCase
 
         $this->assertSame([
             'redirect' => false,
-            'target_route' => null,
+            'route' => null,
             'target_host' => null,
+            'target_path' => null,
         ], (new RouterCollectorFormatter())->format($collector));
     }
 
-    public function testFormatPreservesTargetRoute()
+    public function testFormatPreservesRedirectingRoute()
     {
-        $collector = $this->createMock(RouterDataCollector::class);
-        $collector->method('getRedirect')->willReturn(true);
-        $collector->method('getTargetRoute')->willReturn('app_home');
-        $collector->method('getTargetUrl')->willReturn('/home?token=secret');
+        $request = Request::create('/old');
+        $request->attributes->set('_route', 'old');
+        $controller = new RedirectController();
+        $collector = new FrameworkRouterDataCollector();
+        $collector->onKernelController(new ControllerEvent($this->createMock(HttpKernelInterface::class), [$controller, 'urlRedirectAction'], $request, HttpKernelInterface::MAIN_REQUEST));
+        $collector->collect($request, $controller->urlRedirectAction($request, '/page?token=secret'));
 
         $this->assertSame([
             'redirect' => true,
-            'target_route' => 'app_home',
-            'target_host' => null,
+            'route' => 'old',
+            'target_host' => 'localhost',
+            'target_path' => '/page',
         ], (new RouterCollectorFormatter())->format($collector));
     }
 
+    public function testFormatNormalizesUnknownRoute()
+    {
+        $request = Request::create('/source');
+        $controller = static fn (): Response => new RedirectResponse('/login');
+        $collector = new FrameworkRouterDataCollector();
+        $collector->onKernelController(new ControllerEvent($this->createMock(HttpKernelInterface::class), $controller, $request, HttpKernelInterface::MAIN_REQUEST));
+        $collector->collect($request, $controller());
+
+        $this->assertSame('n/a', $collector->getTargetRoute());
+        $this->assertNull((new RouterCollectorFormatter())->format($collector)['route']);
+    }
+
     #[DataProvider('provideRedirectTargets')]
-    public function testFormatOmitsSensitiveUrlComponents(string $target, ?string $expectedHost)
+    public function testFormatOmitsSensitiveUrlComponents(string $target, ?string $expectedHost, ?string $expectedPath)
     {
         $collector = new RouterDataCollector();
         $collector->collect(Request::create('/source'), new RedirectResponse($target));
 
         $this->assertSame([
             'redirect' => true,
-            'target_route' => null,
+            'route' => null,
             'target_host' => $expectedHost,
+            'target_path' => $expectedPath,
         ], (new RouterCollectorFormatter())->format($collector));
     }
 
     /**
-     * @return iterable<string, array{string, string|null}>
+     * @return iterable<string, array{string, string|null, string|null}>
      */
     public static function provideRedirectTargets(): iterable
     {
-        yield 'absolute URL' => ['https://user:password@example.com:8443/reset/secret?token=secret#private', 'example.com'];
-        yield 'relative URL' => ['/reset/secret?token=secret#private', null];
-        yield 'network-path URL' => ['//example.com/reset/secret?token=secret', 'example.com'];
-        yield 'fragment' => ['#private', null];
-        yield 'malformed authority' => ['https://example.com:invalid/reset/secret', null];
+        yield 'absolute URL' => ['https://user:password@example.com:8443/reset/secret?token=secret#private', 'example.com', '/reset/secret'];
+        yield 'relative URL' => ['/reset/secret?token=secret#private', null, '/reset/secret'];
+        yield 'network-path URL' => ['//example.com/reset/secret?token=secret', 'example.com', '/reset/secret'];
+        yield 'fragment' => ['#private', null, null];
+        yield 'malformed authority' => ['https://example.com:invalid/reset/secret', null, null];
     }
 
     public function testSummaryOnlyReadsRedirectFlag()
