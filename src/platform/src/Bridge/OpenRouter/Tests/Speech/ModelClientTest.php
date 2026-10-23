@@ -135,4 +135,20 @@ final class ModelClientTest extends TestCase
             'voice' => 'alloy',
         ]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['model' => 'openai/gpt-4o-mini-tts-2025-12-15', 'input' => 'Hello world', 'voice' => 'alloy'], json_decode($options['body'], true));
+
+            return new MockResponse();
+        });
+
+        $client = new ModelClient($httpClient, 'test-key');
+        $client->request(new SpeechModel('openai/gpt-4o-mini-tts-2025-12-15'), 'Hello world', [
+            'voice' => 'alloy',
+            'http_options' => ['max_duration' => 30, 'json' => 'overridden'],
+        ]);
+    }
 }

@@ -176,6 +176,21 @@ final class ModelClientTest extends TestCase
         $this->assertArrayNotHasKey('max_output_tokens', $capturedBody);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['messages' => [['role' => 'user', 'content' => 'Hello']]], json_decode($options['body'], true));
+
+            return new MockResponse();
+        });
+
+        $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-valid-api-key');
+        $modelClient->request(new CompletionsModel('gpt-4o'), [
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     public function testToolChoiceDefaultsToAutoWhenToolsAreProvided()
     {
         $capturedBody = $this->captureRequestBody(['tools' => $this->tools()]);

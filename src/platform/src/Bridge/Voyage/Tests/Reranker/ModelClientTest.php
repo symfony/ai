@@ -62,6 +62,23 @@ final class ModelClientTest extends TestCase
         ]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertArrayNotHasKey('http_options', json_decode($options['body'], true));
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Reranker('rerank-2.5'), [
+            'query' => 'What is AI?',
+            'texts' => ['Document about AI'],
+        ], ['http_options' => ['max_duration' => 30, 'json' => ['overridden']]]);
+    }
+
     public function testItSendsTopKOption()
     {
         $httpClient = new MockHttpClient([function (

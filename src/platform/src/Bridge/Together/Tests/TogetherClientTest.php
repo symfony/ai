@@ -76,6 +76,24 @@ final class TogetherClientTest extends TestCase
         );
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"openai\/gpt-oss-120b","messages":[]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient($resultCallback, 'https://api.together.xyz');
+        $client = new TogetherClient($httpClient);
+        $client->request(
+            new Together('openai/gpt-oss-120b', [Capability::INPUT_MESSAGES]),
+            ['model' => 'openai/gpt-oss-120b', 'messages' => []],
+            ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]],
+        );
+    }
+
     public function testItThrowsOnStringPayloadForCompletions()
     {
         $client = new TogetherClient(new MockHttpClient([], 'https://api.together.xyz'));

@@ -37,10 +37,11 @@ trait UniversalAiPayloadTrait
     /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $options
+     * @param array<string, mixed> $httpOptions
      *
      * @return array<string, mixed>
      */
-    private function createRequestBody(Model $model, array|string $payload, array $options): array
+    private function createRequestBody(Model $model, array|string $payload, array $options, array $httpOptions = []): array
     {
         $input = \is_string($payload) ? [$this->getStringPayloadKey($model) => $payload] : $payload;
 
@@ -48,7 +49,7 @@ trait UniversalAiPayloadTrait
             $fileData = $input['file_data'];
             unset($input['file_data']);
 
-            $input['file'] = $this->uploadBinaryInput($fileData);
+            $input['file'] = $this->uploadBinaryInput($fileData, $httpOptions);
         }
 
         $rootOptions = array_intersect_key($options, array_flip(self::ROOT_OPTIONS));
@@ -65,8 +66,10 @@ trait UniversalAiPayloadTrait
      *
      * The entry is validated first: an unusable one would otherwise be uploaded as an
      * empty file and then submitted as a billable request.
+     *
+     * @param array<string, mixed> $httpOptions
      */
-    private function uploadBinaryInput(mixed $fileData): string
+    private function uploadBinaryInput(mixed $fileData, array $httpOptions): string
     {
         if (!\is_array($fileData)) {
             throw new RuntimeException('Eden AI binary input must be an array.');
@@ -91,6 +94,7 @@ trait UniversalAiPayloadTrait
             $decoded,
             \is_string($filename) ? $filename : null,
             \is_string($format) ? $format : 'application/octet-stream',
+            $httpOptions,
         );
     }
 

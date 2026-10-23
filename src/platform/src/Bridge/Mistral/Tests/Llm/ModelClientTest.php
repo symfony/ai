@@ -77,6 +77,19 @@ final class ModelClientTest extends TestCase
         $client->request(new Mistral('mistral-large-latest'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['max_tokens' => 2000, 'max_output_tokens' => 500]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['messages' => [['role' => 'user', 'content' => 'Hello']]], json_decode($options['body'], true));
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-api-key');
+        $client->request(new Mistral('mistral-large-latest'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
     {
         $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {

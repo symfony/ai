@@ -64,6 +64,20 @@ final class HiggsfieldClientTest extends TestCase
         $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', ['aspect_ratio' => '9:16']);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['prompt' => 'A cat'], json_decode($options['body'], true));
+
+            return new MockResponse('{"request_id": "req-123", "status": "queued"}');
+        }, self::BASE_URL);
+
+        $client = new HiggsfieldClient($httpClient);
+
+        $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     public function testClientMapsNormalizedImageToImageUrl()
     {
         $payload = (new ImageNormalizer())->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));

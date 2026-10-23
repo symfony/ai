@@ -79,4 +79,21 @@ class ModelClientTest extends TestCase
 
         $client->request($model, ['Hello', 'world']);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"test-model","input":"Hello, world!"}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'http://localhost:1234');
+
+        $model = new Embeddings('test-model');
+
+        $client->request($model, 'Hello, world!', ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
 }

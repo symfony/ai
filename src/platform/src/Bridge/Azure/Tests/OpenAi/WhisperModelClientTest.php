@@ -133,4 +133,27 @@ final class WhisperModelClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([
+            static function (string $method, string $url, array $options): MockResponse {
+                self::assertSame(30.0, $options['max_duration']);
+                $body = '';
+                while ('' !== ($chunk = $options['body'](8192))) {
+                    $body .= $chunk;
+                }
+                self::assertStringContainsString("name=\"file\"\r\n\r\naudio-data", $body);
+                self::assertStringNotContainsString('overridden', $body);
+                self::assertStringNotContainsString('http_options', $body);
+
+                return new MockResponse('{"text": "Hello World"}');
+            },
+        ]);
+
+        $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

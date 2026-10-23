@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Decision\RequestBodyBuilder;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -41,6 +42,9 @@ final class DecisionModelClient implements ModelClientInterface
             throw new RuntimeException(\sprintf('The model "%s" is a decision model, which requires the Decision bridge. Try running "composer require symfony/ai-decision-platform".', $model->getName()));
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', 'v1/systemone', ['json' => RequestBodyBuilder::build($model, $payload)]));
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+
+        return new RawHttpResult($this->httpClient->request('POST', 'v1/systemone', ['json' => RequestBodyBuilder::build($model, $payload)] + $httpOptions));
     }
 }

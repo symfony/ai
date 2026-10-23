@@ -114,4 +114,19 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'test-api-key');
         $modelClient->request(new DeepSeek('deepseek-chat'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame(['messages' => [['role' => 'user', 'content' => 'Hi']]], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['choices' => [['message' => ['content' => 'Hello'], 'finish_reason' => 'stop']]]);
+        });
+
+        $modelClient = new ModelClient($httpClient, 'test-api-key');
+        $modelClient->request(new DeepSeek('deepseek-chat'), ['messages' => [['role' => 'user', 'content' => 'Hi']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }
