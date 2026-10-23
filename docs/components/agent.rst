@@ -725,6 +725,37 @@ If you want to expose the underlying error to the LLM, you can throw a custom ex
         }
     }
 
+Current Tool Call
+~~~~~~~~~~~~~~~~~
+
+A tool can access the current :class:`Symfony\\AI\\Platform\\Result\\ToolCall` by implementing
+:class:`Symfony\\AI\\Agent\\Toolbox\\HasToolCallInterface` and using
+:class:`Symfony\\AI\\Agent\\Toolbox\\HasToolCallTrait`::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\HasToolCallInterface;
+    use Symfony\AI\Agent\Toolbox\HasToolCallTrait;
+
+    #[AsTool('lookup', 'Look up a record')]
+    final class Lookup implements HasToolCallInterface
+    {
+        use HasToolCallTrait;
+
+        public function __invoke(string $query): string
+        {
+            $callId = $this->getToolCall()?->getId();
+
+            // Use $callId to correlate this operation with the model's tool call.
+
+            return 'Found: '.$query;
+        }
+    }
+
+The toolbox sets the call immediately before invocation and restores the previous value even
+when the tool fails. Outside an invocation, the default value is ``null``. The trait isolates
+contexts between Fibers, so concurrent calls may share a tool instance. The call is not added
+to the tool's model-visible parameters.
+
 Tool Sources
 ~~~~~~~~~~~~
 
