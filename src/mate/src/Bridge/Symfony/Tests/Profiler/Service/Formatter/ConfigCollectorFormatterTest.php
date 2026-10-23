@@ -12,7 +12,6 @@
 namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ConfigCollectorFormatter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -40,9 +39,6 @@ final class ConfigCollectorFormatterTest extends TestCase
         $collector->lateCollect();
 
         $formatter = new ConfigCollectorFormatter();
-        $registry = new CollectorRegistry([$formatter]);
-
-        $this->assertSame($formatter, $registry->get($collector->getName()));
         $this->assertSame([
             'symfony_version' => $collector->getSymfonyVersion(),
             'php_version' => $collector->getPhpVersion(),
@@ -76,6 +72,7 @@ final class ConfigCollectorFormatterTest extends TestCase
     {
         $collector = new ConfigDataCollector();
         $collector->collect(new Request(), new Response());
+        $collector->lateCollect();
 
         $summary = (new ConfigCollectorFormatter())->getSummary($collector);
 

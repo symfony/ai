@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.15
+0.16
 ----
 
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
