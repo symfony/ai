@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
+ * Add `InMemoryModelCatalog` holding a fixed list of models, e.g. to put configured models in front of another catalog with `CompositeModelCatalog`
 
 0.15
 ----
