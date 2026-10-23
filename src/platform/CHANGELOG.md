@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
+
 0.15
 ----
 

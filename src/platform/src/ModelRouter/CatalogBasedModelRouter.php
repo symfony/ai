@@ -37,6 +37,10 @@ final class CatalogBasedModelRouter implements ModelRouterInterface
             }
         }
 
+        if ($model instanceof Model && Model::class === $model::class) {
+            throw new ModelNotFoundException(\sprintf('No provider found for model "%s": a base "%s" instance has no model client. Pass a bridge-specific model subclass instead (e.g. "Symfony\\AI\\Platform\\Bridge\\OpenAi\\Gpt", "Symfony\\AI\\Platform\\Bridge\\Anthropic\\Claude", "Symfony\\AI\\Platform\\Bridge\\Gemini\\Gemini").', $model->getName(), Model::class));
+        }
+
         throw new ModelNotFoundException(\sprintf('No provider found for model "%s".', $model instanceof Model ? $model->getName() : $model));
     }
 }
