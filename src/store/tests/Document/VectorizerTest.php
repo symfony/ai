@@ -20,9 +20,12 @@ use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentFactoryInterface;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Tests\Double\PlatformTestHandler;
@@ -84,6 +87,35 @@ final class VectorizerTest extends TestCase
         $this->assertSame($document->getId(), $vectorDocuments[0]->getId());
         $this->assertEquals($vector, $vectorDocuments[0]->getVector());
         $this->assertSame($document->getMetadata(), $vectorDocuments[0]->getMetadata());
+    }
+
+    public function testVectorizeLetsADocumentDecideWhatItBecomes()
+    {
+        $document = new SelfBuildingDocument('id-1', 'Some content');
+        $vector = new Vector([0.1, 0.2, 0.3]);
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
+
+        $vectorDocument = $vectorizer->vectorize($document);
+
+        $this->assertInstanceOf(SelfBuiltVectorDocument::class, $vectorDocument);
+        $this->assertSame($document, $vectorDocument->source);
+        $this->assertEquals($vector, $vectorDocument->getVector());
+    }
+
+    public function testVectorizeLetsEveryDocumentOfABatchDecideWhatItBecomes()
+    {
+        $documents = [new SelfBuildingDocument('id-1', 'First'), new TextDocument('id-2', 'Second')];
+
+        $platform = PlatformTestHandler::createPlatform(new VectorResult([new Vector([0.1]), new Vector([0.2])]));
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');
+
+        $vectorDocuments = $vectorizer->vectorize($documents);
+
+        $this->assertInstanceOf(SelfBuiltVectorDocument::class, $vectorDocuments[0]);
+        $this->assertInstanceOf(VectorDocument::class, $vectorDocuments[1]);
+        $this->assertSame('id-2', $vectorDocuments[1]->getId());
     }
 
     public function testVectorizeEmptyDocumentsArray()
@@ -542,5 +574,73 @@ final class VectorizerTest extends TestCase
         $this->assertTrue($result[1]->getMetadata()->hasText());
         $this->assertSame('First content', $result[0]->getMetadata()->getText());
         $this->assertSame('Second content', $result[1]->getMetadata()->getText());
+    }
+}
+
+/**
+ * A document that builds a richer vector document than the shipped one out of its own vector.
+ */
+final class SelfBuildingDocument implements VectorDocumentFactoryInterface
+{
+    public function __construct(
+        private readonly string $id,
+        private readonly string $content,
+        private readonly Metadata $metadata = new Metadata(),
+    ) {
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public function getContent(): string
+    {
+        return $this->content;
+    }
+
+    public function getMetadata(): Metadata
+    {
+        return $this->metadata;
+    }
+
+    public function createVectorDocument(VectorInterface $vector): VectorDocumentInterface
+    {
+        return new SelfBuiltVectorDocument($this, $vector);
+    }
+}
+
+final class SelfBuiltVectorDocument implements VectorDocumentInterface
+{
+    public function __construct(
+        public readonly SelfBuildingDocument $source,
+        private readonly VectorInterface $vector,
+        private readonly ?float $score = null,
+    ) {
+    }
+
+    public function getId(): string
+    {
+        return $this->source->getId();
+    }
+
+    public function getVector(): VectorInterface
+    {
+        return $this->vector;
+    }
+
+    public function getMetadata(): Metadata
+    {
+        return $this->source->getMetadata();
+    }
+
+    public function getScore(): ?float
+    {
+        return $this->score;
+    }
+
+    public function withScore(float $score): self
+    {
+        return new self($this->source, $this->vector, $score);
     }
 }
