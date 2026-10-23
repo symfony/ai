@@ -5,9 +5,10 @@ on:
         paths:
             - 'splitsh.json'
             - 'ai.symfony.com/config/platform_bridges.yaml'
+            - 'ai.symfony.com/config/platform_bridges.json'
             - 'ai.symfony.com/assets/icons/brands/**'
             - 'ai.symfony.com/src/PlatformBridge/**'
-            - 'ai.symfony.com/tests/PlatformBridge/Curation/**'
+            - 'ai.symfony.com/tests/PlatformBridge/**'
             - '.github/workflows/platform-bridges.yaml'
 
 concurrency:
@@ -33,7 +34,8 @@ jobs:
               with:
                   working-directory: ai.symfony.com
 
-            # fails when a bridge of splitsh.json has no entry in ai.symfony.com/config/platform_bridges.yaml
-            - name: Check the classification of the platform bridges
+            # fails when a bridge of splitsh.json has no entry in ai.symfony.com/config/platform_bridges.yaml,
+            # or when ai.symfony.com/config/platform_bridges.json is malformed
+            - name: Check the platform bridges data
               working-directory: ai.symfony.com
-              run: vendor/bin/phpunit tests/PlatformBridge/Curation/CurationLoaderTest.php
+              run: vendor/bin/phpunit tests/PlatformBridge/Curation/CurationLoaderTest.php tests/PlatformBridge/PlatformBridgeCatalogTest.php

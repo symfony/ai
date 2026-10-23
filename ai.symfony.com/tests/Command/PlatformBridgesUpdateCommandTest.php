@@ -12,11 +12,11 @@
 namespace App\Tests\Command;
 
 use App\Command\PlatformBridgesUpdateCommand;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -24,15 +24,21 @@ final class PlatformBridgesUpdateCommandTest extends TestCase
 {
     private const SPLITS = '{"subtrees": {"ai-agent": {"prefixes": []}, "ai-brave-tool": "src/agent/src/Bridge/Brave", "ai-open-ai-platform": "src/platform/src/Bridge/OpenAi", "ai-ollama-platform": "src/platform/src/Bridge/Ollama", "ai-venice-platform": "src/platform/src/Bridge/Venice"}}';
 
+    private string $splitsPath;
     private string $dataPath;
 
     protected function setUp(): void
     {
-        $this->dataPath = sys_get_temp_dir().'/platform_bridges_'.bin2hex(random_bytes(4)).'.json';
+        $prefix = sys_get_temp_dir().'/platform_bridges_'.bin2hex(random_bytes(4));
+        $this->splitsPath = $prefix.'_splitsh.json';
+        $this->dataPath = $prefix.'.json';
+
+        file_put_contents($this->splitsPath, self::SPLITS);
     }
 
     protected function tearDown(): void
     {
+        @unlink($this->splitsPath);
         @unlink($this->dataPath);
     }
 
@@ -71,22 +77,34 @@ final class PlatformBridgesUpdateCommandTest extends TestCase
         $this->assertNull($bridges['Venice']['downloads'], 'A package not on Packagist yet is listed anyway.');
     }
 
-    public function testTheDataFileIsLeftUntouchedWhenTheBridgesCannotBeListed()
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unreadableSplits(): iterable
     {
+        yield 'invalid JSON' => ['{"subtrees": '];
+        yield 'no platform bridge' => ['{"subtrees": {"ai-brave-tool": "src/agent/src/Bridge/Brave"}}'];
+    }
+
+    #[DataProvider('unreadableSplits')]
+    public function testTheDataFileIsLeftUntouchedWhenTheBridgesCannotBeListed(string $splits)
+    {
+        file_put_contents($this->splitsPath, $splits);
         file_put_contents($this->dataPath, '{"previous": true}');
 
-        $tester = $this->tester([], new MockResponse('', ['http_code' => 503]));
+        $tester = $this->tester([]);
 
         $this->assertSame(Command::FAILURE, $tester->execute([]));
-        $this->assertStringContainsString('left untouched', $tester->getDisplay());
+        // the error block wraps lines
+        $this->assertStringContainsString('the data file is left untouched', preg_replace('/\s+/', ' ', $tester->getDisplay()));
         $this->assertSame('{"previous": true}', file_get_contents($this->dataPath));
     }
 
-    public function testTheDataFileIsLeftUntouchedWhenGitHubCannotBeReached()
+    public function testNoDataFileIsWrittenWithoutSplitConfiguration()
     {
-        $tester = $this->tester([], new MockResponse((static function (): \Generator {
-            yield new TransportException('Could not resolve host');
-        })()));
+        unlink($this->splitsPath);
+
+        $tester = $this->tester([]);
 
         $this->assertSame(Command::FAILURE, $tester->execute([]));
         $this->assertFileDoesNotExist($this->dataPath);
@@ -95,15 +113,9 @@ final class PlatformBridgesUpdateCommandTest extends TestCase
     /**
      * @param array<string, MockResponse> $packagist responses indexed by package
      */
-    private function tester(array $packagist, ?MockResponse $splits = null): CommandTester
+    private function tester(array $packagist): CommandTester
     {
-        $splits ??= new MockResponse(self::SPLITS);
-
-        $client = new MockHttpClient(static function (string $method, string $url) use ($packagist, $splits): MockResponse {
-            if ('https://raw.githubusercontent.com/symfony/ai/main/splitsh.json' === $url) {
-                return $splits;
-            }
-
+        $client = new MockHttpClient(static function (string $method, string $url) use ($packagist): MockResponse {
             if (1 === preg_match('#^https://packagist\.org/packages/(.+)/stats\.json$#', $url, $matches)) {
                 return $packagist[$matches[1]];
             }
@@ -112,7 +124,7 @@ final class PlatformBridgesUpdateCommandTest extends TestCase
         });
 
         $application = new Application();
-        $application->addCommand(new PlatformBridgesUpdateCommand($client, $this->dataPath));
+        $application->addCommand(new PlatformBridgesUpdateCommand($client, $this->splitsPath, $this->dataPath));
 
         return new CommandTester($application->find('app:platform-bridges:update'));
     }

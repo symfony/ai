@@ -1,9 +1,9 @@
 # Classification of the platform bridges listed on /bridges/platforms.
 #
-# The list of bridges and their Packagist downloads are refreshed every morning by
-# "bin/console app:platform-bridges:update". This file adds what GitHub cannot tell,
-# keyed by the directory of the bridge in src/platform/src/Bridge. A bridge missing
-# here is still listed, as "Not classified yet".
+# The list of bridges and their Packagist downloads live in config/platform_bridges.json,
+# refreshed every morning by the "Update Platform Bridges" GitHub workflow. This file adds
+# what they cannot tell, keyed by the directory of the bridge in src/platform/src/Bridge.
+# A bridge missing here is still listed, as "Not classified yet".
 #
 # Keys (see the enums in src/PlatformBridge/Taxonomy for the allowed values):
 #   name, summary   display name and one-line pitch (default: directory name, no summary)

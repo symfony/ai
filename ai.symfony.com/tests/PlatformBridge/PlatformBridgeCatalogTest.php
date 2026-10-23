@@ -123,6 +123,23 @@ final class PlatformBridgeCatalogTest extends TestCase
         $this->assertEquals(new \DateTimeImmutable('2026-09-30T05:00:00+00:00'), $this->catalog()->getUpdatedAt());
     }
 
+    /**
+     * The file written by bin/console app:platform-bridges:update, which the update workflow checks before opening its pull request.
+     */
+    public function testTheShippedDataFileIsValid()
+    {
+        $path = __DIR__.'/../../config/platform_bridges.json';
+        $data = json_decode((string) file_get_contents($path), true, flags: \JSON_THROW_ON_ERROR);
+
+        $this->assertNotEmpty($data['bridges']);
+        foreach ($data['bridges'] as $directory => $bridge) {
+            $this->assertMatchesRegularExpression('#^symfony/ai-[a-z0-9-]+-platform$#', $bridge['package'], $directory);
+            $this->assertTrue(null === $bridge['downloads'] || \is_int($bridge['downloads']), $directory);
+        }
+
+        $this->assertNotNull((new PlatformBridgeCatalog(new CurationLoader($this->curationPath), $path))->getUpdatedAt());
+    }
+
     private function catalog(): PlatformBridgeCatalog
     {
         return new PlatformBridgeCatalog(new CurationLoader($this->curationPath), $this->dataPath);

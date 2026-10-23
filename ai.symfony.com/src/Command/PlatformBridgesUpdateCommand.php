@@ -19,10 +19,11 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Writes the platform bridges of symfony/ai and their number of downloads to a local
- * file, which the platform bridges page reads. Scheduled every morning, see .upsun/config.yaml.
+ * Writes the platform bridges of the monorepo and their number of downloads to a file,
+ * which the platform bridges page reads. Run every morning by a GitHub workflow, which
+ * opens a pull request with the changes, see .github/workflows/update-platform-bridges.yaml.
  *
- * Both GitHub and Packagist are read without any token.
+ * Packagist is read without any token.
  *
  * @author Mathieu Santostefano <msantostefano@proton.me>
  */
@@ -32,7 +33,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 )]
 final readonly class PlatformBridgesUpdateCommand
 {
-    private const string SPLIT_CONFIGURATION_URL = 'https://raw.githubusercontent.com/symfony/ai/main/splitsh.json';
     private const string BRIDGES_DIRECTORY = 'src/platform/src/Bridge/';
     private const array OPTIONS = [
         'headers' => ['User-Agent' => 'ai.symfony.com (https://ai.symfony.com)'],
@@ -42,13 +42,14 @@ final readonly class PlatformBridgesUpdateCommand
 
     public function __construct(
         private HttpClientInterface $httpClient,
+        private string $splitsPath,
         private string $dataPath,
     ) {
     }
 
     public function __invoke(SymfonyStyle $io): int
     {
-        $packages = $this->fetchPackages($io);
+        $packages = $this->readPackages($io);
         if (null === $packages) {
             return Command::FAILURE;
         }
@@ -81,12 +82,11 @@ final readonly class PlatformBridgesUpdateCommand
      *
      * @return array<string, string>|null package names indexed by bridge directory, null when the list cannot be read
      */
-    private function fetchPackages(SymfonyStyle $io): ?array
+    private function readPackages(SymfonyStyle $io): ?array
     {
-        try {
-            $splits = $this->httpClient->request('GET', self::SPLIT_CONFIGURATION_URL, self::OPTIONS)->toArray();
-        } catch (ExceptionInterface $exception) {
-            $io->error(\sprintf('Cannot read %s, the data file is left untouched: %s', self::SPLIT_CONFIGURATION_URL, $exception->getMessage()));
+        $splits = is_file($this->splitsPath) ? json_decode((string) file_get_contents($this->splitsPath), true) : null;
+        if (!\is_array($splits)) {
+            $io->error(\sprintf('Cannot read %s, the data file is left untouched.', $this->splitsPath));
 
             return null;
         }

@@ -181,8 +181,8 @@
     <p class="platform-source">
         {{ ux_icon('simple-icons:github', {width: 16, height: 16, 'aria-hidden': 'true'}) }}
         <span>
-            Bridges of <a href="https://github.com/symfony/ai/tree/main/src/platform/src/Bridge" target="_blank" rel="noopener noreferrer">symfony/ai on GitHub</a>, downloads from Packagist, updated every day
-            {%- if this.updatedAt %} (last update on {{ this.updatedAt|date('F j, Y', 'UTC') }}){% endif %}.
+            Bridges of <a href="https://github.com/symfony/ai/tree/main/src/platform/src/Bridge" target="_blank" rel="noopener noreferrer">symfony/ai on GitHub</a>, downloads from Packagist
+            {%- if this.updatedAt %}, last updated on {{ this.updatedAt|date('F j, Y', 'UTC') }}{% endif %}.
         </span>
     </p>
 </div>
