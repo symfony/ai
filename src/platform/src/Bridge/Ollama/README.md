@@ -10,7 +10,24 @@ Models declaring the `decision` capability (Ollama >= 0.35.0) are served through
 This requires `symfony/ai-decision-platform`.
 They are queried with the `Evaluation` of the `Decision` bridge and answer with its `Answers`.
 
-Images (Clef models) are not supported yet.
+Clef and Clef Flash accept images on Ollama >= 0.35.1. Pass platform `Image` objects in
+the optional `images` argument of `Evaluation`. PNG, JPEG, and WebP images are sent as
+raw base64 data, in order, and shared by all questions. The state remains required.
+
+```php
+use Symfony\AI\Platform\Bridge\Decision\Evaluation;
+use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Message\Content\Image;
+
+$result = $platform->invoke('clef-flash', new Evaluation(
+    'A scanned yearbook photograph.',
+    ['portrait' => new NoulQuestion('Is this a posed individual portrait?')],
+    images: [Image::fromFile('/path/to/photo.jpg')],
+));
+```
+
+Image URLs must be fetched by the application and converted to `Image` objects; the
+decision endpoint does not accept URLs or data URLs.
 
 Ollama Documentation
 --------------------

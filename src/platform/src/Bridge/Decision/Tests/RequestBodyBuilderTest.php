@@ -63,4 +63,27 @@ final class RequestBodyBuilderTest extends TestCase
 
         RequestBodyBuilder::build(new Model('jev'), ['state' => 'text', 'questions' => ['q' => 'nope']]);
     }
+
+    public function testItRejectsImagesUnlessTheProviderOptsIn()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('does not support image inputs');
+
+        RequestBodyBuilder::build(new Model('jev'), ['state' => 'text', 'questions' => [], 'images' => [base64_encode('image')]]);
+    }
+
+    public function testItRejectsInvalidImageLists()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Decision images must be a list of base64-encoded strings.');
+
+        RequestBodyBuilder::build(new Model('clef'), ['state' => 'text', 'questions' => [], 'images' => [42]], supportsImages: true);
+    }
+
+    public function testItOmitsAnEmptyImageList()
+    {
+        $body = RequestBodyBuilder::build(new Model('jev'), ['state' => 'text', 'questions' => [], 'images' => []]);
+
+        $this->assertArrayNotHasKey('images', $body);
+    }
 }

@@ -41,6 +41,6 @@ final class DecisionModelClient implements ModelClientInterface
             throw new RuntimeException(\sprintf('The model "%s" is a decision model, which requires the Decision bridge. Try running "composer require symfony/ai-decision-platform".', $model->getName()));
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', 'v1/systemone', ['json' => RequestBodyBuilder::build($model, $payload)]));
+        return new RawHttpResult($this->httpClient->request('POST', 'v1/systemone', ['json' => RequestBodyBuilder::build($model, $payload, supportsImages: true)]));
     }
 }
