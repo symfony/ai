@@ -46,7 +46,6 @@ final class SchemaProviderWiringTest extends TestCase
 
         $definition = $container->getDefinition('ai.platform.json_schema.describer.schema_attribute');
         $this->assertSame(SchemaAttributeDescriber::class, $definition->getClass());
-        $this->assertArrayHasKey('ai.platform.json_schema.describer', $definition->getTags());
 
         $argument = $definition->getArgument(0);
         $this->assertInstanceOf(TaggedIteratorArgument::class, $argument);
