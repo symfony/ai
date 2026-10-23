@@ -19,7 +19,7 @@
 $root = dirname(__DIR__);
 
 // Changes to these paths never affect code
-$irrelevant = ['#\.md$#', '#\.rst$#', '#^docs/#', '#^ai\.symfony\.com/#', '#^\.github/ISSUE_TEMPLATE/#', '#^\.github/PULL_REQUEST_TEMPLATE\.md$#', '#^\.github/CODEOWNERS$#', '#^LICENSE$#', '#^logo\.svg$#'];
+$irrelevant = ['#(^|/)(README|CHANGELOG|UPGRADE|AGENTS|CONTRIBUTING)\.md$#', '#^docs/#', '#^ai\.symfony\.com/#', '#^\.github/ISSUE_TEMPLATE/#', '#^\.github/PULL_REQUEST_TEMPLATE\.md$#', '#^\.github/CODEOWNERS$#', '#^LICENSE$#', '#^logo\.svg$#'];
 
 // 1. Find all packages
 $packages = [];

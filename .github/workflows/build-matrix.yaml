@@ -27,8 +27,9 @@ jobs:
             - name: Detect affected packages
               id: affected
               run: |
+                  set -o pipefail
                   if [ '${{ github.event_name }}' = 'pull_request' ]; then
-                      git diff --name-only HEAD^1 HEAD | php .github/affected-packages.php > affected.txt
+                      git diff --name-only --no-renames HEAD^1 HEAD | php .github/affected-packages.php > affected.txt
                   else
                       php .github/affected-packages.php --all > affected.txt
                   fi

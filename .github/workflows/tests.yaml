@@ -4,7 +4,8 @@ on:
     pull_request:
         paths-ignore:
             - 'src/*/doc/**'
-            - 'src/**/*.md'
+    push:
+        branches: [main]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
