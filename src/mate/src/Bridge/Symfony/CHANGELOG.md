@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `HttpClientCollectorFormatter` to list traced outbound calls of the `http_client` profiler collector without headers, bodies or secret-looking URL parts
+
 0.14
 ----
 
