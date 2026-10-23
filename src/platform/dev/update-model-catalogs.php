@@ -24,8 +24,8 @@
  * merged, since models frequently go offline on Hugging Face Inference Providers. Pinned models are
  * always looked up, so they stay listed while they are served, even outside the most downloaded ones.
  *
- * Add-only: hand-curated entries win, so only genuinely new models are appended. Removals and
- * capability corrections stay manual. The content between the "// STATIC LIST START" and
+ * Hand-curated entries win for models still present in the source; missing models are removed.
+ * Capability corrections stay manual. The content between the "// STATIC LIST START" and
  * "// STATIC LIST END" markers is rewritten; everything else in the file is left untouched.
  *
  * Usage:
@@ -363,9 +363,8 @@ function writeCatalog(SymfonyStyle $io, string $bridge, array $fresh, bool $merg
         $existing = $catalog->getModels();
     }
 
-    // Add-only: curated entries win, so hand-tuned capabilities/classes are never overwritten and
-    // only genuinely new models are appended.
-    $models = $merge ? [...$fresh, ...$existing] : $fresh;
+    // Preserve curated definitions only for models still present in the source.
+    $models = $merge ? array_replace($fresh, array_intersect_key($existing, $fresh)) : $fresh;
     foreach ($excludeKeys as $key) {
         unset($models[$key]);
     }
