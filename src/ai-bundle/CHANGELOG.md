@@ -26,6 +26,8 @@ CHANGELOG
 0.15
 ----
 
+ * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
+
  * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
  * Add `setup_options` configuration for Redis store to set the `vector_size` used by `ai:store:setup`
  * Add `setup_options` configuration for S3 Vectors store to set the `dimension` and `distance_metric` used by `ai:store:setup`
