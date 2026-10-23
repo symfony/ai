@@ -14,6 +14,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ConfigCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\LoggerCollectorFormatter;
@@ -72,6 +73,9 @@ return static function (ContainerConfigurator $configurator) {
             ]);
 
         // Built-in collector formatters
+        $services->set(ConfigCollectorFormatter::class)
+            ->tag('ai_mate.profiler_collector_formatter');
+
         $services->set(RequestCollectorFormatter::class)
             ->tag('ai_mate.profiler_collector_formatter');
 
