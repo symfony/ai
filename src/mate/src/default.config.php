@@ -27,6 +27,7 @@ use Symfony\AI\Mate\Command\SkillsOverrideCommand;
 use Symfony\AI\Mate\Command\SkillsPruneCommand;
 use Symfony\AI\Mate\Command\SkillsResetCommand;
 use Symfony\AI\Mate\Command\SkillsValidateCommand;
+use Symfony\AI\Mate\Command\ToolsCallBatchCommand;
 use Symfony\AI\Mate\Command\ToolsCallCommand;
 use Symfony\AI\Mate\Command\ToolsInspectCommand;
 use Symfony\AI\Mate\Command\ToolsListCommand;
@@ -166,6 +167,9 @@ return static function (ContainerConfigurator $container): void {
             ->public()
 
         ->set(ToolsCallCommand::class)
+            ->public()
+
+        ->set(ToolsCallBatchCommand::class)
             ->public()
 
         ->set(ResourcesReadCommand::class)

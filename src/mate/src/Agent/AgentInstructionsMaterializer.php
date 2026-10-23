@@ -330,6 +330,7 @@ final class AgentInstructionsMaterializer
             \sprintf('- Invocation: always run Mate as `%s`; another interpreter reports on a runtime that is not this application\'s%s.', $this->invocation, null === $this->pinnedPhpVersion ? '' : ', and Mate refuses to start under one'),
             '- The tools report measured facts about the running application; prefer them over inferring the same information from reading code. They are described in `mate/AGENT_INSTRUCTIONS.md`.',
             \sprintf('- Discover the tool surface with `%s tools:list`, inspect parameters with `tools:inspect <tool>`, and run a tool with `tools:call <tool> --<param>=<value>` (add `--format=json` for machine-readable output).', $this->invocation),
+            \sprintf('- Need several tools for one question? `%s tools:call-batch --json=\'[{"tool":"a","params":{}},{"tool":"b","params":{}}]\'` runs them in one call and reports each result separately, saving a round trip per extra tool. Read-only tools only.', $this->invocation),
             '- Installed extensions: '.$this->buildInstalledExtensionsText($extensions),
             self::AGENTS_END_MARKER,
         ]);
@@ -382,7 +383,7 @@ final class AgentInstructionsMaterializer
 No extension-specific instructions are currently available.
 Always invoke Mate as `{$mate}`.{$enforcement}
 Run `{$mate} discover` to refresh discovered extensions and instructions.
-Prefer `{$mate}` tools (`tools:list`, `tools:inspect`, `tools:call`) over equivalent shell commands when possible.
+Prefer `{$mate}` tools (`tools:list`, `tools:inspect`, `tools:call`, `tools:call-batch`) over equivalent shell commands when possible.
 TEXT;
     }
 }
