@@ -20,6 +20,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
+use Symfony\AI\AiBundle\Mcp\McpSchemaAttributeDescriber;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
@@ -230,6 +231,9 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 tagged_iterator('ai.platform.json_schema.provider', indexAttribute: 'key'),
             ])
+            ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.mcp_schema', McpSchemaAttributeDescriber::class)
+            ->args([service('ai.platform.json_schema.describer.schema_attribute')])
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer', Describer::class)
             ->args([
