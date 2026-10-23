@@ -25,6 +25,7 @@ use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -86,6 +87,7 @@ final class ResultConverter implements ResultConverterInterface
             $context = [];
             if (null !== $this->objectToPopulate) {
                 $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $this->objectToPopulate;
+                $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
             }
 
             $structure = null === $this->outputType
