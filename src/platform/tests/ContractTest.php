@@ -212,6 +212,33 @@ final class ContractTest extends TestCase
         ];
     }
 
+    public function testNormalizeDoesNotBindAModelToTheContext()
+    {
+        $contract = Contract::create();
+
+        $input = new MessageBag(
+            Message::forSystem('System message'),
+            Message::ofUser('User message'),
+        );
+
+        $this->assertSame([
+            'messages' => [
+                ['role' => 'system', 'content' => 'System message'],
+                ['role' => 'user', 'content' => 'User message'],
+            ],
+        ], $contract->normalize($input));
+    }
+
+    public function testNormalizeIsStableAcrossSeparatelyBuiltInputs()
+    {
+        $contract = Contract::create();
+
+        $this->assertSame(
+            $contract->normalize(new MessageBag(Message::ofUser('User message'))),
+            $contract->normalize(new MessageBag(Message::ofUser('User message'))),
+        );
+    }
+
     public function testExtendedContractHandlesWhisper()
     {
         $contract = Contract::create([new AudioNormalizer()]);
