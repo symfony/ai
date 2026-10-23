@@ -17,20 +17,6 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\VarDumper\Cloner\Data;
 
 /**
- * Formats HttpClient collector data for AI consumption.
- *
- * Lists every traced outbound request with its method, URL, status code,
- * duration, error and redirect count, slowest first, so an agent can tell
- * which call took the time and how it ended.
- *
- * Request and response headers, request options, bodies and the debug log are
- * never exposed, since they carry authorization headers and API payloads. URLs
- * are sanitized: userinfo and fragment are dropped, the value of every query
- * parameter whose name looks like a credential (token, key, secret, password,
- * signature, ...) or whose value looks like an opaque token is replaced with
- * `***`, and so is any path segment that looks like an opaque token. The same
- * rule is applied to URLs quoted in error messages.
- *
  * @author Johannes Wachter <johannes@sulu.io>
  *
  * @internal
@@ -54,7 +40,7 @@ final class HttpClientCollectorFormatter implements CollectorFormatterInterface
 
         $calls = $this->collectCalls($collector);
 
-        // Slowest first so truncation drops the least interesting calls; the sort is stable
+        // Slowest first, so truncation drops the least interesting calls
         usort($calls, static fn (array $a, array $b): int => $b['total_time_ms'] <=> $a['total_time_ms']);
 
         $truncated = \count($calls) > self::MAX_CALLS;
@@ -197,11 +183,6 @@ final class HttpClientCollectorFormatter implements CollectorFormatterInterface
         return mb_strimwidth($error, 0, self::MAX_ERROR_LENGTH, '...');
     }
 
-    /**
-     * Keep scheme, host, port, path and query so the AI sees which endpoint
-     * was called, but drop userinfo and fragment, and replace secret-looking
-     * query values and path segments with `***`.
-     */
     private function sanitizeUrl(string $url): string
     {
         $parts = parse_url($url);
@@ -256,15 +237,11 @@ final class HttpClientCollectorFormatter implements CollectorFormatterInterface
 
     private function looksLikeToken(string $value): bool
     {
-        // Short values are ids or descriptive words; keep them.
         if (\strlen($value) < 16) {
             return false;
         }
 
-        // A descriptive slug (lowercase words joined by single hyphens or
-        // underscores) is kept. Anything else of length >= 16, such as hex or
-        // base64 blobs, UUIDs and mixed-case or digit-bearing strings, is a
-        // likely token.
+        // Lowercase slugs are kept, hex, base64, UUIDs and mixed-case strings are tokens
         return 1 !== preg_match('/^[a-z][a-z0-9]*(?:[_-][a-z][a-z0-9]*)+$/', $value);
     }
 }

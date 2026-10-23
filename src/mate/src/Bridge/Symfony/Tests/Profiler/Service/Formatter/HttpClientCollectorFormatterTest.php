@@ -319,8 +319,6 @@ final class HttpClientCollectorFormatterTest extends TestCase
     }
 
     /**
-     * Builds a collector from traces shaped like the ones stored in a profile.
-     *
      * @param list<array{method: string, url: string, http_code: int, total_time?: float, info: array<string, mixed>}> $traces
      */
     private function collectFromTraces(array $traces): HttpClientDataCollector
