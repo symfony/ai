@@ -1,5 +1,5 @@
 Symfony AI - Agent Component
-============================
+=====================
 
 The Agent component provides a framework for building AI agents that,
 sits on top of the Platform and Store components, allowing you to create
@@ -906,6 +906,37 @@ For another result, like an array with an error code, throw an exception that im
 :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolExecutionExceptionInterface`. Its
 ``getToolCallResult()`` method returns the result of the tool call. Any other exception gives the LLM a
 generic error message, which doesn't expose the details of the error.
+
+Current Tool Call
+~~~~~~~~~~~~~~~~~
+
+A tool can access the current :class:`Symfony\\AI\\Platform\\Result\\ToolCall` by implementing
+:class:`Symfony\\AI\\Agent\\Toolbox\\HasToolCallInterface` and using
+:class:`Symfony\\AI\\Agent\\Toolbox\\HasToolCallTrait`::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Agent\Toolbox\HasToolCallInterface;
+    use Symfony\AI\Agent\Toolbox\HasToolCallTrait;
+
+    #[AsTool('lookup', 'Look up a record')]
+    final class Lookup implements HasToolCallInterface
+    {
+        use HasToolCallTrait;
+
+        public function __invoke(string $query): string
+        {
+            $callId = $this->getToolCall()?->getId();
+
+            // Use $callId to correlate this operation with the model's tool call.
+
+            return 'Found: '.$query;
+        }
+    }
+
+The toolbox sets the call immediately before invocation and restores the previous value even
+when the tool fails. Outside an invocation, the default value is ``null``. The trait isolates
+contexts between Fibers, so concurrent calls may share a tool instance. The call is not added
+to the tool's model-visible parameters.
 
 .. _agent-tool-sources:
 
