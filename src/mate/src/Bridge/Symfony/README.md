@@ -3,6 +3,13 @@ Symfony Bridge
 
 Provides Symfony container introspection and profiler data access tools for Symfony AI Mate.
 
+Profiler Configuration
+----------------------
+
+The `config` collector summary in `symfony-profiler-get` exposes the PHP and Symfony
+versions, environment and debug mode recorded in the profile. Fetch its collector
+resource for the PHP SAPI, timezone, and whether Xdebug, APCu and OPcache are enabled.
+
 Resources
 ---------
 
