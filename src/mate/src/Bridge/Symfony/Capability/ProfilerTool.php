@@ -75,7 +75,7 @@ final class ProfilerTool
     /**
      * @param string $token The unique profiler token identifying the profile
      */
-    #[MateTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data.')]
+    #[MateTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data. Collector data (form, validator, request, time, db, events, cache, security, ...) is read through those URIs, with the `resources:read <uri>` command.')]
     public function getProfile(string $token): string
     {
         $profileData = $this->getDataProvider()->findProfile($token);
