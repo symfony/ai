@@ -43,7 +43,7 @@ final class SimilaritySearch
             return 'No results found';
         }
 
-        $result = $this->promptTemplate.\PHP_EOL;
+        $result = $this->promptTemplate."\n";
         foreach ($this->usedDocuments as $document) {
             $result .= json_encode($document->getMetadata());
         }
