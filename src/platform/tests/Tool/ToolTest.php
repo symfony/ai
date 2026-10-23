@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Tests\Tool;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\AI\Platform\Tool\ToolEffectHints;
 
 final class ToolTest extends TestCase
 {
@@ -100,12 +101,47 @@ final class ToolTest extends TestCase
     public function testExplicitEffectHints()
     {
         $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
-            readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false);
+            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false));
 
         $this->assertTrue($tool->isReadOnly());
         $this->assertFalse($tool->isDestructive());
         $this->assertTrue($tool->isIdempotent());
         $this->assertFalse($tool->isOpenWorld());
-        $this->assertSame([], $tool->getMetadata());
+        $this->assertSame(['readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false], $tool->getMetadata());
+    }
+
+    public function testMissingHintsRemainUnset()
+    {
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description');
+
+        $this->assertNull($tool->getEffectHints()->readOnlyHint);
+        $this->assertNull($tool->getEffectHints()->destructiveHint);
+        $this->assertNull($tool->getEffectHints()->idempotentHint);
+        $this->assertNull($tool->getEffectHints()->openWorldHint);
+        $this->assertSame([], $tool->getEffectHints()->toArray());
+    }
+
+    public function testReadOnlyToolsCannotBeDestructive()
+    {
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
+            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: true, idempotentHint: false));
+
+        $this->assertFalse($tool->isDestructive());
+        $this->assertTrue($tool->isIdempotent());
+        $this->assertTrue($tool->getEffectHints()->destructiveHint);
+        $this->assertFalse($tool->getEffectHints()->idempotentHint);
+    }
+
+    public function testExplicitHintsOverrideMetadataWithoutDuplicatingState()
+    {
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
+            metadata: ['readOnlyHint' => false, 'openWorldHint' => false, 'custom' => 'value'],
+            effectHints: new ToolEffectHints(readOnlyHint: true));
+
+        $this->assertTrue($tool->isReadOnly());
+        $this->assertFalse($tool->isOpenWorld());
+        $this->assertTrue($tool->getMetadataValue('readOnlyHint'));
+        $this->assertSame('value', $tool->getMetadataValue('custom'));
+        $this->assertSame(['readOnlyHint' => true, 'openWorldHint' => false], $tool->getEffectHints()->toArray());
     }
 }

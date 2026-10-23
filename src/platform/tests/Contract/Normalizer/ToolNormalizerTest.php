@@ -22,6 +22,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Platform\Contract\Normalizer\ToolNormalizer;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\AI\Platform\Tool\ToolEffectHints;
 
 class ToolNormalizerTest extends TestCase
 {
@@ -37,7 +38,7 @@ class ToolNormalizerTest extends TestCase
     public function testEffectHintsStayOutsideTheModelSchema()
     {
         $tool = new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'description',
-            readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false);
+            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false));
 
         $this->assertSame([
             'type' => 'function',

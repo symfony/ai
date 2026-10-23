@@ -21,6 +21,11 @@ use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 final class Tool
 {
     /**
+     * @var array<string, mixed>
+     */
+    private readonly array $metadata;
+
+    /**
      * @param JsonSchema|null      $parameters
      * @param array<string, mixed> $metadata   Arbitrary custom data attached to the tool
      */
@@ -29,12 +34,10 @@ final class Tool
         private readonly string $name,
         private readonly string $description,
         private readonly ?array $parameters = null,
-        private readonly array $metadata = [],
-        private readonly bool $readOnlyHint = false,
-        private readonly bool $destructiveHint = true,
-        private readonly bool $idempotentHint = false,
-        private readonly bool $openWorldHint = true,
+        array $metadata = [],
+        ToolEffectHints $effectHints = new ToolEffectHints(),
     ) {
+        $this->metadata = array_replace($metadata, $effectHints->toArray());
     }
 
     public function getReference(): ExecutionReference
@@ -60,24 +63,34 @@ final class Tool
         return $this->parameters;
     }
 
+    public function getEffectHints(): ToolEffectHints
+    {
+        return new ToolEffectHints(
+            readOnlyHint: \is_bool($this->metadata['readOnlyHint'] ?? null) ? $this->metadata['readOnlyHint'] : null,
+            destructiveHint: \is_bool($this->metadata['destructiveHint'] ?? null) ? $this->metadata['destructiveHint'] : null,
+            idempotentHint: \is_bool($this->metadata['idempotentHint'] ?? null) ? $this->metadata['idempotentHint'] : null,
+            openWorldHint: \is_bool($this->metadata['openWorldHint'] ?? null) ? $this->metadata['openWorldHint'] : null,
+        );
+    }
+
     public function isReadOnly(): bool
     {
-        return $this->readOnlyHint;
+        return $this->getEffectHints()->readOnlyHint ?? false;
     }
 
     public function isDestructive(): bool
     {
-        return $this->destructiveHint;
+        return !$this->isReadOnly() && ($this->getEffectHints()->destructiveHint ?? true);
     }
 
     public function isIdempotent(): bool
     {
-        return $this->idempotentHint;
+        return $this->isReadOnly() || ($this->getEffectHints()->idempotentHint ?? false);
     }
 
     public function isOpenWorld(): bool
     {
-        return $this->openWorldHint;
+        return $this->getEffectHints()->openWorldHint ?? true;
     }
 
     /**

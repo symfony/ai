@@ -280,13 +280,15 @@ You can configure the method to be called by the LLM with the :class:`Symfony\\A
 Tool Effect Hints
 ~~~~~~~~~~~~~~~~~
 
-Declare a tool's expected side effects with the optional ``AsTool`` hints::
+Declare a tool's expected side effects with an optional ``ToolEffectHints`` value object::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Platform\Tool\ToolEffectHints;
 
     #[AsTool(
         'search_products',
         'Search the product catalog',
-        readOnlyHint: true,
-        openWorldHint: false,
+        effectHints: new ToolEffectHints(readOnlyHint: true, openWorldHint: false),
     )]
     final class ProductSearch
     {
@@ -304,13 +306,17 @@ The hints are available on the resulting tool definition:
 * ``openWorldHint`` / ``Tool::isOpenWorld()``: whether the tool may interact with
   external entities (default: ``true``).
 
-The destructive and idempotent hints are meaningful for tools that are not read-only.
+For read-only tools, ``isDestructive()`` returns ``false`` and ``isIdempotent()`` returns
+``true``, regardless of those two raw hints.
 These are declarations, not guarantees; Symfony AI does not enforce them. A listener
 or custom tool executor can use them to decide whether a call needs confirmation.
-They stay outside the model's parameter schema and the arbitrary ``metadata`` array.
-``MemoryToolFactory::addTool()`` accepts the same named arguments, and MCP tools
-populate them from the server's annotations. Only trust annotations from servers
-you trust.
+``Tool::getEffectHints()`` exposes the raw nullable fields, preserving the difference
+between an omitted hint and an explicit value. The boolean methods above apply defaults.
+Metadata is the canonical storage: explicit non-null ``effectHints`` override matching
+metadata keys, and ``getEffectHints()`` derives its value object from that metadata.
+The hints stay outside the model's parameter schema.
+``MemoryToolFactory::addTool()`` accepts the same ``effectHints`` argument, and MCP tools
+populate metadata from the server's annotations. Only trust annotations from servers you trust.
 
 Tool Metadata
 ~~~~~~~~~~~~~

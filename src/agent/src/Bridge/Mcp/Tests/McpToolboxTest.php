@@ -117,8 +117,10 @@ final class McpToolboxTest extends TestCase
         $tool = (new McpToolbox($toolset))->getTools()[0];
 
         $this->assertTrue($tool->isReadOnly());
-        $this->assertTrue($tool->isDestructive());
-        $this->assertFalse($tool->isIdempotent());
+        $this->assertFalse($tool->isDestructive());
+        $this->assertTrue($tool->isIdempotent());
+        $this->assertNull($tool->getEffectHints()->destructiveHint);
+        $this->assertNull($tool->getEffectHints()->idempotentHint);
         $this->assertTrue($tool->isOpenWorld());
         $this->assertSame(['readOnlyHint' => true], $tool->getMetadata());
     }
