@@ -176,6 +176,12 @@ bridges:
         website: https://decart.ai
         icon: brands:decart
 
+    Decision:
+        summary: The questions, typed answers and evaluations shared by the bridges of decision models, such as TypeSafe.
+        kind: building-block
+        icon: tabler:arrows-split
+        symfony_docs: components/platform/typesafe
+
     Deepgram:
         name: Deepgram
         summary: Speech-to-text and text-to-speech APIs, with the model list discovered from your account.
@@ -298,9 +304,10 @@ bridges:
         hosting: [saas]
         regions: []
         model_access: multi-vendor
-        capabilities: [chat, embeddings, speech-to-text, image-generation]
+        capabilities: [chat, tool-calling, structured-output, vision, embeddings, speech-to-text, image-generation]
         website: https://huggingface.co
         icon: brands:hugging-face
+        symfony_docs: components/platform/huggingface
 
     LmStudio:
         name: LM Studio
@@ -421,16 +428,16 @@ bridges:
 
     Perplexity:
         name: Perplexity
-        summary: Sonar models answering with fresh web search results and their sources.
+        summary: The Agent API of Perplexity, with presets and models of several providers that search the web and cite their sources.
         kind: model-provider
         deployment: [cloud]
         hosting: [saas]
         regions: [us]
-        model_access: single-vendor
-        capabilities: [chat, structured-output, reasoning, web-search, vision]
+        model_access: multi-vendor
+        capabilities: [chat, tool-calling, structured-output, reasoning, web-search, vision]
         website: https://www.perplexity.ai
         icon: brands:perplexity
-        note: Perplexity ended support for its Sonar API on September 27, 2026, in favor of its Agent API.
+        symfony_docs: components/platform/perplexity
 
     Replicate:
         name: Replicate
