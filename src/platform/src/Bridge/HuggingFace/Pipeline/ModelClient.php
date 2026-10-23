@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Pipeline;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -46,6 +47,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $url = \sprintf('%s/hf-inference/models/%s', $this->baseUrl, $model->getName());
 
         // Sentence similarity models only return embeddings on the feature extraction pipeline route
@@ -58,7 +63,7 @@ final class ModelClient implements ModelClientInterface
                 'auth_bearer' => $this->apiKey,
                 'headers' => $payload['headers'] ?? [],
                 'body' => $payload['body'],
-            ]));
+            ] + $httpOptions));
         }
 
         $body = ['inputs' => $payload];
@@ -70,6 +75,6 @@ final class ModelClient implements ModelClientInterface
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
             'body' => $this->encodeJsonBody($body),
-        ]));
+        ] + $httpOptions));
     }
 }

@@ -59,6 +59,21 @@ final class DecisionModelClientTest extends TestCase
         ]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('nimble', json_decode($options['body'], true)['model']);
+
+            return new MockResponse();
+        }], 'http://127.0.0.1:11434');
+
+        (new DecisionModelClient($httpClient))->request(new Decision('nimble'), [
+            'state' => 'text',
+            'questions' => ['label' => ['type' => 'choice', 'instructions' => 'Which?', 'criteria' => ['a' => 'A']]],
+        ], ['http_options' => ['max_duration' => 30, 'json' => ['overridden']]]);
+    }
+
     public function testItKeepsNumericKeysAsJsonObjects()
     {
         $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {

@@ -63,6 +63,30 @@ final class ModelClientTest extends TestCase
         ], json_decode($response->getRequestOptions()['body'], true));
     }
 
+    public function testHttpOptionsAreSentWithTheRequestAndNotAsParameters()
+    {
+        $response = new MockResponse('[]');
+        $modelClient = new ModelClient(new MockHttpClient($response), 'test-api-key');
+
+        $modelClient->request(new Classification('ProsusAI/finbert'), 'hello', ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+
+        $this->assertSame(30.0, $response->getRequestOptions()['max_duration']);
+        $this->assertSame(['inputs' => 'hello'], json_decode($response->getRequestOptions()['body'], true));
+    }
+
+    public function testHttpOptionsAreSentWithBinaryBodies()
+    {
+        $response = new MockResponse('[]');
+        $modelClient = new ModelClient(new MockHttpClient($response), 'test-api-key');
+        $model = new Classification('google/vit-base-patch16-224');
+
+        $payload = HuggingFaceContract::create()->createRequestPayload($model, Image::fromDataUrl('data:image/png;base64,'.base64_encode('fake-image')));
+        $modelClient->request($model, $payload, ['http_options' => ['max_duration' => 30]]);
+
+        $this->assertSame(30.0, $response->getRequestOptions()['max_duration']);
+        $this->assertSame('fake-image', $response->getRequestOptions()['body']);
+    }
+
     public function testSendsRerankingQueryAndTextsAsInputs()
     {
         $response = new MockResponse('[]');
