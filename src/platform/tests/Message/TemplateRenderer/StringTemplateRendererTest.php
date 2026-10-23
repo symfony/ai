@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Tests\Message\TemplateRenderer;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Template;
@@ -99,15 +100,30 @@ final class StringTemplateRendererTest extends TestCase
         $this->assertSame('Hello {name}!', $result);
     }
 
-    public function testThrowsExceptionForNonStringKey()
+    /**
+     * @param array<int|string, mixed> $variables
+     */
+    #[DataProvider('provideNonStringKeys')]
+    public function testThrowsExceptionForNonStringKey(array $variables)
     {
         $template = Template::string('Hello {name}!');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Template variable keys must be strings');
 
-        /* @phpstan-ignore-next-line - Intentionally passing wrong type to test exception */
-        $this->renderer->render($template, [0 => 'value']);
+        $this->renderer->render($template, $variables);
+    }
+
+    /**
+     * @return iterable<string, array{array<int|string, mixed>}>
+     */
+    public static function provideNonStringKeys(): iterable
+    {
+        yield 'numeric scalar key' => [[0 => 'value']];
+        yield 'numeric key before nested array' => [[2 => 'value', 'person' => ['name' => 'Ada']]];
+        yield 'numeric key before empty array' => [[2 => 'value', 'person' => []]];
+        yield 'numeric key under empty prefix' => [['' => [2 => 'value'], 'person' => ['name' => 'Ada']]];
+        yield 'numeric key overwritten after reindexing' => [[2 => 'first', 'person' => [], 0 => 'last']];
     }
 
     public function testThrowsExceptionForInvalidValueType()
@@ -197,5 +213,61 @@ final class StringTemplateRendererTest extends TestCase
         ]);
 
         $this->assertSame('Coordinates: 52.520008, 13.404954', $result);
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    #[DataProvider('provideNestedVariables')]
+    public function testRenderPreservesNestedVariableOrder(array $variables, string $template, string $expected)
+    {
+        $this->assertSame($expected, $this->renderer->render(Template::string($template), $variables));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string, string}>
+     */
+    public static function provideNestedVariables(): iterable
+    {
+        yield 'nested value overwrites dotted key' => [
+            ['person.name' => 'first', 'person' => ['name' => 'last']],
+            '{person.name}',
+            'last',
+        ];
+        yield 'dotted key overwrites nested value' => [
+            ['person' => ['name' => 'first'], 'person.name' => 'last'],
+            '{person.name}',
+            'last',
+        ];
+        yield 'replacement follows variable order' => [
+            ['value' => '{person.name}', 'person' => ['name' => 'Ada']],
+            '{value}',
+            'Ada',
+        ];
+        yield 'replacement does not revisit earlier variables' => [
+            ['person' => ['name' => 'Ada'], 'value' => '{person.name}'],
+            '{value}',
+            '{person.name}',
+        ];
+        yield 'overwritten key retains its position' => [
+            ['person' => ['name' => 'first'], 'value' => '{person.name}', 'person.name' => 'last'],
+            '{value}',
+            '{person.name}',
+        ];
+        yield 'nested numeric keys' => [
+            ['items' => [2 => 'two', 0 => 'zero']],
+            '{items.2}/{items.0}',
+            'two/zero',
+        ];
+        yield 'empty prefix' => [
+            ['' => ['name' => 'Ada']],
+            '{name}',
+            'Ada',
+        ];
+        yield 'nested empty array does not overwrite dotted key' => [
+            ['person.name' => 'Ada', 'person' => ['name' => []]],
+            '{person.name}',
+            'Ada',
+        ];
     }
 }
