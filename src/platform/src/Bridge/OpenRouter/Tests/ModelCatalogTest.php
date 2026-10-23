@@ -34,8 +34,8 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             Capability::cases(),
         ];
 
-        yield 'anthropic/claude-sonnet-4.5' => [
-            'anthropic/claude-sonnet-4.5',
+        yield 'anthropic/claude-sonnet-4.6' => [
+            'anthropic/claude-sonnet-4.6',
             CompletionsModel::class,
             [
                 Capability::OUTPUT_STREAMING,
@@ -78,11 +78,12 @@ final class ModelCatalogTest extends ModelCatalogTestCase
             ],
         ];
 
-        yield 'mistralai/mistral-large-2411 structured' => [
-            'mistralai/mistral-large-2411',
+        yield 'mistralai/mistral-large-2512 structured' => [
+            'mistralai/mistral-large-2512',
             CompletionsModel::class,
             [
                 Capability::INPUT_PDF,
+                Capability::INPUT_IMAGE,
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_STREAMING,
                 Capability::OUTPUT_STRUCTURED,

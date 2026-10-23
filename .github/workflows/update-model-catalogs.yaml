@@ -5,6 +5,11 @@ on:
         # Mondays at 06:00 UTC
         - cron: '0 6 * * 1'
     workflow_dispatch:
+        inputs:
+            allow_large_prune:
+                description: 'Allow removing more than 25% of OpenRouter models after reviewing the dry-run'
+                type: boolean
+                default: false
 
 # Least privilege by default; the job below opts into exactly what it needs.
 permissions: {}
@@ -43,7 +48,14 @@ jobs:
               run: composer install -d src/platform --no-interaction --no-progress --prefer-dist
 
             - name: Update catalogs from upstream metadata
-              run: php src/platform/dev/update-model-catalogs.php
+              env:
+                  ALLOW_LARGE_PRUNE: ${{ inputs.allow_large_prune }}
+              run: |
+                  if [ "$ALLOW_LARGE_PRUNE" = "true" ]; then
+                      php src/platform/dev/update-model-catalogs.php --allow-large-prune
+                  else
+                      php src/platform/dev/update-model-catalogs.php
+                  fi
 
             - name: Fix code style
               run: vendor/bin/php-cs-fixer fix src/platform/src/Bridge
@@ -83,6 +95,8 @@ jobs:
                       (models.dev for per-provider bridges, the OpenRouter API for OpenRouter, the Hugging Face
                       Hub API for HuggingFace).
 
-                      New models are appended; hand-curated entries are left untouched. The HuggingFace list is
-                      rewritten instead, so it also drops models that went offline. Review the diff before
-                      merging, and adjust capabilities or model classes where the heuristics need a human.
+                      New models are added. Only OpenRouter prunes missing models, with a guard against
+                      incomplete feeds. models.dev catalogs retain hand-curated entries omitted by the feed;
+                      the HuggingFace list is rewritten.
+                      Review the diff before merging, and adjust capabilities or model classes where
+                      the heuristics need a human.
