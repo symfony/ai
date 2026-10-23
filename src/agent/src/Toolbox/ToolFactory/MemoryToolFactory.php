@@ -37,7 +37,7 @@ final class MemoryToolFactory implements ToolFactoryInterface
     /**
      * @param array<string, mixed> $metadata
      */
-    public function addTool(string|object $class, string $name, string $description, string $method = '__invoke', array $metadata = []): self
+    public function addTool(string|object $class, string $name, string $description, string $method = '__invoke', array $metadata = [], bool $readOnlyHint = false, bool $destructiveHint = true, bool $idempotentHint = false, bool $openWorldHint = true): self
     {
         $className = \is_object($class) ? $class::class : $class;
         $key = \is_object($class) ? (string) spl_object_id($class) : $className;
@@ -49,6 +49,10 @@ final class MemoryToolFactory implements ToolFactoryInterface
                 $description,
                 $this->factory->buildParameters($className, $method),
                 $metadata,
+                $readOnlyHint,
+                $destructiveHint,
+                $idempotentHint,
+                $openWorldHint,
             );
         } catch (\ReflectionException $e) {
             throw ToolConfigurationException::invalidMethod($className, $method, $e);

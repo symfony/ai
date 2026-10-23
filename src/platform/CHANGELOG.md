@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add read-only, destructive, idempotent and open-world hints to tool definitions
+
 0.15
 ----
 

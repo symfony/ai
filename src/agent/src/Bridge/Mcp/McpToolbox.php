@@ -97,6 +97,10 @@ final class McpToolbox extends AbstractToolbox implements ResetInterface
                 $remote->description ?? '',
                 $inputSchema,
                 $this->annotationsToMetadata($remote->annotations),
+                readOnlyHint: $remote->annotations->readOnlyHint ?? false,
+                destructiveHint: $remote->annotations->destructiveHint ?? true,
+                idempotentHint: $remote->annotations->idempotentHint ?? false,
+                openWorldHint: $remote->annotations->openWorldHint ?? true,
             );
         }
 

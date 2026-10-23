@@ -30,6 +30,10 @@ final class Tool
         private readonly string $description,
         private readonly ?array $parameters = null,
         private readonly array $metadata = [],
+        private readonly bool $readOnlyHint = false,
+        private readonly bool $destructiveHint = true,
+        private readonly bool $idempotentHint = false,
+        private readonly bool $openWorldHint = true,
     ) {
     }
 
@@ -54,6 +58,26 @@ final class Tool
     public function getParameters(): ?array
     {
         return $this->parameters;
+    }
+
+    public function isReadOnly(): bool
+    {
+        return $this->readOnlyHint;
+    }
+
+    public function isDestructive(): bool
+    {
+        return $this->destructiveHint;
+    }
+
+    public function isIdempotent(): bool
+    {
+        return $this->idempotentHint;
+    }
+
+    public function isOpenWorld(): bool
+    {
+        return $this->openWorldHint;
     }
 
     /**

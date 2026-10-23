@@ -277,6 +277,41 @@ You can configure the method to be called by the LLM with the :class:`Symfony\\A
         }
     }
 
+Tool Effect Hints
+~~~~~~~~~~~~~~~~~
+
+Declare a tool's expected side effects with the optional ``AsTool`` hints::
+
+    #[AsTool(
+        'search_products',
+        'Search the product catalog',
+        readOnlyHint: true,
+        openWorldHint: false,
+    )]
+    final class ProductSearch
+    {
+        // ...
+    }
+
+The hints are available on the resulting tool definition:
+
+* ``readOnlyHint`` / ``Tool::isReadOnly()``: whether the tool leaves its environment
+  unchanged (default: ``false``).
+* ``destructiveHint`` / ``Tool::isDestructive()``: whether updates may be destructive
+  (default: ``true``).
+* ``idempotentHint`` / ``Tool::isIdempotent()``: whether repeating a call with the same
+  arguments has no additional effect (default: ``false``).
+* ``openWorldHint`` / ``Tool::isOpenWorld()``: whether the tool may interact with
+  external entities (default: ``true``).
+
+The destructive and idempotent hints are meaningful for tools that are not read-only.
+These are declarations, not guarantees; Symfony AI does not enforce them. A listener
+or custom tool executor can use them to decide whether a call needs confirmation.
+They stay outside the model's parameter schema and the arbitrary ``metadata`` array.
+``MemoryToolFactory::addTool()`` accepts the same named arguments, and MCP tools
+populate them from the server's annotations. Only trust annotations from servers
+you trust.
+
 Tool Metadata
 ~~~~~~~~~~~~~
 

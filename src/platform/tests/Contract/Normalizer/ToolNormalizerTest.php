@@ -34,6 +34,17 @@ class ToolNormalizerTest extends TestCase
         $this->assertSame($expected, (new ToolNormalizer())->normalize($tool));
     }
 
+    public function testEffectHintsStayOutsideTheModelSchema()
+    {
+        $tool = new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'description',
+            readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false);
+
+        $this->assertSame([
+            'type' => 'function',
+            'function' => ['name' => 'tool', 'description' => 'description'],
+        ], (new ToolNormalizer())->normalize($tool));
+    }
+
     public static function provideTools(): \Generator
     {
         yield 'required params' => [

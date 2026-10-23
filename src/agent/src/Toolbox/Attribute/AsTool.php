@@ -26,6 +26,10 @@ final class AsTool
         public readonly string $description,
         public readonly string $method = '__invoke',
         public readonly array $metadata = [],
+        public readonly bool $readOnlyHint = false,
+        public readonly bool $destructiveHint = true,
+        public readonly bool $idempotentHint = false,
+        public readonly bool $openWorldHint = true,
     ) {
     }
 }

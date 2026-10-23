@@ -86,4 +86,26 @@ final class ToolTest extends TestCase
         $this->assertNull($tool->getMetadataValue('hitl'));
         $this->assertSame('fallback', $tool->getMetadataValue('hitl', 'fallback'));
     }
+
+    public function testEffectHintsDefaultToConservativeValues()
+    {
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description');
+
+        $this->assertFalse($tool->isReadOnly());
+        $this->assertTrue($tool->isDestructive());
+        $this->assertFalse($tool->isIdempotent());
+        $this->assertTrue($tool->isOpenWorld());
+    }
+
+    public function testExplicitEffectHints()
+    {
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
+            readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false);
+
+        $this->assertTrue($tool->isReadOnly());
+        $this->assertFalse($tool->isDestructive());
+        $this->assertTrue($tool->isIdempotent());
+        $this->assertFalse($tool->isOpenWorld());
+        $this->assertSame([], $tool->getMetadata());
+    }
 }

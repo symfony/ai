@@ -13,7 +13,7 @@ namespace Symfony\AI\Agent\Tests\Fixtures\Tool;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
-#[AsTool('tool_with_metadata', 'A tool carrying metadata', metadata: ['needs_confirmation' => true, 'category' => 'admin'])]
+#[AsTool('tool_with_metadata', 'A tool carrying metadata', metadata: ['needs_confirmation' => true, 'category' => 'admin'], readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)]
 final class ToolWithMetadata
 {
     public function __invoke(): string
