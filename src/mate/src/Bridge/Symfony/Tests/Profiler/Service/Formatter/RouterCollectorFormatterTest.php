@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\RouterDataCollector;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\Routing\Controller\RedirectController as RoutingRedirectController;
 
 /**
  * @author Andrey Bolonin <andreybolonin1989@gmail.com>
@@ -54,10 +55,18 @@ final class RouterCollectorFormatterTest extends TestCase
     {
         $request = Request::create('/old');
         $request->attributes->set('_route', 'old');
-        $controller = new RedirectController();
+        if (class_exists(RoutingRedirectController::class)) {
+            $controller = new RoutingRedirectController();
+        } else {
+            $controller = new RedirectController();
+        }
+        $action = [$controller, 'urlRedirectAction'];
+        $this->assertIsCallable($action);
         $collector = new FrameworkRouterDataCollector();
-        $collector->onKernelController(new ControllerEvent($this->createMock(HttpKernelInterface::class), [$controller, 'urlRedirectAction'], $request, HttpKernelInterface::MAIN_REQUEST));
-        $collector->collect($request, $controller->urlRedirectAction($request, '/page?token=secret'));
+        $collector->onKernelController(new ControllerEvent($this->createMock(HttpKernelInterface::class), $action, $request, HttpKernelInterface::MAIN_REQUEST));
+        $response = $action($request, '/page?token=secret');
+        $this->assertInstanceOf(Response::class, $response);
+        $collector->collect($request, $response);
 
         $this->assertSame([
             'redirect' => true,
