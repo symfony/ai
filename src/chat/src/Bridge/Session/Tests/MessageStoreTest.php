@@ -57,7 +57,7 @@ final class MessageStoreTest extends TestCase
     public function testSaveStoresMessageBag()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Test message'));
+        $messageBag = $messageBag->with(Message::ofUser('Test message'));
 
         $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);
@@ -77,7 +77,7 @@ final class MessageStoreTest extends TestCase
     public function testLoadReturnsStoredMessages()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Session message'));
+        $messageBag = $messageBag->with(Message::ofUser('Session message'));
 
         $session = $this->createMock(SessionInterface::class);
         $requestStack = $this->createMock(RequestStack::class);

@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MockResponse;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
@@ -57,6 +58,19 @@ final class MockAgentTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hi there!', $result->getContent());
+    }
+
+    public function testGetMessagesAppendsTheAnswer()
+    {
+        $input = new MessageBag(Message::ofUser('hello'));
+
+        $messages = (new MockAgent(['hello' => 'Hi there!']))->call($input)->getMessages();
+
+        $this->assertCount(1, $input);
+        $this->assertCount(2, $messages);
+        $answer = $messages->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('Hi there!', $answer->asText());
     }
 
     public function testCallHandlesMultipleTextContents()

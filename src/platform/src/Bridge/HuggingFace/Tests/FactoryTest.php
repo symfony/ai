@@ -91,8 +91,8 @@ final class FactoryTest extends TestCase
         $this->assertInstanceOf(ToolCallResult::class, $result);
         $this->assertSame(['city' => 'Paris'], $result->getContent()[0]->getArguments());
 
-        $messages->add(Message::ofAssistant($result));
-        $messages->add(Message::ofToolCall($result->getContent()[0], 'sunny'));
+        $messages = $messages->with(Message::ofAssistant($result));
+        $messages = $messages->with(Message::ofToolCall($result->getContent()[0], 'sunny'));
 
         $this->assertSame('It is sunny in Paris.', $platform->invoke('test/model', $messages, $options)->asText());
         $this->assertCount(2, $requests);

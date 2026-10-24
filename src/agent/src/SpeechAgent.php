@@ -52,9 +52,11 @@ final class SpeechAgent implements AgentInterface
             }
 
             $result = null;
+            $agentMessages = null;
             foreach ($cancellation->forward($this->agent->call($messages, $options)) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
+                    $agentMessages = $update->getMessages(...);
 
                     continue;
                 }
@@ -73,7 +75,7 @@ final class SpeechAgent implements AgentInterface
             }
 
             if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
-                yield new ResultUpdate($result);
+                yield new ResultUpdate($result, $agentMessages);
 
                 return;
             }
@@ -90,7 +92,8 @@ final class SpeechAgent implements AgentInterface
 
             $speechResult->getMetadata()->add('text', $text);
 
-            yield new ResultUpdate($speechResult->getResult());
+            // the messages keep the answer as text
+            yield new ResultUpdate($speechResult->getResult(), $agentMessages);
         }, cancellation: $cancellation);
     }
 
@@ -131,8 +134,7 @@ final class SpeechAgent implements AgentInterface
         $cancellation->activate($result->getRawResult());
 
         $text = new Text($result->asText());
-        $messages->replace($latestUserMessage->getId(), Message::ofUser($text));
 
-        return $messages;
+        return $messages->replace($latestUserMessage->getId(), Message::ofUser($text));
     }
 }

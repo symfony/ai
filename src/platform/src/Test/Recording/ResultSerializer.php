@@ -112,6 +112,7 @@ final class ResultSerializer
                 'type' => 'object',
                 'is_object' => \is_object($content),
                 'content' => json_encode($content, \JSON_THROW_ON_ERROR),
+                'text' => $result->getText(),
             ];
         }
 
@@ -167,7 +168,7 @@ final class ResultSerializer
         if ('object' === $type) {
             $content = json_decode((string) $data['content'], !($data['is_object'] ?? false), flags: \JSON_THROW_ON_ERROR);
 
-            return new ObjectResult($content);
+            return new ObjectResult($content, $data['text'] ?? null);
         }
 
         if ('vector' === $type) {

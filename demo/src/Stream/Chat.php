@@ -43,12 +43,9 @@ final class Chat
 
     public function submitMessage(string $message): UserMessage
     {
-        $messages = $this->loadMessages();
-
         $userMessage = Message::ofUser($message);
-        $messages->add($userMessage);
 
-        $this->saveMessages($messages);
+        $this->saveMessages($this->loadMessages()->with($userMessage));
 
         return $userMessage;
     }
@@ -73,9 +70,11 @@ final class Chat
             yield $response .= $delta;
         }
 
-        $assistantMessage = Message::ofAssistant($response);
-        $messages->add($assistantMessage);
+        $messages = $execution->getMessages();
         $this->saveMessages($messages);
+
+        $assistantMessage = $messages->latestAs(Role::Assistant);
+        \assert($assistantMessage instanceof AssistantMessage);
 
         return $assistantMessage;
     }

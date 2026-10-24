@@ -102,7 +102,7 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException(\sprintf('Cannot deserialize the content into the "%s" class.', $this->outputType), previous: $e);
         }
 
-        $objectResult = new ObjectResult($structure);
+        $objectResult = new ObjectResult($structure, $content);
         $objectResult->setRawResult($result);
         $objectResult->getMetadata()->set($textResult->getMetadata()->all());
 

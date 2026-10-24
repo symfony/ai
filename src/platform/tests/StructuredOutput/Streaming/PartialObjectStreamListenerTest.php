@@ -99,6 +99,7 @@ final class PartialObjectStreamListenerTest extends TestCase
         $this->assertInstanceOf(City::class, $city);
         $this->assertSame('Berlin', $city->name);
         $this->assertSame(3500000, $city->population);
+        $this->assertSame('{"name":"Berlin","population":3500000}', $final->getText());
     }
 
     public function testValidatorRunsOnlyOnFinalObject()

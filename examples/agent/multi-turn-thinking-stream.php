@@ -36,8 +36,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
 );
 
-$messages->add(Message::ofUser('What time is it right now?'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($messages->with(Message::ofUser('What time is it right now?')), $options);
 
 output()->write('<info>Turn 1:</info> ');
 foreach ($execution->asStream() as $delta) {
@@ -47,10 +46,7 @@ foreach ($execution->asStream() as $delta) {
 }
 output()->writeln('');
 
-$messages->add(Message::ofAssistant($execution->getResult()));
-
-$messages->add(Message::ofUser('What did I just ask you?'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($execution->getMessages()->with(Message::ofUser('What did I just ask you?')), $options);
 
 output()->write('<info>Turn 2:</info> ');
 foreach ($execution->asStream() as $delta) {
@@ -60,6 +56,4 @@ foreach ($execution->asStream() as $delta) {
 }
 output()->writeln('');
 
-$messages->add(Message::ofAssistant($execution->getResult()));
-
-print_conversation_shape($messages);
+print_conversation_shape($execution->getMessages());

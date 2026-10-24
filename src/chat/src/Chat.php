@@ -13,8 +13,8 @@ namespace Symfony\AI\Chat;
 
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
-use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 
 /**
@@ -36,35 +36,22 @@ final class Chat implements ChatInterface
 
     public function submit(UserMessage $message): AssistantMessage
     {
-        $messages = $this->store->load();
-
-        $messages->add($message);
-
-        // the execution is lazy, reading its result runs the agent and returns the underlying result
-        $result = $this->agent->call($messages)->getResult();
-
-        $assistantMessage = Message::ofAssistant($result);
-        $assistantMessage->getMetadata()->merge($result->getMetadata());
-        $messages->add($assistantMessage);
+        $messages = $this->agent->call($this->store->load()->with($message))->getMessages();
 
         $this->store->save($messages);
 
-        return $assistantMessage;
+        $answer = $messages->latestAs(Role::Assistant);
+        \assert($answer instanceof AssistantMessage);
+
+        return $answer;
     }
 
     public function stream(UserMessage $message): \Generator
     {
-        $messages = $this->store->load();
-        $messages->add($message);
-
-        $execution = $this->agent->call($messages, ['stream' => true]);
+        $execution = $this->agent->call($this->store->load()->with($message), ['stream' => true]);
 
         yield from $execution->asStream();
 
-        $assistantMessage = Message::ofAssistant($execution->getResult());
-        $assistantMessage->getMetadata()->merge($execution->getMetadata());
-        $messages->add($assistantMessage);
-
-        $this->store->save($messages);
+        $this->store->save($execution->getMessages());
     }
 }

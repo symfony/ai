@@ -42,6 +42,7 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(ObjectResult::class, $result);
         $this->assertIsArray($result->getContent());
         $this->assertSame(['key' => 'value'], $result->getContent());
+        $this->assertSame('{"key": "value"}', $result->getText());
     }
 
     public function testConvertWithOutputType()

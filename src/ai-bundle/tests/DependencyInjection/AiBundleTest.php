@@ -329,7 +329,8 @@ class AiBundleTest extends TestCase
     {
         $container = $this->buildContainer($this->getFullConfig());
 
-        $this->assertTrue($container->hasDefinition('ai.chat.message_bag.normalizer'));
+        $this->assertTrue($container->hasDefinition('ai.platform.message_normalizer'));
+        $this->assertTrue($container->hasDefinition('ai.platform.message_bag_normalizer'));
     }
 
     public function testResponseFormatFactoryServiceIsRegistered()
@@ -5519,53 +5520,6 @@ class AiBundleTest extends TestCase
         $agentDefinition = $container->getDefinition('ai.agent.test_agent');
 
         $this->assertEquals(new Reference('ai.tool_result_converter'), $agentDefinition->getArgument('$toolResultConverter'));
-    }
-
-    public function testExcludeToolMessagesDefaultsToFalse()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'test_agent' => [
-                        'model' => 'gpt-4',
-                        'tools' => true,
-                    ],
-                ],
-            ],
-        ]);
-
-        $agentDefinition = $container->getDefinition('ai.agent.test_agent');
-
-        $this->assertFalse($agentDefinition->getArgument('$excludeToolMessages'));
-    }
-
-    /**
-     * @return iterable<string, array{bool}>
-     */
-    public static function provideExcludeToolMessages(): iterable
-    {
-        yield 'excluded' => [true];
-        yield 'preserved' => [false];
-    }
-
-    #[DataProvider('provideExcludeToolMessages')]
-    public function testExcludeToolMessagesIsPassedToAgent(bool $excludeToolMessages)
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'test_agent' => [
-                        'model' => 'gpt-4',
-                        'tools' => true,
-                        'exclude_tool_messages' => $excludeToolMessages,
-                    ],
-                ],
-            ],
-        ]);
-
-        $agentDefinition = $container->getDefinition('ai.agent.test_agent');
-
-        $this->assertSame($excludeToolMessages, $agentDefinition->getArgument('$excludeToolMessages'));
     }
 
     public function testMaxToolCallsDefaultsToFifty()

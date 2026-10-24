@@ -59,6 +59,22 @@ final class ResultSerializerTest extends TestCase
         $this->assertSame(['answer' => 42], $result->getContent());
     }
 
+    public function testObjectRoundTripKeepsTheAnsweredJson()
+    {
+        $result = ResultSerializer::fromArray(ResultSerializer::toArray(new ObjectResult(['answer' => 42], '{"answer": 42}')));
+
+        $this->assertInstanceOf(ObjectResult::class, $result);
+        $this->assertSame('{"answer": 42}', $result->getText());
+    }
+
+    public function testObjectWithoutRecordedTextHasNoText()
+    {
+        $result = ResultSerializer::fromArray(['type' => 'object', 'is_object' => false, 'content' => '{"answer":42}']);
+
+        $this->assertInstanceOf(ObjectResult::class, $result);
+        $this->assertNull($result->getText());
+    }
+
     public function testVectorRoundTrip()
     {
         $result = ResultSerializer::fromArray(ResultSerializer::toArray(new VectorResult([new Vector([0.1, 0.2, 0.3])])));

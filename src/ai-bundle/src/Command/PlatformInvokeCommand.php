@@ -107,7 +107,7 @@ final class PlatformInvokeCommand extends Command
 
         try {
             $messages = new MessageBag();
-            $messages->add(Message::ofUser($message));
+            $messages = $messages->with(Message::ofUser($message));
 
             $result = $platform->invoke($model, $messages)->getResult();
 

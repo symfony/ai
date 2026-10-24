@@ -13,9 +13,6 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Execution\Execution;
-use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
@@ -43,7 +40,6 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -421,10 +417,7 @@ class DataCollectorTest extends TestCase
 
     public function testCollectsDataForChat()
     {
-        $agent = $this->createMock(AgentInterface::class);
-        $agent->expects($this->once())->method('call')->willReturn($this->execution(new TextResult('foo')));
-
-        $chat = new Chat($agent, new InMemoryStore());
+        $chat = new Chat(new MockAgent(['Hello World' => 'foo']), new InMemoryStore());
 
         $traceableChat = new TraceableChat($chat, new MonotonicClock());
 
@@ -573,12 +566,5 @@ class DataCollectorTest extends TestCase
         $this->assertCount(2, $tools);
         $this->assertSame('research_agent', $tools[0]->getName());
         $this->assertSame('writer_agent', $tools[1]->getName());
-    }
-
-    private function execution(ResultInterface $result): Execution
-    {
-        return new Execution(static function () use ($result): \Generator {
-            yield new ResultUpdate($result);
-        });
     }
 }

@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Execution\Update;
 
 use Symfony\AI\Agent\Execution\UpdateInterface;
 use Symfony\AI\Agent\Execution\UpdateType;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -22,8 +23,12 @@ use Symfony\AI\Platform\Result\ResultInterface;
  */
 final class Result implements UpdateInterface
 {
+    /**
+     * @param (\Closure(?ResultInterface=): ?MessageBag)|MessageBag|null $messages built lazily, since not every result maps to an assistant message, the closure gets the result replacing the answer if any
+     */
     public function __construct(
         private readonly ResultInterface $result,
+        private \Closure|MessageBag|null $messages = null,
     ) {
     }
 
@@ -35,5 +40,23 @@ final class Result implements UpdateInterface
     public function getResult(): ResultInterface
     {
         return $this->result;
+    }
+
+    /**
+     * The messages of the execution, ending with the final answer, null if the agent doesn't provide them.
+     *
+     * @param ResultInterface|null $answer replaces the result as final answer, e.g. after output processing
+     */
+    public function getMessages(?ResultInterface $answer = null): ?MessageBag
+    {
+        if (null !== $answer && $this->messages instanceof \Closure) {
+            return ($this->messages)($answer);
+        }
+
+        if ($this->messages instanceof \Closure) {
+            $this->messages = ($this->messages)();
+        }
+
+        return $this->messages;
     }
 }

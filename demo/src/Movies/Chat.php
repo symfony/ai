@@ -44,17 +44,15 @@ final class Chat
 
     public function submitMessage(string $message): void
     {
-        $messages = $this->loadMessages();
-        $messages->add(Message::ofUser($message));
+        $messages = $this->loadMessages()->with(Message::ofUser($message));
 
         $result = $this->agent->call($messages, ['response_format' => MovieAnswer::class])->asObject();
         \assert($result instanceof MovieAnswer);
 
         $assistantMessage = Message::ofAssistant($result->answer);
         $assistantMessage->getMetadata()->add('movies', $result->movies);
-        $messages->add($assistantMessage);
 
-        $this->saveMessages($messages);
+        $this->saveMessages($messages->with($assistantMessage));
     }
 
     public function reset(): void

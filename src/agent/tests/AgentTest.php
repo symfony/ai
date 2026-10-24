@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
 use Symfony\AI\Agent\OutputProcessorInterface;
@@ -26,6 +27,8 @@ use Symfony\AI\Agent\Tests\Fixtures\MessageBagCapturingProcessor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
+use Symfony\AI\Platform\Exception\InvalidArgumentException as PlatformInvalidArgumentException;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -36,14 +39,17 @@ use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -360,17 +366,135 @@ final class AgentTest extends TestCase
         $serializer = $this->createStub(SerializerInterface::class);
         $serializer->method('serialize')->willReturn('converted result');
 
-        $invocations = 0;
-        $platform = MockPlatformFactory::createPlatform(static function () use (&$invocations, $toolCall): ResultInterface|string {
-            return 1 === ++$invocations ? new ToolCallResult([$toolCall]) : 'Final answer';
+        $toolMessages = [];
+        $platform = MockPlatformFactory::createPlatform(static function ($model, array $input) use (&$toolMessages, $toolCall): ResultInterface|string {
+            $toolMessages = array_values(array_filter($input['messages'], static fn (array $message): bool => 'tool' === $message['role']));
+
+            return [] === $toolMessages ? new ToolCallResult([$toolCall]) : 'Final answer';
         });
 
         $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, toolResultConverter: new ToolResultConverter($serializer));
-        $agent->call($messages = new MessageBag(), [])->getResult();
+        $agent->call(new MessageBag(), [])->getResult();
 
-        $toolCallMessages = array_values(array_filter($messages->getMessages(), static fn ($message): bool => $message instanceof ToolCallMessage));
-        $this->assertCount(1, $toolCallMessages);
-        $this->assertSame('converted result', $toolCallMessages[0]->asText());
+        $this->assertCount(1, $toolMessages);
+        $this->assertSame('converted result', $toolMessages[0]['content']);
+    }
+
+    public function testGetMessagesAppendsTheRunToTheGivenMessages()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null)]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, 'Sunny'));
+
+        $toolCallResult = new ToolCallResult([$toolCall]);
+        $toolCallResult->getMetadata()->add('finish_reason', 'tool_calls');
+        $toolCallResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10));
+        $textResult = new TextResult('It is sunny.');
+        $textResult->getMetadata()->add('finish_reason', 'stop');
+        $textResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 20));
+        $results = [$toolCallResult, $textResult];
+        $platform = MockPlatformFactory::createPlatform(static function () use (&$results): ResultInterface {
+            return array_shift($results);
+        });
+
+        $agent = new Agent($platform, 'gpt-4', [new SystemPromptInputProcessor('You are a weather bot.')], toolbox: $toolbox);
+        $input = new MessageBag(Message::ofUser('How is the weather?'));
+
+        $execution = $agent->call($input);
+        $messages = $execution->getMessages();
+
+        $this->assertCount(1, $input);
+        $this->assertTrue($input->getId()->equals($messages->getId()));
+        $this->assertNull($messages->getSystemMessage());
+        $this->assertSame([UserMessage::class, AssistantMessage::class, ToolCallMessage::class, AssistantMessage::class], array_map(get_class(...), $messages->getMessages()));
+        $this->assertSame($input->getMessages()[0], $messages->getMessages()[0]);
+        $answer = $messages->getMessages()[3];
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('It is sunny.', $answer->asText());
+
+        $this->assertSame('tool_calls', $messages->getMessages()[1]->getMetadata()->get('finish_reason'));
+        $this->assertSame(10, $messages->getMessages()[1]->getMetadata()->get('token_usage')->getPromptTokens());
+        $this->assertSame('stop', $messages->getMessages()[3]->getMetadata()->get('finish_reason'));
+        $this->assertSame(20, $messages->getMessages()[3]->getMetadata()->get('token_usage')->getPromptTokens());
+        $this->assertSame(30, $execution->getMetadata()->get('token_usage')->getPromptTokens());
+    }
+
+    public function testGetMessagesMapsStructuredOutputToTheAnsweredJson()
+    {
+        $agent = new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => new ObjectResult(['city' => 'Berlin'], '{"city":"Berlin"}')), 'gpt-4');
+
+        $execution = $agent->call('Where?');
+
+        $this->assertSame(['city' => 'Berlin'], $execution->getContent());
+        $answer = $execution->getMessages()->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('{"city":"Berlin"}', $answer->asText());
+    }
+
+    public function testGetMessagesMapsTheStreamedAnswer()
+    {
+        $platform = MockPlatformFactory::createPlatform(static fn (): ResultInterface => new StreamResult((static function (): \Generator {
+            yield new TextDelta('Hello ');
+            yield new TextDelta('World');
+        })()));
+        $agent = new Agent($platform, 'gpt-4');
+
+        $execution = $agent->call('Hi', ['stream' => true]);
+        iterator_to_array($execution->asStream(), false);
+
+        $answer = $execution->getMessages()->getMessages()[1];
+
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+
+        $this->assertSame('Hello World', $answer->asText());
+    }
+
+    public function testGetMessagesEndsWithTheResultOfTheOutputProcessors()
+    {
+        $result = new TextResult('original');
+        $result->getMetadata()->add('finish_reason', 'stop');
+        $outputProcessor = new class implements OutputProcessorInterface {
+            public function processOutput(Output $output): void
+            {
+                $output->setResult(new TextResult('processed'));
+            }
+        };
+        $agent = new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => $result), 'gpt-4', [], [$outputProcessor]);
+
+        $answer = $agent->call('Hi')->getMessages()->getMessages()[1];
+
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('processed', $answer->asText());
+        $this->assertSame('stop', $answer->getMetadata()->get('finish_reason'));
+    }
+
+    public function testGetMessagesDoesNotMapTheResultReplacedByTheOutputProcessors()
+    {
+        $outputProcessor = new class implements OutputProcessorInterface {
+            public function processOutput(Output $output): void
+            {
+                $output->setResult(new TextResult('processed'));
+            }
+        };
+        $agent = new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => new ObjectResult(new \stdClass())), 'gpt-4', [], [$outputProcessor]);
+
+        $answer = $agent->call('Hi')->getMessages()->getMessages()[1];
+
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('processed', $answer->asText());
+    }
+
+    public function testResultWithoutAssistantMessageOnlyFailsWhenReadingTheMessages()
+    {
+        $result = new ObjectResult(new \stdClass());
+        $execution = (new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => $result), 'gpt-4'))->call('Hi');
+
+        $this->assertSame($result, $execution->getResult());
+
+        $this->expectException(PlatformInvalidArgumentException::class);
+
+        $execution->getMessages();
     }
 
     public function testGetNameReturnsDefaultName()

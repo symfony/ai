@@ -99,8 +99,7 @@ final class ResearchHandler
         }
 
         $response->getMetadata()->add('steps', $steps);
-        $messages->add($response);
-        $this->conversations->save($research->chatId, $messages);
+        $this->conversations->save($research->chatId, $messages->with($response));
         $this->publish($research, 'finished', ['message' => $response]);
 
         if (isset($exception)) {

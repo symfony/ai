@@ -86,8 +86,8 @@ final class OutputTest extends TestCase
     public function testGetMessageBag()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('User message'));
-        $messageBag->add(Message::ofAssistant('Assistant reply'));
+        $messageBag = $messageBag->with(Message::ofUser('User message'));
+        $messageBag = $messageBag->with(Message::ofAssistant('Assistant reply'));
 
         $result = new TextResult('Content');
         $output = new Output('model', $result, $messageBag);
@@ -124,7 +124,7 @@ final class OutputTest extends TestCase
     public function testMessageBagIsReadOnly()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Test'));
+        $messageBag = $messageBag->with(Message::ofUser('Test'));
 
         $result = new TextResult('Content');
         $output = new Output('model', $result, $messageBag);

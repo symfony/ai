@@ -39,6 +39,7 @@ use Symfony\AI\Platform\Result\McpApprovalRequestResult;
 use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
+use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -120,6 +121,10 @@ final class Message
 
         if ($part instanceof TextResult) {
             return [new Text($part->getContent(), $part->getSignature(), $part->getPhase())];
+        }
+
+        if ($part instanceof ObjectResult && null !== $part->getText()) {
+            return [new Text($part->getText(), $part->getMetadata()->get('signature'))];
         }
 
         if ($part instanceof ThinkingResult) {

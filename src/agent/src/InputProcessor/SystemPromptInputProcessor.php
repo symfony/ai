@@ -104,6 +104,6 @@ final class SystemPromptInputProcessor implements InputProcessorInterface
             }
         }
 
-        $messages->prepend(Message::forSystem($message));
+        $input->setMessageBag($messages->withSystemMessage(Message::forSystem($message)));
     }
 }

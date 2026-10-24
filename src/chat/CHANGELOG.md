@@ -4,7 +4,7 @@ CHANGELOG
 0.16
 ----
 
- * Persist the phase of an assistant `Text` part in the `MessageNormalizer`
+ * [BC BREAK] Remove `MessageNormalizer` in favor of `Symfony\AI\Platform\Serializer\MessageNormalizer`
 
 0.13
 ----

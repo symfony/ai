@@ -52,11 +52,7 @@ final class Chat
 
     public function submitMessage(string $message): void
     {
-        $messages = $this->loadMessages();
-
-        $messages->add(Message::ofUser($message));
-
-        $this->saveMessages($messages);
+        $this->saveMessages($this->loadMessages()->with(Message::ofUser($message)));
     }
 
     /**
@@ -99,9 +95,8 @@ final class Chat
 
         $assistantMessage = Message::ofAssistant($recipe->toString());
         $assistantMessage->getMetadata()->add('recipe', $recipe);
-        $messages->add($assistantMessage);
 
-        $this->saveMessages($messages);
+        $this->saveMessages($messages->with($assistantMessage));
 
         return $recipe;
     }

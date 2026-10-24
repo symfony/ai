@@ -18,6 +18,8 @@ use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
@@ -38,6 +40,29 @@ final class ExecutionTest extends TestCase
         });
 
         $this->assertSame($result, $execution->getResult());
+    }
+
+    public function testGetMessagesReturnsTheMessagesOfTheResult()
+    {
+        $messages = new MessageBag(Message::ofUser('Hi'), Message::ofAssistant('Done'));
+
+        $execution = new Execution(static function () use ($messages): \Generator {
+            yield new ResultUpdate(new TextResult('Done'), static fn (): MessageBag => $messages);
+        });
+
+        $this->assertSame($messages, $execution->getMessages());
+    }
+
+    public function testGetMessagesThrowsWhenTheAgentDoesNotProvideThem()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('The agent did not provide the messages of its execution.');
+
+        $execution->getMessages();
     }
 
     public function testItIsIterable()
