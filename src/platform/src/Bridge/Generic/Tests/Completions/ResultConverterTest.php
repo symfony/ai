@@ -793,6 +793,85 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['tz' => 'CET'], $byId['call_b']->getArguments());
     }
 
+    public function testStreamingToolCallsWithoutIndexContinueOnRepeatedIdOrBareFragment()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['id' => 'call_a', 'type' => 'function', 'function' => ['name' => 'get_weather', 'arguments' => '{"city":']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['id' => 'call_a', 'function' => ['arguments' => '"Paris"']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['function' => ['arguments' => '}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['id' => 'call_b', 'type' => 'function', 'function' => ['name' => 'get_time', 'arguments' => '{"tz":"CET"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $toolCallStarts = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallStart));
+        $this->assertSame(['call_a', 'call_b'], array_map(static fn (ToolCallStart $start): string => $start->getId(), $toolCallStarts));
+
+        $toolInputDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolInputDelta));
+        $this->assertSame([['call_a', '"Paris"'], ['call_a', '}']], array_map(static fn (ToolInputDelta $delta): array => [$delta->getId(), $delta->getPartialJson()], $toolInputDeltas));
+
+        $toolCallCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallComplete));
+        $this->assertCount(1, $toolCallCompletes);
+        $completed = $toolCallCompletes[0]->getToolCalls();
+        $this->assertCount(2, $completed);
+        $this->assertSame(['city' => 'Paris'], $completed[0]->getArguments());
+        $this->assertSame(['tz' => 'CET'], $completed[1]->getArguments());
+    }
+
+    public function testStreamingParallelToolCallsWithProviderIndexInOneChunk()
+    {
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 1, 'id' => 'call_b', 'type' => 'function', 'function' => ['name' => 'get_time', 'arguments' => '']],
+                ['index' => 0, 'id' => 'call_a', 'type' => 'function', 'function' => ['name' => 'get_weather', 'arguments' => '']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '{"city":"Paris"}']],
+                ['index' => 1, 'function' => ['arguments' => '{"tz":"CET"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $toolInputDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolInputDelta));
+        $this->assertSame([['call_a', '{"city":"Paris"}'], ['call_b', '{"tz":"CET"}']], array_map(static fn (ToolInputDelta $delta): array => [$delta->getId(), $delta->getPartialJson()], $toolInputDeltas));
+
+        $toolCallCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallComplete));
+        $this->assertCount(1, $toolCallCompletes);
+
+        $byId = [];
+        foreach ($toolCallCompletes[0]->getToolCalls() as $toolCall) {
+            $byId[$toolCall->getId()] = $toolCall->getArguments();
+        }
+        ksort($byId);
+
+        $this->assertSame(['call_a' => ['city' => 'Paris'], 'call_b' => ['tz' => 'CET']], $byId);
+    }
+
     public function testStreamingThrowsWhenFinishReasonIsMissing()
     {
         $converter = new ResultConverter();
