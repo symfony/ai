@@ -1,6 +1,32 @@
 UPGRADE FROM 0.15 to 0.16
 =========================
 
+Agent
+-----
+
+ * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` is removed. The retrieved documents are added as
+   `Bridge\SimilaritySearch\DocumentSource` sources of the tool instead, enable `includeSources` on the agent to read
+   them from the result metadata:
+
+   ```diff
+   -$documents = $similaritySearch->getUsedDocuments();
+   +$documents = [];
+   +foreach ($result->getMetadata()->get('sources', []) as $source) {
+   +    if ($source instanceof DocumentSource) {
+   +        $documents[] = $source->getDocument();
+   +    }
+   +}
+   ```
+
+ * `Bridge\SimilaritySearch\SimilaritySearch` returns a `Bridge\SimilaritySearch\SimilaritySearchResult` instead of a
+   string, and its `$promptTemplate` argument is removed. The model gets a JSON list of the documents with their id, or
+   `[]` without results. To change what the model gets, register a normalizer for `SimilaritySearchResult`:
+
+   ```diff
+   -$similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
+   +$similaritySearch = new SimilaritySearch($retriever);
+   ```
+
 Store
 -----
 

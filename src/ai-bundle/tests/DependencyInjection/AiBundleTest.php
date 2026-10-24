@@ -5736,6 +5736,24 @@ class AiBundleTest extends TestCase
         $this->assertCount(3, array_filter($secondSystemPrompt->getArguments()));
     }
 
+    public function testToolResultConverterIsPassedToAgent()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'test_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => true,
+                    ],
+                ],
+            ],
+        ]);
+
+        $agentDefinition = $container->getDefinition('ai.agent.test_agent');
+
+        $this->assertEquals(new Reference('ai.tool_result_converter'), $agentDefinition->getArgument('$toolResultConverter'));
+    }
+
     public function testExcludeToolMessagesDefaultsToFalse()
     {
         $container = $this->buildContainer([

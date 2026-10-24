@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add a `$toolResultConverter` argument to `Agent` to customize how tool results are converted for the model
+
 0.15
 ----
 

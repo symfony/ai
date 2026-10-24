@@ -20,6 +20,7 @@ use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
+use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
@@ -53,6 +54,7 @@ final class Agent implements AgentInterface
         bool $excludeToolMessages = false,
         bool $includeSources = false,
         ?EventDispatcherInterface $eventDispatcher = null,
+        ToolResultConverter $toolResultConverter = new ToolResultConverter(),
     ) {
         if (null === $toolExecutor && $toolbox instanceof ToolboxInterface) {
             $toolExecutor = new SequentialToolExecutor($toolbox);
@@ -66,6 +68,7 @@ final class Agent implements AgentInterface
             $excludeToolMessages,
             $includeSources,
             $eventDispatcher,
+            $toolResultConverter,
         );
     }
 
