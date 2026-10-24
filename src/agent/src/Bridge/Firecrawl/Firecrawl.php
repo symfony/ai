@@ -12,6 +12,10 @@
 namespace Symfony\AI\Agent\Bridge\Firecrawl;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
+use Symfony\AI\Agent\Toolbox\Source\Source;
+use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -20,16 +24,58 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  *
  * @see https://www.firecrawl.dev/
  */
+#[AsTool('firecrawl_search', description: 'Search the web and return matching pages with title, url and excerpt', method: 'search')]
 #[AsTool('firecrawl_scrape', description: 'Allow to scrape website using url', method: 'scrape')]
 #[AsTool('firecrawl_crawl', description: 'Allow to crawl website using url', method: 'crawl')]
 #[AsTool('firecrawl_map', description: 'Allow to retrieve all urls from a website using url', method: 'map')]
-final class Firecrawl
+final class Firecrawl implements HasSourcesInterface
 {
+    use HasSourcesTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $endpoint,
     ) {
+    }
+
+    /**
+     * @param string $query The search query
+     * @param int    $limit The maximum number of results to return
+     *
+     * @return array<int, array{
+     *     title: string,
+     *     url: string,
+     *     description: string,
+     * }>
+     */
+    public function search(
+        #[Schema(maxLength: 500)]
+        string $query,
+        #[Schema(minimum: 1, maximum: 20)]
+        int $limit = 5,
+    ): array {
+        $response = $this->httpClient->request('POST', \sprintf('%s/v2/search', $this->endpoint), [
+            'auth_bearer' => $this->apiKey,
+            'json' => [
+                'query' => $query,
+                'limit' => $limit,
+                'sources' => ['web'],
+                'origin' => 'symfony-ai',
+            ],
+        ]);
+
+        $results = $response->toArray()['data']['web'] ?? [];
+
+        foreach ($results as $result) {
+            $this->addSource(new Source($result['title'] ?? '', $result['url'], $result['description'] ?? ''));
+        }
+
+        return array_map(static fn (array $result): array => [
+            'title' => $result['title'] ?? '',
+            'url' => $result['url'],
+            'description' => $result['description'] ?? '',
+        ], $results);
     }
 
     /**

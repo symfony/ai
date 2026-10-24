@@ -12,13 +12,13 @@
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Firecrawl\Firecrawl;
 use Symfony\AI\Agent\Toolbox\Toolbox;
-use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
+$platform = Factory::createPlatform(env('ANTHROPIC_API_KEY'), httpClient: http_client());
 
 $firecrawl = new Firecrawl(
     http_client(),
@@ -28,7 +28,7 @@ $firecrawl = new Firecrawl(
 
 $toolbox = new Toolbox([$firecrawl], logger: logger());
 
-$agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
+$agent = new Agent($platform, 'claude-sonnet-4-5-20250929', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('Scrape the following URL: https://symfony.com/doc/current/setup.html then resume it in less than 200 words.'));
 $result = $agent->call($messages);
