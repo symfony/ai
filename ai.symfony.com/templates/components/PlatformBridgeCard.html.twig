@@ -1,0 +1,68 @@
+{% props bridge %}
+
+{#- Icons reference the sprite rendered once by the page, see App\Twig\PlatformBridgeIcons -#}
+<article{{ attributes.defaults({class: 'platform-card sf-ai-card sf-ai-card-hover sf-ai-card-glow h-100' ~ (bridge.classified ? '' : ' is-unclassified')}) }}>
+    <div class="platform-card-header">
+        <span class="platform-card-logo platform-logo" aria-hidden="true">
+            {%- if bridge.icon -%}
+                {{ platform_bridge_icon(bridge.icon, {width: 26, height: 26}) }}
+            {%- else -%}
+                {{ bridge.name|slice(0, 2)|upper }}
+            {%- endif -%}
+        </span>
+        <div class="platform-card-heading">
+            <h3 class="platform-card-title ff-title">{{ bridge.name }}</h3>
+            <p class="platform-card-kind">
+                {{- bridge.kind ? bridge.kind.label : 'Not classified yet' -}}
+                {%- if bridge.formattedDownloads %} · <span class="platform-card-downloads" title="{{ bridge.downloads|number_format }} downloads on Packagist">{{ bridge.formattedDownloads }} downloads</span>{% endif -%}
+            </p>
+        </div>
+    </div>
+
+    {%- if bridge.summary %}
+    <p class="platform-card-summary">{{ bridge.summary }}</p>
+    {%- endif %}
+
+    {#- building blocks such as Cache or Meta wrap other bridges, which tell where they run -#}
+    {%- if bridge.deployments is not empty %}
+    <dl class="platform-card-facts">
+        <div><dt>Runs</dt><dd>{{ bridge.deployments|map(item => item.label)|join(' & ') }}</dd></div>
+        <div><dt>Hosting</dt><dd>{{ bridge.hostings|map(item => item.label)|join(' & ') }}</dd></div>
+        <div><dt>Server location</dt><dd>{{ (bridge.regions|filter(item => 'worldwide' == item.value) is not empty ? 'Worldwide' : bridge.regions|map(item => item.label)|join(', '))|default('Not documented') }}</dd></div>
+        <div><dt>Models</dt><dd>{{ bridge.modelAccess ? bridge.modelAccess.label : 'Not documented' }}</dd></div>
+    </dl>
+    {%- endif %}
+
+    {%- if bridge.capabilities is not empty %}
+    <ul class="platform-card-capabilities" aria-label="Capabilities">
+        {%- for capability in bridge.capabilities %}
+        <li>{{ capability.label }}</li>
+        {%- endfor %}
+    </ul>
+    {%- endif %}
+
+    {%- if bridge.note %}
+    <p class="platform-card-note">{{ platform_bridge_icon('tabler:info-circle', {width: 16, height: 16}) }}<span>{{ bridge.note }}</span></p>
+    {%- endif %}
+
+    <div class="platform-card-footer">
+        <div class="platform-card-install" data-controller="clipboard">
+            {#- the package goes on its own line, the copied text stays a one-line command -#}
+            <code data-clipboard-target="source"><span class="platform-card-prompt">$ composer require</span> <span class="platform-card-package">{{ bridge.package }}</span></code>
+            <button type="button" class="platform-copy" data-clipboard-target="button" data-action="clipboard#copy" aria-label="Copy the install command of {{ bridge.name }}">
+                {{- platform_bridge_icon('tabler:copy', {width: 15, height: 15, class: 'platform-copy-idle'}) -}}
+                {{- platform_bridge_icon('tabler:check', {width: 15, height: 15, class: 'platform-copy-done'}) -}}
+            </button>
+        </div>
+
+        <div class="platform-card-links">
+            {%- if bridge.symfonyDocsUrl %}
+            <a href="{{ bridge.symfonyDocsUrl }}" target="_blank" rel="noopener noreferrer">Docs{{ platform_bridge_icon('tabler:arrow-up-right', {width: 14, height: 14}) }}</a>
+            {%- endif %}
+            {%- if bridge.websiteUrl %}
+            <a href="{{ bridge.websiteUrl }}" target="_blank" rel="noopener noreferrer">Website{{ platform_bridge_icon('tabler:arrow-up-right', {width: 14, height: 14}) }}</a>
+            {%- endif %}
+            <a href="{{ bridge.sourceUrl }}" target="_blank" rel="noopener noreferrer">Source{{ platform_bridge_icon('tabler:arrow-up-right', {width: 14, height: 14}) }}</a>
+        </div>
+    </div>
+</article>

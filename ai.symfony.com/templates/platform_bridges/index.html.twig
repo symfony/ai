@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Platform Bridges | Symfony AI{% endblock %}
+
+{% block body %}
+    {{ include('_header.html.twig') }}
+
+    <main>
+        {# outside of the Live Component, so re-renders do not send the icons again #}
+        {{ platform_bridge_icon_sprite() }}
+
+        <div class="hero-wrapper color-shift text-white">
+            <section class="hero-section">
+                <div class="container">
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="cookbook-breadcrumb platform-hero-breadcrumb">
+                            <li><a href="{{ path('homepage') }}">Home</a></li>
+                            <li><a href="{{ path('homepage') }}#bridges">Bridges</a></li>
+                            <li aria-current="page">Platforms</li>
+                        </ol>
+                    </nav>
+
+                    <div class="row align-items-center">
+                        <div class="col-xl-6 pe-xl-5" data-aos="fade-right">
+                            <h1 class="ff-title text-balance display-5 fw-bold mb-3">
+                                Platform <span class="hero-highlight">Bridges</span>
+                            </h1>
+                            <p class="text-balance fs-5 mb-4 opacity-75">
+                                One PHP API for every model provider, inference platform and local runtime.
+                                Find the ones matching your needs: capabilities, server location, hosting, vendor lock-in.
+                            </p>
+                            <ul class="platform-stats">
+                                <li><strong>{{ total }}</strong> bridges</li>
+                                <li><strong>{{ local }}</strong> run locally</li>
+                                <li><strong>{{ agnostic }}</strong> provider-agnostic</li>
+                            </ul>
+                        </div>
+
+                        <div class="col-xl-6 mt-5 mt-xl-0" data-aos="fade-left">
+                            {% set bridge_typed = stimulus_controller('typed', {
+                                loop: true,
+                                cursorChar: '|',
+                                strings: ['Mistral', 'Ollama', 'OpenAi', 'Anthropic', 'Scaleway', 'Gemini'],
+                            }) %}
+                            <pre class="terminal"><code><span class="comment">// swap the bridge, keep your code</span>
+<span class="variable">$platform</span> = <span class="title class_" {{ bridge_typed|raw }}></span>\<span class="title class_">Factory</span>::<span class="title function_ invoke__">createPlatform</span>(...);
+
+<span class="variable">$messages</span> = <span class="keyword">new</span> <span class="title class_">MessageBag</span>(
+    <span class="title class_">Message</span>::<span class="title function_ invoke__">ofUser</span>(<span class="string">'What is the Symfony framework?'</span>),
+);
+
+<span class="keyword">echo</span> <span class="variable">$platform</span>-&gt;<span class="title function_ invoke__">invoke</span>(<span class="variable">$model</span>, <span class="variable">$messages</span>)-&gt;<span class="title function_ invoke__">asText</span>();</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        {# the track holds the logos twice and slides by one copy, which loops seamlessly #}
+        <div class="platform-marquee">
+            <div class="platform-marquee-track">
+                {% for copy in [false, true] %}
+                    <ul class="platform-marquee-list" {% if copy %}aria-hidden="true"{% else %}aria-label="Platforms with a bridge"{% endif %}>
+                        {% for bridge in logos %}
+                            <li class="platform-marquee-item platform-logo">
+                                {{ platform_bridge_icon(bridge.icon, {width: 28, height: 28}) }}
+                                <span>{{ bridge.name }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </div>
+        </div>
+
+        <section class="section-secondary platform-bridges-section py-5">
+            {# outside of the Live Component, whose re-renders would reset the measured height #}
+            <div class="container" data-aos="fade-up" {{ stimulus_controller('sticky-offset', {property: '--platform-presets-height'}) }}>
+                <div class="mb-4">
+                    <h2 class="ff-title fw-bold h3 mb-1 section-heading">Find your bridge</h2>
+                    <p class="text-muted mb-0">Start from a need or combine the filters, the list narrows down as you go.</p>
+                </div>
+
+                <twig:PlatformBridgeList />
+            </div>
+        </section>
+
+        <section class="cta-section color-shift text-white py-4 position-relative overflow-hidden">
+            <div class="cta-overlay"></div>
+            <div class="container z-above">
+                <h2 class="ff-title fw-bold text-center mb-4" data-aos="fade-up">Missing a platform?</h2>
+                <div class="row g-4">
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+                        <a href="https://github.com/symfony/ai/issues/new" target="_blank" rel="noopener noreferrer" class="cta-card d-block text-white text-decoration-none h-100 p-4 text-center">
+                            {{ ux_icon('simple-icons:github', {width: 36, height: 36, class: 'mb-3 opacity-75'}) }}
+                            <h3 class="h5 ff-title fw-bold mb-2">Propose a bridge</h3>
+                            <p class="mb-0 small opacity-75">Open an issue or a pull request on symfony/ai</p>
+                        </a>
+                    </div>
+
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                        <a href="https://symfony.com/doc/current/ai/components/platform.html" target="_blank" rel="noopener noreferrer" class="cta-card d-block text-white text-decoration-none h-100 p-4 text-center">
+                            {{ ux_icon('tabler:book', {width: 36, height: 36, class: 'mb-3 opacity-75'}) }}
+                            <h3 class="h5 ff-title fw-bold mb-2">Platform documentation</h3>
+                            <p class="mb-0 small opacity-75">Install, configure and call the bridges</p>
+                        </a>
+                    </div>
+
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                        <a href="https://github.com/symfony/ai/blob/main/ai.symfony.com/config/platform_bridges.yaml" target="_blank" rel="noopener noreferrer" class="cta-card d-block text-white text-decoration-none h-100 p-4 text-center">
+                            {{ ux_icon('tabler:adjustments-horizontal', {width: 36, height: 36, class: 'mb-3 opacity-75'}) }}
+                            <h3 class="h5 ff-title fw-bold mb-2">Improve this list</h3>
+                            <p class="mb-0 small opacity-75">The classification lives in <strong>platform_bridges.yaml</strong></p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}

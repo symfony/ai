@@ -1,0 +1,72 @@
+name: Update Platform Bridges
+
+on:
+    schedule:
+        # Every day at 05:00 UTC
+        - cron: '0 5 * * *'
+    workflow_dispatch:
+
+# Least privilege by default; the job below opts into exactly what it needs.
+permissions: {}
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+jobs:
+    update:
+        name: Refresh the platform bridges data and open PR
+        runs-on: ubuntu-latest
+        if: github.repository == 'symfony/ai'
+        permissions:
+            contents: write
+            pull-requests: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.5
+
+            - name: Install website dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  working-directory: ai.symfony.com
+
+            # the bridges listed in splitsh.json and their downloads on Packagist, read without token
+            - name: Update the platform bridges data
+              working-directory: ai.symfony.com
+              run: php bin/console app:platform-bridges:update
+
+            - name: Check the data file
+              working-directory: ai.symfony.com
+              run: vendor/bin/phpunit --filter testTheShippedDataFileIsValid tests/PlatformBridge/PlatformBridgeCatalogTest.php
+
+            - name: Create pull request
+              uses: peter-evans/create-pull-request@v8
+              with:
+                  add-paths: ai.symfony.com/config/platform_bridges.json
+                  commit-message: '[Website] Update the platform bridges data'
+                  author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+                  committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+                  branch: automation/update-platform-bridges
+                  delete-branch: true
+                  title: '[Website] Update the platform bridges data'
+                  body: |
+                      | Q             | A
+                      | ------------- | ---
+                      | Bug fix?      | no
+                      | New feature?  | no
+                      | Docs?         | no
+                      | Issues        | -
+                      | License       | MIT
+
+                      Automated refresh of `ai.symfony.com/config/platform_bridges.json`, read by
+                      https://ai.symfony.com/bridges/platforms: the platform bridges listed in
+                      `splitsh.json` and their downloads on Packagist.
+
+                      The website is deployed by hand once this pull request is merged.

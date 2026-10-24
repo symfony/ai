@@ -18,6 +18,8 @@ This is the Symfony AI monorepo containing multiple components and bundles that 
 ### Bridges
 Each core component has bridges in `src/<component>/src/Bridge/` that provide integrations with specific third-party services. Bridges are dedicated Composer packages with their own dependencies and can be installed independently.
 
+A new platform bridge also needs an entry in `ai.symfony.com/config/platform_bridges.yaml`, which classifies it on the platform bridges page of the website (the header of the file documents the keys and allowed values). Only use facts documented by the provider. The `Platform Bridges` workflow fails until the entry exists.
+
 ### Integration Bundles
 - **AI Bundle** (`src/ai-bundle/`): Symfony integration for Platform, Store, and Agent components
 - **MCP Bundle** (`src/mcp-bundle/`): Symfony integration for official MCP SDK
