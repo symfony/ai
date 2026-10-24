@@ -61,6 +61,18 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame([], $model->getCapabilities());
     }
 
+    public function testModelCatalogPreservesVisionForDecisionModels()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['decision', 'vision', 'completion', 'tools']]),
+        ], 'http://127.0.0.1:11434');
+
+        $model = (new ModelCatalog($httpClient))->getModel('clef-flash');
+
+        $this->assertInstanceOf(Decision::class, $model);
+        $this->assertSame([Capability::INPUT_IMAGE], $model->getCapabilities());
+    }
+
     public function testModelCatalogCanReturnDecisionModelsFromApi()
     {
         $httpClient = new MockHttpClient([

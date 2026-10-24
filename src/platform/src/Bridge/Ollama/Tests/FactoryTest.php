@@ -18,6 +18,8 @@ use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
 use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -69,6 +71,53 @@ final class FactoryTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(174, $tokenUsage->getPromptTokens());
         $this->assertSame(1, $tokenUsage->getCompletionTokens());
+    }
+
+    public function testItEvaluatesImagesWithClef()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['decision', 'vision']]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('http://127.0.0.1:11434/v1/systemone', $url);
+                $body = json_decode($options['body'], true);
+                $this->assertSame('clef-flash', $body['model']);
+                $this->assertSame(['caption' => 'Graduating class'], $body['state']);
+                $this->assertSame([base64_encode('page image'), base64_encode('crop image')], $body['images']);
+                $this->assertSame('noul', $body['questions']['portrait']['type']);
+
+                return new JsonMockResponse(['model' => 'clef-flash', 'answers' => ['portrait' => ['type' => 'noul', 'noul' => 0.98]]]);
+            },
+        ]);
+        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('clef-flash', new Evaluation(
+            ['caption' => 'Graduating class'],
+            ['portrait' => new NoulQuestion('Does the crop show a portrait?')],
+            images: [new Image('page image', 'image/png'), new Image('crop image', 'image/jpeg')],
+        ));
+
+        $this->assertSame(0.98, $result->asObject(Answers::class)->getNoul('portrait')->getProbability());
+        $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testItRejectsImagesForTextOnlyDecisionModels()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['decision']]),
+        ]);
+
+        try {
+            Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', new Evaluation(
+                'A photo',
+                ['portrait' => new NoulQuestion('Is this a portrait?')],
+                images: [new Image('image bytes', 'image/png')],
+            ));
+            $this->fail('Text-only decision models must reject images.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('The decision model "nimble" does not support image inputs.', $e->getMessage());
+        }
+
+        // Only model discovery is allowed; no decision request is sent.
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     public function testCreatePlatformUsesGivenModelCatalog()

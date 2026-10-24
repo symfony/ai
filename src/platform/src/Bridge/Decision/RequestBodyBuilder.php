@@ -26,9 +26,9 @@ final class RequestBodyBuilder
     /**
      * @param array<mixed>|string $payload
      *
-     * @return array{model: string, state: mixed, questions: object}
+     * @return array{model: string, state: mixed, questions: object, images?: list<string>}
      */
-    public static function build(Model $model, array|string $payload): array
+    public static function build(Model $model, array|string $payload, bool $supportsImages = false): array
     {
         if (!\is_array($payload) || !isset($payload['state'], $payload['questions']) || !\is_array($payload['questions'])) {
             throw new InvalidArgumentException('Decision payload must be an array with a "state" key and a "questions" map.');
@@ -48,10 +48,27 @@ final class RequestBodyBuilder
             $questions[$id] = $question;
         }
 
-        return [
+        $body = [
             'model' => $model->getName(),
             'state' => $payload['state'],
             'questions' => (object) $questions,
         ];
+
+        if (isset($payload['images']) && [] !== $payload['images']) {
+            if (!$supportsImages) {
+                throw new InvalidArgumentException(\sprintf('The decision model "%s" does not support image inputs.', $model->getName()));
+            }
+            if (!\is_array($payload['images']) || !array_is_list($payload['images'])) {
+                throw new InvalidArgumentException('Decision images must be a list of base64-encoded strings.');
+            }
+            foreach ($payload['images'] as $image) {
+                if (!\is_string($image) || '' === $image) {
+                    throw new InvalidArgumentException('Decision images must be a list of base64-encoded strings.');
+                }
+            }
+            $body['images'] = $payload['images'];
+        }
+
+        return $body;
     }
 }

@@ -1,9 +1,9 @@
 CHANGELOG
-=========
-
+==
 0.16
 ----
 
+ * Add image inputs for Clef decision models (Ollama >= 0.35.1)
  * Add a `$modelCatalog` argument to `Factory::createProvider()` and `Factory::createPlatform()`, e.g. to wrap the API-based catalog in a `CachedModelCatalog`
 
 0.15
