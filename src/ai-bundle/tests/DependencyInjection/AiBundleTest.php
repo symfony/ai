@@ -83,6 +83,10 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory as ClickHouseStoreFactory;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
+use Symfony\AI\Store\Bridge\Doctrine\EmbeddingListener;
+use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
+use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
@@ -146,6 +150,8 @@ use Symfony\Component\DependencyInjection\Compiler\ResolveChildDefinitionsPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpClient\NativeHttpClient;
@@ -7728,6 +7734,153 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(VectorizerInterface::class.' $another'));
     }
 
+    public function testDoctrineStoreWithVectorizerEmbedsAndIndexesTheEntity()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $embedder = $container->getDefinition('ai.store.doctrine.movies.embedder');
+        $this->assertSame(EntityEmbedder::class, $embedder->getClass());
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $embedder->getArgument(0));
+
+        $listener = $container->getDefinition('ai.store.doctrine.movies.embedding_listener');
+        $this->assertSame(EmbeddingListener::class, $listener->getClass());
+        $this->assertSame('ai.store.doctrine.movies.embedder', (string) $listener->getArgument(0));
+        $this->assertSame('App\\Entity\\Movie', $listener->getArgument(1));
+        $this->assertSame([['event' => 'onFlush']], $listener->getTag('doctrine.event_listener'));
+
+        $entityIndexer = $container->getDefinition('ai.store.doctrine.movies.entity_indexer');
+        $this->assertSame(EntityIndexer::class, $entityIndexer->getClass());
+        $this->assertSame('doctrine.orm.entity_manager', (string) $entityIndexer->getArgument(0));
+
+        $indexer = $container->getDefinition('ai.indexer.movies');
+        $this->assertSame(ConfiguredSourceIndexer::class, $indexer->getClass());
+        $this->assertSame('ai.store.doctrine.movies.entity_indexer', (string) $indexer->getArgument(0));
+        $this->assertSame('App\\Entity\\Movie', $indexer->getArgument(1));
+        $this->assertSame([['name' => 'movies']], $indexer->getTag('ai.indexer'));
+    }
+
+    public function testDoctrineStoreIndexerIsTheDefaultIndexerWhenItIsTheOnlyOne()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.indexer.movies', (string) $container->getAlias(IndexerInterface::class));
+    }
+
+    public function testDoctrineStoreIndexerIsNoDefaultNextToAConfiguredIndexer()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+                'indexer' => [
+                    'documents' => [
+                        'loader' => InMemoryLoader::class,
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        'store' => 'ai.store.doctrine.movies',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasAlias(IndexerInterface::class));
+    }
+
+    public function testDoctrineStoreWithoutVectorizerLeavesTheEmbeddingToTheApplication()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => ['entity' => 'App\\Entity\\Movie'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.doctrine.movies'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.embedding_listener'));
+        $this->assertFalse($container->hasDefinition('ai.indexer.movies'));
+    }
+
+    public function testIndexerMustNotShareTheNameOfADoctrineStore()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Indexer "movies" is already defined by the doctrine store of the same name');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+                'indexer' => [
+                    'movies' => [
+                        'loader' => InMemoryLoader::class,
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        'store' => 'ai.store.doctrine.movies',
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineStoreRegistersTheVectorTypeWithDoctrine()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', 'test');
+        $container->registerExtension(new class extends Extension {
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+            }
+
+            public function getAlias(): string
+            {
+                return 'doctrine';
+            }
+        });
+        $extension = (new AiBundle())->getContainerExtension();
+        $this->assertInstanceOf(PrependExtensionInterface::class, $extension);
+        $container->registerExtension($extension);
+        $container->loadFromExtension('ai', ['store' => ['doctrine' => ['movies' => ['entity' => 'App\\Entity\\Movie']]]]);
+
+        $extension->prepend($container);
+
+        $this->assertSame([['dbal' => ['types' => ['vector' => VectorType::class]]]], $container->getExtensionConfig('doctrine'));
+    }
+
     public function testIndexerWithConfiguredVectorizer()
     {
         $container = $this->buildContainer([
@@ -8816,6 +8969,27 @@ class AiBundleTest extends TestCase
                     ],
                     'memory' => [
                         'main' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineStoreNameConflictThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "doctrine.movies", "memory.movies" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                        ],
+                    ],
+                    'memory' => [
+                        'movies' => [],
                     ],
                 ],
             ],

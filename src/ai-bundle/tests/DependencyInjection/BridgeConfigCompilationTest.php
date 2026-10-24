@@ -516,6 +516,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'chromadb' => ['chromadb', ['default' => ['collection' => 'col']], 'ai.store.chromadb.default'];
         yield 'clickhouse' => ['clickhouse', ['default' => ['dsn' => 'http://localhost:9000', 'database' => 'db', 'table' => 'tbl']], 'ai.store.clickhouse.default'];
         yield 'cloudflare' => ['cloudflare', ['default' => ['account_id' => 'a', 'api_key' => 'k', 'index_name' => 'idx']], 'ai.store.cloudflare.default'];
+        yield 'doctrine' => ['doctrine', ['default' => ['entity' => 'App\\Entity\\Article']], 'ai.store.doctrine.default'];
         yield 'elasticsearch' => ['elasticsearch', ['default' => ['endpoint' => 'http://localhost:9200']], 'ai.store.elasticsearch.default'];
         yield 'manticoresearch' => ['manticoresearch', ['default' => ['endpoint' => 'http://localhost:9306', 'table' => 'tbl', 'field' => 'vec', 'type' => 'hnsw', 'metric' => 'cosine', 'dimensions' => 768]], 'ai.store.manticoresearch.default'];
         yield 'mariadb' => ['mariadb', ['default' => ['connection' => 'default', 'table_name' => 'tbl', 'index_name' => 'idx', 'vector_field_name' => 'vec']], 'ai.store.mariadb.default'];
@@ -642,8 +643,9 @@ class BridgeConfigCompilationTest extends TestCase
             new Definition(InMemoryStorage::class),
         ]));
 
-        // Doctrine connection (for stores/message stores that reference it)
+        // Doctrine connection and entity manager (for stores/message stores that reference them)
         $container->register('doctrine.dbal.default_connection')->setSynthetic(true);
+        $container->register('doctrine.orm.entity_manager')->setSynthetic(true);
 
         // External services provided by FrameworkBundle or third-party packages
         $container->register('request_stack')->setSynthetic(true);

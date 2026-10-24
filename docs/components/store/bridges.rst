@@ -243,6 +243,39 @@ search through the `sqlite-vec`_ extension.
 
 See :doc:`sqlite` for the differences between both stores and the ``sqlite-vec`` setup.
 
+Doctrine
+~~~~~~~~
+
+Vector storage in a field of a Doctrine entity, on PostgreSQL with `pgvector`_ or on SQLite with
+`sqlite-vec`_. Queries return the entities.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-doctrine-store
+
+::
+
+    use Symfony\AI\Store\Bridge\Doctrine\Dbal\Metric;
+    use Symfony\AI\Store\Bridge\Doctrine\OrmStore;
+
+    $store = new OrmStore($entityManager, Article::class, Metric::Cosine);
+
+**Available metrics:** ``Metric::Cosine`` (default), ``Metric::Euclidean``,
+``Metric::InnerProduct`` (PostgreSQL only)
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        store:
+            doctrine:
+                articles:
+                    entity: 'App\Entity\Article'
+                    metric: 'cosine'
+
+The store writes vectors only to existing entities. See :doc:`doctrine` for the entity mapping,
+the column setup, embedding entities and how the write methods work.
+
 Supabase
 ~~~~~~~~
 
@@ -1000,6 +1033,7 @@ The table and index are created by ``setup()``::
     :hidden:
 
     local
+    doctrine
     sqlite
     supabase
     mongodb

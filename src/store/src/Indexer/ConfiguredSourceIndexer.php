@@ -14,7 +14,7 @@ namespace Symfony\AI\Store\Indexer;
 use Symfony\AI\Store\IndexerInterface;
 
 /**
- * Decorator that wraps a SourceIndexer with a pre-configured default source.
+ * Decorator that wraps an indexer with a pre-configured default source.
  *
  * This is useful for bundle configuration where the source is defined in YAML/PHP config
  * but can still be overridden at runtime by passing a source to index().
@@ -27,7 +27,7 @@ final class ConfiguredSourceIndexer implements IndexerInterface
      * @param string|array<string> $defaultSource Default source to use when calling index()
      */
     public function __construct(
-        private readonly SourceIndexer $indexer,
+        private readonly IndexerInterface $indexer,
         private readonly string|array $defaultSource,
     ) {
     }

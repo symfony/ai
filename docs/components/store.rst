@@ -95,6 +95,7 @@ Similarity Search Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Similarity Search with Cloudflare (RAG)`_
+* `Similarity Search with Doctrine (RAG)`_
 * `Similarity Search with Manticore Search (RAG)`_
 * `Similarity Search with MariaDB (RAG)`_
 * `Similarity Search with Meilisearch (RAG)`_
@@ -128,6 +129,7 @@ See :doc:`store/bridges` for installation and configuration details for all supp
 * `ChromaDB`_ (requires ``codewithkyrian/chromadb-php``)
 * `ClickHouse`_
 * `Cloudflare Vectorize`_
+* `Doctrine`_ (requires ``doctrine/orm``)
 * `Elasticsearch`_
 * InMemory & Symfony Cache (for development and testing)
 * `ManticoreSearch`_
@@ -377,6 +379,7 @@ does not include documents added moments ago::
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
+.. _`Similarity Search with Doctrine (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/doctrine-orm.php
 .. _`Similarity Search with Manticore Search (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php
 .. _`Similarity Search with Meilisearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
@@ -398,6 +401,7 @@ does not include documents added moments ago::
 .. _`ChromaDB`: https://www.trychroma.com/
 .. _`ClickHouse`: https://clickhouse.com/
 .. _`Cloudflare Vectorize`: https://developers.cloudflare.com/vectorize/
+.. _`Doctrine`: https://www.doctrine-project.org/projects/orm.html
 .. _`Elasticsearch`: https://www.elastic.co/elasticsearch
 .. _`ManticoreSearch`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/
