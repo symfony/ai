@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama;
 /**
  * A decision (classification) model, served by Ollama through "POST /v1/systemone" instead of the chat API.
  *
- * It has no capabilities on purpose: it only accepts an
+ * Only the image input capability applies, when the model supports vision. It accepts an
  * {@see \Symfony\AI\Platform\Bridge\Decision\Evaluation} and answers with
  * {@see \Symfony\AI\Platform\Bridge\Decision\Answer\Answers}.
  *

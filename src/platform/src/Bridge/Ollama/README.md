@@ -13,6 +13,15 @@ They are queried with the `Evaluation` of the `Decision` bridge and answer with 
 Clef and Clef Flash accept images on Ollama >= 0.35.1. Pass platform `Image` objects in
 the optional `images` argument of `Evaluation`. PNG, JPEG, and WebP images are sent as
 raw base64 data, in order, and shared by all questions. The state remains required.
+For [Ollama cloud requests](https://docs.ollama.com/capabilities/decision#use-a-cloud-model),
+the documented limits are at most **4 images**, **4 MiB and 16 megapixels per image**,
+and **8 MiB in total**. Ollama's server enforces image formats and request limits;
+this bridge does not inspect image bytes or enforce those cloud limits locally.
+
+The model catalog maps `vision` to `Capability::INPUT_IMAGE` for decision models.
+Images sent to a decision model without that capability are rejected by the bridge
+before the decision request is sent. Custom model catalogs must declare
+`Capability::INPUT_IMAGE` for image-capable decision models.
 
 ```php
 use Symfony\AI\Platform\Bridge\Decision\Evaluation;

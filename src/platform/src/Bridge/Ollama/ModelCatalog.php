@@ -61,9 +61,9 @@ final class ModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
         }
 
-        // Decision models use /v1/systemone, so their other capabilities (e.g. "completion") do not apply.
+        // Decision models use /v1/systemone: retain vision, but not chat capabilities (e.g. "completion").
         if (\in_array('decision', $payload['capabilities'], true)) {
-            return new Decision($modelName, []);
+            return new Decision($modelName, \in_array('vision', $payload['capabilities'], true) ? [Capability::INPUT_IMAGE] : []);
         }
 
         $capabilities = array_map(
