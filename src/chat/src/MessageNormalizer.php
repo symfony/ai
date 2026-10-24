@@ -14,6 +14,7 @@ namespace Symfony\AI\Chat;
 use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Document;
 use Symfony\AI\Platform\Message\Content\DocumentUrl;
@@ -155,6 +156,8 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $parts[] = ['type' => Text::class, 'text' => $part->getText()];
             } elseif ($part instanceof Thinking) {
                 $parts[] = ['type' => Thinking::class, 'content' => $part->getContent(), 'signature' => $part->getSignature()];
+            } elseif ($part instanceof Commentary) {
+                $parts[] = ['type' => Commentary::class, 'content' => $part->getContent()];
             } elseif ($part instanceof ToolCall) {
                 $parts[] = ['type' => ToolCall::class, 'toolCall' => $this->normalizer->normalize($part, $format, $context), 'signature' => $part->getSignature()];
             } elseif ($part instanceof File || $part instanceof ImageUrl || $part instanceof DocumentUrl) {
@@ -227,6 +230,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
                 $parts[] = match ($part['type']) {
                     Text::class => new Text($part['text']),
                     Thinking::class => new Thinking($part['content'] ?? '', $part['signature'] ?? null),
+                    Commentary::class => new Commentary($part['content'] ?? ''),
                     ToolCall::class => new ToolCall(
                         $part['toolCall']['id'],
                         $part['toolCall']['function']['name'],

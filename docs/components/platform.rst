@@ -606,6 +606,8 @@ argument - without it, object variables are rejected with an exception::
     When using the AI Bundle, template rendering is automatically configured and available without manual setup,
     including the ``serializer`` service as normalizer, so object variables work out of the box.
 
+.. _platform-result-streaming:
+
 Result Streaming
 ----------------
 
@@ -656,6 +658,9 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingDelta` -- a chunk of model reasoning
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingComplete` -- signals thinking is complete, includes accumulated thinking text and optional signature
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingSignature` -- a cryptographic signature for a thinking block
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryStart` -- signals the start of a commentary block, the model narrating what it is about to do
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryDelta` -- a chunk of that narration
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryComplete` -- signals commentary is complete, includes the accumulated narration
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallStart` -- signals the start of a tool call
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolInputDelta` -- a chunk of tool call input data
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete` -- signals all tool calls are complete and ready for execution
@@ -818,6 +823,33 @@ the application is not expected to answer it::
 
     Like the other built-in server-side tool results, ``custom_tool_call`` items are only
     available on non-streamed responses.
+
+Commentary
+~~~~~~~~~~
+
+Newer OpenAI models (``gpt-5.4`` and later) may narrate what they are about to do before using a
+tool, in an assistant message of the ``commentary`` phase next to the final answer. The
+OpenResponses bridge reports that narration as a
+:class:`Symfony\\AI\\Platform\\Result\\CommentaryResult`, so ``asText()`` still returns the answer
+alone::
+
+    use Symfony\AI\Platform\Result\CommentaryResult;
+
+    $result = $platform->invoke($model, $messages);
+
+    echo $result->asText(); // the answer
+
+    foreach ($result->asMultiPart() as $part) {
+        if ($part instanceof CommentaryResult) {
+            // $part->getContent(), e.g. "I'll run Python to verify it."
+        }
+    }
+
+A streamed response reports it with the ``Commentary*`` deltas listed in
+:ref:`Result Streaming <platform-result-streaming>`.
+:method:`Symfony\\AI\\Platform\\Message\\Message::ofAssistant` keeps it as a
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Commentary` part, which is replayed to the model with
+its phase on the next turn.
 
 Citations
 ~~~~~~~~~

@@ -33,11 +33,15 @@ use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
@@ -624,6 +628,25 @@ final class RunnerTest extends TestCase
             $actual->getContent(),
         );
         $this->assertSame('It is 10:00.', $actual->asText());
+    }
+
+    public function testAStreamedRoundKeepsItsCommentaryLikeABufferedOne()
+    {
+        $stream = new StreamResult((static function () {
+            yield new CommentaryStart();
+            yield new CommentaryDelta('I will run code.');
+            yield new CommentaryComplete('I will run code.');
+            yield new TextDelta('425');
+        })());
+
+        $actual = $this->drive($this->createRunner($this->platform($stream), $this->createMock(ToolboxInterface::class)), new MessageBag());
+
+        $this->assertInstanceOf(MultiPartResult::class, $actual);
+        $this->assertEquals(
+            [new CommentaryResult('I will run code.'), new TextResult('425')],
+            $actual->getContent(),
+        );
+        $this->assertSame('425', $actual->asText());
     }
 
     public function testAStreamedRoundOfPlainTextStaysATextResult()

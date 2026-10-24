@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
@@ -45,6 +46,18 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
                 $text .= $part->getText();
+
+                continue;
+            }
+
+            if ($part instanceof Commentary) {
+                if ('' === $part->getContent()) {
+                    continue;
+                }
+
+                // Replayed with its phase, so the model does not read its narration as a past answer
+                $this->flushText($items, $text, $data);
+                $items[] = [...self::message($data, $part->getContent()), 'phase' => 'commentary'];
 
                 continue;
             }

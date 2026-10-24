@@ -21,12 +21,14 @@ use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -220,6 +222,10 @@ final class Runner
         foreach ($turn->getContent() as $content) {
             if ($content instanceof Thinking) {
                 $parts[] = new ThinkingResult($content->getContent(), $content->getSignature());
+            }
+
+            if ($content instanceof Commentary) {
+                $parts[] = new CommentaryResult($content->getContent());
             }
 
             if ($content instanceof Text) {
