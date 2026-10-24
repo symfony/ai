@@ -51,7 +51,7 @@ final class OllamaClient implements ModelClientInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Ollama;
+        return $model instanceof Ollama && !$model instanceof Decision;
     }
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult

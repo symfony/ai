@@ -555,6 +555,7 @@ deptrac:
       - GeminiPlatform
       - VertexAiPlatform
     OllamaPlatform:
+      - DecisionPlatform
       - PlatformComponent
     OpenAiPlatform:
       - PlatformComponent

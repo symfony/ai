@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
@@ -40,6 +41,11 @@ final class OllamaResultConverterTest extends TestCase
 
         $this->assertTrue($converter->supports(new Ollama('llama3.2')));
         $this->assertFalse($converter->supports(new Model('any-model')));
+    }
+
+    public function testDoesNotSupportDecisionModels()
+    {
+        $this->assertFalse((new OllamaResultConverter())->supports(new Decision('nimble')));
     }
 
     public function testConvertTextResponse()

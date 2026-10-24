@@ -1,10 +1,10 @@
-.github @chr-hertel @OskarStark
+.github @chr-hertel @OskarStark @wachterjohannes
 .upsun @nicolas-grekas
-ai.symfony.com @chr-hertel @javiereguiluz @OskarStark
-demo @chr-hertel @OskarStark
-docs @chr-hertel @OskarStark
-examples @chr-hertel @OskarStark
-fixtures @chr-hertel @OskarStark
-src @chr-hertel @OskarStark
+ai.symfony.com @chr-hertel @javiereguiluz @OskarStark @wachterjohannes
+demo @chr-hertel @OskarStark @wachterjohannes
+docs @chr-hertel @OskarStark @wachterjohannes
+examples @chr-hertel @OskarStark @wachterjohannes
+fixtures @chr-hertel @OskarStark @wachterjohannes
+src @chr-hertel @OskarStark @wachterjohannes
 src/mate @chr-hertel @Nyholm @OskarStark @wachterjohannes
-src/mcp-bundle @chr-hertel @Nyholm @OskarStark
+src/mcp-bundle @chr-hertel @Nyholm @OskarStark @wachterjohannes

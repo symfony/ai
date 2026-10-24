@@ -157,6 +157,7 @@ Supported Models & Platforms
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
   * `TypeSafe's Jev`_ with `TypeSafe`_ as Platform, see :doc:`platform/typesafe`
+  * Decision models (e.g. Ollama's ``nimble``) with `Ollama`_ as Platform, queried with the ``Evaluation`` of the ``Decision`` bridge
   * OCR and document parsing (invoices, resumes, identity documents) with `Eden AI`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,

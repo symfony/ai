@@ -1,10 +1,16 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add a `$modelCatalog` argument to `Factory::createProvider()` and `Factory::createPlatform()`, e.g. to wrap the API-based catalog in a `CachedModelCatalog`
+
 0.15
 ----
 
  * Add `UserMessageNormalizer` to send image content in Ollama's native message format
+ * Add support for decision models (`decision` capability, Ollama >= 0.35.0), served through `POST /v1/systemone`
 
 0.14
 ----

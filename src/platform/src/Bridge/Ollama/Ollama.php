@@ -16,6 +16,6 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Joshua Behrens <code@joshua-behrens.de>
  */
-final class Ollama extends Model
+class Ollama extends Model
 {
 }
