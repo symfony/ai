@@ -1064,6 +1064,33 @@ The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool`
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
 
+Reusing MCP Schema Constraints
+------------------------------
+
+When ``mcp/sdk`` is installed, agent tools also use parameter constraints declared with
+``Mcp\Capability\Attribute\Schema``::
+
+    use Mcp\Capability\Attribute\Schema;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+
+    #[AsTool('search', 'Search articles')]
+    final class Search
+    {
+        public function __invoke(
+            string $query,
+            #[Schema(enum: ['article', 'advertisement'])] ?string $kind = null,
+            #[Schema(minimum: 1, maximum: 200)] int $limit = 20,
+        ): array {
+            // ...
+        }
+    }
+
+This lets a service shared with an MCP server declare its constraints once. The SDK's
+``definition`` argument contributes a raw schema fragment. If a parameter also carries
+``Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema``, its explicitly declared
+keywords take precedence, including complete ``enum`` lists. Method-level MCP schemas
+are not imported, and installing the MCP SDK is optional.
+
 Tool Execution Strategy
 -----------------------
 
