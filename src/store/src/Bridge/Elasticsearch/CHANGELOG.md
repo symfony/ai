@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Remove the `dimensions` and `similarity` options of `Store::setup()`, use the arguments of `Store` instead
+ * [BC BREAK] Rename the `similarity` argument of `Store` and `StoreFactory` to `metric`
+
 0.14
 ----
 

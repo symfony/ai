@@ -39,7 +39,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $collection,
         private readonly string $vectorFieldName = '_vectors',
         private readonly int $dimensions = 1536,
-        private readonly string $metricType = 'COSINE',
+        private readonly string $metric = 'COSINE',
     ) {
     }
 
@@ -89,7 +89,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'indexParams' => [
                 [
                     'fieldName' => $this->vectorFieldName,
-                    'metricType' => $this->metricType,
+                    'metricType' => $this->metric,
                     'indexName' => \sprintf('%s_%s', $this->collection, $this->vectorFieldName),
                     'indexType' => 'AUTOINDEX',
                 ],

@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Replace the `fields` option of `Store::setup()` by the `indexFields` argument of `Store`
+ * [BC BREAK] Rename the `embeddingsDimension` and `similarity` arguments of `Store` to `dimensions` and `metric`
+ * [BC BREAK] Rename the `Similarity` enum to `Metric`
+
 0.15
 ----
 

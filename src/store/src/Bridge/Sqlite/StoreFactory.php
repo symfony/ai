@@ -36,12 +36,12 @@ final class StoreFactory
     public static function createVecStore(
         string $dsn,
         string $tableName,
-        Distance $distance = Distance::Cosine,
-        int $vectorDimension = 1536,
+        Metric $metric = Metric::Cosine,
+        int $dimensions = 1536,
     ): VecStore {
         $pdo = self::createPdo($dsn);
 
-        return new VecStore($pdo, $tableName, $distance, $vectorDimension);
+        return new VecStore($pdo, $tableName, $metric, $dimensions);
     }
 
     private static function createPdo(string $dsn): \PDO

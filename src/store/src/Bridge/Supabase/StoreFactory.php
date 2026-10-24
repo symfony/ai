@@ -31,7 +31,7 @@ final class StoreFactory
         ?HttpClientInterface $httpClient = null,
         string $table = 'documents',
         string $vectorFieldName = 'embedding',
-        int $vectorDimension = 1536,
+        int $dimensions = 1536,
         string $functionName = 'match_documents',
     ): StoreInterface {
         if (null === $endpoint && null !== $apiKey) {
@@ -52,6 +52,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, rtrim($endpoint, '/').'/', $defaultOptions);
         }
 
-        return new Store($httpClient, $table, $vectorFieldName, $vectorDimension, $functionName);
+        return new Store($httpClient, $table, $vectorFieldName, $dimensions, $functionName);
     }
 }

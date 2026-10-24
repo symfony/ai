@@ -16,7 +16,7 @@ namespace Symfony\AI\Store\Bridge\MongoDb;
  *
  * @author Alejandro Borrego
  */
-enum Similarity: string
+enum Metric: string
 {
     case Euclidean = 'euclidean';
     case Cosine = 'cosine';

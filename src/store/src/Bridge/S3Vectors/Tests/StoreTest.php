@@ -427,12 +427,10 @@ final class StoreTest extends TestCase
                     && DataType::FLOAT_32 === $input['dataType'];
             }));
 
-        self::createStore($client)->setup([
-            'dimension' => 1536,
-        ]);
+        self::createStore($client)->setup();
     }
 
-    public function testSetupWithCustomOptions()
+    public function testSetupWithCustomConfiguration()
     {
         $client = $this->createMock(S3VectorsClient::class);
 
@@ -461,22 +459,27 @@ final class StoreTest extends TestCase
                     && ['env' => 'test'] === $input['tags'];
             }));
 
-        self::createStore($client)->setup([
-            'dimension' => 384,
-            'distanceMetric' => DistanceMetric::EUCLIDEAN,
-            'encryption' => ['kmsKeyId' => 'test-key'],
-            'tags' => ['env' => 'test'],
-        ]);
+        $store = new Store(
+            $client,
+            'test-bucket',
+            'test-index',
+            dimensions: 384,
+            metric: DistanceMetric::EUCLIDEAN,
+            kmsKeyId: 'test-key',
+            tags: ['env' => 'test'],
+        );
+        $store->setup();
     }
 
-    public function testSetupThrowsExceptionWithoutDimension()
+    public function testSetupRejectsOptions()
     {
         $client = $this->createMock(S3VectorsClient::class);
+        $client->expects($this->never())->method('createIndex');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "dimension" option is required.');
+        $this->expectExceptionMessage('No supported options.');
 
-        self::createStore($client)->setup([]);
+        self::createStore($client)->setup(['dimension' => 1536]);
     }
 
     public function testDrop()

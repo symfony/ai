@@ -836,6 +836,13 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
     # Setup the chromadb store
     $ php bin/console ai:store:setup ai.store.chromadb.default
 
+    # Pass a runtime option supported by the store
+    $ php bin/console ai:store:setup ai.store.surrealdb.default --option forceDatabaseCreation=true
+
+The ``--option`` (or ``-o``) option takes ``name=value`` and can be repeated. The value is decoded
+as JSON when possible (e.g. ``true`` or ``100``), and a ``name`` without value is set to ``true``.
+The ``ai:store:drop`` command accepts the same option.
+
 .. note::
 
     This command only works with stores that implement :class:`Symfony\\AI\\Store\\ManagedStoreInterface`.

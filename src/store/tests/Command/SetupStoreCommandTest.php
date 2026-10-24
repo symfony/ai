@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
@@ -34,6 +35,8 @@ final class SetupStoreCommandTest extends TestCase
         $storeArgument = $definition->getArgument('store');
         $this->assertSame('Service name of the store to setup', $storeArgument->getDescription());
         $this->assertTrue($storeArgument->isRequired());
+
+        $this->assertTrue($definition->getOption('option')->isArray());
     }
 
     public function testCommandCannotSetupUndefinedStore()
@@ -106,16 +109,11 @@ final class SetupStoreCommandTest extends TestCase
     public function testCommandCanSetupDefinedStore()
     {
         $store = $this->createMock(ManagedStoreInterface::class);
-        $store->expects($this->once())->method('setup')->with(['some_option' => 'some_value']);
+        $store->expects($this->once())->method('setup')->with([]);
 
-        $command = new SetupStoreCommand(
-            new ServiceLocator([
-                'foo' => static fn (): object => $store,
-            ]),
-            [
-                'foo' => ['some_option' => 'some_value'],
-            ]
-        );
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
 
         $tester = new CommandTester($command);
 
@@ -124,5 +122,49 @@ final class SetupStoreCommandTest extends TestCase
         ]);
 
         $this->assertStringContainsString('The "foo" store was set up successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandPassesOptionsToTheStore()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('setup')->with([
+            'forceDatabaseCreation' => true,
+            'batchSize' => 100,
+            'name' => 'foo',
+            'flag' => true,
+        ]);
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'store' => 'foo',
+            '--option' => ['forceDatabaseCreation=true', 'batchSize=100', 'name=foo', 'flag'],
+        ]);
+
+        $this->assertStringContainsString('The "foo" store was set up successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandRejectsOptionWithoutName()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->never())->method('setup');
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The option "=true" must be given as "name=value".');
+
+        $tester->execute([
+            'store' => 'foo',
+            '--option' => ['=true'],
+        ]);
     }
 }

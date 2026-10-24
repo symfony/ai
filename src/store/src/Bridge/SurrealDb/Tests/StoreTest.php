@@ -107,7 +107,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse([['result' => null, 'status' => 'OK']], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', embeddingsDimension: 3);
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', dimensions: 3);
 
         $store->setup();
 
@@ -128,7 +128,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse([['result' => null, 'status' => 'OK']], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'test', 'test', 'my_namespace', 'my_database', 'movies', embeddingsDimension: 3);
+        $store = new Store($httpClient, 'test', 'test', 'my_namespace', 'my_database', 'movies', dimensions: 3);
 
         $store->setup(['forceDatabaseCreation' => true]);
 
@@ -485,7 +485,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', strategy: 'euclidean');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', metric: 'euclidean');
 
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -589,7 +589,7 @@ final class StoreTest extends TestCase
             return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', embeddingsDimension: 3);
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', dimensions: 3);
 
         $operation($store);
 

@@ -366,13 +366,13 @@ class StoreTest extends TestCase
         $store->clear();
     }
 
-    private function createStore(MockHttpClient $httpClient, ?int $vectorDimension = 2): SupabaseStore
+    private function createStore(MockHttpClient $httpClient, ?int $dimensions = 2): SupabaseStore
     {
         return new SupabaseStore(
             ScopingHttpClient::forBaseUri($httpClient, 'https://test.supabase.co/'),
             'documents',
             'embedding',
-            $vectorDimension,
+            $dimensions,
             'match_documents'
         );
     }

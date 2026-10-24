@@ -33,7 +33,7 @@ $store = StoreFactory::create(
     httpClient: http_client(),
     table: 'documents',
     vectorFieldName: 'embedding',
-    vectorDimension: 768,
+    dimensions: 768,
     functionName: 'match_documents',
 );
 

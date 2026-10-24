@@ -29,7 +29,7 @@ final class StoreFactory
         ?HttpClientInterface $httpClient = null,
         string $embedder = 'default',
         string $vectorFieldName = '_vectors',
-        int $embeddingsDimension = 1536,
+        int $dimensions = 1536,
         float $semanticRatio = 1.0,
     ): StoreInterface&ManagedStoreInterface {
         if (null !== $endpoint) {
@@ -43,6 +43,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient ?? HttpClient::create(), $endpoint, $defaultOptions);
         }
 
-        return new Store($httpClient, $indexName, $embedder, $vectorFieldName, $embeddingsDimension, $semanticRatio);
+        return new Store($httpClient, $indexName, $embedder, $vectorFieldName, $dimensions, $semanticRatio);
     }
 }

@@ -27,6 +27,68 @@ Agent
    +$similaritySearch = new SimilaritySearch($retriever);
    ```
 
+AI Bundle
+---------
+
+ * The `setup_options` key of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis`, `s3vectors` and
+   `surrealdb` stores is removed. Its values are store keys, some of them renamed:
+
+   ```diff
+    ai:
+        store:
+            postgres:
+                default:
+                    dsn: '%env(DATABASE_URL)%'
+   -                setup_options:
+   -                    vector_size: 1024
+   -                    vector_type: halfvec
+   +                dimensions: 1024
+   +                vector_type: halfvec
+   ```
+
+   | Store       | Before                                     | After                         |
+   |-------------|--------------------------------------------|-------------------------------|
+   | `mariadb`   | `setup_options.dimensions`                 | `dimensions`                  |
+   | `mongodb`   | `setup_options.fields`                     | `index_fields`                |
+   | `pinecone`  | `setup_options.dimension`, `.metric`       | `dimensions`, `metric`        |
+   | `pinecone`  | `setup_options.cloud`, `.region`           | `cloud`, `region`             |
+   | `postgres`  | `setup_options.vector_size`                | `dimensions`                  |
+   | `postgres`  | `setup_options.vector_type`, `.index_method`, `.index_opclass` | `vector_type`, `index_method`, `index_opclass` |
+   | `redis`     | `setup_options.vector_size`                | `dimensions`                  |
+   | `s3vectors` | `setup_options.dimension`, `.distance_metric` | `dimensions`, `metric`     |
+
+ * The `redis` store creates an index with 1536 dimensions by default instead of 3072. Set `dimensions: 3072`
+   to keep the previous size, documents with a different number of dimensions are not indexed. The `pinecone`
+   and `s3vectors` stores no longer require the dimensions, they default to 1536 as well.
+
+ * The `setup_options.force_database_creation` key of the `surrealdb` store is removed, pass the option to
+   the command instead:
+
+   ```diff
+   -$ php bin/console ai:store:setup ai.store.surrealdb.default
+   +$ php bin/console ai:store:setup ai.store.surrealdb.default --option forceDatabaseCreation=true
+   ```
+
+ * The store keys for the vector metric and the number of dimensions are renamed to `metric` and
+   `dimensions`:
+
+   | Store             | Before             | After        |
+   |-------------------|--------------------|--------------|
+   | `elasticsearch`   | `similarity`       | `metric`     |
+   | `manticoresearch` | `similarity`       | `metric`     |
+   | `mariadb`         | `distance`         | `metric`     |
+   | `milvus`          | `metric_type`      | `metric`     |
+   | `mongodb`         | `similarity`       | `metric`     |
+   | `neo4j`           | `distance`         | `metric`     |
+   | `opensearch`      | `space_type`       | `metric`     |
+   | `postgres`        | `distance`         | `metric`     |
+   | `qdrant`          | `distance`         | `metric`     |
+   | `redis`           | `distance`         | `metric`     |
+   | `sqlite`          | `distance`         | `metric`     |
+   | `sqlite`          | `vector_dimension` | `dimensions` |
+   | `supabase`        | `vector_dimension` | `dimensions` |
+   | `surrealdb`       | `strategy`         | `metric`     |
+
 Store
 -----
 
@@ -38,6 +100,78 @@ Store
 
    -final class ArticleDocument implements EmbeddableDocumentInterface
    +final class ArticleDocument implements DocumentInterface
+   ```
+
+ * `Command\SetupStoreCommand` no longer accepts the setup options of the stores as second constructor
+   argument. Pass runtime options with `--option name=value` instead.
+
+ * The Elasticsearch, MariaDB, MongoDB, OpenSearch, Pinecone, Postgres, Redis and S3 Vectors stores take
+   the definition of their index as constructor arguments, and their `setup()` throws an
+   `InvalidArgumentException` when it receives options:
+
+   ```diff
+   -$store = new Store($pdo, 'documents');
+   -$store->setup(['vector_size' => 1024, 'vector_type' => 'halfvec']);
+   +$store = new Store($pdo, 'documents', dimensions: 1024, vectorType: 'halfvec');
+   +$store->setup();
+   ```
+
+   | Store         | `setup()` option                                     | Constructor argument                       |
+   |---------------|------------------------------------------------------|--------------------------------------------|
+   | Elasticsearch | `dimensions`, `similarity`                           | `dimensions`, `metric`                     |
+   | MariaDB       | `dimensions`                                         | `dimensions`                               |
+   | MongoDB       | `fields`                                             | `indexFields`                              |
+   | OpenSearch    | `dimensions`, `space_type`                           | `dimensions`, `metric`                     |
+   | Pinecone      | `dimension`, `metric`, `cloud`, `region`             | `dimensions`, `metric`, `cloud`, `region` |
+   | Postgres      | `vector_size`, `vector_type`, `index_method`, `index_opclass` | `dimensions`, `vectorType`, `indexMethod`, `indexOpclass` |
+   | Redis         | `vector_size`, `index_method`, `extra_schema`        | `dimensions`, `indexMethod`, `extraSchema` |
+   | S3 Vectors    | `dimension`, `distanceMetric`, `dataType`, `metadata`, `encryption.kmsKeyId`, `tags` | `dimensions`, `metric`, `dataType`, `metadataConfiguration`, `kmsKeyId`, `tags` |
+
+   The Pinecone and S3 Vectors stores no longer require a dimension, it defaults to 1536.
+
+ * The Redis `Store::setup()` creates an index with 1536 dimensions instead of 3072. Pass `dimensions: 3072`
+   to keep the previous size, for example for Gemini embeddings. Existing indexes are kept.
+
+ * The constructor and factory arguments for the vector metric and the number of dimensions are renamed to
+   `metric` and `dimensions`. Update calls that use named arguments:
+
+   ```diff
+    $store = new Store(
+        // ...
+   -    embeddingsDimension: 768,
+   -    embeddingsDistance: 'Cosine',
+   +    dimensions: 768,
+   +    metric: 'Cosine',
+    );
+   ```
+
+   | Store           | Before                                       | After                     |
+   |-----------------|----------------------------------------------|---------------------------|
+   | Elasticsearch   | `similarity`                                 | `metric`                  |
+   | ManticoreSearch | `similarity`                                 | `metric`                  |
+   | MariaDB         | `distance`                                   | `metric`                  |
+   | Meilisearch     | `embeddingsDimension`                        | `dimensions`              |
+   | Milvus          | `metricType`                                 | `metric`                  |
+   | MongoDB         | `embeddingsDimension`, `similarity`          | `dimensions`, `metric`    |
+   | Neo4j           | `embeddingsDimension`, `embeddingsDistance`  | `dimensions`, `metric`    |
+   | OpenSearch      | `spaceType`                                  | `metric`                  |
+   | Postgres        | `distance`                                   | `metric`                  |
+   | Qdrant          | `embeddingsDimension`, `embeddingsDistance`  | `dimensions`, `metric`    |
+   | Redis           | `distance`                                   | `metric`                  |
+   | SQLite          | `vectorDimension`, `distance` (`VecStore`)   | `dimensions`, `metric`    |
+   | Supabase        | `vectorDimension`                            | `dimensions`              |
+   | SurrealDB       | `embeddingsDimension`, `strategy`            | `dimensions`, `metric`    |
+   | Typesense       | `embeddingsDimension`                        | `dimensions`              |
+
+ * The `Distance` enums of the MariaDB, Postgres, Redis and SQLite stores and the `Similarity` enum of the MongoDB
+   store are renamed to `Metric`, with the same cases:
+
+   ```diff
+   -use Symfony\AI\Store\Bridge\Postgres\Distance;
+   +use Symfony\AI\Store\Bridge\Postgres\Metric;
+
+   -$store = new Store($pdo, 'documents', distance: Distance::Cosine);
+   +$store = new Store($pdo, 'documents', metric: Metric::Cosine);
    ```
 
 UPGRADE FROM 0.14 to 0.15

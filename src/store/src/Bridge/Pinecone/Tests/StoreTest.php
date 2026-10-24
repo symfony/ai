@@ -506,24 +506,37 @@ final class StoreTest extends TestCase
 
         $indexResource->expects($this->once())
             ->method('createServerless')
-            ->with(1536, 'cosine', 'aws', 'us-east-1');
+            ->with(768, 'cosine', 'aws', 'us-east-1');
 
-        self::createStore($client, indexName: 'my-index')->setup([
-            'dimension' => 1536,
-            'metric' => 'cosine',
-            'cloud' => 'aws',
-            'region' => 'us-east-1',
-        ]);
+        $store = new Store($client, 'my-index', dimensions: 768, metric: 'cosine', cloud: 'aws', region: 'us-east-1');
+        $store->setup();
     }
 
-    public function testSetupThrowsExceptionWithoutDimension()
+    public function testSetupUsesDefaultDimensions()
     {
+        $indexResource = $this->createMock(IndexResource::class);
+        $controlResource = $this->createMock(ControlResource::class);
         $client = $this->createMock(Client::class);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "dimension" option is required.');
+        $client->method('control')->willReturn($controlResource);
+        $controlResource->method('index')->willReturn($indexResource);
 
-        self::createStore($client, indexName: 'my-index')->setup([]);
+        $indexResource->expects($this->once())
+            ->method('createServerless')
+            ->with(1536, null, null, null);
+
+        self::createStore($client, indexName: 'my-index')->setup();
+    }
+
+    public function testSetupRejectsOptions()
+    {
+        $client = $this->createMock(Client::class);
+        $client->expects($this->never())->method('control');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+
+        self::createStore($client, indexName: 'my-index')->setup(['dimension' => 1536]);
     }
 
     public function testDrop()

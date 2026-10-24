@@ -38,30 +38,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly \PDO $connection,
         private readonly string $tableName,
         private readonly string $vectorFieldName = 'embedding',
-        private readonly Distance $distance = Distance::L2,
+        private readonly Metric $metric = Metric::L2,
         private readonly string $lang = 'english',
+        private readonly int $dimensions = 1536,
+        private readonly string $vectorType = 'vector',
+        // Unlike ivfflat, hnsw needs no data to build a good index, and supports every distance
+        private readonly string $indexMethod = 'hnsw',
+        private readonly ?string $indexOpclass = null,
     ) {
     }
 
-    /**
-     * @param array{vector_type?: string, vector_size?: positive-int, index_method?: string, index_opclass?: string} $options
-     *
-     * Good configuration $options are:
-     * - For Mistral: ['vector_size' => 1024]
-     * - For Gemini: ['vector_type' => 'halfvec', 'vector_size' => 3072]
-     */
     public function setup(array $options = []): void
     {
-        $vectorType = $options['vector_type'] ?? 'vector';
-        // Unlike ivfflat, hnsw needs no data to build a good index, and supports every distance
-        $indexMethod = $options['index_method'] ?? 'hnsw';
-
-        // Documents are written and read in the "[x,y,z]" format, which other pgvector types reject
-        if (!\in_array($vectorType, ['halfvec', 'vector'], true)) {
-            throw new InvalidArgumentException(\sprintf('The "%s" vector type is not supported, use "vector" or "halfvec".', $vectorType));
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
         }
 
-        $indexOpclass = $options['index_opclass'] ?? $this->getIndexOpclass($vectorType, $indexMethod);
+        // Documents are written and read in the "[x,y,z]" format, which other pgvector types reject
+        if (!\in_array($this->vectorType, ['halfvec', 'vector'], true)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" vector type is not supported, use "vector" or "halfvec".', $this->vectorType));
+        }
+
+        $indexOpclass = $this->indexOpclass ?? $this->getIndexOpclass($this->vectorType, $this->indexMethod);
 
         $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
 
@@ -74,8 +72,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 )',
                 $this->tableName,
                 $this->vectorFieldName,
-                $vectorType,
-                $options['vector_size'] ?? 1536,
+                $this->vectorType,
+                $this->dimensions,
             ),
         );
         $this->connection->exec(
@@ -84,7 +82,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->tableName,
-                $indexMethod,
+                $this->indexMethod,
                 $this->vectorFieldName,
                 $indexOpclass,
             ),
@@ -189,7 +187,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $params = ['embedding' => $this->toPgvector($query->getVector())];
 
         if (isset($options['maxScore'])) {
-            $whereClauses[] = \sprintf('("%s" %s :embedding) <= :maxScore', $this->vectorFieldName, $this->distance->getComparisonSign());
+            $whereClauses[] = \sprintf('("%s" %s :embedding) <= :maxScore', $this->vectorFieldName, $this->metric->getComparisonSign());
             $params['maxScore'] = $options['maxScore'];
         }
 
@@ -213,7 +211,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             SQL,
             $this->vectorFieldName,
             $this->vectorFieldName,
-            $this->distance->getComparisonSign(),
+            $this->metric->getComparisonSign(),
             $this->tableName,
             $where,
             $options['limit'] ?? 5,
@@ -322,7 +320,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         if (isset($options['maxScore'])) {
             $where .= \sprintf(' AND ((:semantic_ratio * (1 - ("%s" %s :embedding))) + (:keyword_ratio * ts_rank(%s, %s))) >= :maxScore',
                 $this->vectorFieldName,
-                $this->distance->getComparisonSign(),
+                $this->metric->getComparisonSign(),
                 $tsvectorExpression,
                 $tsqueryExpression
             );
@@ -340,7 +338,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             SQL,
             $this->vectorFieldName,
             $this->vectorFieldName,
-            $this->distance->getComparisonSign(),
+            $this->metric->getComparisonSign(),
             $tsvectorExpression,
             $tsqueryExpression,
             $this->tableName,
@@ -368,15 +366,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     private function getIndexOpclass(string $vectorType, string $indexMethod): string
     {
-        if ('ivfflat' === $indexMethod && Distance::L1 === $this->distance) {
+        if ('ivfflat' === $indexMethod && Metric::L1 === $this->metric) {
             throw new InvalidArgumentException('The "ivfflat" index method does not support the L1 distance, use "hnsw".');
         }
 
-        return \sprintf('%s_%s_ops', $vectorType, match ($this->distance) {
-            Distance::Cosine => 'cosine',
-            Distance::InnerProduct => 'ip',
-            Distance::L1 => 'l1',
-            Distance::L2 => 'l2',
+        return \sprintf('%s_%s_ops', $vectorType, match ($this->metric) {
+            Metric::Cosine => 'cosine',
+            Metric::InnerProduct => 'ip',
+            Metric::L1 => 'l1',
+            Metric::L2 => 'l2',
         });
     }
 

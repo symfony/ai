@@ -27,11 +27,6 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
         $redis = new \Redis();
         $redis->connect('127.0.0.1', 6379);
 
-        return new Store($redis, 'test_index');
-    }
-
-    protected static function getSetupOptions(): array
-    {
-        return ['vector_size' => 3];
+        return new Store($redis, 'test_index', dimensions: 3);
     }
 }

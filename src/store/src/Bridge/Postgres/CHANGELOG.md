@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Replace the `vector_size`, `vector_type`, `index_method` and `index_opclass` options of `Store::setup()` by the `dimensions`, `vectorType`, `indexMethod` and `indexOpclass` arguments of `Store` and `StoreFactory`
+ * [BC BREAK] Rename the `Distance` enum to `Metric`, and the `distance` argument of `Store` and `StoreFactory` to `metric`
+
 0.14
 ----
 

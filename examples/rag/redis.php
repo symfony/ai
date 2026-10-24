@@ -48,7 +48,7 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // initialize the table
-$store->setup(['vector_size' => 1536]);
+$store->setup();
 
 // create embeddings for documents
 $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());

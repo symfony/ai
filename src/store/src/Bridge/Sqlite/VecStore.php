@@ -39,8 +39,8 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     public function __construct(
         private readonly \PDO $connection,
         private readonly string $tableName,
-        private readonly Distance $distance = Distance::Cosine,
-        private readonly int $vectorDimension = 1536,
+        private readonly Metric $metric = Metric::Cosine,
+        private readonly int $dimensions = 1536,
     ) {
     }
 
@@ -53,8 +53,8 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $this->connection->exec(\sprintf(
             'CREATE VIRTUAL TABLE IF NOT EXISTS %s USING vec0(id TEXT PRIMARY KEY, embedding float[%d] distance_metric=%s, +metadata TEXT)',
             $this->tableName,
-            $this->vectorDimension,
-            $this->distance->value,
+            $this->dimensions,
+            $this->metric->value,
         ));
 
         $this->connection->exec(\sprintf(
@@ -66,10 +66,10 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     public static function fromPdo(
         \PDO $connection,
         string $tableName,
-        Distance $distance = Distance::Cosine,
-        int $vectorDimension = 1536,
+        Metric $metric = Metric::Cosine,
+        int $dimensions = 1536,
     ): self {
-        return new self($connection, $tableName, $distance, $vectorDimension);
+        return new self($connection, $tableName, $metric, $dimensions);
     }
 
     /**
@@ -78,8 +78,8 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     public static function fromDbal(
         Connection $connection,
         string $tableName,
-        Distance $distance = Distance::Cosine,
-        int $vectorDimension = 1536,
+        Metric $metric = Metric::Cosine,
+        int $dimensions = 1536,
     ): self {
         $pdo = $connection->getNativeConnection();
 
@@ -87,7 +87,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return self::fromPdo($pdo, $tableName, $distance, $vectorDimension);
+        return self::fromPdo($pdo, $tableName, $metric, $dimensions);
     }
 
     public static function isExtensionAvailable(\PDO $connection): bool

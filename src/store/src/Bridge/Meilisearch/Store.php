@@ -43,7 +43,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $indexName,
         private readonly string $embedder = 'default',
         private readonly string $vectorFieldName = '_vectors',
-        private readonly int $embeddingsDimension = 1536,
+        private readonly int $dimensions = 1536,
         private readonly float $semanticRatio = 1.0,
     ) {
         if ($semanticRatio < 0.0 || $semanticRatio > 1.0) {
@@ -66,7 +66,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'embedders' => [
                 $this->embedder => [
                     'source' => 'userProvided',
-                    'dimensions' => $this->embeddingsDimension,
+                    'dimensions' => $this->dimensions,
                 ],
             ],
         ]);

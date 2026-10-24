@@ -5,6 +5,8 @@ CHANGELOG
 ----
 
  * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
+ * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
+ * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead
 
 0.14
 ----

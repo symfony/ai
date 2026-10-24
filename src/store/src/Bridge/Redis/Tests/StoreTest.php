@@ -13,10 +13,11 @@ namespace Symfony\AI\Store\Bridge\Redis\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\Redis\Distance;
+use Symfony\AI\Store\Bridge\Redis\Metric;
 use Symfony\AI\Store\Bridge\Redis\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
@@ -141,7 +142,7 @@ final class StoreTest extends TestCase
     public function testQueryChangedDistanceMethodWithoutMaxScore()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:', Distance::L2);
+        $store = new Store($redis, 'test_index', 'vector:', Metric::L2, 1024, 'HNSW');
 
         $uuid = Uuid::v4()->toString();
 
@@ -337,16 +338,16 @@ final class StoreTest extends TestCase
                 'PREFIX', '1', 'vector:',
                 'SCHEMA',
                 '$.id', 'AS', 'id', 'TEXT',
-                '$.embedding', 'AS', 'embedding', 'VECTOR', 'FLAT', '6', 'TYPE', 'FLOAT32', 'DIM', 3072, 'DISTANCE_METRIC', 'COSINE'
+                '$.embedding', 'AS', 'embedding', 'VECTOR', 'FLAT', '6', 'TYPE', 'FLOAT32', 'DIM', 1536, 'DISTANCE_METRIC', 'COSINE'
             );
 
         $store->setup();
     }
 
-    public function testInitializeWithCustomVectorSize()
+    public function testInitializeWithCustomDimensions()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:');
+        $store = new Store($redis, 'test_index', 'vector:', dimensions: 768);
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -358,13 +359,13 @@ final class StoreTest extends TestCase
                 '$.embedding', 'AS', 'embedding', 'VECTOR', 'FLAT', '6', 'TYPE', 'FLOAT32', 'DIM', 768, 'DISTANCE_METRIC', 'COSINE'
             );
 
-        $store->setup(['vector_size' => 768]);
+        $store->setup();
     }
 
     public function testInitializeWithCustomIndexMethod()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:', Distance::L2);
+        $store = new Store($redis, 'test_index', 'vector:', Metric::L2, 1024, 'HNSW');
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -376,16 +377,13 @@ final class StoreTest extends TestCase
                 '$.embedding', 'AS', 'embedding', 'VECTOR', 'HNSW', '6', 'TYPE', 'FLOAT32', 'DIM', 1024, 'DISTANCE_METRIC', 'L2'
             );
 
-        $store->setup([
-            'vector_size' => 1024,
-            'index_method' => 'HNSW',
-        ]);
+        $store->setup();
     }
 
     public function testInitializeWithExtraSchema()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:');
+        $store = new Store($redis, 'test_index', 'vector:', extraSchema: ['$.metadata.title', 'AS', 'title', 'TEXT']);
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -394,13 +392,24 @@ final class StoreTest extends TestCase
                 'PREFIX', '1', 'vector:',
                 'SCHEMA',
                 '$.id', 'AS', 'id', 'TEXT',
-                '$.embedding', 'AS', 'embedding', 'VECTOR', 'FLAT', '6', 'TYPE', 'FLOAT32', 'DIM', 3072, 'DISTANCE_METRIC', 'COSINE',
+                '$.embedding', 'AS', 'embedding', 'VECTOR', 'FLAT', '6', 'TYPE', 'FLOAT32', 'DIM', 1536, 'DISTANCE_METRIC', 'COSINE',
                 '$.metadata.title', 'AS', 'title', 'TEXT'
             );
 
-        $store->setup([
-            'extra_schema' => ['$.metadata.title', 'AS', 'title', 'TEXT'],
-        ]);
+        $store->setup();
+    }
+
+    public function testInitializeRejectsOptions()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $redis->expects($this->never())->method('rawCommand');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+
+        $store->setup(['vector_size' => 768]);
     }
 
     public function testInitializeIndexAlreadyExists()

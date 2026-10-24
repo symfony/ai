@@ -39,6 +39,8 @@ final class DropStoreCommandTest extends TestCase
         $forceOption = $definition->getOption('force');
         $this->assertSame('Force dropping the store even if it contains vectors', $forceOption->getDescription());
         $this->assertFalse($forceOption->acceptValue());
+
+        $this->assertTrue($definition->getOption('option')->isArray());
     }
 
     public function testCommandCannotDropWithoutStores()
@@ -141,6 +143,26 @@ final class DropStoreCommandTest extends TestCase
         $tester->execute([
             'store' => 'foo',
             '--force' => true,
+        ]);
+
+        $this->assertStringContainsString('The "foo" store was dropped successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandPassesOptionsToTheStore()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('drop')->with(['optimize' => true]);
+
+        $command = new DropStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'store' => 'foo',
+            '--force' => true,
+            '--option' => ['optimize'],
         ]);
 
         $this->assertStringContainsString('The "foo" store was dropped successfully.', $tester->getDisplay());

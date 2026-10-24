@@ -14,7 +14,7 @@ namespace Symfony\AI\Store\Bridge\MariaDb\Tests;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\MariaDb\Distance;
+use Symfony\AI\Store\Bridge\MariaDb\Metric;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -130,7 +130,7 @@ final class StoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $statement = $this->createMock(\PDOStatement::class);
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Cosine);
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Metric::Cosine);
 
         $expectedQuery = <<<'SQL'
             SELECT id, VEC_ToText(`embedding`) embedding, metadata, VEC_DISTANCE_COSINE(`embedding`, q.query_vector) AS score
@@ -375,15 +375,15 @@ final class StoreTest extends TestCase
         $this->assertSame('https://example.com', $results[0]->getMetadata()['url']);
     }
 
-    #[DataProvider('provideIndexDistances')]
-    public function testSetupCreatesVectorIndexWithStoreDistance(Distance $distance, string $expectedIndex)
+    #[DataProvider('provideIndexMetrics')]
+    public function testSetupCreatesVectorIndexWithStoreMetric(Metric $metric, string $expectedIndex)
     {
         $pdo = $this->createMock(\PDO::class);
         $pdo->method('getAttribute')
             ->with(\PDO::ATTR_SERVER_VERSION)
             ->willReturn('11.8.1-MariaDB-ubu2404');
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', $distance);
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', $metric);
 
         $expectedQuery = <<<SQL
             CREATE TABLE IF NOT EXISTS embeddings_table (
@@ -403,13 +403,13 @@ final class StoreTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Distance, string}>
+     * @return iterable<string, array{Metric, string}>
      */
-    public static function provideIndexDistances(): iterable
+    public static function provideIndexMetrics(): iterable
     {
-        yield 'cosine' => [Distance::Cosine, 'VECTOR INDEX embedding_index (`embedding`) DISTANCE=cosine'];
-        yield 'euclidean' => [Distance::Euclidean, 'VECTOR INDEX embedding_index (`embedding`) DISTANCE=euclidean'];
-        yield 'distance of the index' => [Distance::Distance, 'VECTOR INDEX embedding_index (`embedding`)'];
+        yield 'cosine' => [Metric::Cosine, 'VECTOR INDEX embedding_index (`embedding`) DISTANCE=cosine'];
+        yield 'euclidean' => [Metric::Euclidean, 'VECTOR INDEX embedding_index (`embedding`) DISTANCE=euclidean'];
+        yield 'distance of the index' => [Metric::Distance, 'VECTOR INDEX embedding_index (`embedding`)'];
     }
 
     public function testSetupWithDistanceOfTheIndexRequiresMariaDb118()
@@ -420,10 +420,10 @@ final class StoreTest extends TestCase
             ->willReturn('11.7.2-MariaDB-ubu2404');
         $pdo->expects($this->never())->method('exec');
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Distance);
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Metric::Distance);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('You need MariaDB >=11.8 to use "Distance::Distance"');
+        $this->expectExceptionMessage('You need MariaDB >=11.8 to use "Metric::Distance"');
 
         $store->setup();
     }
@@ -436,7 +436,7 @@ final class StoreTest extends TestCase
             ->willReturn('11.8.0-MariaDB-ubu2404');
         $pdo->expects($this->once())->method('exec')->willReturn(0);
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Distance);
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Metric::Distance);
         $store->setup();
     }
 
@@ -448,8 +448,36 @@ final class StoreTest extends TestCase
             ->willReturn('11.7.2-MariaDB-ubu2404');
         $pdo->expects($this->once())->method('exec')->willReturn(0);
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Distance::Cosine);
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Metric::Cosine);
         $store->setup();
+    }
+
+    public function testSetupWithCustomDimensions()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->method('getAttribute')
+            ->with(\PDO::ATTR_SERVER_VERSION)
+            ->willReturn('11.8.1-MariaDB-ubu2404');
+        $pdo->expects($this->once())
+            ->method('exec')
+            ->with($this->stringContains('`embedding` VECTOR(768) NOT NULL'))
+            ->willReturn(0);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', dimensions: 768);
+        $store->setup();
+    }
+
+    public function testSetupRejectsOptions()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->expects($this->never())->method('exec');
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
+
+        $store->setup(['dimensions' => 768]);
     }
 
     public function testItCanDrop()

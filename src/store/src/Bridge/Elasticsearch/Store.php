@@ -33,12 +33,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $indexName,
         private readonly string $vectorsField = '_vectors',
         private readonly int $dimensions = 1536,
-        private readonly string $similarity = 'cosine',
+        private readonly string $metric = 'cosine',
     ) {
     }
 
     public function setup(array $options = []): void
     {
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
         $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (200 === $indexExistResponse->getStatusCode()) {
@@ -50,8 +54,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'properties' => [
                     $this->vectorsField => [
                         'type' => 'dense_vector',
-                        'dims' => $options['dimensions'] ?? $this->dimensions,
-                        'similarity' => $options['similarity'] ?? $this->similarity,
+                        'dims' => $this->dimensions,
+                        'similarity' => $this->metric,
                     ],
                 ],
             ],

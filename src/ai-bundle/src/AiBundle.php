@@ -135,28 +135,28 @@ use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\StoreFactory as ManticoreSearchStoreFactory;
-use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
+use Symfony\AI\Store\Bridge\MariaDb\Metric as MariaDbMetric;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\Milvus\StoreFactory as MilvusStoreFactory;
-use Symfony\AI\Store\Bridge\MongoDb\Similarity as MongoDbSimilarity;
+use Symfony\AI\Store\Bridge\MongoDb\Metric as MongoDbMetric;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Neo4j\StoreFactory as Neo4jStoreFactory;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory as OpenSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
-use Symfony\AI\Store\Bridge\Postgres\Distance;
+use Symfony\AI\Store\Bridge\Postgres\Metric as PostgresMetric;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Postgres\StoreFactory as PostgresStoreFactory;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
-use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
+use Symfony\AI\Store\Bridge\Redis\Metric as RedisMetric;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
-use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
+use Symfony\AI\Store\Bridge\Sqlite\Metric as SqliteMetric;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
@@ -268,7 +268,6 @@ final class AiBundle extends AbstractBundle
             }
         }
 
-        $setupStoresOptions = [];
         if ([] !== ($config['store'] ?? [])) {
             $storeConfigured = \count($config['store']) !== \count($config['store'], \COUNT_RECURSIVE);
             if ($storeConfigured && !ContainerBuilder::willBeAvailable('symfony/ai-store', StoreInterface::class, ['symfony/ai-bundle'])) {
@@ -276,10 +275,9 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($config['store'] as $type => $store) {
-                $this->processStoreConfig($type, $store, $builder, $setupStoresOptions);
+                $this->processStoreConfig($type, $store, $builder);
             }
         }
-        $builder->getDefinition('ai.command.setup_store')->setArgument(1, $setupStoresOptions);
 
         $stores = array_keys($builder->findTaggedServiceIds('ai.store'));
 
@@ -1774,9 +1772,8 @@ final class AiBundle extends AbstractBundle
 
     /**
      * @param array<string, mixed> $stores
-     * @param array<string, mixed> $setupStoresOptions
      */
-    private function processStoreConfig(string $type, array $stores, ContainerBuilder $container, array &$setupStoresOptions): void
+    private function processStoreConfig(string $type, array $stores, ContainerBuilder $container): void
     {
         if ([] === $stores) {
             return;
@@ -1929,7 +1926,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($store['http_client'] ?? 'http_client'),
                         $store['vectors_field'],
                         $store['dimensions'],
-                        $store['similarity'],
+                        $store['metric'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
@@ -1956,7 +1953,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($store['http_client'] ?? 'http_client'),
                         $store['field'],
                         $store['type'],
-                        $store['similarity'],
+                        $store['metric'],
                         $store['dimensions'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
@@ -1988,17 +1985,19 @@ final class AiBundle extends AbstractBundle
                         $store['table_name'] ?? $name,
                         $store['index_name'],
                         $store['vector_field_name'],
-                        MariaDbDistance::from($store['distance']),
+                        MariaDbMetric::from($store['metric']),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
 
+                if (isset($store['dimensions'])) {
+                    $definition->setArgument('$dimensions', $store['dimensions']);
+                }
+
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -2076,7 +2075,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($store['http_client'] ?? 'http_client'),
                         $store['vector_field'],
                         $store['dimensions'],
-                        $store['metric_type'],
+                        $store['metric'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
@@ -2107,11 +2106,15 @@ final class AiBundle extends AbstractBundle
                 }
 
                 if (isset($store['dimensions'])) {
-                    $arguments['$embeddingsDimension'] = $store['dimensions'];
+                    $arguments['$dimensions'] = $store['dimensions'];
                 }
 
-                if (isset($store['similarity'])) {
-                    $arguments['$similarity'] = MongoDbSimilarity::from($store['similarity']);
+                if (isset($store['metric'])) {
+                    $arguments['$metric'] = MongoDbMetric::from($store['metric']);
+                }
+
+                if (isset($store['index_fields'])) {
+                    $arguments['$indexFields'] = $store['index_fields'];
                 }
 
                 $definition = new Definition(MongoDbStore::class);
@@ -2125,8 +2128,6 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -2146,7 +2147,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($store['http_client'] ?? 'http_client'),
                     $store['vector_field'],
                     $store['dimensions'],
-                    $store['distance'],
+                    $store['metric'],
                 ];
 
                 if (\array_key_exists('quantization', $store)) {
@@ -2182,7 +2183,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($store['http_client'] ?? 'http_client'),
                         $store['vectors_field'],
                         $store['dimensions'],
-                        $store['space_type'],
+                        $store['metric'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
@@ -2211,7 +2212,11 @@ final class AiBundle extends AbstractBundle
                     $arguments[4] = $store['top_k'];
                 }
 
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
+                foreach (['dimensions', 'metric', 'cloud', 'region'] as $key) {
+                    if (isset($store[$key])) {
+                        $arguments['$'.$key] = $store[$key];
+                    }
+                }
 
                 $definition = new Definition(PineconeStore::class);
                 $definition
@@ -2242,7 +2247,7 @@ final class AiBundle extends AbstractBundle
                             new Reference($store['dbal_connection']),
                             $store['table_name'] ?? $name,
                             $store['vector_field'],
-                            Distance::tryFrom($store['distance']),
+                            PostgresMetric::tryFrom($store['metric']),
                             $store['lang'],
                         ]);
                 } else {
@@ -2259,9 +2264,15 @@ final class AiBundle extends AbstractBundle
                             $pdo,
                             $store['table_name'] ?? $name,
                             $store['vector_field'],
-                            Distance::tryFrom($store['distance']),
+                            PostgresMetric::tryFrom($store['metric']),
                             $store['lang'],
                         ]);
+                }
+
+                foreach (['dimensions' => '$dimensions', 'vector_type' => '$vectorType', 'index_method' => '$indexMethod', 'index_opclass' => '$indexOpclass'] as $key => $argument) {
+                    if (isset($store[$key])) {
+                        $definition->setArgument($argument, $store[$key]);
+                    }
                 }
 
                 $definition
@@ -2273,8 +2284,6 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -2293,7 +2302,7 @@ final class AiBundle extends AbstractBundle
                         $store['api_key'] ?? null,
                         new Reference($store['http_client']),
                         $store['dimensions'],
-                        $store['distance'],
+                        $store['metric'],
                         $store['async'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
@@ -2326,17 +2335,19 @@ final class AiBundle extends AbstractBundle
                         $redisClient,
                         $store['index_name'] ?? $name,
                         $store['key_prefix'],
-                        RedisDistance::from($store['distance']),
+                        RedisMetric::from($store['metric']),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store');
 
+                if (isset($store['dimensions'])) {
+                    $definition->setArgument('$dimensions', $store['dimensions']);
+                }
+
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $store['setup_options'] ?? [];
             }
         }
 
@@ -2367,12 +2378,13 @@ final class AiBundle extends AbstractBundle
                     $arguments[4] = $store['top_k'];
                 }
 
-                $setupOptions = $store['setup_options'] ?? [];
-                if (\array_key_exists('distance_metric', $setupOptions)) {
-                    $setupOptions['distanceMetric'] = $setupOptions['distance_metric'];
-                    unset($setupOptions['distance_metric']);
+                if (isset($store['dimensions'])) {
+                    $arguments['$dimensions'] = $store['dimensions'];
                 }
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $setupOptions;
+
+                if (isset($store['metric'])) {
+                    $arguments['$metric'] = $store['metric'];
+                }
 
                 $definition = new Definition(S3VectorsStore::class);
                 $definition
@@ -2397,8 +2409,8 @@ final class AiBundle extends AbstractBundle
                 $isVec = $store['vec'] ?? false;
 
                 if ($isVec) {
-                    $distance = SqliteDistance::from($store['distance'] ?? 'cosine');
-                    $vectorDimension = $store['vector_dimension'] ?? 1536;
+                    $metric = SqliteMetric::from($store['metric'] ?? 'cosine');
+                    $dimensions = $store['dimensions'] ?? 1536;
 
                     $definition = new Definition(SqliteVecStore::class);
 
@@ -2407,16 +2419,16 @@ final class AiBundle extends AbstractBundle
                             ->setArguments([
                                 new Reference(\sprintf('doctrine.dbal.%s_connection', $store['connection'])),
                                 $store['table_name'] ?? $name,
-                                $distance,
-                                $vectorDimension,
+                                $metric,
+                                $dimensions,
                             ]);
                     } else {
                         $definition->setFactory([SqliteStoreFactory::class, 'createVecStore'])
                             ->setArguments([
                                 $store['dsn'],
                                 $store['table_name'] ?? $name,
-                                $distance,
-                                $vectorDimension,
+                                $metric,
+                                $dimensions,
                             ]);
                     }
                 } else {
@@ -2479,7 +2491,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($store['http_client'] ?? 'http_client'),
                         $store['table'] ?? $name,
                         $store['vector_field'],
-                        $store['vector_dimension'],
+                        $store['dimensions'],
                         $store['function_name'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
@@ -2506,7 +2518,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($store['http_client']),
                     $store['table'] ?? $name,
                     $store['vector_field'],
-                    $store['strategy'],
+                    $store['metric'],
                     $store['dimensions'],
                 ];
 
@@ -2525,13 +2537,6 @@ final class AiBundle extends AbstractBundle
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
-
-                $setupOptions = [];
-                if (isset($store['setup_options']['force_database_creation'])) {
-                    $setupOptions['forceDatabaseCreation'] = $store['setup_options']['force_database_creation'];
-                }
-
-                $setupStoresOptions['ai.store.'.$type.'.'.$name] = $setupOptions;
             }
         }
 

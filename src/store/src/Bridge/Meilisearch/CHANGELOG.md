@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Rename the `embeddingsDimension` argument of `Store` and `StoreFactory` to `dimensions`
+
 0.14
 ----
 

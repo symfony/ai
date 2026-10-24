@@ -34,7 +34,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly HttpClientInterface $httpClient,
         private readonly string $collection,
         private readonly string $vectorFieldName = '_vectors',
-        private readonly int $embeddingsDimension = 1536,
+        private readonly int $dimensions = 1536,
     ) {
     }
 
@@ -54,7 +54,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 [
                     'name' => $this->vectorFieldName,
                     'type' => 'float[]',
-                    'num_dim' => $this->embeddingsDimension,
+                    'num_dim' => $this->dimensions,
                 ],
                 [
                     'name' => 'metadata',
