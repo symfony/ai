@@ -24,8 +24,8 @@
  * merged, since models frequently go offline on Hugging Face Inference Providers. Pinned models are
  * always looked up, so they stay listed while they are served, even outside the most downloaded ones.
  *
- * Add-only: hand-curated entries win, so only genuinely new models are appended. Removals and
- * capability corrections stay manual. The content between the "// STATIC LIST START" and
+ * Hand-curated entries win. Only OpenRouter removes models missing from its complete catalog.
+ * Capability corrections stay manual. The content between the "// STATIC LIST START" and
  * "// STATIC LIST END" markers is rewritten; everything else in the file is left untouched.
  *
  * Usage:
@@ -153,7 +153,7 @@ $modelsDevBridges = [
     ],
 ];
 
-(new SingleCommandApplication())
+$application = (new SingleCommandApplication())
     ->setName('Update Model Catalogs')
     ->addArgument('bridge', InputArgument::OPTIONAL, 'Limit the update to a single bridge (e.g. "Anthropic", "OpenRouter")')
     ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Print what would change without writing any file')
@@ -197,7 +197,7 @@ $modelsDevBridges = [
 
         if (null === $filter || 'openrouter' === strtolower($filter)) {
             $openRouter = fetchOpenRouter($http);
-            $failed = !writeCatalog($io, 'OpenRouter', $openRouter, true, $dryRun, OPENROUTER_ROUTING_KEYS) || $failed;
+            $failed = !writeCatalog($io, 'OpenRouter', $openRouter, true, $dryRun, OPENROUTER_ROUTING_KEYS, prune: true) || $failed;
         }
 
         if (null === $filter || 'huggingface' === strtolower($filter)) {
@@ -214,8 +214,11 @@ $modelsDevBridges = [
         $io->success($dryRun ? 'Dry-run complete.' : 'Catalogs updated.');
 
         return Command::SUCCESS;
-    })
-    ->run();
+    });
+
+if (__FILE__ === realpath($_SERVER['SCRIPT_FILENAME'])) {
+    $application->run();
+}
 
 /**
  * @return array<string, mixed>
@@ -345,7 +348,7 @@ function pickClass(array $model, array $config): string
  * @param array<string, array{class: class-string, capabilities: list<Capability>}> $fresh
  * @param list<string>                                                              $excludeKeys
  */
-function writeCatalog(SymfonyStyle $io, string $bridge, array $fresh, bool $merge, bool $dryRun, array $excludeKeys = []): bool
+function writeCatalog(SymfonyStyle $io, string $bridge, array $fresh, bool $merge, bool $dryRun, array $excludeKeys = [], bool $prune = false): bool
 {
     $file = PLATFORM_DIR.'/src/Bridge/'.$bridge.'/ModelCatalog.php';
     $source = file_get_contents($file);
@@ -363,9 +366,16 @@ function writeCatalog(SymfonyStyle $io, string $bridge, array $fresh, bool $merg
         $existing = $catalog->getModels();
     }
 
-    // Add-only: curated entries win, so hand-tuned capabilities/classes are never overwritten and
-    // only genuinely new models are appended.
-    $models = $merge ? [...$fresh, ...$existing] : $fresh;
+    $baseline = array_diff_key($existing, array_flip($excludeKeys));
+    $removed = $prune ? array_diff_key($baseline, $fresh) : [];
+    if ($prune && ([] === $fresh || count($removed) > count($baseline) * 0.25)) {
+        $io->error(sprintf('%s: refusing to remove %d of %d models; the upstream catalog may be incomplete.', $bridge, count($removed), count($baseline)));
+
+        return false;
+    }
+
+    $curated = $prune ? array_intersect_key($existing, $fresh) : $existing;
+    $models = $merge ? array_replace($fresh, $curated) : $fresh;
     foreach ($excludeKeys as $key) {
         unset($models[$key]);
     }
@@ -393,11 +403,18 @@ function writeCatalog(SymfonyStyle $io, string $bridge, array $fresh, bool $merg
     }
 
     $added = array_diff(array_keys($models), array_keys($existing));
-    $summary = sprintf('%s: %d models (%d new)', $bridge, count($models), count($added));
+    $summary = sprintf('%s: %d models (%d new, %d removed)', $bridge, count($models), count($added), count($removed));
 
     if ($dryRun) {
         $io->writeln('<comment>[dry-run]</comment> '.$summary);
-        $io->listing(array_values($added));
+        if ([] !== $added) {
+            $io->section('Added models');
+            $io->listing(array_values($added));
+        }
+        if ([] !== $removed) {
+            $io->section('Removed models');
+            $io->listing(array_keys($removed));
+        }
 
         return true;
     }

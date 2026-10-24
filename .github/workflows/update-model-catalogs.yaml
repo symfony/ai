@@ -83,6 +83,8 @@ jobs:
                       (models.dev for per-provider bridges, the OpenRouter API for OpenRouter, the Hugging Face
                       Hub API for HuggingFace).
 
-                      New models are appended; hand-curated entries are left untouched. The HuggingFace list is
-                      rewritten instead, so it also drops models that went offline. Review the diff before
-                      merging, and adjust capabilities or model classes where the heuristics need a human.
+                      New models are added. Only OpenRouter prunes missing models, with a guard against
+                      incomplete feeds. models.dev catalogs retain hand-curated entries omitted by the feed;
+                      the HuggingFace list is rewritten.
+                      Review the diff before merging, and adjust capabilities or model classes where
+                      the heuristics need a human.
