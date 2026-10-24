@@ -1,25 +1,26 @@
 {% import '_message.html.twig' as msg %}
+{% import 'wikipedia/_research.html.twig' as research %}
 {% set messages = this.messages %}
 
 <section class="chat" {{ attributes.defaults(stimulus_controller('wikipedia')) }}>
     {{ include('_chat_header.html.twig', { demo: demos.wikipedia }) }}
     <div id="chat-body" class="chat-body">
+        {# Kept across re-renders, so the connection to the Mercure hub stays open #}
+        <div id="research-stream" data-live-ignore>{{ turbo_stream_from(this.topic) }}</div>
         {% for message in messages %}
-            {% include '_message.html.twig' with { message, latest: loop.last } %}
-            {% if message.metadata.has('sources') and 0 != message.metadata.get('sources')|length %}
-                <div class="message-sources">
-                    <span class="message-sources-label">Sources</span>
-                    {% for source in message.metadata.get('sources') %}
-                        <a class="source-pill" href="{{ source.reference }}" target="_blank" rel="noopener">{{ ux_icon('wikipedia') }}{{ source.name }}</a>
-                    {% endfor %}
-                </div>
+            {% if message.role.value == 'assistant' %}
+                {{ research.answer(message) }}
+            {% else %}
+                {{ msg.user(message.content) }}
             {% endif %}
         {% else %}
-            {{ msg.welcome('Wikipedia Research', 'Ask me about any topic - I search and read Wikipedia, then summarize what I found with sources.') }}
+            {{ msg.welcome('Wikipedia Research', 'Ask me about any topic - I search and read Wikipedia in a background worker, and you watch every step of my research arrive via Mercure.') }}
         {% endfor %}
+        {% if this.researching %}
+            {{ research.researching() }}
+        {% endif %}
         <div id="loading-message" class="d-none">
             {{ msg.user([{text:''}]) }}
-            {{ msg.bot('The Wikipedia Bot is doing some research ...', true) }}
         </div>
     </div>
     <div class="chat-composer" data-controller="chat-prompt">

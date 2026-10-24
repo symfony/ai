@@ -37,13 +37,13 @@ twig:
             wikipedia:
                 label: 'Wikipedia'
                 name: 'Wikipedia Research Bot'
-                tag: 'Tool Calling'
-                description: 'A chatbot equipped with tools to search and read Wikipedia about topics you ask for.'
-                model: 'gpt-5-mini'
+                tag: 'Mercure'
+                description: 'A research bot that searches and reads Wikipedia in a background worker, pushing every step to the browser via Mercure.'
+                model: 'gpt-6-luna'
                 icon: 'wikipedia'
                 gradient: 'linear-gradient(180deg, #1CA574, #56AB48)'
-                source: 'src/Wikipedia/Chat.php'
-                line: 21
+                source: 'src/Wikipedia/ResearchHandler.php'
+                line: 37
             mcp:
                 label: 'MCP'
                 name: 'MCP Client Bot'

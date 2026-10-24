@@ -749,6 +749,72 @@ body.chat-page {
     }
 }
 
+.research-message {
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
+}
+
+.research {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.research-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 4px 0 0;
+    list-style: none;
+    font-size: .82rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+
+    &:empty {
+        display: none;
+    }
+}
+
+.research-step {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+
+    svg {
+        flex-shrink: 0;
+        width: 13px;
+        height: 13px;
+        color: var(--sf-violet);
+        transform: translateY(2px);
+    }
+}
+
+.research-step-commentary {
+    font-style: italic;
+}
+
+.research-step-tool {
+    font-family: var(--font-mono);
+    font-size: .74rem;
+}
+
+.research-log {
+    font-size: .76rem;
+    color: var(--text-muted);
+
+    summary {
+        padding-top: 4px;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: .64rem;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+}
+
 .typing {
     display: inline-flex;
     align-items: center;
