@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Document\Loader;
 
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
@@ -33,7 +33,7 @@ final class RstLoader implements LoaderInterface
     /**
      * @param array<string, mixed> $options accepts 'depth' (int, default 0)
      *
-     * @return iterable<EmbeddableDocumentInterface>
+     * @return iterable<DocumentInterface>
      */
     public function load(?string $source = null, array $options = []): iterable
     {
@@ -61,7 +61,7 @@ final class RstLoader implements LoaderInterface
      *
      * @param array<string, mixed> $options accepts 'depth' (int, default 0)
      *
-     * @return iterable<EmbeddableDocumentInterface>
+     * @return iterable<DocumentInterface>
      */
     public function loadContent(string $content, string $source, array $options = []): iterable
     {
@@ -71,7 +71,7 @@ final class RstLoader implements LoaderInterface
     }
 
     /**
-     * @return iterable<EmbeddableDocumentInterface>
+     * @return iterable<DocumentInterface>
      */
     private function splitIntoSections(string $content, string $source, int $depth): iterable
     {
@@ -115,7 +115,7 @@ final class RstLoader implements LoaderInterface
     }
 
     /**
-     * @return iterable<EmbeddableDocumentInterface>
+     * @return iterable<DocumentInterface>
      */
     private function yieldSection(string $text, string $title, string $source, int $depth): iterable
     {

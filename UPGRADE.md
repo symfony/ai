@@ -1,3 +1,19 @@
+UPGRADE FROM 0.15 to 0.16
+=========================
+
+Store
+-----
+
+ * `Document\EmbeddableDocumentInterface` is renamed to `Document\DocumentInterface`:
+
+   ```diff
+   -use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+   +use Symfony\AI\Store\Document\DocumentInterface;
+
+   -final class ArticleDocument implements EmbeddableDocumentInterface
+   +final class ArticleDocument implements DocumentInterface
+   ```
+
 UPGRADE FROM 0.14 to 0.15
 =========================
 

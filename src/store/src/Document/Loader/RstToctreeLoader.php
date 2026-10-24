@@ -13,7 +13,7 @@ namespace Symfony\AI\Store\Document\Loader;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
@@ -39,7 +39,7 @@ final class RstToctreeLoader implements LoaderInterface
     /**
      * @param array<string, mixed> $options
      *
-     * @return iterable<EmbeddableDocumentInterface>
+     * @return iterable<DocumentInterface>
      */
     public function load(?string $source = null, array $options = []): iterable
     {
@@ -51,7 +51,7 @@ final class RstToctreeLoader implements LoaderInterface
     }
 
     /**
-     * @return iterable<EmbeddableDocumentInterface>
+     * @return iterable<DocumentInterface>
      */
     private function processFile(string $path, int $depth, string $rootDir): iterable
     {
