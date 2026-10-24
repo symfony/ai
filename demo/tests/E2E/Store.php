@@ -15,7 +15,7 @@ use PHPUnit\Framework\Assert;
 use Symfony\Component\Process\Process;
 
 /**
- * The vector store of the blog, driven through the console commands of the Store component.
+ * The vector stores of the blog and the movies, driven through the console commands of the demo.
  *
  * The commands run in the `dev` environment, against the PostgreSQL of the Docker setup and the
  * real embeddings of OpenAI - the same store the browser then queries through the blog agent.
@@ -56,19 +56,24 @@ final class Store
      */
     public static function documents(): int
     {
-        $connection = self::connect();
+        return self::rows(self::TABLE);
+    }
 
-        if (null === $connection) {
-            return 0;
-        }
+    /**
+     * The number of movies, embedded on flush when the fixtures are loaded.
+     */
+    public static function movies(): int
+    {
+        return self::rows('movie');
+    }
 
-        try {
-            $result = $connection->query(\sprintf('SELECT count(*) FROM "%s"', self::TABLE));
-
-            return false === $result ? 0 : (int) $result->fetchColumn();
-        } catch (\PDOException) {
-            return 0;
-        }
+    /**
+     * Creates the movie table and loads the movies from the Markdown fixtures, embedding them through OpenAI.
+     */
+    public static function loadMovies(): void
+    {
+        self::console('doctrine:migrations:migrate');
+        self::console('doctrine:fixtures:load');
     }
 
     /**
@@ -94,6 +99,23 @@ final class Store
     public static function retrieve(string $query, int $limit = 3): string
     {
         return self::console('ai:store:retrieve', self::RETRIEVER, $query, '--limit='.$limit);
+    }
+
+    private static function rows(string $table): int
+    {
+        $connection = self::connect();
+
+        if (null === $connection) {
+            return 0;
+        }
+
+        try {
+            $result = $connection->query(\sprintf('SELECT count(*) FROM "%s"', $table));
+
+            return false === $result ? 0 : (int) $result->fetchColumn();
+        } catch (\PDOException) {
+            return 0;
+        }
     }
 
     /**

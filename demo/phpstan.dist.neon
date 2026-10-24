@@ -1,3 +1,6 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
 parameters:
     level: 8
     paths:
