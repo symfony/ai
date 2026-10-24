@@ -86,7 +86,13 @@ final class McpToolboxTest extends TestCase
             ),
         ]);
 
-        $metadata = (new McpToolbox($toolset))->getTools()[0]->getMetadata();
+        $tool = (new McpToolbox($toolset))->getTools()[0];
+        $metadata = $tool->getMetadata();
+
+        $this->assertFalse($tool->isReadOnly());
+        $this->assertTrue($tool->isDestructive());
+        $this->assertFalse($tool->isIdempotent());
+        $this->assertFalse($tool->isOpenWorld());
 
         $this->assertSame([
             'readOnlyHint' => false,
@@ -108,14 +114,28 @@ final class McpToolboxTest extends TestCase
             ),
         ]);
 
-        $this->assertSame(['readOnlyHint' => true], (new McpToolbox($toolset))->getTools()[0]->getMetadata());
+        $tool = (new McpToolbox($toolset))->getTools()[0];
+
+        $this->assertTrue($tool->isReadOnly());
+        $this->assertFalse($tool->isDestructive());
+        $this->assertTrue($tool->isIdempotent());
+        $this->assertNull($tool->getEffectHints()->destructiveHint);
+        $this->assertNull($tool->getEffectHints()->idempotentHint);
+        $this->assertTrue($tool->isOpenWorld());
+        $this->assertSame(['readOnlyHint' => true], $tool->getMetadata());
     }
 
     public function testNoAnnotationsMeansNoMetadata()
     {
         $toolbox = new McpToolbox(new StaticToolset(tools: [$this->remoteTool('echo')]));
 
-        $this->assertSame([], $toolbox->getTools()[0]->getMetadata());
+        $tool = $toolbox->getTools()[0];
+
+        $this->assertSame([], $tool->getMetadata());
+        $this->assertFalse($tool->isReadOnly());
+        $this->assertTrue($tool->isDestructive());
+        $this->assertFalse($tool->isIdempotent());
+        $this->assertTrue($tool->isOpenWorld());
     }
 
     public function testAnnotationsTitleIsNotMetadataSinceItIsDeprecatedInFavorOfToolTitle()

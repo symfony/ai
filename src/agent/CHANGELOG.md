@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add tool effect hints to `AsTool` and the tool factories
+
 0.15
 ----
 

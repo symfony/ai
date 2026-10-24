@@ -1,9 +1,9 @@
 CHANGELOG
-=========
-
+==
 0.16
 ----
 
+ * Add read-only, destructive, idempotent and open-world hints to tool definitions
  * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
 
 0.15
