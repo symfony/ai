@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-23T20:05:16Z
+
+Metadata is now the canonical source, with `getEffectHints()` deriving nullable values so omitted MCP hints remain distinguishable from explicit values. Read-only tools report non-destructive and idempotent behavior. Replaced the four flat parameters with one appended `ToolEffectHints` argument; there is no dependency on #1841, whose constructor addition can be rebased independently while preserving existing positional arguments.
+
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-25T21:51:09Z
+
+Raised Agent’s Platform dependency and the MCP bridge’s Agent/Platform dependencies to ^0.16, where the tool-effect API is introduced. The lowest failure was in SimilaritySearch: adding its direct Platform test dependency lets the existing build-packages path-repository setup resolve the local Platform alongside the local Agent instead of mixing in released 0.15.
