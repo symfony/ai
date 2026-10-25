@@ -54,7 +54,7 @@ final class EmbeddingListener
             $metadata = $entityManager->getClassMetadata($entity::class);
             $mapping = $this->mapping($metadata);
 
-            if (null !== $mapping && null === $metadata->getFieldValue($entity, $mapping->getVectorField())) {
+            if (null !== $mapping && null === $metadata->getFieldValue($entity, $mapping->getRequiredVectorField())) {
                 $entitiesByClass[$metadata->getName()][] = $entity;
             }
         }
@@ -64,7 +64,7 @@ final class EmbeddingListener
             $mapping = $this->mapping($metadata);
             $changeSet = $unitOfWork->getEntityChangeSet($entity);
 
-            if (null !== $mapping && !\array_key_exists($mapping->getVectorField(), $changeSet) && $mapping->isAffectedBy($changeSet)) {
+            if (null !== $mapping && !\array_key_exists($mapping->getRequiredVectorField(), $changeSet) && $mapping->isAffectedBy($changeSet)) {
                 $entitiesByClass[$metadata->getName()][] = $entity;
             }
         }
@@ -94,7 +94,7 @@ final class EmbeddingListener
         \assert(null !== $mapping);
 
         foreach ($entities as $entity) {
-            $metadata->setFieldValue($entity, $mapping->getVectorField(), null);
+            $metadata->setFieldValue($entity, $mapping->getRequiredVectorField(), null);
         }
 
         $this->logger->warning('Embedding {count} "{class}" entities failed, they stay without embedding until indexed again: {message}', [
@@ -112,7 +112,8 @@ final class EmbeddingListener
     {
         if (!\array_key_exists($metadata->getName(), $this->mappings)) {
             $handled = null === $this->entityClass || is_a($metadata->getName(), $this->entityClass, true);
-            $this->mappings[$metadata->getName()] = $handled ? EmbeddingMapping::fromClassMetadata($metadata) : null;
+            $mapping = $handled ? EmbeddingMapping::fromClassMetadata($metadata) : null;
+            $this->mappings[$metadata->getName()] = $mapping?->isMirrored() ? null : $mapping;
         }
 
         return $this->mappings[$metadata->getName()];

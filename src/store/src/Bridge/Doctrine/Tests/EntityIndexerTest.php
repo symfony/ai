@@ -13,15 +13,21 @@ namespace Symfony\AI\Store\Bridge\Doctrine\Tests;
 
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
 use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\ArrayStore;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\KeywordVectorizer;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Memo;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Note;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Place;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Translation;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Untracked;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\StoreInterface;
 
 final class EntityIndexerTest extends TestCase
 {
@@ -141,6 +147,86 @@ final class EntityIndexerTest extends TestCase
         $this->assertSame(0, $this->countWithoutEmbedding(Note::class));
     }
 
+    public function testMirrorsTheTableIntoTheStore()
+    {
+        $this->persist(new Product('Cats'), new Product('Dogs'), new Place('Fish'));
+        $store = new ArrayStore();
+
+        $this->indexer($store)->index([Product::class, Place::class], ['batch_size' => 1]);
+
+        $this->assertCount(3, $store);
+    }
+
+    public function testMirrorsTheEntitiesItIsGiven()
+    {
+        $cats = new Product('Cats');
+        $this->entityManager->persist($cats);
+        $this->entityManager->flush();
+        $store = new ArrayStore();
+
+        $this->indexer($store)->index($cats);
+
+        $this->assertCount(1, $store);
+    }
+
+    public function testFailsWhenTheModelFailsWhileMirroring()
+    {
+        $this->vectorizer = new KeywordVectorizer(maxLength: 3);
+        $this->persist(new Product('Cats'));
+        $store = new ArrayStore();
+
+        try {
+            $this->indexer($store)->index(Product::class);
+            $this->fail('The indexer should fail when nothing reaches the store.');
+        } catch (ExceedContextSizeException) {
+            $this->assertCount(0, $store);
+        }
+    }
+
+    public function testRefusesAnEntityThatIsNotMirroredWhenMirroring()
+    {
+        $this->persist(new Article('Cats'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('Entity "%s" is not mirrored', Article::class));
+
+        $this->indexer(new ArrayStore())->index(Article::class);
+    }
+
+    public function testRefusesAMirroredEntityTheListenerDoesNotHandle()
+    {
+        $this->persist(new Product('Cats'), new Place('Dogs'));
+        $embedder = new EntityEmbedder($this->vectorizer);
+        $indexer = new EntityIndexer($this->entityManager, $embedder, mirror: new MirrorListener($embedder, new ArrayStore(), Product::class));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('does not handle "%s" entities', Place::class));
+
+        try {
+            $indexer->index(Place::class);
+        } finally {
+            $this->assertSame([], $this->vectorizer->calls);
+        }
+    }
+
+    public function testRefusesToMirrorWithoutAMirrorListener()
+    {
+        $this->persist(new Product('Cats'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('need a mirror listener');
+
+        $this->indexer()->index(Product::class);
+    }
+
+    public function testRefusesOnlyMissingForAMirroredEntity()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"only_missing" has no field to check');
+
+        $this->indexer(new ArrayStore())->index(Product::class, ['only_missing' => true]);
+    }
+
     public function testRefusesPlatformOptions()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -156,9 +242,11 @@ final class EntityIndexerTest extends TestCase
         $this->indexer()->index('App\Entity\Missing');
     }
 
-    private function indexer(): EntityIndexer
+    private function indexer(?StoreInterface $mirror = null): EntityIndexer
     {
-        return new EntityIndexer($this->entityManager, new EntityEmbedder($this->vectorizer));
+        $embedder = new EntityEmbedder($this->vectorizer);
+
+        return new EntityIndexer($this->entityManager, $embedder, mirror: null === $mirror ? null : new MirrorListener($embedder, $mirror));
     }
 
     private function persist(object ...$entities): void

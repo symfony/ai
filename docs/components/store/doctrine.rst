@@ -7,7 +7,8 @@ writes it with the rest of the entity, and a query returns the entities.
 
 The store supports PostgreSQL with the `pgvector`_ extension, MariaDB 11.7 or newer and SQLite
 with the `sqlite-vec`_ extension. MySQL is not supported, because MySQL Community has no function
-to compare vectors.
+to compare vectors. If your database has no vector support, you can mirror the entities into
+another store instead (see `Mirroring Entities`_).
 
 Installation
 ------------
@@ -300,6 +301,81 @@ Fill the store with the entity indexer or the embedding listener. The
 :class:`Symfony\\AI\\Store\\Indexer\\DocumentIndexer` don't work with this store. They add new
 documents, and ``add()`` throws an exception for a document without an entity.
 
+Mirroring Entities
+------------------
+
+If your database has no vector support, mirror the entities into another store instead. Put
+``#[Embedding]`` on the class, without a vector field. The ``from`` option works as before::
+
+    use Doctrine\ORM\Mapping as ORM;
+    use Symfony\AI\Store\Bridge\Doctrine\Mapping\Embedding;
+
+    #[ORM\Entity]
+    #[Embedding(from: ['name', 'description'])]
+    class Product
+    {
+        // ...
+    }
+
+:class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\Mirror\\MirrorListener` embeds new and changed
+entities with the same
+:class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\EntityEmbedder`, and adds them as documents to the
+store. It writes after the flush, because generated ids exist only then. It removes the document
+of a removed entity. Register it for the ``onFlush`` and ``postFlush`` events:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder:
+            arguments: ['@ai.vectorizer.openai_embeddings']
+
+        Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener:
+            arguments:
+                $store: '@ai.store.qdrant.catalog'
+            tags:
+                - { name: doctrine.event_listener, event: onFlush }
+                - { name: doctrine.event_listener, event: postFlush }
+
+The document id is a UUID built from the class and the id of the entity, so a changed entity
+replaces its document. The metadata holds the class and the id. Entities need a single identifier.
+Because the class name is part of the id, renaming or moving the entity class leaves the old
+documents in the store. Clear the store and run the indexer again after such a change.
+
+The database has already saved the entity when the listener writes to the store. If the model call
+fails in a way described above, the listener logs a warning and the store keeps the old document.
+Run the indexer to mirror these entities again. If the store itself fails, the exception reaches
+your code after the flush.
+
+``postFlush`` also runs when the flush is part of a bigger transaction, for example inside
+``wrapInTransaction()`` or the ``doctrine_transaction`` middleware of Messenger. The store is then
+written before the outer commit. If the transaction rolls back, the store keeps documents of
+entities that were never saved and misses the removal of entities that still exist. Run the
+indexer to repair this.
+
+To read the entities back, wrap a retriever of the mirror store in
+:class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\Mirror\\EntityRetriever`::
+
+    use Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever;
+    use Symfony\AI\Store\Retriever;
+
+    $retriever = new EntityRetriever(new Retriever($mirrorStore, $vectorizer), $entityManager);
+
+    foreach ($retriever->retrieve('red shoes') as $document) {
+        echo $document->getEntity()->getName();
+    }
+
+It returns :class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\EntityVectorDocument` objects, like the
+``OrmStore``, so ``SimilaritySearch`` works the same with both. Hits without an entity, for
+example after a removal that never reached the store, are skipped. Pass a callable as the third
+argument to be told about them.
+
+To mirror a table that already has rows, pass the listener to the entity indexer as its last
+argument. ``only_missing`` is not available, because there is no vector field to check::
+
+    $indexer = new EntityIndexer($entityManager, $embedder, mirror: $mirrorListener);
+    $indexer->index(Product::class);
+
 Bundle Configuration
 --------------------
 
@@ -317,6 +393,24 @@ Bundle Configuration
                     entity_manager: 'doctrine.orm.entity_manager'
                     # embeds the entities on flush and through "ai:store:index articles", null by default
                     vectorizer: 'ai.vectorizer.openai_embeddings'
+
+To mirror the entity into another store, set ``mirror_to`` to that store. It needs a
+``vectorizer`` and ``#[Embedding]`` on the entity class. The bundle then registers no ``OrmStore``.
+It registers the listener, the indexer and an entity retriever instead, named like the store:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        store:
+            doctrine:
+                products:
+                    entity: 'App\Entity\Product'
+                    vectorizer: 'ai.vectorizer.openai_embeddings'
+                    mirror_to: 'ai.store.qdrant.catalog'
+
+The retriever is available as ``ai.retriever.products``. A ``retriever`` or ``indexer`` of the same
+name is not allowed.
 
 Testing on SQLite
 -----------------

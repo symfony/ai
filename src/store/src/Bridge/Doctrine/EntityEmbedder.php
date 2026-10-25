@@ -12,6 +12,8 @@
 namespace Symfony\AI\Store\Bridge\Doctrine;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\AI\Platform\Exception\ContentFilterException;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -38,17 +40,36 @@ final class EntityEmbedder
      */
     public function embed(EntityManagerInterface $entityManager, iterable $entities): void
     {
+        $vectors = $this->vectorize($entityManager, $entities);
+
+        foreach ($vectors as $entity) {
+            EmbeddingMapping::fromClassMetadata($entityManager->getClassMetadata($entity::class))?->setVector($entityManager, $entity, $vectors[$entity]);
+        }
+    }
+
+    /**
+     * @param iterable<object> $entities
+     *
+     * @return \SplObjectStorage<object, VectorInterface|null> the vector per entity, null when there is nothing to embed
+     *
+     * @throws ExceedContextSizeException
+     * @throws ContentFilterException
+     */
+    public function vectorize(EntityManagerInterface $entityManager, iterable $entities): \SplObjectStorage
+    {
         $entitiesByClass = [];
         foreach ($entities as $entity) {
             $entitiesByClass[$entityManager->getClassMetadata($entity::class)->getName()][] = $entity;
         }
 
+        /** @var \SplObjectStorage<object, VectorInterface|null> $vectors */
+        $vectors = new \SplObjectStorage();
         foreach ($entitiesByClass as $class => $classEntities) {
             $metadata = $entityManager->getClassMetadata($class);
             $mapping = EmbeddingMapping::fromClassMetadata($metadata);
 
             if (null === $mapping) {
-                throw new InvalidArgumentException(\sprintf('Entity "%s" has no field marked with #[Embedding].', $class));
+                throw new InvalidArgumentException(\sprintf('Entity "%s" has no #[Embedding] attribute.', $class));
             }
 
             $contents = [];
@@ -56,7 +77,7 @@ final class EntityEmbedder
                 $content = trim($mapping->getContent($entity));
 
                 if ('' === $content) {
-                    $mapping->setVector($entityManager, $entity, null);
+                    $vectors[$entity] = null;
 
                     continue;
                 }
@@ -69,13 +90,15 @@ final class EntityEmbedder
             }
 
             foreach (array_chunk($contents, $this->chunkSize, true) as $chunk) {
-                /** @var list<VectorInterface> $vectors */
-                $vectors = $this->vectorizer->vectorize(array_values($chunk));
+                /** @var list<VectorInterface> $chunkVectors */
+                $chunkVectors = $this->vectorizer->vectorize(array_values($chunk));
 
                 foreach (array_keys($chunk) as $position => $i) {
-                    $mapping->setVector($entityManager, $classEntities[$i], $vectors[$position]);
+                    $vectors[$classEntities[$i]] = $chunkVectors[$position];
                 }
             }
         }
+
+        return $vectors;
     }
 }

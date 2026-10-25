@@ -92,6 +92,8 @@ use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
 use Symfony\AI\Store\Bridge\Doctrine\EmbeddingListener;
 use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
 use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
@@ -7790,6 +7792,94 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.store.doctrine.movies'));
         $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.embedding_listener'));
         $this->assertFalse($container->hasDefinition('ai.indexer.movies'));
+    }
+
+    public function testDoctrineStoreMirrorsTheEntityIntoAnotherStore()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'products' => [
+                            'entity' => 'App\\Entity\\Product',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                            'mirror_to' => 'ai.store.memory.catalog',
+                        ],
+                    ],
+                    'memory' => [
+                        'catalog' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.products'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.products.embedding_listener'));
+
+        $listener = $container->getDefinition('ai.store.doctrine.products.mirror_listener');
+        $this->assertSame(MirrorListener::class, $listener->getClass());
+        $this->assertSame('ai.store.doctrine.products.embedder', (string) $listener->getArgument(0));
+        $this->assertSame('ai.store.memory.catalog', (string) $listener->getArgument(1));
+        $this->assertSame('App\\Entity\\Product', $listener->getArgument(2));
+        $this->assertSame([['event' => 'onFlush'], ['event' => 'postFlush']], $listener->getTag('doctrine.event_listener'));
+
+        $entityIndexer = $container->getDefinition('ai.store.doctrine.products.entity_indexer');
+        $this->assertSame('ai.store.doctrine.products.mirror_listener', (string) $entityIndexer->getArgument('$mirror'));
+        $this->assertTrue($container->hasDefinition('ai.indexer.products'));
+
+        $retriever = $container->getDefinition('ai.retriever.products');
+        $this->assertSame(EntityRetriever::class, $retriever->getClass());
+        $this->assertSame('doctrine.orm.entity_manager', (string) $retriever->getArgument(1));
+        $this->assertSame([['name' => 'products']], $retriever->getTag('ai.retriever'));
+
+        $innerRetriever = $container->getDefinition('ai.store.doctrine.products.retriever');
+        $this->assertSame('ai.store.memory.catalog', (string) $innerRetriever->getArgument(0));
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $innerRetriever->getArgument(1));
+    }
+
+    public function testDoctrineStoreMirrorNeedsAVectorizer()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The Doctrine store "products" needs a "vectorizer"');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'products' => [
+                            'entity' => 'App\\Entity\\Product',
+                            'mirror_to' => 'ai.store.memory.catalog',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testRetrieverMustNotShareTheNameOfAMirroringDoctrineStore()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Retriever "products" is already defined by the doctrine store of the same name');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'products' => [
+                            'entity' => 'App\\Entity\\Product',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                            'mirror_to' => 'ai.store.memory.catalog',
+                        ],
+                    ],
+                ],
+                'retriever' => [
+                    'products' => [
+                        'store' => 'ai.store.memory.catalog',
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function testIndexerMustNotShareTheNameOfADoctrineStore()

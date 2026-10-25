@@ -23,6 +23,8 @@ use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Memo;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Note;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Place;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Untracked;
 use Symfony\Bridge\Doctrine\Types\UlidType;
 
@@ -75,7 +77,7 @@ trait SqliteEntityManagerTrait
      */
     private function schemaMetadata(EntityManagerInterface $entityManager): array
     {
-        return array_map($entityManager->getClassMetadata(...), [Article::class, Memo::class, Note::class, Untracked::class]);
+        return array_map($entityManager->getClassMetadata(...), [Article::class, Memo::class, Note::class, Place::class, Product::class, Untracked::class]);
     }
 
     private function registerFunction(\PDO $pdo, string $name, \Closure $function): void

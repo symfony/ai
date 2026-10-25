@@ -19,6 +19,7 @@ use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Note;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Page;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Untracked;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\SqliteEntityManagerTrait;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -38,6 +39,41 @@ final class EmbeddingMappingTest extends TestCase
 
         $this->assertSame('embedding', $mapping?->getVectorField());
         $this->assertSame('Cats', $mapping->getContent(new Page('Cats')));
+    }
+
+    public function testMirrorsAnEntityWithTheEmbeddingOnTheClass()
+    {
+        $mapping = $this->mapping(Product::class);
+
+        $this->assertTrue($mapping->isMirrored());
+        $this->assertNull($mapping->getVectorField());
+        $this->assertSame('Cats', $mapping->getContent(new Product('Cats', 3)));
+        $this->assertTrue($mapping->isAffectedBy(['name' => ['Cats', 'Dogs']]));
+        $this->assertFalse($mapping->isAffectedBy(['stock' => [1, 2]]));
+    }
+
+    public function testKeepsTheVectorOnTheEntityWithTheEmbeddingOnAField()
+    {
+        $this->assertFalse($this->mapping(Article::class)->isMirrored());
+    }
+
+    public function testRefusesTheVectorFieldOfAMirroredEntity()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('is mirrored into another store');
+
+        $this->mapping(Product::class)->getRequiredVectorField();
+    }
+
+    public function testRefusesAnEmbeddingOnTheClassAndOnAField()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('has #[Embedding] on the class and on "$embedding"');
+
+        EmbeddingMapping::fromClassMetadata($this->metadataWithEmbedding(new #[Embedding(from: ['title'])] class {
+            #[Embedding(from: ['title'])]
+            public mixed $embedding = null;
+        }, ['embedding', 'title']));
     }
 
     public function testIgnoresAnEntityWithoutEmbedding()

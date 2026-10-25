@@ -2,10 +2,11 @@ Doctrine Store
 ==============
 
 Keeps vectors in a field of a Doctrine entity and returns entities when queried, for Symfony AI
-Store. Supports PostgreSQL with pgvector, MariaDB 11.7 or newer and SQLite with sqlite-vec.
+Store. Supports PostgreSQL with pgvector, MariaDB 11.7 or newer and SQLite with sqlite-vec. For a
+database without vector support, it mirrors the entities into any other store.
 
 See the [Doctrine store documentation](https://symfony.com/doc/current/ai/components/store/doctrine.html)
-for the entity mapping, the column setup and embedding entities.
+for the entity mapping, the column setup, embedding entities and mirroring them.
 
 Doctrine Store Documentation
 ----------------------------

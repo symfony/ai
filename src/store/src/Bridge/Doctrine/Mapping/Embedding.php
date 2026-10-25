@@ -12,11 +12,11 @@
 namespace Symfony\AI\Store\Bridge\Doctrine\Mapping;
 
 /**
- * Marks the entity field holding the embedding of the entity.
+ * Marks the entity field holding the embedding, or the entity class to mirror into another store.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_CLASS)]
 final class Embedding
 {
     /**

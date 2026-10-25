@@ -135,6 +135,8 @@ use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
 use Symfony\AI\Store\Bridge\Doctrine\EmbeddingListener;
 use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
 use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
 use Symfony\AI\Store\Bridge\Doctrine\OrmStore as DoctrineOrmStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
@@ -2273,6 +2275,12 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
+                if (null !== $store['mirror_to']) {
+                    $this->processDoctrineMirrorConfig((string) $name, $store, $container);
+
+                    continue;
+                }
+
                 $definition = (new Definition(DoctrineOrmStore::class))
                     ->setLazy(true)
                     ->setArguments([
@@ -2681,11 +2689,65 @@ final class AiBundle extends AbstractBundle
             new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
         ]))->addTag('doctrine.event_listener', ['event' => 'onFlush']));
 
+        $this->processDoctrineEntityIndexer($name, $store, $embedderId, null, $container);
+    }
+
+    /**
+     * @param array{entity: class-string, entity_manager: string, vectorizer: string|null, mirror_to: string} $store
+     */
+    private function processDoctrineMirrorConfig(string $name, array $store, ContainerBuilder $container): void
+    {
+        if (null === $store['vectorizer']) {
+            throw new InvalidArgumentException(\sprintf('The Doctrine store "%s" needs a "vectorizer" to mirror its entity into "%s".', $name, $store['mirror_to']));
+        }
+
+        $embedderId = 'ai.store.doctrine.'.$name.'.embedder';
+        $container->setDefinition($embedderId, new Definition(EntityEmbedder::class, [new Reference($store['vectorizer'])]));
+
+        $listenerId = 'ai.store.doctrine.'.$name.'.mirror_listener';
+        $container->setDefinition($listenerId, (new Definition(MirrorListener::class, [
+            new Reference($embedderId),
+            new Reference($store['mirror_to']),
+            $store['entity'],
+            new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]))
+            ->addTag('doctrine.event_listener', ['event' => 'onFlush'])
+            ->addTag('doctrine.event_listener', ['event' => 'postFlush']));
+
+        $this->processDoctrineEntityIndexer($name, $store, $embedderId, $listenerId, $container);
+
+        $innerRetrieverId = 'ai.store.doctrine.'.$name.'.retriever';
+        $container->setDefinition($innerRetrieverId, new Definition(Retriever::class, [
+            new Reference($store['mirror_to']),
+            new Reference($store['vectorizer']),
+            new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+            new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]));
+
+        $retrieverId = 'ai.retriever.'.$name;
+        $container->setDefinition($retrieverId, (new Definition(EntityRetriever::class, [
+            new Reference($innerRetrieverId),
+            new Reference($store['entity_manager']),
+        ]))->addTag('ai.retriever', ['name' => $name]));
+        $container->registerAliasForArgument($retrieverId, RetrieverInterface::class, (new Target($name))->getParsedName());
+    }
+
+    /**
+     * @param array{entity: class-string, entity_manager: string} $store
+     */
+    private function processDoctrineEntityIndexer(string $name, array $store, string $embedderId, ?string $mirrorListenerId, ContainerBuilder $container): void
+    {
         $entityIndexerId = 'ai.store.doctrine.'.$name.'.entity_indexer';
-        $container->setDefinition($entityIndexerId, new Definition(EntityIndexer::class, [
+        $entityIndexer = new Definition(EntityIndexer::class, [
             new Reference($store['entity_manager']),
             new Reference($embedderId),
-        ]));
+        ]);
+
+        if (null !== $mirrorListenerId) {
+            $entityIndexer->setArgument('$mirror', new Reference($mirrorListenerId));
+        }
+
+        $container->setDefinition($entityIndexerId, $entityIndexer);
 
         $indexerId = 'ai.indexer.'.$name;
         $container->setDefinition($indexerId, (new Definition(ConfiguredSourceIndexer::class, [
@@ -3069,6 +3131,12 @@ final class AiBundle extends AbstractBundle
      */
     private function processRetrieverConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
+        $serviceId = 'ai.retriever.'.$name;
+
+        if ($container->hasDefinition($serviceId)) {
+            throw new InvalidArgumentException(\sprintf('Retriever "%s" is already defined by the doctrine store of the same name, rename one of them.', $name));
+        }
+
         $definition = new Definition(Retriever::class, [
             new Reference($config['store']),
             new Reference($config['vectorizer']),
@@ -3077,7 +3145,6 @@ final class AiBundle extends AbstractBundle
         ]);
         $definition->addTag('ai.retriever', ['name' => $name]);
 
-        $serviceId = 'ai.retriever.'.$name;
         $container->setDefinition($serviceId, $definition);
         $container->registerAliasForArgument($serviceId, RetrieverInterface::class, (new Target((string) $name))->getParsedName());
     }
