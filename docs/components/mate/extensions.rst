@@ -247,6 +247,8 @@ ships formatters for these collectors:
 Collector        Notes
 ===============  ===================================================================
 ``request``      Request and response data, redacted (see below).
+``router``       Redirect status, redirecting route, target host and path.
+                 Query strings, fragments and userinfo are omitted.
 ``exception``    The exception with its stack trace.
 ``logger``       Log entry counts per level.
 ``time``         Timing metrics.
