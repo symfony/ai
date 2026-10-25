@@ -1,0 +1,5 @@
+workers:
+    # Runs the research of the Wikipedia bot, which pushes its progress to the browser via Mercure
+    messenger_consume_async:
+        cmd: ['symfony', 'console', 'messenger:consume', 'async']
+        watch: ['config', 'src', 'templates']

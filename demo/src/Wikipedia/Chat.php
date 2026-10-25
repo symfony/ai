@@ -11,49 +11,61 @@
 
 namespace App\Wikipedia;
 
-use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Uid\Uuid;
 
 final class Chat
 {
-    private const SESSION_KEY = 'wikipedia-chat';
+    private const SESSION_KEY = 'wikipedia-chat-id';
 
     public function __construct(
         private readonly RequestStack $requestStack,
-        #[Autowire(service: 'ai.agent.wikipedia')]
-        private readonly AgentInterface $agent,
+        private readonly Conversations $conversations,
+        private readonly MessageBusInterface $bus,
     ) {
+    }
+
+    public function getId(): string
+    {
+        $session = $this->requestStack->getSession();
+
+        if (!$session->has(self::SESSION_KEY)) {
+            $session->set(self::SESSION_KEY, Uuid::v4()->toRfc4122());
+        }
+
+        return $session->get(self::SESSION_KEY);
+    }
+
+    public function getTopic(): string
+    {
+        return Conversations::topic($this->getId());
     }
 
     public function loadMessages(): MessageBag
     {
-        return $this->requestStack->getSession()->get(self::SESSION_KEY, new MessageBag());
+        return $this->conversations->load($this->getId());
+    }
+
+    public function isResearching(): bool
+    {
+        return $this->loadMessages()->isLastMessageFrom(Role::User);
     }
 
     public function submitMessage(string $message): void
     {
         $messages = $this->loadMessages();
-
         $messages->add(Message::ofUser($message));
-        $result = $this->agent->call($messages);
 
-        $response = Message::ofAssistant($result->asText());
-        $response->getMetadata()->add('sources', $result->getMetadata()->get('sources', []));
-        $messages->add($response);
-
-        $this->saveMessages($messages);
+        $this->conversations->save($this->getId(), $messages);
+        $this->bus->dispatch(new Research($this->getId()));
     }
 
     public function reset(): void
     {
-        $this->requestStack->getSession()->remove(self::SESSION_KEY);
-    }
-
-    private function saveMessages(MessageBag $messages): void
-    {
-        $this->requestStack->getSession()->set(self::SESSION_KEY, $messages);
+        $this->conversations->delete($this->getId());
     }
 }

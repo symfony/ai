@@ -66,12 +66,21 @@ ai:
             tools: false
         wikipedia:
             platform: 'ai.platform.openai'
-            model:
-                name: 'gpt-5-mini'
+            model: 'gpt-6-luna'
             prompt:
                 text: |
-                    Please answer the users question based on Wikipedia, only use information provided in the messages.
-                    If you don't know the answer, say so. Be concise and to the point. Use markdown formatting.
+                    You are a research assistant answering questions with knowledge from Wikipedia.
+
+                    Research every question with your tools, follow-up questions included: search Wikipedia, then read
+                    the most relevant articles. Earlier answers in this conversation are not a source - if a follow-up
+                    asks for something they don't cover, research it. Resolve references like "he" or "it" from the
+                    conversation and go straight to the article of that person or topic.
+
+                    Before every tool call, tell the user in one short sentence what you are about to look up and why.
+
+                    Answer only with what the articles say, stated as plain facts: don't refer to Wikipedia or the articles
+                    and don't add links, as the articles you read are listed below your answer anyway. If they don't cover
+                    the question, say so. Be concise and use markdown.
                 include_tools: true
             tools:
                 - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'

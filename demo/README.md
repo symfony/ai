@@ -28,6 +28,7 @@ This small demo sits on top of following technologies:
 * [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 * [OpenAI's GPT & Embeddings](https://platform.openai.com/docs/overview)
 * [PostgreSQL with pgvector](https://github.com/pgvector/pgvector)
+* [Symfony Messenger](https://symfony.com/doc/current/messenger.html) & [Mercure](https://mercure.rocks/)
 * [FrankenPHP](https://frankenphp.dev/)
 
 ## Setup
@@ -48,6 +49,12 @@ symfony serve -d
 
 Now you should be able to open https://localhost:8000/ in your browser,
 and the chatbot UI should be available for you to start chatting.
+
+Docker also starts a Mercure hub, and `symfony serve` starts the Messenger worker configured in
+`.symfony.local.yaml` - the Wikipedia bot researches in that worker and pushes its progress to the
+browser via the hub. Without the Symfony CLI, run `bin/console messenger:consume async` yourself.
+The updates are public, so every subscriber of the hub receives them - fine for a local demo, but in
+production, publish them as [private updates](https://symfony.com/doc/current/mercure.html#authorization).
 
 > [!NOTE]
 > You might have to bypass the security warning of your browser with regard to self-signed certificates.
@@ -111,6 +118,8 @@ Next to the setup above, it needs:
   its use case is missing: `OPENAI_API_KEY` for nine of them, `HUGGINGFACE_API_KEY` for the image
   cropping, `MISTRAL_API_KEY` for the document OCR.
 * **ffmpeg** (optional) to convert the audio fixture for the fake microphone of the speech use case.
+* **The Mercure hub** of the Docker environment for the Wikipedia use case - `WikipediaTest` starts
+  its own Messenger worker, since Panther's web server does not.
 
 The blog store does not need to be indexed beforehand: `StoreTest` drives the indexing pipeline
 through the console commands, and `BlogTest` sets the store up and indexes it when it is empty. Both
@@ -132,6 +141,12 @@ Screenshots of failing tests are written to `var/error-screenshots/`.
 
 * The chatbot application is a simple and small Symfony 8.1 application.
 * The UI is coupled to a [Twig LiveComponent](https://symfony.com/bundles/ux-live-component/current/index.html), that integrates different `Chat` implementations on top of the user's session.
+* The answer of an agent reaches the browser in one of three ways:
+  * **HTTP response** - most chats call the agent in the live component's request and render its answer.
+  * **Server-sent events** - the Turbo Stream and the recipe bot stream the answer in a second request, as Turbo Streams.
+  * **Mercure** - the Wikipedia bot hands the question to a Messenger worker, which pushes every step of
+    its research to the browser via a Mercure hub: the model's commentary on what it is about to look
+    up, each tool call, and the answer as it is written.
 * You can reset the chat context by hitting the `Reset chat` button in the top right corner.
 * You find eleven different usage scenarios in the upper navbar.
 

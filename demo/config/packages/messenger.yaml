@@ -1,0 +1,7 @@
+framework:
+    messenger:
+        transports:
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+
+        routing:
+            'App\Wikipedia\Research': async
