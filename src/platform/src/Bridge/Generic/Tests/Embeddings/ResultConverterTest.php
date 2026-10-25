@@ -13,8 +13,12 @@ namespace Symfony\AI\Platform\Bridge\Generic\Tests\Embeddings;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Embeddings\ResultConverter;
+use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ResultConverterTest extends TestCase
@@ -70,6 +74,53 @@ class ResultConverterTest extends TestCase
         $this->assertNotNull($exception);
         $this->assertNull($exception->getRetryAfter());
         $this->assertSame('Rate limit exceeded.', $exception->getMessage());
+    }
+
+    public function testThrowsServerExceptionOnServerError()
+    {
+        $response = $this->createResponse('{"error":{"message":"Service unavailable."}}', 503);
+
+        $exception = null;
+        try {
+            (new ResultConverter())->convert(new RawHttpResult($response));
+        } catch (ServerException $e) {
+            $exception = $e;
+        }
+
+        $this->assertNotNull($exception);
+        $this->assertSame(503, $exception->getStatusCode());
+        $this->assertSame('Server error (HTTP 503). Service unavailable.', $exception->getMessage());
+    }
+
+    public function testThrowsServerExceptionOnServerErrorWithoutJsonBody()
+    {
+        $response = $this->createResponse('<html>Bad Gateway</html>', 502);
+
+        $exception = null;
+        try {
+            (new ResultConverter())->convert(new RawHttpResult($response));
+        } catch (ServerException $e) {
+            $exception = $e;
+        }
+
+        $this->assertNotNull($exception);
+        $this->assertSame(502, $exception->getStatusCode());
+        $this->assertSame('Server error (HTTP 502).', $exception->getMessage());
+    }
+
+    public function testThrowsAuthenticationExceptionWithoutJsonBody()
+    {
+        $response = $this->createResponse('Unauthorized', 401);
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Authentication failed.');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    private function createResponse(string $body, int $statusCode): ResponseInterface
+    {
+        return (new MockHttpClient(new MockResponse($body, ['http_code' => $statusCode])))->request('POST', 'https://api.example.com/v1/embeddings');
     }
 
     private function getEmbeddingStub(): string

@@ -14,9 +14,13 @@ namespace Symfony\AI\Platform\Bridge\Voyage\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Voyage\ResultConverter;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
+use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -82,6 +86,26 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Response does not contain embedding data.');
 
         $converter->convert(new RawHttpResult($result));
+    }
+
+    public function testItThrowsServerExceptionOnServerError()
+    {
+        $response = (new MockHttpClient(new MockResponse('<html>Bad Gateway</html>', ['http_code' => 502])))->request('POST', 'https://api.voyageai.com/v1/embeddings');
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 502).');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    public function testItReadsTheDetailOfAnErrorResponse()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"detail":"Provided API key is invalid."}', ['http_code' => 401])))->request('POST', 'https://api.voyageai.com/v1/embeddings');
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Provided API key is invalid.');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
     }
 
     public function testItSupportsVoyageModel()

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -36,6 +37,11 @@ final class ResultConverter implements ResultConverterInterface
         if (404 === $result->getObject()->getStatusCode()
             && str_contains(strtolower($result->getObject()->getContent(false)), 'model not found')) {
             throw new ModelNotFoundException($result->getObject()->getContent(false));
+        }
+
+        if (($code = $result->getObject()->getStatusCode()) >= 500) {
+            $errorMessage = json_decode($result->getObject()->getContent(false), true)['error']['message'] ?? null;
+            throw new ServerException($code, $errorMessage);
         }
 
         $data = $result->getData();

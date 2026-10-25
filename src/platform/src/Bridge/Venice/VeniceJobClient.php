@@ -18,9 +18,7 @@ use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Job\JobStateCase;
 use Symfony\AI\Platform\Job\JobStatus;
 use Symfony\AI\Platform\Result\BinaryResult;
-use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -35,7 +33,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class VeniceJobClient implements JobClientInterface
 {
-    use HttpStatusErrorHandlingTrait;
+    use VeniceErrorHandlingTrait;
 
     public const DEFAULT_MAX_DURATION = 600;
 
@@ -126,32 +124,6 @@ final class VeniceJobClient implements JobClientInterface
         }
 
         return $response;
-    }
-
-    /**
-     * Overrides the shared lookup: Venice may answer a plain `error` string next to `error.message`.
-     */
-    private function extractErrorMessage(ResponseInterface $response): ?string
-    {
-        try {
-            $data = $response->toArray(false);
-        } catch (DecodingExceptionInterface) {
-            return null;
-        }
-
-        $error = $data['error'] ?? null;
-
-        if (\is_array($error)) {
-            $error = $error['message'] ?? null;
-        }
-
-        foreach ([$error, $data['message'] ?? null] as $message) {
-            if (\is_string($message) && '' !== $message) {
-                return $message;
-            }
-        }
-
-        return null;
     }
 
     private static function isJson(ResponseInterface $response): bool

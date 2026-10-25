@@ -14,10 +14,13 @@ namespace Symfony\AI\Platform\Bridge\Voyage\Tests\Reranker;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Voyage\Reranker;
 use Symfony\AI\Platform\Bridge\Voyage\Reranker\ResultConverter;
+use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RerankingResult;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class ResultConverterTest extends TestCase
@@ -41,6 +44,16 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Server error (HTTP 500');
 
         $converter->convert(new RawHttpResult($response));
+    }
+
+    public function testItReadsTheDetailOfAnErrorResponse()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"detail":"Provided API key is invalid."}', ['http_code' => 401])))->request('POST', 'https://api.voyageai.com/v1/rerank');
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Provided API key is invalid.');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
     }
 
     public function testItConvertsResponseToRerankingResult()

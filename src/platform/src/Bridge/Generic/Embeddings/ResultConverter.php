@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -39,10 +40,9 @@ class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): VectorResult
     {
         $response = $result->getObject();
-        $data = $result->getData();
 
         if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Authentication failed.';
             throw new AuthenticationException($errorMessage);
         }
 
@@ -56,6 +56,13 @@ class ResultConverter implements ResultConverterInterface
             $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
             throw new RateLimitExceededException(null !== $retryAfter ? (int) $retryAfter : null, $errorMessage);
         }
+
+        if (($code = $response->getStatusCode()) >= 500) {
+            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
+            throw new ServerException($code, $errorMessage);
+        }
+
+        $data = $result->getData();
 
         if (!isset($data['data'][0]['embedding'])) {
             throw new RuntimeException('Response does not contain data.');

@@ -21,6 +21,8 @@ use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Pauline Vos <pauline.vos@mongodb.com>
@@ -61,5 +63,19 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
+    }
+
+    /**
+     * Overrides the shared lookup: Voyage reports errors as `{"detail": "..."}`.
+     */
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        try {
+            $detail = $response->toArray(false)['detail'] ?? null;
+        } catch (DecodingExceptionInterface) {
+            return null;
+        }
+
+        return \is_string($detail) ? $detail : null;
     }
 }
