@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-23T20:05:11Z
+
+Moved the changelog entry to 0.16, renamed `target_route` to `route`, and normalized `n/a` to `null`. Redirect details now retain the target path while omitting query strings, fragments and userinfo. The redirect-controller fixture also supports its relocation to the Routing component in Symfony 8.2.
