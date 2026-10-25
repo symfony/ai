@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-25T15:55:48Z
+
+@paulinevos a similar setup could work for MongoDB/ODM, don't you think?
+or did you figure out a way already to combine data and vector source on one document?
+
+---------------------------------------------------------------------------
+
+by paulinevos at 2026-10-25T16:07:06Z
+
+@chr-hertel Yes, iirc (it's been a while though), this is why I introduced `EmbeddableDocumentInterface` to be able to return the source data through `getContent`. I think I made an example for MongoDB, but I'm not at my computer right now so can't check. You want me to check later?
