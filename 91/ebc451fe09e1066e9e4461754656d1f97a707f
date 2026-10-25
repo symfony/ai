@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-25T22:40:13Z
+
+Thanks @wachterjohannes - all three fair, patched in `e8f4f2f`: docs say the history is matched by message id & that the storage needs to be trusted, and the stricter Chat serializers got a CHANGELOG & UPGRADE entry (so `BC Break` label now).
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-25T22:42:49Z
+
+While stacking a change on this I noticed that the checkpoints saved from `onToolRound` happen before anything is added to the messages of the run, so a checkpoint in the middle of a run carries no per-run metadata. In #112 an execution gets an id that is stored as `execution_id` on the messages a run appends. I set it inside the `onToolRound` callback as well, so a crash mid-run still leaves it on the stored messages. Is it fine for you if I rely on the callback like this?
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-25T22:57:51Z
+
+A question on `save()` from a consumer that keeps operational state next to the messages. The sulu.ai platform stores the conversation together with its status, attempt and heartbeat in one guarded UPDATE.
+
+Two things would let it use the store instead of rebuilding the bag itself. One is a way to tell the agent not to persist for a call, because the caller writes the messages in its own transaction. The other is a `ConflictException` that carries the stored version, so the caller can retry on the right state. The last message id as the version already looks like the right base for that. Would either of them fit this PR, or is it better as a follow up?
