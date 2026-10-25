@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -64,6 +65,8 @@ final class Execution implements \IteratorAggregate, ResultInterface
     private bool $finished = false;
 
     private ?ResultInterface $result = null;
+
+    private ?Result $resultUpdate = null;
 
     private readonly Metadata $metadata;
 
@@ -157,6 +160,22 @@ final class Execution implements \IteratorAggregate, ResultInterface
         throw new RuntimeException('The agent execution finished without producing a result.');
     }
 
+    /**
+     * Drives the execution to completion and returns the given messages followed by the new ones, ending with the answer.
+     *
+     * @throws LogicException when the agent doesn't provide the messages of its execution
+     */
+    public function getMessages(): MessageBag
+    {
+        $this->getResult();
+
+        if (null === $messages = $this->resultUpdate?->getMessages()) {
+            throw new LogicException('The agent did not provide the messages of its execution.');
+        }
+
+        return $messages;
+    }
+
     public function getContent(): string|iterable|object|null
     {
         if ($this->streamed) {
@@ -238,6 +257,7 @@ final class Execution implements \IteratorAggregate, ResultInterface
                 if ($update instanceof Result) {
                     // the final result carries the metadata aggregated over all rounds, e.g. token usage
                     $this->result = $update->getResult();
+                    $this->resultUpdate = $update;
                     $this->metadata->merge($update->getResult()->getMetadata());
 
                     foreach ($this->resultCallbacks as $callback) {

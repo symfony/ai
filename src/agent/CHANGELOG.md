@@ -5,6 +5,10 @@ CHANGELOG
 ----
 
  * Keep the phase of a streamed text when the `Runner` turns the round into a result
+ * Add `Execution::getMessages()` returning the given messages followed by the messages of the run, each assistant message carrying the metadata of its own model request
+ * Add an optional `$messages` argument to `Update\Result`, for agents providing the messages of their execution
+ * [BC BREAK] The agent no longer changes the given `MessageBag`: input processors replace it with `Input::setMessageBag()`, and the tool loop runs on its own copy
+ * [BC BREAK] Remove the `excludeToolMessages` argument of `Agent`, tool messages never reach the caller's `MessageBag`
  * Add a `$toolResultConverter` argument to `Agent` to customize how tool results are converted for the model
 
 0.15

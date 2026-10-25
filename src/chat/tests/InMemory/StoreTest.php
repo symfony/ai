@@ -37,8 +37,8 @@ final class StoreTest extends TestCase
         $store = new Store();
 
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Hello'));
-        $messageBag->add(Message::ofAssistant('Hi there'));
+        $messageBag = $messageBag->with(Message::ofUser('Hello'));
+        $messageBag = $messageBag->with(Message::ofAssistant('Hi there'));
 
         $store->save($messageBag);
 
@@ -64,7 +64,7 @@ final class StoreTest extends TestCase
         $store->setup();
 
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Test message'));
+        $messageBag = $messageBag->with(Message::ofUser('Test message'));
 
         $store->save($messageBag);
 
@@ -82,8 +82,8 @@ final class StoreTest extends TestCase
         $store = new Store();
 
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Message 1'));
-        $messageBag->add(Message::ofUser('Message 2'));
+        $messageBag = $messageBag->with(Message::ofUser('Message 1'));
+        $messageBag = $messageBag->with(Message::ofUser('Message 2'));
 
         $store->save($messageBag);
         $this->assertCount(2, $store->load());

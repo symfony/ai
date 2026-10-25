@@ -22,11 +22,10 @@ use Doctrine\DBAL\Types\Types;
 use Psr\Clock\ClockInterface;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\ManagedStoreInterface;
-use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Chat\MessageStoreInterface;
-use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
@@ -43,7 +42,6 @@ final class DoctrineDbalMessageStore implements ManagedStoreInterface, MessageSt
         private readonly DBALConnection $dbalConnection,
         private readonly SerializerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
-            new ToolCallNormalizer(),
             new MessageNormalizer(),
         ], [new JsonEncoder()]),
         private readonly ClockInterface $clock = new MonotonicClock(),

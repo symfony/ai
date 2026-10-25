@@ -74,6 +74,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                 ObjectResult::class => [
                     'type' => get_debug_type($data->getContent()),
                     'content' => \is_array($data->getContent()) ? $data->getContent() : $this->objectNormalizer->normalize($data->getContent(), $format, $context),
+                    'text' => $data->getText(),
                 ],
                 StreamResult::class => throw new InvalidArgumentException(\sprintf('"%s" cannot be normalized.', StreamResult::class)),
                 TextResult::class => $data->getContent(),
@@ -112,7 +113,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
             )),
             ThinkingResult::class => new ThinkingResult($data['payload']['content'], $data['payload']['signature']),
             CommentaryResult::class => new CommentaryResult($data['payload']),
-            ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context)),
+            ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context), $data['payload']['text'] ?? null),
             TextResult::class => new TextResult($data['payload']),
             ToolCallResult::class => new ToolCallResult(array_map(
                 static fn (array $toolCall): ToolCall => new ToolCall(

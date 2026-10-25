@@ -27,6 +27,30 @@ Agent
    +$similaritySearch = new SimilaritySearch($retriever);
    ```
 
+ * The agent no longer changes the `MessageBag` it is called with. The system prompt, memory and the messages of
+   the tool loop stay out of it, so add the answer to your own bag:
+
+   ```diff
+    $execution = $agent->call($messages);
+   -$messages->add(Message::ofAssistant($execution->getResult()));
+   +$messages = $messages->with(Message::ofAssistant($execution->getResult()));
+   ```
+
+ * Input processors must replace the `MessageBag` instead of changing it:
+
+   ```diff
+   -$input->getMessageBag()->add($message);
+   +$input->setMessageBag($input->getMessageBag()->with($message));
+   ```
+
+ * The `excludeToolMessages` argument of `Agent` has been removed, tool messages never reach the caller's
+   `MessageBag` anymore. The arguments after `maxToolCalls` move up by one, so pass them by name:
+
+   ```diff
+   -new Agent($platform, 'gpt-5', [], [], 'agent', $toolbox, null, 50, false, true);
+   +new Agent($platform, 'gpt-5', toolbox: $toolbox, includeSources: true);
+   ```
+
 AI Bundle
 ---------
 
@@ -180,6 +204,49 @@ AI Bundle
    +            model_catalog:
    +                api: true
    ```
+
+ * The `exclude_tool_messages` agent option has been removed, tool messages never reach the caller's `MessageBag`
+   anymore.
+
+ * The `ai.chat.message_bag.normalizer` service has been renamed to `ai.platform.message_normalizer` and is registered
+   without `symfony/ai-chat` as well.
+
+Chat
+----
+
+ * `Chat` no longer persists the system prompt. The assistant messages of a turn carry the metadata of their own model
+   request instead of the metadata aggregated over the turn.
+
+ * `MessageNormalizer` has been removed. Use `Symfony\AI\Platform\Serializer\MessageNormalizer` instead, which no longer
+   needs the `ToolCallNormalizer` next to it. It still reads messages persisted with the old format, but writes all
+   content as `parts`, and no longer adds `addedAt` to the metadata of denormalized messages:
+
+   ```diff
+   -use Symfony\AI\Chat\MessageNormalizer;
+   +use Symfony\AI\Platform\Serializer\MessageNormalizer;
+
+    $serializer = new Serializer([
+        new ArrayDenormalizer(),
+   -    new ToolCallNormalizer(),
+        new MessageNormalizer(),
+    ], [new JsonEncoder()]);
+   ```
+
+Platform
+--------
+
+ * `MessageBag` is immutable. `add()`, `prepend()` and `removeSystemMessage()` have been removed, use the methods
+   returning a copy instead, and `replace()` returns a copy as well:
+
+   ```diff
+   -$messages->add(Message::ofUser('Hello'));
+   -$messages->prepend(Message::forSystem('You are a pirate.'));
+   +$messages = $messages->with(Message::ofUser('Hello'));
+   +$messages = $messages->withSystemMessage(Message::forSystem('You are a pirate.'));
+   ```
+
+ * `CachePlatform` keys message bags by their content and includes the options in the key, so results cached
+   before the upgrade are not used anymore.
 
 Store
 -----

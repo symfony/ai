@@ -160,12 +160,9 @@ final class ChatTest extends TestCase
         $calls = $agent->getCalls();
         $secondCallMessages = $calls[1]['messages'];
 
-        // Should contain: system + user1 + assistant1 + user2, but apparently there are 5 messages
-        // This might include an additional message from the conversation flow
         $messages = $secondCallMessages->getMessages();
-        $this->assertCount(4, $messages);
+        $this->assertCount(3, $messages);
 
-        // Verify the conversation flow (with 5 messages)
         $this->assertInstanceOf(UserMessage::class, $messages[0]);
         $this->assertCount(1, $messages[0]->getContent());
         $this->assertInstanceOf(Text::class, $messages[0]->getContent()[0]);

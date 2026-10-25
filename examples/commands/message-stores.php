@@ -24,7 +24,7 @@ use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore as SurrealDbMessageStore;
 use Symfony\AI\Chat\Command\DropStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
-use Symfony\AI\Chat\MessageNormalizer;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Console\Application;

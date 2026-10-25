@@ -12,15 +12,26 @@
 namespace Symfony\AI\Chat\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\MockResponse;
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\ToolCallMessage;
+use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
 
 final class ChatTest extends TestCase
 {
@@ -68,14 +79,34 @@ final class ChatTest extends TestCase
         $this->agent->assertCalledWith($userPrompt);
     }
 
+    public function testItPersistsTheToolCallsOfTheRun()
+    {
+        $toolCall = new ToolCall('call_1', 'clock');
+        $platform = MockPlatformFactory::createPlatform(static function (Model $model, array $input): ResultInterface {
+            return 1 === \count($input['messages']) ? new ToolCallResult([new ToolCall('call_1', 'clock')]) : new TextResult('It is noon.');
+        });
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, '12:00'));
+
+        $chat = new Chat(new Agent($platform, 'gpt-4', toolbox: $toolbox), $this->store);
+        $answer = $chat->submit(Message::ofUser('What time is it?'));
+
+        $this->assertSame('It is noon.', $answer->asText());
+        $this->assertSame(
+            [UserMessage::class, AssistantMessage::class, ToolCallMessage::class, AssistantMessage::class],
+            array_map(get_class(...), $this->store->load()->getMessages()),
+        );
+    }
+
     public function testItAppendsMessagesToExistingConversation()
     {
         $existingUserMessage = Message::ofUser('What is the weather?');
         $existingAssistantMessage = Message::ofAssistant('I cannot provide weather information.');
 
         $existingMessages = new MessageBag();
-        $existingMessages->add($existingUserMessage);
-        $existingMessages->add($existingAssistantMessage);
+        $existingMessages = $existingMessages->with($existingUserMessage);
+        $existingMessages = $existingMessages->with($existingAssistantMessage);
 
         $this->store->save($existingMessages);
 
@@ -142,8 +173,8 @@ final class ChatTest extends TestCase
     public function testItStreamsAndPreservesExistingConversation()
     {
         $existingMessages = new MessageBag();
-        $existingMessages->add(Message::ofUser('What is the weather?'));
-        $existingMessages->add(Message::ofAssistant('I cannot provide weather information.'));
+        $existingMessages = $existingMessages->with(Message::ofUser('What is the weather?'));
+        $existingMessages = $existingMessages->with(Message::ofAssistant('I cannot provide weather information.'));
 
         $store = new InMemoryStore();
         $store->save($existingMessages);

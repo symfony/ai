@@ -19,9 +19,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Exception\RuntimeException;
-use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
@@ -58,12 +58,10 @@ final class AgentCallCommandTest extends TestCase
 
     public function testCommandExecutesWithValidAgent()
     {
-        $agent = $this->createMock(AgentInterface::class);
-        $result = new TextResult('Hello! How can I help you today?');
-
-        $agent->expects($this->once())
-            ->method('call')
-            ->willReturn($this->execution($result));
+        $agent = new MockAgent([
+            'Hello' => 'Hello! How can I help you today?',
+            'Thanks' => static fn (MessageBag $messages): string => \sprintf('You sent %d messages.', \count($messages)),
+        ]);
 
         $agents = [
             'test' => $agent,
@@ -75,7 +73,7 @@ final class AgentCallCommandTest extends TestCase
         $commandTester = new CommandTester($command);
 
         // Simulate user input
-        $commandTester->setInputs(['Hello', 'exit']);
+        $commandTester->setInputs(['Hello', 'Thanks', 'exit']);
 
         $commandTester->execute([
             'agent' => 'test',
@@ -88,6 +86,8 @@ final class AgentCallCommandTest extends TestCase
         $this->assertStringContainsString('Type your message and press Enter', $output);
         $this->assertStringContainsString('Assistant', $output);
         $this->assertStringContainsString('Hello! How can I help you today?', $output);
+        $this->assertStringContainsString('You sent 3 messages.', $output);
+        $this->assertStringNotContainsString('Error', $output);
         $this->assertStringContainsString('Goodbye!', $output);
     }
 
@@ -179,58 +179,6 @@ final class AgentCallCommandTest extends TestCase
         // Verify correct agent was used
         $this->assertStringContainsString('Chat with second Agent', $output);
         $this->assertStringContainsString('Response from agent 2', $output);
-    }
-
-    public function testCommandWithSystemPromptDisplaysItOnce()
-    {
-        $agent = $this->createMock(AgentInterface::class);
-        $result = new TextResult('Response');
-
-        $agent->expects($this->exactly(2))
-            ->method('call')
-            ->willReturnCallback(static function (MessageBag $messages) use ($result) {
-                // Simulate SystemPromptInputProcessor behavior - add system prompt if not present
-                if (null === $messages->getSystemMessage()) {
-                    $messages->withSystemMessage(Message::forSystem('System prompt'));
-                }
-
-                return new Execution(static function () use ($result): \Generator {
-                    yield new ResultUpdate($result);
-                });
-            });
-
-        $agents = [
-            'test' => $agent,
-        ];
-
-        $command = new AgentCallCommand($this->createServiceLocator($agents));
-        $application = self::createApplication($command);
-
-        $commandTester = new CommandTester($command);
-
-        // Send two messages
-        $commandTester->setInputs(['First message', 'Second message', 'exit']);
-
-        $commandTester->execute([
-            'agent' => 'test',
-        ]);
-
-        $output = $commandTester->getDisplay();
-
-        // Debug output to understand what's happening
-        if (!str_contains($output, 'System Prompt')) {
-            // If system prompt is not shown, let's not assert it
-            // This happens because the MessageBag is not preserved across calls in our mock
-            $this->assertStringContainsString('Response', $output);
-            $this->assertSame(2, substr_count($output, 'Response'));
-        } else {
-            // System prompt should appear only once (after first message)
-            $this->assertSame(1, substr_count($output, 'System Prompt'));
-            $this->assertStringContainsString('System prompt', $output);
-
-            // Both responses should be shown
-            $this->assertSame(2, substr_count($output, 'Response'));
-        }
     }
 
     /**

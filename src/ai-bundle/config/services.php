@@ -24,7 +24,6 @@ use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
 use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
-use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
@@ -84,6 +83,8 @@ use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
+use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -302,7 +303,10 @@ return static function (ContainerConfigurator $container): void {
             ->tag('data_collector', ['id' => 'ai'])
 
         // serializer
-        ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+        ->set('ai.platform.message_normalizer', MessageNormalizer::class)
+            ->tag('serializer.normalizer')
+        ->set('ai.platform.message_bag_normalizer', MessageBagNormalizer::class)
+            ->args([service('ai.platform.message_normalizer')])
             ->tag('serializer.normalizer')
 
         // commands

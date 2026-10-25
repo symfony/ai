@@ -139,7 +139,7 @@ final class PartialObjectStreamListener extends AbstractStreamListener
             }
         }
 
-        $this->finalObjectResult = new ObjectResult($structure);
+        $this->finalObjectResult = new ObjectResult($structure, $this->buffer);
     }
 
     /**

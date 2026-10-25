@@ -28,16 +28,11 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),
 );
 
-$messages->add(Message::ofUser('What is the capital of France?'));
-$execution = $agent->call($messages);
+$execution = $agent->call($messages->with(Message::ofUser('What is the capital of France?')));
 echo 'Turn 1: '.$execution->asText().\PHP_EOL;
-$messages->add(Message::ofAssistant($execution->getResult()));
 
-$messages->add(Message::ofUser('What time is it right now, and which European capitals do you know about via your tools?'));
-$execution = $agent->call($messages);
+$execution = $agent->call($execution->getMessages()->with(Message::ofUser('What time is it right now, and which European capitals do you know about via your tools?')));
 echo 'Turn 2: '.$execution->asText().\PHP_EOL;
-$messages->add(Message::ofAssistant($execution->getResult()));
 
-$messages->add(Message::ofUser('What was the first question I asked you?'));
-$execution = $agent->call($messages);
+$execution = $agent->call($execution->getMessages()->with(Message::ofUser('What was the first question I asked you?')));
 echo 'Turn 3: '.$execution->asText().\PHP_EOL;

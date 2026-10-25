@@ -148,10 +148,6 @@ final class MessageBagTest extends TestCase
         $this->assertSame($messageBag->getId(), $newMessageBag->getId());
         $this->assertSame($originalMessages, $messageBag->getMessages());
         $this->assertSame($expectedMessages, $newMessageBag->getMessages());
-
-        $messageBag->removeSystemMessage();
-
-        $this->assertSame($expectedMessages, $messageBag->getMessages());
     }
 
     public function testSystemMessageRemovalFromEmptyBag()
@@ -159,8 +155,6 @@ final class MessageBagTest extends TestCase
         $messageBag = new MessageBag();
 
         $this->assertSame([], $messageBag->withoutSystemMessage()->getMessages());
-        $messageBag->removeSystemMessage();
-        $this->assertSame([], $messageBag->getMessages());
     }
 
     public function testSystemMessageRemovalWithOnlySystemMessages()
@@ -169,8 +163,6 @@ final class MessageBagTest extends TestCase
 
         $this->assertSame([], $messageBag->withoutSystemMessage()->getMessages());
         $this->assertCount(2, $messageBag);
-        $messageBag->removeSystemMessage();
-        $this->assertSame([], $messageBag->getMessages());
     }
 
     public function testSystemMessageRemovalWithoutSystemMessages()
@@ -179,7 +171,6 @@ final class MessageBagTest extends TestCase
         $messageBag = new MessageBag(...$originalMessages);
 
         $this->assertSame($originalMessages, $messageBag->withoutSystemMessage()->getMessages());
-        $messageBag->removeSystemMessage();
         $this->assertSame($originalMessages, $messageBag->getMessages());
     }
 
@@ -229,15 +220,16 @@ final class MessageBagTest extends TestCase
         $this->assertSame('My amazing system prompt.', $newMessageBagMessage->getContent());
     }
 
-    public function testPrependMutatesInPlace()
+    public function testWithSystemMessagePrependsToCopy()
     {
-        $messageBag = new MessageBag(
+        $originalBag = new MessageBag(
             Message::ofAssistant('It is time to sleep.'),
             Message::ofUser('Hello, world!'),
         );
 
-        $messageBag->prepend(Message::forSystem('My amazing system prompt.'));
+        $messageBag = $originalBag->withSystemMessage(Message::forSystem('My amazing system prompt.'));
 
+        $this->assertCount(2, $originalBag);
         $this->assertCount(3, $messageBag);
 
         $first = $messageBag->getMessages()[0];
@@ -255,7 +247,7 @@ final class MessageBagTest extends TestCase
             Message::forSystem('Another system prompt at the end'),
         );
 
-        $messageBag->removeSystemMessage();
+        $messageBag = $messageBag->withoutSystemMessage();
 
         $this->assertCount(2, $messageBag);
 
@@ -288,6 +280,33 @@ final class MessageBagTest extends TestCase
         );
 
         $this->assertTrue($messageBag->containsImage());
+    }
+
+    public function testWithIdReturnsCopyWithGivenId()
+    {
+        $id = Uuid::v7();
+        $messageBag = new MessageBag(Message::ofUser('Hello!'));
+        $messageBag->getMetadata()->add('key', 'value');
+
+        $newMessageBag = $messageBag->withId($id);
+
+        $this->assertNotSame($messageBag, $newMessageBag);
+        $this->assertSame($id, $newMessageBag->getId());
+        $this->assertFalse($messageBag->getId()->equals($id));
+        $this->assertSame($messageBag->getMessages(), $newMessageBag->getMessages());
+        $this->assertSame('value', $newMessageBag->getMetadata()->get('key'));
+    }
+
+    public function testCopiesDoNotShareMetadata()
+    {
+        $messageBag = new MessageBag();
+        $messageBag->getMetadata()->add('key', 'value');
+
+        $newMessageBag = $messageBag->with(Message::ofUser('Hello!'));
+        $newMessageBag->getMetadata()->add('other', 'value');
+
+        $this->assertFalse($messageBag->getMetadata()->has('other'));
+        $this->assertSame('value', $newMessageBag->getMetadata()->get('key'));
     }
 
     public function testItCanHandleMetadata()
@@ -447,9 +466,10 @@ final class MessageBagTest extends TestCase
         /** @var AbstractUid&TimeBasedUidInterface $existingMessageUuid */
         $existingMessageUuid = $userMessage->getId();
 
-        $messageBag->replace($existingMessageUuid, Message::ofUser('Hello from a new user message'));
+        $newMessageBag = $messageBag->replace($existingMessageUuid, Message::ofUser('Hello from a new user message'));
 
-        $this->assertSame('Hello from a new user message', $messageBag->getUserMessage()->asText());
+        $this->assertSame('Hello World', $messageBag->getUserMessage()->asText());
+        $this->assertSame('Hello from a new user message', $newMessageBag->getUserMessage()->asText());
     }
 
     public function testMessageBagCanReturnLatestAs()
@@ -523,7 +543,7 @@ final class MessageBagTest extends TestCase
         $this->assertFalse($messageBag->isLastMessageFrom(Role::Assistant));
         $this->assertFalse($messageBag->isLastMessageFrom(Role::System));
 
-        $messageBag->add(Message::ofAssistant('Hi there!'));
+        $messageBag = $messageBag->with(Message::ofAssistant('Hi there!'));
 
         $this->assertFalse($messageBag->isLastMessageFrom(Role::User));
         $this->assertTrue($messageBag->isLastMessageFrom(Role::Assistant));

@@ -35,14 +35,9 @@ final class Chat
 
     public function submitMessage(string $message): void
     {
-        $messages = $this->loadMessages();
+        $execution = $this->agent->call($this->loadMessages()->with(Message::ofUser($message)));
 
-        $messages->add(Message::ofUser($message));
-        $result = $this->agent->call($messages);
-
-        $messages->add(Message::ofAssistant($result->asText()));
-
-        $this->saveMessages($messages);
+        $this->saveMessages($execution->getMessages());
     }
 
     public function reset(): void

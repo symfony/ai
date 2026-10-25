@@ -81,15 +81,24 @@ final class CachePlatform implements PlatformInterface
             default => $this->generateInputCacheKey($input),
         };
 
-        $cacheKey = (new UnicodeString())->join([
-            $options['prompt_cache_key'] ?? $this->cacheKey,
-            (new UnicodeString($modelName))->camel(),
-            $normalizedInput,
-        ]);
-
+        $namespace = $options['prompt_cache_key'] ?? $this->cacheKey;
         $ttl = $options['prompt_cache_ttl'] ?? $this->cacheTtl;
 
         unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
+
+        try {
+            $normalizedOptions = hash('xxh128', serialize($model instanceof Model ? array_merge($model->getOptions(), $options) : $options));
+        } catch (\Exception) {
+            // options holding closures can't be keyed
+            return $this->platform->invoke($model, $input, $options);
+        }
+
+        $cacheKey = (new UnicodeString())->join([
+            $namespace,
+            (new UnicodeString($modelName))->camel(),
+            $normalizedInput,
+            $normalizedOptions,
+        ]);
 
         $cached = $this->cache->get($cacheKey, function (ItemInterface $item) use ($model, $modelName, $input, $options, $cacheKey, $ttl): array {
             $item->tag((new UnicodeString($modelName))->camel());

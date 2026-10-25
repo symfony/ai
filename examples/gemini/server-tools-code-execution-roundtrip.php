@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -32,7 +33,7 @@ $messages = new MessageBag(
 );
 
 $execution = $agent->call($messages, $options);
-$messages->add($assistant = Message::ofAssistant($execution->getResult()));
+$assistant = $execution->getMessages()->latestAs(Role::Assistant);
 
 output()->writeln('<info>====== Turn 1 ======</info>');
 foreach ($assistant->getContent() as $part) {
@@ -48,6 +49,5 @@ foreach ($assistant->getContent() as $part) {
 echo \PHP_EOL;
 
 output()->writeln('<info>====== Turn 2 ======</info>');
-$messages->add(Message::ofUser('What number did your snippet print? Answer with the number only.'));
-$execution = $agent->call($messages, $options);
+$execution = $agent->call($execution->getMessages()->with(Message::ofUser('What number did your snippet print? Answer with the number only.')), $options);
 output()->writeln('<comment>Assistant:</comment> '.$execution->asText());

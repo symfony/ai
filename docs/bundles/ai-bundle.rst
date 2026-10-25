@@ -130,7 +130,6 @@ Advanced Example with Multiple Agents
                     - { mcp_server: 'research.filesystem' } # Tools of a remote MCP server configured under "mcp.clients"
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
                 max_tool_calls: 75 # Cap of tool-calling iterations per agent call (default 50); set to null to disable the limit
-                exclude_tool_messages: true # Drops tool call and tool result messages from the conversation history, default is false
             search_agent:
                 platform: 'ai.platform.perplexity'
                 model: 'fast'

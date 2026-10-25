@@ -1036,7 +1036,7 @@ previous invocation back into the message bag is therefore a one-liner::
 
     $result = $platform->invoke($model, $messages)->getResult();
 
-    $messages->add(Message::ofAssistant($result));
+    $messages = $messages->with(Message::ofAssistant($result));
 
 :class:`Symfony\\AI\\Platform\\Result\\MultiPartResult` is unwrapped recursively,
 so a result that contains a :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`
@@ -1058,7 +1058,7 @@ blocks with their signatures, and tool calls, in order::
         echo $delta;
     }
 
-    $messages->add(Message::ofAssistant($result));
+    $messages = $messages->with(Message::ofAssistant($result));
 
 The turn is collected while the stream is read;
 :method:`Symfony\\AI\\Platform\\Result\\StreamResult::getAssistantMessage` returns it

@@ -17,9 +17,9 @@ use MongoDB\Database;
 use MongoDB\Driver\CursorInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\MongoDb\MessageStore;
-use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Serializer;
@@ -92,24 +92,11 @@ final class MessageStoreTest extends TestCase
 
         $messageStore = new MessageStore($client, 'foo', 'bar', $serializer);
 
-        $before = (new \DateTimeImmutable())->getTimestamp();
         $messageStore->save($bag);
-        $after = (new \DateTimeImmutable())->getTimestamp();
 
         $this->assertIsArray($documents);
         $this->assertCount(1, $documents);
-
-        $document = $documents[0];
-
-        // The normalizer stamps "addedAt" on every call, so it cannot equal the expectation built above.
-        $this->assertArrayHasKey('addedAt', $document);
-        $this->assertIsInt($document['addedAt']);
-        $this->assertGreaterThanOrEqual($before, $document['addedAt']);
-        $this->assertLessThanOrEqual($after, $document['addedAt']);
-
-        unset($document['addedAt'], $payload['addedAt']);
-
-        $this->assertSame($payload, $document);
+        $this->assertSame($payload, $documents[0]);
     }
 
     public function testMessageStoreCanLoad()

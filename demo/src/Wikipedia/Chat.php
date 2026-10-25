@@ -57,10 +57,7 @@ final class Chat
 
     public function submitMessage(string $message): void
     {
-        $messages = $this->loadMessages();
-        $messages->add(Message::ofUser($message));
-
-        $this->conversations->save($this->getId(), $messages);
+        $this->conversations->save($this->getId(), $this->loadMessages()->with(Message::ofUser($message)));
         $this->bus->dispatch(new Research($this->getId()));
     }
 

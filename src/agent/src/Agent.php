@@ -39,8 +39,7 @@ final class Agent implements AgentInterface
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
      * @param non-empty-string           $model
-     * @param bool                       $excludeToolMessages keeps the messages appended during tool calling out of the caller's message bag
-     * @param bool                       $includeSources      exposes the sources collected during tool calling as `sources` result metadata
+     * @param bool                       $includeSources   exposes the sources collected during tool calling as `sources` result metadata
      */
     public function __construct(
         PlatformInterface $platform,
@@ -51,7 +50,6 @@ final class Agent implements AgentInterface
         ?ToolboxInterface $toolbox = null,
         ?ToolExecutorInterface $toolExecutor = null,
         ?int $maxToolCalls = 50,
-        bool $excludeToolMessages = false,
         bool $includeSources = false,
         ?EventDispatcherInterface $eventDispatcher = null,
         ToolResultConverter $toolResultConverter = new ToolResultConverter(),
@@ -65,7 +63,6 @@ final class Agent implements AgentInterface
             $toolbox,
             $toolExecutor,
             $maxToolCalls,
-            $excludeToolMessages,
             $includeSources,
             $eventDispatcher,
             $toolResultConverter,
@@ -99,7 +96,8 @@ final class Agent implements AgentInterface
     {
         $cancellation = new Cancellation();
         $factory = function () use ($input, $options, $cancellation): \Generator {
-            $request = new Input($this->getModel(), InputNormalizer::toMessageBag($input), $options);
+            $input = InputNormalizer::toMessageBag($input);
+            $request = new Input($this->getModel(), $input, $options);
             foreach ($this->inputProcessors as $inputProcessor) {
                 if (!$inputProcessor instanceof InputProcessorInterface) {
                     throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
@@ -117,9 +115,11 @@ final class Agent implements AgentInterface
             $processedOptions = $request->getOptions();
 
             $result = null;
+            $resultUpdate = null;
             foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
+                    $resultUpdate = $update;
 
                     continue;
                 }
@@ -131,7 +131,7 @@ final class Agent implements AgentInterface
                 return;
             }
 
-            \assert($result instanceof ResultInterface);
+            \assert($result instanceof ResultInterface && $resultUpdate instanceof ResultUpdate);
 
             $output = new Output($model, $result, $messages, $processedOptions);
             foreach ($this->outputProcessors as $outputProcessor) {
@@ -146,7 +146,17 @@ final class Agent implements AgentInterface
                 $outputProcessor->processOutput($output);
             }
 
-            yield new ResultUpdate($output->getResult());
+            $finalResult = $output->getResult();
+            $newMessages = static function () use ($resultUpdate, $messages, $input, $result, $finalResult): MessageBag {
+                $runMessages = $resultUpdate->getMessages($finalResult !== $result ? $finalResult : null);
+
+                // the runner appended to the processed request, the caller's input only gets the new messages
+                $newMessages = \array_slice($runMessages?->getMessages() ?? [], \count($messages));
+
+                return $input->merge(new MessageBag(...$newMessages));
+            };
+
+            yield new ResultUpdate($finalResult, $newMessages);
         };
 
         return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);

@@ -15,6 +15,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
@@ -38,17 +39,12 @@ final class Chat
         $path = $this->filesystem->tempnam(sys_get_temp_dir(), 'audio-', '.wav');
         $this->filesystem->dumpFile($path, base64_decode($base64audio));
 
-        $messages = $this->loadMessages();
-        $messages->add(Message::ofUser(Audio::fromFile($path)));
-
-        $result = $this->agent->call($messages)->getResult();
-
-        $text = $result->getMetadata()->get('text');
-        $assistantMessage = Message::ofAssistant($text);
-        $messages->add($assistantMessage);
+        $execution = $this->agent->call($this->loadMessages()->with(Message::ofUser(Audio::fromFile($path))));
+        $result = $execution->getResult();
+        $messages = $execution->getMessages();
 
         if ($result instanceof BinaryResult) {
-            $assistantMessage->getMetadata()->add('speech', $result->toDataUri('audio/mpeg'));
+            $messages->latestAs(Role::Assistant)->getMetadata()->add('speech', $result->toDataUri('audio/mpeg'));
         }
 
         $this->saveMessages($messages);

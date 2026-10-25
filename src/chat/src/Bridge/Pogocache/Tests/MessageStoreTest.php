@@ -13,10 +13,10 @@ namespace Symfony\AI\Chat\Bridge\Pogocache\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Pogocache\MessageStore;
-use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;

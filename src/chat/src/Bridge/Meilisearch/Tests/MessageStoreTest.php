@@ -13,9 +13,9 @@ namespace Symfony\AI\Chat\Bridge\Meilisearch\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore;
-use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;

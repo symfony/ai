@@ -87,8 +87,6 @@ final class MemoryInputProcessor implements InputProcessorInterface
         $combinedSystemMessage = Message::forSystem($combinedMessage);
         $combinedSystemMessage->getMetadata()->add(self::ORIGINAL_SYSTEM_PROMPT_KEY, $originalSystemPrompt);
 
-        $messages = $input->getMessageBag();
-        $messages->removeSystemMessage();
-        $messages->prepend($combinedSystemMessage);
+        $input->setMessageBag($input->getMessageBag()->withSystemMessage($combinedSystemMessage));
     }
 }

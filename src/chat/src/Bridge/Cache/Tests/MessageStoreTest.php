@@ -71,7 +71,7 @@ final class MessageStoreTest extends TestCase
     public function testSaveStoresMessageBag()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Test message'));
+        $messageBag = $messageBag->with(Message::ofUser('Test message'));
 
         $cache = $this->createMock(CacheItemPoolInterface::class);
         $cacheItem = $this->createMock(CacheItemInterface::class);
@@ -101,7 +101,7 @@ final class MessageStoreTest extends TestCase
     public function testLoadReturnsStoredMessages()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Cached message'));
+        $messageBag = $messageBag->with(Message::ofUser('Cached message'));
 
         $cache = $this->createMock(CacheItemPoolInterface::class);
         $cacheItem = $this->createMock(CacheItemInterface::class);

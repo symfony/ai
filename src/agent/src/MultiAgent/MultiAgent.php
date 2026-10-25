@@ -26,7 +26,6 @@ use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
-use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
  * A multi-agent system that coordinates multiple specialized agents.
@@ -103,12 +102,12 @@ final class MultiAgent implements AgentInterface
                 return;
             }
 
-            $decision = $selection->getContent();
+            $decision = $selection->getResult()->getContent();
 
             if (!$decision instanceof Decision) {
                 $this->logger->debug('MultiAgent: Failed to get decision, falling back to orchestrator');
 
-                yield from $this->answerWith($this->orchestrator, $messages, $options, $cancellation);
+                yield from $this->answerWith($this->orchestrator, $messages, $messages, $options, $cancellation);
 
                 return;
             }
@@ -123,7 +122,7 @@ final class MultiAgent implements AgentInterface
 
                 yield new Progress(Progress::STAGE_HANDOFF, \sprintf('Routing to fallback agent "%s".', $this->fallback->getName()), $decision);
 
-                yield from $this->answerWith($this->fallback, $messages, $options, $cancellation);
+                yield from $this->answerWith($this->fallback, $messages, $messages, $options, $cancellation);
 
                 return;
             }
@@ -145,7 +144,7 @@ final class MultiAgent implements AgentInterface
 
                 yield new Progress(Progress::STAGE_HANDOFF, \sprintf('Routing to fallback agent "%s".', $this->fallback->getName()), $decision);
 
-                yield from $this->answerWith($this->fallback, $messages, $options, $cancellation);
+                yield from $this->answerWith($this->fallback, $messages, $messages, $options, $cancellation);
 
                 return;
             }
@@ -155,7 +154,7 @@ final class MultiAgent implements AgentInterface
             yield new Progress(Progress::STAGE_HANDOFF, \sprintf('Routing to agent "%s".', $targetAgent->getName()), $decision);
 
             // Call the selected agent with the original user question
-            yield from $this->answerWith($targetAgent, new MessageBag($userMessage), $options, $cancellation);
+            yield from $this->answerWith($targetAgent, new MessageBag($userMessage), $messages, $options, $cancellation);
         }, cancellation: $cancellation);
     }
 
@@ -166,13 +165,23 @@ final class MultiAgent implements AgentInterface
      *
      * @return \Generator<int, Progress|ResultUpdate, mixed, void>
      */
-    private function answerWith(AgentInterface $agent, MessageBag $messages, array $options, Cancellation $cancellation): \Generator
+    private function answerWith(AgentInterface $agent, MessageBag $messages, MessageBag $input, array $options, Cancellation $cancellation): \Generator
     {
-        $result = yield from $this->delegate($agent, $messages, $options, $cancellation);
+        $update = yield from $this->delegate($agent, $messages, $options, $cancellation);
 
-        if (null !== $result) {
-            yield new ResultUpdate($result);
+        if (null === $update) {
+            return;
         }
+
+        yield new ResultUpdate($update->getResult(), static function () use ($update, $messages, $input): ?MessageBag {
+            $agentMessages = $update->getMessages();
+            if (null === $agentMessages) {
+                return null;
+            }
+
+            // the agent may have been called with a part of the input only
+            return $input->merge(new MessageBag(...\array_slice($agentMessages->getMessages(), \count($messages))));
+        });
     }
 
     /**
@@ -181,7 +190,7 @@ final class MultiAgent implements AgentInterface
      * @param array<string, mixed> $options
      * @param bool                 $forwardDeltas whether the delegated deltas are part of this agent's answer
      *
-     * @return \Generator<int, Progress, mixed, ResultInterface|null> the result, or null when the execution was canceled
+     * @return \Generator<int, Progress, mixed, ResultUpdate|null> the result, or null when the execution was canceled
      */
     private function delegate(AgentInterface $agent, MessageBag $messages, array $options, Cancellation $cancellation, bool $forwardDeltas = true): \Generator
     {
@@ -189,7 +198,7 @@ final class MultiAgent implements AgentInterface
 
         foreach ($cancellation->forward($agent->call($messages, $options)) as $update) {
             if ($update instanceof ResultUpdate) {
-                $result = $update->getResult();
+                $result = $update;
 
                 continue;
             }
@@ -209,7 +218,7 @@ final class MultiAgent implements AgentInterface
             return null;
         }
 
-        if (!$result instanceof ResultInterface) {
+        if (!$result instanceof ResultUpdate) {
             throw new RuntimeException(\sprintf('The agent "%s" finished without producing a result.', $agent->getName()));
         }
 

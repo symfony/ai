@@ -255,6 +255,14 @@ final class MessageTest extends TestCase
         $this->assertInstanceOf(ToolCall::class, $content[1]);
     }
 
+    public function testCreateAssistantMessageFromObjectResultKeepsTheAnsweredJson()
+    {
+        $result = new ObjectResult(['city' => 'Berlin'], '{"city": "Berlin"}');
+        $result->getMetadata()->add('signature', 'sig');
+
+        $this->assertEquals([new Text('{"city": "Berlin"}', 'sig')], Message::ofAssistant($result)->getContent());
+    }
+
     public function testCreateAssistantMessageFromUnsupportedResultThrows()
     {
         $result = new ObjectResult(new \stdClass());
