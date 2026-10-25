@@ -12,6 +12,7 @@ CHANGELOG
  * Add `MessageStore\MessageStoreInterface` and `MessageStore\InMemoryMessageStore` keeping message bags by their ID, and the `$messageStore` argument of `Agent` continuing and saving the stored conversation
  * Add `ExecutionInterface`, returned by `AgentInterface::call()`
  * Add `ExecutionStatus` and `Execution::getStatus()`, `isSuspended()`, `getPendingToolCalls()`, `getError()` and `getId()` to read where an execution stands
+ * Add the `max_rounds` and `defer_tool_calls` options to run an agent in steps, `defer_tool_calls` also takes a list of tool names or a closure to defer only some calls of a round, and the round number as `round` in the metadata of every assistant message of a run
  * Keep the phase of a streamed text when the `Runner` turns the round into a result
  * Add `Execution::getMessages()` returning the given messages followed by the messages of the run, each assistant message carrying the metadata of its own model request
  * Add an optional `$messages` argument to `Update\Result`, for agents providing the messages of their execution

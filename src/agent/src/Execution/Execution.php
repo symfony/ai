@@ -120,6 +120,10 @@ final class Execution implements ExecutionInterface
             return ExecutionStatus::Failed;
         }
 
+        if (null !== $status = $this->resultUpdate?->getStatus()) {
+            return $status;
+        }
+
         if (null !== $this->result) {
             return [] === $this->getPendingToolCalls() ? ExecutionStatus::Completed : ExecutionStatus::WaitingForInput;
         }
@@ -136,12 +140,16 @@ final class Execution implements ExecutionInterface
     }
 
     /**
-     * The tool calls of the final result, left unanswered by the agent.
+     * The tool calls of the final result, left unanswered by the agent, or the deferred ones of a stopped run.
      *
      * @return list<ToolCall>
      */
     public function getPendingToolCalls(): array
     {
+        if (null !== $this->resultUpdate?->getStatus()) {
+            return $this->resultUpdate->getPendingToolCalls();
+        }
+
         $parts = $this->result instanceof MultiPartResult ? $this->result->getContent() : [$this->result];
 
         $toolCalls = [];
