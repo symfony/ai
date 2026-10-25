@@ -59,10 +59,12 @@ final class VectorDistance extends FunctionNode
     public function getSql(SqlWalker $sqlWalker): string
     {
         $vectorPlatform = VectorPlatformFactory::create($sqlWalker->getConnection()->getDatabasePlatform());
+        $vector = $sqlWalker->walkArithmeticPrimary($this->vector);
 
         return $vectorPlatform->getDistanceSql(
             $sqlWalker->walkArithmeticPrimary($this->column),
-            $vectorPlatform->getVectorParameterSql($sqlWalker->walkArithmeticPrimary($this->vector)),
+            // the ORM already wraps a parameter bound with the vector type
+            '?' === $vector ? $vectorPlatform->getVectorParameterSql($vector) : $vector,
             $this->metric,
         );
     }

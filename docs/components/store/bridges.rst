@@ -246,8 +246,8 @@ See :doc:`sqlite` for the differences between both stores and the ``sqlite-vec``
 Doctrine
 ~~~~~~~~
 
-Vector storage in a field of a Doctrine entity, on PostgreSQL with `pgvector`_ or on SQLite with
-`sqlite-vec`_. Queries return the entities.
+Vector storage in a field of a Doctrine entity, on PostgreSQL with `pgvector`_, on MariaDB 11.7 or
+newer or on SQLite with `sqlite-vec`_. Queries return the entities.
 
 .. code-block:: terminal
 

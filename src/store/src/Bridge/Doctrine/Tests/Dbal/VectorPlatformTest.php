@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Metric;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\MariaDbVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\PostgresVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\SqliteVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorPlatformInterface;
@@ -35,6 +36,7 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform(), 'vector'];
         yield 'sqlite' => [new SqliteVectorPlatform(), 'CLOB'];
+        yield 'mariadb' => [new MariaDbVectorPlatform(), 'VECTOR'];
     }
 
     #[DataProvider('provideCosineDistances')]
@@ -52,6 +54,22 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform(), '(embedding <=> :vector)'];
         yield 'sqlite' => [new SqliteVectorPlatform(), 'vec_distance_cosine(embedding, :vector)'];
+        yield 'mariadb' => [new MariaDbVectorPlatform(), 'VEC_DISTANCE_COSINE(embedding, VEC_FromText(:vector))'];
+    }
+
+    public function testMariaDbExpressesAnEuclideanDistance()
+    {
+        $platform = new MariaDbVectorPlatform();
+
+        $this->assertSame('VEC_DISTANCE_EUCLIDEAN(embedding, VEC_FromText(:vector))', $platform->getDistanceSql('embedding', $platform->getVectorParameterSql(':vector'), Metric::Euclidean));
+    }
+
+    public function testMariaDbReadsAndWritesVectorsAsText()
+    {
+        $platform = new MariaDbVectorPlatform();
+
+        $this->assertSame('VEC_ToText(embedding)', $platform->getVectorSelectSql('embedding'));
+        $this->assertSame('[0.25,-1.5,3]', $platform->toDatabaseValue(new Vector([0.25, -1.5, 3.0])));
     }
 
     #[DataProvider('providePlatforms')]
@@ -84,6 +102,7 @@ final class VectorPlatformTest extends TestCase
     {
         yield 'postgres' => [new PostgresVectorPlatform()];
         yield 'sqlite' => [new SqliteVectorPlatform()];
+        yield 'mariadb' => [new MariaDbVectorPlatform()];
     }
 
     #[DataProvider('providePlatformsWithoutInnerProduct')]
@@ -100,6 +119,7 @@ final class VectorPlatformTest extends TestCase
     public static function providePlatformsWithoutInnerProduct(): iterable
     {
         yield 'sqlite' => [new SqliteVectorPlatform()];
+        yield 'mariadb' => [new MariaDbVectorPlatform()];
     }
 
     public function testSqliteStoresVectorsWithoutTheExtension()
