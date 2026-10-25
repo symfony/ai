@@ -40,6 +40,7 @@ final class TraceableStoreTest extends TestCase
             [
                 'method' => 'add',
                 'documents' => $document,
+                'options' => [],
                 'called_at' => $clock->now(),
             ],
         ], $traceableStore->getCalls());
