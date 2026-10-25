@@ -24,6 +24,7 @@ use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -80,5 +81,12 @@ final class Factory
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        ?HttpClientInterface $httpClient = null,
+        string $baseUrl = 'https://openrouter.ai/api',
+    ): ModelCatalogInterface {
+        return new ModelApiCatalog($httpClient ?? HttpClient::create(), $baseUrl);
     }
 }

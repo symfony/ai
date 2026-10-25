@@ -345,17 +345,21 @@ You can also define models for the vectorizer this way:
             embeddings:
                 model: 'text-embedding-3-small?dimensions=512&encoding_format=float'
 
-Adding Models to a Platform's Catalog
--------------------------------------
+.. _ai-bundle-model-catalog:
 
-Each platform ships with a built-in model catalog that knows the available models and their
-capabilities. When you use a model that is not part of the built-in catalog – for example a
-local model served by `LM Studio`_ or `Ollama`_, or a freshly released model that has not been
-added to the bridge yet – you can register it through the ``model`` configuration key without
-having to wait for a new release or override the catalog service.
+Configuring the Model Catalog
+-----------------------------
 
-Models are added per platform, keyed by the platform name. For each model you provide the model
-class and the list of capabilities it supports:
+Each platform uses a model catalog that knows the available models and their capabilities. You
+can change this catalog with the ``model_catalog`` option of the platform.
+
+Adding Models
+~~~~~~~~~~~~~
+
+Sometimes you need a model that is not part of the platform's bundled list (e.g. a local model
+served by `LM Studio`_, or a model that has not been added to the bridge yet). Add it with the
+``models`` option. For each model you provide the model class and the list of capabilities it
+supports:
 
 .. code-block:: yaml
 
@@ -364,37 +368,105 @@ class and the list of capabilities it supports:
         platform:
             lmstudio:
                 host_url: '%env(LMSTUDIO_HOST_URL)%'
-
-        model:
-            lmstudio:
-                qwen3-coder-next:
-                    class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
-                    capabilities:
-                        - !php/const Symfony\AI\Platform\Capability::INPUT_MESSAGES
-                        - !php/const Symfony\AI\Platform\Capability::INPUT_IMAGE
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_TEXT
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_STREAMING
-                        - !php/const Symfony\AI\Platform\Capability::TOOL_CALLING
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_STRUCTURED
+                model_catalog:
+                    models:
+                        qwen3-coder-next:
+                            class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+                            capabilities:
+                                - !php/const Symfony\AI\Platform\Capability::INPUT_MESSAGES
+                                - !php/const Symfony\AI\Platform\Capability::INPUT_IMAGE
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_TEXT
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_STREAMING
+                                - !php/const Symfony\AI\Platform\Capability::TOOL_CALLING
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_STRUCTURED
 
         agent:
             coder:
                 platform: 'ai.platform.lmstudio'
                 model: 'qwen3-coder-next'
 
-The configured models are merged into the platform's built-in catalog and take precedence over
-models defined there with the same name, so you can also use this to override the capabilities of
-an existing model.
+The configured models take precedence over models with the same name in the platform's catalog,
+so you can also use this option to change the capabilities of an existing model.
 
-* ``class`` (string): The fully qualified class name of the model. It must extend
-  :class:`Symfony\\AI\\Platform\\Model`. For platforms based on the generic bridge, use
+* ``class`` (string): The fully qualified class name of the model, defaults to
+  :class:`Symfony\\AI\\Platform\\Model`. It must extend :class:`Symfony\\AI\\Platform\\Model`.
+  For platforms based on the generic bridge, use
   :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` for chat/completion models or
   :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel` for embedding models.
 * ``capabilities`` (list): The :class:`Symfony\\AI\\Platform\\Capability` cases the model supports.
   At least one capability must be specified for each model.
 
+The ``models`` option works with every platform and catalog: the bundled list, a custom
+``service`` and a catalog that fetches its models from the provider API. The ``generic``,
+``openresponses`` and ``transformersphp`` platforms accept any model name, and the ``models``
+option gives such a model its exact capabilities.
+
+Using a Custom Catalog
+~~~~~~~~~~~~~~~~~~~~~~
+
+To use your own catalog, pass the ID of a service that implements
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\ModelCatalogInterface`:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+                model_catalog:
+                    service: 'app.model_catalog'
+
+                # a string is short for the "service" option
+                # model_catalog: 'app.model_catalog'
+
+Fetching Models from the Provider API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``amazeeai``, ``deepgram``, ``elevenlabs``, ``fireworks``, ``higgsfield``, ``ollama``,
+``together`` and ``venice`` platforms always fetch their models from the provider API, so they
+have no ``api`` option.
+
+The ``edenai``, ``huggingface`` and ``openrouter`` platforms ship a bundled list of models and can
+also fetch the models from the API. They use the bundled list by default. Set the ``api`` option to use the API:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openrouter:
+                api_key: '%env(OPENROUTER_API_KEY)%'
+                model_catalog:
+                    api: true
+
+Caching the Model Catalog
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A catalog that fetches its models from the provider API sends a request for each model lookup.
+Enable the ``cache`` option to store the lookups in a cache pool and reuse them across requests:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            ollama:
+                endpoint: '%env(OLLAMA_HOST_URL)%'
+                model_catalog:
+                    cache: true
+
+                    # "true" is short for:
+                    # cache:
+                    #     service: 'cache.app' # the cache pool that stores the lookups
+                    #     ttl: 3600            # lifetime of the cached lookups in seconds
+
+Lookups of unknown models are not cached. The models of the ``models`` option are not cached
+either, so changes to them apply right away. You can use the ``cache`` option with a catalog that
+fetches its models from the API or with a custom ``service``. A bundled list needs no cache, so
+the bundle throws an exception if you enable the cache for it.
+
 .. _`LM Studio`: https://lmstudio.ai/
-.. _`Ollama`: https://ollama.com/
 
 HTTP Client Configuration
 -------------------------

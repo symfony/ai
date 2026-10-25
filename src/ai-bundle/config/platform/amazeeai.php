@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('amazeeai'))
     ->children()
         ->stringNode('base_url')->isRequired()->end()
@@ -21,4 +23,5 @@ return (new ArrayNodeDefinition('amazeeai'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
+        ->append($modelCatalog('api'))
     ->end();

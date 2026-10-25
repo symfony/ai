@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('ollama'))
     ->children()
         ->stringNode('endpoint')
@@ -25,4 +27,5 @@ return (new ArrayNodeDefinition('ollama'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use. When "endpoint" is null, this client must be pre-configured (e.g. with a base_uri).')
         ->end()
+        ->append($modelCatalog('api'))
     ->end();

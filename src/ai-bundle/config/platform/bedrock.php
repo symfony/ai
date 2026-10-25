@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 // Options that belong to one inference engine only, so that pairing them with another one fails
 // instead of being silently dropped. Only keys without a default can be told apart from "unset".
 $mantleOnly = ['api_key', 'region', 'credential_provider', 'http_client', 'path'];
@@ -67,7 +69,7 @@ return (new ArrayNodeDefinition('bedrock'))
             ->stringNode('workspace')
                 ->info('Bedrock Mantle workspace ID sent with Anthropic Messages requests; only valid with "api: messages"')
             ->end()
-            ->stringNode('model_catalog')->defaultNull()->end()
+            ->append($modelCatalog('static'))
         ->end()
         ->validate()
             ->ifTrue(static function (array $v) use ($hasAny, $mantleOnly, $messagesOnly): bool {

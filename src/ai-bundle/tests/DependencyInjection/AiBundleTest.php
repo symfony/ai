@@ -16,7 +16,6 @@ use AsyncAws\S3Vectors\S3VectorsClient;
 use Codewithkyrian\ChromaDB\Client;
 use MongoDB\Client as MongoDbClient;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +42,7 @@ use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
@@ -53,12 +53,14 @@ use Symfony\AI\Platform\Bridge\EdenAi\Factory as EdenAiFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
+use Symfony\AI\Platform\Bridge\Fireworks\Factory as FireworksFactory;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
-use Symfony\AI\Platform\Bridge\HuggingFace\ApiClient as HuggingFaceApiClient;
-use Symfony\AI\Platform\Bridge\HuggingFace\ModelApiCatalog as HuggingFaceModelApiCatalog;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Bridge\Together\Factory as TogetherFactory;
 use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
@@ -72,6 +74,9 @@ use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRende
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\InMemoryModelCatalog;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
@@ -5141,8 +5146,7 @@ class AiBundleTest extends TestCase
         $this->assertNull($definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
         $this->assertSame('http_client', (string) $definition->getArgument(4));
-        // No explicit catalog: the factory picks the one belonging to the route.
-        $this->assertNull($definition->getArgument(5));
+        $this->assertSame('ai.platform.model_catalog.bedrock.completions', (string) $definition->getArgument(5));
         $this->assertNull($definition->getArgument(6));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(7));
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(7));
@@ -5314,7 +5318,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5345,7 +5350,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://ollama.com', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5375,7 +5380,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertNull($definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5940,7 +5945,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([ElevenLabsFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5976,7 +5982,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v2/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6012,7 +6018,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6047,7 +6053,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6084,7 +6090,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([DeepgramFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('https://api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6134,7 +6141,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6436,7 +6443,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.fireworks');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(4, $arguments);
+        $this->assertCount(5, $arguments);
+        $this->assertSame([FireworksFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('fw-test-key', $arguments[0]);
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('http_client', (string) $arguments[1]);
@@ -6492,7 +6500,7 @@ class AiBundleTest extends TestCase
         $this->assertNull($arguments[2]);
         $this->assertInstanceOf(Reference::class, $arguments[3]);
         $this->assertSame('http_client', (string) $arguments[3]);
-        $this->assertNull($arguments[4]);
+        $this->assertSame([HiggsfieldFactory::class, 'createModelCatalog'], $arguments[4]->getFactory());
         $this->assertInstanceOf(Reference::class, $arguments[5]);
         $this->assertSame('ai.platform.contract.higgsfield', (string) $arguments[5]);
         $this->assertInstanceOf(Reference::class, $arguments[6]);
@@ -6517,7 +6525,6 @@ class AiBundleTest extends TestCase
         $this->assertNull($arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[3]);
         $this->assertSame('ai.platform.model_catalog.huggingface', (string) $arguments[3]);
-        $this->assertFalse($container->hasDefinition('ai.platform.model_catalog.huggingface.api'));
     }
 
     public function testHuggingFacePlatformResolvesModelsThroughTheHubApiWhenConfigured()
@@ -6528,7 +6535,7 @@ class AiBundleTest extends TestCase
                     'huggingface' => [
                         'api_key' => 'hf-test-key',
                         'provider' => 'nscale',
-                        'api_catalog' => true,
+                        'model_catalog' => ['api' => true],
                     ],
                 ],
             ],
@@ -6536,17 +6543,14 @@ class AiBundleTest extends TestCase
 
         $arguments = $container->getDefinition('ai.platform.huggingface')->getArguments();
         $this->assertSame('nscale', $arguments[1]);
-        $this->assertSame('ai.platform.model_catalog.huggingface.api', (string) $arguments[3]);
 
-        $catalog = $container->getDefinition('ai.platform.model_catalog.huggingface.api');
-        $this->assertSame(HuggingFaceModelApiCatalog::class, $catalog->getClass());
-        $this->assertSame('nscale', $catalog->getArgument(1));
-
-        $apiClient = $catalog->getArgument(0);
-        $this->assertInstanceOf(Definition::class, $apiClient);
-        $this->assertSame(HuggingFaceApiClient::class, $apiClient->getClass());
-        $this->assertSame('http_client', (string) $apiClient->getArgument(0));
-        $this->assertSame('hf-test-key', $apiClient->getArgument(1));
+        $catalog = $arguments[3];
+        $this->assertInstanceOf(Definition::class, $catalog);
+        $this->assertSame([HuggingFaceFactory::class, 'createModelCatalog'], $catalog->getFactory());
+        $this->assertSame(['hf-test-key', 'nscale', 'http_client'], array_map(
+            static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument,
+            $catalog->getArguments(),
+        ));
     }
 
     #[TestDox('Higgsfield platform uses a custom model catalog service when configured')]
@@ -6613,7 +6617,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.together');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(5, $arguments);
+        $this->assertCount(6, $arguments);
+        $this->assertSame([TogetherFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertNull($arguments[0]);
         $this->assertSame('together-test-key', $arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[2]);
@@ -10048,87 +10053,366 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
 
-    #[TestDox('Model configuration defaults class to Model::class')]
-    #[DoesNotPerformAssertions]
-    public function testModelConfigurationDefaultsClassToModel()
-    {
-        // Should not throw - class defaults to Model::class
-        $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'openai' => [
-                        'my-custom-model' => [
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    #[TestDox('Model configuration throws exception when class does not exist')]
-    public function testModelConfigurationThrowsExceptionWhenClassDoesNotExist()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('does not exist');
-
-        $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'openai' => [
-                        'my-custom-model' => [
-                            'class' => 'NonExistentModelClass',
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    #[TestDox('Model configuration throws exception when class does not extend Model')]
-    public function testModelConfigurationThrowsExceptionWhenClassDoesNotExtendModel()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('must extend');
-
-        $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'openai' => [
-                        'my-custom-model' => [
-                            'class' => \stdClass::class,
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    #[TestDox('Model configuration is passed to ModelCatalog services')]
-    public function testModelConfigurationIsPassedToModelCatalogServices()
+    public function testModelCatalogStringIsShortForService()
     {
         $container = $this->buildContainer([
             'ai' => [
-                'model' => [
+                'platform' => [
                     'openai' => [
-                        'my-custom-model' => [
-                            'class' => Model::class,
-                            'capabilities' => ['input-text', 'output-text'],
+                        'api_key' => 'sk-test',
+                        'model_catalog' => 'my_model_catalog',
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.openai')->getArgument(2);
+
+        $this->assertInstanceOf(Reference::class, $modelCatalog);
+        $this->assertSame('my_model_catalog', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogUsesBundledCatalogByDefault()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => ['api_key' => 'sk-test'],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.platform.model_catalog.openai', (string) $container->getDefinition('ai.platform.openai')->getArgument(2));
+    }
+
+    public function testModelCatalogModelsTakePrecedenceOverBundledCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => [
+                                    'class' => Gpt::class,
+                                    'capabilities' => ['input-text', 'output-text'],
+                                ],
+                            ],
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.model_catalog.openai');
-        $arguments = $definition->getArguments();
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.openai')->getArgument(2));
 
-        $this->assertCount(1, $arguments);
-        $this->assertArrayHasKey('my-custom-model', $arguments[0]);
-        $this->assertSame(Model::class, $arguments[0]['my-custom-model']['class']);
-        $this->assertEquals([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT], $arguments[0]['my-custom-model']['capabilities']);
+        $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
+        $this->assertEquals([
+            'my-custom-model' => [
+                'class' => Gpt::class,
+                'capabilities' => [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT],
+            ],
+        ], $configuredCatalog->getArgument(0));
+        $this->assertSame('ai.platform.model_catalog.openai', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogModelsDefaultClassToModel()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'vertexai' => [
+                        'api_key' => 'test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.vertexai')->getArgument(4));
+
+        $this->assertSame(Model::class, $configuredCatalog->getArgument(0)['my-custom-model']['class']);
+        $this->assertSame('ai.platform.model_catalog.vertexai.gemini', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogModelsAreConfiguredPerPlatformInstance()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'azure' => [
+                        'with_models' => [
+                            'api_key' => 'key',
+                            'base_url' => 'my.azure.com',
+                            'deployment' => 'gpt',
+                            'api_version' => '2024-08-01',
+                            'model_catalog' => [
+                                'models' => [
+                                    'my-custom-model' => ['capabilities' => ['input-text']],
+                                ],
+                            ],
+                        ],
+                        'without_models' => [
+                            'api_key' => 'key',
+                            'base_url' => 'my.azure.com',
+                            'deployment' => 'gpt',
+                            'api_version' => '2024-08-01',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.azure.with_models')->getArgument(5));
+
+        $this->assertSame('ai.platform.model_catalog.azure.openai', (string) $modelCatalog);
+        $this->assertSame('ai.platform.model_catalog.azure.openai', (string) $container->getDefinition('ai.platform.azure.without_models')->getArgument(5));
+    }
+
+    public function testModelCatalogModelsCombineWithCustomService()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'service' => 'my_model_catalog',
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.openai')->getArgument(2));
+
+        $this->assertSame('my_model_catalog', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogModelsCombineWithApiCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                    'edenai' => [
+                        'api_key' => 'test',
+                        'model_catalog' => [
+                            'api' => true,
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [, $ollamaCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+        [, $edenAiCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.edenai')->getArgument(2));
+
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $ollamaCatalog->getFactory());
+        $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $edenAiCatalog->getFactory());
+    }
+
+    public function testModelCatalogModelsAreNotCached()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'model_catalog' => [
+                            'cache' => true,
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+
+        $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
+        $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
+    }
+
+    #[TestWith(['NonExistentModelClass', 'does not exist'])]
+    #[TestWith([\stdClass::class, 'must extend'])]
+    public function testModelCatalogModelsRejectInvalidClass(string $class, string $message)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage($message);
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => [
+                                    'class' => $class,
+                                    'capabilities' => ['input-text'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testModelCatalogServiceCanBeCached()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'service' => 'my_model_catalog',
+                            'cache' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.openai')->getArgument(2);
+
+        $this->assertInstanceOf(Definition::class, $modelCatalog);
+        $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
+        $this->assertSame('my_model_catalog', (string) $modelCatalog->getArgument(0));
+        $this->assertSame('cache.app', (string) $modelCatalog->getArgument(1));
+        $this->assertSame(3600, $modelCatalog->getArgument(2));
+        $this->assertSame('ai.platform.openai', $modelCatalog->getArgument(3));
+    }
+
+    public function testModelCatalogCacheServiceAndTtlAreConfigurable()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                        'model_catalog' => [
+                            'cache' => [
+                                'service' => 'cache.model_catalog',
+                                'ttl' => 60,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog');
+
+        $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $modelCatalog->getArgument(0)->getFactory());
+        $this->assertSame(['http://127.0.0.1:11434', null, 'http_client'], array_map(
+            static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument,
+            $modelCatalog->getArgument(0)->getArguments(),
+        ));
+        $this->assertSame('cache.model_catalog', (string) $modelCatalog->getArgument(1));
+        $this->assertSame(60, $modelCatalog->getArgument(2));
+        $this->assertSame('ai.platform.ollama', $modelCatalog->getArgument(3));
+    }
+
+    public function testModelCatalogApiIsOptIn()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openrouter' => ['api_key' => 'sk-test'],
+                    'edenai' => [
+                        'api_key' => 'test',
+                        'model_catalog' => ['api' => true],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.platform.model_catalog.openrouter', (string) $container->getDefinition('ai.platform.openrouter')->getArgument(2));
+        $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $container->getDefinition('ai.platform.edenai')->getArgument(2)->getFactory());
+    }
+
+    public function testModelCatalogOfAmazeeAiIsApiBased()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'amazeeai' => [
+                        'base_url' => 'https://llm.us104.amazee.ai',
+                        'api_key' => 'test',
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.amazeeai')->getArgument(3);
+
+        $this->assertSame([AmazeeAiFactory::class, 'createModelCatalog'], $modelCatalog->getFactory());
+        $this->assertSame(['https://llm.us104.amazee.ai', 'test', 'http_client'], array_map(
+            static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument,
+            $modelCatalog->getArguments(),
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $platform
+     */
+    #[DataProvider('provideInvalidModelCatalogConfigurations')]
+    public function testModelCatalogRejectsInvalidConfiguration(array $platform, string $message)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage($message);
+
+        $this->buildContainer(['ai' => ['platform' => $platform]]);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function provideInvalidModelCatalogConfigurations(): iterable
+    {
+        yield 'cache on the bundled list' => [
+            ['openai' => ['api_key' => 'sk-test', 'model_catalog' => ['cache' => true]]],
+            'Caching the model catalog requires a custom "service", the bundled list needs no cache.',
+        ];
+        yield 'cache on the bundled list of a bridge with an API catalog' => [
+            ['openrouter' => ['api_key' => 'sk-test', 'model_catalog' => ['cache' => true]]],
+            'Caching the model catalog requires a custom "service" or "api: true", the bundled list needs no cache.',
+        ];
+        yield 'cache on the catalog of a bridge accepting any model' => [
+            ['generic' => ['main' => ['base_url' => 'http://localhost', 'model_catalog' => ['cache' => true]]]],
+            'Caching the model catalog requires a custom "service", the bundled list needs no cache.',
+        ];
+        yield 'service combined with api' => [
+            ['edenai' => ['api_key' => 'test', 'model_catalog' => ['service' => 'my_model_catalog', 'api' => true]]],
+            'The "service" and "api" options of the model catalog cannot be combined.',
+        ];
+        yield 'api on a bridge without API catalog' => [
+            ['openai' => ['api_key' => 'sk-test', 'model_catalog' => ['api' => true]]],
+            'Unrecognized option "api" under "ai.platform.openai.model_catalog"',
+        ];
     }
 
     public function testVenicePlatformCanBeConfigured()
@@ -10150,7 +10434,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([VeniceFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10186,7 +10471,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10222,7 +10507,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10258,7 +10543,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10275,29 +10560,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $venice'));
-    }
-
-    #[TestDox('Model configuration for vertexai uses correct catalog service id')]
-    public function testModelConfigurationForVertexAiUsesCorrectCatalogServiceId()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'vertexai' => [
-                        'my-custom-vertex-model' => [
-                            'class' => Model::class,
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $definition = $container->getDefinition('ai.platform.model_catalog.vertexai.gemini');
-        $arguments = $definition->getArguments();
-
-        $this->assertCount(1, $arguments);
-        $this->assertArrayHasKey('my-custom-vertex-model', $arguments[0]);
     }
 
     #[TestDox('VertexAI platform uses custom http_client when configured')]
@@ -10358,28 +10620,6 @@ class AiBundleTest extends TestCase
 
         // For global endpoint, http client should be a plain Reference, not a bearer-token-wrapping Definition
         $this->assertInstanceOf(Reference::class, $arguments[3]);
-    }
-
-    #[TestDox('Model configuration is ignored for unknown platform')]
-    public function testModelConfigurationIsIgnoredForUnknownPlatform()
-    {
-        // Should not throw - unknown platforms are silently ignored
-        $container = $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'unknown_platform' => [
-                        'my-custom-model' => [
-                            'class' => Model::class,
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        // The model catalog for openai should not have been modified
-        $definition = $container->getDefinition('ai.platform.model_catalog.openai');
-        $this->assertSame([], $definition->getArguments());
     }
 
     public function testTemplateRendererServicesAreRegistered()
@@ -10565,8 +10805,8 @@ class AiBundleTest extends TestCase
         $this->assertSame('generic-test-key', $arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('http_client', (string) $arguments[2]);
-        $this->assertInstanceOf(Definition::class, $arguments[3], 'Model catalog should default to a FallbackModelCatalog Definition when not configured');
-        $this->assertSame(\Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog::class, $arguments[3]->getClass());
+        $this->assertInstanceOf(Reference::class, $arguments[3]);
+        $this->assertSame('ai.platform.model_catalog.generic', (string) $arguments[3]);
         $this->assertNull($arguments[4], 'Contract should be null');
         $this->assertInstanceOf(Reference::class, $arguments[5]);
         $this->assertSame('event_dispatcher', (string) $arguments[5]);
@@ -11573,5 +11813,19 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    /**
+     * @return array{Definition, Reference|Definition}
+     */
+    private function getCompositeModelCatalogs(mixed $modelCatalog): array
+    {
+        $this->assertInstanceOf(Definition::class, $modelCatalog);
+        $this->assertSame(CompositeModelCatalog::class, $modelCatalog->getClass());
+
+        $catalogs = $modelCatalog->getArgument(0);
+        $this->assertCount(2, $catalogs);
+
+        return $catalogs;
     }
 }

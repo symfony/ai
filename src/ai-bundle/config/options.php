@@ -12,8 +12,6 @@
 namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelOptionsParser;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -88,49 +86,6 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/venice'))
                     ->append($import('platform/vertexai'))
                     ->append($import('platform/voyage'))
-                ->end()
-            ->end()
-            ->arrayNode('model')
-                ->useAttributeAsKey('platform')
-                ->arrayPrototype()
-                    ->useAttributeAsKey('model_name')
-                    ->normalizeKeys(false)
-                    ->validate()
-                        ->ifEmpty()
-                        ->thenInvalid('Model name cannot be empty.')
-                    ->end()
-                    ->arrayPrototype()
-                        ->children()
-                            ->stringNode('class')
-                                ->info('The fully qualified class name of the model (must extend '.Model::class.')')
-                                ->defaultValue(Model::class)
-                                ->cannotBeEmpty()
-                                ->validate()
-                                    ->ifTrue(static function ($v) {
-                                        return !class_exists($v);
-                                    })
-                                    ->thenInvalid('The model class "%s" does not exist.')
-                                ->end()
-                                ->validate()
-                                    ->ifTrue(static function ($v) {
-                                        return !is_a($v, Model::class, true);
-                                    })
-                                    ->thenInvalid('The model class "%s" must extend '.Model::class.'.')
-                                ->end()
-                            ->end()
-                            ->arrayNode('capabilities')
-                                ->info('Array of capabilities that this model supports')
-                                ->enumPrototype(Capability::class)
-                                    ->enumFqcn(Capability::class)
-                                ->end()
-                                ->defaultValue([])
-                                ->validate()
-                                    ->ifEmpty()
-                                    ->thenInvalid('At least one capability must be specified for each model.')
-                                ->end()
-                            ->end()
-                        ->end()
-                    ->end()
                 ->end()
             ->end()
             ->arrayNode('agent')
