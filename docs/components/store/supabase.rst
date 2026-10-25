@@ -92,7 +92,7 @@ Basic Configuration
         apiKey: 'your-anon-key',
         table: 'documents',
         vectorFieldName: 'embedding',
-        vectorDimension: 768,               // depending on your embedding model
+        dimensions: 768,                    // depending on your embedding model
         functionName: 'match_documents',
     );
 
@@ -110,7 +110,7 @@ Bundle Configuration
                     api_key: '%env(SUPABASE_API_KEY)%'
                     table: 'documents'
                     vector_field: 'embedding'
-                    vector_dimension: 768
+                    dimensions: 768
                     function_name: 'match_documents'
 
 Environment Variables

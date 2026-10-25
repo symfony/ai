@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Replace the `dimension`, `metric`, `cloud` and `region` options of `Store::setup()` by the `dimensions`, `metric`, `cloud` and `region` arguments of `Store`, the dimensions default to 1536
+
 0.14
 ----
 

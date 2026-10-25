@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Rename the `similarity` argument of `Store` and `StoreFactory` to `metric`
+
 0.14
 ----
 

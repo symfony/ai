@@ -31,7 +31,8 @@ use Symfony\AI\Store\StoreInterface;
 final class Store implements ManagedStoreInterface, StoreInterface
 {
     /**
-     * @param array<string, mixed> $filter
+     * @param array<string, mixed>                   $filter
+     * @param 'cosine'|'euclidean'|'dotproduct'|null $metric
      */
     public function __construct(
         private readonly Client $pinecone,
@@ -39,32 +40,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly ?string $namespace = null,
         private readonly array $filter = [],
         private readonly int $topK = 3,
+        private readonly int $dimensions = 1536,
+        private readonly ?string $metric = null,
+        private readonly ?string $cloud = null,
+        private readonly ?string $region = null,
     ) {
     }
 
-    /**
-     * @param array{
-     *     dimension?: int,
-     *     metric?: string,
-     *     cloud?: string,
-     *     region?: string,
-     * } $options
-     */
     public function setup(array $options = []): void
     {
-        if (false === isset($options['dimension'])) {
-            throw new InvalidArgumentException('The "dimension" option is required.');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
         }
 
         $this->pinecone
             ->control()
             ->index($this->indexName)
-            ->createServerless(
-                $options['dimension'],
-                $options['metric'] ?? null,
-                $options['cloud'] ?? null,
-                $options['region'] ?? null,
-            );
+            ->createServerless($this->dimensions, $this->metric, $this->cloud, $this->region);
     }
 
     public function add(VectorDocumentInterface|array $documents): void

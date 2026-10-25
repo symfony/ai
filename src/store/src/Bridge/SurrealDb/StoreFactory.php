@@ -31,8 +31,8 @@ final class StoreFactory
         ?HttpClientInterface $httpClient = null,
         string $table = 'vectors',
         string $vectorFieldName = '_vectors',
-        string $strategy = 'cosine',
-        int $embeddingsDimension = 1536,
+        string $metric = 'cosine',
+        int $dimensions = 1536,
         bool $isNamespacedUser = false,
     ): StoreInterface&ManagedStoreInterface {
         $httpClient ??= HttpClient::create();
@@ -43,6 +43,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint);
         }
 
-        return new Store($httpClient, $user, $password, $namespace, $database, $table, $vectorFieldName, $strategy, $embeddingsDimension, $isNamespacedUser);
+        return new Store($httpClient, $user, $password, $namespace, $database, $table, $vectorFieldName, $metric, $dimensions, $isNamespacedUser);
     }
 }

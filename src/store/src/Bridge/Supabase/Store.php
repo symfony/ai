@@ -48,7 +48,7 @@ final class Store implements StoreInterface
         private readonly HttpClientInterface $httpClient,
         private readonly string $table = 'documents',
         private readonly string $vectorFieldName = 'embedding',
-        private readonly int $vectorDimension = 1536,
+        private readonly int $dimensions = 1536,
         private readonly string $functionName = 'match_documents',
     ) {
     }
@@ -66,7 +66,7 @@ final class Store implements StoreInterface
         $rows = [];
 
         foreach ($documents as $document) {
-            if (\count($document->getVector()->getData()) !== $this->vectorDimension) {
+            if (\count($document->getVector()->getData()) !== $this->dimensions) {
                 continue;
             }
 
@@ -168,8 +168,8 @@ final class Store implements StoreInterface
         }
 
         $vector = $query->getVector();
-        if (\count($vector->getData()) !== $this->vectorDimension) {
-            throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->vectorDimension}.");
+        if (\count($vector->getData()) !== $this->dimensions) {
+            throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->dimensions}.");
         }
 
         $matchCount = $options['max_items'] ?? ($options['limit'] ?? 10);

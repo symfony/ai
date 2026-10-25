@@ -31,7 +31,7 @@ final class StoreFactory
         ?HttpClientInterface $httpClient = null,
         string $vectorFieldName = '_vectors',
         int $dimensions = 1536,
-        string $metricType = 'COSINE',
+        string $metric = 'COSINE',
     ): StoreInterface&ManagedStoreInterface {
         if (null === $endpoint && null !== $apiKey) {
             throw new InvalidArgumentException('The Milvus "apiKey" requires an "endpoint", configure it on the HTTP client otherwise.');
@@ -48,6 +48,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, rtrim($endpoint, '/').'/', $defaultOptions);
         }
 
-        return new Store($httpClient, $database, $collection, $vectorFieldName, $dimensions, $metricType);
+        return new Store($httpClient, $database, $collection, $vectorFieldName, $dimensions, $metric);
     }
 }

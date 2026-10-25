@@ -318,7 +318,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.setup_store', SetupStoreCommand::class)
             ->args([
                 tagged_locator('ai.store', 'name'),
-                abstract_arg('setup store options'),
             ])
             ->tag('console.command')
         ->set('ai.command.drop_store', DropStoreCommand::class)

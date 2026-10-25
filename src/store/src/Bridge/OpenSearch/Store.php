@@ -38,12 +38,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $indexName,
         private readonly string $vectorsField = '_vectors',
         private readonly int $dimensions = 1536,
-        private readonly string $spaceType = 'l2',
+        private readonly string $metric = 'l2',
     ) {
     }
 
     public function setup(array $options = []): void
     {
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
         $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (200 === $indexExistResponse->getStatusCode()) {
@@ -58,8 +62,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'properties' => [
                     $this->vectorsField => [
                         'type' => 'knn_vector',
-                        'dimension' => $options['dimensions'] ?? $this->dimensions,
-                        'space_type' => $options['space_type'] ?? $this->spaceType,
+                        'dimension' => $this->dimensions,
+                        'space_type' => $this->metric,
                     ],
                 ],
             ],

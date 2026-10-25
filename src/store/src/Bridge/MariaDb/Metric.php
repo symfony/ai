@@ -9,29 +9,27 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\AI\Store\Bridge\Postgres;
+namespace Symfony\AI\Store\Bridge\MariaDb;
 
 use OskarStark\Enum\Trait\Comparable;
 
 /**
- * @author Denis Zunke <denis.zunke@gmail.com>
+ * @author Grégoire Pineau <lyrixx@lyrixx.info>
  */
-enum Distance: string
+enum Metric: string
 {
     use Comparable;
 
     case Cosine = 'cosine';
-    case InnerProduct = 'inner_product';
-    case L1 = 'l1';
-    case L2 = 'l2';
+    case Euclidean = 'euclidean';
+    case Distance = 'distance';
 
-    public function getComparisonSign(): string
+    public function getComparisonFunction(): string
     {
         return match ($this) {
-            self::Cosine => '<=>',
-            self::InnerProduct => '<#>',
-            self::L1 => '<+>',
-            self::L2 => '<->',
+            self::Cosine => 'VEC_DISTANCE_COSINE',
+            self::Euclidean => 'VEC_DISTANCE_EUCLIDEAN',
+            self::Distance => 'VEC_DISTANCE',
         };
     }
 }

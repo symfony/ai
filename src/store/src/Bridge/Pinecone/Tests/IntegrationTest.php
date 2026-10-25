@@ -32,6 +32,10 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
         $store = new Store(
             new PineconeLocalClient('pclocal', 'http://127.0.0.1:5080', self::INDEX_NAME),
             self::INDEX_NAME,
+            dimensions: 3,
+            metric: 'cosine',
+            cloud: 'aws',
+            region: 'us-east-1',
         );
 
         // The index outlives a previous run that did not reach drop(), and creating it again would fail
@@ -41,16 +45,6 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
         }
 
         return $store;
-    }
-
-    protected static function getSetupOptions(): array
-    {
-        return [
-            'dimension' => 3,
-            'metric' => 'cosine',
-            'cloud' => 'aws',
-            'region' => 'us-east-1',
-        ];
     }
 
     protected function waitForIndexing(): void

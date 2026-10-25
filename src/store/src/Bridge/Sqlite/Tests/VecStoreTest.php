@@ -14,7 +14,7 @@ namespace Symfony\AI\Store\Bridge\Sqlite\Tests;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\Sqlite\Distance;
+use Symfony\AI\Store\Bridge\Sqlite\Metric;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -66,7 +66,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $this->assertSame(0, $store->count());
@@ -91,7 +91,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), new Metadata(['name' => 'test'])));
@@ -110,7 +110,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         // Verify vec0 table exists
@@ -132,7 +132,7 @@ final class VecStoreTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup(['unsupported' => true]);
     }
 
@@ -144,7 +144,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
         $store->drop();
 
@@ -163,7 +163,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata = new Metadata(['name' => 'test']);
@@ -190,7 +190,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add([
@@ -210,7 +210,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata(['name' => 'original']);
@@ -240,7 +240,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add([
@@ -263,7 +263,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add([
@@ -285,7 +285,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add([
@@ -313,7 +313,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0]))));
@@ -329,7 +329,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata(['name' => 'first']);
@@ -361,7 +361,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata(['name' => 'first']);
@@ -412,7 +412,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata();
@@ -444,7 +444,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata();
@@ -482,7 +482,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata();
@@ -516,7 +516,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         for ($i = 1; $i <= 10; ++$i) {
@@ -545,7 +545,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata();
@@ -573,7 +573,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata1 = new Metadata();
@@ -601,7 +601,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         for ($i = 1; $i <= 10; ++$i) {
@@ -634,7 +634,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $results = iterator_to_array($store->query(
@@ -652,7 +652,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata = new Metadata(['name' => 'test']);
@@ -676,7 +676,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add([
@@ -700,7 +700,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $metadata = new Metadata(['name' => 'test']);
@@ -734,7 +734,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $query = new class implements \Symfony\AI\Store\Query\QueryInterface {};
@@ -752,7 +752,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = VecStore::fromPdo($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = VecStore::fromPdo($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $result = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='test_vectors'");
@@ -772,7 +772,7 @@ final class VecStoreTest extends TestCase
             ->method('getNativeConnection')
             ->willReturn($pdo);
 
-        $store = VecStore::fromDbal($connection, 'test_vectors', Distance::Cosine, 3);
+        $store = VecStore::fromDbal($connection, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $result = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='test_vectors'");
@@ -787,7 +787,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
         $store->setup();
 
         $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), new Metadata(['name' => 'no-text'])));
@@ -808,7 +808,7 @@ final class VecStoreTest extends TestCase
             $this->markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        $store = new VecStore($pdo, 'test_vectors', Distance::L2, 3);
+        $store = new VecStore($pdo, 'test_vectors', Metric::L2, 3);
         $store->setup();
 
         $store->add([

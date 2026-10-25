@@ -118,25 +118,27 @@ Vector storage using `pgvector`_, the PostgreSQL extension for vector similarity
 
     $ composer require symfony/ai-postgres-store
 
-**Requirements:** ``pgvector`` extension 0.5.0 or later (0.7.0 for ``halfvec`` and ``Distance::L1``),
+**Requirements:** ``pgvector`` extension 0.5.0 or later (0.7.0 for ``halfvec`` and ``Metric::L1``),
 PHP ``ext-pdo``
 
 The table and index are created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\Postgres\Distance;
+    use Symfony\AI\Store\Bridge\Postgres\Metric;
     use Symfony\AI\Store\Bridge\Postgres\StoreFactory;
 
     $pdo = new \PDO('pgsql:host=localhost;dbname=mydb', $user, $password);
-    $store = StoreFactory::createStoreFromPdo($pdo, 'documents', vectorFieldName: 'embedding', distance: Distance::Cosine);
+    $store = StoreFactory::createStoreFromPdo($pdo, 'documents', vectorFieldName: 'embedding', metric: Metric::Cosine);
 
     // or from a Doctrine DBAL connection
-    $store = StoreFactory::createStoreFromDbal($connection, 'documents', vectorFieldName: 'embedding', distance: Distance::Cosine);
+    $store = StoreFactory::createStoreFromDbal($connection, 'documents', vectorFieldName: 'embedding', metric: Metric::Cosine);
 
-**Available distances:** ``Distance::Cosine``, ``Distance::InnerProduct``, ``Distance::L1``, ``Distance::L2`` (default)
+**Available metrics:** ``Metric::Cosine``, ``Metric::InnerProduct``, ``Metric::L1``, ``Metric::L2`` (default)
 
-``setup()`` creates an HNSW index with the operator class of the distance (e.g. ``vector_cosine_ops``
-for ``Distance::Cosine``): queries can only use an index built for their distance. The
-``index_method`` and ``index_opclass`` setup options override them. The ``vector_type`` setup option
+``setup()`` creates a column with 1536 dimensions, change it with the ``dimensions`` argument.
+
+The index is an HNSW index with the operator class of the metric (e.g. ``vector_cosine_ops``
+for ``Metric::Cosine``). Queries can only use an index built for their metric. The
+``indexMethod`` and ``indexOpclass`` arguments override them. The ``vectorType`` argument
 accepts ``vector`` (default) and ``halfvec``, which can index up to 2,000 and 4,000 dimensions.
 
 .. code-block:: yaml
@@ -151,9 +153,11 @@ accepts ``vector`` (default) and ``halfvec``, which can index up to 2,000 and 4,
                     # dbal_connection: 'doctrine.dbal.default_connection'
                     table_name: 'documents'
                     vector_field: 'embedding'
-                    distance: 'cosine'
-                    setup_options:
-                        vector_size: 1536
+                    metric: 'cosine'
+                    dimensions: 1536              # default: 1536
+                    vector_type: 'vector'         # vector (default) or halfvec
+                    index_method: 'hnsw'          # default: hnsw
+                    # index_opclass: 'vector_cosine_ops' # default: the one of the metric
 
 This store also supports hybrid vector and full-text search via
 :class:`Symfony\\AI\\Store\\Query\\HybridQuery`, which uses the configured ``lang`` for the
@@ -168,19 +172,19 @@ Vector storage using MariaDB's native ``VECTOR`` column type.
 
     $ composer require symfony/ai-maria-db-store
 
-**Requirements:** MariaDB 11.7+ (11.8+ for ``Distance::Distance``), PHP ``ext-pdo``
+**Requirements:** MariaDB 11.7+ (11.8+ for ``Metric::Distance``), PHP ``ext-pdo``
 
 ::
 
-    use Symfony\AI\Store\Bridge\MariaDb\Distance;
+    use Symfony\AI\Store\Bridge\MariaDb\Metric;
     use Symfony\AI\Store\Bridge\MariaDb\Store;
 
-    $store = Store::fromPdo($pdo, 'documents', indexName: 'embedding_idx', vectorFieldName: 'embedding', distance: Distance::Cosine);
+    $store = Store::fromPdo($pdo, 'documents', indexName: 'embedding_idx', vectorFieldName: 'embedding', metric: Metric::Cosine);
 
     // or from a Doctrine DBAL connection
     $store = Store::fromDbal($connection, 'documents', indexName: 'embedding_idx', vectorFieldName: 'embedding');
 
-**Available distances:** ``Distance::Cosine``, ``Distance::Euclidean`` (default), ``Distance::Distance``
+**Available metrics:** ``Metric::Cosine``, ``Metric::Euclidean`` (default), ``Metric::Distance``
 
 .. code-block:: yaml
 
@@ -194,9 +198,8 @@ Vector storage using MariaDB's native ``VECTOR`` column type.
                     table_name: 'documents'
                     index_name: 'embedding_idx'
                     vector_field_name: 'embedding'
-                    distance: 'cosine'
-                    setup_options:
-                        dimensions: 1536
+                    metric: 'cosine'
+                    dimensions: 1536              # default: 1536
 
 SQLite
 ~~~~~~
@@ -235,8 +238,8 @@ search through the `sqlite-vec`_ extension.
 
                     # or with the sqlite-vec extension:
                     # vec: true
-                    # distance: 'cosine' # or 'L2'
-                    # vector_dimension: 1536
+                    # metric: 'cosine' # or 'L2'
+                    # dimensions: 1536
 
 See :doc:`sqlite` for the differences between both stores and the ``sqlite-vec`` setup.
 
@@ -263,7 +266,7 @@ Vector storage using `Supabase`_ with the ``pgvector`` extension through the RES
         apiKey: 'your-anon-key',
         table: 'documents',
         vectorFieldName: 'embedding',
-        vectorDimension: 768,
+        dimensions: 768,
         functionName: 'match_documents',
     );
 
@@ -280,7 +283,7 @@ Vector storage using `Supabase`_ with the ``pgvector`` extension through the RES
                     # http_client: 'app.supabase_client'
                     table: 'documents'
                     vector_field: 'embedding'
-                    vector_dimension: 768
+                    dimensions: 768
                     function_name: 'match_documents'
 
 See :doc:`supabase` for the SQL that creates the table and the ``match_documents`` function.
@@ -306,7 +309,7 @@ The index is created by ``setup()``::
         'https://localhost:9200',
         vectorsField: '_vectors',
         dimensions: 1536,
-        similarity: 'cosine',
+        metric: 'cosine',
     );
 
 .. code-block:: yaml
@@ -322,7 +325,7 @@ The index is created by ``setup()``::
                     index_name: 'my_documents'
                     vectors_field: '_vectors'
                     dimensions: 1536
-                    similarity: 'cosine'
+                    metric: 'cosine'
 
 OpenSearch
 ~~~~~~~~~~
@@ -342,7 +345,7 @@ The index is created by ``setup()``::
         'https://localhost:9200',
         vectorsField: '_vectors',
         dimensions: 1536,
-        spaceType: 'cosinesimil',
+        metric: 'cosinesimil',
     );
 
 .. code-block:: yaml
@@ -358,7 +361,7 @@ The index is created by ``setup()``::
                     index_name: 'my_documents'
                     vectors_field: '_vectors'
                     dimensions: 1536
-                    space_type: 'cosinesimil'
+                    metric: 'cosinesimil'
 
 ManticoreSearch
 ~~~~~~~~~~~~~~~
@@ -378,7 +381,7 @@ The table is created by ``setup()``::
         'http://localhost:9308',
         field: '_vectors',
         type: 'hnsw',
-        similarity: 'cosine',
+        metric: 'cosine',
         dimensions: 1536,
         quantization: '8bit',
     );
@@ -396,7 +399,7 @@ The table is created by ``setup()``::
                     table: 'documents'
                     field: '_vectors'
                     type: 'hnsw'
-                    similarity: 'cosine'
+                    metric: 'cosine'
                     dimensions: 1536
                     quantization: '8bit'
 
@@ -419,7 +422,7 @@ The index and its embedder settings are created by ``setup()``::
         'your-api-key',
         embedder: 'default',
         vectorFieldName: '_vectors',
-        embeddingsDimension: 1536,
+        dimensions: 1536,
         semanticRatio: 1.0,
     );
 
@@ -456,7 +459,7 @@ The collection is created by ``setup()``::
         'http://localhost:8108',
         'your-api-key',
         vectorFieldName: '_vectors',
-        embeddingsDimension: 1536,
+        dimensions: 1536,
     );
 
 .. code-block:: yaml
@@ -492,8 +495,8 @@ The collection is created by ``setup()``::
         'my_documents',
         'http://localhost:6333',
         'your-api-key',
-        embeddingsDimension: 1536,
-        embeddingsDistance: 'Cosine',
+        dimensions: 1536,
+        metric: 'Cosine',
     );
 
 .. code-block:: yaml
@@ -507,7 +510,7 @@ The collection is created by ``setup()``::
                     api_key: '%env(QDRANT_API_KEY)%'
                     collection_name: 'my_documents'
                     dimensions: 1536
-                    distance: 'Cosine'
+                    metric: 'Cosine'
                     async: false
 
 Milvus
@@ -530,7 +533,7 @@ The collection is created by ``setup()``::
         'your-api-key',
         vectorFieldName: '_vectors',
         dimensions: 1536,
-        metricType: 'COSINE',
+        metric: 'COSINE',
     );
 
 .. code-block:: yaml
@@ -548,11 +551,12 @@ The collection is created by ``setup()``::
                     collection: 'my_documents'
                     vector_field: '_vectors'
                     dimensions: 1536
-                    metric_type: 'COSINE'
+                    metric: 'COSINE'
 
 .. tip::
 
     Pass ``['forceDatabaseCreation' => true]`` to ``setup()`` to create the database as well.
+    With the AI Bundle, run ``ai:store:setup <store> --option forceDatabaseCreation=true``.
 
 Weaviate
 ~~~~~~~~
@@ -643,16 +647,13 @@ Vector storage using `Pinecone`_.
                     index_name: 'my-index'
                     namespace: 'default'
                     top_k: 3
-                    setup_options:
-                        dimension: 1536
-                        metric: cosine
-                        cloud: aws
-                        region: us-east-1
+                    dimensions: 1536              # default: 1536
+                    metric: cosine              # cosine, euclidean or dotproduct
+                    cloud: aws
+                    region: us-east-1
 
-The ``ai:store:setup`` command uses ``setup_options`` to create the serverless
-index. The ``dimension`` option is required. The ``metric`` option is one of
-``cosine``, ``euclidean`` or ``dotproduct``. When you leave them out, ``metric``,
-``cloud`` and ``region`` default to ``cosine``, ``aws`` and ``us-west-2``.
+The ``ai:store:setup`` command creates a serverless index with these values. When you leave
+them out, ``metric``, ``cloud`` and ``region`` default to ``cosine``, ``aws`` and ``us-west-2``.
 
 MongoDB Atlas
 ~~~~~~~~~~~~~
@@ -676,7 +677,7 @@ Vector storage using `Atlas Vector Search`_.
         'documents',
         'vector_index',
         vectorFieldName: 'vector',
-        embeddingsDimension: 1536,
+        dimensions: 1536,
     );
 
 .. code-block:: yaml
@@ -694,7 +695,7 @@ Vector storage using `Atlas Vector Search`_.
                     vector_field: 'vector'
                     bulk_write: false
                     dimensions: 1536
-                    similarity: 'euclidean' # or 'cosine', 'dotProduct'
+                    metric: 'euclidean' # or 'cosine', 'dotProduct'
 
 .. note::
 
@@ -816,9 +817,8 @@ Vector storage using `S3 Vectors`_.
                     top_k: 3
                     configuration:
                         region: 'us-east-1'
-                    setup_options:
-                        dimension: 1536
-                        distance_metric: cosine
+                    dimensions: 1536              # default: 1536
+                    metric: cosine              # cosine (default) or euclidean
 
 See :doc:`s3-vectors` for the AWS credentials setup.
 
@@ -878,8 +878,8 @@ The vector index is created by ``setup()``::
         'neo4j',
         'your-password',
         embeddingsField: 'embeddings',
-        embeddingsDimension: 1536,
-        embeddingsDistance: 'cosine',
+        dimensions: 1536,
+        metric: 'cosine',
     );
 
 .. code-block:: yaml
@@ -899,7 +899,7 @@ The vector index is created by ``setup()``::
                     node_name: 'Document'
                     vector_field: 'embeddings'
                     dimensions: 1536
-                    distance: 'cosine'
+                    metric: 'cosine'
 
 Redis Stack
 ~~~~~~~~~~~
@@ -914,15 +914,15 @@ Vector storage using the vector similarity search of `Redis`_.
 
 The index is created by ``setup()``::
 
-    use Symfony\AI\Store\Bridge\Redis\Distance;
+    use Symfony\AI\Store\Bridge\Redis\Metric;
     use Symfony\AI\Store\Bridge\Redis\Store;
 
     $redis = new \Redis();
     $redis->connect('127.0.0.1', 6379);
 
-    $store = new Store($redis, 'my_index', keyPrefix: 'vector:', distance: Distance::Cosine);
+    $store = new Store($redis, 'my_index', keyPrefix: 'vector:', metric: Metric::Cosine);
 
-**Available distances:** ``Distance::Cosine`` (default), ``Distance::L2``, ``Distance::Ip``
+**Available metrics:** ``Metric::Cosine`` (default), ``Metric::L2``, ``Metric::Ip``
 
 .. code-block:: yaml
 
@@ -938,9 +938,8 @@ The index is created by ``setup()``::
                     # client: 'app.redis'
                     index_name: 'my_index'
                     key_prefix: 'vector:'
-                    distance: 'COSINE'
-                    setup_options:
-                        vector_size: 1536
+                    metric: 'COSINE'
+                    dimensions: 1536              # default: 1536
 
 SurrealDB
 ~~~~~~~~~
@@ -963,8 +962,8 @@ The table and index are created by ``setup()``::
         'http://localhost:8000',
         table: 'vectors',
         vectorFieldName: '_vectors',
-        strategy: 'cosine',
-        embeddingsDimension: 1536,
+        metric: 'cosine',
+        dimensions: 1536,
     );
 
 .. code-block:: yaml
@@ -981,15 +980,14 @@ The table and index are created by ``setup()``::
                     database: 'my_database'
                     table: 'vectors'
                     vector_field: '_vectors'
-                    strategy: 'cosine'
+                    metric: 'cosine'
                     dimensions: 1536
 
 .. tip::
 
-    SurrealDB 3 no longer creates the namespace and database on first use. Pass
-    ``['forceDatabaseCreation' => true]`` to ``setup()``, or set
-    ``setup_options.force_database_creation: true`` in the bundle configuration, to
-    create them as well.
+    SurrealDB 3 doesn't create the namespace and database on first use. Pass
+    ``['forceDatabaseCreation' => true]`` to ``setup()`` to create them as well. With the
+    AI Bundle, run ``ai:store:setup <store> --option forceDatabaseCreation=true``.
 
 .. caution::
 

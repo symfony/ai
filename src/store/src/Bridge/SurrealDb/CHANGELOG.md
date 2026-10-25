@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * [BC BREAK] Rename the `embeddingsDimension` and `strategy` arguments of `Store` and `StoreFactory` to `dimensions` and `metric`
+
 0.15
 ----
 

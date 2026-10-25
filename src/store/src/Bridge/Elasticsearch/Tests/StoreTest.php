@@ -64,29 +64,39 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
-    public function testStoreCanSetupWithExtraOptions()
+    public function testStoreCanSetupWithCustomConfiguration()
     {
+        $createResponse = new JsonMockResponse([
+            'acknowledged' => true,
+            'shards_acknowledged' => true,
+            'index' => 'foo',
+        ], [
+            'http_code' => 200,
+        ]);
         $httpClient = new MockHttpClient([
             new JsonMockResponse('', [
                 'http_code' => 400,
             ]),
-            new JsonMockResponse([
-                'acknowledged' => true,
-                'shards_acknowledged' => true,
-                'index' => 'foo',
-            ], [
-                'http_code' => 200,
-            ]),
+            $createResponse,
         ]);
+
+        $store = new Store($httpClient, 'foo', dimensions: 768, metric: 'dot_product');
+        $store->setup();
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame('{"mappings":{"properties":{"_vectors":{"type":"dense_vector","dims":768,"similarity":"dot_product"}}}}', $createResponse->getRequestOptions()['body']);
+    }
+
+    public function testStoreSetupRejectsOptions()
+    {
+        $httpClient = new MockHttpClient();
 
         $store = new Store($httpClient, 'foo');
 
-        $store->setup([
-            'dimensions' => 768,
-            'similarity' => 'dot_product',
-        ]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $store->setup(['dimensions' => 768]);
     }
 
     public function testStoreCannotDropOnUndefinedIndex()

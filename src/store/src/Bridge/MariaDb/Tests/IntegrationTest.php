@@ -26,11 +26,6 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
     {
         $pdo = new \PDO('mysql:host=127.0.0.1;port=3306;dbname=test_database', 'root', '');
 
-        return new Store($pdo, 'test_vectors', 'test_vector_idx', 'embedding');
-    }
-
-    protected static function getSetupOptions(): array
-    {
-        return ['dimensions' => 3];
+        return new Store($pdo, 'test_vectors', 'test_vector_idx', 'embedding', dimensions: 3);
     }
 }

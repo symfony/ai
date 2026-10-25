@@ -41,8 +41,8 @@ The default index definition looks like this:
         ]
     }
 
-``numDimensions`` comes from the ``embeddingsDimension`` argument of the store,
-``path`` from ``vectorFieldName`` and ``similarity`` from the ``similarity``
+``numDimensions`` comes from the ``dimensions`` argument of the store,
+``path`` from ``vectorFieldName`` and ``similarity`` from the ``metric``
 argument (see `Similarity Metrics`_).
 
 Configuration
@@ -54,7 +54,7 @@ Basic Configuration
 ::
 
     use MongoDB\Client;
-    use Symfony\AI\Store\Bridge\MongoDb\Similarity;
+    use Symfony\AI\Store\Bridge\MongoDb\Metric;
     use Symfony\AI\Store\Bridge\MongoDb\Store;
 
     $store = new Store(
@@ -64,8 +64,9 @@ Basic Configuration
         indexName: 'vector_index',
         vectorFieldName: 'vector',        // default: 'vector'
         bulkWrite: false,                 // default: false
-        embeddingsDimension: 1536,        // default: 1536
-        similarity: Similarity::Cosine,   // default: Similarity::Euclidean
+        dimensions: 1536,                 // default: 1536
+        metric: Metric::Cosine,     // default: Metric::Euclidean
+        indexFields: [],                  // default: [], extra fields of the search index
     );
 
 Bundle Configuration
@@ -84,9 +85,8 @@ Bundle Configuration
                     vector_field: 'vector'        # optional, default: vector
                     bulk_write: false             # optional, default: false
                     dimensions: 1536              # optional, default: 1536
-                    similarity: 'cosine'          # optional, default: euclidean
-                    setup_options:
-                        fields: []                # optional extra index fields
+                    metric: 'cosine'            # optional, default: euclidean
+                    index_fields: []              # optional extra index fields
 
 By default, the bundle uses a ``MongoDB\Client`` service registered in the
 container. Register the client as a service with the connection string:
@@ -120,19 +120,17 @@ If either already exists the call is a no-op (existing resources are preserved):
 
     $store->setup();
 
-Pass additional field definitions to include extra fields in the search index.
-The vector field itself is defined by the store and cannot be part of ``fields``:
+To add extra fields to the search index, pass their definitions with the ``indexFields``
+argument. The vector field itself is defined by the store and cannot be part of ``indexFields``:
 
 ::
 
-    $store->setup([
-        'fields' => [
-            [
-                'path' => 'title',
-                'type' => 'string',
-            ],
+    $store = new Store(
+        // ...
+        indexFields: [
+            ['path' => 'metadata.category', 'type' => 'filter'],
         ],
-    ]);
+    );
 
 Adding Documents
 ~~~~~~~~~~~~~~~~
@@ -250,7 +248,7 @@ Similarity Metrics
 ------------------
 
 The similarity metric is set on the Atlas Search index. ``setup()`` creates the
-index with the ``similarity`` argument of the store. Choose the metric that
+index with the ``metric`` argument of the store. Choose the metric that
 matches how your embedding model was trained:
 
 * ``euclidean`` — Euclidean (L2) distance; good general-purpose default

@@ -517,7 +517,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'clickhouse' => ['clickhouse', ['default' => ['dsn' => 'http://localhost:9000', 'database' => 'db', 'table' => 'tbl']], 'ai.store.clickhouse.default'];
         yield 'cloudflare' => ['cloudflare', ['default' => ['account_id' => 'a', 'api_key' => 'k', 'index_name' => 'idx']], 'ai.store.cloudflare.default'];
         yield 'elasticsearch' => ['elasticsearch', ['default' => ['endpoint' => 'http://localhost:9200']], 'ai.store.elasticsearch.default'];
-        yield 'manticoresearch' => ['manticoresearch', ['default' => ['endpoint' => 'http://localhost:9306', 'table' => 'tbl', 'field' => 'vec', 'type' => 'hnsw', 'similarity' => 'cosine', 'dimensions' => 768]], 'ai.store.manticoresearch.default'];
+        yield 'manticoresearch' => ['manticoresearch', ['default' => ['endpoint' => 'http://localhost:9306', 'table' => 'tbl', 'field' => 'vec', 'type' => 'hnsw', 'metric' => 'cosine', 'dimensions' => 768]], 'ai.store.manticoresearch.default'];
         yield 'mariadb' => ['mariadb', ['default' => ['connection' => 'default', 'table_name' => 'tbl', 'index_name' => 'idx', 'vector_field_name' => 'vec']], 'ai.store.mariadb.default'];
         yield 'meilisearch' => ['meilisearch', ['default' => ['endpoint' => 'http://localhost:7700', 'api_key' => 'k', 'index_name' => 'idx']], 'ai.store.meilisearch.default'];
         yield 'memory' => ['memory', ['default' => []], 'ai.store.memory.default'];
@@ -531,7 +531,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'redis' => ['redis', ['default' => ['connection_parameters' => ['host' => 'localhost', 'port' => 6379], 'index_name' => 'idx']], 'ai.store.redis.default'];
         yield 's3vectors' => ['s3vectors', ['default' => ['vector_bucket_name' => 'bucket']], 'ai.store.s3vectors.default'];
         yield 'sqlite' => ['sqlite', ['default' => ['dsn' => 'sqlite::memory:']], 'ai.store.sqlite.default'];
-        yield 'supabase' => ['supabase', ['default' => ['url' => 'https://t.supabase.co', 'api_key' => 'k', 'table' => 'tbl', 'vector_field' => 'emb', 'vector_dimension' => 1024]], 'ai.store.supabase.default'];
+        yield 'supabase' => ['supabase', ['default' => ['url' => 'https://t.supabase.co', 'api_key' => 'k', 'table' => 'tbl', 'vector_field' => 'emb', 'dimensions' => 1024]], 'ai.store.supabase.default'];
         yield 'surrealdb' => ['surrealdb', ['default' => ['endpoint' => 'http://localhost:8000', 'username' => 'u', 'password' => 'p', 'namespace' => 'ns', 'database' => 'db', 'table' => 'tbl', 'dimensions' => 768]], 'ai.store.surrealdb.default'];
         yield 'typesense' => ['typesense', ['default' => ['endpoint' => 'http://localhost:8108', 'api_key' => 'k', 'collection' => 'col', 'dimensions' => 768]], 'ai.store.typesense.default'];
         yield 'vektor' => ['vektor', ['default' => []], 'ai.store.vektor.default'];

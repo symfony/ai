@@ -39,24 +39,21 @@ Basic Configuration
         indexName: 'my-index',
         filter: [], // Optional: default filter for queries
         topK: 3, // Optional: default number of results
+        dimensions: 1536, // Optional: dimensions of the index, default: 1536
+        metric: \AsyncAws\S3Vectors\Enum\DistanceMetric::COSINE, // Optional
+        dataType: \AsyncAws\S3Vectors\Enum\DataType::FLOAT_32, // Optional
+        kmsKeyId: 'your-kms-key-id', // Optional: encrypts the bucket and the index
+        tags: ['env' => 'production'], // Optional
     );
 
 Setup the Vector Store
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Before using the store, you need to initialize it with the appropriate configuration::
+Before using the store, create the vector bucket and the index::
 
-    // Setup the vector bucket and index
-    $store->setup([
-        'dimension' => 1536,
-        'distanceMetric' => \AsyncAws\S3Vectors\Enum\DistanceMetric::COSINE, // Optional
-        'dataType' => \AsyncAws\S3Vectors\Enum\DataType::FLOAT_32, // Optional
-        'encryption' => ['kmsKeyId' => 'your-kms-key-id'], // Optional
-        'tags' => ['env' => 'production'], // Optional
-    ]);
+    $store->setup();
 
-When using the AI Bundle, configure ``setup_options`` and run ``ai:store:setup``
-to create the vector bucket and index:
+When using the AI Bundle, run ``ai:store:setup`` to create the vector bucket and index:
 
 .. code-block:: yaml
 
@@ -69,12 +66,8 @@ to create the vector bucket and index:
                     index_name: 'my-index'
                     configuration:
                         region: 'us-east-1'
-                    setup_options:
-                        dimension: 1536
-                        distance_metric: cosine
-
-The ``dimension`` option is required when creating an index. The optional
-``distance_metric`` option defaults to ``cosine`` and also accepts ``euclidean``.
+                    dimensions: 1536              # default: 1536
+                    metric: cosine              # cosine (default) or euclidean
 
 Usage
 -----

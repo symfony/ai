@@ -32,8 +32,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $collectionName,
-        private readonly int $embeddingsDimension = 1536,
-        private readonly string $embeddingsDistance = 'Cosine',
+        private readonly int $dimensions = 1536,
+        private readonly string $metric = 'Cosine',
         private readonly bool $async = false,
     ) {
     }
@@ -52,8 +52,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->request('PUT', \sprintf('collections/%s', $this->collectionName), [
             'vectors' => [
-                'size' => $this->embeddingsDimension,
-                'distance' => $this->embeddingsDistance,
+                'size' => $this->dimensions,
+                'distance' => $this->metric,
             ],
         ]);
     }

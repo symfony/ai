@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
@@ -28,28 +29,28 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    /**
+     * @param 'FLAT'|'HNSW' $indexMethod
+     * @param list<string>  $extraSchema
+     */
     public function __construct(
         private readonly \Redis $redis,
         private readonly string $indexName,
         private readonly string $keyPrefix = 'vector:',
-        private readonly Distance $distance = Distance::Cosine,
+        private readonly Metric $metric = Metric::Cosine,
+        private readonly int $dimensions = 1536,
+        private readonly string $indexMethod = 'FLAT',
+        private readonly array $extraSchema = [],
     ) {
     }
 
-    /**
-     * @param array{vector_size?: positive-int, index_method?: "FLAT"|"HNSW", extra_schema?: list<string>} $options
-     *
-     * - For Mistral: ['vector_size' => 1024]
-     * - For OpenAI: ['vector_size' => 1536]
-     * - For Gemini: ['vector_size' => 3072] (default)
-     */
     public function setup(array $options = []): void
     {
-        $this->redis->clearLastError();
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
 
-        $vectorSize = $options['vector_size'] ?? 3072;
-        $indexMethod = $options['index_method'] ?? 'FLAT'; // Or 'HNSW' for approximate search
-        $extraSchema = $options['extra_schema'] ?? [];
+        $this->redis->clearLastError();
 
         // Create the index with vector field for JSON documents
         try {
@@ -58,8 +59,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'PREFIX', '1', $this->keyPrefix,
                 'SCHEMA',
                 '$.id', 'AS', 'id', 'TEXT',
-                '$.embedding', 'AS', 'embedding', 'VECTOR', $indexMethod, '6', 'TYPE', 'FLOAT32', 'DIM', $vectorSize, 'DISTANCE_METRIC', $this->distance->value,
-                ...$extraSchema,
+                '$.embedding', 'AS', 'embedding', 'VECTOR', $this->indexMethod, '6', 'TYPE', 'FLOAT32', 'DIM', $this->dimensions, 'DISTANCE_METRIC', $this->metric->value,
+                ...$this->extraSchema,
             );
         } catch (\RedisException $e) {
             if (!str_contains($e->getMessage(), 'Index already exists')) {

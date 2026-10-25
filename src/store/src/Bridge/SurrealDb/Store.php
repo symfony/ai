@@ -40,8 +40,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $database,
         private readonly string $table = 'vectors',
         private readonly string $vectorFieldName = '_vectors',
-        private readonly string $strategy = 'cosine',
-        private readonly int $embeddingsDimension = 1536,
+        private readonly string $metric = 'cosine',
+        private readonly int $dimensions = 1536,
         private readonly bool $isNamespacedUser = false,
     ) {
     }
@@ -62,7 +62,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->request('POST', 'sql', \sprintf(
             'DEFINE INDEX %s_vectors ON %s FIELDS %s HNSW DIMENSION %d DIST %s TYPE F32',
-            $this->table, $this->table, $this->vectorFieldName, $this->embeddingsDimension, $this->strategy
+            $this->table, $this->table, $this->vectorFieldName, $this->dimensions, $this->metric
         ));
     }
 

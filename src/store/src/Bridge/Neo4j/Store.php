@@ -41,8 +41,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $vectorIndexName,
         private readonly string $nodeName,
         private readonly string $embeddingsField = 'embeddings',
-        private readonly int $embeddingsDimension = 1536,
-        private readonly string $embeddingsDistance = 'cosine',
+        private readonly int $dimensions = 1536,
+        private readonly string $metric = 'cosine',
         private readonly bool $quantization = false,
     ) {
     }
@@ -52,7 +52,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
             'statement' => \sprintf(
                 'CREATE VECTOR INDEX %s IF NOT EXISTS FOR (n:%s) ON n.%s OPTIONS { indexConfig: {`vector.dimensions`: %d, `vector.similarity_function`: "%s", `vector.quantization.enabled`: %s}}',
-                $this->vectorIndexName, $this->nodeName, $this->embeddingsField, $this->embeddingsDimension, $this->embeddingsDistance, $this->quantization ? 'true' : 'false',
+                $this->vectorIndexName, $this->nodeName, $this->embeddingsField, $this->dimensions, $this->metric, $this->quantization ? 'true' : 'false',
             ),
         ]);
     }

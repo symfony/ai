@@ -38,7 +38,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private const DELETE_MAX_KEYS = 500;
 
     /**
-     * @param array<string, mixed> $filter
+     * @param array<string, mixed>                $filter
+     * @param DistanceMetric::*                   $metric
+     * @param DataType::*                         $dataType
+     * @param array<string, array<string, mixed>> $metadataConfiguration
+     * @param array<string, string>               $tags
      */
     public function __construct(
         private readonly S3VectorsClient $client,
@@ -46,23 +50,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $indexName,
         private readonly array $filter = [],
         private readonly int $topK = 3,
+        private readonly int $dimensions = 1536,
+        private readonly string $metric = DistanceMetric::COSINE,
+        private readonly string $dataType = DataType::FLOAT_32,
+        private readonly array $metadataConfiguration = [],
+        private readonly ?string $kmsKeyId = null,
+        private readonly array $tags = [],
     ) {
     }
 
-    /**
-     * @param array{
-     *     dimension?: positive-int,
-     *     distanceMetric?: DistanceMetric::*,
-     *     dataType?: DataType::*,
-     *     metadata?: array<string, array<string, mixed>>,
-     *     encryption?: array{kmsKeyId?: string},
-     *     tags?: array<string, string>,
-     * } $options
-     */
     public function setup(array $options = []): void
     {
-        if (!isset($options['dimension'])) {
-            throw new InvalidArgumentException('The "dimension" option is required.');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
         }
 
         // Create vector bucket if it doesn't exist
@@ -75,14 +75,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'vectorBucketName' => $this->vectorBucketName,
             ];
 
-            if (isset($options['encryption']['kmsKeyId'])) {
+            if (null !== $this->kmsKeyId) {
                 $bucketInput['encryptionConfiguration'] = [
-                    'kmsKeyId' => $options['encryption']['kmsKeyId'],
+                    'kmsKeyId' => $this->kmsKeyId,
                 ];
             }
 
-            if (isset($options['tags'])) {
-                $bucketInput['tags'] = $options['tags'];
+            if ([] !== $this->tags) {
+                $bucketInput['tags'] = $this->tags;
             }
 
             $this->client->createVectorBucket($bucketInput);
@@ -92,23 +92,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $indexInput = [
             'vectorBucketName' => $this->vectorBucketName,
             'indexName' => $this->indexName,
-            'dimension' => $options['dimension'],
-            'distanceMetric' => $options['distanceMetric'] ?? DistanceMetric::COSINE,
-            'dataType' => $options['dataType'] ?? DataType::FLOAT_32,
+            'dimension' => $this->dimensions,
+            'distanceMetric' => $this->metric,
+            'dataType' => $this->dataType,
         ];
 
-        if (isset($options['metadata'])) {
-            $indexInput['metadataConfiguration'] = $options['metadata'];
+        if ([] !== $this->metadataConfiguration) {
+            $indexInput['metadataConfiguration'] = $this->metadataConfiguration;
         }
 
-        if (isset($options['encryption']['kmsKeyId'])) {
+        if (null !== $this->kmsKeyId) {
             $indexInput['encryptionConfiguration'] = [
-                'kmsKeyId' => $options['encryption']['kmsKeyId'],
+                'kmsKeyId' => $this->kmsKeyId,
             ];
         }
 
-        if (isset($options['tags'])) {
-            $indexInput['tags'] = $options['tags'];
+        if ([] !== $this->tags) {
+            $indexInput['tags'] = $this->tags;
         }
 
         $this->client->createIndex($indexInput);

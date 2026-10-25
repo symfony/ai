@@ -158,7 +158,7 @@ ai:
             symfony_blog:
                 dbal_connection: 'doctrine.dbal.default_connection'
                 table_name: 'symfony_blog'
-                distance: 'cosine'
+                metric: 'cosine'
     vectorizer:
         openai:
             platform: 'ai.platform.openai'

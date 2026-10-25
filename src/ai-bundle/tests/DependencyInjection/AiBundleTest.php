@@ -87,28 +87,28 @@ use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\StoreFactory as ManticoreSearchStoreFactory;
-use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
+use Symfony\AI\Store\Bridge\MariaDb\Metric as MariaDbMetric;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\Milvus\StoreFactory as MilvusStoreFactory;
-use Symfony\AI\Store\Bridge\MongoDb\Similarity as MongoDbSimilarity;
+use Symfony\AI\Store\Bridge\MongoDb\Metric as MongoDbMetric;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Neo4j\StoreFactory as Neo4jStoreFactory;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory as OpenSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
-use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
+use Symfony\AI\Store\Bridge\Postgres\Metric as PostgresMetric;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Postgres\StoreFactory as PostgresStoreFactory;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
-use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
+use Symfony\AI\Store\Bridge\Redis\Metric as RedisMetric;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
-use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
+use Symfony\AI\Store\Bridge\Sqlite\Metric as SqliteMetric;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
@@ -281,21 +281,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.command.setup_store'));
 
         $setupStoreCommandDefinition = $container->getDefinition('ai.command.setup_store');
-        $this->assertCount(2, $setupStoreCommandDefinition->getArguments());
-        $this->assertSame([
-            'ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024],
-            'ai.store.mongodb.my_mongo_store' => ['fields' => [['path' => 'metadata.store_code', 'type' => 'filter']]],
-            'ai.store.pinecone.my_pinecone_store' => [],
-            'ai.store.pinecone.my_pinecone_store_with_filter' => [],
-            'ai.store.pinecone.my_pinecone_store_with_top_k' => [],
-            'ai.store.postgres.my_postgres_store' => ['vector_type' => 'vector', 'vector_size' => 1536, 'index_method' => 'hnsw', 'index_opclass' => 'vector_l2_ops'],
-            'ai.store.s3vectors.my_s3vectors_store' => [],
-            'ai.store.redis.my_redis_store' => ['vector_size' => 1536],
-            'ai.store.redis.my_redis_store_with_custom_client' => [],
-            'ai.store.redis.my_redis_store_with_custom_key_prefix' => [],
-            'ai.store.redis.my_redis_store_with_custom_distance' => [],
-            'ai.store.surrealdb.my_surrealdb_store' => ['forceDatabaseCreation' => true],
-        ], $setupStoreCommandDefinition->getArgument(1));
+        $this->assertCount(1, $setupStoreCommandDefinition->getArguments());
         $this->assertArrayHasKey('console.command', $setupStoreCommandDefinition->getTags());
 
         $this->assertTrue($container->hasDefinition('ai.command.drop_store'));
@@ -1596,7 +1582,7 @@ class AiBundleTest extends TestCase
                             'index_name' => 'foo',
                             'vectors_field' => 'embedding',
                             'dimensions' => 768,
-                            'similarity' => 'dot_product',
+                            'metric' => 'dot_product',
                         ],
                     ],
                 ],
@@ -1828,7 +1814,7 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://127.0.0.1:9306',
                             'field' => 'foo_vector',
                             'type' => 'hnsw',
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'quantization' => '1bit',
                         ],
@@ -1902,9 +1888,7 @@ class AiBundleTest extends TestCase
                             'connection' => 'default',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
-                            'setup_options' => [
-                                'dimensions' => 1024,
-                            ],
+                            'dimensions' => 1024,
                         ],
                     ],
                 ],
@@ -1917,13 +1901,14 @@ class AiBundleTest extends TestCase
         $this->assertSame(MariaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
         $this->assertSame('my_mariadb_store', $definition->getArgument(1));
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
-        $this->assertSame(MariaDbDistance::Euclidean, $definition->getArgument(4));
+        $this->assertSame(MariaDbMetric::Euclidean, $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument('$dimensions'));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -1949,10 +1934,8 @@ class AiBundleTest extends TestCase
                             'table_name' => 'vector_table',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
-                            'setup_options' => [
-                                'dimensions' => 1024,
-                            ],
-                            'distance' => 'cosine',
+                            'dimensions' => 1024,
+                            'metric' => 'cosine',
                         ],
                     ],
                 ],
@@ -1965,13 +1948,14 @@ class AiBundleTest extends TestCase
         $this->assertSame(MariaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
         $this->assertSame('vector_table', $definition->getArgument(1));
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
-        $this->assertSame(MariaDbDistance::Cosine, $definition->getArgument(4));
+        $this->assertSame(MariaDbMetric::Cosine, $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument('$dimensions'));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2342,7 +2326,7 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://127.0.0.1:19530',
                             'api_key' => 'foo',
                             'collection' => 'default',
-                            'metric_type' => 'COSINE',
+                            'metric' => 'COSINE',
                         ],
                     ],
                 ],
@@ -2643,7 +2627,7 @@ class AiBundleTest extends TestCase
                             'database' => 'my_db',
                             'index_name' => 'vector_index',
                             'dimensions' => 768,
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                         ],
                     ],
                 ],
@@ -2652,8 +2636,8 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
 
-        $this->assertSame(768, $definition->getArgument('$embeddingsDimension'));
-        $this->assertSame(MongoDbSimilarity::Cosine, $definition->getArgument('$similarity'));
+        $this->assertSame(768, $definition->getArgument('$dimensions'));
+        $this->assertSame(MongoDbMetric::Cosine, $definition->getArgument('$metric'));
     }
 
     public function testNeo4jStoreCanBeConfigured()
@@ -2776,7 +2760,7 @@ class AiBundleTest extends TestCase
                             'node_name' => 'foo',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
-                            'distance' => 'cosine',
+                            'metric' => 'cosine',
                             'quantization' => true,
                         ],
                     ],
@@ -3035,7 +3019,7 @@ class AiBundleTest extends TestCase
                     'opensearch' => [
                         'my_opensearch_store' => [
                             'endpoint' => 'http://127.0.0.1:9200',
-                            'space_type' => 'l1',
+                            'metric' => 'l1',
                         ],
                     ],
                 ],
@@ -3179,7 +3163,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testPineconeStoreWithSetupOptionsCanBeConfigured()
+    public function testPineconeStoreWithIndexConfigurationCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3187,14 +3171,12 @@ class AiBundleTest extends TestCase
                     'pinecone' => [
                         'my_pinecone_store' => [
                             'index_name' => 'my-index',
-                            'setup_options' => [
-                                'dimension' => 1536,
-                                'metric' => 'cosine',
-                                'cloud' => 'aws',
-                                'region' => 'us-east-1',
-                            ],
+                            'dimensions' => 1536,
+                            'metric' => 'cosine',
+                            'cloud' => 'aws',
+                            'region' => 'us-east-1',
                         ],
-                        'my_pinecone_store_without_setup_options' => [
+                        'my_pinecone_store_without_index_configuration' => [
                             'index_name' => 'my-other-index',
                         ],
                     ],
@@ -3202,21 +3184,19 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertSame([
-            'ai.store.pinecone.my_pinecone_store' => [
-                'dimension' => 1536,
-                'metric' => 'cosine',
-                'cloud' => 'aws',
-                'region' => 'us-east-1',
-            ],
-            'ai.store.pinecone.my_pinecone_store_without_setup_options' => [],
-        ], $container->getDefinition('ai.command.setup_store')->getArgument(1));
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(1536, $definition->getArgument('$dimensions'));
+        $this->assertSame('cosine', $definition->getArgument('$metric'));
+        $this->assertSame('aws', $definition->getArgument('$cloud'));
+        $this->assertSame('us-east-1', $definition->getArgument('$region'));
+
+        $this->assertCount(4, $container->getDefinition('ai.store.pinecone.my_pinecone_store_without_index_configuration')->getArguments());
     }
 
-    public function testPineconeStoreSetupOptionsRequireDimension()
+    public function testPineconeStoreRejectsUnknownDistance()
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('The child config "dimension" under "ai.store.pinecone.my_pinecone_store.setup_options" must be configured.');
+        $this->expectExceptionMessage('The value "dot_product" is not allowed for path "ai.store.pinecone.my_pinecone_store.metric".');
 
         $this->buildContainer([
             'ai' => [
@@ -3224,31 +3204,7 @@ class AiBundleTest extends TestCase
                     'pinecone' => [
                         'my_pinecone_store' => [
                             'index_name' => 'my-index',
-                            'setup_options' => [
-                                'metric' => 'cosine',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    public function testPineconeStoreSetupOptionsRejectUnknownMetric()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('The value "dot_product" is not allowed for path "ai.store.pinecone.my_pinecone_store.setup_options.metric".');
-
-        $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'pinecone' => [
-                        'my_pinecone_store' => [
-                            'index_name' => 'my-index',
-                            'setup_options' => [
-                                'dimension' => 1536,
-                                'metric' => 'dot_product',
-                            ],
+                            'metric' => 'dot_product',
                         ],
                     ],
                 ],
@@ -3321,7 +3277,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('embedding', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3364,7 +3320,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(['pgsql:host=localhost;port=5432;dbname=testdb', 'foo', 'bar'], $definition->getArgument(0)->getArguments());
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3402,7 +3358,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3424,7 +3380,7 @@ class AiBundleTest extends TestCase
                         'db' => [
                             'dbal_connection' => 'my_connection',
                             'vector_field' => 'foo',
-                            'distance' => PostgresDistance::L1->value,
+                            'metric' => PostgresMetric::L1->value,
                         ],
                     ],
                 ],
@@ -3441,7 +3397,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L1, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3464,7 +3420,7 @@ class AiBundleTest extends TestCase
                             'dbal_connection' => 'my_connection',
                             'table_name' => 'foo',
                             'vector_field' => 'foo',
-                            'distance' => PostgresDistance::L1->value,
+                            'metric' => PostgresMetric::L1->value,
                         ],
                     ],
                 ],
@@ -3481,7 +3437,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L1, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3505,7 +3461,7 @@ class AiBundleTest extends TestCase
                             'dbal_connection' => 'my_connection',
                             'table_name' => 'foo',
                             'vector_field' => 'foo',
-                            'distance' => PostgresDistance::L1->value,
+                            'metric' => PostgresMetric::L1->value,
                             'lang' => 'french',
                         ],
                     ],
@@ -3523,7 +3479,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L1, $definition->getArgument(3));
         $this->assertSame('french', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3539,7 +3495,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testPostgresStoreSetupOptionsLetTheStoreChooseTheIndex()
+    public function testPostgresStoreWithVectorColumnConfigurationCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3547,20 +3503,27 @@ class AiBundleTest extends TestCase
                     'postgres' => [
                         'db' => [
                             'dbal_connection' => 'my_connection',
-                            'distance' => PostgresDistance::Cosine->value,
-                            'setup_options' => [
-                                'vector_size' => 1024,
-                            ],
+                            'metric' => PostgresMetric::Cosine->value,
+                            'dimensions' => 1024,
+                            'vector_type' => 'halfvec',
+                            'index_method' => 'ivfflat',
+                            'index_opclass' => 'halfvec_cosine_ops',
+                        ],
+                        'db_without_vector_column_configuration' => [
+                            'dbal_connection' => 'my_connection',
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $this->assertSame(
-            ['ai.store.postgres.db' => ['vector_size' => 1024, 'vector_type' => 'vector']],
-            $container->getDefinition('ai.command.setup_store')->getArgument(1),
-        );
+        $definition = $container->getDefinition('ai.store.postgres.db');
+        $this->assertSame(1024, $definition->getArgument('$dimensions'));
+        $this->assertSame('halfvec', $definition->getArgument('$vectorType'));
+        $this->assertSame('ivfflat', $definition->getArgument('$indexMethod'));
+        $this->assertSame('halfvec_cosine_ops', $definition->getArgument('$indexOpclass'));
+
+        $this->assertCount(5, $container->getDefinition('ai.store.postgres.db_without_vector_column_configuration')->getArguments());
     }
 
     public function testQdrantStoreCanBeConfigured()
@@ -3815,7 +3778,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(\Redis::class, $definition->getArgument(0)->getClass());
         $this->assertSame('my_redis_store', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3831,7 +3794,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testS3VectorsStoreWithSetupOptionsCanBeConfigured()
+    public function testS3VectorsStoreWithIndexConfigurationCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3839,32 +3802,23 @@ class AiBundleTest extends TestCase
                     's3vectors' => [
                         'my_s3vectors_store' => [
                             'vector_bucket_name' => 'my-bucket',
-                            'setup_options' => [
-                                'dimension' => 1536,
-                                'distance_metric' => 'euclidean',
-                            ],
-                        ],
-                        'my_s3vectors_store_without_setup_options' => [
-                            'vector_bucket_name' => 'my-other-bucket',
+                            'dimensions' => 1536,
+                            'metric' => 'euclidean',
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $this->assertSame([
-            'ai.store.s3vectors.my_s3vectors_store' => [
-                'dimension' => 1536,
-                'distanceMetric' => 'euclidean',
-            ],
-            'ai.store.s3vectors.my_s3vectors_store_without_setup_options' => [],
-        ], $container->getDefinition('ai.command.setup_store')->getArgument(1));
+        $definition = $container->getDefinition('ai.store.s3vectors.my_s3vectors_store');
+        $this->assertSame(1536, $definition->getArgument('$dimensions'));
+        $this->assertSame('euclidean', $definition->getArgument('$metric'));
     }
 
-    public function testS3VectorsStoreRejectsUnknownDistanceMetric()
+    public function testS3VectorsStoreRejectsUnknownDistance()
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('The value "cosin" is not allowed for path "ai.store.s3vectors.my_s3vectors_store.setup_options.distance_metric".');
+        $this->expectExceptionMessage('The value "cosin" is not allowed for path "ai.store.s3vectors.my_s3vectors_store.metric".');
 
         $this->buildContainer([
             'ai' => [
@@ -3872,10 +3826,7 @@ class AiBundleTest extends TestCase
                     's3vectors' => [
                         'my_s3vectors_store' => [
                             'vector_bucket_name' => 'my-bucket',
-                            'setup_options' => [
-                                'dimension' => 1536,
-                                'distance_metric' => 'cosin',
-                            ],
+                            'metric' => 'cosin',
                         ],
                     ],
                 ],
@@ -3948,7 +3899,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(\Redis::class, $definition->getArgument(0)->getClass());
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3990,7 +3941,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_vector_index', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -4033,7 +3984,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_vector_index', $definition->getArgument(1));
         $this->assertSame('foo:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -4058,7 +4009,7 @@ class AiBundleTest extends TestCase
                         'my_redis_store' => [
                             'client' => 'foo',
                             'index_name' => 'my_vector_index',
-                            'distance' => RedisDistance::L2->value,
+                            'metric' => RedisMetric::L2->value,
                         ],
                     ],
                 ],
@@ -4076,7 +4027,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_vector_index', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::L2, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::L2, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -4092,7 +4043,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testRedisStoreWithSetupOptionsCanBeConfigured()
+    public function testRedisStoreWithDimensionsCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -4101,23 +4052,14 @@ class AiBundleTest extends TestCase
                         'my_redis_store' => [
                             'client' => 'foo',
                             'index_name' => 'my_vector_index',
-                            'setup_options' => [
-                                'vector_size' => 1536,
-                            ],
-                        ],
-                        'my_redis_store_without_setup_options' => [
-                            'client' => 'foo',
-                            'index_name' => 'my_other_vector_index',
+                            'dimensions' => 768,
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $this->assertSame([
-            'ai.store.redis.my_redis_store' => ['vector_size' => 1536],
-            'ai.store.redis.my_redis_store_without_setup_options' => [],
-        ], $container->getDefinition('ai.command.setup_store')->getArgument(1));
+        $this->assertSame(768, $container->getDefinition('ai.store.redis.my_redis_store')->getArgument('$dimensions'));
     }
 
     public function testSqliteStoreCanBeConfigured()
@@ -4236,7 +4178,7 @@ class AiBundleTest extends TestCase
 
         $arguments = $definition->getArguments();
         $this->assertSame('sqlite:/tmp/test.db', $arguments[0]);
-        $this->assertEquals(SqliteDistance::Cosine, $arguments[2]);
+        $this->assertEquals(SqliteMetric::Cosine, $arguments[2]);
         $this->assertSame(1536, $arguments[3]);
 
         // VecStore with DBAL connection uses fromDbal factory
@@ -4270,7 +4212,7 @@ class AiBundleTest extends TestCase
                         'my_sqlite_vec_store' => [
                             'dsn' => 'sqlite:/tmp/test.db',
                             'vec' => true,
-                            'distance' => 'L2',
+                            'metric' => 'L2',
                         ],
                     ],
                 ],
@@ -4279,7 +4221,7 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
         $arguments = $definition->getArguments();
-        $this->assertEquals(SqliteDistance::L2, $arguments[2]);
+        $this->assertEquals(SqliteMetric::L2, $arguments[2]);
 
         // VecStore with custom vector dimension
         $container = $this->buildContainer([
@@ -4289,7 +4231,7 @@ class AiBundleTest extends TestCase
                         'my_sqlite_vec_store' => [
                             'dsn' => 'sqlite:/tmp/test.db',
                             'vec' => true,
-                            'vector_dimension' => 768,
+                            'dimensions' => 768,
                         ],
                     ],
                 ],
@@ -4552,40 +4494,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testSurrealDbStoreWithSetupOptionsCanBeConfigured()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'store' => [
-                    'surrealdb' => [
-                        'my_surrealdb_store' => [
-                            'endpoint' => 'http://127.0.0.1:8000',
-                            'username' => 'test',
-                            'password' => 'test',
-                            'namespace' => 'foo',
-                            'database' => 'bar',
-                            'setup_options' => [
-                                'force_database_creation' => true,
-                            ],
-                        ],
-                        'my_surrealdb_store_without_setup_options' => [
-                            'endpoint' => 'http://127.0.0.1:8000',
-                            'username' => 'test',
-                            'password' => 'test',
-                            'namespace' => 'foo',
-                            'database' => 'bar',
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertSame([
-            'ai.store.surrealdb.my_surrealdb_store' => ['forceDatabaseCreation' => true],
-            'ai.store.surrealdb.my_surrealdb_store_without_setup_options' => [],
-        ], $container->getDefinition('ai.command.setup_store')->getArgument(1));
-    }
-
     public function testSurrealDbStoreWithCustomTableCanBeConfigured()
     {
         $container = $this->buildContainer([
@@ -4653,7 +4561,7 @@ class AiBundleTest extends TestCase
                             'database' => 'bar',
                             'table' => 'bar',
                             'vector_field' => '_vectors',
-                            'strategy' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'namespaced_user' => true,
                         ],
@@ -11074,7 +10982,7 @@ class AiBundleTest extends TestCase
                             'table' => 'test',
                             'field' => 'foo_vector',
                             'type' => 'hnsw',
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                         ],
                         'my_manticoresearch_store_with_quantization' => [
@@ -11082,7 +10990,7 @@ class AiBundleTest extends TestCase
                             'table' => 'test',
                             'field' => 'foo_vector',
                             'type' => 'hnsw',
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'quantization' => '1bit',
                         ],
@@ -11093,9 +11001,7 @@ class AiBundleTest extends TestCase
                             'table_name' => 'vector_table',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
-                            'setup_options' => [
-                                'dimensions' => 1024,
-                            ],
+                            'dimensions' => 1024,
                         ],
                     ],
                     'meilisearch' => [
@@ -11130,7 +11036,7 @@ class AiBundleTest extends TestCase
                             'collection' => 'default',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
-                            'metric_type' => 'COSINE',
+                            'metric' => 'COSINE',
                         ],
                     ],
                     'mongodb' => [
@@ -11140,10 +11046,8 @@ class AiBundleTest extends TestCase
                             'index_name' => 'vector_index',
                             'vector_field' => 'embedding',
                             'bulk_write' => true,
-                            'setup_options' => [
-                                'fields' => [
-                                    ['path' => 'metadata.store_code', 'type' => 'filter'],
-                                ],
+                            'index_fields' => [
+                                ['path' => 'metadata.store_code', 'type' => 'filter'],
                             ],
                         ],
                     ],
@@ -11157,7 +11061,7 @@ class AiBundleTest extends TestCase
                             'node_name' => 'foo',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
-                            'distance' => 'cosine',
+                            'metric' => 'cosine',
                             'quantization' => true,
                         ],
                     ],
@@ -11175,7 +11079,7 @@ class AiBundleTest extends TestCase
                         ],
                         'my_opensearch_store_with_custom_space_type' => [
                             'endpoint' => 'http://127.0.0.1:9200',
-                            'space_type' => 'l1',
+                            'metric' => 'l1',
                         ],
                         'my_opensearch_store_with_custom_http_client' => [
                             'endpoint' => 'http://127.0.0.1:9200',
@@ -11208,12 +11112,10 @@ class AiBundleTest extends TestCase
                             'password' => 'pass',
                             'table_name' => 'my_table',
                             'vector_field' => 'my_embedding',
-                            'setup_options' => [
-                                'vector_type' => 'vector',
-                                'vector_size' => 1536,
-                                'index_method' => 'hnsw',
-                                'index_opclass' => 'vector_l2_ops',
-                            ],
+                            'dimensions' => 1536,
+                            'vector_type' => 'vector',
+                            'index_method' => 'hnsw',
+                            'index_opclass' => 'vector_l2_ops',
                         ],
                     ],
                     'qdrant' => [
@@ -11222,7 +11124,7 @@ class AiBundleTest extends TestCase
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                             'async' => false,
                         ],
                         'my_custom_dimensions_qdrant_store' => [
@@ -11230,21 +11132,21 @@ class AiBundleTest extends TestCase
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                         ],
                         'my_custom_distance_qdrant_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                         ],
                         'my_async_qdrant_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                             'async' => false,
                         ],
                     ],
@@ -11260,9 +11162,7 @@ class AiBundleTest extends TestCase
                                 'port' => 6379,
                             ],
                             'index_name' => 'my_vector_index',
-                            'setup_options' => [
-                                'vector_size' => 1536,
-                            ],
+                            'dimensions' => 1536,
                         ],
                         'my_redis_store_with_custom_client' => [
                             'client' => 'foo',
@@ -11276,7 +11176,7 @@ class AiBundleTest extends TestCase
                         'my_redis_store_with_custom_distance' => [
                             'client' => 'foo',
                             'index_name' => 'my_vector_index',
-                            'distance' => RedisDistance::L2->value,
+                            'metric' => RedisMetric::L2->value,
                         ],
                     ],
                     'supabase' => [
@@ -11285,7 +11185,7 @@ class AiBundleTest extends TestCase
                             'api_key' => 'supabase_test_key',
                             'table' => 'my_supabase_table',
                             'vector_field' => 'my_embedding',
-                            'vector_dimension' => 1024,
+                            'dimensions' => 1024,
                             'function_name' => 'my_match_function',
                         ],
                         'my_supabase_store_with_custom_http_client' => [
@@ -11294,14 +11194,14 @@ class AiBundleTest extends TestCase
                             'api_key' => 'supabase_test_key',
                             'table' => 'my_supabase_table',
                             'vector_field' => 'my_embedding',
-                            'vector_dimension' => 1024,
+                            'dimensions' => 1024,
                         ],
                         'my_supabase_store_with_custom_function' => [
                             'url' => 'https://test.supabase.co',
                             'api_key' => 'supabase_test_key',
                             'table' => 'my_supabase_table',
                             'vector_field' => 'my_embedding',
-                            'vector_dimension' => 1024,
+                            'dimensions' => 1024,
                             'function_name' => 'foo',
                         ],
                     ],
@@ -11314,12 +11214,9 @@ class AiBundleTest extends TestCase
                             'database' => 'bar',
                             'table' => 'bar',
                             'vector_field' => '_vectors',
-                            'strategy' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'namespaced_user' => true,
-                            'setup_options' => [
-                                'force_database_creation' => true,
-                            ],
                         ],
                     ],
                     'typesense' => [
