@@ -46,7 +46,7 @@ final class DocumentProcessor
     /**
      * Process documents through the pipeline: filter → transform → vectorize → store.
      *
-     * @param iterable<DocumentInterface>                                                                          $documents Documents to process
+     * @param iterable<DocumentInterface>                                                                           $documents Documents to process
      * @param array{chunk_size?: int, platform_options?: array<string, mixed>, http_options?: array<string, mixed>} $options   Processing options
      */
     public function process(iterable $documents, array $options = []): void
