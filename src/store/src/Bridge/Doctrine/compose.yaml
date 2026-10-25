@@ -7,3 +7,11 @@ services:
             POSTGRES_PASSWORD: postgres
         ports:
             - '5432:5432'
+
+    mariadb:
+        image: mariadb:11.8
+        environment:
+            MARIADB_DATABASE: test_database
+            MARIADB_ROOT_PASSWORD: root
+        ports:
+            - '3306:3306'

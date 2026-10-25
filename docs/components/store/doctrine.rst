@@ -5,8 +5,9 @@ Other stores keep vectors in a storage of their own, so you have to load the mat
 after a query. The Doctrine store keeps each vector in a field of the entity itself. Doctrine
 writes it with the rest of the entity, and a query returns the entities.
 
-The store supports PostgreSQL with the `pgvector`_ extension and SQLite with the `sqlite-vec`_
-extension.
+The store supports PostgreSQL with the `pgvector`_ extension, MariaDB 11.7 or newer and SQLite
+with the `sqlite-vec`_ extension. MySQL is not supported, because MySQL Community has no function
+to compare vectors.
 
 Installation
 ------------
@@ -90,6 +91,54 @@ dimensions, like ``text-embedding-3-large`` with 3,072, request at most 2,000 di
 model, or leave out the index. Without the index, also remove the ``#[ORM\Index]`` from the
 entity, otherwise ``doctrine:migrations:diff`` adds the btree index to every new migration. Pass the dimensions with the model name of the vectorizer, for
 example ``text-embedding-3-large?dimensions=1536``, so the indexer and the listener use the same.
+
+MariaDB
+~~~~~~~
+
+MariaDB needs the size of the column, and a vector index needs the column to be ``NOT NULL``.
+Doctrine can't know either, so declare both with a ``columnDefinition``. Doctrine ignores this
+option when it compares the schema, but it also ignores ``nullable: false`` then, so set both::
+
+    #[ORM\Table(name: 'article')]
+    #[ORM\Index(name: 'article_embedding_idx', columns: ['embedding'])]
+    class Article
+    {
+        #[ORM\Column(type: 'vector', nullable: false, columnDefinition: 'VECTOR(1536) NOT NULL')]
+        #[Embedding(from: ['title', 'body'])]
+        private ?VectorInterface $embedding = null;
+    }
+
+``doctrine:migrations:diff`` generates the index of the entity as a btree index, and MariaDB
+rejects it for a vector column of 1536 dimensions. Replace it in the generated migration with a
+vector index. It keeps the name and the column of the index declared on the entity, so Doctrine
+sees no difference:
+
+.. code-block:: diff
+
+     CREATE TABLE article (
+         id INT AUTO_INCREMENT NOT NULL,
+         embedding VECTOR(1536) NOT NULL,
+    -    INDEX article_embedding_idx (embedding),
+    +    VECTOR INDEX article_embedding_idx (embedding) DISTANCE=cosine,
+         PRIMARY KEY(id)
+     )
+
+When the column is added to an existing table, the migration has a
+``CREATE INDEX article_embedding_idx ON article (embedding)`` statement instead. Replace it with
+``ALTER TABLE article ADD VECTOR INDEX article_embedding_idx (embedding) DISTANCE=cosine``.
+
+Use ``DISTANCE=euclidean`` for the euclidean distance. MariaDB doesn't support the inner product.
+
+.. warning::
+
+    Create the vector index only in a migration. ``doctrine:schema:update`` creates the index of
+    the entity as a btree index, and it fails from 769 dimensions on with
+    ``ERROR 1071: Specified key was too long; max key length is 3072 bytes``.
+
+The column is ``NOT NULL``, so every entity needs an embedding when it is saved. A failing model
+call fails the flush, and ``remove()`` and ``clear()`` of the store can't set the vector to null
+either. Without the index, declare the column nullable and remove the ``#[ORM\Index]``, then every
+query scans the table.
 
 Embedding Entities
 ------------------

@@ -12,6 +12,8 @@
 namespace Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -26,7 +28,9 @@ final class VectorPlatformFactory
         return match (true) {
             $platform instanceof PostgreSQLPlatform => new PostgresVectorPlatform(),
             $platform instanceof SQLitePlatform => new SqliteVectorPlatform(),
-            default => throw new InvalidArgumentException(\sprintf('Database platform "%s" has no vector support, use PostgreSQL with pgvector or SQLite with sqlite-vec.', $platform::class)),
+            $platform instanceof MariaDBPlatform => new MariaDbVectorPlatform(),
+            $platform instanceof MySQLPlatform => throw new InvalidArgumentException('MySQL has no function to compare vectors outside of HeatWave, use PostgreSQL with pgvector, MariaDB or SQLite with sqlite-vec.'),
+            default => throw new InvalidArgumentException(\sprintf('Database platform "%s" has no vector support, use PostgreSQL with pgvector, MariaDB or SQLite with sqlite-vec.', $platform::class)),
         };
     }
 }

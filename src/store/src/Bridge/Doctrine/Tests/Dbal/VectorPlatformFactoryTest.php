@@ -11,14 +11,13 @@
 
 namespace Symfony\AI\Store\Bridge\Doctrine\Tests\Dbal;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\OraclePlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\MariaDbVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\PostgresVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\SqliteVectorPlatform;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorPlatformFactory;
@@ -36,22 +35,26 @@ final class VectorPlatformFactoryTest extends TestCase
         $this->assertInstanceOf(SqliteVectorPlatform::class, VectorPlatformFactory::create(new SQLitePlatform()));
     }
 
-    #[DataProvider('provideUnsupportedPlatforms')]
-    public function testRefusesAPlatformItHasNoDialectFor(AbstractPlatform $platform)
+    public function testPicksTheMariaDbDialect()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(\sprintf('Database platform "%s" has no vector support, use PostgreSQL with pgvector or SQLite with sqlite-vec.', $platform::class));
-
-        VectorPlatformFactory::create($platform);
+        $this->assertInstanceOf(MariaDbVectorPlatform::class, VectorPlatformFactory::create(new MariaDBPlatform()));
     }
 
-    /**
-     * @return iterable<string, array{AbstractPlatform}>
-     */
-    public static function provideUnsupportedPlatforms(): iterable
+    public function testExplainsWhyMySqlIsNotSupported()
     {
-        yield 'mariadb' => [new MariaDBPlatform()];
-        yield 'mysql' => [new MySQLPlatform()];
-        yield 'oracle' => [new OraclePlatform()];
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('MySQL has no function to compare vectors outside of HeatWave');
+
+        VectorPlatformFactory::create(new MySQLPlatform());
+    }
+
+    public function testRefusesAPlatformItHasNoDialectFor()
+    {
+        $platform = new OraclePlatform();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('Database platform "%s" has no vector support, use PostgreSQL with pgvector, MariaDB or SQLite with sqlite-vec.', $platform::class));
+
+        VectorPlatformFactory::create($platform);
     }
 }

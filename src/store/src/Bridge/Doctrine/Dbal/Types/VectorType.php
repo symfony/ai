@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Doctrine\Dbal\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Types\Type;
 use Symfony\AI\Platform\Vector\VectorInterface;
@@ -43,7 +44,7 @@ final class VectorType extends Type
      */
     public function getMappedDatabaseTypes(AbstractPlatform $platform): array
     {
-        return $platform instanceof PostgreSQLPlatform ? ['vector'] : [];
+        return $platform instanceof PostgreSQLPlatform || $platform instanceof MariaDBPlatform ? ['vector'] : [];
     }
 
     public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
