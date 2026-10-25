@@ -305,6 +305,42 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStorePassesHttpOptionsToAllRequests()
+    {
+        $timeouts = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$timeouts) {
+            $timeouts[] = $options['timeout'] ?? null;
+
+            return new MockResponse(json_encode(['data' => []]), ['http_code' => 200]);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+        $httpOptions = ['http_options' => ['timeout' => 7.0]];
+
+        $store->add(new VectorDocument(Uuid::v4()->toString(), new Vector([0.1, 0.2, 0.3])), $httpOptions);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), $httpOptions));
+        $store->remove('a0d23a85-abfb-4696-a652-73a83b46710b', $httpOptions);
+        $store->clear($httpOptions);
+
+        $this->assertSame([7.0, 7.0, 7.0, 7.0], $timeouts);
+    }
+
+    public function testAddMergesHttpOptionHeaders()
+    {
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$headers) {
+            $headers = $options['headers'];
+
+            return new MockResponse('', ['http_code' => 200]);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+        $store->add(new VectorDocument(Uuid::v4()->toString(), new Vector([0.1, 0.2, 0.3])), ['http_options' => ['headers' => ['X-Test' => 'yes']]]);
+
+        $this->assertContains('X-Test: yes', $headers);
+        $this->assertContains('Content-Type: application/json', $headers);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'default', 'test_table');

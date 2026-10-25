@@ -48,7 +48,7 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
         $this->drop();
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];

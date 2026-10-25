@@ -66,14 +66,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ));
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
         foreach ($documents as $document) {
-            $this->request('POST', \sprintf('key/%s', $this->table), $this->convertToIndexableArray($document));
+            $this->request('POST', \sprintf('key/%s', $this->table), $this->convertToIndexableArray($document), $options['http_options'] ?? []);
         }
     }
 
@@ -88,12 +88,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $recordIds = array_map(fn (string $id) => \sprintf('%s:%s', $this->table, $this->escapeIdentifier($id)), $ids);
-        $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
+        $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)), $options['http_options'] ?? []);
     }
 
     public function clear(array $options = []): void
     {
-        $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table));
+        $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table), $options['http_options'] ?? []);
     }
 
     public function supports(string $queryClass): bool
@@ -102,7 +102,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, ef?: positive-int} $options
+     * @param array{limit?: positive-int, ef?: positive-int, http_options?: array<string, mixed>} $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
     {
@@ -120,7 +120,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $results = $this->request('POST', 'sql', \sprintf(
             'SELECT id, %s, _metadata, vector::distance::knn() AS distance FROM %s WHERE %s <|%d,%d|> %s ORDER BY distance;',
             $this->vectorFieldName, $this->table, $this->vectorFieldName, $limit, $ef, $vectors,
-        ));
+        ), $options['http_options'] ?? []);
 
         $statement = $results[0] ?? null;
         if (!\is_array($statement)) {
@@ -184,10 +184,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed>|string $payload
+     * @param array<string, mixed>        $httpOptions
      *
      * @return array<string|int, mixed>
      */
-    private function request(string $method, string $endpoint, array|string $payload): array
+    private function request(string $method, string $endpoint, array|string $payload, array $httpOptions = []): array
     {
         $this->authenticate();
 
@@ -206,9 +207,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $response = $this->httpClient->request($method, $endpoint, [
+            ...$httpOptions,
             ...$finalPayload,
             ...[
                 'headers' => [
+                    ...$httpOptions['headers'] ?? [],
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                     'Surreal-NS' => $this->namespace,

@@ -52,6 +52,17 @@ final class DocumentProcessorTest extends TestCase
         $this->assertSame([], $store->documents);
     }
 
+    public function testProcessPassesHttpOptionsToStore()
+    {
+        $document = new TextDocument(Uuid::v4()->toString(), 'Test content');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(new Vector([0.1, 0.2, 0.3]))), 'text-embedding-3-small');
+
+        $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
+        $processor->process([$document], ['http_options' => ['timeout' => 60]]);
+
+        $this->assertSame(['http_options' => ['timeout' => 60]], $store->addOptions);
+    }
+
     public function testProcessDocumentWithMetadata()
     {
         $metadata = new Metadata(['key' => 'value']);

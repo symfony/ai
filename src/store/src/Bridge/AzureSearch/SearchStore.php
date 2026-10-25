@@ -43,7 +43,7 @@ final class SearchStore implements StoreInterface
     ) {
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
@@ -54,7 +54,7 @@ final class SearchStore implements StoreInterface
                 'id' => $document->getId(),
                 $this->vectorFieldName => $document->getVector()->getData(),
             ], $document->getMetadata()->getArrayCopy()), $documents),
-        ]);
+        ], $options['http_options'] ?? []);
     }
 
     public function remove(string|array $ids, array $options = []): void
@@ -74,11 +74,11 @@ final class SearchStore implements StoreInterface
 
         $this->request('index', [
             'value' => $documents,
-        ]);
+        ], $options['http_options'] ?? []);
     }
 
     /**
-     * @param array{batch_size?: int} $options
+     * @param array{batch_size?: int, http_options?: array<string, mixed>} $options
      */
     public function clear(array $options = []): void
     {
@@ -96,7 +96,7 @@ final class SearchStore implements StoreInterface
                 'search' => '*',
                 'select' => 'id',
                 'top' => $batchSize,
-            ]);
+            ], $options['http_options'] ?? []);
 
             $ids = array_column($result['value'], 'id');
 
@@ -104,7 +104,7 @@ final class SearchStore implements StoreInterface
                 return;
             }
 
-            $this->remove($ids);
+            $this->remove($ids, ['http_options' => $options['http_options'] ?? []]);
 
             if ($ids !== $previousIds) {
                 $unchangedBatches = 0;
@@ -124,7 +124,7 @@ final class SearchStore implements StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, exhaustive?: bool} $options
+     * @param array{limit?: positive-int, exhaustive?: bool, http_options?: array<string, mixed>} $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
     {
@@ -147,7 +147,7 @@ final class SearchStore implements StoreInterface
 
         $result = $this->request('search', [
             'vectorQueries' => [$vectorQuery],
-        ]);
+        ], $options['http_options'] ?? []);
 
         foreach ($result['value'] as $item) {
             yield $this->convertToVectorDocument($item);
@@ -166,12 +166,12 @@ final class SearchStore implements StoreInterface
     }
 
     /**
-     * @param array{batch_size?: int} $options
+     * @param array{batch_size?: int, http_options?: array<string, mixed>} $options
      */
     private function getBatchSize(array $options): int
     {
-        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
-            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        if ([] !== array_diff(array_keys($options), ['batch_size', 'http_options'])) {
+            throw new InvalidArgumentException('Only the "batch_size" and "http_options" options are supported.');
         }
 
         $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
@@ -185,12 +185,14 @@ final class SearchStore implements StoreInterface
 
     /**
      * @param array<string, mixed> $payload
+     * @param array<string, mixed> $httpOptions
      *
      * @return array<string, mixed>
      */
-    private function request(string $endpoint, array $payload): array
+    private function request(string $endpoint, array $payload, array $httpOptions = []): array
     {
         $response = $this->httpClient->request('POST', \sprintf('indexes/%s/docs/%s', $this->indexName, $endpoint), [
+            ...$httpOptions,
             'json' => $payload,
         ]);
 

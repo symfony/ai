@@ -57,7 +57,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
@@ -71,7 +71,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     'metadata' => json_encode($document->getMetadata()->getArrayCopy()),
                     'embeddings' => $document->getVector()->getData(),
                 ],
-            ]);
+            ], $options['http_options'] ?? []);
         }
     }
 
@@ -90,11 +90,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'parameters' => [
                 'ids' => $ids,
             ],
-        ]);
+        ], $options['http_options'] ?? []);
     }
 
     /**
-     * @param array{batch_size?: int} $options
+     * @param array{batch_size?: int, http_options?: array<string, mixed>} $options
      */
     public function clear(array $options = []): void
     {
@@ -106,7 +106,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->nodeName,
                 $this->getBatchSize($options),
             ),
-        ]);
+        ], $options['http_options'] ?? []);
     }
 
     public function supports(string $queryClass): bool
@@ -126,7 +126,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'parameters' => [
                 'vectors' => $vector->getData(),
             ],
-        ]);
+        ], $options['http_options'] ?? []);
 
         foreach ($response['data']['values'] as $item) {
             yield $this->convertToVectorDocument($item);
@@ -150,12 +150,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{batch_size?: int} $options
+     * @param array{batch_size?: int, http_options?: array<string, mixed>} $options
      */
     private function getBatchSize(array $options): int
     {
-        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
-            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        if ([] !== array_diff(array_keys($options), ['batch_size', 'http_options'])) {
+            throw new InvalidArgumentException('Only the "batch_size" and "http_options" options are supported.');
         }
 
         $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
@@ -169,12 +169,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed> $payload
+     * @param array<string, mixed> $httpOptions
      *
      * @return array<string, mixed>
      */
-    private function request(string $method, string $path, array $payload = []): array
+    private function request(string $method, string $path, array $payload = [], array $httpOptions = []): array
     {
         $response = $this->httpClient->request($method, $path, [
+            ...$httpOptions,
             'json' => $payload,
         ]);
 

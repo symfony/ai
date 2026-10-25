@@ -52,7 +52,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->get($this->cacheKey, static fn (): array => []);
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];

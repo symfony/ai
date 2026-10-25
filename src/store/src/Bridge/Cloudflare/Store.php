@@ -77,7 +77,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return max(0, $count);
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
@@ -92,7 +92,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             foreach ($payload as $entry) {
                 yield json_encode($entry).\PHP_EOL;
             }
-        });
+        }, $options['http_options'] ?? []);
     }
 
     public function remove(string|array $ids, array $options = []): void
@@ -103,11 +103,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->request('POST', \sprintf('vectorize/v2/indexes/%s/delete_by_ids', $this->index), [
             'ids' => $ids,
-        ]);
+        ], $options['http_options'] ?? []);
     }
 
     /**
-     * @param array{batch_size?: int} $options
+     * @param array{batch_size?: int, http_options?: array<string, mixed>} $options
      */
     public function clear(array $options = []): void
     {
@@ -127,7 +127,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $query['cursor'] = $cursor;
             }
 
-            $response = $this->request('GET', \sprintf('vectorize/v2/indexes/%s/list', $this->index), [], $query);
+            $response = $this->request('GET', \sprintf('vectorize/v2/indexes/%s/list', $this->index), [], $options['http_options'] ?? [], $query);
 
             $result = $response['result'] ?? null;
             if (!\is_array($result)) {
@@ -149,7 +149,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             }
 
             if ([] !== $ids) {
-                $this->remove($ids);
+                $this->remove($ids, ['http_options' => $options['http_options'] ?? []]);
             }
 
             $cursor = true === ($result['isTruncated'] ?? false) && \is_string($result['nextCursor'] ?? null)
@@ -174,7 +174,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'vector' => $vector->getData(),
             'returnValues' => true,
             'returnMetadata' => 'all',
-        ]);
+        ], $options['http_options'] ?? []);
 
         $result = $results['result'] ?? null;
         if (!\is_array($result)) {
@@ -196,12 +196,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{batch_size?: int} $options
+     * @param array{batch_size?: int, http_options?: array<string, mixed>} $options
      */
     private function getBatchSize(array $options): int
     {
-        if ([] !== array_diff(array_keys($options), ['batch_size'])) {
-            throw new InvalidArgumentException('Only the "batch_size" option is supported.');
+        if ([] !== array_diff(array_keys($options), ['batch_size', 'http_options'])) {
+            throw new InvalidArgumentException('Only the "batch_size" and "http_options" options are supported.');
         }
 
         $batchSize = $options['batch_size'] ?? self::BATCH_SIZE;
@@ -215,16 +215,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed> $payload
+     * @param array<string, mixed> $httpOptions
      * @param array<string, mixed> $query
      *
      * @return array<mixed>
      */
-    private function request(string $method, string $endpoint, \Closure|array $payload = [], array $query = []): array
+    private function request(string $method, string $endpoint, \Closure|array $payload = [], array $httpOptions = [], array $query = []): array
     {
         $options = [];
 
         if ($payload instanceof \Closure) {
             $options['headers'] = [
+                ...$httpOptions['headers'] ?? [],
                 'Content-Type' => 'application/x-ndjson',
             ];
 
@@ -239,7 +241,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['query'] = $query;
         }
 
-        $response = $this->httpClient->request($method, $endpoint, $options);
+        $response = $this->httpClient->request($method, $endpoint, [...$httpOptions, ...$options]);
 
         return $response->toArray();
     }
