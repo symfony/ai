@@ -16,7 +16,9 @@ use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -31,6 +33,8 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class OllamaResultConverterTest extends TestCase
@@ -150,6 +154,26 @@ final class OllamaResultConverterTest extends TestCase
         $this->expectExceptionMessage('Message does not contain content');
 
         $converter->convert($rawResult);
+    }
+
+    public function testItThrowsServerExceptionOnServerError()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"error":"Service unavailable."}', ['http_code' => 503])))->request('POST', 'http://localhost:11434/api/embed');
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 503). Service unavailable.');
+
+        (new OllamaResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    public function testItThrowsModelNotFoundExceptionOnNotFound()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"error":"model \"foo\" not found, try pulling it first"}', ['http_code' => 404])))->request('POST', 'http://localhost:11434/api/embed');
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('model "foo" not found, try pulling it first');
+
+        (new OllamaResultConverter())->convert(new RawHttpResult($response));
     }
 
     public function testItConvertsAResponseToAVectorResult()

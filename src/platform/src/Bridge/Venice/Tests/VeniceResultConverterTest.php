@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Venice\VeniceJobClient;
 use Symfony\AI\Platform\Bridge\Venice\VeniceResultConverter;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -106,6 +107,20 @@ final class VeniceResultConverterTest extends TestCase
         $this->assertSame(5, $chunks[3]->getPromptTokens());
         $this->assertSame(3, $chunks[3]->getCompletionTokens());
         $this->assertSame(8, $chunks[3]->getTotalTokens());
+    }
+
+    public function testConvertThrowsServerExceptionOnServerError()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['error' => 'Service unavailable.'], ['http_code' => 503]),
+        ], 'https://api.venice.ai/api/v1/');
+
+        $result = new RawHttpResult($httpClient->request('POST', 'embeddings'));
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 503). Service unavailable.');
+
+        (new VeniceResultConverter())->convert($result);
     }
 
     public function testConvertSpeechToBinaryResult()
