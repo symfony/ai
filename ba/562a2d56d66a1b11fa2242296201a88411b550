@@ -1,0 +1,15 @@
+---------------------------------------------------------------------------
+
+by tacman at 2026-10-24T11:04:20Z
+
+Thanks @wachterjohannes — addressed the review in cd743e0a.
+
+`ModelCatalog` now preserves `vision` as `Capability::INPUT_IMAGE` for decision models, and `DecisionModelClient` checks it before sending images. The regression test verifies that a text-only decision model makes only the discovery request, never the decision request; the existing Clef image round-trip still passes. Custom catalogs must declare `INPUT_IMAGE` for image-capable decision models.
+
+The README also lists the cloud image limits and explicitly documents server-side format/limit enforcement, as suggested in the inline review. Ollama tests pass (81 tests, 281 assertions), as do PHPStan and PHP CS Fixer.
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-10-25T18:50:27Z
+
+I restored the `=========` underline in the Ollama `CHANGELOG.md` myself (957cfb796) and approved.
