@@ -400,6 +400,35 @@ not trigger ``ResultErrorEvent``, which fires only when the conversion itself fa
 For a streamed result, ``ResultConvertedEvent`` fires when the stream result is created,
 not when it is fully consumed.
 
+Error Codes
+-----------
+
+The exceptions that describe a failed call implement
+:class:`Symfony\\AI\\Platform\\Exception\\ErrorCodeAwareInterface`. Its ``getErrorCode()``
+returns a code that stays the same across providers. ``isRetryable()`` tells whether
+repeating the same request may succeed. It is ``true`` for exceptions implementing
+:class:`Symfony\\AI\\Platform\\Exception\\RetryableExceptionInterface`::
+
+    use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
+
+    try {
+        $platform->invoke('gpt-4o-mini', $input)->asText();
+    } catch (ErrorCodeAwareInterface $exception) {
+        $logger->warning($exception->getErrorCode(), ['retry' => $exception->isRetryable()]);
+    }
+
+========================================  ========================  =========
+Exception                                 Code                      Retryable
+========================================  ========================  =========
+``RateLimitExceededException``            ``rate_limit_exceeded``   yes
+``ServerException``                       ``provider_error``        yes
+``AuthenticationException``               ``authentication_failed`` no
+``BadRequestException``                   ``bad_request``           no
+``ModelNotFoundException``                ``model_not_found``       no
+``MissingModelSupportException``          ``model_not_found``       no
+``ContentFilterException``                ``content_filtered``      no
+========================================  ========================  =========
+
 Options
 -------
 

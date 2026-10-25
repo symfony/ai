@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Model;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class MissingModelSupportException extends RuntimeException
+final class MissingModelSupportException extends RuntimeException implements ErrorCodeAwareInterface
 {
     private function __construct(Model $model, string $support)
     {
@@ -41,5 +41,15 @@ final class MissingModelSupportException extends RuntimeException
     public static function forStructuredOutput(Model $model): self
     {
         return new self($model, 'structured output');
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'model_not_found';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
     }
 }
