@@ -51,6 +51,20 @@ class MessageBag implements \Countable, \IteratorAggregate
         return $this->id;
     }
 
+    /**
+     * @param MessageInterface|string ...$messages strings are user messages
+     */
+    public static function forId(AbstractUid&TimeBasedUidInterface $id, MessageInterface|string ...$messages): self
+    {
+        $bag = new self(...array_map(
+            static fn (MessageInterface|string $message): MessageInterface => \is_string($message) ? Message::ofUser($message) : $message,
+            $messages,
+        ));
+        $bag->id = $id;
+
+        return $bag;
+    }
+
     public function withId(AbstractUid&TimeBasedUidInterface $id): static
     {
         $messages = clone $this;

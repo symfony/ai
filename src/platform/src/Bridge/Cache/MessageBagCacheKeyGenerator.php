@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Serializer\MessageNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 /**
  * @author Tac Tacelosky <tacman@gmail.com>
@@ -38,12 +39,10 @@ final class MessageBagCacheKeyGenerator implements CacheKeyGenerator
         }
 
         // ids and metadata differ between bags carrying the same conversation
-        $messages = array_map(function (MessageInterface $message): array {
-            $normalized = $this->normalizer->normalize($message);
-            unset($normalized['id'], $normalized['metadata'], $normalized['addedAt']);
-
-            return $normalized;
-        }, $input->getMessages());
+        $messages = array_map(
+            fn (MessageInterface $message): array => $this->normalizer->normalize($message, context: [AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt']]),
+            $input->getMessages(),
+        );
 
         return hash('xxh128', json_encode($messages, \JSON_THROW_ON_ERROR));
     }

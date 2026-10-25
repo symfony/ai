@@ -4,6 +4,8 @@ CHANGELOG
 0.16
 ----
 
+ * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
+ * Add `MessageStore\MessageStoreInterface` and `MessageStore\InMemoryMessageStore` keeping message bags by their ID, and the `$messageStore` argument of `Agent` continuing and saving the stored conversation
  * Keep the phase of a streamed text when the `Runner` turns the round into a result
  * Add `Execution::getMessages()` returning the given messages followed by the messages of the run, each assistant message carrying the metadata of its own model request
  * Add an optional `$messages` argument to `Update\Result`, for agents providing the messages of their execution

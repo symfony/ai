@@ -5,6 +5,7 @@ CHANGELOG
 ----
 
  * [BC BREAK] Remove `MessageNormalizer` in favor of `Symfony\AI\Platform\Serializer\MessageNormalizer`
+ * [BC BREAK] The message store bridges keep the type of objects in the message metadata, their default serializer throws a `NotNormalizableValueException` for objects without a normalizer
 
 0.13
 ----

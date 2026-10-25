@@ -14,6 +14,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -307,6 +308,8 @@ return static function (ContainerConfigurator $container): void {
             ->tag('serializer.normalizer')
         ->set('ai.platform.message_bag_normalizer', MessageBagNormalizer::class)
             ->args([service('ai.platform.message_normalizer')])
+            ->tag('serializer.normalizer')
+        ->set('ai.agent.source_collection_normalizer', SourceCollectionNormalizer::class)
             ->tag('serializer.normalizer')
 
         // commands

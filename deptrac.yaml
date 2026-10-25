@@ -450,27 +450,34 @@ deptrac:
       - ChatComponent
       - PlatformComponent
     ChatCloudflareBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     ChatDoctrineBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     ChatSessionBridge:
       - ChatComponent
       - PlatformComponent
     ChatMeilisearchBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     ChatMongoDbBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     ChatPogocacheBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     ChatRedisBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     ChatSurrealDbBridge:
+      - AgentComponent
       - ChatComponent
       - PlatformComponent
     PlatformComponent: ~

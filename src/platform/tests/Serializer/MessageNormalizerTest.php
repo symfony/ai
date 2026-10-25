@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Tests\Serializer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\FinishReason\FinishReason;
+use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
@@ -42,8 +44,13 @@ use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Serializer\MessageNormalizer;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Uid\Uuid;
 
@@ -102,6 +109,77 @@ final class MessageNormalizerTest extends TestCase
         )];
         yield 'tool call' => [new ToolCallMessage($toolCall, new Text('Sunny'))];
         yield 'multimodal tool call' => [new ToolCallMessage($toolCall, new Text('Chart'), Image::fromDataUrl('data:image/png;base64,aW1hZ2U='))];
+    }
+
+    public function testRoundTripKeepsThePlatformMetadataObjects()
+    {
+        $message = Message::ofAssistant('Hi');
+        $message->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10, completionTokens: 5, model: 'gpt-4'));
+        $message->getMetadata()->add('aggregated', new TokenUsageAggregation([new TokenUsage(promptTokens: 1), new TokenUsage(promptTokens: 2)]));
+        $message->getMetadata()->add('finish_reason', new FinishReason(FinishReasonCase::STOP, 'end_turn'));
+        $serializer = new Serializer([new MessageNormalizer()], [new JsonEncoder()]);
+
+        $restored = $serializer->deserialize($serializer->serialize($message, 'json'), MessageInterface::class, 'json');
+
+        $this->assertEquals($message->getMetadata()->all(), $restored->getMetadata()->all());
+        $this->assertSame(3, $restored->getMetadata()->get('aggregated')->getPromptTokens());
+    }
+
+    public function testOtherMetadataObjectsAreHandedToTheSerializer()
+    {
+        $message = Message::ofAssistant('Berlin');
+        $message->getMetadata()->add('cities', [new City('Berlin', 3500000)]);
+        $serializer = new Serializer([new MessageNormalizer(), new ObjectNormalizer()], [new JsonEncoder()]);
+
+        $restored = $serializer->deserialize($serializer->serialize($message, 'json'), MessageInterface::class, 'json');
+
+        $this->assertEquals([new City('Berlin', 3500000)], $restored->getMetadata()->get('cities'));
+    }
+
+    public function testMetadataArraysShapedLikeATypedObjectStayArrays()
+    {
+        $message = Message::ofAssistant('Hi');
+        $message->getMetadata()->add('label', ['@type' => 'label', '@value' => 'text']);
+        $message->getMetadata()->add('usage', ['@type' => TokenUsage::class, '@value' => ['promptTokens' => 1]]);
+        $serializer = new Serializer([new MessageNormalizer()], [new JsonEncoder()]);
+
+        $restored = $serializer->deserialize($serializer->serialize($message, 'json'), MessageInterface::class, 'json');
+
+        $this->assertSame($message->getMetadata()->all(), $restored->getMetadata()->all());
+    }
+
+    public function testMetadataObjectsWithReorderedKeysKeepTheirType()
+    {
+        $message = Message::ofAssistant('Hi');
+        $message->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10));
+        $normalizer = new MessageNormalizer();
+        $normalized = $normalizer->normalize($message);
+        $normalized['metadata']['token_usage'] = array_reverse($normalized['metadata']['token_usage'], true);
+
+        $restored = $normalizer->denormalize($normalized, MessageInterface::class);
+
+        $this->assertEquals(new TokenUsage(promptTokens: 10), $restored->getMetadata()->get('token_usage'));
+    }
+
+    public function testIgnoredAttributesAreLeftOutWithoutNormalizingTheMetadata()
+    {
+        $message = Message::ofAssistant('Berlin');
+        $message->getMetadata()->add('city', new City('Berlin'));
+
+        $normalized = (new MessageNormalizer())->normalize($message, context: [AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt']]);
+
+        $this->assertSame(['type', 'content', 'parts', 'toolCall'], array_keys($normalized));
+    }
+
+    public function testItRejectsMetadataObjectsWithoutNormalizer()
+    {
+        $message = Message::ofAssistant('Berlin');
+        $message->getMetadata()->add('city', new City('Berlin'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('Cannot normalize the metadata value of type "%s", use a serializer with a normalizer for it.', City::class));
+
+        (new MessageNormalizer())->normalize($message);
     }
 
     public function testItKeepsAddedAtStableAndDerivedFromTheId()

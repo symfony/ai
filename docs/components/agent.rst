@@ -154,6 +154,44 @@ enabled, the final answer carries :ref:`tool sources <agent-tool-sources>` as we
         }
     }
 
+Storing Conversations
+~~~~~~~~~~~~~~~~~~~~~
+
+Conversations often span several requests or workers. Pass a
+:class:`Symfony\\AI\\Agent\\MessageStore\\MessageStoreInterface` to the agent, and it keeps the conversation
+stored under the ID of the message bag::
+
+    use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+    use Symfony\Component\Uid\Uuid;
+
+    $agent = new Agent($platform, $model, messageStore: new InMemoryMessageStore());
+
+    // e.g. the ID of the conversation in your application
+    $id = Uuid::v7();
+
+    // a string is a user message
+    $agent->call(MessageBag::forId($id, 'My name is Wilhelm Tell.'))->getResult();
+    $agent->call(MessageBag::forId($id, 'What is my name?'))->asText(); // "Wilhelm Tell"
+
+The agent uses the ID of the message bag as it is. Your application resolves the conversation ID, e.g. from the
+current user, and checks that the user is allowed to continue that conversation.
+
+The agent loads the stored messages and adds the given messages it doesn't know yet. It matches them by their
+message ID, so passing the whole conversation or only the new message is the same. A message you create again from
+its text gets a new ID, and the agent adds it a second time.
+
+The agent saves the conversation after adding the input, after each round of tool calls and with the answer. A
+failed run therefore keeps its tool results.
+
+If the stored conversation changed while the agent was running, e.g. because a second request answered the same
+conversation in the meantime, saving fails with a :class:`Symfony\\AI\\Agent\\Exception\\ConflictException`.
+
+.. warning::
+
+    When a message is serialized, the objects in its metadata keep their class name. On loading, the serializer
+    creates objects of the stored class names. Only load conversations from a storage that only your application
+    writes to.
+
 Streaming
 ~~~~~~~~~
 

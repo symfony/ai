@@ -68,11 +68,12 @@ final class Runner
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>              $options
+     * @param (\Closure(MessageBag): void)|null $onToolRound receives the messages after each completed tool round
      *
      * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null): \Generator
+    public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null, ?\Closure $onToolRound = null): \Generator
     {
         [$options, $allowedTools] = $this->exposeTools($options);
 
@@ -133,6 +134,10 @@ final class Runner
                 if (null !== $toolResult->getSources()) {
                     $sources = $sources->merge($toolResult->getSources());
                 }
+            }
+
+            if (null !== $onToolRound) {
+                $onToolRound($messages);
             }
 
             $event = new ToolCallsExecuted($toolResults);

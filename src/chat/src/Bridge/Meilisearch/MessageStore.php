@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Chat\Bridge\Meilisearch;
 
+use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Chat\Exception\InvalidArgumentException;
 use Symfony\AI\Chat\Exception\RuntimeException;
 use Symfony\AI\Chat\ManagedStoreInterface;
@@ -42,6 +43,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
             new MessageNormalizer(),
+            new SourceCollectionNormalizer(),
         ], [new JsonEncoder()]),
     ) {
         if (!interface_exists(ClockInterface::class)) {

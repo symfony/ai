@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
@@ -35,6 +36,7 @@ final class MessageBagNormalizerTest extends TestCase
             Message::ofAssistant('It is sunny.'),
         );
         $messages->getMetadata()->add('sticky_agent', 'weather');
+        $messages->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10));
         $normalizer = new MessageBagNormalizer();
         $serializer = new Serializer([$normalizer], [new JsonEncoder()]);
 
@@ -42,6 +44,7 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertTrue($messages->getId()->equals($restored->getId()));
         $this->assertSame('weather', $restored->getMetadata()->get('sticky_agent'));
+        $this->assertEquals(new TokenUsage(promptTokens: 10), $restored->getMetadata()->get('token_usage'));
         $this->assertSame($normalizer->normalize($messages), $normalizer->normalize($restored));
     }
 
