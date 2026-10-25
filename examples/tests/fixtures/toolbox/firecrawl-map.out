@@ -1,14 +1,24 @@
-Found these Messenger-related links on symfony.com:
+I retrieved the links from https://symfony.com and filtered for those related to the Messenger component. Here are the unique Messenger-related links found:
 
+Docs
 - https://symfony.com/doc/current/messenger.html
-- https://symfony.com/doc/6.4/messenger.html
 - https://symfony.com/doc/current/messenger/custom-transport.html
+- https://symfony.com/doc/6.4/messenger.html
+- https://symfony.com/doc/6.4/components/messenger.html
+- https://symfony.com/doc/7.4/messenger.html
+
+Packages (transports/adapters/etc.)
 - https://symfony.com/packages/messenger
+- https://symfony.com/packages/redis-messenger
 - https://symfony.com/packages/amazon-sqs-messenger
+- https://symfony.com/packages/doctrine-messenger
+- https://symfony.com/packages/beanstalkd-messenger
 - https://symfony.com/packages/amqp-messenger
 - https://symfony.com/packages/amp-sql-messenger
-- https://symfony.com/packages/beanstalkd-messenger
-- https://symfony.com/packages/doctrine-messenger
 - https://symfony.com/packages/mongodb-messenger
-- https://symfony.com/packages/redis-messenger
+
+Blog posts
 - https://symfony.com/blog/new-in-symfony-8-1-messenger-improvements
+- https://symfony.com/blog/symfonycon-warsaw-2026-not-all-messenger-transports-are-equal
+
+If you want, I can (a) open any of these pages and extract specific details, or (b) include related links that don’t contain "messenger" in the URL but discuss Messenger (e.g., certain release/blog posts). Which would you prefer?
