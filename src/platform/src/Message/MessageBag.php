@@ -191,10 +191,22 @@ class MessageBag implements \Countable, \IteratorAggregate
         return $messages;
     }
 
+    /**
+     * @return ($role is Role::User ? UserMessage : ($role is Role::Assistant ? AssistantMessage : ($role is Role::System ? SystemMessage : ToolCallMessage)))
+     *
+     * @throws InvalidArgumentException
+     */
     public function latestAs(Role $role): MessageInterface
     {
+        $class = match ($role) {
+            Role::User => UserMessage::class,
+            Role::Assistant => AssistantMessage::class,
+            Role::System => SystemMessage::class,
+            Role::ToolCall => ToolCallMessage::class,
+        };
+
         for ($index = \count($this->messages) - 1; $index >= 0; --$index) {
-            if ($this->messages[$index]->getRole() === $role) {
+            if ($this->messages[$index] instanceof $class) {
                 return $this->messages[$index];
             }
         }

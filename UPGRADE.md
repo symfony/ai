@@ -248,6 +248,19 @@ Platform
  * `CachePlatform` keys message bags by their content and includes the options in the key, so results cached
    before the upgrade are not used anymore.
 
+ * `MessageBag::latestAs()` only returns the built-in message class of the role, like `UserMessage` for `Role::User`.
+   Custom `MessageInterface` implementations are skipped, so iterate the bag to find them instead:
+
+   ```diff
+   -$message = $messages->latestAs(Role::User);
+   +$message = null;
+   +foreach ($messages as $candidate) {
+   +    if (Role::User === $candidate->getRole()) {
+   +        $message = $candidate;
+   +    }
+   +}
+   ```
+
 Store
 -----
 
