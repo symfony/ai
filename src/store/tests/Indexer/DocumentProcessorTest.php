@@ -55,7 +55,7 @@ final class DocumentProcessorTest extends TestCase
     public function testProcessPassesHttpOptionsToStore()
     {
         $document = new TextDocument(Uuid::v4()->toString(), 'Test content');
-        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult(new Vector([0.1, 0.2, 0.3]))), 'text-embedding-3-small');
+        $vectorizer = new Vectorizer(PlatformTestHandler::createPlatform(new VectorResult([new Vector([0.1, 0.2, 0.3])])), 'text-embedding-3-small');
 
         $processor = new DocumentProcessor($vectorizer, $store = new TestStore());
         $processor->process([$document], ['http_options' => ['timeout' => 60]]);

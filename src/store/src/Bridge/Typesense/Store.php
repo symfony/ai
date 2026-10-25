@@ -64,6 +64,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
@@ -75,6 +78,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function remove(string|array $ids, array $options = []): void
     {
         $httpOptions = $options['http_options'] ?? [];
@@ -105,6 +111,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ), [], $httpOptions);
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function clear(array $options = []): void
     {
         // "truncate" removes all documents while keeping the collection and its schema in place,
@@ -117,6 +126,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{k?: mixed, http_options?: array<string, mixed>} $options
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {

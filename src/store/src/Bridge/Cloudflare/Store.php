@@ -77,6 +77,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return max(0, $count);
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
@@ -95,6 +98,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }, $options['http_options'] ?? []);
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function remove(string|array $ids, array $options = []): void
     {
         if (\is_string($ids)) {
@@ -163,6 +169,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
@@ -226,7 +235,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         if ($payload instanceof \Closure) {
             $options['headers'] = [
-                ...$httpOptions['headers'] ?? [],
+                ...(array) ($httpOptions['headers'] ?? []),
                 'Content-Type' => 'application/x-ndjson',
             ];
 
