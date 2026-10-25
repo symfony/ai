@@ -189,6 +189,22 @@ class AssistantMessageNormalizerTest extends TestCase
             ],
         ];
 
+        yield 'the phase of a text is replayed' => [
+            new AssistantMessage(new Commentary('I will run code.'), new Text('425', null, 'final_answer')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'I will run code.', 'phase' => 'commentary'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => '425', 'phase' => 'final_answer'],
+            ],
+        ];
+
+        yield 'texts of different phases are replayed as messages of their own' => [
+            new AssistantMessage(new Text('One.', null, 'final_answer'), new Text('Two.'), new Text('Three.')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'One.', 'phase' => 'final_answer'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'Two.Three.'],
+            ],
+        ];
+
         yield 'empty commentary is not replayed' => [
             new AssistantMessage(new Commentary(''), new Text('425')),
             [['role' => 'assistant', 'type' => 'message', 'content' => '425']],

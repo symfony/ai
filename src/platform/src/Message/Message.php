@@ -119,7 +119,7 @@ final class Message
         }
 
         if ($part instanceof TextResult) {
-            return [new Text($part->getContent(), $part->getSignature())];
+            return [new Text($part->getContent(), $part->getSignature(), $part->getPhase())];
         }
 
         if ($part instanceof ThinkingResult) {

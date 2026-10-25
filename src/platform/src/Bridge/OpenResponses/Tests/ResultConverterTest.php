@@ -26,6 +26,8 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReason;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
+use Symfony\AI\Platform\Message\Content\Commentary;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\CommentaryResult;
@@ -41,6 +43,8 @@ use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\AssistantMessageStreamListener;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -1180,6 +1184,102 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Response does not contain any content.');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertKeepsThePhaseOfTheAnswer()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'final_answer',
+                    'content' => [['type' => 'output_text', 'text' => '425']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('425', $result->getContent());
+        $this->assertSame('final_answer', $result->getPhase());
+    }
+
+    public function testConvertLeavesThePhaseEmptyWithoutOne()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => '425']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertNull($result->getPhase());
+    }
+
+    public function testStreamKeepsThePhaseOfTheAnswerNextToCommentary()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            ['type' => 'response.output_item.added', 'item' => ['type' => 'message', 'id' => 'msg_1', 'phase' => 'commentary']],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_1', 'delta' => 'I will run code.'],
+            ['type' => 'response.output_item.done', 'item' => ['type' => 'message', 'id' => 'msg_1', 'phase' => 'commentary']],
+            ['type' => 'response.output_item.added', 'item' => ['type' => 'message', 'id' => 'msg_2', 'phase' => 'final_answer']],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_2', 'delta' => '4'],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_2', 'delta' => '25'],
+            ['type' => 'response.output_item.done', 'item' => ['type' => 'message', 'id' => 'msg_2', 'phase' => 'final_answer']],
+            ['type' => 'response.completed', 'response' => ['output' => []]],
+        ];
+
+        $listener = new AssistantMessageStreamListener();
+        foreach ($converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true])->getContent() as $delta) {
+            if ($delta instanceof DeltaInterface) {
+                $listener->accumulate($delta);
+            }
+        }
+
+        $this->assertEquals(
+            [new Commentary('I will run code.'), new Text('425', null, 'final_answer')],
+            $listener->getAssistantMessage()->getContent(),
+        );
+    }
+
+    public function testStreamLeavesThePhaseOfTextWithoutOneEmpty()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            ['type' => 'response.output_item.added', 'item' => ['type' => 'message', 'id' => 'msg_1']],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_1', 'delta' => '425'],
+            ['type' => 'response.output_item.done', 'item' => ['type' => 'message', 'id' => 'msg_1']],
+            ['type' => 'response.completed', 'response' => ['output' => []]],
+        ];
+
+        $chunks = iterator_to_array($converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true])->getContent());
+
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('425', $chunks[0]->getText());
+        $this->assertNull($chunks[0]->getPhase());
     }
 
     public function testConvertCommentaryNextToFunctionCallIntoMultiPartResult()

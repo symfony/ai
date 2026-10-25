@@ -229,7 +229,7 @@ final class Runner
             }
 
             if ($content instanceof Text) {
-                $parts[] = new TextResult($content->getText(), $content->getSignature());
+                $parts[] = new TextResult($content->getText(), $content->getSignature(), $content->getPhase());
             }
         }
 

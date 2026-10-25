@@ -518,6 +518,8 @@ class ResultConverter implements ResultConverterInterface
         $currentCommentary = null;
         /** @var array<string, true> $commentaryItems */
         $commentaryItems = [];
+        /** @var array<string, string> $textPhases */
+        $textPhases = [];
         // Announced function calls, keyed by output item id, so the argument deltas of an item
         // can be attributed to the call id that ToolCallStart was emitted with
         /** @var array<string, array{id: string, name: string}> $announcedToolCalls */
@@ -584,6 +586,15 @@ class ResultConverter implements ResultConverterInterface
                 $commentaryItems[$event['item']['id']] = true;
             }
 
+            if ('response.output_item.added' === $type
+                && 'message' === ($event['item']['type'] ?? null)
+                && \is_string($event['item']['phase'] ?? null)
+                && self::PHASE_COMMENTARY !== $event['item']['phase']
+                && isset($event['item']['id'])
+            ) {
+                $textPhases[$event['item']['id']] = $event['item']['phase'];
+            }
+
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
                 if (isset($commentaryItems[$event['item_id'] ?? ''])) {
                     if (null === $currentCommentary) {
@@ -593,7 +604,7 @@ class ResultConverter implements ResultConverterInterface
                     $currentCommentary .= $event['delta'];
                     yield new CommentaryDelta($event['delta']);
                 } else {
-                    yield new TextDelta($event['delta']);
+                    yield new TextDelta($event['delta'], $textPhases[$event['item_id'] ?? ''] ?? null);
                 }
             }
 
@@ -739,7 +750,7 @@ class ResultConverter implements ResultConverterInterface
             return;
         }
 
-        $result = new TextResult($content['text']);
+        $result = new TextResult($content['text'], null, $output['phase'] ?? null);
 
         $citations = $this->extractCitations($content['annotations'] ?? []);
         if ([] !== $citations) {

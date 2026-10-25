@@ -79,6 +79,16 @@ final class MessageTest extends TestCase
         $this->assertSame('It is time to sleep.', $message->asText());
     }
 
+    public function testCreateAssistantMessageKeepsThePhaseOfATextResult()
+    {
+        $message = Message::ofAssistant(new TextResult('425', null, 'final_answer'));
+
+        $parts = $message->getContent();
+        $this->assertCount(1, $parts);
+        $this->assertInstanceOf(Text::class, $parts[0]);
+        $this->assertSame('final_answer', $parts[0]->getPhase());
+    }
+
     public function testCreateAssistantMessageWithToolCalls()
     {
         $toolCalls = [

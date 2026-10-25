@@ -649,6 +649,25 @@ final class RunnerTest extends TestCase
         $this->assertSame('425', $actual->asText());
     }
 
+    public function testAStreamedRoundKeepsThePhaseOfItsAnswerLikeABufferedOne()
+    {
+        $stream = new StreamResult((static function () {
+            yield new CommentaryStart();
+            yield new CommentaryDelta('I will run code.');
+            yield new CommentaryComplete('I will run code.');
+            yield new TextDelta('425', 'final_answer');
+        })());
+
+        $actual = $this->drive($this->createRunner($this->platform($stream), $this->createMock(ToolboxInterface::class)), new MessageBag());
+
+        $this->assertInstanceOf(MultiPartResult::class, $actual);
+        [$commentary, $answer] = $actual->getContent();
+        $this->assertInstanceOf(CommentaryResult::class, $commentary);
+        $this->assertInstanceOf(TextResult::class, $answer);
+        $this->assertSame('425', $answer->getContent());
+        $this->assertSame('final_answer', $answer->getPhase());
+    }
+
     public function testAStreamedRoundOfPlainTextStaysATextResult()
     {
         $stream = new StreamResult((static function () {

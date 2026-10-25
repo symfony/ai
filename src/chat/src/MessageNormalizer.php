@@ -153,7 +153,11 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
         $parts = [];
         foreach ($message->getContent() as $part) {
             if ($part instanceof Text) {
-                $parts[] = ['type' => Text::class, 'text' => $part->getText()];
+                $textPart = ['type' => Text::class, 'text' => $part->getText()];
+                if (null !== $part->getPhase()) {
+                    $textPart['phase'] = $part->getPhase();
+                }
+                $parts[] = $textPart;
             } elseif ($part instanceof Thinking) {
                 $parts[] = ['type' => Thinking::class, 'content' => $part->getContent(), 'signature' => $part->getSignature()];
             } elseif ($part instanceof Commentary) {
@@ -228,7 +232,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             $parts = [];
             foreach ($data['parts'] as $part) {
                 $parts[] = match ($part['type']) {
-                    Text::class => new Text($part['text']),
+                    Text::class => new Text($part['text'], null, $part['phase'] ?? null),
                     Thinking::class => new Thinking($part['content'] ?? '', $part['signature'] ?? null),
                     Commentary::class => new Commentary($part['content'] ?? ''),
                     ToolCall::class => new ToolCall(

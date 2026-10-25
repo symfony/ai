@@ -330,6 +330,33 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame('Narrated step.', $parts[5]->getContent());
     }
 
+    public function testItPreservesThePhaseOfATextAcrossRoundtrip()
+    {
+        $serializer = new Serializer([
+            new ArrayDenormalizer(),
+            new ToolCallNormalizer(),
+            new MessageNormalizer(),
+        ], [new JsonEncoder()]);
+
+        $message = new AssistantMessage(
+            new Text('Answer.', null, 'final_answer'),
+            new Text('Plain.'),
+        );
+
+        $payload = $serializer->normalize($message);
+        $this->assertArrayNotHasKey('phase', $payload['parts'][1]);
+
+        /** @var AssistantMessage $denormalized */
+        $denormalized = $serializer->denormalize($payload, MessageInterface::class);
+
+        $parts = $denormalized->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(Text::class, $parts[0]);
+        $this->assertSame('final_answer', $parts[0]->getPhase());
+        $this->assertInstanceOf(Text::class, $parts[1]);
+        $this->assertNull($parts[1]->getPhase());
+    }
+
     public function testItPreservesMixedTextImageAndToolCallOrderingAcrossRoundtrip()
     {
         $serializer = new Serializer([

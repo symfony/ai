@@ -4,6 +4,7 @@ CHANGELOG
 0.16
 ----
 
+ * Keep the phase of a streamed text when the `Runner` turns the round into a result
  * Add a `$toolResultConverter` argument to `Agent` to customize how tool results are converted for the model
 
 0.15
