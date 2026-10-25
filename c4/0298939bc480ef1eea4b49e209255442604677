@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-25T19:53:40Z
+
+Thanks @wachterjohannes - went for exact names only instead, so a full service id isn't resolved anymore but suggested: `did you mean "blog"?` That's a BC break for setup, drop & clear, documented in `UPGRADE.md`. Added tests for your case and the menu index.
