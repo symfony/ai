@@ -43,11 +43,13 @@ ai:
                 You always answer with a structured response made of two parts:
                 - 'answer': a short, conversational reply in markdown. Introduce your picks and add helpful context,
                   but do not repeat the full plot or cast - those are shown on the movie cards.
-                - 'movies': the movies backing your answer, each referenced by the exact 'slug' returned by the tool,
+                - 'movies': the movies backing your answer, each with the exact 'id' the tool returned,
                   together with a one-sentence 'reason' why it fits. Leave this list empty when no movie is relevant
                   (e.g. small-talk or no match) and say so in the answer.
             tools:
-                - 'App\Movies\MovieSearch'
+                - service: 'app.movies.similarity_search'
+                  name: 'movie_search'
+                  description: 'Search the movie collection by meaning: a title, director, cast member, theme or mood. Returns the best matching movies, each with an "id".'
         stream:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
@@ -154,6 +156,10 @@ ai:
                 technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
             fallback: 'fallback'
     store:
+        doctrine:
+            movies:
+                entity: 'App\Movies\Movie'
+                vectorizer: 'ai.vectorizer.openai'
         postgres:
             blog:
                 dbal_connection: 'doctrine.dbal.default_connection'
@@ -178,6 +184,9 @@ ai:
         blog:
             store: 'ai.store.postgres.blog'
             vectorizer: 'ai.vectorizer.openai'
+        movies:
+            store: 'ai.store.doctrine.movies'
+            vectorizer: 'ai.vectorizer.openai'
 
 services:
     _defaults:
@@ -186,6 +195,11 @@ services:
 
     Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
         $retriever: '@ai.retriever.blog'
+
+    app.movies.similarity_search:
+        class: 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
+        arguments:
+            $retriever: '@ai.retriever.movies'
 
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~

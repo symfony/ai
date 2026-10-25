@@ -93,6 +93,19 @@ Now you should be able to retrieve documents from the store:
 symfony console ai:store:retrieve blog "Week of Symfony"
 ```
 
+The movie chat keeps its movies in a Doctrine entity, and its embedding in a `vector` column of the
+same table. Create the table and load the movies from the Markdown files in `fixtures/movies/`.
+The embedding listener of the Doctrine store embeds them when the fixtures are flushed:
+
+```shell
+symfony console doctrine:migrations:migrate
+symfony console doctrine:fixtures:load
+symfony console ai:store:retrieve movies "dreams within dreams"
+```
+
+To embed all movies again, for example after changing the embedding model, run
+`symfony console ai:store:index movies`.
+
 **Don't forget to set up the project in your favorite IDE or editor.**
 
 ## Testing
@@ -122,8 +135,9 @@ Next to the setup above, it needs:
   its own Messenger worker, since Panther's web server does not.
 
 The blog store does not need to be indexed beforehand: `StoreTest` drives the indexing pipeline
-through the console commands, and `BlogTest` sets the store up and indexes it when it is empty. Both
-skip themselves when the database is not running.
+through the console commands, and `BlogTest` sets the store up and indexes it when it is empty.
+`MoviesTest` loads the movie fixtures when the table is empty. All of them skip themselves when the
+database is not running.
 
 Panther boots the application in the **dev** environment, because the profiler - and with it the
 Symfony AI panel - only collects data with `kernel.debug` enabled. The web server therefore reads

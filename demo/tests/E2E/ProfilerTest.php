@@ -29,16 +29,18 @@ final class ProfilerTest extends E2ETestCase
         // The toolbar is replaced with the one of the live component request, which called the agent.
         $this->client->waitForVisibility('.sf-toolbar-block-ai');
 
-        $this->assertSelectorTextContains('.sf-toolbar-block-ai .sf-toolbar-value', '2');
+        $this->assertSelectorTextContains('.sf-toolbar-block-ai .sf-toolbar-value', '3');
         $this->assertSelectorExists('.sf-toolbar-block-ai a[href*="panel=ai"]');
 
-        $panel = $this->openAiPanel(platformCalls: 2);
+        $panel = $this->openAiPanel(platformCalls: 3);
 
         $this->assertSelectorTextContains('#collector-content', 'Platform Calls');
         $this->assertSelectorTextContains('#collector-content', 'Tools');
         $this->assertSelectorTextContains('#collector-content', 'Tool Calls');
 
-        $calls = $panel->platformCalls();
+        // The vectorization of the search query by the movie search is the third call.
+        $this->assertCount(3, $panel->platformCalls());
+        $calls = array_values(array_filter($panel->platformCalls(), static fn (array $call) => 'gpt-4.1' === $call['model']));
         $this->assertCount(2, $calls);
 
         // First call: the conversation, resulting in the tool call of the agent.
@@ -52,7 +54,7 @@ final class ProfilerTest extends E2ETestCase
         $this->assertStringContainsString('Tool:', $calls[1]['input']);
 
         // The platform reports the token usage of every call back as metadata.
-        foreach ($calls as $call) {
+        foreach ($panel->platformCalls() as $call) {
             $this->assertStringContainsString('token_usage', $call['result']);
         }
 

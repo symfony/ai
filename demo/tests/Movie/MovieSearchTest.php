@@ -12,7 +12,6 @@
 namespace App\Tests\Movie;
 
 use App\Movies\Movie;
-use App\Movies\MovieRepository;
 use App\Movies\MovieSearch;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MovieSearch::class)]
 final class MovieSearchTest extends TestCase
 {
-    private const FIXTURES_DIR = __DIR__.'/../../../fixtures/movies';
+    use MovieCollectionTrait;
 
     public function testEmptyQueryReturnsWholeCollection()
     {
@@ -52,6 +51,11 @@ final class MovieSearchTest extends TestCase
         $this->assertContains('the-matrix', $slugs);
     }
 
+    public function testSearchLimitsTheNumberOfMovies()
+    {
+        $this->assertCount(2, ($this->search())('the', 2));
+    }
+
     public function testSearchReturnsEmptyArrayForNoMatch()
     {
         $this->assertSame([], ($this->search())('this-does-not-match-anything'));
@@ -67,6 +71,8 @@ final class MovieSearchTest extends TestCase
 
     private function search(): MovieSearch
     {
-        return new MovieSearch(new MovieRepository(self::FIXTURES_DIR));
+        $repository = $this->repository();
+
+        return new MovieSearch($repository, $this->retriever($repository));
     }
 }
