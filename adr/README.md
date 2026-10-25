@@ -52,7 +52,8 @@ without a design change and CS-only changes do **not** need an ADR.
 
 1. Copy [`0000-template.md`](0000-template.md) to the next free
    `NNNN-kebab-case-title.md` of the right ADR directory.
-2. Fill it in. Keep it short and concrete, and name the real classes and files.
+2. Fill it in, in English. Keep it concise and easy to understand: short, plain
+   sentences, and name the real classes and files.
 3. Add its row to the index table of that directory's `README.md`.
 4. When an ADR records a decision after the fact, fill its **History** section: the
    pull requests that introduced and reshaped the decision, with date and author, so

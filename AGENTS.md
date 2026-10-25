@@ -152,6 +152,7 @@ in the root `adr/`. The process and template are in `adr/README.md`.
   a new cross-cutting pattern, a dependency that shapes the architecture, or the reversal
   of an earlier decision. Copy `adr/0000-template.md` to the next free number of the
   package's `adr/` directory and add its row to that directory's `README.md`.
+- Write ADRs in English, concise and easy to understand: short, plain sentences.
 - Bridges get no ADR directory of their own; decisions about how bridges work belong to
   the component.
 - Accepted ADRs are immutable: to change a decision, add a new ADR and set the old one's
