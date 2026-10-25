@@ -77,6 +77,16 @@ final class AssistantMessageStreamListenerTest extends TestCase
             [new Text('Hi')],
         ];
 
+        yield 'text of the same phase is concatenated' => [
+            [new TextDelta('Hello ', 'final_answer'), new TextDelta('World', 'final_answer')],
+            [new Text('Hello World', null, 'final_answer')],
+        ];
+
+        yield 'text of different phases stays apart' => [
+            [new TextDelta('Hello ', 'final_answer'), new TextDelta('World')],
+            [new Text('Hello ', null, 'final_answer'), new Text('World')],
+        ];
+
         yield 'commentary is kept next to the answer' => [
             [
                 new CommentaryStart(),

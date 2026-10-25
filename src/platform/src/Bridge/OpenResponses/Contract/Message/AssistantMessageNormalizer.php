@@ -42,9 +42,15 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     {
         $items = [];
         $text = '';
+        $phase = null;
 
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
+                if ($part->getPhase() !== $phase) {
+                    $this->flushText($items, $text, $data, $phase);
+                    $phase = $part->getPhase();
+                }
+
                 $text .= $part->getText();
 
                 continue;
@@ -56,7 +62,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
                 }
 
                 // Replayed with its phase, so the model does not read its narration as a past answer
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
                 $items[] = [...self::message($data, $part->getContent()), 'phase' => 'commentary'];
 
                 continue;
@@ -69,7 +75,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
                     continue;
                 }
 
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
                 $items[] = $item;
 
                 continue;
@@ -82,14 +88,14 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
                     continue;
                 }
 
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
                 $items[] = $item;
 
                 continue;
             }
 
             if ($part instanceof ToolCall) {
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
 
                 /** @var array<string, mixed> $toolCall */
                 $toolCall = $this->normalizer->normalize($part, $format, $context);
@@ -97,7 +103,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             }
         }
 
-        $this->flushText($items, $text, $data);
+        $this->flushText($items, $text, $data, $phase);
 
         if ([] === $items) {
             $items[] = self::message($data, null);
@@ -173,13 +179,18 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     /**
      * @param list<array<string, mixed>> $items
      */
-    private function flushText(array &$items, string &$text, AssistantMessage $data): void
+    private function flushText(array &$items, string &$text, AssistantMessage $data, ?string $phase): void
     {
         if ('' === $text) {
             return;
         }
 
-        $items[] = self::message($data, $text);
+        $item = self::message($data, $text);
+        if (null !== $phase) {
+            $item['phase'] = $phase;
+        }
+
+        $items[] = $item;
         $text = '';
     }
 

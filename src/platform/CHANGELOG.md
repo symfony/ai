@@ -4,6 +4,7 @@ CHANGELOG
 0.16
 ----
 
+ * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
  * Add `Result\CommentaryResult`, `Message\Content\Commentary` and the `Result\Stream\Delta\CommentaryStart`, `CommentaryDelta` and `CommentaryComplete` deltas for narration a model emits next to its answer
  * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
  * Add `InMemoryModelCatalog` holding a fixed list of models, e.g. to put configured models in front of another catalog with `CompositeModelCatalog`

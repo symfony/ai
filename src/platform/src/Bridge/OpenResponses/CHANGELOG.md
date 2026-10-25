@@ -4,6 +4,7 @@ CHANGELOG
 0.16
 ----
 
+ * Keep the phase of an answer (e.g. `final_answer`) on the result and replay it with the text on the next turn
  * Report `commentary` phase messages as `CommentaryResult` and commentary deltas instead of as part of the answer, and replay them with their phase on the next turn
 
 0.14

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Persist the phase of an assistant `Text` part in the `MessageNormalizer`
+
 0.13
 ----
 

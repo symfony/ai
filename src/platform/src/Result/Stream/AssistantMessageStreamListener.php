@@ -101,7 +101,7 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
     public function accumulate(DeltaInterface $delta): void
     {
         if ($delta instanceof TextDelta) {
-            $this->appendText($delta->getText());
+            $this->appendText($delta->getText(), $delta->getPhase());
 
             return;
         }
@@ -222,7 +222,7 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
         return new AssistantMessage(...$content);
     }
 
-    private function appendText(string $text): void
+    private function appendText(string $text, ?string $phase): void
     {
         if ('' === $text) {
             return;
@@ -234,13 +234,13 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
         $index = array_key_last($this->content);
         $last = null === $index ? null : $this->content[$index];
 
-        if ($last instanceof Text) {
-            $this->content[$index] = new Text($last->getText().$text, $last->getSignature());
+        if ($last instanceof Text && $last->getPhase() === $phase) {
+            $this->content[$index] = new Text($last->getText().$text, $last->getSignature(), $phase);
 
             return;
         }
 
-        $this->content[] = new Text($text);
+        $this->content[] = new Text($text, null, $phase);
     }
 
     /**
