@@ -28,6 +28,12 @@ classes, configuration keys and conventions involved.
 
 - **<alternative>**: not chosen because <reason>.
 
+## History
+
+> Optional; used for ADRs that record an existing decision after the fact.
+
+- YYYY-MM-DD, #NNNN by @handle: what changed and why.
+
 ## References
 
 - `src/...`: what it shows.

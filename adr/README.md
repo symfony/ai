@@ -54,7 +54,10 @@ without a design change and CS-only changes do **not** need an ADR.
    `NNNN-kebab-case-title.md` of the right ADR directory.
 2. Fill it in. Keep it short and concrete, and name the real classes and files.
 3. Add its row to the index table of that directory's `README.md`.
-4. Use `status: proposed` while the pull request is open; it becomes `accepted` when the
+4. When an ADR records a decision after the fact, fill its **History** section: the
+   pull requests that introduced and reshaped the decision, with date and author, so
+   the reasoning can be traced back to the original discussion.
+5. Use `status: proposed` while the pull request is open; it becomes `accepted` when the
    pull request is merged.
 
 ## Immutability
