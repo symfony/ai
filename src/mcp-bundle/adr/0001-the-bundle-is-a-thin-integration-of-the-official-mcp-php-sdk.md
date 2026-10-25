@@ -7,55 +7,39 @@ date: 2026-10-25
 
 ## Context and Problem Statement
 
-The Model Context Protocol defines a JSON-RPC protocol with sessions, capability
-negotiation, several transports and dated specification revisions that keep changing. A
-Symfony application wants to act as an MCP server and as an MCP client without
-re-implementing that protocol, and without the bundle having to follow every revision of
-the specification itself.
+The Model Context Protocol (MCP) has sessions, transports and new versions of the
+specification every few months. A Symfony application wants to be an MCP server and an MCP
+client without building the protocol itself.
 
 ## Decision
 
-The bundle depends on the official MCP PHP SDK (`mcp/sdk` in `composer.json`) and contains
-no protocol implementation of its own. It only builds and wires SDK objects as services:
+The bundle uses the official MCP PHP SDK (`mcp/sdk`) and contains no protocol code of its
+own. It only creates SDK objects as Symfony services:
 
-- per server, an `Mcp\Server\Builder` (`mcp.server.<name>.builder`, created with
-  `Server::builder()`) configured through method calls (`setServerInfo`, `setRegistry`,
-  `setSession`, `setEventDispatcher`, `addRequestHandlers`, protocol versions, cache and
-  request-state options), and the `Mcp\Server` it builds (`mcp.server.<name>`);
-- per client connection, an `Mcp\Client\Builder` and the `Mcp\Client` it builds, with the
-  SDK's `StdioTransport` or `HttpTransport` created by `Client\TransportFactory`;
-- SDK session stores (`InMemorySessionStore`, `FileSessionStore`, `Psr16SessionStore`) and
-  locks, plus `Session\FrameworkSessionStore` to back sessions with Symfony's
-  `SessionHandlerInterface`.
+- for each server, an SDK `Builder` (`mcp.server.<name>.builder`) and the `Server` it builds
+  (`mcp.server.<name>`);
+- for each client connection, an SDK `Client` with its STDIO or HTTP transport;
+- SDK session stores, plus `FrameworkSessionStore`, which uses Symfony's session handler.
 
-Extension points of the SDK are exposed through autoconfiguration: services implementing
-`LoaderInterface`, `RequestHandlerInterface` or `NotificationHandlerInterface` are tagged
-`mcp.loader`, `mcp.request_handler` and `mcp.notification_handler` and passed to every
-server builder. What the bundle adds is Symfony glue: configuration, routing, console
-commands, the profiler panel (`Profiler\DataCollector`), `debug:mcp`, and MCP Apps rendered
-with Twig.
+Services implementing the SDK's `LoaderInterface`, `RequestHandlerInterface` or
+`NotificationHandlerInterface` are added to every server automatically. On top of that, the
+bundle adds Symfony features: configuration, routes, console commands, the profiler panel,
+`debug:mcp`, and MCP Apps rendered with Twig.
 
 ## Consequences
 
-- **Good:** protocol behavior, including new specification revisions such as 2026-07-28,
-  comes from the SDK; the bundle mostly adds configuration for what the SDK offers.
-- **Good:** applications can plug in SDK-level handlers and loaders as ordinary services.
-- **Trade-off:** the bundle follows the SDK's release cadence and API; an SDK change in a
-  builder signature is a bundle change, and the bundle is marked experimental.
-- **Trade-off:** concerns the SDK leaves out stay out of the bundle as well; for example
-  the bundle acts as an OAuth resource server only and delegates the authorization server
-  role to Symfony Security and other packages.
+- **Good:** protocol behavior and new specification versions come from the SDK.
+- **Good:** applications can add SDK handlers as normal services.
+- **Trade-off:** the bundle follows the SDK's releases; an SDK API change means a bundle
+  change. The bundle is marked experimental.
 
 ## Alternatives Considered
 
-- **A protocol implementation inside the bundle**: not chosen because it would duplicate the
-  SDK maintained by the MCP project and drift from the specification.
+- **Implementing the protocol in the bundle**: not chosen, because it would duplicate the SDK
+  maintained by the MCP project.
 
 ## References
 
 - `composer.json`: the `mcp/sdk` requirement.
-- `src/McpBundle.php`: `configureServer()`, `configureClients()`, `clientBuilder()`,
-  `configureSessionStore()` and the autoconfiguration in `loadExtension()`.
-- `src/Client/TransportFactory.php`: creation of the SDK client transports.
-- `config/services.php`: the shared PSR-7/PSR-17 factories.
-- `CHANGELOG.md`: 0.13, support for the 2026-07-28 revision served by the SDK.
+- `src/McpBundle.php`: `configureServer()`, `configureClients()`, `loadExtension()`.
+- `src/Client/TransportFactory.php`: the client transports.

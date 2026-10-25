@@ -7,59 +7,38 @@ date: 2026-10-25
 
 ## Context and Problem Statement
 
-What an AI feature did during a request (which model was called with which input, which
-tools ran, what was stored or retrieved) is hard to see from the outside, and model output
-is not deterministic. Developers need this information in the Symfony profiler, but
-production must not pay for recording it, and the components themselves should not depend
-on the profiler.
+Developers need to see what an AI feature did during a request: which model was called,
+which tools ran, what was stored. This belongs in the Symfony profiler, but production
+should not pay for it, and the components should not depend on the profiler.
 
 ## Decision
 
-The components ship `Traceable*` decorators that record their calls: `TraceablePlatform`,
-`TraceableAgent`, `TraceableToolbox`, `TraceableStore`, `TraceableMessageStore` and
-`TraceableChat`. The bundle applies them in `DependencyInjection\DebugCompilerPass`, which
-only runs when `kernel.debug` is true. For every service tagged `ai.platform`, `ai.agent`,
-`ai.toolbox`, `ai.store`, `ai.message_store` and `ai.chat` it registers a decorator
-`ai.traceable_<kind>.<suffix>` with priority `-1024`, so it wraps every other decorator, tags
-it `ai.traceable_<kind>`, and tags it `kernel.reset` so recorded calls do not leak between
-requests. Platform, agent and toolbox decorators also receive `debug.stopwatch` to feed the
-performance timeline.
+The components ship `Traceable*` decorators that record calls, such as
+`TraceablePlatform`, `TraceableAgent`, `TraceableToolbox` and `TraceableStore`.
 
-`Profiler\DataCollector` (`ai.data_collector`) receives the decorators as tagged iterators.
-It implements `LateDataCollectorInterface` and gathers the data in `lateCollect()`, after the
-response is sent, so it can await streamed and asynchronous platform results without
-delaying the response. Toolboxes tagged `ai.profiler_toolbox` provide the list of available
-tools; for MCP servers that list goes through `Profiler\DeferredToolbox`, so the profiler does
-not open a connection just to list tools. Outside debug mode `AiBundle::loadExtension()`
-removes `ai.data_collector` and `ai.traceable_toolbox`.
+`DebugCompilerPass` runs only when `kernel.debug` is true. It wraps every tagged platform,
+agent, toolbox, store, message store and chat in its traceable decorator. The decorators
+are reset after each request.
 
-`Test\AiAssertionsTrait` builds functional-test assertions (platform calls, tool calls,
-token usage) on the same collected data.
+`Profiler\DataCollector` reads the recorded calls after the response is sent
+(`lateCollect()`), so it does not slow the response down. `Test\AiAssertionsTrait` uses the
+same data for assertions in functional tests. In production, the collector is removed.
 
 ## Consequences
 
-- **Good:** production containers contain no tracing code paths; debug containers trace
-  every configured instance without any application configuration.
-- **Good:** one recording mechanism serves the profiler panel, the timeline and functional
-  tests.
-- **Trade-off:** only services that carry the bundle's tags are traced; a platform or store
-  an application builds by hand does not show up in the profiler.
-- **Trade-off:** decorators keep every call of a request in memory until reset, which is
-  acceptable in debug mode but large for long batch commands run with debug enabled.
+- **Good:** production has no tracing code; in debug mode everything is traced without any
+  configuration.
+- **Good:** the profiler panel, the timeline and test assertions share one source of data.
+- **Trade-off:** only services created by the bundle are traced; services an application
+  builds by hand do not show up.
 
 ## Alternatives Considered
 
-- **Collecting from component events only**: not chosen because the event dispatcher is
-  optional in the components (for example the nullable `$eventDispatcher` of `Toolbox`) and
-  the Chat component dispatches no events, while a decorator records every call of a tagged
-  service.
-- **Always-on tracing**: not chosen because recording inputs and results costs memory and
-  time on every production request.
+- **Collecting only from component events**: not chosen, because the event dispatcher is
+  optional in the components and the Chat component sends no events.
 
 ## References
 
-- `src/DependencyInjection/DebugCompilerPass.php`: decorator registration per tag.
-- `src/Profiler/DataCollector.php`: late collection from the traceable decorators.
-- `src/Profiler/DeferredToolbox.php`: tool listing for MCP toolboxes without connecting.
-- `src/Test/AiAssertionsTrait.php`: assertions on collected profiler data.
-- `config/services.php`: `ai.data_collector` and its tagged iterators.
+- `src/DependencyInjection/DebugCompilerPass.php`: wrapping services in decorators.
+- `src/Profiler/DataCollector.php`: collecting the recorded data.
+- `src/Test/AiAssertionsTrait.php`: assertions on that data.

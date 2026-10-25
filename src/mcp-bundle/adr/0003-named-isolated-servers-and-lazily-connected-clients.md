@@ -7,65 +7,45 @@ date: 2026-10-25
 
 ## Context and Problem Statement
 
-An application may expose more than one MCP server (for example a public one and an
-internal one behind another firewall) and may itself call remote MCP servers. Each server
-needs its own identity, transports and sessions, and must not accept the sessions of
-another. A client connection, on the other hand, owns a child process or an HTTP session
-that must not outlive a request or a worker message.
+An application may run several MCP servers, for example a public one and an internal one,
+and may call remote MCP servers itself. Each server needs its own name, transports and
+sessions, and must not accept another server's sessions. A client connection holds a child
+process or an HTTP session that must not leak from one request to the next.
 
 ## Decision
 
-Servers are configured under `mcp.servers.<name>` and clients under `mcp.clients.<name>`;
-every service id carries those names.
+Servers are configured under `mcp.servers.<name>` and clients under `mcp.clients.<name>`.
 
-For each server the bundle registers its own registry, session store, builder and
-`mcp.server.<name>` service, aliased for autowiring as `Server $<name>Server`. Transports
-are chosen per server under `transports`:
+Each server gets its own services and can use two transports:
 
-- **HTTP** (default on): `Routing\RouteLoader` (type `mcp`) adds one route per server at
-  `http.path`, defaulting to `/mcp/<name>` regardless of how many servers exist.
-  `Controller\McpController` converts the request to PSR-7, runs the server with the SDK's
-  `StreamableHttpTransport` and converts the response back, streaming it for
-  `text/event-stream`. `Http\MiddlewareFactory` keeps the SDK's DNS rebinding protection,
-  tailored by `http.allowed_hosts` and `http.allowed_origins`.
-- **STDIO** (default off): the `mcp:server [name]` command runs one server per process,
-  because the transport owns STDIN and STDOUT.
+- **HTTP** (on by default): one route per server, at `/mcp/<name>` unless `http.path` is
+  set. `McpController` passes the request to the SDK. The SDK's DNS rebinding protection
+  stays on and can be adjusted with `http.allowed_hosts` and `http.allowed_origins`.
+- **STDIO** (off by default): `mcp:server <name>` runs one server per process.
 
-`McpBundle::assertServersAreIsolated()` rejects two servers on the same HTTP path or on the
-same session storage, because the SDK does not namespace session ids by server.
+The bundle fails the build if two servers share an HTTP path or a session storage, because
+the SDK would accept a session from one server on the other.
 
-For each remote server of a client the bundle registers a `Client\ServerConnection`
-(`mcp.client.<client>.server.<server>`) and per client a `Client\McpClient`
-(`mcp.client.<client>`, autowired as `McpClientInterface $<client>`). `ServerConnection`
-connects on the first request and disconnects on `kernel.reset`, so a long-running worker
-never carries a child process or a stale session into the next message. Client capabilities
-such as roots, sampling and elicitation are advertised only when a handler service is
-configured for them.
+For each remote server, the bundle creates a `ServerConnection`. It connects on the first
+call and disconnects on `kernel.reset`, so long-running workers start each message clean.
 
 ## Consequences
 
-- **Good:** servers with different audiences can live in one application, each behind its own
-  route and firewall, with session leakage between them rejected at build time.
-- **Good:** application code calls remote servers without handling `connect()` or process
-  lifetime itself; the AI Bundle builds its `mcp_server` tool entries on these connections.
-- **Trade-off:** every server needs a `registry` and, when several are configured, distinct
-  paths and session storage, which is more configuration for the single-server case.
-- **Trade-off:** a lazy connection reports connection errors on first use rather than at boot.
+- **Good:** servers for different audiences can live in one application, each behind its own
+  route and firewall.
+- **Good:** application code calls remote servers without managing connections. The AI
+  Bundle uses these connections for its `mcp_server` tools.
+- **Trade-off:** a connection error shows up on first use, not when the application starts.
 
 ## Alternatives Considered
 
-- **A single global server**: the configuration before 0.13, replaced by named servers so
-  one application can expose several, each with its own identity, transports and sessions.
-- **A path default of `/mcp` for a single server**: not chosen because adding a second server
-  would silently move the existing endpoint.
+- **One global server**: the setup before 0.13, replaced by named servers.
+- **`/mcp` as the path for a single server**: not chosen, because adding a second server
+  would move the first one's endpoint.
 
 ## References
 
-- `src/McpBundle.php`: `configureServer()`, `configureRouting()`, `configureCommands()`,
-  `configureClients()`, `httpPath()` and `assertServersAreIsolated()`.
-- `src/Controller/McpController.php`, `src/Routing/RouteLoader.php`,
-  `src/Http/MiddlewareFactory.php`: the HTTP transport.
+- `src/McpBundle.php`: `configureServer()`, `configureClients()`, `assertServersAreIsolated()`.
+- `src/Controller/McpController.php`, `src/Routing/RouteLoader.php`: the HTTP transport.
 - `src/Command/McpCommand.php`: the STDIO transport.
-- `src/Client/ServerConnection.php`, `src/Client/McpClient.php`: client connections and their
-  lifecycle.
-- `CHANGELOG.md`: 0.13, multiple servers and the `clients:` configuration.
+- `src/Client/ServerConnection.php`: the client connection lifecycle.
