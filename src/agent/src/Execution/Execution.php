@@ -11,16 +11,22 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\TypedResultTrait;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A lazy agent execution that is also the {@see ResultInterface} it produces.
@@ -38,10 +44,8 @@ use Symfony\AI\Platform\Result\TypedResultTrait;
  * stream option, its deltas (asStream(), asTextStream(), asStreamedObject(), ...).
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
- *
- * @implements \IteratorAggregate<int, UpdateInterface>
  */
-final class Execution implements \IteratorAggregate, ResultInterface
+final class Execution implements ExecutionInterface
 {
     use TypedResultTrait {
         asVectors as private;
@@ -68,9 +72,23 @@ final class Execution implements \IteratorAggregate, ResultInterface
 
     private ?Result $resultUpdate = null;
 
+    private ?string $error = null;
+
+    /**
+     * @var non-empty-string|null
+     */
+    private ?string $errorCode = null;
+
+    /**
+     * @var list<ExecutionEvent>
+     */
+    private array $events = [];
+
     private readonly Metadata $metadata;
 
     private readonly Cancellation $cancellation;
+
+    private readonly AbstractUid&TimeBasedUidInterface $id;
 
     /**
      * @param \Closure(): \Generator<int, UpdateInterface, mixed, void> $factory
@@ -80,9 +98,19 @@ final class Execution implements \IteratorAggregate, ResultInterface
         private readonly \Closure $factory,
         private readonly bool $streamed = false,
         ?Cancellation $cancellation = null,
+        (AbstractUid&TimeBasedUidInterface)|null $id = null,
     ) {
         $this->metadata = new Metadata();
         $this->cancellation = $cancellation ?? new Cancellation();
+        $this->id = $id ?? Uuid::v7();
+    }
+
+    /**
+     * Identifies this run, the conversation is identified by the id of its MessageBag.
+     */
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
     }
 
     /**
@@ -91,6 +119,97 @@ final class Execution implements \IteratorAggregate, ResultInterface
     public function getIterator(): \Generator
     {
         yield from $this->consume();
+    }
+
+    public function getStatus(): ExecutionStatus
+    {
+        if ($this->canceled) {
+            return ExecutionStatus::Cancelled;
+        }
+
+        if (null !== $this->error) {
+            return ExecutionStatus::Failed;
+        }
+
+        if (null !== $messages = $this->resultUpdate?->getMessages()) {
+            return ExecutionState::statusOf($messages);
+        }
+
+        if (null !== $this->result) {
+            return ExecutionStatus::Completed;
+        }
+
+        return $this->consumed ? ExecutionStatus::Running : ExecutionStatus::Pending;
+    }
+
+    /**
+     * Whether tool calls of the model are unanswered, see {@see ExecutionStatus::WaitingForInput}.
+     */
+    public function isSuspended(): bool
+    {
+        return ExecutionStatus::WaitingForInput === $this->getStatus();
+    }
+
+    /**
+     * The tool calls without an answer in the messages known so far.
+     *
+     * @return list<ToolCall>
+     */
+    public function getPendingToolCalls(): array
+    {
+        if (null === $messages = $this->resultUpdate?->getMessages()) {
+            return [];
+        }
+
+        return ExecutionState::pendingToolCallsOf($messages);
+    }
+
+    /**
+     * The message of the error of a failed execution.
+     */
+    public function getError(): ?string
+    {
+        return $this->error;
+    }
+
+    /**
+     * The machine readable code of the exception that failed the execution, when it implements {@see ErrorCodeAwareInterface}.
+     *
+     * @return non-empty-string|null
+     */
+    public function getErrorCode(): ?string
+    {
+        return $this->errorCode;
+    }
+
+    /**
+     * The progress updates recorded after the given sequence, in order.
+     *
+     * @return list<ExecutionEvent>
+     */
+    public function getEventsSince(int $sequence = 0): array
+    {
+        return array_values(array_filter(
+            $this->events,
+            static fn (ExecutionEvent $event): bool => $event->getSequence() > $sequence,
+        ));
+    }
+
+    /**
+     * Records a progress update, with the next sequence unless an explicit one is given.
+     *
+     * @throws InvalidArgumentException when the explicit sequence is not greater than the last recorded one
+     */
+    public function record(Progress $progress, ?int $sequence = null): void
+    {
+        $last = [] === $this->events ? 0 : $this->events[array_key_last($this->events)]->getSequence();
+        $sequence ??= $last + 1;
+
+        if ($sequence <= $last) {
+            throw new InvalidArgumentException(\sprintf('The sequence must be greater than the last recorded one (%d), got %d.', $last, $sequence));
+        }
+
+        $this->events[] = ExecutionEvent::fromProgress($sequence, $progress);
     }
 
     /**
@@ -266,6 +385,8 @@ final class Execution implements \IteratorAggregate, ResultInterface
                 }
 
                 if ($update instanceof Progress) {
+                    $this->record($update);
+
                     foreach ($this->progressCallbacks as $callback) {
                         $callback($update);
                     }
@@ -273,13 +394,16 @@ final class Execution implements \IteratorAggregate, ResultInterface
 
                 yield $update;
 
-                // @phpstan-ignore if.alwaysFalse (cancellation can happen while the generator is suspended)
+                // cancellation can happen while the generator is suspended
                 if ($this->canceled) {
                     break;
                 }
             }
         } catch (\Throwable $exception) {
             if (!$this->canceled) {
+                $this->error = $exception->getMessage();
+                $this->errorCode = $exception instanceof ErrorCodeAwareInterface ? $exception->getErrorCode() : null;
+
                 throw $exception;
             }
         } finally {

@@ -14,6 +14,15 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Oscar Esteve <oscarsdt@gmail.com>
  */
-class BadRequestException extends RuntimeException
+class BadRequestException extends RuntimeException implements ErrorCodeAwareInterface
 {
+    public function getErrorCode(): string
+    {
+        return 'bad_request';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
+    }
 }
