@@ -11,7 +11,6 @@
 
 namespace App\Tests\Wikipedia;
 
-use App\Wikipedia\Conversations;
 use App\Wikipedia\Research;
 use App\Wikipedia\ResearchHandler;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +19,7 @@ use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -29,17 +29,18 @@ use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Mercure\Jwt\StaticTokenProvider;
 use Symfony\Component\Mercure\MockHub;
 use Symfony\Component\Mercure\Update;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
+use Symfony\Component\Uid\UuidV7;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
 final class ResearchHandlerTest extends TestCase
 {
-    private const CHAT_ID = 'chat-1';
+    private const CONVERSATION_ID = '019a1b2c-3d4e-7f00-8a00-000000000001';
+    private const TOPIC = 'https://symfony.com/ai/demo/wikipedia/topic-1';
 
     /**
      * Stand-ins for the Turbo Streams, so the published updates can be compared as plain text.
@@ -58,11 +59,11 @@ final class ResearchHandlerTest extends TestCase
 
     public function testEveryStepOfTheResearchIsPublished()
     {
-        $conversations = $this->conversationWith(Message::ofUser('Who created Symfony?'));
-        $answer = new TextResult('Fabien Potencier.');
+        $store = $this->conversationWith(Message::ofUser('Who created Symfony?'));
+        $answer = Message::ofAssistant('Fabien Potencier.');
         $answer->getMetadata()->add('sources', ['Symfony']);
 
-        $handler = $this->createHandler($conversations, [
+        $handler = $this->createHandler($store, [
             new Progress(Progress::STAGE_DELTA, payload: new CommentaryStart()),
             new Progress(Progress::STAGE_DELTA, payload: new CommentaryDelta('Let me')),
             new Progress(Progress::STAGE_DELTA, payload: new CommentaryDelta(' look.')),
@@ -70,10 +71,10 @@ final class ResearchHandlerTest extends TestCase
             new Progress(Progress::STAGE_TOOL_CALL, payload: new ToolCall('call_2', 'wikipedia_article', ['title' => 'Symfony'])),
             new Progress(Progress::STAGE_DELTA, payload: new TextDelta('Fabien')),
             new Progress(Progress::STAGE_DELTA, payload: new TextDelta(' Potencier.')),
-            new Result($answer),
+            new Result(new TextResult('Fabien Potencier.'), $this->load($store)->with($answer)),
         ]);
 
-        $handler(new Research(self::CHAT_ID));
+        $handler(new Research(self::CONVERSATION_ID, self::TOPIC));
 
         $this->assertSame([
             'added 0: commentary ',
@@ -87,10 +88,10 @@ final class ResearchHandlerTest extends TestCase
         ], array_map(static fn (Update $update): string => $update->getData(), $this->published));
 
         foreach ($this->published as $update) {
-            $this->assertSame([Conversations::topic(self::CHAT_ID)], $update->getTopics());
+            $this->assertSame([self::TOPIC], $update->getTopics());
         }
 
-        $response = $conversations->load(self::CHAT_ID)->getMessages()[1];
+        $response = $this->load($store)->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $response);
         $this->assertSame('Fabien Potencier.', $response->asText());
         $this->assertSame(['Symfony'], $response->getMetadata()->get('sources'));
@@ -103,28 +104,28 @@ final class ResearchHandlerTest extends TestCase
 
     public function testAnsweredQuestionIsNotResearchedAgain()
     {
-        $conversations = $this->conversationWith(Message::ofUser('Who created Symfony?'), Message::ofAssistant('Fabien Potencier.'));
-        $handler = $this->createHandler($conversations, static function (): never {
+        $store = $this->conversationWith(Message::ofUser('Who created Symfony?'), Message::ofAssistant('Fabien Potencier.'));
+        $handler = $this->createHandler($store, static function (): never {
             throw new \LogicException('The agent must not be called.');
         });
 
-        $handler(new Research(self::CHAT_ID));
+        $handler(new Research(self::CONVERSATION_ID, self::TOPIC));
 
         $this->assertSame([], $this->published);
-        $this->assertCount(2, $conversations->load(self::CHAT_ID));
+        $this->assertCount(2, $this->load($store));
     }
 
     public function testFailedResearchEndsWithAnApology()
     {
-        $conversations = $this->conversationWith(Message::ofUser('Who created Symfony?'));
-        $handler = $this->createHandler($conversations, static function (): \Generator {
+        $store = $this->conversationWith(Message::ofUser('Who created Symfony?'));
+        $handler = $this->createHandler($store, static function (): \Generator {
             yield new Progress(Progress::STAGE_TOOL_CALL, payload: new ToolCall('call_1', 'wikipedia_search', ['query' => 'Symfony']));
 
             throw new RuntimeException('Wikipedia is down.');
         });
 
         try {
-            $handler(new Research(self::CHAT_ID));
+            $handler(new Research(self::CONVERSATION_ID, self::TOPIC));
             $this->fail('The failure must not be retried.');
         } catch (UnrecoverableMessageHandlingException $exception) {
             $this->assertSame('Wikipedia is down.', $exception->getMessage());
@@ -134,23 +135,28 @@ final class ResearchHandlerTest extends TestCase
         $this->assertInstanceOf(Update::class, $finished);
         $this->assertSame('finished: Sorry, my research failed. Please try again.', $finished->getData());
 
-        $response = $conversations->load(self::CHAT_ID)->getMessages()[1];
+        $response = $this->load($store)->getMessages()[1];
         $this->assertInstanceOf(AssistantMessage::class, $response);
         $this->assertSame([['type' => 'tool', 'text' => 'Searching Wikipedia for "Symfony"']], $response->getMetadata()->get('steps'));
     }
 
-    private function conversationWith(UserMessage|AssistantMessage ...$messages): Conversations
+    private function conversationWith(UserMessage|AssistantMessage ...$messages): InMemoryMessageStore
     {
-        $conversations = new Conversations(new ArrayAdapter());
-        $conversations->save(self::CHAT_ID, new MessageBag(...$messages));
+        $store = new InMemoryMessageStore();
+        $store->save(MessageBag::forId(UuidV7::fromString(self::CONVERSATION_ID), ...$messages));
 
-        return $conversations;
+        return $store;
+    }
+
+    private function load(InMemoryMessageStore $store): MessageBag
+    {
+        return $store->load(UuidV7::fromString(self::CONVERSATION_ID));
     }
 
     /**
      * @param list<Progress|Result>|\Closure(): \Generator $updates
      */
-    private function createHandler(Conversations $conversations, array|\Closure $updates): ResearchHandler
+    private function createHandler(InMemoryMessageStore $store, array|\Closure $updates): ResearchHandler
     {
         $factory = \is_array($updates) ? static fn (): \Generator => yield from $updates : $updates;
 
@@ -177,6 +183,6 @@ final class ResearchHandlerTest extends TestCase
             return 'id';
         });
 
-        return new ResearchHandler($conversations, $agent, $hub, new Environment(new ArrayLoader(['wikipedia/_research.html.twig' => self::TEMPLATE]), ['autoescape' => false]));
+        return new ResearchHandler($store, $agent, $hub, new Environment(new ArrayLoader(['wikipedia/_research.html.twig' => self::TEMPLATE]), ['autoescape' => false]));
     }
 }

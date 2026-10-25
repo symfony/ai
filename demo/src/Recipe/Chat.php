@@ -11,23 +11,23 @@
 
 namespace App\Recipe;
 
+use App\Conversation\ConversationIds;
 use App\Recipe\Data\Recipe;
-use Psr\Cache\CacheItemPoolInterface;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class Chat
 {
-    private const CACHE_PREFIX = 'recipe-chat-';
-    private const CACHE_TTL = 3600;
+    private const CHAT = 'recipe';
 
     public function __construct(
-        private readonly RequestStack $requestStack,
-        private readonly CacheItemPoolInterface $cache,
+        private readonly ConversationIds $conversationIds,
+        #[Autowire(service: 'ai.message_store.cache.shared_conversations')]
+        private readonly MessageStoreInterface $messageStore,
         #[Autowire(service: 'ai.agent.recipe')]
         private readonly AgentInterface $agent,
     ) {
@@ -52,7 +52,7 @@ final class Chat
 
     public function submitMessage(string $message): void
     {
-        $this->saveMessages($this->loadMessages()->with(Message::ofUser($message)));
+        $this->messageStore->save($this->loadMessages()->with(Message::ofUser($message)));
     }
 
     /**
@@ -66,7 +66,7 @@ final class Chat
 
     /**
      * Streams the recipe as it is generated, yielding a progressively populated Recipe
-     * for each partial snapshot and persisting the final recipe to the chat store.
+     * for each partial snapshot and storing the final recipe in the conversation.
      *
      * @return \Generator<int, Recipe, void, Recipe>
      */
@@ -93,36 +93,25 @@ final class Chat
             yield $recipe;
         }
 
-        $assistantMessage = Message::ofAssistant($recipe->toString());
+        // the agent stored the recipe as JSON, replacing it under its ID keeps the conversation readable
+        $messages = $execution->getMessages();
+        $answerId = $messages->latestAs(Role::Assistant)->getId();
+        $assistantMessage = Message::ofAssistant($recipe->toString())->withId($answerId);
         $assistantMessage->getMetadata()->add('recipe', $recipe);
 
-        $this->saveMessages($messages->with($assistantMessage));
+        $this->messageStore->save($messages->replace($answerId, $assistantMessage));
 
         return $recipe;
     }
 
     public function reset(): void
     {
-        $this->cache->deleteItem($this->cacheKey());
+        $this->messageStore->delete($this->conversationIds->get(self::CHAT));
+        $this->conversationIds->reset(self::CHAT);
     }
 
     public function loadMessages(): MessageBag
     {
-        $item = $this->cache->getItem($this->cacheKey());
-
-        return $item->isHit() ? $item->get() : new MessageBag();
-    }
-
-    private function saveMessages(MessageBag $messages): void
-    {
-        $item = $this->cache->getItem($this->cacheKey());
-        $item->set($messages)->expiresAfter(self::CACHE_TTL);
-
-        $this->cache->save($item);
-    }
-
-    private function cacheKey(): string
-    {
-        return self::CACHE_PREFIX.$this->requestStack->getSession()->getId();
+        return $this->messageStore->load($this->conversationIds->get(self::CHAT));
     }
 }

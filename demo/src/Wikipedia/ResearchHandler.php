@@ -13,6 +13,7 @@ namespace App\Wikipedia;
 
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Execution\Update\Progress;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
@@ -24,6 +25,7 @@ use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
+use Symfony\Component\Uid\UuidV7;
 use Twig\Environment;
 
 /**
@@ -39,7 +41,8 @@ final class ResearchHandler
     private const TEMPLATE = 'wikipedia/_research.html.twig';
 
     public function __construct(
-        private readonly Conversations $conversations,
+        #[Autowire(service: 'ai.message_store.cache.shared_conversations')]
+        private readonly MessageStoreInterface $messageStore,
         #[Autowire(service: 'ai.agent.wikipedia')]
         private readonly AgentInterface $agent,
         private readonly HubInterface $hub,
@@ -49,7 +52,7 @@ final class ResearchHandler
 
     public function __invoke(Research $research): void
     {
-        $messages = $this->conversations->load($research->chatId);
+        $messages = $this->messageStore->load(UuidV7::fromString($research->conversationId));
 
         // A redelivered message finds its question answered already
         if (!$messages->isLastMessageFrom(Role::User)) {
@@ -91,15 +94,16 @@ final class ResearchHandler
                 }
             }
 
-            $result = $execution->getResult();
-            $response = Message::ofAssistant($result);
-            $response->getMetadata()->add('sources', $result->getMetadata()->get('sources', []));
+            $messages = $execution->getMessages();
+            $response = $messages->latestAs(Role::Assistant);
         } catch (\Throwable $exception) {
             $response = Message::ofAssistant('Sorry, my research failed. Please try again.');
+            // continues after the tool results the agent stored before failing
+            $messages = $this->messageStore->load($messages->getId())->with($response);
         }
 
         $response->getMetadata()->add('steps', $steps);
-        $this->conversations->save($research->chatId, $messages->with($response));
+        $this->messageStore->save($messages);
         $this->publish($research, 'finished', ['message' => $response]);
 
         if (isset($exception)) {
@@ -126,6 +130,6 @@ final class ResearchHandler
     {
         $html = $this->twig->load(self::TEMPLATE)->renderBlock($block, $context);
 
-        $this->hub->publish(new Update(Conversations::topic($research->chatId), $html));
+        $this->hub->publish(new Update($research->topic, $html));
     }
 }

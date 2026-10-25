@@ -10,12 +10,14 @@ ai:
         document:
             platform: 'ai.platform.mistral'
             model: 'mistral-medium-latest'
+            message_store: 'ai.message_store.session.conversations'
             # The system prompt is built dynamically in App\Document\Chat::start(), where the
             # OCR-extracted text is injected, so no static prompt is configured here.
             tools: false
         blog:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
+            message_store: 'ai.message_store.session.conversations'
             prompt: |
                 You are an helpful assistant that knows about the latest blog content of the Symfony's framework website.
                 To search for content you use the tool 'similarity_search' for generating the answer. Only use content
@@ -33,6 +35,7 @@ ai:
         movies:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
+            message_store: 'ai.message_store.session.conversations'
             prompt: |
                 You are a friendly movie expert helping users discover films from a curated collection.
 
@@ -53,22 +56,26 @@ ai:
         stream:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt:
                 file: '%kernel.project_dir%/prompts/stream-chat.txt'
             tools: false
         youtube:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.session.conversations'
             tools: false
         recipe:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt:
                 text: 'You are a helpful cooking assistant. Provide detailed recipes based on user requests.'
             tools: false
         wikipedia:
             platform: 'ai.platform.openai'
             model: 'gpt-6-luna'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt:
                 text: |
                     You are a research assistant answering questions with knowledge from Wikipedia.
@@ -90,6 +97,7 @@ ai:
         speech:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.session.conversations'
             prompt: |
                 You are a friendly, positive and energetic voice assistant. You can engage in light discussions, ask
                 questions, and do general small-talk. If asked about the Symfony Framework or their community events,
@@ -115,6 +123,7 @@ ai:
         mcp:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.session.conversations'
             prompt:
                 text: |
                     You are a helpful assistant that answers questions about live football, the New York City
@@ -149,6 +158,14 @@ ai:
             model: 'gpt-5-mini'
             prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
             tools: false
+    message_store:
+        session:
+            conversations:
+                identifier: 'conversations'
+        # The streamed answers and the Wikipedia worker save outside of the request's session
+        cache:
+            shared_conversations:
+                ttl: 3600
     multi_agent:
         support:
             orchestrator: 'orchestrator'
