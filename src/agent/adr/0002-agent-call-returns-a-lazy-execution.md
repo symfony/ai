@@ -7,51 +7,59 @@ date: 2026-10-25
 
 ## Context and Problem Statement
 
-A single agent call can involve several model requests, tool calls and streamed deltas.
-Callers have different needs: most only want the final answer, a UI wants to show
-progress or stream text, and long-running calls must be cancelable. Returning a plain
-`ResultInterface` hides everything between request and answer, while a separate
-streaming or event API per use case would multiply the entry points of the agent.
+One agent call can include several model requests, tool calls and streamed text pieces.
+Callers need different things: most want only the final answer, a UI wants to show
+progress or stream text, and long calls must be cancelable. A plain `ResultInterface`
+hides everything between request and answer. A separate streaming or event API for each
+need would add more entry points to the agent.
 
 ## Decision
 
 `AgentInterface::call(string|MessageBag|UserMessage $input, array $options = [])` returns
 an `Execution\Execution` (`src/Execution/Execution.php`):
 
-- The execution is lazy. It wraps a generator factory and nothing runs until it is
-  consumed; consuming drives the agent including its side effects.
-- It implements `ResultInterface`, so `getContent()`, `getResult()` and `getMetadata()`
-  drive it to completion, and the typed accessors of `TypedResultTrait` (`asText()`,
-  `asObject()`, `asStream()`, ...) work as on a platform result.
-- It is an `IteratorAggregate` of `Execution\UpdateInterface`: `Update\Progress` updates
+- The execution is lazy. Nothing runs until it is consumed; consuming it runs the agent,
+  including its side effects.
+- It implements `ResultInterface`. `getContent()`, `getResult()` and `getMetadata()` run
+  it to the end, and the typed accessors of `TypedResultTrait` (`asText()`, `asObject()`,
+  `asStream()`, ...) work as on a platform result.
+- It is an `IteratorAggregate` of `Execution\UpdateInterface`. `Update\Progress` updates
   carry a stage (`Progress::STAGE_MODEL_REQUEST`, `STAGE_DELTA`, `STAGE_TOOL_CALL`,
-  `STAGE_HANDOFF`) and a payload, and the last update is an `Update\Result`. Callbacks can
-  be registered with `onProgress()` and `onResult()`.
-- With the `stream` option, `getContent()` and `asStream()` yield the deltas of the
-  answer; there is no separate streaming method on the agent.
+  `STAGE_HANDOFF`) and a payload; the last update is an `Update\Result`. Callbacks can be
+  registered with `onProgress()` and `onResult()`.
+- With the `stream` option, `getContent()` and `asStream()` yield the text pieces of the
+  answer. There is no separate streaming method.
 - `cancel()` stops the execution and cancels the active HTTP response through
   `Execution\Cancellation`.
-- The final result is cached; re-iterating a consumed execution throws.
+- The final result is cached. Iterating a consumed execution again throws.
 
-The input is normalized to a `MessageBag` by `InputNormalizer`, so a plain string works.
+`InputNormalizer` turns the input into a `MessageBag`, so a plain string works.
 
 ## Consequences
 
-- **Good:** one method serves the eager, the observing and the streaming use case, and
-  decorators (`TraceableAgent`, `MultiAgent`, `SpeechAgent`) forward progress by wrapping
-  the inner execution.
-- **Good:** progress is observable without an event dispatcher.
-- **Trade-off:** forgetting to consume the execution means the agent never runs, which
-  surprises callers used to eager calls.
+- **Good:** one method serves the simple, the observing and the streaming use case.
+  Decorators (`TraceableAgent`, `MultiAgent`, `SpeechAgent`) pass progress on by
+  wrapping the inner execution.
+- **Good:** progress can be watched without an event dispatcher.
+- **Trade-off:** the call is lazy, so side effects and exceptions only happen when the
+  execution is consumed. A caller that never reads it never runs the agent, and type
+  checks on the result need `getResult()` first.
 - **Trade-off:** an execution can be consumed only once; a retry needs a new `call()`.
 
 ## Alternatives Considered
 
-- **Return the platform result directly (before 0.13)**: replaced because progress, tool
-  calls and streamed deltas inside the tool loop were not observable, and streaming
-  needed the separate `Toolbox\StreamListener`.
-- **Callbacks or events only**: not chosen because pull-based iteration composes with
-  generators and works for nested agents without shared global state.
+- **Return the platform result directly**: the design until #2436. Progress, tool calls
+  and streamed text inside the tool loop were not visible, and streaming needed the
+  separate `Toolbox\StreamListener` added in #1394. Both were replaced by `Execution`.
+
+## History
+
+- 2026-01-15, #1394 by @chr-hertel (Christopher Hertel): added stream listeners as the hook into streamed results, later replaced by `Execution`.
+- 2026-07-22, #2353 by @chr-hertel (Christopher Hertel): first step of the agent rework; `call()` accepts a string or a `UserMessage` as input.
+- 2026-08-29, #2436 by @chr-hertel (Christopher Hertel): `call()` returns a lazy `Execution` with progress updates and typed accessors; `StreamListener` removed.
+- 2026-09-04, #2471 by @fabpot (Fabien Potencier): added `cancel()`, mainly for fibers and signal handling.
+- 2026-09-05, #2483 by @saifulferoz: `MultiAgent` and `SpeechAgent` forward the progress of the agent they delegate to.
+- 2026-10-06, #2619 by @wachterjohannes (Johannes Wachter): added the `Progress::STAGE_*` constants.
 
 ## References
 
