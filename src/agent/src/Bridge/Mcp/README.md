@@ -16,6 +16,10 @@ servers can be attached to the same agent without their names colliding. A tool'
 MCP annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`)
 reach `Tool::getMetadata()` under their own spec field names, so a listener can decide
 things like whether a call needs approval without asking the server again.
+Metadata is the canonical source: `Tool::getEffectHints()` derives nullable hints
+from it, preserving omitted values. `Tool::isReadOnly()`, `isDestructive()`,
+`isIdempotent()` and `isOpenWorld()` apply conservative defaults; read-only tools
+are non-destructive and idempotent regardless of the other two raw hints.
 
 Standalone, a toolset is reached through the official `mcp/sdk` client:
 

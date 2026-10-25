@@ -12,6 +12,7 @@ CHANGELOG
  * [BC BREAK] Make `MessageBag` immutable: remove `add()`, `prepend()` and `removeSystemMessage()` in favor of `with()`, `withSystemMessage()` and `withoutSystemMessage()`, `replace()` returns a copy, and copies no longer share their metadata
  * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
  * Add `InMemoryModelCatalog` holding a fixed list of models, e.g. to put configured models in front of another catalog with `CompositeModelCatalog`
+ * Add read-only, destructive, idempotent and open-world hints to tool definitions
 
 0.15
 ----

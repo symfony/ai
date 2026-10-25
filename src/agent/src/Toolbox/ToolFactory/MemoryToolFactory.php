@@ -18,6 +18,7 @@ use Symfony\AI\Agent\Toolbox\ToolFactoryInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\AI\Platform\Tool\ToolEffectHints;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -37,7 +38,7 @@ final class MemoryToolFactory implements ToolFactoryInterface
     /**
      * @param array<string, mixed> $metadata
      */
-    public function addTool(string|object $class, string $name, string $description, string $method = '__invoke', array $metadata = []): self
+    public function addTool(string|object $class, string $name, string $description, string $method = '__invoke', array $metadata = [], ToolEffectHints $effectHints = new ToolEffectHints()): self
     {
         $className = \is_object($class) ? $class::class : $class;
         $key = \is_object($class) ? (string) spl_object_id($class) : $className;
@@ -49,6 +50,7 @@ final class MemoryToolFactory implements ToolFactoryInterface
                 $description,
                 $this->factory->buildParameters($className, $method),
                 $metadata,
+                $effectHints,
             );
         } catch (\ReflectionException $e) {
             throw ToolConfigurationException::invalidMethod($className, $method, $e);
