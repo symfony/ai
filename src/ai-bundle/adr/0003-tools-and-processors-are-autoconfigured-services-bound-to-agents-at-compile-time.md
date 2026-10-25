@@ -27,7 +27,8 @@ Tools are opt-in for each agent. Without a `tools` option an agent has no tools.
 
 `ProcessorCompilerPass` gives each agent the processors meant for it (or for all agents),
 sorted by priority, highest first. If a class has both an attribute and an interface, the
-attribute wins.
+attribute wins. The bundle's own processors, such as the system prompt, use the same tags
+and priorities.
 
 ## Consequences
 
@@ -38,8 +39,25 @@ attribute wins.
 
 ## Alternatives Considered
 
-- **Giving every agent all tagged tools**: the behavior before 0.10. Replaced, so an agent
-  only gets tools when its configuration asks for them.
+- **Giving every agent all tagged tools**: the behavior before 0.10. Replaced in #2157, so
+  an agent only gets tools when its configuration asks for them.
+- **A fixed processor list per agent**: before #352 the bundle built each agent's
+  processors in a fixed list, and tagged application processors were not attached to any
+  agent. Replaced by the attributes with `agent` and `priority`.
+
+## History
+
+- 2024-06-23, 33a2b61f by Christopher Hertel: `#[AsTool]` autoconfigured as a tool tag in
+  the first bundle version.
+- 2024-10-05, php-llm/llm-chain-bundle#40 by Christopher Hertel: processor interfaces
+  registered for autoconfiguration.
+- 2025-03-20, php-llm/llm-chain-bundle#75 by Christopher Hertel: tools listed per agent in
+  the configuration, including other agents as tools.
+- 2025-09-02, #352 by @VincentLanglet (Vincent Langlet): `#[AsInputProcessor]` and
+  `#[AsOutputProcessor]` with `agent` and `priority`, and `ProcessorCompilerPass`; the
+  priority was added to control the order of processors.
+- 2026-06-12, #2157 by @chr-hertel (Christopher Hertel): tools became opt-in (BC break);
+  `tools: true` keeps the old behavior.
 
 ## References
 

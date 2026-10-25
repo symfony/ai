@@ -14,8 +14,8 @@ does not know about Symfony Security, so the bundle has to add them.
 ## Decision
 
 The bundle provides the `#[IsGrantedTool]` attribute, which works like Symfony's
-`#[IsGranted]`. It can be put on a tool class or method and takes a role or voter
-attribute, an optional subject, a message and an error code.
+`#[IsGranted]` from `symfony/security-http`. It can be put on a tool class or method and
+takes a role or voter attribute, an optional subject, a message and an error code.
 
 `IsGrantedToolAttributeListener` listens to the Agent event `ToolCallArgumentsResolved`.
 This event fires after the model's arguments are known and before the tool runs. The
@@ -38,6 +38,15 @@ attribute fails the container build with a clear message.
 
 - **Checking permissions inside each tool**: not chosen, because it repeats code and hides
   the rule from the class signature.
+
+## History
+
+- 2025-07-01, php-llm/llm-chain#359 by valtzu: the library added the
+  `ToolCallArgumentsResolved` event while adding denormalization of tool arguments.
+- 2025-07-15, #102 by @valtzu: added `#[IsGrantedTool]` and its listener, modeled on
+  `#[IsGranted]`; moved over from php-llm/llm-chain#382.
+- 2025-07-15, #134 by @valtzu: removed the listener when `symfony/security-core` is
+  missing, and made the attribute fail the build in that case.
 
 ## References
 

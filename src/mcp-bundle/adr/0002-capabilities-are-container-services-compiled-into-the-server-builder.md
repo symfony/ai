@@ -9,8 +9,8 @@ date: 2026-10-25
 
 The SDK can find tools, prompts and resources by scanning folders at runtime. In Symfony
 these elements are services with dependencies, and the container already knows every class.
-Scanning files on each request is wasted work. Also, with several servers, each server must
-expose only its own elements.
+Until 0.12 the bundle used that folder scan, and it ran again on every request (#2328).
+Also, with several servers, each server must expose only its own elements.
 
 ## Decision
 
@@ -37,8 +37,25 @@ the build, because it is almost always a typo. Elements no server uses are shown
 
 ## Alternatives Considered
 
-- **The SDK's folder scanning**: used before 0.12, replaced by the container approach.
-- **Every element on every server**: replaced in 0.13 by the required `registry` option.
+- **The SDK's folder scanning** (`mcp.discovery.scan_dirs`): used before 0.12. It scanned
+  and reflected files on every request; replaced by the container approach in #2349.
+- **Every element on every server**: replaced in 0.13 by the required `registry` option
+  (#2412).
+- **Selecting elements by tag names**: proposed in #2412 and left for later (#2426), because
+  tag names are global and two vendors could use the same one, while class and namespace
+  patterns are unambiguous.
+
+## History
+
+- 2025-07-25, #168 by @TomHart (Tom Hart): a compiler pass that collects tagged tool services.
+- 2025-09-24, #637 by @camilleislasse: autoconfiguration of the SDK attributes
+  `#[McpTool]`, `#[McpPrompt]`, `#[McpResource]` and `#[McpResourceTemplate]`.
+- 2025-10-23, #808 by @OskarStark (Oskar Stark): `scan_dirs` and `exclude_dirs` options
+  for the SDK's folder scan.
+- 2026-07-21, #2349 by @chr-hertel (Christopher Hertel): replaced the folder scan with
+  build-time registration in `McpPass`, so no scan or schema generation runs per request.
+- 2026-08-22, #2412 by @chr-hertel (Christopher Hertel): the required per-server `registry`
+  option with its patterns.
 
 ## References
 

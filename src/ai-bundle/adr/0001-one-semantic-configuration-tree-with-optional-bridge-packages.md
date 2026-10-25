@@ -8,9 +8,9 @@ date: 2026-10-25
 ## Context and Problem Statement
 
 The bundle connects the Platform, Agent, Store and Chat components and dozens of bridges to
-Symfony. Each bridge is its own Composer package, and an application installs only the few
-it needs. The bundle needs one way to configure all of them that still works when most
-bridges are missing.
+Symfony. Since December 2025 each bridge is its own Composer package, and an application
+installs only the few it needs. The bundle needs one way to configure all of them that
+still works when most bridges are missing.
 
 ## Decision
 
@@ -42,6 +42,23 @@ components that are not installed are removed.
 
 - **One bundle per bridge**: not chosen, because there would be no single place where an
   agent can name its platform or an indexer its store.
+- **One large `options.php`**: used until January 2026. It was split into one file per
+  bridge (#1448), because the single file had become very slow to edit in an IDE.
+
+## History
+
+- 2024-06-23, 33a2b61f by Christopher Hertel: first `llm_chain` bundle with a semantic
+  configuration tree, at that time only for OpenAI.
+- 2025-07-12, #94 by @yceruto (Yonel Ceruto): moved to `AbstractBundle` with
+  `config/options.php`, replacing the separate `Configuration` and extension classes.
+- 2025-12-17, #1093 by @OskarStark (Oskar Stark): split the platform bridges into their own
+  packages (stores followed in #1057) and added the `willBeAvailable()` checks for clear
+  errors.
+- 2025-12-23, #1268 by @OskarStark (Oskar Stark): made the Agent, Store and Chat components
+  optional, so users install only what they use, with helpful errors when a package is
+  missing.
+- 2026-01-25, #1448 by @chr-hertel (Christopher Hertel): split `options.php` into one config
+  file per bridge.
 
 ## References
 
