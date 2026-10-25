@@ -7749,6 +7749,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $movies'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $doctrineMovies'));
+
         $embedder = $container->getDefinition('ai.store.doctrine.movies.embedder');
         $this->assertSame(EntityEmbedder::class, $embedder->getClass());
         $this->assertSame('ai.vectorizer.my_vectorizer', (string) $embedder->getArgument(0));
