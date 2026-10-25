@@ -138,7 +138,8 @@ Filesystem
 ~~~~~~~~~~
 
 Provides sandboxed file operations for the agent. Supports reading, writing, listing, and managing files
-within a defined base path.
+within a defined base path. It is meant for local agents, like CLI or coding assistants, that work on
+files of the person running them. In a web application, prefer tools that are specific to your domain.
 
 .. code-block:: terminal
 
@@ -148,6 +149,11 @@ within a defined base path.
 
     Always restrict the ``basePath`` to a directory the agent is allowed to access.
     The ``allowDelete`` option is disabled by default for safety.
+
+    Never use a directory that a web server serves as ``basePath``. The tool denies common
+    executable extensions like ``php`` or ``phtml`` by default, but a list of denied extensions can
+    never cover every web server configuration. To limit the files the agent can write, set
+    ``allowedExtensions`` to the extensions it needs, e.g. ``['txt', 'md', 'json']``.
 
 Date & Time
 -----------

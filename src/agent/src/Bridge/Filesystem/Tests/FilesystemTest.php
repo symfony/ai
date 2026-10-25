@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Bridge\Filesystem\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\OperationNotPermittedException;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\PathSecurityException;
@@ -379,6 +380,76 @@ class FilesystemTest extends TestCase
         $filesystem->read('script.php');
     }
 
+    #[DataProvider('provideExecutableFilenames')]
+    public function testWriteDeniesExecutableExtensionsByDefault(string $filename)
+    {
+        $filesystem = $this->createFilesystem();
+
+        try {
+            $filesystem->write($filename, '<?php echo "test";');
+            $this->fail('Expected PathSecurityException was not thrown.');
+        } catch (PathSecurityException $e) {
+            $this->assertStringContainsString('is not allowed', $e->getMessage());
+        }
+
+        $this->assertFileDoesNotExist($this->tempPath.'/'.$filename);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideExecutableFilenames(): iterable
+    {
+        foreach (['php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'pht', 'phtml', 'phar', 'sh', 'exe', 'bat'] as $extension) {
+            yield $extension => ['shell.'.$extension];
+        }
+
+        yield 'uppercase' => ['shell.PHTML'];
+    }
+
+    public function testMoveDeniesRenamingToExecutableExtension()
+    {
+        $filesystem = $this->createFilesystem();
+
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Extension "phtml" is not allowed');
+
+        $filesystem->move('sample.txt', 'shell.phtml');
+    }
+
+    public function testDeniedExtensionPreventsMovingDirectoryContainingDeniedFiles()
+    {
+        $this->symfonyFilesystem->dumpFile($this->tempPath.'/private/shell.php', '<?php echo "test";');
+
+        $filesystem = $this->createFilesystem();
+
+        try {
+            $filesystem->move('private', 'public');
+            $this->fail('Expected PathSecurityException was not thrown.');
+        } catch (PathSecurityException $e) {
+            $this->assertSame('Extension "php" is not allowed.', $e->getMessage());
+        }
+
+        $this->assertFileExists($this->tempPath.'/private/shell.php');
+        $this->assertDirectoryDoesNotExist($this->tempPath.'/public');
+    }
+
+    public function testDeniedExtensionPreventsDeletingDirectoryContainingDeniedFiles()
+    {
+        $this->symfonyFilesystem->dumpFile($this->tempPath.'/project/index.php', '<?php echo "test";');
+
+        $filesystem = $this->createFilesystem(allowDelete: true);
+
+        try {
+            $filesystem->delete('project');
+            $this->fail('Expected PathSecurityException was not thrown.');
+        } catch (PathSecurityException $e) {
+            $this->assertSame('Extension "php" is not allowed.', $e->getMessage());
+        }
+
+        $this->assertFileExists($this->tempPath.'/project/index.php');
+    }
+
     public function testDeniedPatternPrevented()
     {
         $this->symfonyFilesystem->dumpFile($this->tempPath.'/.hidden', 'secret');
@@ -495,10 +566,8 @@ class FilesystemTest extends TestCase
             $this->tempPath,
             $allowWrite,
             $allowDelete,
-            [],
-            ['php', 'phar', 'sh', 'exe', 'bat'],
-            $deniedPatterns,
-            $maxReadSize,
+            deniedPatterns: $deniedPatterns,
+            maxReadSize: $maxReadSize,
         );
     }
 }

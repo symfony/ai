@@ -22,6 +22,9 @@ use Symfony\Component\Finder\Finder;
  */
 final class PathValidator
 {
+    public const DEFAULT_DENIED_EXTENSIONS = ['php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'pht', 'phtml', 'phar', 'sh', 'exe', 'bat'];
+    public const DEFAULT_DENIED_PATTERNS = ['.*', '*.env*'];
+
     private readonly string $basePath;
 
     /**
@@ -32,8 +35,8 @@ final class PathValidator
     public function __construct(
         string $basePath,
         private readonly array $allowedExtensions = [],
-        private readonly array $deniedExtensions = ['php', 'phar', 'sh', 'exe', 'bat'],
-        private readonly array $deniedPatterns = ['.*', '*.env*'],
+        private readonly array $deniedExtensions = self::DEFAULT_DENIED_EXTENSIONS,
+        private readonly array $deniedPatterns = self::DEFAULT_DENIED_PATTERNS,
     ) {
         $workingDirectory = getcwd();
 
@@ -77,7 +80,7 @@ final class PathValidator
     }
 
     /**
-     * Validates that no path inside an already validated directory matches a denied pattern, also when relocated to an already validated destination.
+     * Validates that no path inside an already validated directory matches a denied pattern or extension, also when relocated to an already validated destination.
      *
      * @throws PathSecurityException If a contained path violates security constraints
      */
@@ -101,6 +104,10 @@ final class PathValidator
         // Ancestors are visited by the finder as well, so each entry only needs its own name and path checked
         foreach ($finder as $item) {
             $relativePathname = str_replace(\DIRECTORY_SEPARATOR, '/', $item->getRelativePathname());
+
+            if ($item->isFile()) {
+                $this->assertExtensionAllowed($item->getFilename());
+            }
 
             foreach ($prefixes as $prefix) {
                 $relativePath = ltrim($prefix.'/'.$relativePathname, '/');
