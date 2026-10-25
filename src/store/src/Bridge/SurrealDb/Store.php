@@ -66,6 +66,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ));
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
@@ -77,6 +80,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function remove(string|array $ids, array $options = []): void
     {
         if (\is_string($ids)) {
@@ -91,6 +97,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)), $options['http_options'] ?? []);
     }
 
+    /**
+     * @param array{http_options?: array<string, mixed>} $options
+     */
     public function clear(array $options = []): void
     {
         $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table), $options['http_options'] ?? []);
@@ -211,7 +220,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ...$finalPayload,
             ...[
                 'headers' => [
-                    ...$httpOptions['headers'] ?? [],
+                    ...(array) ($httpOptions['headers'] ?? []),
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                     'Surreal-NS' => $this->namespace,
