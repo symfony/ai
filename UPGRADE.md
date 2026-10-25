@@ -89,6 +89,48 @@ AI Bundle
    | `supabase`        | `vector_dimension` | `dimensions` |
    | `surrealdb`       | `strategy`         | `metric`     |
 
+ * Store and message store names must be unique across all types, and names like `blog_store` and `blogStore`
+   count as the same. Before, the `StoreInterface $blogStore` and `MessageStoreInterface $blogStore` aliases
+   pointed to the store defined last. Rename one of the stores:
+
+   ```diff
+    ai:
+        store:
+            memory:
+                main: ~
+            chromadb:
+   -            main:
+   +            documents:
+                    collection: 'documents'
+   ```
+
+ * The type-prefixed `StoreInterface` and `MessageStoreInterface` aliases are removed, use the alias named after
+   the store instead:
+
+   ```diff
+    public function __construct(
+   -    private StoreInterface $chromadbDocuments,
+   +    private StoreInterface $documents,
+    ) {
+    }
+   ```
+
+ * The name of a `failover` platform must not match the name of another platform, like `anthropic`. Before, the
+   `PlatformInterface $anthropic` alias and the `ai:platform:invoke` command used the platform defined last.
+   Names like `azure.main` and `azure_main` count as the same. Rename the failover platform:
+
+   ```diff
+    ai:
+        platform:
+            anthropic:
+                api_key: '%env(ANTHROPIC_API_KEY)%'
+            failover:
+   -            anthropic:
+   +            main:
+                    platforms: ['ai.platform.anthropic', 'ai.platform.openai']
+                    rate_limiter: 'limiter.failover_platform'
+   ```
+
 Store
 -----
 
