@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-23T20:05:10Z
+
+Added `config` to the collector formatter table in `extensions.rst` and removed the dedicated README section so its documentation follows the existing pattern.
