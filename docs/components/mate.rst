@@ -326,6 +326,35 @@ PHPStan or Rector, are listed in `awesome-mate`_ and installed the same way:
 The Composer plugin then runs ``mate discover``, which enables the extension and installs its
 skills. To write your own extension, see :doc:`mate/creating-extensions`.
 
+Backward Compatibility
+----------------------
+
+Mate is a development tool for coding agents, so its backward compatibility promise is narrower
+than the one of the other components. Only the parts that you script, configure or extend are
+covered.
+
+**Covered.** Changes to these follow the usual deprecation process and are documented in the
+``UPGRADE.md`` file:
+
+* The CLI interface: the names, arguments and options of the :doc:`commands <mate/commands>`.
+* The definition of tools and resources: the name, the parameters and the input schema of a tool,
+  and the URI of a resource, for the tools shipped by Mate and its official extensions. A tool
+  is removed only after a deprecation.
+* The user-facing customization: the ``mate/config.php`` parameters and services documented here,
+  the format of ``mate/extensions.php``, and the ``extra.ai-mate`` keys of ``composer.json``.
+* The extension points for extension authors: the ``#[MateTool]``, ``#[MateResource]`` and
+  ``#[MateResourceTemplate]`` attributes.
+
+**Not covered.** These can change in any release:
+
+* The content and shape of tool responses and resources, for example the keys of a result, the
+  redaction rules, or the ``pretty`` output format.
+* The text of agent instructions and skills.
+* Everything marked ``@internal``, and every class that is not documented as an extension point.
+
+Agents read tool responses as text, so they cope with changes to the response better than
+a script or a parser does. Pass ``--format=json`` and keep your own parsing tolerant of new keys.
+
 Security
 --------
 
