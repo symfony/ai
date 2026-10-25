@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-25T19:33:12Z
+
+Thanks @wachterjohannes - description is updated. The order of the empty search is only cosmetic in the grid, so I'd leave it. `from` isn't dead tho: with `IndexableEntityInterface` it still decides which changes embed the movie again - but you made me spot that `year` was missing there, added it.
