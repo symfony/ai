@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\BatchResult;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -85,6 +86,7 @@ final class AssistantContentMappingTest extends TestCase
     {
         yield TextResult::class => [new TextResult('Hello')];
         yield ThinkingResult::class => [new ThinkingResult('Let me think', 'signature')];
+        yield CommentaryResult::class => [new CommentaryResult('I will run code.')];
         yield ToolCallResult::class => [new ToolCallResult([new ToolCall('call_1', 'tool')])];
         yield ExecutableCodeResult::class => [new ExecutableCodeResult('print(1)', 'python', 'code_1')];
         yield CodeExecutionResult::class => [new CodeExecutionResult(true, '1', 'code_1')];

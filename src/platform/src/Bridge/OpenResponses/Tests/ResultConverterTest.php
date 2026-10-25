@@ -28,6 +28,7 @@ use Symfony\AI\Platform\FinishReason\FinishReason;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -1134,6 +1135,84 @@ final class ResultConverterTest extends TestCase
         $this->assertCount(1, $toolCallResults);
         $this->assertSame(['title' => 'Test'], $toolCallResults[0]->getContent()[0]->getArguments());
         $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
+    }
+
+    public function testThrowsMaxOutputTokensExceptionWhenIncompleteResponseHoldsOnlyCommentary()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'commentary',
+                    'content' => [['type' => 'output_text', 'text' => 'I will look up the weather and']],
+                ],
+            ],
+        ]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsRuntimeExceptionWhenOutputHoldsOnlyCommentary()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'commentary',
+                    'content' => [['type' => 'output_text', 'text' => 'I will look up the weather.']],
+                ],
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Response does not contain any content.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertCommentaryNextToFunctionCallIntoMultiPartResult()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'commentary',
+                    'content' => [['type' => 'output_text', 'text' => 'I will look up the weather.']],
+                ],
+                [
+                    'type' => 'function_call',
+                    'id' => 'fc_1',
+                    'call_id' => 'call_1',
+                    'name' => 'weather',
+                    'arguments' => '{"city":"Berlin"}',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        [$commentary, $toolCall] = $result->getContent();
+        $this->assertInstanceOf(CommentaryResult::class, $commentary);
+        $this->assertSame('I will look up the weather.', $commentary->getContent());
+        $this->assertInstanceOf(ToolCallResult::class, $toolCall);
+        $this->assertSame('weather', $toolCall->getContent()[0]->getName());
     }
 
     public function testThrowsRuntimeExceptionWhenOutputYieldsNoContent()

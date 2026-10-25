@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -148,6 +149,34 @@ final class ResultNormalizerTest extends TestCase
             [
                 'class' => ThinkingResult::class,
                 'payload' => ['content' => 'reasoning summary', 'signature' => 'sig_abc'],
+            ],
+        ];
+        yield CommentaryResult::class => [
+            new MultiPartResult([
+                new CommentaryResult('I will look up the weather.'),
+                new ToolCallResult([new ToolCall('call-1', 'get_weather', ['city' => 'Paris'])]),
+            ]),
+            [
+                'class' => MultiPartResult::class,
+                'payload' => [
+                    [
+                        'class' => CommentaryResult::class,
+                        'payload' => 'I will look up the weather.',
+                    ],
+                    [
+                        'class' => ToolCallResult::class,
+                        'payload' => [
+                            [
+                                'id' => 'call-1',
+                                'type' => 'function',
+                                'function' => [
+                                    'name' => 'get_weather',
+                                    'arguments' => '{"city":"Paris"}',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
             ],
         ];
         yield ObjectResult::class.'-array' => [

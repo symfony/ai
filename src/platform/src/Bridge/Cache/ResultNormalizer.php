@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Cache;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -69,6 +70,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                     'content' => $data->getContent(),
                     'signature' => $data->getSignature(),
                 ],
+                CommentaryResult::class => $data->getContent(),
                 ObjectResult::class => [
                     'type' => get_debug_type($data->getContent()),
                     'content' => \is_array($data->getContent()) ? $data->getContent() : $this->objectNormalizer->normalize($data->getContent(), $format, $context),
@@ -109,6 +111,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                 $data['payload']
             )),
             ThinkingResult::class => new ThinkingResult($data['payload']['content'], $data['payload']['signature']),
+            CommentaryResult::class => new CommentaryResult($data['payload']),
             ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context)),
             TextResult::class => new TextResult($data['payload']),
             ToolCallResult::class => new ToolCallResult(array_map(

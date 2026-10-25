@@ -16,6 +16,7 @@ use Symfony\AI\Chat\Exception\LogicException;
 use Symfony\AI\Chat\MessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -304,6 +305,7 @@ final class MessageNormalizerTest extends TestCase
             new ToolCall('call-1', 'run', ['x' => 1]),
             new Thinking('Second thought.', 'sig_2'),
             new Text('Trailing text.'),
+            new Commentary('Narrated step.'),
         );
 
         $payload = $serializer->normalize($message);
@@ -311,7 +313,7 @@ final class MessageNormalizerTest extends TestCase
         $denormalized = $serializer->denormalize($payload, MessageInterface::class);
 
         $parts = $denormalized->getContent();
-        $this->assertCount(5, $parts);
+        $this->assertCount(6, $parts);
         $this->assertInstanceOf(Thinking::class, $parts[0]);
         $this->assertSame('First thought.', $parts[0]->getContent());
         $this->assertSame('sig_1', $parts[0]->getSignature());
@@ -324,6 +326,8 @@ final class MessageNormalizerTest extends TestCase
         $this->assertSame('sig_2', $parts[3]->getSignature());
         $this->assertInstanceOf(Text::class, $parts[4]);
         $this->assertSame('Trailing text.', $parts[4]->getText());
+        $this->assertInstanceOf(Commentary::class, $parts[5]);
+        $this->assertSame('Narrated step.', $parts[5]->getContent());
     }
 
     public function testItPreservesMixedTextImageAndToolCallOrderingAcrossRoundtrip()

@@ -1,0 +1,78 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.openai.com/v1/responses",
+                "signature": "fd8ea53b364b3ddffd051acfb86438f6",
+                "signature_v2": "b2858d9162500568da3ee802082a7a83",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"tools\":[{\"type\":\"code_interpreter\",\"container\":{\"type\":\"auto\"}}],\"model\":\"gpt-5.5\",\"input\":[{\"role\":\"user\",\"content\":\"Compute 17 * 25 by running Python code, then give me just the number.\"}],\"instructions\":\"Tell the user what you are about to do before you run code.\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "access-control-expose-headers": [
+                        "X-Request-ID",
+                        "CF-Ray",
+                        "CF-Ray"
+                    ],
+                    "openai-organization": [
+                        "[redacted]"
+                    ],
+                    "openai-project": [
+                        "[redacted]"
+                    ],
+                    "openai-version": [
+                        "2020-10-01"
+                    ],
+                    "x-ratelimit-limit-requests": [
+                        "10000"
+                    ],
+                    "x-ratelimit-limit-tokens": [
+                        "4000000"
+                    ],
+                    "x-ratelimit-remaining-requests": [
+                        "9999"
+                    ],
+                    "x-ratelimit-remaining-tokens": [
+                        "3999955"
+                    ],
+                    "x-ratelimit-reset-requests": [
+                        "6ms"
+                    ],
+                    "x-ratelimit-reset-tokens": [
+                        "0s"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\n  \"id\": \"resp_02762a87f1952fd8006ab31601202c87d293ba08e3c977a7da\",\n  \"object\": \"response\",\n  \"created_at\": 1790121473,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1790121476,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"Tell the user what you are about to do before you run code.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5.5-2026-04-23\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_02762a87f1952fd8006ab31601cc7c87d2bb83c60bc0b326bd\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABqsxYEXLMnSblCjIqKoohQGTP6rce4V8tu0nt9fY1HMkIqNLmWaJukMcfgUYodwMlaoO3Upf4JKloTEiPy9JDNyXL5cVKVuqrOTLxwz3cq21OKqxxLI8v1ov9HWmn_MUk9tj2Stop9ZWKCGBSleR8udwrJASO-SkwDhiM8M5Srt6uQin4CagJcdtFVHsh4t0Bjpr8PkusrCNxzPU9LFAB1Nba6oiUpsFsA330TXGhpYE_t_eGRPP9dA_104ha8QruOLqez44U4XSwV7gFZdi05Ur0w82eMSL9qYK5JKGpKIHDWlf4F5CEPxmpl-TbHRnzzAsztC_gy28RklH2d5XXpIeTPQnICud0QAFc5BQXAKW4vw8mLPJ22g91W5vlP3AbAxEhL94-kcVtRPgRKfg5B2VqKhc8CPh0KCjOHYLqN9wV_kZ4Qg1ACY5w4vLg7x56ZMojH_S1Axv1seFnnjyd0_BUwbAz919dnw0IK7eFYCYuKt6ktKEz6eoqqLjqLQaBxOCEdK4OL8xroLAwHopJ0gL6W5URgOqabipAL9bdpwcYWtY6LIOQdZx7YJNX8MvnyOK8r6THoYwJJpX-JYyXCKEb5KhJGdpB1mLghba4wsd8guDNbPRcLY3bSUwcWFqpR8ISwC_HrW4sQf46deq5SYUF6lAuVoi94N2x87X3XAkGjXzKI3Dlf7sF1kJ4dF9PwXdDtXIDanDp32wc1RfzkfOGP9f2uXbqvPr5typwx41j3WeZTrvsJU2H-KC2Raz6w1RduSoXf5nZnTBKwXh83cbR7D5r2b47fzhy3x8Wqyh14PvUpKYl4AcUaDbaZdjNrZZLp2HSmPdQNj9sVxh6-UO-UZiWGomLAZ6cn-6qMb4zljapfwFh3X3qUlz_NBXBn2Q61rE0tudUwwAdNFohbdD1Q3EovmZ8st4Yut3P3_7McafmkWdE__LDL-_fpBrh6e3DOhfyJfHVP6npAQ2jf_d1-MXqtIocQc_FsxwoB3WROn4PG5kXy4Vm67ZN_Y9fVe333oRowP9MJEOjXb_MIH0HanokK-S-QkTLwRRzMtLix8vsDDRuM1j32HmZkUwIcGWNesdd9as5xs1pYkAr-mi-j_gFFNAWqiWLCQlNUL4olkFf0k6MmuRO3I01zKrv5Y8l-PtALLdmmsnrW312Bntl_ij1LHjb_J9-9TRys5b7-YRJ7jLfchHZDTfrF--OCAav5CqU9xmLt3y6SJLwmY4N-9_ciwxIMZHgJfpKL-ARbCnijXgp7WyRabd6b5_ueBH5p573OmOEXw8syre3SCafD3hyNQIbksS_pUhe64uhTHy0-mvii39SvqtMITl66oef_mlLkCAJxi8mLWXGBn2dd3dAfvGBSDalLcrV55ePvr6LlyWGc7pCMGMCaecr8LQA59Sp-XUI4RsY12HxxPGG9C0jGGlRYnxuGX27PCAO2dUXc1ClaMsVzWKwAD5-A4vPF_vw3MOcUpgB-TGVxRc20iDtgULQJQ4goOwuBPDGCgBiE1Il1Dk03_cMzcijF6cCSXY5g6hNLUNERpbCqcH3mzZn9GgoOAQQ0U6nX_ofqmH3WuSok8QgbRCwt-ZQE6Rry\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"msg_02762a87f1952fd8006ab31602913487d28bfb4496dd641c02\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"I\\u2019ll run Python to compute the multiplication.\"\n        }\n      ],\n      \"phase\": \"commentary\",\n      \"role\": \"assistant\"\n    },\n    {\n      \"id\": \"ci_02762a87f1952fd8006ab31602d52c87d290eb5881e027e542\",\n      \"type\": \"code_interpreter_call\",\n      \"status\": \"completed\",\n      \"code\": \"17 * 25\",\n      \"container_id\": \"cntr_6ab3160142988191a192ae04f4eb18690a3e3a44af04b173\",\n      \"outputs\": null\n    },\n    {\n      \"id\": \"msg_02762a87f1952fd8006ab31603e6f887d28b3136aa8c89a4dc\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"425\"\n        }\n      ],\n      \"phase\": \"final_answer\",\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"24h\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"code_interpreter\",\n      \"container\": {\n        \"type\": \"auto\"\n      }\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 0.98,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 1360,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 101,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 80\n    },\n    \"total_tokens\": 1461\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+            }
+        }
+    ]
+}

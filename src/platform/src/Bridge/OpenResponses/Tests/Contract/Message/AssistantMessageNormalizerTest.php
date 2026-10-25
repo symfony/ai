@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message\AssistantMessageNo
 use Symfony\AI\Platform\Bridge\OpenResponses\Contract\ToolCallNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
@@ -178,6 +179,19 @@ class AssistantMessageNormalizerTest extends TestCase
                 ],
                 $normalizedToolCall,
             ],
+        ];
+
+        yield 'commentary is replayed as a message of its own phase' => [
+            new AssistantMessage(new Commentary('I will run code.'), new Text('425')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'I will run code.', 'phase' => 'commentary'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => '425'],
+            ],
+        ];
+
+        yield 'empty commentary is not replayed' => [
+            new AssistantMessage(new Commentary(''), new Text('425')),
+            [['role' => 'assistant', 'type' => 'message', 'content' => '425']],
         ];
 
         yield 'an assistant turn with nothing replayable keeps the empty message' => [

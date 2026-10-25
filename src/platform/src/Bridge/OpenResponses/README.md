@@ -10,6 +10,7 @@ Open Responses Documentation
  * [Specification](https://www.openresponses.org/specification)
  * [Source](https://github.com/open-responses/open-responses)
  * [OpenAI Responses API (canonical contract)](https://platform.openai.com/docs/api-reference/responses)
+ * [OpenAI assistant message phase (commentary and final answer)](https://developers.openai.com/api/docs/guides/reasoning#phase-parameter)
 
 Resources
 ---------
