@@ -357,6 +357,27 @@ final class AgentTest extends TestCase
         $agent->call(new MessageBag(), [])->getResult();
     }
 
+    public function testAHitIterationLimitIsReportedWithItsErrorCode()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, 'Test response'));
+        $platform = MockPlatformFactory::createPlatform(static fn (): ResultInterface => new ToolCallResult([$toolCall]));
+        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, maxToolCalls: 2);
+
+        $execution = $agent->call(new MessageBag(Message::ofUser('Hi')));
+
+        try {
+            $execution->getResult();
+            $this->fail('The run should hit the iteration limit.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
+        $this->assertSame('max_iterations_exceeded', $execution->getErrorCode());
+    }
+
     public function testConvertsToolResultsWithTheGivenConverter()
     {
         $toolCall = new ToolCall('id1', 'tool1');

@@ -11,10 +11,12 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -71,6 +73,16 @@ final class Execution implements ExecutionInterface
     private ?Result $resultUpdate = null;
 
     private ?string $error = null;
+
+    /**
+     * @var non-empty-string|null
+     */
+    private ?string $errorCode = null;
+
+    /**
+     * @var list<ExecutionEvent>
+     */
+    private array $events = [];
 
     private readonly Metadata $metadata;
 
@@ -158,6 +170,46 @@ final class Execution implements ExecutionInterface
     public function getError(): ?string
     {
         return $this->error;
+    }
+
+    /**
+     * The machine readable code of the exception that failed the execution, when it implements {@see ErrorCodeAwareInterface}.
+     *
+     * @return non-empty-string|null
+     */
+    public function getErrorCode(): ?string
+    {
+        return $this->errorCode;
+    }
+
+    /**
+     * The progress updates recorded after the given sequence, in order.
+     *
+     * @return list<ExecutionEvent>
+     */
+    public function getEventsSince(int $sequence = 0): array
+    {
+        return array_values(array_filter(
+            $this->events,
+            static fn (ExecutionEvent $event): bool => $event->getSequence() > $sequence,
+        ));
+    }
+
+    /**
+     * Records a progress update, with the next sequence unless an explicit one is given.
+     *
+     * @throws InvalidArgumentException when the explicit sequence is not greater than the last recorded one
+     */
+    public function record(Progress $progress, ?int $sequence = null): void
+    {
+        $last = [] === $this->events ? 0 : $this->events[array_key_last($this->events)]->getSequence();
+        $sequence ??= $last + 1;
+
+        if ($sequence <= $last) {
+            throw new InvalidArgumentException(\sprintf('The sequence must be greater than the last recorded one (%d), got %d.', $last, $sequence));
+        }
+
+        $this->events[] = ExecutionEvent::fromProgress($sequence, $progress);
     }
 
     /**
@@ -333,6 +385,8 @@ final class Execution implements ExecutionInterface
                 }
 
                 if ($update instanceof Progress) {
+                    $this->record($update);
+
                     foreach ($this->progressCallbacks as $callback) {
                         $callback($update);
                     }
@@ -340,7 +394,7 @@ final class Execution implements ExecutionInterface
 
                 yield $update;
 
-                // @phpstan-ignore if.alwaysFalse (cancellation can happen while the generator is suspended)
+                // cancellation can happen while the generator is suspended
                 if ($this->canceled) {
                     break;
                 }
@@ -348,6 +402,7 @@ final class Execution implements ExecutionInterface
         } catch (\Throwable $exception) {
             if (!$this->canceled) {
                 $this->error = $exception->getMessage();
+                $this->errorCode = $exception instanceof ErrorCodeAwareInterface ? $exception->getErrorCode() : null;
 
                 throw $exception;
             }

@@ -15,13 +15,16 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\AbstractExecution;
+use Symfony\AI\Agent\Execution\ExecutionEvent;
 use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\ExecutionState;
 use Symfony\AI\Agent\Execution\ExecutionStatus;
+use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\InputNormalizer;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -66,11 +69,32 @@ final class RemoteRunAdapterTest extends TestCase
         $this->assertFalse($first->getId()->equals($second->getId()));
     }
 
-    public function testAFailedRemoteRunProducesAFailedExecution()
+    public function testAPollerReadsOnlyTheNewEventsWithItsCursor()
     {
         $remote = new FakeRemoteHistory();
         $runId = $remote->start('What is the weather?');
-        $remote->fail($runId);
+        $adapter = new RemoteRunAdapter($remote, new Toolbox([new WeatherTool()]));
+
+        $first = $adapter->call((new MessageBag())->withId($runId));
+        $this->assertSame([], $first->getEventsSince());
+
+        $messages = $first->getMessages();
+
+        $second = $adapter->call($messages);
+        $this->assertSame([1, 2], $this->sequencesOf($second->getEventsSince()));
+        $this->assertSame([], $second->getEventsSince(2));
+
+        $messages = $second->getMessages();
+
+        $third = $adapter->call($messages);
+        $this->assertSame([3, 4], $this->sequencesOf($third->getEventsSince(2)));
+    }
+
+    public function testAFailedRemoteMessageProducesAFailedExecutionWithAnErrorCode()
+    {
+        $remote = new FakeRemoteHistory();
+        $runId = $remote->start('What is the weather?');
+        $remote->fail($runId, 'provider_error');
 
         $execution = (new RemoteRunAdapter($remote, new Toolbox([new WeatherTool()])))->call((new MessageBag())->withId($runId));
 
@@ -81,7 +105,36 @@ final class RemoteRunAdapterTest extends TestCase
         }
 
         $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
+        $this->assertSame('provider_error', $execution->getErrorCode());
         $this->assertSame('The remote run failed.', $execution->getError());
+    }
+
+    /**
+     * @param list<ExecutionEvent> $events
+     *
+     * @return list<int>
+     */
+    private function sequencesOf(array $events): array
+    {
+        return array_map(static fn (ExecutionEvent $event): int => $event->getSequence(), $events);
+    }
+}
+
+final class RemoteRunException extends RuntimeException implements ErrorCodeAwareInterface
+{
+    public function __construct(private readonly string $errorCode)
+    {
+        parent::__construct('The remote run failed.');
+    }
+
+    public function getErrorCode(): string
+    {
+        return $this->errorCode;
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
     }
 }
 
@@ -97,7 +150,17 @@ final class RemoteRunAdapter implements AgentInterface
     {
         $runId = InputNormalizer::toMessageBag($input)->getId();
 
-        return new RemoteRun($this->remote, $this->toolbox, $runId);
+        $events = [];
+        $step = 0;
+        foreach ($this->remote->history($runId)->getMessages() as $message) {
+            if ($message instanceof AssistantMessage) {
+                $events[] = ExecutionEvent::fromProgress(2 * $step + 1, new Progress('model_request', 'The remote model answered.'));
+                $events[] = ExecutionEvent::fromProgress(2 * $step + 2, new Progress('remote_step', 'The remote step finished.'));
+                ++$step;
+            }
+        }
+
+        return new RemoteRun($this->remote, $this->toolbox, $runId, $events);
     }
 
     public function getName(): string
@@ -114,12 +177,16 @@ final class RemoteRun extends AbstractExecution
     private readonly AbstractUid&TimeBasedUidInterface $id;
     private ?MessageBag $history = null;
     private ?ResultInterface $result = null;
-    private ?RuntimeException $failure = null;
+    private ?RemoteRunException $failure = null;
 
+    /**
+     * @param list<ExecutionEvent> $events
+     */
     public function __construct(
         private readonly FakeRemoteHistory $remote,
         private readonly ToolboxInterface $toolbox,
         private readonly AbstractUid $runId,
+        private readonly array $events,
     ) {
         $this->id = Uuid::v7();
     }
@@ -148,6 +215,19 @@ final class RemoteRun extends AbstractExecution
         return $this->failure?->getMessage();
     }
 
+    public function getErrorCode(): ?string
+    {
+        return $this->failure?->getErrorCode();
+    }
+
+    public function getEventsSince(int $sequence = 0): array
+    {
+        return array_values(array_filter(
+            $this->events,
+            static fn (ExecutionEvent $event): bool => $event->getSequence() > $sequence,
+        ));
+    }
+
     public function getMessages(): MessageBag
     {
         $this->advance();
@@ -172,8 +252,8 @@ final class RemoteRun extends AbstractExecution
             return;
         }
 
-        if ($this->remote->hasFailed($this->runId)) {
-            throw $this->failure = new RuntimeException('The remote run failed.');
+        if (null !== $code = $this->remote->failureOf($this->runId)) {
+            throw $this->failure = new RemoteRunException($code);
         }
 
         foreach (ExecutionState::pendingToolCallsOf($this->remote->history($this->runId)) as $toolCall) {
@@ -208,7 +288,7 @@ final class FakeRemoteHistory
     private array $runs = [];
 
     /**
-     * @var array<string, true>
+     * @var array<string, string>
      */
     private array $failures = [];
 
@@ -220,14 +300,14 @@ final class FakeRemoteHistory
         return $history->getId();
     }
 
-    public function fail(AbstractUid $id): void
+    public function fail(AbstractUid $id, string $code): void
     {
-        $this->failures[$id->toRfc4122()] = true;
+        $this->failures[$id->toRfc4122()] = $code;
     }
 
-    public function hasFailed(AbstractUid $id): bool
+    public function failureOf(AbstractUid $id): ?string
     {
-        return isset($this->failures[$id->toRfc4122()]);
+        return $this->failures[$id->toRfc4122()] ?? null;
     }
 
     public function history(AbstractUid $id): MessageBag

@@ -257,6 +257,39 @@ the message. Every assistant message of a run also carries its ``round`` metadat
 after the highest ``round`` already in the conversation, or after the number of its assistant messages if that is
 higher, so a run that continues a ``MessageBag`` numbers on, also when one assistant message holds several rounds.
 
+While an execution runs, every ``Progress`` update is recorded as an
+:class:`Symfony\\AI\\Agent\\Execution\\ExecutionEvent` with a sequence number that starts at ``1``.
+``getEventsSince($sequence)`` returns the events after that sequence, in order. A client that polls keeps the last
+sequence it saw as its cursor. An adapter that rebuilds the execution on every poll records the events it read from
+the remote state with ``record($progress, $sequence)`` and uses its own sequence numbers. An explicit sequence must be
+greater than the last recorded one::
+
+    $execution = $agent->call($messages);
+
+    foreach ($remoteProgress as $sequence => $progress) {
+        $execution->record($progress, $sequence);
+    }
+
+    $events = $execution->getEventsSince($cursor);
+    $cursor = [] === $events ? $cursor : end($events)->getSequence();
+
+``getErrorCode()`` returns the code of the exception that failed the execution, if it implements
+:class:`Symfony\\AI\\Platform\\Exception\\ErrorCodeAwareInterface`. Otherwise it returns ``null``. The exceptions of the
+platform implement it, so the codes are the same for every provider. ``isRetryable()`` on the exception tells whether
+repeating the same request may succeed:
+
+* ``rate_limit_exceeded`` (``RateLimitExceededException``, retryable)
+* ``provider_error`` (``ServerException``, retryable)
+* ``authentication_failed`` (``AuthenticationException``)
+* ``bad_request`` (``BadRequestException``)
+* ``model_not_found`` (``ModelNotFoundException`` and ``MissingModelSupportException``)
+* ``content_filtered`` (``ContentFilterException``)
+* ``max_iterations_exceeded`` (``MaxIterationsExceededException``)
+* ``tool_not_found`` (``ToolNotFoundException``)
+* ``tool_execution_failed`` (``ToolExecutionException``)
+
+The last three belong to the agent. None of them is retryable.
+
 Stepwise runs
 ~~~~~~~~~~~~~
 
@@ -292,6 +325,14 @@ application stores it.
 
 Stopping the iteration of an execution works inside one process. The options exist for workers in different
 processes, since the state is the ``MessageBag`` and no generator has to survive between the steps.
+
+Custom metadata
+~~~~~~~~~~~~~~~
+
+Messages and the ``MessageBag`` carry metadata. Custom keys are set with ``$message->getMetadata()->add()``. The core
+writes two keys itself. ``execution_id`` is the id of the execution, on the last message of a run. ``round`` is the
+number of the model round, on every assistant message. Applications should give their own keys a prefix, for example
+``app_ticket``, so they never collide with a key the core adds later.
 
 Tools
 -----

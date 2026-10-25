@@ -56,6 +56,16 @@ abstract class AbstractExecution implements ExecutionInterface
         return ExecutionStatus::WaitingForInput === $this->getStatus();
     }
 
+    public function getErrorCode(): ?string
+    {
+        return null;
+    }
+
+    public function getEventsSince(int $sequence = 0): array
+    {
+        return [];
+    }
+
     public function getContent(): string|iterable|object|null
     {
         return $this->getResult()->getContent();

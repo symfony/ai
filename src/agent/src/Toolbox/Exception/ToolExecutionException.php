@@ -11,12 +11,13 @@
 
 namespace Symfony\AI\Agent\Toolbox\Exception;
 
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
 use Symfony\AI\Platform\Result\ToolCall;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ToolExecutionException extends \RuntimeException implements ToolExecutionExceptionInterface
+final class ToolExecutionException extends \RuntimeException implements ToolExecutionExceptionInterface, ErrorCodeAwareInterface
 {
     private ?ToolCall $toolCall = null;
 
@@ -36,5 +37,15 @@ final class ToolExecutionException extends \RuntimeException implements ToolExec
     public function getToolCallResult(): string
     {
         return \sprintf('An error occurred while executing tool "%s".', $this->toolCall->getName());
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'tool_execution_failed';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
     }
 }

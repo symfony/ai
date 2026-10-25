@@ -43,6 +43,15 @@ final class AbstractExecutionTest extends TestCase
         }
     }
 
+    public function testErrorCodeAndEventsAreEmptyByDefault()
+    {
+        $execution = $this->createExecution();
+
+        $this->assertNull($execution->getErrorCode());
+        $this->assertSame([], $execution->getEventsSince());
+        $this->assertSame([], $execution->getEventsSince(5));
+    }
+
     public function testResultAccessorsDelegateToTheResult()
     {
         $result = new TextResult('Hello');
