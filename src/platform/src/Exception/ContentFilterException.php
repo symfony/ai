@@ -14,6 +14,15 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-class ContentFilterException extends InvalidArgumentException
+class ContentFilterException extends InvalidArgumentException implements ErrorCodeAwareInterface
 {
+    public function getErrorCode(): string
+    {
+        return 'content_filtered';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
+    }
 }
