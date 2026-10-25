@@ -5,3 +5,4 @@ phpstan.dist.neon export-ignore
 phpunit.xml.dist export-ignore
 CLAUDE.md export-ignore
 AGENTS.md export-ignore
+/adr export-ignore
