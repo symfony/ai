@@ -28,6 +28,12 @@ Multiple vector store implementations:
 - **Vectorizer**: Converts TextDocuments using AI Platform
 - **Transformers**: ChainTransformer, TextSplitTransformer, ChunkDelayTransformer
 
+## Architecture Decisions
+
+The design decisions of this package are recorded in `adr/` (index in `adr/README.md`).
+Read them before changing contracts or extension points, and add a new ADR for every new
+architecturally significant decision (see the root `adr/README.md`).
+
 ## Essential Commands
 
 ### Testing

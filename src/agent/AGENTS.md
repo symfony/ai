@@ -24,6 +24,12 @@ Framework for building AI agents with user interaction and task execution. Built
 - **MultiAgent** (`src/MultiAgent/`): Orchestration across multiple specialized agents
 - **Bridge** (`src/Bridge/`): Third-party tool integrations (Brave, Tavily, Wikipedia, etc.)
 
+## Architecture Decisions
+
+The design decisions of this package are recorded in `adr/` (index in `adr/README.md`).
+Read them before changing contracts or extension points, and add a new ADR for every new
+architecturally significant decision (see the root `adr/README.md`).
+
 ## Essential Commands
 
 ### Testing

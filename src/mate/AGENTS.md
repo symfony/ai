@@ -38,6 +38,12 @@ not use MCP and does not integrate with the AI Bundle.
 - **Symfony Bridge** (`src/Bridge/Symfony/`): Container introspection and profiler access
 - **Monolog Bridge** (`src/Bridge/Monolog/`): Log search and analysis
 
+## Architecture Decisions
+
+The design decisions of this package are recorded in `adr/` (index in `adr/README.md`).
+Read them before changing contracts or extension points, and add a new ADR for every new
+architecturally significant decision (see the root `adr/README.md`).
+
 ## Essential Commands
 
 ### Testing

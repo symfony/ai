@@ -138,6 +138,28 @@ Each component uses:
 - NEVER mention Claude as co-author in commits
 - Avoid using the `empty()` function; prefer explicit checks like `[] === $array`, `'' === $string`, or `null === $value`
 
+## Architecture Decision Records
+
+The *why* behind the design is recorded in Architecture Decision Records (ADRs), one
+Markdown file per decision. Each component and bundle keeps its own in
+`src/<package>/adr/` (index in that directory's `README.md`); monorepo-wide decisions live
+in the root `adr/`. The process and template are in `adr/README.md`.
+
+- Read the ADRs of the package you are changing before changing its contracts,
+  extension points or cross-cutting patterns, and do not silently work against them.
+- Every new architecturally significant decision needs a new ADR in the **same** pull
+  request: a new or changed core contract, a new extension point or way bridges plug in,
+  a new cross-cutting pattern, a dependency that shapes the architecture, or the reversal
+  of an earlier decision. Copy `adr/0000-template.md` to the next free number of the
+  package's `adr/` directory and add its row to that directory's `README.md`.
+- Write ADRs in English, concise and easy to understand: short, plain sentences.
+- Bridges get no ADR directory of their own; decisions about how bridges work belong to
+  the component.
+- Accepted ADRs are immutable: to change a decision, add a new ADR and set the old one's
+  status to `superseded by NNNN`.
+- Bug fixes, new bridges following the existing pattern, new options and CS-only changes
+  do not need an ADR.
+
 ## Code Comments
 
 Comments are the exception, not the default. Well-named classes, methods, and variables
