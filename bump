@@ -30,10 +30,15 @@ use Symfony\Component\Finder\Finder;
  * ./bump --minor : Bump minor version (x.X.0)
  * ./bump --patch : Bump patch version (x.x.X)
  *
+ * Before a major release, run through pre-releases with:
+ * ./bump --beta : Start or continue the betas of the next major version (X.0.0-BETA1, X.0.0-BETA2, ...)
+ * ./bump --rc : Start or continue the release candidates (X.0.0-RC1, X.0.0-RC2, ...)
+ * ./bump --major : Release the pre-released version as stable (X.0.0)
+ *
  * This will also update all symfony/ai-* composer constraints to match the new version.
  *
  * Alternatively, you can specify an explicit version with:
- * ./bump --release=1.2.3 : Set explicit release version
+ * ./bump --release=1.2.3 : Set explicit release version (e.g., 1.2.3 or 1.2.3-RC1)
  * ./bump --constraint="^1.2" : Set explicit composer constraint
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -45,7 +50,9 @@ use Symfony\Component\Finder\Finder;
     ->addOption('major', null, InputOption::VALUE_NONE, 'Bump major version (X.0.0)')
     ->addOption('minor', null, InputOption::VALUE_NONE, 'Bump minor version (x.X.0)')
     ->addOption('patch', null, InputOption::VALUE_NONE, 'Bump patch version (x.x.X)')
-    ->addOption('release', null, InputOption::VALUE_REQUIRED, 'Set explicit release version (e.g., 1.2.3)')
+    ->addOption('beta', null, InputOption::VALUE_NONE, 'Bump beta version of the next major (X.0.0-BETAn)')
+    ->addOption('rc', null, InputOption::VALUE_NONE, 'Bump release candidate of the next major (X.0.0-RCn)')
+    ->addOption('release', null, InputOption::VALUE_REQUIRED, 'Set explicit release version (e.g., 1.2.3 or 1.2.3-RC1)')
     ->addOption('constraint', null, InputOption::VALUE_REQUIRED, 'Set explicit composer constraint (e.g., ^1.2)')
     ->setCode(function (InputInterface $input, OutputInterface $output): int {
         $filesystem = new Filesystem();
@@ -54,6 +61,8 @@ use Symfony\Component\Finder\Finder;
         $isMajor = $input->getOption('major');
         $isMinor = $input->getOption('minor');
         $isPatch = $input->getOption('patch');
+        $isBeta = $input->getOption('beta');
+        $isRc = $input->getOption('rc');
         $releaseVersion = $input->getOption('release');
         $composerConstraint = $input->getOption('constraint');
 
@@ -61,37 +70,69 @@ use Symfony\Component\Finder\Finder;
             'major' => $isMajor,
             'minor' => $isMinor,
             'patch' => $isPatch,
+            'beta' => $isBeta,
+            'rc' => $isRc,
             'release' => $releaseVersion,
         ]);
 
         if (1 !== \count($bumpOptions)) {
-            $io->error('You must specify exactly one of --major, --minor, --patch, or --release');
+            $io->error('You must specify exactly one of --major, --minor, --patch, --beta, --rc, or --release');
 
             return Command::FAILURE;
         }
 
         $appPhpPath = __DIR__.'/src/mate/src/App.php';
         $appPhpContent = $filesystem->readFile($appPhpPath);
-        if (!preg_match('/public const VERSION = \'([0-9]+\.[0-9]+\.[0-9]+)\';/', $appPhpContent, $matches)) {
+        if (!preg_match('/public const VERSION = \'(([0-9]+)\.([0-9]+)\.([0-9]+)(?:-(BETA|RC)([0-9]+))?)\';/', $appPhpContent, $matches)) {
             $io->error('Could not find VERSION constant in App.php');
 
             return Command::FAILURE;
         }
 
         $currentVersion = $matches[1];
-        [$major, $minor, $patch] = explode('.', $currentVersion);
+        [, , $major, $minor, $patch] = $matches;
+        $stability = $matches[5] ?? null;
+        $stabilityNumber = (int) ($matches[6] ?? 0);
 
         $io->writeln(\sprintf('Current version: <info>%s</info>', $currentVersion));
 
         // Calculate new version
         if ($releaseVersion) {
             $newVersion = $releaseVersion;
-            if (!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/', $newVersion)) {
-                $io->error('Version must be in format X.Y.Z (e.g., 1.2.3)');
+            if (!preg_match('/^([0-9]+)\.([0-9]+)\.([0-9]+)(-(BETA|RC)[0-9]+)?$/', $newVersion, $releaseMatches)) {
+                $io->error('Version must be in format X.Y.Z or X.Y.Z-BETAn or X.Y.Z-RCn (e.g., 1.2.3 or 1.2.3-RC1)');
 
                 return Command::FAILURE;
             }
-            [$newMajor, $newMinor, $newPatch] = explode('.', $newVersion);
+            [, $newMajor, $newMinor, $newPatch] = $releaseMatches;
+        } elseif (null !== $stability && !$isMajor && !$isBeta && !$isRc) {
+            $io->error(\sprintf('Current version %s is a pre-release, use --beta, --rc or --major to continue.', $currentVersion));
+
+            return Command::FAILURE;
+        } elseif ($isBeta || $isRc) {
+            if ('RC' === $stability && $isBeta) {
+                $io->error(\sprintf('Current version %s is already a release candidate, use --rc or --major to continue.', $currentVersion));
+
+                return Command::FAILURE;
+            }
+
+            $newStability = $isBeta ? 'BETA' : 'RC';
+            if (null === $stability) {
+                $newMajor = (int) $major + 1;
+                $newMinor = 0;
+                $newPatch = 0;
+            } else {
+                $newMajor = (int) $major;
+                $newMinor = (int) $minor;
+                $newPatch = (int) $patch;
+            }
+            $newStabilityNumber = $newStability === $stability ? $stabilityNumber + 1 : 1;
+            $newVersion = \sprintf('%s.%s.%s-%s%d', $newMajor, $newMinor, $newPatch, $newStability, $newStabilityNumber);
+        } elseif ($isMajor && null !== $stability) {
+            $newMajor = (int) $major;
+            $newMinor = (int) $minor;
+            $newPatch = (int) $patch;
+            $newVersion = \sprintf('%s.%s.%s', $newMajor, $newMinor, $newPatch);
         } elseif ($isMajor) {
             $newMajor = (int) $major + 1;
             $newMinor = 0;
@@ -118,7 +159,7 @@ use Symfony\Component\Finder\Finder;
             // For major bumps, use the new major version constraint (^X.0)
             if ($isPatch) {
                 $composerConstraint = \sprintf('^%s.%s', $newMajor, $newMinor);
-            } elseif ($isMinor || $isMajor) {
+            } elseif ($isMinor || $isMajor || $isBeta || $isRc) {
                 $composerConstraint = \sprintf('^%s.%s', $newMajor, $newMinor);
             } elseif ($releaseVersion) {
                 // For explicit version, use ^X.Y
@@ -136,7 +177,7 @@ use Symfony\Component\Finder\Finder;
         }
 
         $newAppPhpContent = preg_replace(
-            '/public const VERSION = \'[0-9]+\.[0-9]+\.[0-9]+\';/',
+            '/public const VERSION = \'[0-9]+\.[0-9]+\.[0-9]+(-(BETA|RC)[0-9]+)?\';/',
             \sprintf("public const VERSION = '%s';", $newVersion),
             $appPhpContent
         );
