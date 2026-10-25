@@ -253,7 +253,45 @@ failed execution::
 
 ``getId()`` returns a UUID that identifies this run. The conversation is identified by the id of its ``MessageBag``.
 The last message returned by ``getMessages()`` carries the id in its ``execution_id`` metadata, so it is stored with
-the message.
+the message. Every assistant message of a run also carries its ``round`` metadata, a positive integer. It continues
+after the highest ``round`` already in the conversation, or after the number of its assistant messages if that is
+higher, so a run that continues a ``MessageBag`` numbers on, also when one assistant message holds several rounds.
+
+Stepwise runs
+~~~~~~~~~~~~~
+
+An agent can also be driven in steps, so workers in different processes advance one conversation. The ``MessageBag``
+is the only state. Two options limit a run. ``max_rounds`` is a positive integer. The run does at most that many model
+rounds and executes the tools of the last round. Then it stops without another model call. With ``defer_tool_calls``
+the run stops as soon as the model asks for tools and leaves the deferred calls open. Both options count per
+run and never reach the platform. A stopped run skips the output processors, since it has no final answer.
+
+``defer_tool_calls`` takes three forms. With ``true`` every call is deferred. A list of tool names defers the calls to
+those tools. A closure receives each ``ToolCall`` and returns ``true`` to defer it. When only some calls of a round are
+deferred, the agent executes the others in the same round and appends their ``ToolCallMessage``, in the order of the
+model's calls. The run then stops. ``getPendingToolCalls()`` lists exactly the deferred calls. This fits tools that run
+on the client, approvals and questions for the user, while server tools keep running right away::
+
+    $execution = $agent->call($messages, ['defer_tool_calls' => ['ask_user', 'open_url']]);
+
+    $execution = $agent->call($messages, ['defer_tool_calls' => true]);
+    $messages = $execution->getMessages();
+
+    if (ExecutionStatus::WaitingForInput === $execution->getStatus()) {
+        foreach ($execution->getPendingToolCalls() as $toolCall) {
+            $messages = $messages->with(Message::ofToolCall($toolCall, $runTheTool($toolCall)));
+        }
+    }
+
+    $execution = $agent->call($messages, ['defer_tool_calls' => true]);
+
+A worker loop reads the status. ``Pending`` means the next model round is due, so call the agent again with the
+messages. ``WaitingForInput`` means tool calls have no answer. Append a ``ToolCallMessage`` for each of them, then call
+the agent again. ``Completed`` means the run is done. Nothing keeps the ``MessageBag`` between the steps, so the
+application stores it.
+
+Stopping the iteration of an execution works inside one process. The options exist for workers in different
+processes, since the state is the ``MessageBag`` and no generator has to survive between the steps.
 
 Tools
 -----

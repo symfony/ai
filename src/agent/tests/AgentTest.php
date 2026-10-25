@@ -18,6 +18,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\ExecutionStatus;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
@@ -420,6 +421,72 @@ final class AgentTest extends TestCase
         $this->assertSame(30, $execution->getMetadata()->get('token_usage')->getPromptTokens());
     }
 
+    public function testMaxRoundsRunsTheAgentInSteps()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $results = [new ToolCallResult([$toolCall]), new TextResult('It is sunny.')];
+        $options = ['unset'];
+        $platform = MockPlatformFactory::createPlatform(static function (mixed $model, mixed $input, array $invocationOptions) use (&$results, &$options): ResultInterface {
+            $options = $invocationOptions;
+
+            return array_shift($results);
+        });
+        $agent = new Agent($platform, 'gpt-4', toolbox: $this->countingToolbox($toolCall, $executions));
+
+        $first = $agent->call(new MessageBag(Message::ofUser('Weather?')), ['max_rounds' => 1]);
+        $messages = $first->getMessages();
+
+        $this->assertSame(1, $executions);
+        $this->assertSame(ExecutionStatus::Pending, $first->getStatus());
+        $this->assertInstanceOf(ToolCallMessage::class, $messages->getMessages()[array_key_last($messages->getMessages())]);
+        $this->assertArrayNotHasKey('max_rounds', $options);
+
+        $second = $agent->call($messages, ['max_rounds' => 1]);
+
+        $this->assertSame('It is sunny.', $second->getContent());
+        $this->assertSame(ExecutionStatus::Completed, $second->getStatus());
+        $this->assertArrayNotHasKey('max_rounds', $options);
+    }
+
+    public function testDeferToolCallsLeavesTheToolCallsToTheCaller()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null)]);
+        $toolbox->expects($this->never())->method('execute');
+        $results = [new ToolCallResult([$toolCall]), new TextResult('It is sunny.')];
+        $platform = MockPlatformFactory::createPlatform(static function () use (&$results): ResultInterface {
+            return array_shift($results);
+        });
+        $outputProcessor = $this->createMock(OutputProcessorInterface::class);
+        $outputProcessor->expects($this->once())->method('processOutput');
+        $agent = new Agent($platform, 'gpt-4', [], [$outputProcessor], toolbox: $toolbox);
+
+        $first = $agent->call(new MessageBag(Message::ofUser('Weather?')), ['defer_tool_calls' => true]);
+        $messages = $first->getMessages();
+
+        $this->assertSame(ExecutionStatus::WaitingForInput, $first->getStatus());
+        $this->assertEquals([$toolCall], $first->getPendingToolCalls());
+        $this->assertSame($toolCall, $first->asToolCalls()[0]);
+        $this->assertSame($first->getId()->toRfc4122(), $messages->getMessages()[1]->getMetadata()->get('execution_id'));
+
+        $second = $agent->call($messages->with(Message::ofToolCall($toolCall, 'Sunny')), ['defer_tool_calls' => true]);
+
+        $this->assertSame('It is sunny.', $second->getContent());
+        $this->assertSame(ExecutionStatus::Completed, $second->getStatus());
+    }
+
+    public function testOutputProcessorsStillRunOnAToolCallResultWithoutStepOptions()
+    {
+        $platform = MockPlatformFactory::createPlatform(static fn (): ResultInterface => new ToolCallResult([new ToolCall('call_1', 'weather', [])]));
+        $outputProcessor = $this->createMock(OutputProcessorInterface::class);
+        $outputProcessor->expects($this->once())->method('processOutput');
+        $agent = new Agent($platform, 'gpt-4', [], [$outputProcessor]);
+
+        $agent->call('Weather?')->getResult();
+    }
+
     public function testGetMessagesMarksTheLastAssistantMessageWithTheExecutionId()
     {
         $agent = new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => new TextResult('Hi')), 'gpt-4');
@@ -527,5 +594,18 @@ final class AgentTest extends TestCase
         $agent = new Agent($platform, 'gpt-4', [], [], $name);
 
         $this->assertSame($name, $agent->getName());
+    }
+
+    private function countingToolbox(ToolCall $toolCall, int &$executions): ToolboxInterface
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null)]);
+        $toolbox->method('execute')->willReturnCallback(static function () use ($toolCall, &$executions): ToolResult {
+            ++$executions;
+
+            return new ToolResult($toolCall, 'Sunny');
+        });
+
+        return $toolbox;
     }
 }

@@ -11,12 +11,17 @@
 
 namespace Symfony\AI\Agent\Tests\Execution;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
+use Symfony\AI\Agent\Execution\ExecutionState;
+use Symfony\AI\Agent\Execution\ExecutionStatus;
 use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Execution\UpdateInterface;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\Source\Source;
@@ -31,6 +36,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\ToolCallMessage;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
@@ -62,6 +68,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class RunnerTest extends TestCase
 {
@@ -919,6 +926,369 @@ final class RunnerTest extends TestCase
         $this->assertInstanceOf(TextResult::class, $result);
     }
 
+    public function testMaxRoundsStopsAfterTheToolsOfTheLastRoundRan()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Never asked'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['max_rounds' => 1]);
+
+        $this->assertSame(1, $executions);
+        $this->assertCount(1, $this->invokedMessages);
+        $this->assertInstanceOf(ToolCallResult::class, $update->getResult());
+        $messages = $update->getMessages();
+        $this->assertInstanceOf(MessageBag::class, $messages);
+        $this->assertSame([UserMessage::class, AssistantMessage::class, ToolCallMessage::class], array_map(get_class(...), $messages->getMessages()));
+        $this->assertSame(ExecutionStatus::Pending, ExecutionState::statusOf($messages));
+    }
+
+    public function testMaxRoundsLargerThanNeededBehavesLikeNoLimit()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Done'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['max_rounds' => 5]);
+
+        $this->assertSame('Done', $update->getResult()->getContent());
+        $this->assertInstanceOf(MessageBag::class, $update->getMessages());
+        $this->assertSame(ExecutionStatus::Completed, ExecutionState::statusOf($update->getMessages()));
+    }
+
+    public function testMaxRoundsCountsPerRun()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Done'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $first = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['max_rounds' => 1]);
+        $second = $this->lastUpdate($runner, $first->getMessages(), ['max_rounds' => 1]);
+
+        $this->assertSame('Done', $second->getResult()->getContent());
+        $this->assertSame(1, $executions);
+    }
+
+    public function testDeferToolCallsStopsWithoutExecutingTheTools()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['a' => 1]);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Never asked'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => true]);
+
+        $this->assertSame(0, $executions);
+        $this->assertCount(1, $this->invokedMessages);
+        $this->assertInstanceOf(ToolCallResult::class, $update->getResult());
+        $messages = $update->getMessages();
+        $this->assertInstanceOf(MessageBag::class, $messages);
+        $this->assertSame([UserMessage::class, AssistantMessage::class], array_map(get_class(...), $messages->getMessages()));
+        $this->assertSame(ExecutionStatus::WaitingForInput, ExecutionState::statusOf($messages));
+        $this->assertEquals([$toolCall], ExecutionState::pendingToolCallsOf($messages));
+    }
+
+    public function testDeferToolCallsByNameRunsTheOtherToolsInTheSameRound()
+    {
+        $server = new ToolCall('id1', 'server_tool', ['a' => 1]);
+        $client = new ToolCall('id2', 'client_tool', []);
+        $executed = [];
+        $platform = $this->platform(new ToolCallResult([$server, $client]), new TextResult('Never asked'));
+        $runner = $this->createRunner($platform, $this->recordingToolbox($executed));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => ['client_tool']]);
+
+        $this->assertSame(['server_tool'], $executed);
+        $this->assertCount(1, $this->invokedMessages);
+        $messages = $update->getMessages();
+        $this->assertInstanceOf(MessageBag::class, $messages);
+        $this->assertSame([UserMessage::class, AssistantMessage::class, ToolCallMessage::class], array_map(get_class(...), $messages->getMessages()));
+        $assistant = $messages->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $assistant);
+        $this->assertEquals([$server, $client], $assistant->getToolCalls());
+        $this->assertSame(ExecutionStatus::WaitingForInput, ExecutionState::statusOf($messages));
+        $this->assertEquals([$client], ExecutionState::pendingToolCallsOf($messages));
+    }
+
+    public function testDeferToolCallsByClosureReceivesEachCall()
+    {
+        $server = new ToolCall('id1', 'server_tool', []);
+        $client = new ToolCall('id2', 'client_tool', ['ask' => true]);
+        $seen = [];
+        $executed = [];
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$server, $client])), $this->recordingToolbox($executed));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => static function (ToolCall $toolCall) use (&$seen): bool {
+            $seen[] = $toolCall->getName();
+
+            return [] !== $toolCall->getArguments();
+        }]);
+
+        $this->assertSame(['server_tool', 'client_tool'], $seen);
+        $this->assertSame(['server_tool'], $executed);
+        $this->assertEquals([$client], ExecutionState::pendingToolCallsOf($update->getMessages()));
+    }
+
+    public function testDeferToolCallsTrueStillDefersEveryCall()
+    {
+        $first = new ToolCall('id1', 'server_tool', []);
+        $second = new ToolCall('id2', 'client_tool', []);
+        $executed = [];
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$first, $second])), $this->recordingToolbox($executed));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => true]);
+
+        $this->assertSame([], $executed);
+        $this->assertEquals([$first, $second], ExecutionState::pendingToolCallsOf($update->getMessages()));
+    }
+
+    public function testDeferToolCallsFalseDefersNoCall()
+    {
+        $first = new ToolCall('id1', 'server_tool', []);
+        $second = new ToolCall('id2', 'client_tool', []);
+        $executed = [];
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$first, $second]), new TextResult('Done')), $this->recordingToolbox($executed));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => false]);
+
+        $this->assertSame(['server_tool', 'client_tool'], $executed);
+        $this->assertSame('Done', $update->getResult()->getContent());
+    }
+
+    public function testARoundWithoutADeferredCallContinuesToTheFinalAnswer()
+    {
+        $toolCall = new ToolCall('id1', 'server_tool', []);
+        $executed = [];
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$toolCall]), new TextResult('Done')), $this->recordingToolbox($executed));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => ['client_tool']]);
+
+        $this->assertSame(['server_tool'], $executed);
+        $this->assertCount(2, $this->invokedMessages);
+        $this->assertSame('Done', $update->getResult()->getContent());
+        $this->assertSame(ExecutionStatus::Completed, ExecutionState::statusOf($update->getMessages()));
+    }
+
+    public function testToolMessagesOfAPartialDeferFollowTheOrderOfTheModelsCalls()
+    {
+        $first = new ToolCall('id1', 'server_a', []);
+        $deferred = new ToolCall('id2', 'client_tool', []);
+        $third = new ToolCall('id3', 'server_b', []);
+        $executed = [];
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$first, $deferred, $third])), $this->recordingToolbox($executed));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => ['client_tool']]);
+
+        $this->assertSame(['server_a', 'server_b'], $executed);
+        $answered = [];
+        foreach ($update->getMessages()->getMessages() as $message) {
+            if ($message instanceof ToolCallMessage) {
+                $text = $message->getContent()[0];
+                $this->assertInstanceOf(Text::class, $text);
+                $answered[] = [$message->getToolCall()->getId(), $text->getText()];
+            }
+        }
+        $this->assertSame([['id1', 'answer of server_a'], ['id3', 'answer of server_b']], $answered);
+    }
+
+    public function testAPartialDeferCollectsTheSourcesOfTheExecutedCalls()
+    {
+        $server = new ToolCall('id1', 'server_tool', []);
+        $client = new ToolCall('id2', 'client_tool', []);
+        $source = new Source('Title', 'https://example.com', 'Content');
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturn(new ToolResult($server, 'answer', new SourceCollection([$source])));
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$server, $client])), $toolbox, includeSources: true);
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => ['client_tool']]);
+
+        $this->assertEquals(new SourceCollection([$source]), $update->getResult()->getMetadata()->get('sources'));
+    }
+
+    public function testAPartialDeferFiresTheEventWithTheExecutedResults()
+    {
+        $server = new ToolCall('id1', 'server_tool', []);
+        $client = new ToolCall('id2', 'client_tool', []);
+        $executed = [];
+        $dispatched = [];
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ToolCallsExecuted::class, static function (ToolCallsExecuted $event) use (&$dispatched): void {
+            $dispatched[] = array_map(static fn (ToolResult $result): string => $result->getToolCall()->getName(), $event->getToolResults());
+            $event->setResult(new TextResult('Replaced'));
+        });
+        $toolbox = $this->recordingToolbox($executed);
+        $runner = new Runner($this->platform(new ToolCallResult([$server, $client])), $toolbox, new SequentialToolExecutor($toolbox), eventDispatcher: $dispatcher);
+        $last = null;
+        foreach ($runner->run('gpt-4', new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => ['client_tool']]) as $update) {
+            $last = $update;
+        }
+
+        $this->assertSame([['server_tool']], $dispatched);
+        $this->assertInstanceOf(ResultUpdate::class, $last);
+        $this->assertInstanceOf(ToolCallResult::class, $last->getResult());
+        $this->assertEquals([$client], ExecutionState::pendingToolCallsOf($last->getMessages()));
+    }
+
+    public function testEveryAssistantMessageCarriesItsRoundNumber()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Done'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')));
+
+        $this->assertSame([1, 2], $this->roundsOf($update->getMessages()));
+    }
+
+    public function testRoundNumbersContinueInTheNextRun()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Done'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $first = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['max_rounds' => 1]);
+        $second = $this->lastUpdate($runner, $first->getMessages());
+
+        $this->assertSame([1], $this->roundsOf($first->getMessages()));
+        $this->assertSame([1, 2], $this->roundsOf($second->getMessages()));
+    }
+
+    public function testRoundNumbersContinueAfterDeferredToolCalls()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new ToolCallResult([$toolCall]), new TextResult('Done'));
+        $runner = $this->createRunner($platform, $this->countingToolbox($toolCall, $executions));
+
+        $first = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => true]);
+        $bag = $this->withToolResult($first, $toolCall);
+        $second = $this->lastUpdate($runner, $bag, ['defer_tool_calls' => true]);
+        $bag = $this->withToolResult($second, $toolCall);
+        $third = $this->lastUpdate($runner, $bag);
+
+        $this->assertSame([1], $this->roundsOf($first->getMessages()));
+        $this->assertSame([1, 2], $this->roundsOf($second->getMessages()));
+        $this->assertSame([1, 2, 3], $this->roundsOf($third->getMessages()));
+    }
+
+    public function testRoundNumbersContinueAfterTheHighestRoundOnTheMessages()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$toolCall]), new TextResult('Done')), $this->countingToolbox($toolCall, $executions));
+        $answer = Message::ofAssistant('Rounds one to four in one message');
+        $answer->getMetadata()->add('round', 4);
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi'), $answer, Message::ofUser('More')));
+
+        $this->assertSame([4, 5, 6], $this->roundsOf($update->getMessages()));
+    }
+
+    public function testRoundNumbersFallBackToTheAssistantMessagesWithoutRoundMetadata()
+    {
+        $executions = 0;
+        $runner = $this->createRunner($this->platform(new TextResult('Done')), $this->countingToolbox(new ToolCall('id1', 'tool1', []), $executions));
+
+        $update = $this->lastUpdate($runner, new MessageBag(
+            Message::ofUser('Hi'),
+            Message::ofAssistant('One'),
+            Message::ofUser('Again'),
+            Message::ofAssistant('Two'),
+            Message::ofUser('And again'),
+        ));
+
+        $this->assertSame([null, null, 3], $this->roundsOf($update->getMessages()));
+    }
+
+    public function testStreamedRoundsCarryTheirRoundNumber()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $executions = 0;
+        $toolStream = new StreamResult((static function () use ($toolCall) {
+            yield new TextDelta('Let me check');
+            yield new ToolCallComplete([$toolCall]);
+        })());
+        $finalStream = new StreamResult((static function () {
+            yield new TextDelta('Done');
+        })());
+        $runner = $this->createRunner($this->platform($toolStream, $finalStream), $this->countingToolbox($toolCall, $executions));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')));
+
+        $this->assertSame([1, 2], $this->roundsOf($update->getMessages()));
+    }
+
+    public function testDeferToolCallsHonorsTheToolsOption()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null)]);
+        $runner = $this->createRunner($this->platform(new ToolCallResult([$toolCall])), $toolbox);
+
+        $this->expectException(ToolNotFoundException::class);
+
+        $this->collectUpdates($runner, new MessageBag(), ['defer_tool_calls' => true, 'tools' => []]);
+    }
+
+    public function testDeferToolCallsWithoutToolExecutorChangesNothing()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $runner = new Runner($this->platform(new ToolCallResult([$toolCall])));
+
+        $update = $this->lastUpdate($runner, new MessageBag(Message::ofUser('Hi')), ['defer_tool_calls' => true]);
+
+        $this->assertInstanceOf(ToolCallResult::class, $update->getResult());
+    }
+
+    public function testStepOptionsDoNotReachThePlatform()
+    {
+        $captured = [];
+        $platform = MockPlatformFactory::createPlatform(static function (mixed $model, mixed $input, array $invocationOptions) use (&$captured): TextResult {
+            $captured = $invocationOptions;
+
+            return new TextResult('Done');
+        });
+        $toolbox = $this->createStub(ToolboxInterface::class);
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['max_rounds' => 2, 'defer_tool_calls' => false, 'temperature' => 0.5]);
+
+        $this->assertSame(['temperature' => 0.5], $captured);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    #[DataProvider('provideInvalidStepOptions')]
+    public function testInvalidStepOptionsThrow(array $options)
+    {
+        $runner = $this->createRunner($this->platform(new TextResult('Done')), $this->createStub(ToolboxInterface::class));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->collectUpdates($runner, new MessageBag(), $options);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function provideInvalidStepOptions(): iterable
+    {
+        yield 'zero rounds' => [['max_rounds' => 0]];
+        yield 'negative rounds' => [['max_rounds' => -1]];
+        yield 'string rounds' => [['max_rounds' => '2']];
+        yield 'non-bool defer' => [['defer_tool_calls' => 'yes']];
+        yield 'defer list with a non-string' => [['defer_tool_calls' => ['tool1', 1]]];
+        yield 'defer list with an empty name' => [['defer_tool_calls' => ['']]];
+        yield 'defer map' => [['defer_tool_calls' => ['tool1' => true]]];
+        yield 'defer callable string' => [['defer_tool_calls' => 'strlen']];
+    }
+
     public function testSourcesDoNotLeakFromAFailedRunIntoTheNextOne()
     {
         $failingToolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
@@ -1003,6 +1373,74 @@ final class RunnerTest extends TestCase
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello world!', $result->getContent());
+    }
+
+    private function withToolResult(ResultUpdate $update, ToolCall $toolCall): MessageBag
+    {
+        $messages = $update->getMessages();
+        $this->assertInstanceOf(MessageBag::class, $messages);
+
+        return $messages->with(Message::ofToolCall($toolCall, 'result'));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function roundsOf(?MessageBag $messages): array
+    {
+        $this->assertInstanceOf(MessageBag::class, $messages);
+
+        $rounds = [];
+        foreach ($messages->getMessages() as $message) {
+            if ($message instanceof AssistantMessage) {
+                $rounds[] = $message->getMetadata()->get('round');
+            }
+        }
+
+        return $rounds;
+    }
+
+    /**
+     * @param list<string> $executed
+     *
+     * @param-out list<string> $executed
+     */
+    private function recordingToolbox(array &$executed): ToolboxInterface
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturnCallback(static function (ToolCall $toolCall) use (&$executed): ToolResult {
+            $executed[] = $toolCall->getName();
+
+            return new ToolResult($toolCall, 'answer of '.$toolCall->getName());
+        });
+
+        return $toolbox;
+    }
+
+    private function countingToolbox(ToolCall $toolCall, int &$executions): ToolboxInterface
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturnCallback(static function () use ($toolCall, &$executions): ToolResult {
+            ++$executions;
+
+            return new ToolResult($toolCall, 'Tool answer');
+        });
+
+        return $toolbox;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function lastUpdate(Runner $runner, MessageBag $messages, array $options = []): ResultUpdate
+    {
+        $updates = $this->collectUpdates($runner, $messages, $options);
+        $last = end($updates);
+        $this->assertInstanceOf(ResultUpdate::class, $last);
+
+        return $last;
     }
 
     /**
