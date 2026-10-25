@@ -30,6 +30,16 @@ The package ships with the `symfony/ai-mate-composer-plugin`, which automaticall
 refreshes Mate extension discovery after `composer install` and `composer update` once the
 project has been initialized.
 
+## Backward Compatibility
+
+Mate is a development tool, so its backward compatibility promise is narrower than the one of
+the other components. Covered are the CLI interface (commands, arguments, options), the
+definition of tools and resources (name, parameters, input schema), the user-facing
+customization (`mate/config.php`, `mate/extensions.php`, `extra.ai-mate`) and the extension
+points (`#[MateTool]`, `#[MateResource]`, `#[MateResourceTemplate]`). Not covered are the
+content of tool responses, agent instructions, skills and everything marked `@internal`.
+See the [documentation](https://symfony.com/doc/current/ai/components/mate.html#backward-compatibility).
+
 ## Installation
 
 ```bash
