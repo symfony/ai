@@ -358,7 +358,7 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                     'weaviate' => [
-                        'main' => [
+                        'secondary' => [
                             'endpoint' => 'http://localhost:8080',
                             'api_key' => 'bar',
                             'collection' => 'my_weaviate_collection',
@@ -368,11 +368,12 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $main'));
+        $this->assertSame('ai.store.memory.main', (string) $container->getAlias(StoreInterface::class.' $main'));
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $secondary_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $secondaryWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_main'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMain'));
+        $this->assertSame('ai.store.weaviate.secondary', (string) $container->getAlias(StoreInterface::class.' $secondary'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $memoryMain'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $weaviateSecondary'));
     }
 
     public function testInjectionMessageStoreAliasIsRegistered()
@@ -395,9 +396,8 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $main'));
-        $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $memory_main'));
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $session'));
-        $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $session_session'));
+        $this->assertFalse($container->hasAlias(MessageStoreInterface::class.' $memoryMain'));
     }
 
     public function testInjectionChatAliasIsRegistered()
@@ -759,7 +759,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom vector field
@@ -801,7 +800,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Scoped HttpClient
@@ -839,7 +837,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -880,7 +877,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cache_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom cache key
@@ -918,9 +914,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_key'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomKey'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomKey'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom strategy
@@ -958,9 +952,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom cache key and strategy
@@ -999,9 +991,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_strategy_and_custom_key'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategyAndCustomKey'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategyAndCustomKey'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1039,9 +1029,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom client
@@ -1078,9 +1066,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store_with_custom_client'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStoreWithCustomClient'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStoreWithCustomClient'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Empty collection name
@@ -1114,9 +1100,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1200,7 +1184,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_clickhouse_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myClickhouseStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $clickhouseMyClickhouseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1243,7 +1226,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_clickhouse_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myClickhouseStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $clickhouseMyClickhouseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1352,7 +1334,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom index
@@ -1395,7 +1376,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom dimensions
@@ -1438,7 +1418,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom endpoint
@@ -1484,7 +1463,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom HttpClient
@@ -1523,7 +1501,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1566,8 +1543,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_elasticsearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myElasticsearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $elasticsearch_my_elasticsearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $elasticsearchMyElasticsearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1665,7 +1640,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1710,7 +1684,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1755,7 +1728,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1800,7 +1772,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1850,7 +1821,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1918,8 +1888,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mariadb_my_mariadb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mariadbMyMariadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1965,8 +1933,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mariadb_my_mariadb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mariadbMyMariadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2012,8 +1978,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -2057,8 +2021,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom semantic ratio
@@ -2104,8 +2066,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom HttpClient
@@ -2145,8 +2105,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2178,8 +2136,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_memory_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $memory_my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $memoryMyMemoryStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2214,8 +2170,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_memory_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $memory_my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $memoryMyMemoryStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2262,8 +2216,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2311,8 +2263,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2360,8 +2310,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2431,8 +2379,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2476,8 +2422,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2521,8 +2465,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2566,8 +2508,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2612,8 +2552,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2687,8 +2625,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2740,8 +2676,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2798,8 +2732,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2871,8 +2803,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2916,8 +2846,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2961,8 +2889,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3006,8 +2932,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3051,8 +2975,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3120,8 +3042,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3158,8 +3078,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_pinecone_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $pineconeMyPineconeStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3246,8 +3164,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_pinecone_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $pineconeMyPineconeStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3288,8 +3204,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3331,8 +3245,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3369,8 +3281,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3408,8 +3318,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3448,8 +3356,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom lang
@@ -3490,8 +3396,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3567,8 +3471,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3611,8 +3513,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3656,8 +3556,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3702,8 +3600,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3745,8 +3641,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3789,8 +3683,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3910,8 +3802,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3952,8 +3842,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3995,8 +3883,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4038,8 +3924,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4088,8 +3972,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_sqlite_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySqliteStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $sqlite_my_sqlite_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $sqliteMySqliteStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Store with DBAL connection uses fromDbal factory
@@ -4281,8 +4163,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4325,8 +4205,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4369,8 +4247,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4437,8 +4313,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4489,8 +4363,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4542,8 +4414,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4600,8 +4470,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4651,8 +4519,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4696,8 +4562,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4742,8 +4606,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4788,8 +4650,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4831,8 +4691,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -4872,8 +4730,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -4914,8 +4770,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4951,8 +4805,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
 
         $container = $this->buildContainer([
@@ -4987,8 +4839,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
 
         $container = $this->buildContainer([
@@ -5023,8 +4873,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
@@ -8891,6 +8739,192 @@ class AiBundleTest extends TestCase
     }
 
     #[TestDox('Comprehensive multi-agent configuration with all features works correctly')]
+    public function testStoreNameConflictAcrossTypesThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "cache.default", "memory.default" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'default' => [],
+                        'blog' => [],
+                    ],
+                    'memory' => [
+                        'default' => [],
+                        'docs' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testMessageStoreNameConflictAcrossTypesThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The message stores "cache.chat", "memory.chat", "session.chat" have conflicting names, message store names must be unique across all message store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'cache' => [
+                        'chat' => [],
+                    ],
+                    'memory' => [
+                        'chat' => [],
+                        'support' => [],
+                    ],
+                    'session' => [
+                        'chat' => [],
+                        'support' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testStoreNamesConflictingAsArgumentNameThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "cache.blog_store", "memory.blogStore" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'blog_store' => [],
+                    ],
+                    'memory' => [
+                        'blogStore' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testStoreNamesConflictingInCaseOfFirstLetterThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "cache.Main", "memory.main" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'Main' => [],
+                    ],
+                    'memory' => [
+                        'main' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineMessageStoreNameConflictThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The message stores "doctrine.dbal.chat", "memory.chat" have conflicting names, message store names must be unique across all message store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'doctrine' => [
+                        'dbal' => [
+                            'chat' => [
+                                'connection' => 'default',
+                            ],
+                        ],
+                    ],
+                    'memory' => [
+                        'chat' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineMessageStoreNamesAreNotConfusedWithDriver()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'doctrine' => [
+                        'dbal' => [
+                            'chat' => [
+                                'connection' => 'default',
+                            ],
+                        ],
+                    ],
+                    'memory' => [
+                        'dbal' => [
+                            'identifier' => 'dbal',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.message_store.doctrine.dbal.chat'));
+        $this->assertTrue($container->hasDefinition('ai.message_store.memory.dbal'));
+    }
+
+    public function testFailoverPlatformNameConflictWithPlatformThrowsException()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The platforms "ai.platform.anthropic" and "ai.platform.failover.anthropic" have conflicting names, platform names must be unique.');
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'failover' => [
+                        'anthropic' => [
+                            'platforms' => ['ai.platform.openai', 'ai.platform.anthropic'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testFailoverPlatformNameConflictingAsArgumentNameThrowsException()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The platforms "ai.platform.azure.main" and "ai.platform.failover.azure_main" have conflicting names, platform names must be unique.');
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'azure' => [
+                        'main' => [
+                            'api_key' => 'azure_key',
+                            'base_url' => 'myazure.openai.azure.com/',
+                            'deployment' => 'gpt-35-turbo',
+                            'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'azure_main' => [
+                            'platforms' => ['ai.platform.openai', 'ai.platform.azure.main'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function testComprehensiveMultiAgentHappyPath()
     {
         $container = $this->buildContainer([
@@ -9544,7 +9578,6 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $mongodb_custom'));
         $this->assertFalse($container->hasAlias(StoreInterface::class.' $custom'));
         $this->assertFalse($container->hasAlias('.'.StoreInterface::class.' $mongodb_custom'));
     }
@@ -9751,7 +9784,6 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $surrealdb_custom'));
         $this->assertFalse($container->hasAlias(StoreInterface::class.' $custom'));
         $this->assertFalse($container->hasAlias('.'.StoreInterface::class.' $surrealdb_custom'));
     }

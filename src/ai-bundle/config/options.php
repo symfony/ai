@@ -20,10 +20,32 @@ use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
     $import = fn (string $resource): ArrayNodeDefinition => require __DIR__.'/'.$resource.'.php';
+    $assertUniqueNames = static fn (string $message): \Closure => static function (array $types) use ($message): array {
+        $namesByArgument = [];
+        foreach ($types as $type => $services) {
+            if ('doctrine' === $type) {
+                $type .= '.dbal';
+                $services = $services['dbal'] ?? [];
+            }
+
+            foreach (array_keys($services) as $name) {
+                $namesByArgument[(new Target((string) $name))->getParsedName()][] = $type.'.'.$name;
+            }
+        }
+
+        foreach ($namesByArgument as $names) {
+            if (\count($names) > 1) {
+                throw new InvalidArgumentException(\sprintf($message, implode('", "', $names)));
+            }
+        }
+
+        return $types;
+    };
 
     $configurator->rootNode()
         ->children()
@@ -476,6 +498,9 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/weaviate'))
                     ->append($import('store/vektor'))
                 ->end()
+                ->validate()
+                    ->always($assertUniqueNames('The stores "%s" have conflicting names, store names must be unique across all store types.'))
+                ->end()
             ->end()
             ->arrayNode('message_store')
                 ->children()
@@ -489,6 +514,9 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('message_store/redis'))
                     ->append($import('message_store/session'))
                     ->append($import('message_store/surrealdb'))
+                ->end()
+                ->validate()
+                    ->always($assertUniqueNames('The message stores "%s" have conflicting names, message store names must be unique across all message store types.'))
                 ->end()
             ->end()
             ->arrayNode('chat')

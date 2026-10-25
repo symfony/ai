@@ -273,13 +273,10 @@ this platform allows to reduce network calls / resource consumption:
 Store Dependency Injection
 --------------------------
 
-When using multiple stores in your application, the AI Bundle provides flexible dependency injection through store aliases.
-This allows you to inject specific stores into your services without conflicts, even when stores share the same name across different types.
-
-For each configured store, the bundle automatically creates two types of aliases:
-
-1. **Simple alias**: ``StoreInterface $storeName`` - Direct reference by store name
-2. **Type-prefixed alias**: ``StoreInterface $typeStoreName`` - Reference with store type prefix in camelCase
+When using multiple stores in your application, the AI Bundle registers an alias for each store,
+named after the store, to inject it into your services. Store names must be unique across all store
+types, so each name points to exactly one store. Names like ``blog_store`` and ``blogStore`` count as
+the same, because both lead to the ``StoreInterface $blogStore`` alias.
 
 .. code-block:: yaml
 
@@ -288,37 +285,26 @@ For each configured store, the bundle automatically creates two types of aliases
             memory:
                 main:
                     strategy: 'cosine'
-                products:
-                    strategy: 'manhattan'
             chromadb:
-                main:
+                documents:
                     collection: 'documents'
 
-From the configuration above, the following aliases are automatically registered:
-
-- ``StoreInterface $main`` - References the chromadb store (type defined last)
-- ``StoreInterface $memoryMain`` - Explicitly references the memory store
-- ``StoreInterface $chromadbMain`` - Explicitly references the chromadb store
-- ``StoreInterface $products`` - References the memory products store
-- ``StoreInterface $memoryProducts`` - Explicitly references the memory products store
-
-You can inject stores into your services using the generated aliases::
+From the configuration above, the bundle registers ``StoreInterface $main`` for the memory store and
+``StoreInterface $documents`` for the chromadb store::
 
     use Symfony\AI\Store\StoreInterface;
 
     final readonly class DocumentService
     {
         public function __construct(
-            private StoreInterface $main,              // Uses chromadb store (type defined last)
-            private StoreInterface $chromadbMain,      // Explicitly uses chromadb store
-            private StoreInterface $memoryProducts,    // Explicitly uses memory products store
+            private StoreInterface $main,
+            private StoreInterface $documents,
         ) {
         }
     }
 
-When multiple stores share the same name (like ``main`` in the example), the simple alias (``$main``) will reference the store of the type defined last in the configuration,
-so reordering the store types changes which store is injected.
-Use type-prefixed aliases (``$memoryMain``, ``$chromadbMain``) for explicit disambiguation.
+The same applies to message stores: their names must be unique across all message store types, and
+each one gets a ``MessageStoreInterface`` alias named after it.
 
 Model Configuration
 -------------------
