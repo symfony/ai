@@ -25,11 +25,13 @@ use Symfony\AI\Agent\OutputProcessorInterface;
 use Symfony\AI\Agent\Tests\Fixtures\MessageBagCapturingProcessor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
+use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
@@ -44,6 +46,7 @@ use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class AgentTest extends TestCase
@@ -345,6 +348,29 @@ final class AgentTest extends TestCase
         $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
 
         $agent->call(new MessageBag(), [])->getResult();
+    }
+
+    public function testConvertsToolResultsWithTheGivenConverter()
+    {
+        $toolCall = new ToolCall('id1', 'tool1');
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null)]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, ['raw' => 'result']));
+
+        $serializer = $this->createStub(SerializerInterface::class);
+        $serializer->method('serialize')->willReturn('converted result');
+
+        $invocations = 0;
+        $platform = MockPlatformFactory::createPlatform(static function () use (&$invocations, $toolCall): ResultInterface|string {
+            return 1 === ++$invocations ? new ToolCallResult([$toolCall]) : 'Final answer';
+        });
+
+        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, toolResultConverter: new ToolResultConverter($serializer));
+        $agent->call($messages = new MessageBag(), [])->getResult();
+
+        $toolCallMessages = array_values(array_filter($messages->getMessages(), static fn ($message): bool => $message instanceof ToolCallMessage));
+        $this->assertCount(1, $toolCallMessages);
+        $this->assertSame('converted result', $toolCallMessages[0]->asText());
     }
 
     public function testGetNameReturnsDefaultName()

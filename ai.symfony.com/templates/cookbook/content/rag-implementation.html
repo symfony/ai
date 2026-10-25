@@ -227,27 +227,10 @@ documents from a source (file path, URL, etc.) via a <a href="https://github.com
 <p>The <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Bridge/SimilaritySearch/SimilaritySearch.php" class="reference external" title="Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch" rel="external noopener noreferrer" target="_blank">SimilaritySearch</a> tool:</p>
 <ul>
     <li>Uses the retriever to find similar documents in the store</li>
-<li>Returns the most relevant documents</li>
+<li>Returns the most relevant documents to the model as a JSON list, each with its id and metadata</li>
+<li>Adds these documents as sources of the agent result, when <code translate="no" class="notranslate">includeSources</code> is enabled (see
+<a href="https://symfony.com/doc/current/ai/components/agent.html#agent-tool-sources" class="reference internal">Tool Sources</a>)</li>
 </ul>
-<p>You can customize the result header by passing a prompt template:</p>
-<div translate="no" class="highlight-php notranslate">
-    <table class="highlighttable">
-        <tbody>
-            <tr>
-                <td class="linenos">
-                    <div class="linenodiv">
-                        <pre>1</pre>
-                    </div>
-                </td>
-                <td class="code">
-                    <div class="highlight">
-                        <pre class="hljs php"><span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>similaritySearch</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">SimilaritySearch</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>retriever</span>, <span class="hljs-string">'Here are the relevant results:'</span>);</pre>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
 </div>
 <div class="section">
 <h2 id="step-5-create-rag-enabled-agent">

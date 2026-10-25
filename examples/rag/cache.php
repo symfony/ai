@@ -24,7 +24,6 @@ use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
 use Symfony\AI\Store\Retriever;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
-use Symfony\Component\Uid\Uuid;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -35,7 +34,7 @@ $store = StoreFactory::create(new ArrayAdapter(), 'movies');
 $documents = [];
 foreach (Movies::all() as $i => $movie) {
     $documents[] = new TextDocument(
-        id: Uuid::v4(),
+        id: 'movie-'.$i,
         content: 'Title: '.$movie['title'].\PHP_EOL.'Director: '.$movie['director'].\PHP_EOL.'Description: '.$movie['description'],
         metadata: new Metadata($movie),
     );

@@ -999,8 +999,39 @@ Some tools may require additional configuration even when installed as dedicated
 
         Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
             $retriever: '@ai.retriever.main'
-            # optionally customize the result header
-            # $promptTemplate: 'Here are the relevant results:'
+
+The SimilaritySearch tool returns a
+:class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearchResult`, which the agent serializes
+with the ``serializer`` service. By default, the model gets a JSON list of the documents with their id and metadata.
+To change what the model gets, register a normalizer for this class::
+
+    use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearchResult;
+    use Symfony\AI\Store\Document\VectorDocumentInterface;
+    use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+
+    final class SimilaritySearchResultNormalizer implements NormalizerInterface
+    {
+        public function normalize(mixed $data, ?string $format = null, array $context = []): array
+        {
+            return array_map(
+                static fn (VectorDocumentInterface $document): array => [
+                    'id' => $document->getId(),
+                    'text' => $document->getMetadata()->getText(),
+                ],
+                $data->getDocuments(),
+            );
+        }
+
+        public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
+        {
+            return $data instanceof SimilaritySearchResult;
+        }
+
+        public function getSupportedTypes(?string $format): array
+        {
+            return [SimilaritySearchResult::class => true];
+        }
+    }
 
 Creating Custom Tools
 ---------------------

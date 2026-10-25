@@ -247,6 +247,21 @@ Tool Return Value
 In the end, the tool's result needs to be a string, but Symfony AI converts arrays and objects, that implement the
 JsonSerializable interface, to JSON strings for you. So you can return arrays or objects directly from your tool.
 
+This conversion uses the Symfony Serializer. To control how a result is converted, pass a
+:class:`Symfony\\AI\\Agent\\Toolbox\\ToolResultConverter` with your own serializer to the agent::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Toolbox\ToolResultConverter;
+    use Symfony\Component\Serializer\Encoder\JsonEncoder;
+    use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
+    use Symfony\Component\Serializer\Serializer;
+
+    $serializer = new Serializer([new MyResultNormalizer(), new JsonSerializableNormalizer()], [new JsonEncoder()]);
+
+    $agent = new Agent($platform, $model, toolbox: $toolbox, toolResultConverter: new ToolResultConverter($serializer));
+
+In a Symfony application, the agent uses the ``serializer`` service, so registering a normalizer is enough.
+
 Tool Methods
 ~~~~~~~~~~~~
 
@@ -724,6 +739,8 @@ If you want to expose the underlying error to the LLM, you can throw a custom ex
             return $user->getAge();
         }
     }
+
+.. _agent-tool-sources:
 
 Tool Sources
 ~~~~~~~~~~~~

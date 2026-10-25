@@ -1574,7 +1574,8 @@ final class AiBundle extends AbstractBundle
                 ->setArgument('$maxToolCalls', $config['max_tool_calls'])
                 ->setArgument('$excludeToolMessages', $config['exclude_tool_messages'])
                 ->setArgument('$includeSources', $config['include_sources'])
-                ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE));
+                ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE))
+                ->setArgument('$toolResultConverter', new Reference('ai.tool_result_converter'));
 
             // Define specific list of tools if are explicitly defined
             if ([] !== $services) {
