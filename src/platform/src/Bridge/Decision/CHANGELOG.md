@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add optional `Image` inputs to `Evaluation`, omitted from text-only payloads
+
 0.15
 ----
 

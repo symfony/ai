@@ -157,4 +157,23 @@ final class ModelClientTest extends TestCase
 
         $client->request(new Jev('jev-latest'), ['state' => 'state', 'questions' => ['is_urgent' => 'Urgent?']]);
     }
+
+    public function testItRejectsImagesBeforeSendingARequest()
+    {
+        $httpClient = new MockHttpClient();
+        $client = new ModelClient($httpClient, 'test-key');
+
+        try {
+            $client->request(new Jev('jev-latest'), [
+                'state' => 'A photo',
+                'questions' => ['q' => ['type' => 'noul', 'instructions' => 'Portrait?']],
+                'images' => [base64_encode('image')],
+            ]);
+            $this->fail('TypeSafe must reject image inputs.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('The decision model "jev-latest" does not support image inputs.', $e->getMessage());
+        }
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
 }

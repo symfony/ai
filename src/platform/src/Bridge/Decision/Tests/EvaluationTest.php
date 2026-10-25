@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Decision\Evaluation;
 use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
 use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\Image;
 
 final class EvaluationTest extends TestCase
 {
@@ -59,5 +60,31 @@ final class EvaluationTest extends TestCase
 
         /* @phpstan-ignore argument.type */
         new Evaluation('state', ['is_urgent' => 'Does this convey urgency?']);
+    }
+
+    public function testItSerializesImagesInOrderAsRawBase64()
+    {
+        $evaluation = new Evaluation('A yearbook page.', ['photo' => new NoulQuestion('Is this a photograph?')], images: [
+            new Image('first image', 'image/png'),
+            new Image('second image', 'image/jpeg'),
+        ]);
+
+        $this->assertSame([base64_encode('first image'), base64_encode('second image')], $evaluation->jsonSerialize()['images']);
+    }
+
+    public function testItOmitsEmptyImages()
+    {
+        $evaluation = new Evaluation('text', ['q' => new NoulQuestion('Relevant?')], images: []);
+
+        $this->assertArrayNotHasKey('images', $evaluation->jsonSerialize());
+    }
+
+    public function testItRejectsImagesThatAreNotImageObjects()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Evaluation images must be instances of');
+
+        /* @phpstan-ignore argument.type */
+        new Evaluation('text', ['q' => new NoulQuestion('Relevant?')], images: ['https://example.com/image.png']);
     }
 }
