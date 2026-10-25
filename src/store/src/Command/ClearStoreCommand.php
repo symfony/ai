@@ -30,6 +30,8 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 #[AsCommand(name: 'ai:store:clear', description: 'Remove all documents from the store')]
 final class ClearStoreCommand extends Command
 {
+    use ServiceArgumentTrait;
+
     /**
      * @param ServiceLocator<StoreInterface> $stores
      */
@@ -64,16 +66,23 @@ EOF
         ;
     }
 
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'store', 'store', $this->getStoreNames());
+
+        if (!$input->getOption('force') && null !== $input->getArgument('store')) {
+            $question = \sprintf('Do you really want to clear the "%s" store?', $input->getArgument('store'));
+            $input->setOption('force', (new SymfonyStyle($input, $output))->confirm($question, false));
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (0 === \count($this->getStoreNames())) {
             throw new RuntimeException('No store is configured to be cleared.');
         }
 
-        $storeName = $input->getArgument('store');
-        if (!$this->stores->has($storeName)) {
-            throw new RuntimeException(\sprintf('The "%s" store does not exist, use "%s".', $storeName, implode('", "', $this->getStoreNames())));
-        }
+        $storeName = $this->resolveServiceName($input->getArgument('store'), 'store', $this->getStoreNames());
 
         $io = new SymfonyStyle($input, $output);
 

@@ -66,7 +66,7 @@ AI Bundle
 
    ```diff
    -$ php bin/console ai:store:setup ai.store.surrealdb.default
-   +$ php bin/console ai:store:setup ai.store.surrealdb.default --option forceDatabaseCreation=true
+   +$ php bin/console ai:store:setup default --option forceDatabaseCreation=true
    ```
 
  * The store keys for the vector metric and the number of dimensions are renamed to `metric` and
@@ -129,6 +129,14 @@ AI Bundle
    +            main:
                     platforms: ['ai.platform.anthropic', 'ai.platform.openai']
                     rate_limiter: 'limiter.failover_platform'
+   ```
+
+ * The `ai:store:setup`, `ai:store:drop` and `ai:store:clear` commands take the configured name of the store
+   instead of its service id, like the `ai:store:index` and `ai:store:retrieve` commands:
+
+   ```diff
+   -$ php bin/console ai:store:drop ai.store.chromadb.default --force
+   +$ php bin/console ai:store:drop default --force
    ```
 
 Store

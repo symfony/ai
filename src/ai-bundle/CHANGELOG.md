@@ -10,6 +10,7 @@ CHANGELOG
  * [BC BREAK] Require store and message store names to be unique across all types, and `failover` platform names to differ from other platform names
  * [BC BREAK] Remove the type-prefixed `StoreInterface` and `MessageStoreInterface` aliases, e.g. `StoreInterface $chromadbDocuments`
  * Add a `doctrine` store, keeping vectors in an `#[Embedding]` field of a Doctrine entity, and embedding the entity on flush and through `ai:store:index` when a `vectorizer` is configured
+ * [BC BREAK] Name stores by their configured name in the `ai:store:setup`, `ai:store:drop` and `ai:store:clear` commands instead of their service id
 
 0.15
 ----

@@ -29,7 +29,7 @@ final class Store
      */
     private const int INDEX_TIMEOUT = 600;
 
-    private const string SERVICE = 'ai.store.postgres.symfony_blog';
+    private const string STORE = 'blog';
     private const string INDEXER = 'blog';
     private const string RETRIEVER = 'blog';
     private const string TABLE = 'symfony_blog';
@@ -40,7 +40,7 @@ final class Store
      */
     public static function setup(): string
     {
-        return self::console('ai:store:setup', self::SERVICE);
+        return self::console('ai:store:setup', self::STORE);
     }
 
     /**
@@ -76,7 +76,7 @@ final class Store
      */
     public static function drop(): string
     {
-        return self::console('ai:store:drop', self::SERVICE, '--force');
+        return self::console('ai:store:drop', self::STORE, '--force');
     }
 
     /**
