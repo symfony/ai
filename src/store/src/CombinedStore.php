@@ -35,12 +35,12 @@ final class CombinedStore implements StoreInterface
     ) {
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
-        $this->vectorStore->add($documents);
+        $this->vectorStore->add($documents, $options);
 
         if ($this->textStore !== $this->vectorStore) {
-            $this->textStore->add($documents);
+            $this->textStore->add($documents, $options);
         }
     }
 

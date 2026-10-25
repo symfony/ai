@@ -63,7 +63,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return (int) ($result['data'][0]['cnt'] ?? 0);
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
@@ -75,7 +75,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $rows[] = $this->formatVectorDocument($document);
         }
 
-        $this->insertBatch($rows);
+        $this->insertBatch($rows, $options['http_options'] ?? []);
     }
 
     public function remove(string|array $ids, array $options = []): void
@@ -90,12 +90,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->execute('POST', 'DELETE FROM {{ table }} WHERE id IN {ids:Array(UUID)}', [
             'ids' => "['".implode("','", $ids)."']",
-        ]);
+        ], $options['http_options'] ?? []);
     }
 
     public function clear(array $options = []): void
     {
-        $this->execute('POST', 'TRUNCATE TABLE {{ table }}');
+        $this->execute('POST', 'TRUNCATE TABLE {{ table }}', [], $options['http_options'] ?? []);
     }
 
     public function supports(string $queryClass): bool
@@ -132,7 +132,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'query_vector' => $this->toClickHouseVector($query->getVector()),
                 'limit' => $options['limit'] ?? 5,
                 ...$options['params'] ?? [],
-            ])
+            ], $options['http_options'] ?? [])
             ->toArray()['data']
         ;
 
@@ -160,12 +160,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed> $params
+     * @param array<string, mixed> $httpOptions
      */
-    protected function execute(string $method, string $sql, array $params = []): ResponseInterface
+    protected function execute(string $method, string $sql, array $params = [], array $httpOptions = []): ResponseInterface
     {
         $sql = str_replace('{{ table }}', $this->tableName, $sql);
 
         $options = [
+            ...$httpOptions,
             'query' => [
                 'query' => $sql,
                 'database' => $this->databaseName,
@@ -182,8 +184,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<array<string, mixed>> $rows
+     * @param array<string, mixed>        $httpOptions
      */
-    private function insertBatch(array $rows): void
+    private function insertBatch(array $rows, array $httpOptions = []): void
     {
         if (!$rows) {
             return;
@@ -198,12 +201,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $options = [
+            ...$httpOptions,
             'query' => [
                 'query' => $sql,
                 'database' => $this->databaseName,
             ],
             'body' => $jsonData,
             'headers' => [
+                ...$httpOptions['headers'] ?? [],
                 'Content-Type' => 'application/json',
             ],
         ];

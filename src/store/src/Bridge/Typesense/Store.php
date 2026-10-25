@@ -64,19 +64,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         ]);
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
         foreach ($documents as $document) {
-            $this->request('POST', \sprintf('collections/%s/documents', $this->collection), $this->convertToIndexableArray($document));
+            $this->request('POST', \sprintf('collections/%s/documents', $this->collection), $this->convertToIndexableArray($document), $options['http_options'] ?? []);
         }
     }
 
     public function remove(string|array $ids, array $options = []): void
     {
+        $httpOptions = $options['http_options'] ?? [];
+        unset($options['http_options']);
+
         if ([] !== $options) {
             throw new InvalidArgumentException('No supported options.');
         }
@@ -99,14 +102,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'collections/%s/documents?filter_by=id:[%s]',
             $this->collection,
             implode(',', $ids),
-        ), []);
+        ), [], $httpOptions);
     }
 
     public function clear(array $options = []): void
     {
         // "truncate" removes all documents while keeping the collection and its schema in place,
         // in contrast to "filter_by" it does not walk the filter index.
-        $this->request('DELETE', \sprintf('collections/%s/documents?truncate=true', $this->collection), []);
+        $this->request('DELETE', \sprintf('collections/%s/documents?truncate=true', $this->collection), [], $options['http_options'] ?? []);
     }
 
     public function supports(string $queryClass): bool
@@ -135,7 +138,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     'vector_query' => \sprintf('%s:([%s], k:%d)', $this->vectorFieldName, implode(', ', $vector->getData()), $k),
                 ],
             ],
-        ]);
+        ], $options['http_options'] ?? []);
 
         $results = $documents['results'] ?? null;
         if (!\is_array($results)) {
@@ -180,12 +183,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed> $payload
+     * @param array<string, mixed> $httpOptions
      *
      * @return array<mixed>
      */
-    private function request(string $method, string $endpoint, array $payload): array
+    private function request(string $method, string $endpoint, array $payload, array $httpOptions = []): array
     {
         $result = $this->httpClient->request($method, $endpoint, [
+            ...$httpOptions,
             'json' => [] !== $payload ? $payload : new \stdClass(),
         ]);
 

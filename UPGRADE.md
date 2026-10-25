@@ -346,6 +346,14 @@ Store
    +$store = new Store($pdo, 'documents', metric: Metric::Cosine);
    ```
 
+ * `StoreInterface::add()` takes an `array $options = []` second argument, like `remove()`, `clear()` and
+   `query()`. Custom store implementations and decorators must add it to their signature:
+
+   ```diff
+   -public function add(VectorDocumentInterface|array $documents): void
+   +public function add(VectorDocumentInterface|array $documents, array $options = []): void
+   ```
+
 UPGRADE FROM 0.14 to 0.15
 =========================
 

@@ -102,7 +102,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return max(0, (int) $statement->fetchColumn());
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];

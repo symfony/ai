@@ -27,13 +27,19 @@ final class TestStore implements StoreInterface
 
     public int $addCalls = 0;
 
-    public function add(VectorDocumentInterface|array $documents): void
+    /**
+     * @var array<string, mixed>
+     */
+    public array $addOptions = [];
+
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
         }
 
         ++$this->addCalls;
+        $this->addOptions = $options;
         $this->documents = array_merge($this->documents, $documents);
     }
 

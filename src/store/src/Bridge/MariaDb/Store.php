@@ -124,7 +124,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return self::fromPdo($pdo, $tableName, $indexName, $vectorFieldName, $metric, $dimensions);
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];

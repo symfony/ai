@@ -737,6 +737,30 @@ final class StoreTest extends TestCase
         $this->assertSame('DELETE vectors;', $requests[1]['body']);
     }
 
+    public function testStorePassesHttpOptionsToAllRequests()
+    {
+        $timeouts = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$timeouts): JsonMockResponse {
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['code' => 200, 'details' => 'Authentication succeeded.', 'token' => 'bar'], ['http_code' => 200]);
+            }
+
+            $timeouts[] = $options['timeout'] ?? null;
+
+            return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
+        $httpOptions = ['http_options' => ['timeout' => 7.0]];
+
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))], $httpOptions);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), $httpOptions));
+        $store->remove('123e4567-e89b-12d3-a456-426614174000', $httpOptions);
+        $store->clear($httpOptions);
+
+        $this->assertSame([7.0, 7.0, 7.0, 7.0], $timeouts);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test', 'test', 'test_namespace', 'test_database', 'test_table');

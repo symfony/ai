@@ -53,7 +53,7 @@ final class Store implements StoreInterface
     ) {
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
@@ -78,13 +78,15 @@ final class Store implements StoreInterface
         }
 
         $chunkSize = 200;
+        $httpOptions = $options['http_options'] ?? [];
 
         foreach (array_chunk($rows, $chunkSize) as $chunk) {
             $response = $this->httpClient->request(
                 'POST',
                 \sprintf('rest/v1/%s', $this->table),
                 [
-                    'headers' => $this->getHeaders() + ['Prefer' => 'resolution=merge-duplicates'],
+                    ...$httpOptions,
+                    'headers' => [...$httpOptions['headers'] ?? [], ...$this->getHeaders(), 'Prefer' => 'resolution=merge-duplicates'],
                     'json' => $chunk,
                 ]
             );
@@ -108,6 +110,7 @@ final class Store implements StoreInterface
         // Supabase REST API supports batch deletes using the 'in' filter
         // We'll chunk the ids to avoid potential URL length limits
         $chunkSize = 200;
+        $httpOptions = $options['http_options'] ?? [];
 
         foreach (array_chunk($ids, $chunkSize) as $chunk) {
             $idsString = implode(',', array_map(static fn ($id) => '"'.str_replace('"', '""', $id).'"', $chunk));
@@ -116,7 +119,8 @@ final class Store implements StoreInterface
                 'DELETE',
                 \sprintf('rest/v1/%s', $this->table),
                 [
-                    'headers' => $this->getHeaders(),
+                    ...$httpOptions,
+                    'headers' => [...$httpOptions['headers'] ?? [], ...$this->getHeaders()],
                     'query' => [
                         'id' => \sprintf('in.(%s)', $idsString),
                     ],
@@ -131,13 +135,16 @@ final class Store implements StoreInterface
 
     public function clear(array $options = []): void
     {
+        $httpOptions = $options['http_options'] ?? [];
+
         // PostgREST refuses a DELETE without filter. Only the "is" operator treats "null" as SQL NULL,
         // every other one binds it as the string "null" - which fails to cast on a uuid or bigint id.
         $response = $this->httpClient->request(
             'DELETE',
             \sprintf('rest/v1/%s', $this->table),
             [
-                'headers' => $this->getHeaders(),
+                ...$httpOptions,
+                'headers' => [...$httpOptions['headers'] ?? [], ...$this->getHeaders()],
                 'query' => [
                     'id' => 'not.is.null',
                 ],
@@ -158,7 +165,8 @@ final class Store implements StoreInterface
      * @param array{
      *      max_items?: int,
      *      limit?: int,
-     *      min_score?: float
+     *      min_score?: float,
+     *      http_options?: array<string, mixed>
      *  } $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -174,12 +182,14 @@ final class Store implements StoreInterface
 
         $matchCount = $options['max_items'] ?? ($options['limit'] ?? 10);
         $threshold = $options['min_score'] ?? 0.0;
+        $httpOptions = $options['http_options'] ?? [];
 
         $response = $this->httpClient->request(
             'POST',
             \sprintf('rest/v1/rpc/%s', $this->functionName),
             [
-                'headers' => $this->getHeaders(),
+                ...$httpOptions,
+                'headers' => [...$httpOptions['headers'] ?? [], ...$this->getHeaders()],
                 'json' => [
                     'query_embedding' => $vector->getData(),
                     'match_count' => $matchCount,

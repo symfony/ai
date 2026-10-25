@@ -4,6 +4,7 @@ CHANGELOG
 0.16
 ----
 
+ * [BC BREAK] Add an `$options` argument to `StoreInterface::add()` and support an `http_options` option in `add()`, `remove()`, `clear()` and `query()` of the Neo4j, Typesense, SurrealDb, Cloudflare, OpenSearch, ClickHouse, AzureSearch and Supabase stores
  * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
  * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
  * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead
