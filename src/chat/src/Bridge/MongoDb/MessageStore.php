@@ -12,6 +12,7 @@
 namespace Symfony\AI\Chat\Bridge\MongoDb;
 
 use MongoDB\Client;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Chat\ManagedStoreInterface;
 use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -36,6 +37,7 @@ final class MessageStore implements ManagedStoreInterface, MessageStoreInterface
         private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer = new Serializer([
             new ArrayDenormalizer(),
             new MessageNormalizer(),
+            new SourceCollectionNormalizer(),
         ], [new JsonEncoder()]),
     ) {
     }

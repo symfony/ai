@@ -14,7 +14,9 @@ namespace Symfony\AI\Platform\Serializer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\Component\Serializer\Normalizer\DenormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
@@ -27,11 +29,26 @@ use Symfony\Component\Uid\Uuid;
  *
  * @phpstan-import-type NormalizedMessage from MessageNormalizer
  */
-final class MessageBagNormalizer implements NormalizerInterface, DenormalizerInterface
+final class MessageBagNormalizer implements NormalizerInterface, DenormalizerInterface, NormalizerAwareInterface, DenormalizerAwareInterface
 {
+    private readonly MetadataNormalizer $metadataNormalizer;
+
     public function __construct(
         private readonly MessageNormalizer $messageNormalizer = new MessageNormalizer(),
     ) {
+        $this->metadataNormalizer = new MetadataNormalizer();
+    }
+
+    public function setNormalizer(NormalizerInterface $normalizer): void
+    {
+        $this->messageNormalizer->setNormalizer($normalizer);
+        $this->metadataNormalizer->setNormalizer($normalizer);
+    }
+
+    public function setDenormalizer(DenormalizerInterface $denormalizer): void
+    {
+        $this->messageNormalizer->setDenormalizer($denormalizer);
+        $this->metadataNormalizer->setDenormalizer($denormalizer);
     }
 
     /**
@@ -47,7 +64,7 @@ final class MessageBagNormalizer implements NormalizerInterface, DenormalizerInt
 
         return [
             'id' => $data->getId()->toRfc4122(),
-            'metadata' => $data->getMetadata()->all(),
+            'metadata' => $this->metadataNormalizer->normalize($data->getMetadata()->all(), $format, $context),
             'messages' => array_map(
                 fn (MessageInterface $message): array => $this->messageNormalizer->normalize($message, $format, $context),
                 $data->getMessages(),
@@ -72,13 +89,13 @@ final class MessageBagNormalizer implements NormalizerInterface, DenormalizerInt
         /** @var AbstractUid&TimeBasedUidInterface&Uuid $id */
         $id = Uuid::fromString($data['id']);
 
-        $messages = (new MessageBag(...array_map(
+        $messages = MessageBag::forId($id, ...array_map(
             fn (array $message): MessageInterface => $this->messageNormalizer->denormalize($message, MessageInterface::class, $format, $context),
             $data['messages'],
-        )))->withId($id);
+        ));
 
         if ([] !== ($data['metadata'] ?? [])) {
-            $messages->getMetadata()->set($data['metadata']);
+            $messages->getMetadata()->set($this->metadataNormalizer->denormalize($data['metadata'], $format, $context));
         }
 
         return $messages;

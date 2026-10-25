@@ -333,6 +333,7 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasDefinition('ai.platform.message_normalizer'));
         $this->assertTrue($container->hasDefinition('ai.platform.message_bag_normalizer'));
+        $this->assertTrue($container->hasDefinition('ai.agent.source_collection_normalizer'));
     }
 
     public function testResponseFormatFactoryServiceIsRegistered()

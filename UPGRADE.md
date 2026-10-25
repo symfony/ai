@@ -232,6 +232,27 @@ Chat
     ], [new JsonEncoder()]);
    ```
 
+ * The message stores keep the type of objects in the message metadata. Their default serializer throws a
+   `NotNormalizableValueException` for an object it has no normalizer for, e.g. a `DateTimeImmutable`. Pass a
+   serializer with a normalizer for it:
+
+   ```php
+   use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
+   use Symfony\AI\Chat\Bridge\Redis\MessageStore;
+   use Symfony\AI\Platform\Serializer\MessageNormalizer;
+   use Symfony\Component\Serializer\Encoder\JsonEncoder;
+   use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+   use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+   use Symfony\Component\Serializer\Serializer;
+
+   $store = new MessageStore($redis, 'chat', new Serializer([
+       new ArrayDenormalizer(),
+       new MessageNormalizer(),
+       new SourceCollectionNormalizer(),
+       new DateTimeNormalizer(),
+   ], [new JsonEncoder()]));
+   ```
+
 Platform
 --------
 

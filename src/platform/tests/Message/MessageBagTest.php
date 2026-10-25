@@ -285,6 +285,26 @@ final class MessageBagTest extends TestCase
         $this->assertTrue($messageBag->containsImage());
     }
 
+    public function testForIdCreatesABagWithTheGivenIdAndMessages()
+    {
+        $id = Uuid::v7();
+        $message = Message::ofUser('Hello!');
+
+        $messageBag = MessageBag::forId($id, $message);
+
+        $this->assertSame($id, $messageBag->getId());
+        $this->assertSame([$message], $messageBag->getMessages());
+    }
+
+    public function testForIdTurnsStringsIntoUserMessages()
+    {
+        $messageBag = MessageBag::forId(Uuid::v7(), Message::forSystem('Be brief.'), 'What is my name?');
+
+        $this->assertInstanceOf(SystemMessage::class, $messageBag->getMessages()[0]);
+        $this->assertInstanceOf(UserMessage::class, $messageBag->getMessages()[1]);
+        $this->assertSame('What is my name?', $messageBag->getUserMessage()?->asText());
+    }
+
     public function testWithIdReturnsCopyWithGivenId()
     {
         $id = Uuid::v7();
