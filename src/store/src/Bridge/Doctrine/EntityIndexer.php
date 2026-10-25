@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\Doctrine;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\IndexerInterface;
 
@@ -30,6 +31,7 @@ final class EntityIndexer implements IndexerInterface
         private readonly EntityManagerInterface $entityManager,
         private readonly EntityEmbedder $embedder,
         private readonly int $batchSize = 100,
+        private readonly ?MirrorListener $mirror = null,
     ) {
     }
 
@@ -62,8 +64,7 @@ final class EntityIndexer implements IndexerInterface
 
         // before the table walks, which clear the entity manager
         if ([] !== $entities) {
-            $this->embedder->embed($this->entityManager, $entities);
-            $this->entityManager->flush();
+            $this->embed($entities);
         }
 
         foreach ($entityClasses as $entityClass) {
@@ -84,7 +85,11 @@ final class EntityIndexer implements IndexerInterface
         $mapping = EmbeddingMapping::fromClassMetadata($metadata);
 
         if (null === $mapping) {
-            throw new InvalidArgumentException(\sprintf('Entity "%s" has no field marked with #[Embedding].', $entityClass));
+            throw new InvalidArgumentException(\sprintf('Entity "%s" has no #[Embedding] attribute.', $entityClass));
+        }
+
+        if ($onlyMissing && $mapping->isMirrored()) {
+            throw new InvalidArgumentException(\sprintf('Entity "%s" is mirrored into another store, "only_missing" has no field to check.', $entityClass));
         }
 
         if ($metadata->isIdentifierComposite) {
@@ -104,7 +109,7 @@ final class EntityIndexer implements IndexerInterface
                 ->setMaxResults($batchSize);
 
             if ($onlyMissing) {
-                $queryBuilder->andWhere(\sprintf('e.%s IS NULL', $mapping->getVectorField()));
+                $queryBuilder->andWhere(\sprintf('e.%s IS NULL', $mapping->getRequiredVectorField()));
             }
 
             if (null !== $lastIdentifier) {
@@ -119,13 +124,45 @@ final class EntityIndexer implements IndexerInterface
                 return;
             }
 
-            $this->embedder->embed($this->entityManager, $entities);
-            $this->entityManager->flush();
+            $this->embed($entities);
 
             $lastIdentifier = $metadata->getIdentifierValues($entities[array_key_last($entities)])[$identifierField];
 
             // Keeps the identity map from growing with the whole table
             $this->entityManager->clear();
+        }
+    }
+
+    /**
+     * @param list<object> $entities
+     */
+    private function embed(array $entities): void
+    {
+        $mirrored = [];
+        $embedded = [];
+        foreach ($entities as $entity) {
+            if (EmbeddingMapping::fromClassMetadata($this->entityManager->getClassMetadata($entity::class))?->isMirrored()) {
+                $mirrored[] = $entity;
+            } else {
+                $embedded[] = $entity;
+            }
+        }
+
+        if ([] !== $mirrored) {
+            if (null === $this->mirror) {
+                throw new InvalidArgumentException('Mirrored entities need a mirror listener to write them into the store.');
+            }
+
+            $this->mirror->mirror($this->entityManager, $mirrored);
+        }
+
+        if ([] !== $embedded) {
+            if (null !== $this->mirror) {
+                throw new InvalidArgumentException(\sprintf('Entity "%s" is not mirrored, put #[Embedding] on the class or remove the mirror from the indexer.', $embedded[0]::class));
+            }
+
+            $this->embedder->embed($this->entityManager, $embedded);
+            $this->entityManager->flush();
         }
     }
 }

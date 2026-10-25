@@ -32,7 +32,7 @@ final class EmbeddingMapping
      */
     private function __construct(
         private readonly ClassMetadata $metadata,
-        private readonly string $vectorField,
+        private readonly ?string $vectorField,
         private readonly array $sourceFields,
     ) {
     }
@@ -42,44 +42,77 @@ final class EmbeddingMapping
      */
     public static function fromClassMetadata(ClassMetadata $metadata): ?self
     {
+        $classAttribute = null;
+        $class = $metadata->getReflectionClass();
+        do {
+            $classAttribute = ($class->getAttributes(Embedding::class)[0] ?? null)?->newInstance();
+        } while (null === $classAttribute && false !== $class = $class->getParentClass());
+
+        $vectorField = null;
+        $propertyAttribute = null;
         foreach (self::properties($metadata->getReflectionClass()) as $property) {
             $attribute = $property->getAttributes(Embedding::class)[0] ?? null;
 
-            if (null === $attribute) {
-                continue;
+            if (null !== $attribute) {
+                $vectorField = $property->getName();
+                $propertyAttribute = $attribute->newInstance();
+
+                break;
             }
-
-            $vectorField = $property->getName();
-            $sourceFields = $attribute->newInstance()->from;
-
-            if (!$metadata->hasField($vectorField)) {
-                throw new InvalidArgumentException(\sprintf('The embedding "%s::$%s" is not a mapped field.', $metadata->getName(), $vectorField));
-            }
-
-            if ([] === $sourceFields) {
-                throw new InvalidArgumentException(\sprintf('The embedding "%s::$%s" needs the fields it is built from.', $metadata->getName(), $vectorField));
-            }
-
-            foreach ($sourceFields as $sourceField) {
-                if (!$metadata->hasField($sourceField)) {
-                    throw new InvalidArgumentException(\sprintf('The embedding "%s::$%s" is built from "%s", which is not a mapped field.', $metadata->getName(), $vectorField, $sourceField));
-                }
-            }
-
-            return new self($metadata, $vectorField, $sourceFields);
         }
 
-        return null;
+        if (null !== $classAttribute && null !== $propertyAttribute) {
+            throw new InvalidArgumentException(\sprintf('The entity "%s" has #[Embedding] on the class and on "$%s", choose one.', $metadata->getName(), $vectorField));
+        }
+
+        $attribute = $classAttribute ?? $propertyAttribute;
+        if (null === $attribute) {
+            return null;
+        }
+
+        $label = null === $vectorField ? $metadata->getName() : \sprintf('%s::$%s', $metadata->getName(), $vectorField);
+
+        if (null !== $vectorField && !$metadata->hasField($vectorField)) {
+            throw new InvalidArgumentException(\sprintf('The embedding "%s" is not a mapped field.', $label));
+        }
+
+        if ([] === $attribute->from) {
+            throw new InvalidArgumentException(\sprintf('The embedding "%s" needs the fields it is built from.', $label));
+        }
+
+        foreach ($attribute->from as $sourceField) {
+            if (!$metadata->hasField($sourceField)) {
+                throw new InvalidArgumentException(\sprintf('The embedding "%s" is built from "%s", which is not a mapped field.', $label, $sourceField));
+            }
+        }
+
+        return new self($metadata, $vectorField, $attribute->from);
     }
 
-    public function getVectorField(): string
+    /**
+     * The field holding the vector, null when the entity is mirrored into another store.
+     */
+    public function getVectorField(): ?string
     {
         return $this->vectorField;
     }
 
+    public function isMirrored(): bool
+    {
+        return null === $this->vectorField;
+    }
+
+    /**
+     * @throws InvalidArgumentException when the entity is mirrored into another store
+     */
+    public function getRequiredVectorField(): string
+    {
+        return $this->vectorField ?? throw new InvalidArgumentException(\sprintf('Entity "%s" is mirrored into another store, it has no field for the vector.', $this->metadata->getName()));
+    }
+
     public function setVector(EntityManagerInterface $entityManager, object $entity, ?VectorInterface $vector): void
     {
-        $this->metadata->setFieldValue($entity, $this->vectorField, $vector);
+        $this->metadata->setFieldValue($entity, $this->getRequiredVectorField(), $vector);
 
         // with explicit change tracking, Doctrine only writes entities scheduled for a dirty check
         if ($this->metadata->isChangeTrackingDeferredExplicit() && $entityManager->contains($entity)) {
@@ -137,6 +170,8 @@ final class EmbeddingMapping
             return implode(', ', array_filter($parts, static fn (string $part): bool => '' !== $part));
         }
 
-        throw new InvalidArgumentException(\sprintf('The embedding "%s::$%s" is built from "%s", which holds a "%s" that has no text. Implement "%s" to build the text.', $this->metadata->getName(), $this->vectorField, $sourceField, get_debug_type($value), IndexableEntityInterface::class));
+        $label = null === $this->vectorField ? $this->metadata->getName() : \sprintf('%s::$%s', $this->metadata->getName(), $this->vectorField);
+
+        throw new InvalidArgumentException(\sprintf('The embedding "%s" is built from "%s", which holds a "%s" that has no text. Implement "%s" to build the text.', $label, $sourceField, get_debug_type($value), IndexableEntityInterface::class));
     }
 }

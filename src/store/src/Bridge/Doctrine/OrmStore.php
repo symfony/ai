@@ -166,7 +166,7 @@ final class OrmStore implements StoreInterface
 
             $entity = $row[0];
             /** @var VectorInterface $vector */
-            $vector = $metadata->getFieldValue($entity, $this->mapping()->getVectorField());
+            $vector = $metadata->getFieldValue($entity, $this->mapping()->getRequiredVectorField());
 
             $documents[] = new EntityVectorDocument(
                 entity: $entity,
@@ -202,7 +202,7 @@ final class OrmStore implements StoreInterface
 
     private function vectorField(): string
     {
-        return 'e.'.$this->mapping()->getVectorField();
+        return 'e.'.$this->mapping()->getRequiredVectorField();
     }
 
     private function mapping(): EmbeddingMapping
@@ -215,7 +215,7 @@ final class OrmStore implements StoreInterface
         $mapping = EmbeddingMapping::fromClassMetadata($metadata);
 
         if (null === $mapping) {
-            throw new InvalidArgumentException(\sprintf('Entity "%s" has no field marked with #[Embedding].', $this->entityClass));
+            throw new InvalidArgumentException(\sprintf('Entity "%s" has no #[Embedding] attribute.', $this->entityClass));
         }
 
         if ($metadata->isIdentifierComposite) {

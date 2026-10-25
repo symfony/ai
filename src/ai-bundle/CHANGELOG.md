@@ -17,6 +17,7 @@ CHANGELOG
  * [BC BREAK] Remove the unused `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and `ai.platform.model_catalog.replicate` services
  * [BC BREAK] Remove the `api_catalog` option of the `huggingface` platform in favor of the `api` option of its `model_catalog`
  * [BC BREAK] Remove the `exclude_tool_messages` agent option, tool messages never reach the caller's `MessageBag`
+ * Add the `mirror_to` option to the `doctrine` store, mirroring the entity into another store and registering an entity retriever
 
 0.15
 ----

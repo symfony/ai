@@ -11,6 +11,7 @@ CHANGELOG
  * Accept any `IndexerInterface` in `Indexer\ConfiguredSourceIndexer`, not only a `SourceIndexer`
  * Add interactive selection of the store, indexer or retriever to the `ai:store:*` commands, proposing the closest matches for unknown names
  * Ask for confirmation in `ai:store:drop` and `ai:store:clear` when running interactively without `--force`
+ * Add `Bridge\Doctrine\Mirror\MirrorListener` and `Bridge\Doctrine\Mirror\EntityRetriever`, mirroring entities with `#[Embedding]` on the class into any store and loading them for the hits
 
 0.14
 ----
