@@ -7,10 +7,12 @@ date: 2026-10-25
 
 ## Context and Problem Statement
 
-Backends differ in how they search: some only do vector similarity, some only keyword
-search, some both and a fused hybrid of the two. A single `query(Vector $vector)`
-signature cannot express keyword or hybrid search, and an options array would leave
-each store to guess what the caller meant.
+Backends search in different ways: some only by vector similarity, some only by
+keywords, some both, plus a mix of the two (hybrid). The original
+`query(Vector $vector)` signature tied every store to vectors. It could not express
+keyword or hybrid search, or stores such as ChromaDB that compute embeddings
+themselves and take plain text (RFC #1562). An options array would leave each store to
+guess what the caller meant.
 
 ## Decision
 
@@ -19,37 +21,49 @@ three final implementations:
 
 - `VectorQuery`: a Platform `VectorInterface`.
 - `TextQuery`: one or more search texts, combined with OR.
-- `HybridQuery`: a vector, texts and a `semanticRatio` between 0.0 and 1.0, validated in
+- `HybridQuery`: a vector, texts and a `semanticRatio` between 0.0 and 1.0, checked in
   the constructor.
 
 A store declares what it handles with `supports(string $queryClass)` and dispatches on
-the query class, throwing `Exception\UnsupportedQueryTypeException` for any other type
-(see the `match` in `InMemory\Store::query()`). Backend-specific knobs such as limits or
-filters stay in the `$options` array.
+the query class. For any other type it throws `Exception\UnsupportedQueryTypeException`
+(see the `match` in `InMemory\Store::query()`). Backend-specific settings such as limits
+or filters stay in the `$options` array.
 
 `Retriever` turns a plain string into the best query the store supports: `TextQuery`
 without a vectorizer or without vector support, `HybridQuery` when supported, otherwise
 `VectorQuery`. It dispatches `Event\PreQueryEvent` and `Event\PostQueryEvent` around the
-query, which `EventListener\RerankerListener` uses to rerank results. `CombinedStore`
-builds hybrid support from a vector store and a text store using Reciprocal Rank Fusion.
+query, for example for query rewriting before and reranking after
+(`EventListener\RerankerListener`). `CombinedStore` adds hybrid search on top of one
+vector store and one text store, using Reciprocal Rank Fusion.
 
 ## Consequences
 
-- **Good:** new search modes can be added as new query classes without changing
-  `StoreInterface`.
-- **Good:** callers can probe capabilities before querying instead of catching errors.
-- **Trade-off:** dispatch happens at runtime with `instanceof`/`match`; a store that
-  forgets to keep `supports()` and `query()` in sync fails only when queried.
+- **Good:** a new search mode is a new query class; `StoreInterface` does not change.
+- **Good:** callers can check support before querying instead of catching errors.
+- **Trade-off:** dispatch happens at runtime; a store whose `supports()` and `query()`
+  disagree fails only when queried.
 - **Trade-off:** `UnsupportedQueryTypeException` extends `\RuntimeException` directly and
-  does not implement `Exception\ExceptionInterface`, unlike the other component
-  exceptions, so a catch on that interface does not cover it.
+  does not implement `Exception\ExceptionInterface`, so a catch on that interface misses
+  it.
 
 ## Alternatives Considered
 
-- **Separate methods per search mode on `StoreInterface`**: not chosen because every
-  store would need to implement every mode or throw from most of them.
-- **A vector-only `query()` with options for text search**: not chosen because the
-  intent of the call would be hidden in untyped options.
+- **One `Query` class built with `fromVector()`/`fromText()`**: proposed in RFC #1562,
+  where hybrid would be implicit. The typed classes were chosen in #1570.
+- **Filters and a query type enum on `QueryInterface`**: the first draft of #1570 had
+  `getType()`, `getFilter()` and an `EqualFilter`. Removed before merge and left for a
+  separate issue, so filters stay store-specific options for now.
+- **Separate methods per search mode on `StoreInterface`**: not chosen, because every
+  store would need every mode or throw from most of them.
+
+## History
+
+- 2024-08-25, 0a65c502 by Christopher Hertel: the first store contract, a vector-only `query(Vector $vector)`.
+- 2025-11-29, #1026 by @OskarStark (Oskar Stark): added the `Retriever` service on top of a store and a vectorizer.
+- 2026-02-16, #1570 by @wachterjohannes (Johannes Wachter): added `QueryInterface`, `VectorQuery`, `TextQuery`, `HybridQuery`, `supports()` and `UnsupportedQueryTypeException`; `Retriever` picks the query type.
+- 2026-03-14, #1704 by @wachterjohannes (Johannes Wachter): added `CombinedStore` with Reciprocal Rank Fusion and the `RerankerListener`.
+- 2026-03-15, #1745 by @wachterjohannes (Johannes Wachter): added `PreQueryEvent` so listeners can change the query before it runs.
+- 2026-09-06, #2494 by @chr-hertel (Christopher Hertel): vector queries accept any `VectorInterface`, not only the final `Vector`.
 
 ## References
 
