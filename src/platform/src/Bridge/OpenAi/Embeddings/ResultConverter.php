@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
+use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
@@ -37,7 +38,14 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): VectorResult
     {
         if ($result instanceof RawHttpResult) {
-            $this->throwOnHttpError($result->getObject());
+            $response = $result->getObject();
+
+            // OpenAI reports a too long input only in the message, without an error code
+            if (400 === $response->getStatusCode() && str_contains($message = $this->extractErrorMessage($response) ?? '', 'maximum context length')) {
+                throw new ExceedContextSizeException($message);
+            }
+
+            $this->throwOnHttpError($response);
         }
 
         $data = $result->getData();
