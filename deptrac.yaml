@@ -313,6 +313,10 @@ deptrac:
       collectors:
         - type: classLike
           value: Symfony\\AI\\Store\\Bridge\\Cloudflare\\.*
+    - name: DoctrineStore
+      collectors:
+        - type: classLike
+          value: Symfony\\AI\\Store\\Bridge\\Doctrine\\.*
     - name: ElasticsearchStore
       collectors:
         - type: classLike
@@ -608,6 +612,9 @@ deptrac:
       - StoreComponent
       - PlatformComponent
     CloudflareStore:
+      - StoreComponent
+      - PlatformComponent
+    DoctrineStore:
       - StoreComponent
       - PlatformComponent
     ElasticsearchStore:

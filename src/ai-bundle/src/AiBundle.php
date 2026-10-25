@@ -37,6 +37,7 @@ use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\DoctrineVectorDistancePass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
@@ -131,6 +132,12 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickHouseStore;
 use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory as ClickHouseStoreFactory;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Metric as DoctrineMetric;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
+use Symfony\AI\Store\Bridge\Doctrine\EmbeddingListener;
+use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
+use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
+use Symfony\AI\Store\Bridge\Doctrine\OrmStore as DoctrineOrmStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
@@ -211,6 +218,22 @@ final class AiBundle extends AbstractBundle
         $container->addCompilerPass(new DebugCompilerPass());
         $container->addCompilerPass(new ProcessorCompilerPass());
         $container->addCompilerPass(new SchemaProviderValidationPass());
+        $container->addCompilerPass(new DoctrineVectorDistancePass());
+    }
+
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    {
+        if (!$builder->hasExtension('doctrine') || !ContainerBuilder::willBeAvailable('symfony/ai-doctrine-store', VectorType::class, ['symfony/ai-bundle'])) {
+            return;
+        }
+
+        foreach ($builder->getExtensionConfig('ai') as $config) {
+            if ([] !== ($config['store']['doctrine'] ?? [])) {
+                $builder->prependExtensionConfig('doctrine', ['dbal' => ['types' => [VectorType::NAME => VectorType::class]]]);
+
+                return;
+            }
+        }
     }
 
     public function configure(DefinitionConfigurator $definition): void
@@ -352,9 +375,12 @@ final class AiBundle extends AbstractBundle
             foreach ($config['indexer'] as $indexerName => $indexer) {
                 $this->processIndexerConfig($indexerName, $indexer, $builder);
             }
-            if (1 === \count($config['indexer']) && isset($indexerName)) {
-                $builder->setAlias(IndexerInterface::class, 'ai.indexer.'.$indexerName);
-            }
+        }
+
+        // stores register indexers as well, e.g. the Doctrine store
+        $indexerIds = array_keys($builder->findTaggedServiceIds('ai.indexer'));
+        if (1 === \count($indexerIds)) {
+            $builder->setAlias(IndexerInterface::class, $indexerIds[0]);
         }
 
         if ([] !== ($config['retriever'] ?? [])) {
@@ -2223,6 +2249,32 @@ final class AiBundle extends AbstractBundle
             }
         }
 
+        if ('doctrine' === $type) {
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-doctrine-store', DoctrineOrmStore::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Doctrine store configuration requires "symfony/ai-doctrine-store" package. Try running "composer require symfony/ai-doctrine-store".');
+            }
+
+            foreach ($stores as $name => $store) {
+                $definition = (new Definition(DoctrineOrmStore::class))
+                    ->setLazy(true)
+                    ->setArguments([
+                        new Reference($store['entity_manager']),
+                        $store['entity'],
+                        DoctrineMetric::from($store['metric']),
+                    ])
+                    ->addTag('proxy', ['interface' => StoreInterface::class])
+                    ->addTag('ai.store');
+
+                $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $type.'_'.$name);
+
+                if (null !== $store['vectorizer']) {
+                    $this->processDoctrineEmbeddingConfig((string) $name, $store, $container);
+                }
+            }
+        }
+
         if ('postgres' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-postgres-store', PostgresStore::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Postgres store configuration requires "symfony/ai-postgres-store" package. Try running "composer require symfony/ai-postgres-store".');
@@ -2599,6 +2651,34 @@ final class AiBundle extends AbstractBundle
     }
 
     /**
+     * @param array{entity: class-string, entity_manager: string, vectorizer: string} $store
+     */
+    private function processDoctrineEmbeddingConfig(string $name, array $store, ContainerBuilder $container): void
+    {
+        $embedderId = 'ai.store.doctrine.'.$name.'.embedder';
+        $container->setDefinition($embedderId, new Definition(EntityEmbedder::class, [new Reference($store['vectorizer'])]));
+
+        $container->setDefinition('ai.store.doctrine.'.$name.'.embedding_listener', (new Definition(EmbeddingListener::class, [
+            new Reference($embedderId),
+            $store['entity'],
+            new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
+        ]))->addTag('doctrine.event_listener', ['event' => 'onFlush']));
+
+        $entityIndexerId = 'ai.store.doctrine.'.$name.'.entity_indexer';
+        $container->setDefinition($entityIndexerId, new Definition(EntityIndexer::class, [
+            new Reference($store['entity_manager']),
+            new Reference($embedderId),
+        ]));
+
+        $indexerId = 'ai.indexer.'.$name;
+        $container->setDefinition($indexerId, (new Definition(ConfiguredSourceIndexer::class, [
+            new Reference($entityIndexerId),
+            $store['entity'],
+        ]))->addTag('ai.indexer', ['name' => $name]));
+        $container->registerAliasForArgument($indexerId, IndexerInterface::class, (new Target($name))->getParsedName());
+    }
+
+    /**
      * @param array<string, mixed> $messageStores
      */
     private function processMessageStoreConfig(string $type, array $messageStores, ContainerBuilder $container): void
@@ -2906,6 +2986,10 @@ final class AiBundle extends AbstractBundle
      */
     private function processIndexerConfig(int|string $name, array $config, ContainerBuilder $container): void
     {
+        if ($container->hasDefinition('ai.indexer.'.$name)) {
+            throw new InvalidArgumentException(\sprintf('Indexer "%s" is already defined by the doctrine store of the same name, rename one of them.', $name));
+        }
+
         $transformers = [];
         foreach ($config['transformers'] as $transformer) {
             $transformers[] = new Reference($transformer);

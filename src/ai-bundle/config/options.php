@@ -25,12 +25,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
     $import = fn (string $resource): ArrayNodeDefinition => require __DIR__.'/'.$resource.'.php';
-    $assertUniqueNames = static fn (string $message): \Closure => static function (array $types) use ($message): array {
+    $assertUniqueNames = static fn (string $message, array $subTypes = []): \Closure => static function (array $types) use ($message, $subTypes): array {
         $namesByArgument = [];
         foreach ($types as $type => $services) {
-            if ('doctrine' === $type) {
-                $type .= '.dbal';
-                $services = $services['dbal'] ?? [];
+            if (isset($subTypes[$type])) {
+                $services = $services[$subTypes[$type]] ?? [];
+                $type .= '.'.$subTypes[$type];
             }
 
             foreach (array_keys($services) as $name) {
@@ -477,6 +477,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/chromadb'))
                     ->append($import('store/clickhouse'))
                     ->append($import('store/cloudflare'))
+                    ->append($import('store/doctrine'))
                     ->append($import('store/elasticsearch'))
                     ->append($import('store/manticoresearch'))
                     ->append($import('store/mariadb'))
@@ -516,7 +517,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('message_store/surrealdb'))
                 ->end()
                 ->validate()
-                    ->always($assertUniqueNames('The message stores "%s" have conflicting names, message store names must be unique across all message store types.'))
+                    ->always($assertUniqueNames('The message stores "%s" have conflicting names, message store names must be unique across all message store types.', ['doctrine' => 'dbal']))
                 ->end()
             ->end()
             ->arrayNode('chat')

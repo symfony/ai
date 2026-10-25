@@ -9,6 +9,7 @@ CHANGELOG
  * [BC BREAK] Rename the `similarity` (`elasticsearch`, `manticoresearch`, `mongodb`), `metric_type` (`milvus`), `space_type` (`opensearch`), `strategy` (`surrealdb`) and `distance` (`mariadb`, `neo4j`, `postgres`, `qdrant`, `redis`, `sqlite`) store keys to `metric`, and the `vector_dimension` key of the `sqlite` and `supabase` stores to `dimensions`
  * [BC BREAK] Require store and message store names to be unique across all types, and `failover` platform names to differ from other platform names
  * [BC BREAK] Remove the type-prefixed `StoreInterface` and `MessageStoreInterface` aliases, e.g. `StoreInterface $chromadbDocuments`
+ * Add a `doctrine` store, keeping vectors in an `#[Embedding]` field of a Doctrine entity, and embedding the entity on flush and through `ai:store:index` when a `vectorizer` is configured
 
 0.15
 ----
