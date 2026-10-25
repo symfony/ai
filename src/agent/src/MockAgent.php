@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\OutOfBoundsException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -64,7 +65,7 @@ final class MockAgent implements AgentInterface
     /**
      * @param array<string, mixed> $options
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
     {
         $messages = InputNormalizer::toMessageBag($input);
         $content = $this->extractText($messages);

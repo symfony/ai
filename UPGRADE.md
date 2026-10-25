@@ -27,6 +27,18 @@ Agent
    +$similaritySearch = new SimilaritySearch($retriever);
    ```
 
+ * The return type of `AgentInterface::call()` changed from `Execution` to the new `Execution\ExecutionInterface`.
+   `Execution` stays the implementation. Implementers of `AgentInterface` and code type-hinting `Execution` for the
+   result of `call()` must change it:
+
+   ```diff
+   -use Symfony\AI\Agent\Execution\Execution;
+   +use Symfony\AI\Agent\Execution\ExecutionInterface;
+
+   -public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+   +public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
+   ```
+
  * The agent no longer changes the `MessageBag` it is called with. The system prompt, memory and the messages of
    the tool loop stay out of it, so add the answer to your own bag:
 
