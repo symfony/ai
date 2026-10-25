@@ -246,6 +246,8 @@ ships formatters for these collectors:
 ===============  ===================================================================
 Collector        Notes
 ===============  ===================================================================
+``config``       Recorded PHP/Symfony versions, environment and debug mode.
+                 Runtime details: PHP SAPI, timezone, Xdebug, APCu and OPcache.
 ``request``      Request and response data, redacted (see below).
 ``router``       Redirect status, redirecting route, target host and path.
                  Query strings, fragments and userinfo are omitted.
