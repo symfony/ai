@@ -50,7 +50,7 @@ final class Cancellation
     /**
      * Forwards a cancellation request to the execution of a delegated agent.
      */
-    public function forward(Execution $execution): Execution
+    public function forward(ExecutionInterface $execution): ExecutionInterface
     {
         $this->watch($execution->cancel(...));
 

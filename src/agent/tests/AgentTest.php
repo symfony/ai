@@ -420,6 +420,19 @@ final class AgentTest extends TestCase
         $this->assertSame(30, $execution->getMetadata()->get('token_usage')->getPromptTokens());
     }
 
+    public function testGetMessagesMarksTheLastAssistantMessageWithTheExecutionId()
+    {
+        $agent = new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => new TextResult('Hi')), 'gpt-4');
+
+        $execution = $agent->call('Hello');
+        $messages = $execution->getMessages()->getMessages();
+
+        $last = $messages[array_key_last($messages)];
+        $this->assertInstanceOf(AssistantMessage::class, $last);
+        $this->assertSame($execution->getId()->toRfc4122(), $last->getMetadata()->get('execution_id'));
+        $this->assertFalse($messages[0]->getMetadata()->has('execution_id'));
+    }
+
     public function testGetMessagesMapsStructuredOutputToTheAnsweredJson()
     {
         $agent = new Agent(MockPlatformFactory::createPlatform(static fn (): ResultInterface => new ObjectResult(['city' => 'Berlin'], '{"city":"Berlin"}')), 'gpt-4');

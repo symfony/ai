@@ -61,8 +61,28 @@ behavior, for example available tools to execute, or are forwarded to the underl
 Execution
 ---------
 
-:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\Execution`. The
-execution *is* the result it produces, so the simplest usage reads the answer straight off it - the example at the
+:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\ExecutionInterface`.
+:class:`Symfony\\AI\\Agent\\Execution\\Execution` is its implementation. An adapter may return its own. It can
+extend :class:`Symfony\\AI\\Agent\\Execution\\AbstractExecution` and only provide the id, the status, the pending tool
+calls, the error, the messages and the result. Everything else has a default::
+
+    use Symfony\AI\Agent\Execution\AbstractExecution;
+
+    final class RemoteExecution extends AbstractExecution
+    {
+        public function __construct(private readonly RemoteRun $run)
+        {
+        }
+
+        public function getId(): AbstractUid&TimeBasedUidInterface { return $this->run->id; }
+        public function getStatus(): ExecutionStatus { return $this->run->status; }
+        public function getPendingToolCalls(): array { return $this->run->pendingToolCalls; }
+        public function getError(): ?string { return $this->run->error; }
+        public function getMessages(): MessageBag { return $this->run->messages; }
+        public function getResult(): ResultInterface { return $this->run->result; }
+    }
+
+The execution *is* the result it produces, so the simplest usage reads the answer straight off it - the example at the
 top of this page does exactly that. Beyond that, the same object reports every step the agent takes - each model
 request, each tool call, and each streamed delta - as an update when you iterate it, which is what you need to show
 progress to a user while the agent is still working::
@@ -212,6 +232,28 @@ The stages this package itself reports are available as ``Progress::STAGE_MODEL_
 
 Streaming and tool calling compose: when the model streams a tool call, the agent executes it and streams the next
 round into the very same execution.
+
+Execution Status
+~~~~~~~~~~~~~~~~
+
+An execution also reports where it stands. ``getStatus()`` returns a
+:class:`Symfony\\AI\\Agent\\Execution\\ExecutionStatus` such as ``Pending``, ``Completed``, ``Failed``,
+``Cancelled`` or ``WaitingForInput``. In the last case ``getPendingToolCalls()`` lists the tool calls of the model
+that have no answer yet. Neither method runs the agent and neither throws. ``getError()`` returns the message of a
+failed execution::
+
+    use Symfony\AI\Agent\Execution\ExecutionStatus;
+
+    $execution = $agent->call($messages);
+    $execution->getResult();
+
+    if (ExecutionStatus::WaitingForInput === $execution->getStatus()) {
+        $toolCalls = $execution->getPendingToolCalls();
+    }
+
+``getId()`` returns a UUID that identifies this run. The conversation is identified by the id of its ``MessageBag``.
+The last message returned by ``getMessages()`` carries the id in its ``execution_id`` metadata, so it is stored with
+the message.
 
 Tools
 -----

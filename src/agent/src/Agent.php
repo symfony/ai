@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
@@ -26,6 +27,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -80,7 +82,7 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Starts the agent and returns a lazy {@see Execution} that is also the result it produces.
+     * Starts the agent and returns a lazy {@see ExecutionInterface} that is also the result it produces.
      *
      * Read it eagerly with `->getContent()`/`->getResult()`, iterate it to observe every model request, tool call
      * and streamed delta as an update, or register callbacks via `->onProgress(...)`. With the "stream" option
@@ -92,10 +94,11 @@ final class Agent implements AgentInterface
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
     {
         $cancellation = new Cancellation();
-        $factory = function () use ($input, $options, $cancellation): \Generator {
+        $executionId = Uuid::v7();
+        $factory = function () use ($input, $options, $cancellation, $executionId): \Generator {
             $input = InputNormalizer::toMessageBag($input);
             $request = new Input($this->getModel(), $input, $options);
             foreach ($this->inputProcessors as $inputProcessor) {
@@ -147,11 +150,15 @@ final class Agent implements AgentInterface
             }
 
             $finalResult = $output->getResult();
-            $newMessages = static function () use ($resultUpdate, $messages, $input, $result, $finalResult): MessageBag {
+            $newMessages = static function () use ($resultUpdate, $messages, $input, $result, $finalResult, $executionId): MessageBag {
                 $runMessages = $resultUpdate->getMessages($finalResult !== $result ? $finalResult : null);
 
                 // the runner appended to the processed request, the caller's input only gets the new messages
                 $newMessages = \array_slice($runMessages?->getMessages() ?? [], \count($messages));
+
+                if ([] !== $newMessages) {
+                    $newMessages[array_key_last($newMessages)]->getMetadata()->add('execution_id', $executionId->toRfc4122());
+                }
 
                 return $input->merge(new MessageBag(...$newMessages));
             };
@@ -159,6 +166,6 @@ final class Agent implements AgentInterface
             yield new ResultUpdate($finalResult, $newMessages);
         };
 
-        return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);
+        return new Execution($factory, true === ($options['stream'] ?? false), $cancellation, $executionId);
     }
 }
