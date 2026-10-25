@@ -73,10 +73,7 @@ final class Chat
         $messages = $execution->getMessages();
         $this->saveMessages($messages);
 
-        $assistantMessage = $messages->latestAs(Role::Assistant);
-        \assert($assistantMessage instanceof AssistantMessage);
-
-        return $assistantMessage;
+        return $messages->latestAs(Role::Assistant);
     }
 
     public function reset(): void

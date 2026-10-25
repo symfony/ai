@@ -16,11 +16,14 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\IdentifierAwareTrait;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
@@ -502,6 +505,40 @@ final class MessageBagTest extends TestCase
         $messageBag->latestAs(Role::Assistant);
     }
 
+    public function testLatestAsReturnsMessageClassOfRole()
+    {
+        $system = Message::forSystem('System');
+        $user = Message::ofUser('User');
+        $assistant = Message::ofAssistant('Assistant');
+        $toolCall = Message::ofToolCall(new ToolCall('tool', 'tool_name'), 'Result');
+
+        $messageBag = new MessageBag($system, $user, $assistant, $toolCall);
+
+        $this->assertSame($system, $messageBag->latestAs(Role::System));
+        $this->assertSame($user, $messageBag->latestAs(Role::User));
+        $this->assertSame($assistant, $messageBag->latestAs(Role::Assistant));
+        $this->assertSame($toolCall, $messageBag->latestAs(Role::ToolCall));
+    }
+
+    public function testLatestAsSkipsCustomMessageOfRole()
+    {
+        $userMessage = Message::ofUser('Hello');
+
+        $messageBag = new MessageBag($userMessage, $this->createCustomUserMessage());
+
+        $this->assertSame($userMessage, $messageBag->latestAs(Role::User));
+    }
+
+    public function testLatestAsThrowsWithOnlyCustomMessageOfRole()
+    {
+        $messageBag = new MessageBag($this->createCustomUserMessage());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No message found for role "User".');
+
+        $messageBag->latestAs(Role::User);
+    }
+
     public function testReplaceThrowsForUnknownUuid()
     {
         $messageBag = new MessageBag(Message::ofUser('Hello'));
@@ -547,5 +584,23 @@ final class MessageBagTest extends TestCase
 
         $this->assertFalse($messageBag->isLastMessageFrom(Role::User));
         $this->assertTrue($messageBag->isLastMessageFrom(Role::Assistant));
+    }
+
+    private function createCustomUserMessage(): MessageInterface
+    {
+        return new class implements MessageInterface {
+            use IdentifierAwareTrait;
+            use MetadataAwareTrait;
+
+            public function getRole(): Role
+            {
+                return Role::User;
+            }
+
+            public function getContent(): string
+            {
+                return 'Custom';
+            }
+        };
     }
 }

@@ -113,10 +113,6 @@ final class SpeechAgent implements AgentInterface
             return $messages;
         }
 
-        if (!$latestUserMessage instanceof UserMessage) {
-            return $messages;
-        }
-
         if (!$latestUserMessage->hasAudioContent()) {
             return $messages;
         }

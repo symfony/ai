@@ -40,10 +40,7 @@ final class Chat implements ChatInterface
 
         $this->store->save($messages);
 
-        $answer = $messages->latestAs(Role::Assistant);
-        \assert($answer instanceof AssistantMessage);
-
-        return $answer;
+        return $messages->latestAs(Role::Assistant);
     }
 
     public function stream(UserMessage $message): \Generator

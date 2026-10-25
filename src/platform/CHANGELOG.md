@@ -7,6 +7,7 @@ CHANGELOG
  * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
  * Add `Serializer\MessageNormalizer` and `Serializer\MessageBagNormalizer` for persisting messages and message bags losslessly, including ids, metadata and all content types; `addedAt` is derived from the message id instead of the time of normalization
  * Add `MessageBag::withId()`
+ * [BC BREAK] Add a conditional return type to `MessageBag::latestAs()`, letting static analysis infer the message class from the given role; custom `MessageInterface` implementations are not returned anymore
  * Add `Result\CommentaryResult`, `Message\Content\Commentary` and the `Result\Stream\Delta\CommentaryStart`, `CommentaryDelta` and `CommentaryComplete` deltas for narration a model emits next to its answer
  * Add `ObjectResult::getText()` holding the JSON the model answered with, which `Message::ofAssistant()` maps to text
  * [BC BREAK] Make `MessageBag` immutable: remove `add()`, `prepend()` and `removeSystemMessage()` in favor of `with()`, `withSystemMessage()` and `withoutSystemMessage()`, `replace()` returns a copy, and copies no longer share their metadata
