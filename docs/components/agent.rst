@@ -907,36 +907,29 @@ For another result, like an array with an error code, throw an exception that im
 ``getToolCallResult()`` method returns the result of the tool call. Any other exception gives the LLM a
 generic error message, which doesn't expose the details of the error.
 
-Current Tool Call
-~~~~~~~~~~~~~~~~~
+Tool Call ID
+~~~~~~~~~~~~
 
-A tool can access the current :class:`Symfony\\AI\\Platform\\Result\\ToolCall` by implementing
-:class:`Symfony\\AI\\Agent\\Toolbox\\HasToolCallInterface` and using
-:class:`Symfony\\AI\\Agent\\Toolbox\\HasToolCallTrait`::
+Declare the reserved ``$_toolCallId`` parameter to receive the current tool call ID::
 
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-    use Symfony\AI\Agent\Toolbox\HasToolCallInterface;
-    use Symfony\AI\Agent\Toolbox\HasToolCallTrait;
 
     #[AsTool('lookup', 'Look up a record')]
-    final class Lookup implements HasToolCallInterface
+    final class Lookup
     {
-        use HasToolCallTrait;
-
-        public function __invoke(string $query): string
+        public function __invoke(string $query, string $_toolCallId): string
         {
-            $callId = $this->getToolCall()?->getId();
-
-            // Use $callId to correlate this operation with the model's tool call.
+            // Use $_toolCallId as the idempotency key for an external operation.
 
             return 'Found: '.$query;
         }
     }
 
-The toolbox sets the call immediately before invocation and restores the previous value even
-when the tool fails. Outside an invocation, the default value is ``null``. The trait isolates
-contexts between Fibers, so concurrent calls may share a tool instance. The call is not added
-to the tool's model-visible parameters.
+``ToolCallArgumentResolver`` supplies the ID from the current call, overriding any
+model-provided value with the same name. The reserved parameter is omitted from the
+model's input schema. It also works alongside a ``#[MapToolArguments]`` parameter.
+The ID is an ordinary method argument: tools need no mutable call context, and can
+pass it explicitly to decorators or Fibers they create themselves.
 
 .. _agent-tool-sources:
 

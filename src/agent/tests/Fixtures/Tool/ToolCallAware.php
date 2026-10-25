@@ -13,27 +13,22 @@ namespace Symfony\AI\Agent\Tests\Fixtures\Tool;
 
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Agent\Toolbox\HasToolCallInterface;
-use Symfony\AI\Agent\Toolbox\HasToolCallTrait;
-use Symfony\AI\Platform\Result\ToolCall;
 
 /**
  * @author Andrey Bolonin <andreybolonin1989@gmail.com>
  */
 #[AsTool('call_aware', 'Return the current tool call')]
-final class ToolCallAware implements HasToolCallInterface
+final class ToolCallAware
 {
-    use HasToolCallTrait;
-
     public bool $suspend = false;
     public bool $fail = false;
 
     /**
-     * @return array{query: string, before: ToolCall|null, after: ToolCall|null}
+     * @return array{query: string, before: string, after: string}
      */
-    public function __invoke(string $query): array
+    public function __invoke(string $query, string $_toolCallId): array
     {
-        $before = $this->getToolCall();
+        $before = $_toolCallId;
         if ($this->suspend) {
             \Fiber::suspend();
         }
@@ -41,6 +36,6 @@ final class ToolCallAware implements HasToolCallInterface
             throw new RuntimeException('Tool failed.');
         }
 
-        return ['query' => $query, 'before' => $before, 'after' => $this->getToolCall()];
+        return ['query' => $query, 'before' => $before, 'after' => $_toolCallId];
     }
 }

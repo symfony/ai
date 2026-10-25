@@ -66,23 +66,11 @@ abstract class AbstractToolbox implements ToolboxInterface
             // Before the invocation: the tool writes into the collection while it runs.
             $sourceCollection = $this->prepareSources($tool);
 
-            $previousToolCall = null;
-            if ($tool instanceof HasToolCallInterface) {
-                $previousToolCall = $tool->getToolCall();
-                $tool->setToolCall($toolCall);
-            }
-
-            try {
-                $result = new ToolResult(
-                    $toolCall,
-                    $this->invoke($tool, $metadata, $arguments),
-                    $sourceCollection,
-                );
-            } finally {
-                if ($tool instanceof HasToolCallInterface) {
-                    $tool->setToolCall($previousToolCall);
-                }
-            }
+            $result = new ToolResult(
+                $toolCall,
+                $this->invoke($tool, $metadata, $arguments),
+                $sourceCollection,
+            );
 
             $this->eventDispatcher?->dispatch(new ToolCallSucceeded($tool, $metadata, $arguments, $result));
         } catch (ToolExecutionExceptionInterface $e) {
