@@ -17,10 +17,16 @@ use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\TypedResultTrait;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A lazy agent execution that is also the {@see ResultInterface} it produces.
@@ -38,10 +44,8 @@ use Symfony\AI\Platform\Result\TypedResultTrait;
  * stream option, its deltas (asStream(), asTextStream(), asStreamedObject(), ...).
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
- *
- * @implements \IteratorAggregate<int, UpdateInterface>
  */
-final class Execution implements \IteratorAggregate, ResultInterface
+final class Execution implements ExecutionInterface
 {
     use TypedResultTrait {
         asVectors as private;
@@ -68,9 +72,13 @@ final class Execution implements \IteratorAggregate, ResultInterface
 
     private ?Result $resultUpdate = null;
 
+    private ?string $error = null;
+
     private readonly Metadata $metadata;
 
     private readonly Cancellation $cancellation;
+
+    private readonly AbstractUid&TimeBasedUidInterface $id;
 
     /**
      * @param \Closure(): \Generator<int, UpdateInterface, mixed, void> $factory
@@ -83,6 +91,15 @@ final class Execution implements \IteratorAggregate, ResultInterface
     ) {
         $this->metadata = new Metadata();
         $this->cancellation = $cancellation ?? new Cancellation();
+        $this->id = Uuid::v7();
+    }
+
+    /**
+     * Identifies this run, the conversation is identified by the id of its MessageBag.
+     */
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
     }
 
     /**
@@ -91,6 +108,58 @@ final class Execution implements \IteratorAggregate, ResultInterface
     public function getIterator(): \Generator
     {
         yield from $this->consume();
+    }
+
+    public function getStatus(): ExecutionStatus
+    {
+        if ($this->canceled) {
+            return ExecutionStatus::Cancelled;
+        }
+
+        if (null !== $this->error) {
+            return ExecutionStatus::Failed;
+        }
+
+        if (null !== $this->result) {
+            return [] === $this->getPendingToolCalls() ? ExecutionStatus::Completed : ExecutionStatus::WaitingForInput;
+        }
+
+        return $this->consumed ? ExecutionStatus::Running : ExecutionStatus::Pending;
+    }
+
+    /**
+     * Whether tool calls of the model are unanswered, see {@see ExecutionStatus::WaitingForInput}.
+     */
+    public function isSuspended(): bool
+    {
+        return ExecutionStatus::WaitingForInput === $this->getStatus();
+    }
+
+    /**
+     * The tool calls of the final result, left unanswered by the agent.
+     *
+     * @return list<ToolCall>
+     */
+    public function getPendingToolCalls(): array
+    {
+        $parts = $this->result instanceof MultiPartResult ? $this->result->getContent() : [$this->result];
+
+        $toolCalls = [];
+        foreach ($parts as $part) {
+            if ($part instanceof ToolCallResult) {
+                array_push($toolCalls, ...array_values($part->getContent()));
+            }
+        }
+
+        return $toolCalls;
+    }
+
+    /**
+     * The message of the error of a failed execution.
+     */
+    public function getError(): ?string
+    {
+        return $this->error;
     }
 
     /**
@@ -280,10 +349,16 @@ final class Execution implements \IteratorAggregate, ResultInterface
             }
         } catch (\Throwable $exception) {
             if (!$this->canceled) {
+                $this->error = $exception->getMessage();
+
                 throw $exception;
             }
         } finally {
             $this->finished = true;
+
+            if (!$this->canceled && null === $this->result) {
+                $this->error ??= 'The agent execution finished without producing a result.';
+            }
         }
     }
 }

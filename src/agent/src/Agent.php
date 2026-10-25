@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
@@ -84,7 +85,7 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Starts the agent and returns a lazy {@see Execution} that is also the result it produces.
+     * Starts the agent and returns a lazy {@see ExecutionInterface} that is also the result it produces.
      *
      * Read it eagerly with `->getContent()`/`->getResult()`, iterate it to observe every model request, tool call
      * and streamed delta as an update, or register callbacks via `->onProgress(...)`. With the "stream" option
@@ -96,7 +97,7 @@ final class Agent implements AgentInterface
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
     {
         $cancellation = new Cancellation();
         $factory = function () use ($input, $options, $cancellation): \Generator {
