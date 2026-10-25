@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-10-25T18:59:47Z
+
+Thanks @wachterjohannes - added a before/after for the failover rename to `UPGRADE.md`, and the description now says that stores and message stores have separate namespaces.
