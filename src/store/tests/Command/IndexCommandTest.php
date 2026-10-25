@@ -211,6 +211,62 @@ final class IndexCommandTest extends TestCase
         $this->assertContains('products', $values);
     }
 
+    public function testCommandAsksForMissingIndexer()
+    {
+        $loader = $this->createMock(LoaderInterface::class);
+        $loader->expects($this->once())->method('load')->willReturn([]);
+
+        $indexer = $this->createSourceIndexer($loader);
+
+        $command = new IndexCommand(new ServiceLocator([
+            'blog' => static fn (): SourceIndexer => $indexer,
+            'docs' => static fn (): SourceIndexer => $indexer,
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['blog']);
+        $tester->execute([]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Which indexer do you want to use?', $display);
+        $this->assertStringContainsString('Documents indexed successfully using "blog" indexer.', $display);
+    }
+
+    public function testCommandSuggestsAlternativesForUnknownIndexer()
+    {
+        $command = new IndexCommand(new ServiceLocator([
+            'blog' => fn (): IndexerInterface => $this->createMock(IndexerInterface::class),
+            'docs' => fn (): IndexerInterface => $this->createMock(IndexerInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "blgo" indexer does not exist, did you mean "blog"?');
+        $tester->execute([
+            'indexer' => 'blgo',
+        ], ['interactive' => false]);
+    }
+
+    public function testCommandResolvesNumericIndexerName()
+    {
+        $loader = $this->createMock(LoaderInterface::class);
+        $loader->expects($this->once())->method('load')->willReturn([]);
+
+        $indexer = $this->createSourceIndexer($loader);
+
+        $indexers = $this->createStub(ServiceLocator::class);
+        $indexers->method('getProvidedServices')->willReturn([123 => SourceIndexer::class]);
+        $indexers->method('get')->willReturn($indexer);
+
+        $tester = new CommandTester(new IndexCommand($indexers));
+        $tester->execute([
+            'indexer' => '123',
+        ], ['interactive' => false]);
+
+        $this->assertStringContainsString('Documents indexed successfully using "123" indexer.', $tester->getDisplay());
+    }
+
     private function createSourceIndexer(LoaderInterface $loader): SourceIndexer
     {
         $processor = new DocumentProcessor(

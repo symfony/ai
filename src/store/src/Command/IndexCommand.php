@@ -35,6 +35,8 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 )]
 final class IndexCommand extends Command
 {
+    use ServiceArgumentTrait;
+
     /**
      * @param ServiceLocator<IndexerInterface> $indexers
      */
@@ -72,21 +74,22 @@ EOF
         ;
     }
 
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'indexer', 'indexer', array_keys($this->indexers->getProvidedServices()));
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
-        $indexer = $input->getArgument('indexer');
+        $indexer = $this->resolveServiceName($input->getArgument('indexer'), 'indexer', array_keys($this->indexers->getProvidedServices()));
         $sources = $input->getOption('source');
         $source = match (true) {
             [] === $sources => null,
             1 === \count($sources) => $sources[0],
             default => $sources,
         };
-
-        if (!$this->indexers->has($indexer)) {
-            throw new RuntimeException(\sprintf('The "%s" indexer does not exist.', $indexer));
-        }
 
         $indexerService = $this->indexers->get($indexer);
 

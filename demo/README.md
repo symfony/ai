@@ -83,7 +83,7 @@ You should be able to see the `OPENAI_API_KEY` in the list of environment variab
 To initialize the vector store, you need to run the following command:
 
 ```shell
-symfony console ai:store:setup ai.store.postgres.symfony_blog
+symfony console ai:store:setup blog
 symfony console ai:store:index blog -vv
 ```
 

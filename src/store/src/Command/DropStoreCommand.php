@@ -30,6 +30,7 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 #[AsCommand(name: 'ai:store:drop', description: 'Drop the required infrastructure for the store')]
 final class DropStoreCommand extends Command
 {
+    use ServiceArgumentTrait;
     use StoreOptionsTrait;
 
     /**
@@ -67,16 +68,23 @@ EOF
         $this->addStoreOptionsOption();
     }
 
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'store', 'store', $this->getStoreNames());
+
+        if (!$input->getOption('force') && null !== $input->getArgument('store')) {
+            $question = \sprintf('Do you really want to drop the "%s" store?', $input->getArgument('store'));
+            $input->setOption('force', (new SymfonyStyle($input, $output))->confirm($question, false));
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (0 === \count($this->getStoreNames())) {
             throw new RuntimeException('No store is configured to be dropped.');
         }
 
-        $storeName = $input->getArgument('store');
-        if (!$this->stores->has($storeName)) {
-            throw new RuntimeException(\sprintf('The "%s" store does not exist, use "%s".', $storeName, implode('", "', $this->getStoreNames())));
-        }
+        $storeName = $this->resolveServiceName($input->getArgument('store'), 'store', $this->getStoreNames());
 
         $store = $this->stores->get($storeName);
         if (!$store instanceof ManagedStoreInterface) {

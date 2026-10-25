@@ -15,7 +15,7 @@ composer install
 echo "OPENAI_API_KEY='sk-...'" > .env.local   # HUGGINGFACE_API_KEY only if you wire HF agents
 
 # Vector store must be set up before indexing
-symfony console ai:store:setup ai.store.postgres.symfony_blog
+symfony console ai:store:setup blog
 symfony console ai:store:index blog -vv
 symfony console ai:store:retrieve blog "Week of Symfony"
 

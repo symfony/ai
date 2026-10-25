@@ -243,7 +243,7 @@ infrastructure and run the indexer from the console:
 
 .. code-block:: terminal
 
-    $ php bin/console ai:store:setup ai.store.chromadb.knowledge_base
+    $ php bin/console ai:store:setup knowledge_base
     $ php bin/console ai:store:index docs --source=/path/to/document.txt
 
 An indexer without a ``loader`` becomes a ``DocumentIndexer`` that you feed documents directly in

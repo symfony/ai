@@ -1829,7 +1829,7 @@ final class AiBundle extends AbstractBundle
                         new Reference($store['http_client']),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1852,7 +1852,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1875,7 +1875,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1899,7 +1899,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1931,7 +1931,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1957,7 +1957,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -1984,7 +1984,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 if (\array_key_exists('quantization', $store)) {
                     $definition->setArgument(7, $store['quantization']);
@@ -2014,7 +2014,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 if (isset($store['dimensions'])) {
                     $definition->setArgument('$dimensions', $store['dimensions']);
@@ -2046,7 +2046,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2072,7 +2072,7 @@ final class AiBundle extends AbstractBundle
                 $definition = new Definition(InMemoryStore::class);
                 $definition
                     ->setArguments($arguments)
-                    ->addTag('ai.store')
+                    ->addTag('ai.store', ['name' => $name])
                     ->addTag('kernel.reset', ['method' => 'reset']);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
@@ -2101,7 +2101,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2144,7 +2144,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2180,7 +2180,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2206,7 +2206,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2242,7 +2242,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2263,7 +2263,7 @@ final class AiBundle extends AbstractBundle
                         DoctrineMetric::from($store['metric']),
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2321,7 +2321,7 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2348,7 +2348,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2379,7 +2379,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 if (isset($store['dimensions'])) {
                     $definition->setArgument('$dimensions', $store['dimensions']);
@@ -2431,7 +2431,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2506,7 +2506,7 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2532,7 +2532,7 @@ final class AiBundle extends AbstractBundle
                         $store['function_name'],
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.supabase.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2568,7 +2568,7 @@ final class AiBundle extends AbstractBundle
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2594,7 +2594,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2617,7 +2617,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);
@@ -2641,7 +2641,7 @@ final class AiBundle extends AbstractBundle
                     ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
-                    ->addTag('ai.store');
+                    ->addTag('ai.store', ['name' => $name]);
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
                 $container->registerAliasForArgument('ai.store.'.$type.'.'.$name, StoreInterface::class, $name);

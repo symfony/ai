@@ -155,7 +155,7 @@ ai:
             fallback: 'fallback'
     store:
         postgres:
-            symfony_blog:
+            blog:
                 dbal_connection: 'doctrine.dbal.default_connection'
                 table_name: 'symfony_blog'
                 metric: 'cosine'
@@ -173,10 +173,10 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
-            store: 'ai.store.postgres.symfony_blog'
+            store: 'ai.store.postgres.blog'
     retriever:
         blog:
-            store: 'ai.store.postgres.symfony_blog'
+            store: 'ai.store.postgres.blog'
             vectorizer: 'ai.vectorizer.openai'
 
 services:

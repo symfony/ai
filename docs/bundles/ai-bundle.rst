@@ -820,10 +820,14 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
     $ php bin/console ai:store:setup <store>
 
     # Setup the chromadb store
-    $ php bin/console ai:store:setup ai.store.chromadb.default
+    $ php bin/console ai:store:setup default
 
     # Pass a runtime option supported by the store
-    $ php bin/console ai:store:setup ai.store.surrealdb.default --option forceDatabaseCreation=true
+    $ php bin/console ai:store:setup default --option forceDatabaseCreation=true
+
+The commands name a store by its configured name, e.g. ``default``. If you leave out the store,
+indexer or retriever, or give an unknown one, the command asks you to select one of the configured
+services and lists the closest matches first.
 
 The ``--option`` (or ``-o``) option takes ``name=value`` and can be repeated. The value is decoded
 as JSON when possible (e.g. ``true`` or ``100``), and a ``name`` without value is set to ``true``.
@@ -862,11 +866,12 @@ The ``ai:store:drop`` command drops the infrastructure for a store (e.g., remove
     $ php bin/console ai:store:drop <store> --force
 
     # Drop the chromadb store
-    $ php bin/console ai:store:drop ai.store.chromadb.default --force
+    $ php bin/console ai:store:drop default --force
 
 .. warning::
 
     The ``--force`` (or ``-f``) option is required to prevent accidental data loss.
+    Without it, the command asks for confirmation in interactive mode.
     This command will permanently delete all data in the store.
 
 .. note::

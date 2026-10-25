@@ -388,6 +388,7 @@ class BridgeConfigCompilationTest extends TestCase
         $definition = $container->getDefinition($expectedServiceId);
 
         $this->assertTrue($definition->hasTag('ai.store'), \sprintf('Service "%s" should have the "ai.store" tag.', $expectedServiceId));
+        $this->assertSame([['name' => 'default']], $definition->getTag('ai.store'));
         $this->assertFactoryArgumentCount($definition, $expectedServiceId);
         $this->assertReferencesResolvable($definition, $container, $expectedServiceId);
     }

@@ -9,6 +9,8 @@ CHANGELOG
  * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead
  * Add `Bridge\Doctrine\OrmStore`, keeping vectors in an `#[Embedding]` field of a Doctrine entity, embedding entities in batches or on flush, and returning entities when queried, on PostgreSQL/pgvector and SQLite/sqlite-vec
  * Accept any `IndexerInterface` in `Indexer\ConfiguredSourceIndexer`, not only a `SourceIndexer`
+ * Add interactive selection of the store, indexer or retriever to the `ai:store:*` commands, proposing the closest matches for unknown names
+ * Ask for confirmation in `ai:store:drop` and `ai:store:clear` when running interactively without `--force`
 
 0.14
 ----

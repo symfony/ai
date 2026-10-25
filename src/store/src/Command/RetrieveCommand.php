@@ -33,6 +33,8 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 )]
 final class RetrieveCommand extends Command
 {
+    use ServiceArgumentTrait;
+
     /**
      * @param ServiceLocator<RetrieverInterface> $retrievers
      */
@@ -71,24 +73,26 @@ final class RetrieveCommand extends Command
         ;
     }
 
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'retriever', 'retriever', array_keys($this->retrievers->getProvidedServices()));
+
+        if (null === $input->getArgument('query')) {
+            $input->setArgument('query', (new SymfonyStyle($input, $output))->ask('What do you want to search for?'));
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
-        $retriever = $input->getArgument('retriever');
-
-        if (!$this->retrievers->has($retriever)) {
-            throw new RuntimeException(\sprintf('The "%s" retriever does not exist.', $retriever));
-        }
+        $retriever = $this->resolveServiceName($input->getArgument('retriever'), 'retriever', array_keys($this->retrievers->getProvidedServices()));
 
         $query = $input->getArgument('query');
-        if (null === $query) {
-            $query = $io->ask('What do you want to search for?');
-            if (null === $query || '' === $query) {
-                $io->error('A search query is required.');
+        if (null === $query || '' === $query) {
+            $io->error('A search query is required.');
 
-                return Command::FAILURE;
-            }
+            return Command::FAILURE;
         }
 
         $limit = (int) $input->getOption('limit');

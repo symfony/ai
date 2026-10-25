@@ -30,6 +30,7 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 #[AsCommand(name: 'ai:store:setup', description: 'Prepare the required infrastructure for the store')]
 final class SetupStoreCommand extends Command
 {
+    use ServiceArgumentTrait;
     use StoreOptionsTrait;
 
     /**
@@ -66,16 +67,18 @@ EOF
         $this->addStoreOptionsOption();
     }
 
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'store', 'store', $this->getStoreNames());
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (0 === \count($this->getStoreNames())) {
             throw new RuntimeException('No store is configured to be set up.');
         }
 
-        $storeName = $input->getArgument('store');
-        if (!$this->stores->has($storeName)) {
-            throw new RuntimeException(\sprintf('The "%s" store does not exist, use "%s".', $storeName, implode('", "', $this->getStoreNames())));
-        }
+        $storeName = $this->resolveServiceName($input->getArgument('store'), 'store', $this->getStoreNames());
 
         $store = $this->stores->get($storeName);
         if ($store instanceof TraceableStore) {
