@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class HiggsfieldClientTest extends TestCase
@@ -64,22 +65,44 @@ final class HiggsfieldClientTest extends TestCase
         $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', ['aspect_ratio' => '9:16']);
     }
 
-    public function testClientMapsNormalizedImageToImageUrl()
+    public function testClientUploadsNormalizedImageAndPassesItsPublicUrl()
     {
-        $payload = (new ImageNormalizer())->normalize(Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg'));
+        $image = Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg');
+        $payload = (new ImageNormalizer())->normalize($image);
 
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
-            $body = json_decode($options['body'], true);
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://platform.higgsfield.ai/files/generate-upload-url', $url);
+                $this->assertSame(['content_type' => 'image/jpeg'], json_decode($options['body'], true));
 
-            $this->assertArrayNotHasKey('input_images', $body);
-            $this->assertStringStartsWith('data:image/jpeg;base64,', $body['image_url']);
-            $this->assertSame('Slowly zoom in', $body['prompt']);
+                return new JsonMockResponse([
+                    'public_url' => 'https://cdn.example.com/image.jpeg',
+                    'upload_url' => 'https://bucket.example.com/image.jpeg?signature=abc',
+                    'upload_headers' => ['Content-Type' => 'image/jpeg', 'x-amz-tagging' => 'retention=temporary'],
+                ]);
+            },
+            function (string $method, string $url, array $options) use ($image): MockResponse {
+                $this->assertSame('PUT', $method);
+                $this->assertSame('https://bucket.example.com/image.jpeg?signature=abc', $url);
+                $this->assertContains('x-amz-tagging: retention=temporary', $options['headers']);
+                $this->assertSame($image->asBinary(), $options['body']);
 
-            return new MockResponse('{"request_id": "req-123", "status": "queued"}');
-        }, self::BASE_URL);
+                return new MockResponse();
+            },
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame('https://platform.higgsfield.ai/kling-video/v2.5-turbo/pro/image-to-video', $url);
+                $this->assertSame(['image_url' => 'https://cdn.example.com/image.jpeg', 'prompt' => 'Slowly zoom in'], json_decode($options['body'], true));
+
+                return new MockResponse('{"request_id": "req-123", "status": "queued"}');
+            },
+        ], self::BASE_URL);
 
         $client = new HiggsfieldClient($httpClient);
 
-        $client->request(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video', [Capability::IMAGE_TO_VIDEO]), $payload, ['prompt' => 'Slowly zoom in']);
+        $result = $client->request(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video', [Capability::IMAGE_TO_VIDEO]), $payload, ['prompt' => 'Slowly zoom in']);
+
+        $this->assertSame('req-123', $result->getData()['request_id']);
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 }
