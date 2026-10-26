@@ -615,7 +615,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'cloudflare' => ['cloudflare', ['default' => ['account_id' => 'a', 'api_key' => 'k', 'namespace' => 'ns']], 'ai.message_store.cloudflare.default'];
         yield 'doctrine' => ['doctrine', ['dbal' => ['default' => ['connection' => 'default']]], 'ai.message_store.doctrine.dbal.default'];
         yield 'meilisearch' => ['meilisearch', ['default' => ['endpoint' => 'http://localhost:7700', 'api_key' => 'k', 'index_name' => 'idx']], 'ai.message_store.meilisearch.default'];
-        yield 'memory' => ['memory', ['default' => ['identifier' => 'mem']], 'ai.message_store.memory.default'];
+        yield 'memory' => ['memory', ['default' => []], 'ai.message_store.memory.default'];
         yield 'mongodb' => ['mongodb', ['default' => ['database' => 'db', 'collection' => 'col']], 'ai.message_store.mongodb.default'];
         yield 'pogocache' => ['pogocache', ['default' => ['endpoint' => 'http://localhost:9401', 'password' => 'p', 'key' => 'k']], 'ai.message_store.pogocache.default'];
         yield 'redis' => ['redis', ['default' => ['connection_parameters' => ['host' => 'localhost', 'port' => 6379], 'index_name' => 'idx']], 'ai.message_store.redis.default'];

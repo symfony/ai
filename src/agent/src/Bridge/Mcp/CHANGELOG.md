@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add typed tool effect hints populated from remote MCP annotations
 

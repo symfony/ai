@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics

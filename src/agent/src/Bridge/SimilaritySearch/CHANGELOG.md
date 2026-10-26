@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add `SimilaritySearchResult`, returned by the tool and passed to the model as a JSON list of the documents with their id
  * Add the retrieved documents as sources of the tool, exposed in the agent result with `includeSources`

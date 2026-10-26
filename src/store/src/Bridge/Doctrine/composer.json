@@ -31,8 +31,8 @@
         "doctrine/orm": "^3.4",
         "oskarstark/enum-helper": "^1.5",
         "psr/log": "^3.0",
-        "symfony/ai-platform": "^0.15",
-        "symfony/ai-store": "^0.15",
+        "symfony/ai-platform": "^1.0",
+        "symfony/ai-store": "^1.0",
         "symfony/http-client-contracts": "^3.5",
         "symfony/uid": "^7.3|^8.0"
     },

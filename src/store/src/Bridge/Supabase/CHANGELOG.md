@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * [BC BREAK] Rename the `vectorDimension` argument of `Store` and `StoreFactory` to `dimensions`
 

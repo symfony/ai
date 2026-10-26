@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add the bridge
  * Add `Mirror\MirrorListener` and `Mirror\EntityRetriever`, mirroring entities with `#[Embedding]` on the class into any store and loading them for the hits

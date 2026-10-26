@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * [BC BREAK] Remove the `dimensions` and `space_type` options of `Store::setup()`, use the arguments of `Store` instead
  * [BC BREAK] Rename the `spaceType` argument of `Store` and `StoreFactory` to `metric`
