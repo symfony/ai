@@ -289,7 +289,8 @@ foreach ($changedFiles as $file) {
     $anyMdChanged = true;
     $kind = $isChangelog ? 'changelog' : 'upgrade';
 
-    if (\in_array($file, $movedChangelogs, true)) {
+    // A moved bridge is checked at its new place, a removed package takes its history with it
+    if (\in_array($file, $movedChangelogs, true) || \in_array(\dirname($file).'/composer.json', $deletedFiles, true)) {
         continue;
     }
 

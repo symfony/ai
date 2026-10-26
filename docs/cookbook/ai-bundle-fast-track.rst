@@ -7,8 +7,8 @@
 AI Bundle Fast Track
 ====================
 
-The :doc:`AI Bundle </bundles/ai-bundle>` is the Symfony integration for the Platform, Agent,
-Store, and Chat components. Instead of wiring services by hand, you describe platforms, agents,
+The :doc:`AI Bundle </bundles/ai-bundle>` is the Symfony integration for the Platform, Agent
+and Store components. Instead of wiring services by hand, you describe platforms, agents,
 tools, and stores in ``config/packages/ai.yaml`` and the bundle registers everything in the
 container for you. This guide is a fast track from an empty configuration to an agent that
 answers questions over your own documents. Each step links to a dedicated cookbook article when
@@ -325,7 +325,7 @@ A complete fast-track configuration looks like this:
                     - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
 From here you can grow in any direction: add more platforms and agents, route between them with
-multi-agent orchestration, persist conversations with message stores and chats, or expose your
+multi-agent orchestration, persist conversations with message stores, or expose your
 tools over MCP.
 
 Learn More

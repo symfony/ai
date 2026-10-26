@@ -11,7 +11,7 @@
       "id": 1,
       "name": "broad-core-change",
       "prompt": "I'm in /tmp/run-examples-eval/pr-1853 (a worktree with PR #1853 checked out — base ref is `_test_base_1853`, NOT main). Run the run-examples skill: figure out which examples should be executed for this change, propose them with reasons and skip notes, and stop before executing anything. Output the proposal in plain markdown.",
-      "expected_output": "Proposal recognises this is a broad cross-cutting Platform/Agent/Chat change (AssistantMessage rework, ~69 files). Should pick a small REPRESENTATIVE set per affected capability (chat, persistent-chat, structured output, tool calling, streaming) rather than enumerating hundreds of scripts. Should call out the broadness explicitly."
+      "expected_output": "Proposal recognises this is a broad cross-cutting Platform/Agent change (AssistantMessage rework, ~69 files). Should pick a small REPRESENTATIVE set per affected capability (chat, persistent-chat, structured output, tool calling, streaming) rather than enumerating hundreds of scripts. Should call out the broadness explicitly."
     },
     {
       "id": 2,

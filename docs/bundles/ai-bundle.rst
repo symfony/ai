@@ -6,7 +6,6 @@ Symfony integration bundle for Symfony AI components.
 Integrating:
 
 * `Symfony AI Agent`_
-* `Symfony AI Chat`_
 * `Symfony AI Platform`_
 * `Symfony AI Store`_
 
@@ -1531,7 +1530,7 @@ reported - there is nothing to parse::
     $this->assertGreaterThan(0, $call['metadata']->get('token_usage')->getPromptTokens());
 
 Next to ``getPlatformCalls()``, ``getToolCalls()`` and ``getTools()``, the collector exposes the
-agents, chats, message stores and stores that took part in the request.
+agents, message stores and stores that took part in the request.
 
 .. note::
 
@@ -1590,28 +1589,6 @@ Create it before the first conversation, and remove it with all its conversation
 
     $ php bin/console ai:message-store:setup ai.message_store.doctrine.dbal.main
     $ php bin/console ai:message-store:drop ai.message_store.doctrine.dbal.main --force
-
-Chats
------
-
-Chats are the entrypoint when it comes to sending messages to agents and retrieving content (mostly text)
-that contains the response from the agent.
-
-Each chat requires to define an agent and a message store.
-
-Configuring Chats
-~~~~~~~~~~~~~~~~~
-
-Chats are defined in the ``chat`` section of your configuration:
-
-.. code-block:: yaml
-
-    ai:
-        # ...
-        chat:
-            youtube:
-                agent: 'ai.agent.youtube'
-                message_store: 'ai.message_store.cache.youtube'
 
 Speech
 ------
@@ -1687,6 +1664,5 @@ When only STT is configured (no TTS), the agent returns the same result type as 
 
 .. _`Model Context Protocol`: https://modelcontextprotocol.io
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
-.. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform
 .. _`Symfony AI Store`: https://github.com/symfony/ai-store

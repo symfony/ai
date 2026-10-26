@@ -297,7 +297,6 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.traceable_toolbox'),
                 tagged_iterator('ai.profiler_toolbox'),
                 tagged_iterator('ai.traceable_message_store'),
-                tagged_iterator('ai.traceable_chat'),
                 tagged_iterator('ai.traceable_agent'),
                 tagged_iterator('ai.traceable_store'),
             ])

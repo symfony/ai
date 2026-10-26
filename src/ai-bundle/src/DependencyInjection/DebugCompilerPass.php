@@ -14,7 +14,6 @@ namespace Symfony\AI\AiBundle\DependencyInjection;
 use Symfony\AI\Agent\MessageStore\TraceableMessageStore;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
-use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Platform\TraceablePlatform;
 use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\ClockInterface;
@@ -58,19 +57,6 @@ final class DebugCompilerPass implements CompilerPassInterface
                 ->addTag('kernel.reset', ['method' => 'reset']);
             $suffix = u($messageStore)->afterLast('.')->toString();
             $container->setDefinition('ai.traceable_message_store.'.$suffix, $traceableMessageStoreDefinition);
-        }
-
-        foreach (array_keys($container->findTaggedServiceIds('ai.chat')) as $chat) {
-            $traceableChatDefinition = (new Definition(TraceableChat::class))
-                ->setDecoratedService($chat, priority: -1024)
-                ->setArguments([
-                    new Reference('.inner'),
-                    new Reference(ClockInterface::class),
-                ])
-                ->addTag('ai.traceable_chat')
-                ->addTag('kernel.reset', ['method' => 'reset']);
-            $suffix = u($chat)->afterLast('.')->toString();
-            $container->setDefinition('ai.traceable_chat.'.$suffix, $traceableChatDefinition);
         }
 
         foreach (array_keys($container->findTaggedServiceIds('ai.toolbox')) as $toolbox) {
