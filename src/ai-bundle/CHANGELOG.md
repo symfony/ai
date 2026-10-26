@@ -16,6 +16,9 @@ CHANGELOG
  * [BC BREAK] Remove the `ai.platform.model_catalog.amazeeai` service
  * [BC BREAK] Remove the unused `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and `ai.platform.model_catalog.replicate` services
  * [BC BREAK] Remove the `api_catalog` option of the `huggingface` platform in favor of the `api` option of its `model_catalog`
+ * Add the `message_store` agent option, continuing and saving the conversations of the agent by their ID
+ * [BC BREAK] Configured message stores are the stores of the Agent component, implementing `Symfony\AI\Agent\MessageStore\MessageStoreInterface`; chats keep their conversation in them through `Symfony\AI\Chat\AgentMessageStore`
+ * Deprecate the `identifier` option of the `memory` message store
  * [BC BREAK] Remove the `exclude_tool_messages` agent option, tool messages never reach the caller's `MessageBag`
  * Add the `mirror_to` option to the `doctrine` store, mirroring the entity into another store and registering an entity retriever
 

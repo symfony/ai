@@ -13,6 +13,8 @@ namespace Symfony\AI\AiBundle\Tests\Profiler;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+use Symfony\AI\Agent\MessageStore\TraceableMessageStore;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
@@ -22,7 +24,6 @@ use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
 use Symfony\AI\Chat\TraceableChat;
-use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Job\JobHandle;
@@ -398,7 +399,7 @@ class DataCollectorTest extends TestCase
 
     public function testCollectsDataForMessageStore()
     {
-        $traceableMessageStore = new TraceableMessageStore(new InMemoryStore(), new MonotonicClock());
+        $traceableMessageStore = new TraceableMessageStore(new InMemoryMessageStore(), new MonotonicClock());
         $traceableMessageStore->save(new MessageBag(
             Message::ofUser('Hello World'),
         ));

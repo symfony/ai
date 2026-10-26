@@ -82,19 +82,19 @@ jobs:
               run: git fetch origin ${{ github.base_ref || 'main' }} --depth=1
 
             - name: Validate message store bridge naming conventions
-              run: .github/scripts/validate-bridge-naming.sh message-store chat
+              run: .github/scripts/validate-bridge-naming.sh message-store agent
 
             - name: Validate message store bridges are in splitsh.json
-              run: .github/scripts/validate-bridge-splitsh.sh message-store chat
+              run: .github/scripts/validate-bridge-splitsh.sh message-store agent
 
             - name: Validate message store bridges have required files
-              run: .github/scripts/validate-bridge-files.sh message-store chat
+              run: .github/scripts/validate-bridge-files.sh message-store agent
 
             - name: Validate message store bridges have correct type
-              run: .github/scripts/validate-bridge-type.sh message-store chat
+              run: .github/scripts/validate-bridge-type.sh message-store agent
 
             - name: Validate message store bridges are covered in deptrac.yaml
-              run: .github/scripts/validate-bridge-deptrac.sh message-store chat
+              run: .github/scripts/validate-bridge-deptrac.sh message-store agent
 
     validate_platforms:
         name: Platform Bridges

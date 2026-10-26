@@ -5,6 +5,9 @@ CHANGELOG
 ----
 
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
+ * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation
+ * Add `MessageStore\ManagedMessageStoreInterface`, `MessageStore\TraceableMessageStore` and the `ai:message-store:setup` & `ai:message-store:drop` commands
+ * Add `MessageStore\ConflictDetector` for message store bridges detecting messages saved in the meantime
  * Add `MessageStore\MessageStoreInterface` and `MessageStore\InMemoryMessageStore` keeping message bags by their ID, and the `$messageStore` argument of `Agent` continuing and saving the stored conversation
  * Add `ExecutionInterface`, returned by `AgentInterface::call()`
  * Add `ExecutionStatus` and `Execution::getStatus()`, `isSuspended()`, `getPendingToolCalls()`, `getError()` and `getId()` to read where an execution stands

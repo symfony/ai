@@ -35,10 +35,8 @@ jobs:
                         path: 'src/platform/src/Bridge'
                     -   name: Store Bridges
                         path: 'src/store/src/Bridge'
-                    -   name: Tool Bridges
+                    -   name: Agent Bridges
                         path: 'src/agent/src/Bridge'
-                    -   name: Message Store Bridges
-                        path: 'src/chat/src/Bridge'
                     -   name: Mate Bridges
                         path: 'src/mate/src/Bridge'
         steps:

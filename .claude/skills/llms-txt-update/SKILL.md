@@ -19,7 +19,7 @@ Gather current data from these sources in the monorepo (root: the repo root, whi
 2. **Components** — list directories in `src/` and read each `src/<component>/README.md` for the current description and install command
 3. **Platform bridges** — list directories in `src/platform/src/Bridge/` to get the full set of supported AI platforms
 4. **Store bridges** — list directories in `src/store/src/Bridge/` to get the full set of supported vector stores
-5. **Chat bridges** — list directories in `src/chat/src/Bridge/` for message store backends
+5. **Message store bridges** — list the directories in `src/agent/src/Bridge/` whose `composer.json` type is `symfony-ai-message-store`
 6. **Agent bridges** — list directories in `src/agent/src/Bridge/` for built-in tools (like Wikipedia, YouTube, SimilaritySearch)
 7. **Documentation pages** — scan `docs/` for `.rst` files to build the documentation links section
 8. **Cookbook entries** — scan `docs/cookbook/` for recipe pages

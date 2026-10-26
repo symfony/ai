@@ -1543,8 +1543,9 @@ agents, chats, message stores and stores that took part in the request.
 Message stores
 --------------
 
-Message stores are critical to store messages sent to agents in the short / long term, they can be configured
-and reused in multiple chats, providing the capacity to agents to keep previous interactions.
+Message stores keep the conversations of your agents across requests. The agent loads the conversation with the ID
+of the message bag and saves it with each new message. See
+:ref:`Storing Conversations <agent-storing-conversations>` for how this works.
 
 Configuring message stores
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1559,7 +1560,36 @@ Message stores are defined in the ``message_store`` section of your configuratio
             cache:
                 youtube:
                     service: 'cache.app'
+                    # prefix of the cache keys, defaults to the name of the message store
                     key: 'youtube'
+
+Use the ``message_store`` option of an agent to continue and save its conversations in the store:
+
+.. code-block:: yaml
+
+    ai:
+        # ...
+        agent:
+            youtube:
+                model: 'gpt-5-mini'
+                message_store: 'ai.message_store.cache.youtube'
+
+The calling code then sends only the new message, with the ID of the conversation::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $messages = (new MessageBag(Message::ofUser('And what about the second video?')))->withId($conversationId);
+
+    $answer = $agent->call($messages)->asText();
+
+The cache store needs no setup. Other message stores need a table, an index or a collection (e.g. Doctrine DBAL).
+Create it before the first conversation, and remove it with all its conversations when you no longer need it:
+
+.. code-block:: terminal
+
+    $ php bin/console ai:message-store:setup ai.message_store.doctrine.dbal.main
+    $ php bin/console ai:message-store:drop ai.message_store.doctrine.dbal.main --force
 
 Chats
 -----

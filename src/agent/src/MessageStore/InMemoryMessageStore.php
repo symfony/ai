@@ -11,16 +11,15 @@
 
 namespace Symfony\AI\Agent\MessageStore;
 
-use Symfony\AI\Agent\Exception\ConflictException;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class InMemoryMessageStore implements MessageStoreInterface
+final class InMemoryMessageStore implements MessageStoreInterface, ResetInterface
 {
     /**
      * @var array<string, MessageBag>
@@ -34,18 +33,18 @@ final class InMemoryMessageStore implements MessageStoreInterface
 
     public function save(MessageBag $messages): void
     {
-        $id = $messages->getId()->toRfc4122();
-        $stored = isset($this->messages[$id]) ? $this->messages[$id]->getMessages() : [];
+        ConflictDetector::assertContinues($this->load($messages->getId()), $messages);
 
-        if (array_map(self::id(...), $stored) !== array_map(self::id(...), \array_slice($messages->getMessages(), 0, \count($stored)))) {
-            throw ConflictException::forMessages($messages);
-        }
-
-        $this->messages[$id] = $messages;
+        $this->messages[$messages->getId()->toRfc4122()] = $messages;
     }
 
-    private static function id(MessageInterface $message): string
+    public function delete(AbstractUid&TimeBasedUidInterface $id): void
     {
-        return $message->getId()->toRfc4122();
+        unset($this->messages[$id->toRfc4122()]);
+    }
+
+    public function reset(): void
+    {
+        $this->messages = [];
     }
 }

@@ -78,7 +78,7 @@ Common shortcuts that hold:
 - `src/store/src/Bridge/<Backend>/` → `examples/store/<backend>.php`,
   `examples/rag/<backend>.php` (and variants like `<backend>-openai.php`),
   plus indexer/retriever/memory scripts that import the bridge.
-- `src/chat/src/Bridge/<Backend>/` → `examples/chat/persistent-chat-<backend>.php`.
+- `src/agent/src/Bridge/<Backend>/` (message stores) → `examples/agent/message-store-<backend>.php`.
 - `src/agent/src/Bridge/<Tool>/` → `examples/toolbox/<tool>.php` and any
   example that uses that tool.
 

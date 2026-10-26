@@ -45,7 +45,7 @@ Scan these locations for documentation files:
 - `README.md` - Root repository README
 - `CONTRIBUTING.md` - Contributing guide
 - `src/*/README.md` - Component READMEs (platform, agent, store, chat, mate, ai-bundle, mcp-bundle)
-- `src/*/src/Bridge/*/README.md` - Bridge READMEs (e.g. `src/platform/src/Bridge/HuggingFace/README.md`, `src/store/src/Bridge/Qdrant/README.md`, `src/agent/src/Bridge/Tavily/README.md`, `src/chat/src/Bridge/Doctrine/README.md`)
+- `src/*/src/Bridge/*/README.md` - Bridge READMEs (e.g. `src/platform/src/Bridge/HuggingFace/README.md`, `src/store/src/Bridge/Qdrant/README.md`, `src/agent/src/Bridge/Tavily/README.md`, `src/agent/src/Bridge/Doctrine/README.md`)
 - `src/mate/INSTRUCTIONS.md` and `src/mate/src/Bridge/*/INSTRUCTIONS.md` - Mate extension instructions
 - `examples/README.md` and `examples/*/README.md` - Example-suite READMEs
 - `demo/README.md` - Demo application README

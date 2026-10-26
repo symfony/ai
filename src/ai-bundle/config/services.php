@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\AI\Agent\Command\DropMessageStoreCommand;
+use Symfony\AI\Agent\Command\SetupMessageStoreCommand;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
@@ -23,8 +25,6 @@ use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
-use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
-use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;

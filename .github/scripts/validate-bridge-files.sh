@@ -45,6 +45,12 @@ for bridge_dir in ${BRIDGE_PATH}/; do
     fi
 
     bridge_name=$(basename "$bridge_dir")
+
+    # A component can hold bridges of several types, like the tools and message stores of the agent component
+    bridge_type=$(jq -r '.type // empty' "${bridge_dir%/}/composer.json" 2>/dev/null || true)
+    if [[ "$bridge_type" == symfony-ai-* && "$bridge_type" != "symfony-ai-${BRIDGE_TYPE}" ]]; then
+        continue
+    fi
     bridge_errors=0
 
     for required_file in "${REQUIRED_FILES[@]}"; do
@@ -66,9 +72,10 @@ for bridge_dir in ${BRIDGE_PATH}/; do
             BASE_REF="origin/main"
         fi
 
-        # Check if LICENSE file is newly added (not in base branch)
+        # Check if LICENSE file is newly added (not in base branch, and not moved from another path)
         # Use git show which works with shallow clones if base is fetched
-        if ! git show "${BASE_REF}:${license_file}" &>/dev/null; then
+        if ! git show "${BASE_REF}:${license_file}" &>/dev/null \
+            && ! git diff --name-only --diff-filter=R -M "${BASE_REF}" -- 2>/dev/null | grep -qxF "$license_file"; then
             expected_first_line="Copyright (c) ${CURRENT_YEAR}-present Fabien Potencier"
             actual_first_line=$(head -n 1 "$license_file")
             if [[ "$actual_first_line" != "$expected_first_line" ]]; then

@@ -3,6 +3,7 @@
     "description": "PHP library for building chats with agents.",
     "license": "MIT",
     "type": "library",
+    "abandoned": "symfony/ai-agent",
     "keywords": [
         "ai",
         "llm",
@@ -35,8 +36,6 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
         "symfony/clock": "^7.3|^8.0",
-        "symfony/console": "^7.3|^8.0",
-        "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/serializer": "^7.3|^8.0"
     },
     "minimum-stability": "dev",

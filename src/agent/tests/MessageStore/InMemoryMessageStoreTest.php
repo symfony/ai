@@ -75,4 +75,18 @@ final class InMemoryMessageStoreTest extends TestCase
 
         $store->save($messages);
     }
+
+    public function testDeleteRemovesOnlyTheGivenConversation()
+    {
+        $store = new InMemoryMessageStore();
+        $first = new MessageBag(Message::ofUser('Hello'));
+        $second = new MessageBag(Message::ofUser('Bonjour'));
+        $store->save($first);
+        $store->save($second);
+
+        $store->delete($first->getId());
+
+        $this->assertCount(0, $store->load($first->getId()));
+        $this->assertCount(1, $store->load($second->getId()));
+    }
 }

@@ -19,11 +19,23 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
 use Symfony\AI\Agent\Attribute\AsOutputProcessor;
+use Symfony\AI\Agent\Bridge\Cache\MessageStore as CacheMessageStore;
+use Symfony\AI\Agent\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
+use Symfony\AI\Agent\Bridge\Doctrine\DoctrineDbalMessageStore;
 use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
+use Symfony\AI\Agent\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
+use Symfony\AI\Agent\Bridge\MongoDb\MessageStore as MongoDbMessageStore;
+use Symfony\AI\Agent\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
+use Symfony\AI\Agent\Bridge\Redis\MessageStore as RedisMessageStore;
+use Symfony\AI\Agent\Bridge\Session\MessageStore as SessionMessageStore;
+use Symfony\AI\Agent\Bridge\SurrealDb\MessageStore as SurrealDbMessageStore;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+use Symfony\AI\Agent\MessageStore\ManagedMessageStoreInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\OutputProcessorInterface;
@@ -45,20 +57,9 @@ use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
-use Symfony\AI\Chat\Bridge\Cache\MessageStore as CacheMessageStore;
-use Symfony\AI\Chat\Bridge\Cloudflare\MessageStore as CloudflareMessageStore;
-use Symfony\AI\Chat\Bridge\Doctrine\DoctrineDbalMessageStore;
-use Symfony\AI\Chat\Bridge\Meilisearch\MessageStore as MeilisearchMessageStore;
-use Symfony\AI\Chat\Bridge\MongoDb\MessageStore as MongoDbMessageStore;
-use Symfony\AI\Chat\Bridge\Pogocache\MessageStore as PogocacheMessageStore;
-use Symfony\AI\Chat\Bridge\Redis\MessageStore as RedisMessageStore;
-use Symfony\AI\Chat\Bridge\Session\MessageStore as SessionMessageStore;
-use Symfony\AI\Chat\Bridge\SurrealDb\MessageStore as SurrealDbMessageStore;
+use Symfony\AI\Chat\AgentMessageStore;
 use Symfony\AI\Chat\Chat;
 use Symfony\AI\Chat\ChatInterface;
-use Symfony\AI\Chat\InMemory\Store as InMemoryMessageStore;
-use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
-use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
@@ -316,8 +317,8 @@ final class AiBundle extends AbstractBundle
         }
 
         if ([] !== ($config['message_store'] ?? [])) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-chat', Chat::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Message store configuration requires "symfony/ai-chat" package. Try running "composer require symfony/ai-chat".');
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Message store configuration requires "symfony/ai-agent" package. Try running "composer require symfony/ai-agent".');
             }
 
             foreach ($config['message_store'] as $type => $store) {
@@ -463,11 +464,6 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.command.clear_store');
             $builder->removeDefinition('ai.command.index');
             $builder->removeDefinition('ai.command.retrieve');
-        }
-
-        if (!ContainerBuilder::willBeAvailable('symfony/ai-chat', Chat::class, ['symfony/ai-bundle'])) {
-            $builder->removeDefinition('ai.command.setup_message_store');
-            $builder->removeDefinition('ai.command.drop_message_store');
         }
 
         if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
@@ -1744,6 +1740,10 @@ final class AiBundle extends AbstractBundle
             $container->setDefinition('ai.agent.'.$name.'.memory_input_processor', $memoryInputProcessorDefinition);
         }
 
+        if (null !== $config['message_store']) {
+            $agentDefinition->setArgument('$messageStore', new Reference($config['message_store']));
+        }
+
         $agentDefinition
             ->setArgument('$inputProcessors', []) // placeholder until ProcessorCompilerPass process.
             ->setArgument('$outputProcessors', []) // placeholder until ProcessorCompilerPass process.
@@ -2783,7 +2783,6 @@ final class AiBundle extends AbstractBundle
                     ->setLazy(true)
                     ->setArguments($arguments)
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
                     ->addTag('ai.message_store');
 
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
@@ -2874,7 +2873,6 @@ final class AiBundle extends AbstractBundle
             foreach ($messageStores as $name => $messageStore) {
                 $definition = new Definition(InMemoryMessageStore::class);
                 $definition
-                    ->setArgument(0, $messageStore['identifier'])
                     ->addTag('ai.message_store')
                     ->addTag('kernel.reset', ['method' => 'reset']);
 
@@ -2924,7 +2922,6 @@ final class AiBundle extends AbstractBundle
                         new Reference('serializer'),
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
                     ->addTag('ai.message_store');
 
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
@@ -2976,7 +2973,6 @@ final class AiBundle extends AbstractBundle
                         $messageStore['identifier'],
                     ])
                     ->addTag('proxy', ['interface' => MessageStoreInterface::class])
-                    ->addTag('proxy', ['interface' => ManagedMessageStoreInterface::class])
                     ->addTag('ai.message_store');
 
                 $container->setDefinition('ai.message_store.'.$type.'.'.$name, $definition);
@@ -3027,12 +3023,18 @@ final class AiBundle extends AbstractBundle
      */
     private function processChatConfig(string $name, array $configuration, ContainerBuilder $container): void
     {
+        $messageStore = new Reference($configuration['message_store']);
+
+        if ($container->hasDefinition($configuration['message_store']) && $container->getDefinition($configuration['message_store'])->hasTag('ai.message_store')) {
+            $messageStore = new Definition(AgentMessageStore::class, [$messageStore]);
+        }
+
         $definition = new Definition(Chat::class);
         $definition
             ->setLazy(true)
             ->setArguments([
                 new Reference($configuration['agent']),
-                new Reference($configuration['message_store']),
+                $messageStore,
             ])
             ->addTag('proxy', ['interface' => ChatInterface::class])
             ->addTag('ai.chat');

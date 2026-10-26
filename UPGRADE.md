@@ -223,6 +223,15 @@ AI Bundle
  * The `ai.chat.message_bag.normalizer` service has been renamed to `ai.platform.message_normalizer` and is registered
    without `symfony/ai-chat` as well.
 
+ * The configured message stores are the stores of the Agent component and implement
+   `Symfony\AI\Agent\MessageStore\MessageStoreInterface`. Chats wrap them in `Symfony\AI\Chat\AgentMessageStore`, so
+   a service you pass as `message_store` of a chat must still implement `Symfony\AI\Chat\MessageStoreInterface`:
+
+   ```diff
+   -public function __construct(private \Symfony\AI\Chat\MessageStoreInterface $messageStore)
+   +public function __construct(private \Symfony\AI\Agent\MessageStore\MessageStoreInterface $messageStore)
+   ```
+
 Chat
 ----
 
@@ -244,22 +253,52 @@ Chat
     ], [new JsonEncoder()]);
    ```
 
+ * The message store bridges have moved to the Agent component. Their packages keep their names, the classes move to
+   the `Symfony\AI\Agent\Bridge` namespace and implement `Symfony\AI\Agent\MessageStore\MessageStoreInterface`,
+   which keeps each conversation by the ID of its `MessageBag`. Wrap them in `AgentMessageStore` to use them with a
+   chat:
+
+   ```diff
+   -use Symfony\AI\Chat\Bridge\Redis\MessageStore;
+   +use Symfony\AI\Agent\Bridge\Redis\MessageStore;
+   +use Symfony\AI\Chat\AgentMessageStore;
+
+   -$chat = new Chat($agent, new MessageStore($redis, 'chat'));
+   +$chat = new Chat($agent, new AgentMessageStore(new MessageStore($redis, 'chat')));
+   ```
+
+ * `Command\SetupStoreCommand`, `Command\DropStoreCommand` and `TraceableMessageStore` have moved to the Agent
+   component, use `Symfony\AI\Agent\Command\SetupMessageStoreCommand`, `Symfony\AI\Agent\Command\DropMessageStoreCommand`
+   and `Symfony\AI\Agent\MessageStore\TraceableMessageStore` instead.
+
+ * The message store bridges store the conversation as one serialized `MessageBag`, and don't read the messages
+   stored by the previous version. A custom serializer passed to a store must (de)normalize a `MessageBag`, e.g. with
+   `Symfony\AI\Platform\Serializer\MessageBagNormalizer`. The table of `DoctrineDbalMessageStore` has the columns
+   `id`, `version`, `messages` and `updated_at`. `setup()` keeps an existing table, so remove the old table first
+   (its name defaults to the name of the message store) and set up the store again:
+
+   ```bash
+   $ php bin/console dbal:run-sql 'DROP TABLE main'
+   $ php bin/console ai:message-store:setup ai.message_store.doctrine.dbal.main
+   ```
+
+ * The `Cache`, `Pogocache` and `Session` message stores no longer implement `ManagedMessageStoreInterface`, they have
+   nothing to set up. Their `drop()` method has been removed, use `delete()` to remove a single conversation.
+
  * The message stores keep the type of objects in the message metadata. Their default serializer throws a
    `NotNormalizableValueException` for an object it has no normalizer for, e.g. a `DateTimeImmutable`. Pass a
    serializer with a normalizer for it:
 
    ```php
+   use Symfony\AI\Agent\Bridge\Redis\MessageStore;
    use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
-   use Symfony\AI\Chat\Bridge\Redis\MessageStore;
-   use Symfony\AI\Platform\Serializer\MessageNormalizer;
+   use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
    use Symfony\Component\Serializer\Encoder\JsonEncoder;
-   use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
    use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
    use Symfony\Component\Serializer\Serializer;
 
    $store = new MessageStore($redis, 'chat', new Serializer([
-       new ArrayDenormalizer(),
-       new MessageNormalizer(),
+       new MessageBagNormalizer(),
        new SourceCollectionNormalizer(),
        new DateTimeNormalizer(),
    ], [new JsonEncoder()]));
