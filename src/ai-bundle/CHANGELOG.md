@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
  * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`
  * [BC BREAK] Replace the `setup_options` of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis` and `s3vectors` stores by store keys: `dimensions`, `metric`, `cloud`, `region`, `vector_type`, `index_method`, `index_opclass` and `index_fields`
  * [BC BREAK] Remove the `setup_options.force_database_creation` option of the `surrealdb` store, use `ai:store:setup --option forceDatabaseCreation=true` instead
@@ -25,8 +26,6 @@ CHANGELOG
 
 0.15
 ----
-
- * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
 
  * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
  * Add `setup_options` configuration for Redis store to set the `vector_size` used by `ai:store:setup`
