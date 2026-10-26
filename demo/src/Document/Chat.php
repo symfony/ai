@@ -11,18 +11,21 @@
 
 namespace App\Document;
 
+use App\Conversation\ConversationIds;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class Chat
 {
-    private const SESSION_KEY = 'document-chat';
+    private const CHAT = 'document';
 
     public function __construct(
-        private readonly RequestStack $requestStack,
+        private readonly ConversationIds $conversationIds,
+        #[Autowire(service: 'ai.message_store.session.conversations')]
+        private readonly MessageStoreInterface $messageStore,
         #[Autowire(service: 'ai.agent.document')]
         private readonly AgentInterface $agent,
         private readonly OcrExtractor $ocrExtractor,
@@ -33,7 +36,7 @@ final class Chat
 
     public function loadMessages(): MessageBag
     {
-        return $this->requestStack->getSession()->get(self::SESSION_KEY, new MessageBag());
+        return $this->messageStore->load($this->conversationIds->get(self::CHAT));
     }
 
     public function start(string $url): void
@@ -60,30 +63,25 @@ final class Chat
             Message::ofUser($this->summaryPrompt),
         ));
 
-        $messages = new MessageBag(
-            Message::forSystem($system),
-            Message::ofUser($url),
-            Message::ofAssistant($execution->getResult()),
-        );
-
         $this->reset();
-        $this->saveMessages($messages);
+        $this->messageStore->save(MessageBag::forId(
+            $this->conversationIds->get(self::CHAT),
+            Message::forSystem($system),
+            $url,
+            Message::ofAssistant($execution->getResult()),
+        ));
     }
 
     public function submitMessage(string $message): void
     {
-        $execution = $this->agent->call($this->loadMessages()->with(Message::ofUser($message)));
+        $messages = MessageBag::forId($this->conversationIds->get(self::CHAT), $message);
 
-        $this->saveMessages($execution->getMessages());
+        $this->agent->call($messages)->getResult();
     }
 
     public function reset(): void
     {
-        $this->requestStack->getSession()->remove(self::SESSION_KEY);
-    }
-
-    private function saveMessages(MessageBag $messages): void
-    {
-        $this->requestStack->getSession()->set(self::SESSION_KEY, $messages);
+        $this->messageStore->delete($this->conversationIds->get(self::CHAT));
+        $this->conversationIds->reset(self::CHAT);
     }
 }

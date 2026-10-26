@@ -12,12 +12,15 @@
 namespace App\Tests\Blog;
 
 use App\Blog\Chat;
+use App\Conversation\ConversationIds;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
 use Symfony\AI\Platform\Message\AssistantMessage;
-use Symfony\AI\Platform\Message\Content\Text;
-use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -25,191 +28,76 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 final class ChatTest extends TestCase
 {
-    public function testLoadMessagesReturnsDefaultSystemMessage()
+    /**
+     * @var list<list<string>>
+     */
+    private array $requests = [];
+
+    private InMemoryMessageStore $messageStore;
+
+    public function testLoadMessagesStartsWithAnEmptyConversation()
     {
-        $agent = new MockAgent();
-        $chat = self::createChat($agent);
+        $chat = $this->createChat();
 
-        $messages = $chat->loadMessages();
-
-        $this->assertInstanceOf(MessageBag::class, $messages);
-        $this->assertCount(0, $messages->getMessages());
+        $this->assertCount(0, $chat->loadMessages());
     }
 
-    public function testSubmitMessageAddsUserMessageAndAgentResponse()
+    public function testSubmitMessageStoresQuestionAndAnswer()
     {
-        $agent = new MockAgent([
-            'What is Symfony?' => 'Symfony is a PHP web framework for building web applications and APIs.',
-        ]);
-        $chat = self::createChat($agent);
+        $chat = $this->createChat();
 
-        // Submit a message that the agent has a response for
         $chat->submitMessage('What is Symfony?');
 
-        // Verify the agent was called
-        $agent->assertCallCount(1);
-        $agent->assertCalledWith('What is Symfony?');
-
-        // Load messages and verify they contain both user message and agent response
-        $messages = $chat->loadMessages();
-        $messageList = $messages->getMessages();
-
-        // Should have: system message + user message + assistant message = 3 total
-        $this->assertCount(2, $messageList);
-
-        // Check user message
-        $userMessage = $messageList[0];
-        $this->assertInstanceOf(UserMessage::class, $userMessage);
-        $this->assertInstanceOf(Text::class, $userMessage->getContent()[0]);
-        $this->assertSame('What is Symfony?', $userMessage->getContent()[0]->getText());
-
-        // Check assistant message
-        $assistantMessage = $messageList[1];
-        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $assistantMessage->asText());
+        $messages = $chat->loadMessages()->getMessages();
+        $this->assertCount(2, $messages);
+        $this->assertInstanceOf(UserMessage::class, $messages[0]);
+        $this->assertSame('What is Symfony?', $messages[0]->asText());
+        $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
+        $this->assertSame('Answer 1', $messages[1]->asText());
     }
 
-    public function testSubmitMessageWithUnknownQueryUsesDefaultResponse()
+    public function testAgentContinuesTheConversation()
     {
-        $agent = new MockAgent([
-            'What is the weather today?' => 'I can help you with Symfony-related questions!',
-        ]);
-        $chat = self::createChat($agent);
+        $chat = $this->createChat();
 
-        $chat->submitMessage('What is the weather today?');
-
-        // Verify the agent was called
-        $agent->assertCallCount(1);
-        $agent->assertCalledWith('What is the weather today?');
-
-        $messages = $chat->loadMessages();
-        $messageList = $messages->getMessages();
-
-        // Check assistant used default response
-        $assistantMessage = $messageList[1];
-        $this->assertInstanceOf(AssistantMessage::class, $assistantMessage);
-        $this->assertSame('I can help you with Symfony-related questions!', $assistantMessage->asText());
-    }
-
-    public function testMultipleMessagesAreTrackedCorrectly()
-    {
-        $agent = new MockAgent([
-            'What is Symfony?' => 'Symfony is a PHP web framework for building web applications and APIs.',
-            'Tell me about caching' => 'Symfony provides powerful caching mechanisms including APCu, Redis, and file-based caching.',
-        ]);
-        $chat = self::createChat($agent);
-
-        // Submit multiple messages
         $chat->submitMessage('What is Symfony?');
-        $chat->submitMessage('Tell me about caching');
-
-        // Verify agent call tracking
-        $agent->assertCallCount(2);
-
-        // Get all calls made to the agent
-        $calls = $agent->getCalls();
-        $this->assertCount(2, $calls);
-
-        // First call should have system + user message for "What is Symfony?"
-        $this->assertSame('What is Symfony?', $calls[0]['input']);
-
-        // Second call should have system + previous conversation + new user message
-        $this->assertSame('Tell me about caching', $calls[1]['input']);
-
-        // Verify messages in session
-        $messages = $chat->loadMessages();
-        $this->assertCount(4, $messages->getMessages()); // system + user1 + assistant1 + user2 + assistant2
-    }
-
-    public function testResetClearsMessages()
-    {
-        $agent = new MockAgent([
-            'What is Symfony?' => 'Symfony is a PHP web framework for building web applications and APIs.',
-        ]);
-        $chat = self::createChat($agent);
-
-        // Add some messages
-        $chat->submitMessage('What is Symfony?');
-
-        // Verify messages exist
-        $messages = $chat->loadMessages();
-        $this->assertCount(2, $messages->getMessages());
-
-        // Reset and verify messages are cleared
-        $chat->reset();
-
-        $messages = $chat->loadMessages();
-        $this->assertCount(0, $messages->getMessages()); // Only system message remains
-    }
-
-    public function testAgentReceivesFullConversationHistory()
-    {
-        $agent = new MockAgent([
-            'What is Symfony?' => 'Symfony is a PHP web framework for building web applications and APIs.',
-            'Tell me more' => 'Symfony has many components like HttpFoundation, Console, and Routing.',
-        ]);
-        $chat = self::createChat($agent);
-
-        // Submit first message
-        $chat->submitMessage('What is Symfony?');
-
-        // Submit second message
         $chat->submitMessage('Tell me more');
 
-        // Get the second call to verify it received full conversation
-        $calls = $agent->getCalls();
-        $secondCallMessages = $calls[1]['messages'];
-
-        $messages = $secondCallMessages->getMessages();
-        $this->assertCount(3, $messages);
-
-        $this->assertInstanceOf(UserMessage::class, $messages[0]);
-        $this->assertCount(1, $messages[0]->getContent());
-        $this->assertInstanceOf(Text::class, $messages[0]->getContent()[0]);
-        $this->assertSame('What is Symfony?', $messages[0]->getContent()[0]->getText()); // user1
-        $this->assertInstanceOf(AssistantMessage::class, $messages[1]);
-        $this->assertSame('Symfony is a PHP web framework for building web applications and APIs.', $messages[1]->asText()); // assistant1
-        $this->assertInstanceOf(UserMessage::class, $messages[2]);
-        $this->assertCount(1, $messages[2]->getContent());
-        $this->assertInstanceOf(Text::class, $messages[2]->getContent()[0]);
-        $this->assertSame('Tell me more', $messages[2]->getContent()[0]->getText()); // user2
+        $this->assertSame([
+            ['What is Symfony?'],
+            ['What is Symfony?', 'Answer 1', 'Tell me more'],
+        ], $this->requests);
+        $this->assertCount(4, $chat->loadMessages());
     }
 
-    public function testMockAgentAssertionsWork()
+    public function testResetStartsANewConversation()
     {
-        $agent = new MockAgent([
-            'What is Symfony?' => 'Symfony is a PHP web framework for building web applications and APIs.',
-            'Tell me about caching' => 'Symfony provides powerful caching mechanisms including APCu, Redis, and file-based caching.',
-        ]);
-        $chat = self::createChat($agent);
-
-        // Test that we can make assertions about agent calls
-        $agent->assertNotCalled();
-
+        $chat = $this->createChat();
         $chat->submitMessage('What is Symfony?');
+        $previousId = $chat->loadMessages()->getId();
 
-        // Now agent should have been called
-        $agent->assertCalled();
-        $agent->assertCallCount(1);
-        $agent->assertCalledWith('What is Symfony?');
+        $chat->reset();
+        $chat->submitMessage('Tell me more');
 
-        // Test multiple calls
-        $chat->submitMessage('Tell me about caching');
-        $agent->assertCallCount(2);
-
-        // Test last call
-        $lastCall = $agent->getLastCall();
-        $this->assertSame('Tell me about caching', $lastCall['input']);
+        $this->assertSame([['What is Symfony?'], ['Tell me more']], $this->requests);
+        $this->assertCount(2, $chat->loadMessages());
+        $this->assertCount(0, $this->messageStore->load($previousId));
     }
 
-    private static function createChat(MockAgent $agent): Chat
+    private function createChat(): Chat
     {
-        $session = new Session(new MockArraySessionStorage());
-        $requestStack = new RequestStack();
+        $platform = MockPlatformFactory::createPlatform(function (Model $model, array $input): TextResult {
+            $this->requests[] = array_column($input['messages'], 'content');
+
+            return new TextResult(\sprintf('Answer %d', \count($this->requests)));
+        });
+        $this->messageStore = new InMemoryMessageStore();
+
         $request = new Request();
-        $request->setSession($session);
+        $request->setSession(new Session(new MockArraySessionStorage()));
+        $requestStack = new RequestStack();
         $requestStack->push($request);
 
-        return new Chat($requestStack, $agent);
+        return new Chat(new ConversationIds($requestStack), $this->messageStore, new Agent($platform, 'gpt-4.1', messageStore: $this->messageStore));
     }
 }

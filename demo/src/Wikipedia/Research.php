@@ -19,7 +19,8 @@ namespace App\Wikipedia;
 final class Research
 {
     public function __construct(
-        public readonly string $chatId,
+        public readonly string $conversationId,
+        public readonly string $topic,
     ) {
     }
 }

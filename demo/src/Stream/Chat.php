@@ -11,24 +11,24 @@
 
 namespace App\Stream;
 
-use Psr\Cache\CacheItemPoolInterface;
+use App\Conversation\ConversationIds;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class Chat
 {
-    private const CACHE_PREFIX = 'stream-chat-';
-    private const CACHE_TTL = 3600;
+    private const CHAT = 'stream';
 
     public function __construct(
-        private readonly RequestStack $requestStack,
-        private readonly CacheItemPoolInterface $cache,
+        private readonly ConversationIds $conversationIds,
+        #[Autowire(service: 'ai.message_store.cache.shared_conversations')]
+        private readonly MessageStoreInterface $messageStore,
         #[Autowire(service: 'ai.agent.stream')]
         private readonly AgentInterface $agent,
     ) {
@@ -36,16 +36,14 @@ final class Chat
 
     public function loadMessages(): MessageBag
     {
-        $item = $this->cache->getItem($this->cacheKey());
-
-        return $item->isHit() ? $item->get() : new MessageBag();
+        return $this->messageStore->load($this->conversationIds->get(self::CHAT));
     }
 
     public function submitMessage(string $message): UserMessage
     {
         $userMessage = Message::ofUser($message);
 
-        $this->saveMessages($this->loadMessages()->with($userMessage));
+        $this->messageStore->save($this->loadMessages()->with($userMessage));
 
         return $userMessage;
     }
@@ -70,27 +68,12 @@ final class Chat
             yield $response .= $delta;
         }
 
-        $messages = $execution->getMessages();
-        $this->saveMessages($messages);
-
-        return $messages->latestAs(Role::Assistant);
+        return $execution->getMessages()->latestAs(Role::Assistant);
     }
 
     public function reset(): void
     {
-        $this->cache->deleteItem($this->cacheKey());
-    }
-
-    private function saveMessages(MessageBag $messages): void
-    {
-        $item = $this->cache->getItem($this->cacheKey());
-        $item->set($messages)->expiresAfter(self::CACHE_TTL);
-
-        $this->cache->save($item);
-    }
-
-    private function cacheKey(): string
-    {
-        return self::CACHE_PREFIX.$this->requestStack->getSession()->getId();
+        $this->messageStore->delete($this->conversationIds->get(self::CHAT));
+        $this->conversationIds->reset(self::CHAT);
     }
 }
