@@ -9072,9 +9072,7 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                     'memory' => [
-                        'dbal' => [
-                            'identifier' => 'dbal',
-                        ],
+                        'dbal' => [],
                     ],
                 ],
             ],

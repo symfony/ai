@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation

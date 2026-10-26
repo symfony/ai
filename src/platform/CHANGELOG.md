@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
  * Add `Serializer\MessageNormalizer` and `Serializer\MessageBagNormalizer` for persisting messages and message bags losslessly, including ids, metadata and all content types; objects in the metadata keep their type, the platform's token usage and finish reason are handled directly and other objects are handed to the serializer; `addedAt` is derived from the message id instead of the time of normalization

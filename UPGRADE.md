@@ -1,5 +1,5 @@
-UPGRADE FROM 0.15 to 0.16
-=========================
+UPGRADE FROM 0.15 to 1.0
+========================
 
 Agent
 -----
@@ -243,6 +243,17 @@ AI Bundle
    -        youtube:
    -            agent: 'ai.agent.youtube'
    -            message_store: 'ai.message_store.cache.youtube'
+   ```
+
+ * The `identifier` option of the `memory` message store is removed, the store keeps each conversation by its ID:
+
+   ```diff
+    ai:
+        message_store:
+            memory:
+   -            default:
+   -                identifier: chat
+   +            default: ~
    ```
 
 Chat

@@ -22,7 +22,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/ai-platform": "^0.15"
+        "symfony/ai-platform": "^1.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

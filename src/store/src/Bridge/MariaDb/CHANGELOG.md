@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * [BC BREAK] Replace the `dimensions` option of `Store::setup()` by the `dimensions` argument of `Store`, `Store::fromPdo()` and `Store::fromDbal()`
  * [BC BREAK] Rename the `Distance` enum to `Metric`, and the `distance` argument of `Store`, `Store::fromPdo()` and `Store::fromDbal()` to `metric`

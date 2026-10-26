@@ -16,10 +16,4 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 return (new ArrayNodeDefinition('memory'))
     ->useAttributeAsKey('name')
     ->arrayPrototype()
-        ->children()
-            ->stringNode('identifier')
-                ->setDeprecated('symfony/ai-bundle', '0.16', 'The "%node%" option is deprecated, the in-memory message store keeps each conversation by its ID.')
-                ->cannotBeEmpty()
-            ->end()
-        ->end()
     ->end();

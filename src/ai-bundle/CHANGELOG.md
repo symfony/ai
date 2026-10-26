@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`
  * [BC BREAK] Replace the `setup_options` of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis` and `s3vectors` stores by store keys: `dimensions`, `metric`, `cloud`, `region`, `vector_type`, `index_method`, `index_opclass` and `index_fields`
@@ -19,7 +19,7 @@ CHANGELOG
  * Add the `message_store` agent option, continuing and saving the conversations of the agent by their ID
  * [BC BREAK] Configured message stores are the stores of the Agent component, implementing `Symfony\AI\Agent\MessageStore\MessageStoreInterface`
  * [BC BREAK] Remove the `chat` option and the chats of the profiler together with the Chat component, use the `message_store` agent option instead
- * Deprecate the `identifier` option of the `memory` message store
+ * [BC BREAK] Remove the `identifier` option of the `memory` message store
  * [BC BREAK] Remove the `exclude_tool_messages` agent option, tool messages never reach the caller's `MessageBag`
  * Add the `mirror_to` option to the `doctrine` store, mirroring the entity into another store and registering an entity retriever
 

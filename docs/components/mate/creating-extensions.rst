@@ -24,7 +24,7 @@ Quick Start
         "name": "vendor/my-extension",
         "type": "library",
         "require": {
-            "symfony/ai-mate": "^0.15"
+            "symfony/ai-mate": "^1.0"
         },
         "extra": {
             "ai-mate": {

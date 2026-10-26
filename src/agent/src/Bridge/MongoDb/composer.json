@@ -27,8 +27,8 @@
     "require": {
         "php": ">=8.2",
         "mongodb/mongodb": "^1.21|^2.0",
-        "symfony/ai-agent": "^0.16",
-        "symfony/ai-platform": "^0.16",
+        "symfony/ai-agent": "^1.0",
+        "symfony/ai-platform": "^1.0",
         "symfony/serializer": "^7.3|^8.0"
     },
     "require-dev": {
