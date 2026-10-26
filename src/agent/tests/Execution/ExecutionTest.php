@@ -15,8 +15,11 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\ExecutionInterface;
+use Symfony\AI\Agent\Execution\ExecutionStatus;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -27,9 +30,27 @@ use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\PartialObjectDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 
 final class ExecutionTest extends TestCase
 {
+    public function testExecutionIsAnExecutionInterface()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $this->assertInstanceOf(ExecutionInterface::class, $execution);
+    }
+
+    public function testMockAgentReturnsAnExecutionInterface()
+    {
+        $agent = new MockAgent(['Hello' => 'Hi']);
+
+        $this->assertInstanceOf(ExecutionInterface::class, $agent->call('Hello'));
+    }
+
     public function testGetResultReturnsTheFinalResult()
     {
         $result = new TextResult('Done');
@@ -420,6 +441,161 @@ final class ExecutionTest extends TestCase
 
         $this->assertFalse((new Execution($factory))->isStreamed());
         $this->assertTrue((new Execution($factory, true))->isStreamed());
+    }
+
+    public function testGetIdIsStableAcrossCalls()
+    {
+        $execution = new Execution(static fn (): \Generator => yield new ResultUpdate(new TextResult('Hello')));
+
+        $this->assertSame($execution->getId(), $execution->getId());
+        $execution->getResult();
+        $this->assertTrue($execution->getId()->equals($execution->getId()));
+    }
+
+    public function testGetIdDiffersBetweenExecutions()
+    {
+        $factory = static fn (): \Generator => yield new ResultUpdate(new TextResult('Hello'));
+
+        $this->assertFalse((new Execution($factory))->getId()->equals((new Execution($factory))->getId()));
+    }
+
+    public function testStatusIsPendingBeforeConsumption()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $this->assertSame(ExecutionStatus::Pending, $execution->getStatus());
+        $this->assertSame([], $execution->getPendingToolCalls());
+        $this->assertNull($execution->getError());
+    }
+
+    public function testStatusIsCompletedAfterTheResultWasRead()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->getResult();
+
+        $this->assertSame(ExecutionStatus::Completed, $execution->getStatus());
+        $this->assertFalse($execution->isSuspended());
+    }
+
+    public function testStatusIsCancelledAfterCancel()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel();
+
+        $this->assertSame(ExecutionStatus::Cancelled, $execution->getStatus());
+    }
+
+    public function testStatusIsFailedAfterTheFactoryThrows()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield from [];
+
+            throw new RuntimeException('Boom');
+        });
+
+        try {
+            $execution->getResult();
+            $this->fail('The execution should have thrown.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
+        $this->assertSame('Boom', $execution->getError());
+        $this->assertSame([], $execution->getPendingToolCalls());
+    }
+
+    public function testStatusIsWaitingForInputWithPendingToolCalls()
+    {
+        $toolCall = new ToolCall('call_1', 'weather', []);
+        $messages = new MessageBag(Message::ofUser('Weather?'), Message::ofAssistant(new ToolCallResult([$toolCall])));
+
+        $execution = new Execution(static function () use ($toolCall, $messages): \Generator {
+            yield new ResultUpdate(new ToolCallResult([$toolCall]), static fn (): MessageBag => $messages);
+        });
+
+        $execution->getResult();
+
+        $this->assertSame(ExecutionStatus::WaitingForInput, $execution->getStatus());
+        $this->assertTrue($execution->isSuspended());
+        $this->assertCount(1, $execution->getPendingToolCalls());
+    }
+
+    public function testStatusIsWaitingForInputWithToolCallsInAMultiPartResult()
+    {
+        $toolCall = new ToolCall('call_1', 'weather', []);
+
+        $execution = new Execution(static function () use ($toolCall): \Generator {
+            yield new ResultUpdate(new MultiPartResult([new TextResult('Let me check.'), new ToolCallResult([$toolCall])]));
+        });
+
+        $execution->getResult();
+
+        $this->assertSame(ExecutionStatus::WaitingForInput, $execution->getStatus());
+        $this->assertSame([$toolCall], $execution->getPendingToolCalls());
+    }
+
+    public function testPendingToolCallsOfAToolCallResultWithKeys()
+    {
+        $toolCall = new ToolCall('call_1', 'weather', []);
+
+        $execution = new Execution(static function () use ($toolCall): \Generator {
+            yield new ResultUpdate(new ToolCallResult(['call_1' => $toolCall]));
+        });
+
+        $execution->getResult();
+
+        $this->assertSame(ExecutionStatus::WaitingForInput, $execution->getStatus());
+        $this->assertSame([$toolCall], $execution->getPendingToolCalls());
+    }
+
+    public function testStatusDoesNotBuildTheMessages()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'), static fn (): MessageBag => throw new RuntimeException('Messages built.'));
+        });
+
+        $execution->getResult();
+
+        $this->assertSame(ExecutionStatus::Completed, $execution->getStatus());
+        $this->assertSame([], $execution->getPendingToolCalls());
+    }
+
+    public function testStatusIsFailedWhenTheFactoryFinishesWithoutResult()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new Progress('model_request', 'Invoking model.');
+        });
+
+        try {
+            $execution->getResult();
+            $this->fail('The execution should have thrown.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
+        $this->assertSame('The agent execution finished without producing a result.', $execution->getError());
+    }
+
+    public function testStatusIsFailedWhenTheIterationStopsBeforeTheResult()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new Progress('model_request', 'Invoking model.');
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        foreach ($execution as $update) {
+            break;
+        }
+
+        $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
     }
 
     public function testAsStreamThrowsWhenTheExecutionIsNotStreamed()

@@ -61,11 +61,12 @@ behavior, for example available tools to execute, or are forwarded to the underl
 Execution
 ---------
 
-:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\Execution`. The
-execution *is* the result it produces, so the simplest usage reads the answer straight off it - the example at the
-top of this page does exactly that. Beyond that, the same object reports every step the agent takes - each model
-request, each tool call, and each streamed delta - as an update when you iterate it, which is what you need to show
-progress to a user while the agent is still working::
+:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\ExecutionInterface`.
+:class:`Symfony\\AI\\Agent\\Execution\\Execution` is its implementation. The execution *is* the result it
+produces, so the simplest usage reads the answer straight off it - the example at the top of this page does exactly
+that. Beyond that, the same object reports every step the agent takes - each model request, each tool call, and
+each streamed delta - as an update when you iterate it, which is what you need to show progress to a user while the
+agent is still working::
 
     use Symfony\AI\Agent\Execution\Update\Progress;
     use Symfony\AI\Agent\Execution\Update\Result;
@@ -250,6 +251,26 @@ The stages this package itself reports are available as ``Progress::STAGE_MODEL_
 
 Streaming and tool calling compose: when the model streams a tool call, the agent executes it and streams the next
 round into the very same execution.
+
+Execution Status
+~~~~~~~~~~~~~~~~
+
+An execution also reports where it stands. ``getStatus()`` returns a
+:class:`Symfony\\AI\\Agent\\Execution\\ExecutionStatus` such as ``Pending``, ``Completed``, ``Failed``,
+``Cancelled`` or ``WaitingForInput``. In the last case ``getPendingToolCalls()`` lists the tool calls of the model
+that have no answer yet. Neither method runs the agent and neither throws. ``getError()`` returns the message of a
+failed execution::
+
+    use Symfony\AI\Agent\Execution\ExecutionStatus;
+
+    $execution = $agent->call($messages);
+    $execution->getResult();
+
+    if (ExecutionStatus::WaitingForInput === $execution->getStatus()) {
+        $toolCalls = $execution->getPendingToolCalls();
+    }
+
+``getId()`` returns a UUID that identifies this run. The conversation is identified by the id of its ``MessageBag``.
 
 Tools
 -----
