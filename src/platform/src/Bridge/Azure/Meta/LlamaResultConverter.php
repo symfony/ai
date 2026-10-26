@@ -16,6 +16,8 @@ use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
@@ -27,6 +29,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 final class LlamaResultConverter implements ResultConverterInterface
 {
     use FinishReasonAwareTrait;
+    use HttpStatusErrorHandlingTrait;
 
     public function supports(Model $model): bool
     {
@@ -35,6 +38,10 @@ final class LlamaResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface $result, array $options = []): TextResult
     {
+        if ($result instanceof RawHttpResult) {
+            $this->throwOnHttpError($result->getObject());
+        }
+
         $data = $result->getData();
 
         if (!isset($data['choices'][0]['message']['content'])) {

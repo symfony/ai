@@ -17,13 +17,13 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 $result = $platform->invoke(
-    model: 'gpt-image-1',
+    model: 'gpt-image-2',
     input: 'A cartoon-style elephant with a long trunk and large ears.',
 )->getResult();
 
 assert($result instanceof BinaryResult);
 
-$file = __DIR__.'/gpt-image-1.png';
+$file = __DIR__.'/image-output.png';
 $result->asFile($file);
 
 echo 'Image saved to '.$file.\PHP_EOL;

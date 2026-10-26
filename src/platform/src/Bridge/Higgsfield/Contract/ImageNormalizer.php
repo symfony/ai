@@ -22,13 +22,14 @@ final class ImageNormalizer implements NormalizerInterface
     /**
      * @param Image $data
      *
-     * @return array{type: 'image_url', image_url: string}
+     * @return array{type: 'image', mime_type: string, data: string}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         return [
-            'type' => 'image_url',
-            'image_url' => $data->asDataUrl(),
+            'type' => 'image',
+            'mime_type' => $data->getFormat(),
+            'data' => $data->asBase64(),
         ];
     }
 

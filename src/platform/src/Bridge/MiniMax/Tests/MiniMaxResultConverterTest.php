@@ -302,6 +302,20 @@ final class MiniMaxResultConverterTest extends TestCase
         $converter->convert($raw);
     }
 
+    public function testItThrowsWhenTheProviderRejectedTheRequestWithAnotherClientError()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'type' => 'error',
+            'error' => ['type' => 'insufficient_balance_error', 'message' => 'insufficient balance (1008)', 'http_code' => '402'],
+        ], ['http_code' => 402]));
+        $raw = new RawHttpResult($httpClient->request('POST', 'https://api.minimax.io/v1/chat/completions'));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MiniMax rejected the request: "insufficient balance (1008)" (HTTP 402).');
+
+        (new MiniMaxResultConverter())->convert($raw);
+    }
+
     public function testItThrowsRateLimitExceededExceptionOnTooManyRequests()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse(['message' => 'Slow down.'], ['http_code' => 429]));

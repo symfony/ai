@@ -20,7 +20,7 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client()->withOp
 
 // Pass the source image to edit via the "image" option; the prompt describes the change.
 $result = $platform->invoke(
-    model: 'gpt-image-1',
+    model: 'gpt-image-2',
     input: 'Colorize the elephant in bright red and add a party hat.',
     options: [
         'image' => Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
@@ -29,7 +29,7 @@ $result = $platform->invoke(
 
 assert($result instanceof BinaryResult);
 
-$file = __DIR__.'/gpt-image-1-edit.png';
+$file = __DIR__.'/image-editing.png';
 $result->asFile($file);
 
 echo 'Edited image saved to '.$file.\PHP_EOL;
