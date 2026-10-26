@@ -72,43 +72,43 @@ deptrac:
     - name: ChatComponent
       collectors:
         - type: classLike
-          value: ^Symfony\\AI\\Chat\\(?!Bridge\\).*
-    - name: ChatCacheBridge
+          value: ^Symfony\\AI\\Chat\\.*
+    - name: CacheMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Cache\\.*
-    - name: ChatCloudflareBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Cache\\.*
+    - name: CloudflareMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Cloudflare\\.*
-    - name: ChatDoctrineBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Cloudflare\\.*
+    - name: DoctrineMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Doctrine\\.*
-    - name: ChatSessionBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Doctrine\\.*
+    - name: SessionMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Session\\.*
-    - name: ChatMeilisearchBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Session\\.*
+    - name: MeilisearchMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Meilisearch\\.*
-    - name: ChatMongoDbBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Meilisearch\\.*
+    - name: MongoDbMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\MongoDb\\.*
-    - name: ChatPogocacheBridge
+          value: Symfony\\AI\\Agent\\Bridge\\MongoDb\\.*
+    - name: PogocacheMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Pogocache\\.*
-    - name: ChatRedisBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Pogocache\\.*
+    - name: RedisMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\Redis\\.*
-    - name: ChatSurrealDbBridge
+          value: Symfony\\AI\\Agent\\Bridge\\Redis\\.*
+    - name: SurrealDbMessageStore
       collectors:
         - type: classLike
-          value: Symfony\\AI\\Chat\\Bridge\\SurrealDb\\.*
+          value: Symfony\\AI\\Agent\\Bridge\\SurrealDb\\.*
     - name: PlatformComponent
       collectors:
         - type: classLike
@@ -446,39 +446,32 @@ deptrac:
     ChatComponent:
       - AgentComponent
       - PlatformComponent
-    ChatCacheBridge:
-      - ChatComponent
-      - PlatformComponent
-    ChatCloudflareBridge:
+    CacheMessageStore:
       - AgentComponent
-      - ChatComponent
       - PlatformComponent
-    ChatDoctrineBridge:
+    CloudflareMessageStore:
       - AgentComponent
-      - ChatComponent
       - PlatformComponent
-    ChatSessionBridge:
-      - ChatComponent
-      - PlatformComponent
-    ChatMeilisearchBridge:
+    DoctrineMessageStore:
       - AgentComponent
-      - ChatComponent
       - PlatformComponent
-    ChatMongoDbBridge:
+    SessionMessageStore:
       - AgentComponent
-      - ChatComponent
       - PlatformComponent
-    ChatPogocacheBridge:
+    MeilisearchMessageStore:
       - AgentComponent
-      - ChatComponent
       - PlatformComponent
-    ChatRedisBridge:
+    MongoDbMessageStore:
       - AgentComponent
-      - ChatComponent
       - PlatformComponent
-    ChatSurrealDbBridge:
+    PogocacheMessageStore:
       - AgentComponent
-      - ChatComponent
+      - PlatformComponent
+    RedisMessageStore:
+      - AgentComponent
+      - PlatformComponent
+    SurrealDbMessageStore:
+      - AgentComponent
       - PlatformComponent
     PlatformComponent: ~
     AiMlApiPlatform:

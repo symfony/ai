@@ -40,6 +40,11 @@ for composer_file in ${BRIDGE_PATH}/composer.json; do
 
     actual_type=$(jq -r '.type // empty' "$composer_file")
 
+    # The agent component holds both tool and message store bridges
+    if [[ "$COMPONENT" == "agent" && "$actual_type" != "$EXPECTED_TYPE" && ( "$actual_type" == "symfony-ai-tool" || "$actual_type" == "symfony-ai-message-store" ) ]]; then
+        continue
+    fi
+
     if [[ -z "$actual_type" ]]; then
         echo "::error file=$composer_file::${BRIDGE_TYPE} bridge '$bridge_name' is missing 'type' field in composer.json"
         ERRORS=$((ERRORS + 1))

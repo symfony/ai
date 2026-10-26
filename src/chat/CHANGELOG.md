@@ -4,6 +4,10 @@ CHANGELOG
 0.16
 ----
 
+ * Deprecate the component, use the `$messageStore` argument of `Symfony\AI\Agent\Agent` and the message stores of the Agent component instead
+ * Add `AgentMessageStore`, keeping the conversation of a chat in a message store of the Agent component
+ * [BC BREAK] Move the message store bridges to the Agent component, see `Symfony\AI\Agent\Bridge\*\MessageStore`
+ * [BC BREAK] Remove `Command\SetupStoreCommand`, `Command\DropStoreCommand` and `TraceableMessageStore` in favor of `Symfony\AI\Agent\Command\SetupMessageStoreCommand`, `Symfony\AI\Agent\Command\DropMessageStoreCommand` and `Symfony\AI\Agent\MessageStore\TraceableMessageStore`
  * [BC BREAK] Remove `MessageNormalizer` in favor of `Symfony\AI\Platform\Serializer\MessageNormalizer`
  * [BC BREAK] The message store bridges keep the type of objects in the message metadata, their default serializer throws a `NotNormalizableValueException` for objects without a normalizer
 

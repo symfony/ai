@@ -22,15 +22,15 @@
         "ai-chat": {
             "prefixes": [{ "from": "src/chat", "to": "", "excludes": ["src/Bridge"] }]
         },
-        "ai-cache-message-store": "src/chat/src/Bridge/Cache",
-        "ai-cloudflare-message-store": "src/chat/src/Bridge/Cloudflare",
-        "ai-doctrine-message-store": "src/chat/src/Bridge/Doctrine",
-        "ai-session-message-store": "src/chat/src/Bridge/Session",
-        "ai-meilisearch-message-store": "src/chat/src/Bridge/Meilisearch",
-        "ai-mongo-db-message-store": "src/chat/src/Bridge/MongoDb",
-        "ai-pogocache-message-store": "src/chat/src/Bridge/Pogocache",
-        "ai-redis-message-store": "src/chat/src/Bridge/Redis",
-        "ai-surreal-db-message-store": "src/chat/src/Bridge/SurrealDb",
+        "ai-cache-message-store": "src/agent/src/Bridge/Cache",
+        "ai-cloudflare-message-store": "src/agent/src/Bridge/Cloudflare",
+        "ai-doctrine-message-store": "src/agent/src/Bridge/Doctrine",
+        "ai-session-message-store": "src/agent/src/Bridge/Session",
+        "ai-meilisearch-message-store": "src/agent/src/Bridge/Meilisearch",
+        "ai-mongo-db-message-store": "src/agent/src/Bridge/MongoDb",
+        "ai-pogocache-message-store": "src/agent/src/Bridge/Pogocache",
+        "ai-redis-message-store": "src/agent/src/Bridge/Redis",
+        "ai-surreal-db-message-store": "src/agent/src/Bridge/SurrealDb",
         "ai-mate": {
             "prefixes": [{ "from": "src/mate", "to": "", "excludes": ["src/Bridge", "composer-plugin"] }]
         },

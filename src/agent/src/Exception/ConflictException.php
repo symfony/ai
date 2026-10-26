@@ -18,8 +18,8 @@ use Symfony\AI\Platform\Message\MessageBag;
  */
 final class ConflictException extends RuntimeException
 {
-    public static function forMessages(MessageBag $messages): self
+    public static function forMessages(MessageBag $messages, ?\Throwable $previous = null): self
     {
-        return new self(\sprintf('The messages "%s" were changed in the meantime, load them again before saving.', $messages->getId()->toRfc4122()));
+        return new self(\sprintf('The messages "%s" were changed in the meantime, load them again before saving.', $messages->getId()->toRfc4122()), previous: $previous);
     }
 }

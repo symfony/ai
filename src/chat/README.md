@@ -3,6 +3,8 @@
 The Chat component provides a bridge for building chats with agents, sits on top of the Agent component,
 allowing you to create chats and submit messages to agents.
 
+**This Component is deprecated** after 0.15.0
+
 **This Component is experimental**.
 [Experimental features](https://symfony.com/doc/current/contributing/code/experimental.html)
 are not covered by Symfony's
@@ -14,21 +16,9 @@ are not covered by Symfony's
 composer require symfony/ai-chat
 ```
 
-## Message Store Bridges
+## Message Stores
 
-To use a specific message store, install the corresponding bridge package:
-
-| Message Store | Package                                |
-|---------------|----------------------------------------|
-| Cache         | `symfony/ai-cache-message-store`       |
-| Cloudflare    | `symfony/ai-cloudflare-message-store`  |
-| Doctrine      | `symfony/ai-doctrine-message-store`    |
-| Meilisearch   | `symfony/ai-meilisearch-message-store` |
-| MongoDB       | `symfony/ai-mongo-db-message-store`    |
-| Pogocache     | `symfony/ai-pogocache-message-store`   |
-| Redis         | `symfony/ai-redis-message-store`       |
-| Session       | `symfony/ai-session-message-store`     |
-| SurrealDB     | `symfony/ai-surreal-db-message-store`  |
+The message store bridges are part of the Agent component, wrap one of them in `AgentMessageStore` to keep a chat in it.
 
 **This repository is a READ-ONLY sub-tree split**. See
 https://github.com/symfony/ai to create issues or submit pull requests.

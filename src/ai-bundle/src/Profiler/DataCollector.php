@@ -11,12 +11,12 @@
 
 namespace Symfony\AI\AiBundle\Profiler;
 
+use Symfony\AI\Agent\MessageStore\TraceableMessageStore;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\Chat\TraceableChat;
-use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\ResultInterface;

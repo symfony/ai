@@ -43,6 +43,8 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
         "symfony/ai-store": "^0.15",
+        "symfony/console": "^7.3|^8.0",
+        "symfony/dependency-injection": "^7.3|^8.0",
         "symfony/event-dispatcher": "^7.3|^8.0",
         "symfony/stopwatch": "^7.3|^8.0",
         "symfony/translation": "^7.3|^8.0",

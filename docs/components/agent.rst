@@ -154,6 +154,8 @@ enabled, the final answer carries :ref:`tool sources <agent-tool-sources>` as we
         }
     }
 
+.. _agent-storing-conversations:
+
 Storing Conversations
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -191,6 +193,52 @@ conversation in the meantime, saving fails with a :class:`Symfony\\AI\\Agent\\Ex
     When a message is serialized, the objects in its metadata keep their class name. On loading, the serializer
     creates objects of the stored class names. Only load conversations from a storage that only your application
     writes to.
+
+.. _agent-message-store-bridges:
+
+Message Store Bridges
+.....................
+
+The :class:`Symfony\\AI\\Agent\\MessageStore\\InMemoryMessageStore` keeps conversations only for the current
+process. To keep them across requests, install one of the message store bridges, for example Redis:
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-redis-message-store
+
+Then pass the store to the agent::
+
+    use Symfony\AI\Agent\Bridge\Redis\MessageStore;
+
+    // every key of the store starts with "conversations:"
+    $store = new MessageStore(new \Redis(['host' => 'localhost']), 'conversations');
+
+    $agent = new Agent($platform, $model, messageStore: $store);
+
+The following bridges are available:
+
+* `Cache`_ (``symfony/ai-cache-message-store``, `Cache example`_)
+* `Cloudflare KV`_ (``symfony/ai-cloudflare-message-store``, `Cloudflare example`_)
+* `Doctrine DBAL`_ (``symfony/ai-doctrine-message-store``, `Doctrine example`_)
+* `HttpFoundation session`_ (``symfony/ai-session-message-store``, `Session example`_)
+* `Meilisearch`_ (``symfony/ai-meilisearch-message-store``, `Meilisearch example`_)
+* `MongoDB`_ (``symfony/ai-mongo-db-message-store``, `MongoDB example`_)
+* `Pogocache`_ (``symfony/ai-pogocache-message-store``, `Pogocache example`_)
+* `Redis`_ (``symfony/ai-redis-message-store``, `Redis example`_)
+* `SurrealDB`_ (``symfony/ai-surreal-db-message-store``, `SurrealDB example`_)
+
+To remove a single conversation, call ``delete()`` with its ID.
+
+Stores that need a table, an index or a collection implement
+:class:`Symfony\\AI\\Agent\\MessageStore\\ManagedMessageStoreInterface`. Call ``setup()`` once before the
+first conversation, and ``drop()`` to remove the store with all its conversations. In a Symfony application, the
+``ai:message-store:setup`` and ``ai:message-store:drop`` commands do the same (see
+:doc:`the AI Bundle </bundles/ai-bundle>`).
+
+To use another backend, implement :class:`Symfony\\AI\\Agent\\MessageStore\\MessageStoreInterface` with its
+``load()``, ``save()`` and ``delete()`` methods. The ``save()`` method must throw a :class:`Symfony\\AI\\Agent\\Exception\\ConflictException` when the stored
+conversation doesn't continue in the given messages. The
+:class:`Symfony\\AI\\Agent\\MessageStore\\ConflictDetector` checks this for you.
 
 Streaming
 ~~~~~~~~~
@@ -1512,3 +1560,21 @@ Code Examples
 .. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
 .. _`Tool Call Argument Validation`: https://github.com/symfony/ai/blob/main/examples/toolbox/validation.php
 .. _`Parallel Tool Calls with Fibers`: https://github.com/symfony/ai/blob/main/examples/agent/toolcall-fibers.php
+.. _`Cache`: https://symfony.com/doc/current/components/cache.html
+.. _`Cache example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-cache.php
+.. _`Cloudflare KV`: https://developers.cloudflare.com/kv/
+.. _`Cloudflare example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-cloudflare.php
+.. _`Doctrine DBAL`: https://www.doctrine-project.org/projects/dbal.html
+.. _`Doctrine example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-doctrine.php
+.. _`HttpFoundation session`: https://symfony.com/doc/current/session.html
+.. _`Session example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-session.php
+.. _`Meilisearch`: https://www.meilisearch.com/
+.. _`Meilisearch example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-meilisearch.php
+.. _`MongoDB`: https://www.mongodb.com/
+.. _`MongoDB example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-mongodb.php
+.. _`Pogocache`: https://pogocache.com/
+.. _`Pogocache example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-pogocache.php
+.. _`Redis`: https://redis.io/
+.. _`Redis example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-redis.php
+.. _`SurrealDB`: https://surrealdb.com/
+.. _`SurrealDB example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-surrealdb.php

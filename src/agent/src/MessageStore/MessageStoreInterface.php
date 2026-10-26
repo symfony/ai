@@ -32,4 +32,6 @@ interface MessageStoreInterface
      * @throws ConflictException when the stored messages don't start the given ones, i.e. they were changed after loading
      */
     public function save(MessageBag $messages): void;
+
+    public function delete(AbstractUid&TimeBasedUidInterface $id): void;
 }

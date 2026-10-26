@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\AiBundle\DependencyInjection;
 
+use Symfony\AI\Agent\MessageStore\TraceableMessageStore;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\Chat\TraceableChat;
-use Symfony\AI\Chat\TraceableMessageStore;
 use Symfony\AI\Platform\TraceablePlatform;
 use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\ClockInterface;

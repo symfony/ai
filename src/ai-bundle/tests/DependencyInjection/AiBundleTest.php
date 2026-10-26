@@ -28,6 +28,9 @@ use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+use Symfony\AI\Agent\MessageStore\ManagedMessageStoreInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -39,9 +42,8 @@ use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
+use Symfony\AI\Chat\AgentMessageStore;
 use Symfony\AI\Chat\ChatInterface;
-use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
-use Symfony\AI\Chat\MessageStoreInterface;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
@@ -397,9 +399,7 @@ class AiBundleTest extends TestCase
             'ai' => [
                 'message_store' => [
                     'memory' => [
-                        'main' => [
-                            'identifier' => '_memory',
-                        ],
+                        'main' => [],
                     ],
                     'session' => [
                         'session' => [
@@ -415,6 +415,67 @@ class AiBundleTest extends TestCase
         $this->assertFalse($container->hasAlias(MessageStoreInterface::class.' $memoryMain'));
     }
 
+    public function testAgentContinuesConversationsInItsMessageStore()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'message_store' => 'ai.message_store.memory.main',
+                    ],
+                ],
+                'message_store' => [
+                    'memory' => [
+                        'main' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $messageStore = $container->getDefinition('ai.agent.my_agent')->getArgument('$messageStore');
+        $this->assertInstanceOf(Reference::class, $messageStore);
+        $this->assertSame('ai.message_store.memory.main', (string) $messageStore);
+        $this->assertSame(InMemoryMessageStore::class, $container->getDefinition('ai.message_store.memory.main')->getClass());
+    }
+
+    public function testChatKeepsItsConversationInAConfiguredMessageStore()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                    ],
+                ],
+                'message_store' => [
+                    'memory' => [
+                        'main' => [],
+                    ],
+                ],
+                'chat' => [
+                    'main' => [
+                        'agent' => 'ai.agent.my_agent',
+                        'message_store' => 'ai.message_store.memory.main',
+                    ],
+                    'custom' => [
+                        'agent' => 'ai.agent.my_agent',
+                        'message_store' => 'my_chat_message_store',
+                    ],
+                ],
+            ],
+        ]);
+
+        $messageStore = $container->getDefinition('ai.chat.main')->getArgument(1);
+        $this->assertInstanceOf(Definition::class, $messageStore);
+        $this->assertSame(AgentMessageStore::class, $messageStore->getClass());
+        $this->assertSame('ai.message_store.memory.main', (string) $messageStore->getArgument(0));
+
+        $customMessageStore = $container->getDefinition('ai.chat.custom')->getArgument(1);
+        $this->assertInstanceOf(Reference::class, $customMessageStore);
+        $this->assertSame('my_chat_message_store', (string) $customMessageStore);
+    }
+
     public function testInjectionChatAliasIsRegistered()
     {
         $container = $this->buildContainer([
@@ -426,9 +487,7 @@ class AiBundleTest extends TestCase
                 ],
                 'message_store' => [
                     'memory' => [
-                        'main' => [
-                            'identifier' => '_memory',
-                        ],
+                        'main' => [],
                     ],
                 ],
                 'chat' => [
@@ -447,7 +506,7 @@ class AiBundleTest extends TestCase
         $chatDefinition = $container->getDefinition('ai.chat.main');
         $this->assertCount(2, $chatDefinition->getArguments());
         $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(0));
-        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(1));
+        $this->assertInstanceOf(Definition::class, $chatDefinition->getArgument(1));
     }
 
     public function testAgentHasTag()
@@ -9578,7 +9637,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9609,7 +9667,6 @@ class AiBundleTest extends TestCase
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9749,15 +9806,13 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
 
-    public function testMemoryMessageStoreCanBeConfiguredWithCustomKey()
+    public function testMemoryMessageStoreCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
                 'message_store' => [
                     'memory' => [
-                        'custom' => [
-                            'identifier' => 'foo',
-                        ],
+                        'custom' => [],
                     ],
                 ],
             ],
@@ -9766,7 +9821,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.message_store.memory.custom');
 
         $this->assertFalse($definition->isLazy());
-        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame(InMemoryMessageStore::class, $definition->getClass());
+        $this->assertSame([], $definition->getArguments());
 
         $this->assertFalse($definition->hasTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
@@ -9873,7 +9929,6 @@ class AiBundleTest extends TestCase
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9967,7 +10022,6 @@ class AiBundleTest extends TestCase
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -10770,9 +10824,7 @@ class AiBundleTest extends TestCase
                 ],
                 'message_store' => [
                     'memory' => [
-                        'main' => [
-                            'identifier' => '_memory',
-                        ],
+                        'main' => [],
                     ],
                 ],
                 'chat' => [
@@ -11771,9 +11823,7 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                     'memory' => [
-                        'my_memory_message_store' => [
-                            'identifier' => '_memory',
-                        ],
+                        'my_memory_message_store' => [],
                     ],
                     'meilisearch' => [
                         'my_meilisearch_store' => [

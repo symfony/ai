@@ -152,10 +152,8 @@ jobs:
                         find: "find src/platform/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
                     -   name: Store Bridges
                         find: "find src/store/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
-                    -   name: Tool Bridges
+                    -   name: Agent Bridges
                         find: "find src/agent/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
-                    -   name: Message Store Bridges
-                        find: "find src/chat/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
                     -   name: Mate Bridges
                         find: "find src/mate/src/Bridge -mindepth 2 -maxdepth 2 -name phpunit.xml.dist"
 
