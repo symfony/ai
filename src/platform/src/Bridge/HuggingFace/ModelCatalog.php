@@ -117,6 +117,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::EMBEDDINGS,
                 ],
             ],
+            'BSC-LT/ALIA-40b-instruct-2606' => [
+                'class' => Completions::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
             'Babelscape/wikineural-multilingual-ner' => [
                 'class' => TokenClassification::class,
                 'capabilities' => [
@@ -323,6 +333,13 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                 ],
             ],
+            'Helsinki-NLP/opus-mt-en-az' => [
+                'class' => Translation::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
+                ],
+            ],
             'Helsinki-NLP/opus-mt-en-de' => [
                 'class' => Translation::class,
                 'capabilities' => [
@@ -400,13 +417,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                 ],
             ],
-            'Helsinki-NLP/opus-mt-tc-big-en-tr' => [
-                'class' => Translation::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
             'Helsinki-NLP/opus-mt-tc-big-ko-en' => [
                 'class' => Translation::class,
                 'capabilities' => [
@@ -439,6 +449,12 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_TEXT,
+                ],
+            ],
+            'Jean-Baptiste/camembert-ner' => [
+                'class' => TokenClassification::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
                 ],
             ],
             'MilaNLProc/xlm-emo-t' => [
@@ -484,6 +500,16 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_IMAGE,
                     Capability::TOOL_CALLING,
                     Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
+            'MiniMaxAI/MiniMax-M3.1-Flash' => [
+                'class' => Completions::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::INPUT_IMAGE,
+                    Capability::TOOL_CALLING,
                 ],
             ],
             'MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli' => [
@@ -546,12 +572,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_TEXT,
                 ],
             ],
-            'MoritzLaurer/roberta-base-zeroshot-v2.0-c' => [
-                'class' => ZeroShotClassification::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                ],
-            ],
             'MoritzLaurer/xtremedistil-l6-h256-zeroshot-v1.1-all-33' => [
                 'class' => ZeroShotClassification::class,
                 'capabilities' => [
@@ -575,12 +595,6 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'OpenMed/OpenMed-NER-DiseaseDetect-BioMed-335M' => [
-                'class' => TokenClassification::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                ],
-            ],
-            'OpenMed/OpenMed-NER-DiseaseDetect-SuperClinical-434M' => [
                 'class' => TokenClassification::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
@@ -743,7 +757,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
-                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'Qwen/Qwen3-4B-Thinking-2507' => [
@@ -753,6 +766,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'Qwen/Qwen3-8B' => [
@@ -762,6 +776,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'Qwen/Qwen3-Next-80B-A3B-Instruct' => [
@@ -801,6 +816,13 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_IMAGE,
                     Capability::TOOL_CALLING,
                     Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
+            'Qwen/Qwen3-VL-Reranker-2B' => [
+                'class' => Reranker::class,
+                'capabilities' => [
+                    Capability::INPUT_MULTIPLE,
+                    Capability::RERANKING,
                 ],
             ],
             'Qwen/Qwen3.5-122B-A10B' => [
@@ -986,14 +1008,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_TEXT,
                 ],
             ],
-            'aisingapore/Gemma-SEA-LION-v4-27B-IT' => [
-                'class' => Completions::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                ],
-            ],
             'albert/albert-base-v2' => [
                 'class' => FillMask::class,
                 'capabilities' => [
@@ -1065,6 +1079,12 @@ final class ModelCatalog extends AbstractModelCatalog
                 'capabilities' => [
                     Capability::INPUT_TEXT,
                     Capability::OUTPUT_TEXT,
+                ],
+            ],
+            'cointegrated/rubert-base-cased-nli-threeway' => [
+                'class' => ZeroShotClassification::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
                 ],
             ],
             'cross-encoder/mmarco-mMiniLMv2-L12-H384-v1' => [
@@ -1189,7 +1209,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
@@ -1227,7 +1246,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'deepseek-ai/DeepSeek-V3' => [
@@ -1417,6 +1435,12 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => QuestionAnswering::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
+                ],
+            ],
+            'dima806/fairface_age_image_detection' => [
+                'class' => Classification::class,
+                'capabilities' => [
+                    Capability::INPUT_IMAGE,
                 ],
             ],
             'dima806/man_woman_face_image_detection' => [
@@ -1756,13 +1780,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::RERANKING,
                 ],
             ],
-            'hotchpotch/japanese-reranker-xsmall-v2' => [
-                'class' => Reranker::class,
-                'capabilities' => [
-                    Capability::INPUT_MULTIPLE,
-                    Capability::RERANKING,
-                ],
-            ],
             'ibm-granite/granite-4.2-30b' => [
                 'class' => Completions::class,
                 'capabilities' => [
@@ -1803,7 +1820,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
-                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'inclusionAI/Ling-3.0-flash-Fin' => [
@@ -1813,7 +1829,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
-                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'inclusionAI/Ling-3.0-flash-VL' => [
@@ -2162,7 +2177,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::INPUT_IMAGE,
                     Capability::TOOL_CALLING,
-                    Capability::OUTPUT_STRUCTURED,
                 ],
             ],
             'moonshotai/Kimi-K2.7-Code' => [
@@ -2436,13 +2450,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_TEXT,
                 ],
             ],
-            'pszemraj/long-t5-tglobal-base-sci-simplify' => [
-                'class' => Summarization::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_TEXT,
-                ],
-            ],
             'reflection/Beam-1.0-501B-A23B' => [
                 'class' => Completions::class,
                 'capabilities' => [
@@ -2653,17 +2660,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
-            'swiss-ai/Apertus-v1.5-70B' => [
-                'class' => Completions::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::INPUT_IMAGE,
-                    Capability::TOOL_CALLING,
-                    Capability::OUTPUT_STRUCTURED,
-                ],
-            ],
             'tasksource/ModernBERT-base-nli' => [
                 'class' => ZeroShotClassification::class,
                 'capabilities' => [
@@ -2746,12 +2742,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_TEXT,
                 ],
             ],
-            'umm-maybe/AI-image-detector' => [
-                'class' => Classification::class,
-                'capabilities' => [
-                    Capability::INPUT_IMAGE,
-                ],
-            ],
             'unitary/unbiased-toxic-roberta' => [
                 'class' => Classification::class,
                 'capabilities' => [
@@ -2774,6 +2764,13 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => TokenClassification::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
+                ],
+            ],
+            'yatharth97/T5-base-10K-summarization' => [
+                'class' => Summarization::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_TEXT,
                 ],
             ],
             'zai-org/AutoGLM-Phone-9B-Multilingual' => [
@@ -2862,6 +2859,15 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::TOOL_CALLING,
                     Capability::OUTPUT_STRUCTURED,
+                ],
+            ],
+            'zai-org/GLM-4.7-FP8' => [
+                'class' => Completions::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
                 ],
             ],
             'zai-org/GLM-4.7-Flash' => [

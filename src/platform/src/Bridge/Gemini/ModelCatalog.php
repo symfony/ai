@@ -500,6 +500,20 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_IMAGE,
                 ],
             ],
+            'gemini-pro-latest' => [
+                'class' => Gemini::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
+                    Capability::INPUT_AUDIO,
+                ],
+            ],
             'gemini-robotics-er-1.6-preview' => [
                 'class' => Gemini::class,
                 'capabilities' => [
