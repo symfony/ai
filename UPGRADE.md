@@ -220,25 +220,48 @@ AI Bundle
  * The `exclude_tool_messages` agent option has been removed, tool messages never reach the caller's `MessageBag`
    anymore.
 
- * The `ai.chat.message_bag.normalizer` service has been renamed to `ai.platform.message_normalizer` and is registered
-   without `symfony/ai-chat` as well.
+ * The `ai.chat.message_bag.normalizer` service has been renamed to `ai.platform.message_normalizer`.
 
  * The configured message stores are the stores of the Agent component and implement
-   `Symfony\AI\Agent\MessageStore\MessageStoreInterface`. Chats wrap them in `Symfony\AI\Chat\AgentMessageStore`, so
-   a service you pass as `message_store` of a chat must still implement `Symfony\AI\Chat\MessageStoreInterface`:
+   `Symfony\AI\Agent\MessageStore\MessageStoreInterface`:
 
    ```diff
    -public function __construct(private \Symfony\AI\Chat\MessageStoreInterface $messageStore)
    +public function __construct(private \Symfony\AI\Agent\MessageStore\MessageStoreInterface $messageStore)
    ```
 
+ * The `chat` option has been removed together with the Chat component, as well as the `ai.chat.*` services, the
+   `ChatInterface` aliases and the chats of the profiler. Use the `message_store` option of the agent instead:
+
+   ```diff
+    ai:
+        agent:
+            youtube:
+                model: 'gpt-5-mini'
+   +            message_store: 'ai.message_store.cache.youtube'
+   -    chat:
+   -        youtube:
+   -            agent: 'ai.agent.youtube'
+   -            message_store: 'ai.message_store.cache.youtube'
+   ```
+
 Chat
 ----
 
- * `Chat` no longer persists the system prompt. The assistant messages of a turn carry the metadata of their own model
-   request instead of the metadata aggregated over the turn.
+ * The Chat component has been removed. Pass a message store to the agent instead, it continues and saves the
+   conversation of a `MessageBag` by its ID:
 
- * `MessageNormalizer` has been removed. Use `Symfony\AI\Platform\Serializer\MessageNormalizer` instead, which no longer
+   ```diff
+   -$chat = new Chat($agent, new MessageStore($redis, 'chat'));
+   -$chat->initiate(new MessageBag(Message::forSystem('You are a helpful assistant.')));
+   -$answer = $chat->submit(Message::ofUser('Hello'));
+   +$agent = new Agent($platform, 'gpt-5-mini', [
+   +    new SystemPromptInputProcessor('You are a helpful assistant.'),
+   +], messageStore: new MessageStore($redis, 'chat'));
+   +$answer = $agent->call(MessageBag::forId($conversationId, Message::ofUser('Hello')));
+   ```
+
+ * `Symfony\AI\Chat\MessageNormalizer` has been removed. Use `Symfony\AI\Platform\Serializer\MessageNormalizer` instead, which no longer
    needs the `ToolCallNormalizer` next to it. It still reads messages persisted with the old format, but writes all
    content as `parts`, and no longer adds `addedAt` to the metadata of denormalized messages:
 
@@ -255,16 +278,11 @@ Chat
 
  * The message store bridges have moved to the Agent component. Their packages keep their names, the classes move to
    the `Symfony\AI\Agent\Bridge` namespace and implement `Symfony\AI\Agent\MessageStore\MessageStoreInterface`,
-   which keeps each conversation by the ID of its `MessageBag`. Wrap them in `AgentMessageStore` to use them with a
-   chat:
+   which keeps each conversation by the ID of its `MessageBag`:
 
    ```diff
    -use Symfony\AI\Chat\Bridge\Redis\MessageStore;
    +use Symfony\AI\Agent\Bridge\Redis\MessageStore;
-   +use Symfony\AI\Chat\AgentMessageStore;
-
-   -$chat = new Chat($agent, new MessageStore($redis, 'chat'));
-   +$chat = new Chat($agent, new AgentMessageStore(new MessageStore($redis, 'chat')));
    ```
 
  * `Command\SetupStoreCommand`, `Command\DropStoreCommand` and `TraceableMessageStore` have moved to the Agent

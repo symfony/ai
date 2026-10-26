@@ -18,7 +18,6 @@
         "symfony/ai-agent": "^0.15",
         "symfony/ai-bundle": "^0.15",
         "symfony/ai-cache-message-store": "^0.15",
-        "symfony/ai-chat": "^0.15",
         "symfony/ai-clock-tool": "^0.15",
         "symfony/ai-doctrine-store": "^0.15",
         "symfony/ai-hugging-face-platform": "^0.15",

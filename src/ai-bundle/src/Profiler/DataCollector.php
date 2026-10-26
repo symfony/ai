@@ -16,7 +16,6 @@ use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
-use Symfony\AI\Chat\TraceableChat;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -36,7 +35,6 @@ use Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface;
  *
  * @phpstan-import-type PlatformCallData from TraceablePlatform
  * @phpstan-import-type MessageStoreData from TraceableMessageStore
- * @phpstan-import-type ChatData from TraceableChat
  * @phpstan-import-type AgentData from TraceableAgent
  * @phpstan-import-type StoreData from TraceableStore
  *
@@ -73,11 +71,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     private readonly array $messageStores;
 
     /**
-     * @var TraceableChat[]
-     */
-    private readonly array $chats;
-
-    /**
      * @var TraceableAgent[]
      */
     private readonly array $agents;
@@ -92,7 +85,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
      * @param iterable<TraceableToolbox>      $toolboxes
      * @param iterable<ToolboxInterface>      $toolSources
      * @param iterable<TraceableMessageStore> $messageStores
-     * @param iterable<TraceableChat>         $chats
      * @param iterable<TraceableAgent>        $agents
      * @param iterable<TraceableStore>        $stores
      */
@@ -101,7 +93,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         iterable $toolboxes,
         iterable $toolSources,
         iterable $messageStores,
-        iterable $chats,
         iterable $agents,
         iterable $stores,
     ) {
@@ -109,7 +100,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
         $this->toolboxes = iterator_to_array($toolboxes);
         $this->toolSources = iterator_to_array($toolSources);
         $this->messageStores = iterator_to_array($messageStores);
-        $this->chats = iterator_to_array($chats);
         $this->agents = iterator_to_array($agents);
         $this->stores = iterator_to_array($stores);
     }
@@ -126,7 +116,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
             'platform_calls' => array_merge(...array_map($this->awaitCallResults(...), $this->platforms)),
             'tool_calls' => array_merge(...array_map(static fn (TraceableToolbox $toolbox) => $toolbox->getCalls(), $this->toolboxes)),
             'messages' => array_merge(...array_map(static fn (TraceableMessageStore $messageStore): array => $messageStore->getCalls(), $this->messageStores)),
-            'chats' => array_merge(...array_map(static fn (TraceableChat $chat): array => $chat->getCalls(), $this->chats)),
             'agents' => array_merge(...array_map(static fn (TraceableAgent $agent): array => $agent->getCalls(), $this->agents)),
             'stores' => array_merge(...array_map(static fn (TraceableStore $store): array => $store->getCalls(), $this->stores)),
         ];
@@ -172,14 +161,6 @@ final class DataCollector extends AbstractDataCollector implements LateDataColle
     public function getMessages(): array
     {
         return $this->data['messages'] ?? [];
-    }
-
-    /**
-     * @return ChatData[]
-     */
-    public function getChats(): array
-    {
-        return $this->data['chats'] ?? [];
     }
 
     /**

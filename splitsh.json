@@ -19,9 +19,6 @@
         "ai-youtube-tool": "src/agent/src/Bridge/Youtube",
         "ai-wikipedia-tool": "src/agent/src/Bridge/Wikipedia",
         "ai-bundle": "src/ai-bundle",
-        "ai-chat": {
-            "prefixes": [{ "from": "src/chat", "to": "", "excludes": ["src/Bridge"] }]
-        },
         "ai-cache-message-store": "src/agent/src/Bridge/Cache",
         "ai-cloudflare-message-store": "src/agent/src/Bridge/Cloudflare",
         "ai-doctrine-message-store": "src/agent/src/Bridge/Doctrine",

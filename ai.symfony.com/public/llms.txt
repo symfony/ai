@@ -69,7 +69,6 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [S3 Vectors](https://symfony.com/doc/current/ai/components/store/s3-vectors.html): AWS S3 Vectors bridge for vector storage
 - [SQLite Store](https://symfony.com/doc/current/ai/components/store/sqlite.html): SQLite-based vector store
 - [Supabase Bridge](https://symfony.com/doc/current/ai/components/store/supabase.html): Supabase vector store integration
-- [Chat Component](https://symfony.com/doc/current/ai/components/chat.html): High-level API for conversations with agents and message history persistence
 - [Mate Component](https://symfony.com/doc/current/ai/components/mate.html): Command-line assistant giving coding agents project-aware tools for PHP/Symfony applications
 - [Mate Integration](https://symfony.com/doc/current/ai/components/mate/integration.html): How coding agents find Mate, and choosing the PHP interpreter
 - [Mate Extensions](https://symfony.com/doc/current/ai/components/mate/extensions.html): The tools of the Symfony and Monolog extensions (symfony-services, symfony-profiler-list, monolog-search, ...) with their parameters, resources and configuration
@@ -77,7 +76,7 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [Mate Commands](https://symfony.com/doc/current/ai/components/mate/commands.html): Reference of the mate CLI's own commands (init, discover, tools:call, skills:*, debug:*) and their options, not the parameters of individual tools
 - [Creating Extensions](https://symfony.com/doc/current/ai/components/mate/creating-extensions.html): Building custom extensions for Mate
 - [Mate Troubleshooting](https://symfony.com/doc/current/ai/components/mate/troubleshooting.html): Troubleshooting Mate setup, discovery and tool calls
-- [AI Bundle](https://symfony.com/doc/current/ai/bundles/ai-bundle.html): Symfony framework integration for Platform, Agent, Store, and Chat
+- [AI Bundle](https://symfony.com/doc/current/ai/bundles/ai-bundle.html): Symfony framework integration for Platform, Agent and Store
 - [MCP Bundle](https://symfony.com/doc/current/ai/bundles/mcp-bundle.html): Symfony integration for the official MCP SDK
 
 ## Cookbook
@@ -106,19 +105,16 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 Unified abstraction for interacting with different AI models and providers. Install with `composer require symfony/ai-platform`. Supports model inference, streaming, multi-modal input (text, images, audio, PDFs), structured output, token usage tracking, asynchronous jobs, and batch requests. Each AI provider has a dedicated bridge that can be installed independently (e.g. `symfony/ai-open-ai-platform`, `symfony/ai-anthropic-platform`), plus infrastructure bridges for caching, failover, and generic OpenAI-compatible endpoints.
 
 ### Agent
-Framework for building AI agents that interact with users and perform multi-step tasks. Install with `composer require symfony/ai-agent`. Features tool calling with automatic schema generation from PHP classes via `#[AsTool]` attribute, input/output processor pipeline, memory system with embedding support, structured output, and subagent composition for hierarchical task delegation. Includes built-in tool bridges for Wikipedia, YouTube, Brave Search, Tavily, SerpApi, Firecrawl, Filesystem, Clock, Mapbox, Ollama Web Search, OpenMeteo, Web Scraper, and SimilaritySearch, plus an MCP bridge that exposes the tools of remote MCP servers to an agent.
+Framework for building AI agents that interact with users and perform multi-step tasks. Install with `composer require symfony/ai-agent`. Features tool calling with automatic schema generation from PHP classes via `#[AsTool]` attribute, input/output processor pipeline, memory system with embedding support, structured output, and subagent composition for hierarchical task delegation. Includes built-in tool bridges for Wikipedia, YouTube, Brave Search, Tavily, SerpApi, Firecrawl, Filesystem, Clock, Mapbox, Ollama Web Search, OpenMeteo, Web Scraper, and SimilaritySearch, plus an MCP bridge that exposes the tools of remote MCP servers to an agent. Message stores (Redis, MongoDB, Doctrine, Meilisearch, SurrealDB, Cloudflare, Pogocache, PSR-6 Cache, and Session) continue and save conversations by their ID.
 
 ### Store
 Low-level abstraction for storing and retrieving documents in vector databases. Install with `composer require symfony/ai-store`. Provides document vectorization, indexing, and semantic similarity retrieval for RAG applications. Supports 20+ backends including PostgreSQL, MongoDB, Pinecone, Qdrant, Weaviate, Meilisearch, ChromaDB, and more.
-
-### Chat
-High-level API for building chats with agents and managing conversation history. Install with `composer require symfony/ai-chat`. Supports streaming, automatic conversation history persistence, and multiple message store backends (Redis, MongoDB, Doctrine, Meilisearch, SurrealDB, Cloudflare, Pogocache, PSR-6 Cache, and Session).
 
 ### Mate
 Command-line development assistant for AI assistants. Install with `composer require --dev symfony/ai-mate`, then run `vendor/bin/mate init`. Exposes project-aware development tools to coding agents (Claude Code, Codex, Cursor, …) as plain commands — `tools:list`, `tools:inspect`, `tools:call`, `resources:read`, `debug:*`, `skills:list` — with `--format=json` for machine-readable output. Tool schemas are read on demand instead of being loaded up front. Supports auto-discovery of extensions (such as `symfony/ai-symfony-mate-extension` and `symfony/ai-monolog-mate-extension`) and ships a Composer plugin that refreshes extension discovery after `composer install`/`update`. Development tool, not intended for production use.
 
 ### AI Bundle
-Symfony framework integration for Platform, Agent, Store, and Chat components. Install with `composer require symfony/ai-bundle`. Provides YAML-based configuration, service auto-registration, security integration with `#[IsGrantedTool]`, and Symfony profiler integration for debugging.
+Symfony framework integration for Platform, Agent and Store components. Install with `composer require symfony/ai-bundle`. Provides YAML-based configuration, service auto-registration, security integration with `#[IsGrantedTool]`, and Symfony profiler integration for debugging.
 
 ### MCP Bundle
 Symfony integration for the official MCP SDK (`mcp/sdk`). Install with `composer require symfony/mcp-bundle`. Supports MCP capabilities (tools, prompts, resources, resource templates) as a server via HTTP and STDIO transports, definitions via attributes, and both server and client modes.

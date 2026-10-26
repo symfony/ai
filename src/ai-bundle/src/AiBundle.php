@@ -57,9 +57,6 @@ use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
-use Symfony\AI\Chat\AgentMessageStore;
-use Symfony\AI\Chat\Chat;
-use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\Platform\Bridge\Albert\Factory as AlbertFactory;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
@@ -335,22 +332,6 @@ final class AiBundle extends AbstractBundle
         if ([] === $messageStores) {
             $builder->removeDefinition('ai.command.setup_message_store');
             $builder->removeDefinition('ai.command.drop_message_store');
-        }
-
-        if ([] !== ($config['chat'] ?? [])) {
-            if (!ContainerBuilder::willBeAvailable('symfony/ai-chat', Chat::class, ['symfony/ai-bundle'])) {
-                throw new RuntimeException('Chat configuration requires "symfony/ai-chat" package. Try running "composer require symfony/ai-chat".');
-            }
-
-            foreach ($config['chat'] as $name => $chat) {
-                $this->processChatConfig($name, $chat, $builder);
-            }
-        }
-
-        $chats = array_keys($builder->findTaggedServiceIds('ai.chat'));
-
-        if (1 === \count($chats)) {
-            $builder->setAlias(ChatInterface::class, reset($chats));
         }
 
         if ([] !== ($config['vectorizer'] ?? [])) {
@@ -3013,34 +2994,6 @@ final class AiBundle extends AbstractBundle
                 $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
             }
         }
-    }
-
-    /**
-     * @param array{
-     *     agent: string,
-     *     message_store: string,
-     * } $configuration
-     */
-    private function processChatConfig(string $name, array $configuration, ContainerBuilder $container): void
-    {
-        $messageStore = new Reference($configuration['message_store']);
-
-        if ($container->hasDefinition($configuration['message_store']) && $container->getDefinition($configuration['message_store'])->hasTag('ai.message_store')) {
-            $messageStore = new Definition(AgentMessageStore::class, [$messageStore]);
-        }
-
-        $definition = new Definition(Chat::class);
-        $definition
-            ->setLazy(true)
-            ->setArguments([
-                new Reference($configuration['agent']),
-                $messageStore,
-            ])
-            ->addTag('proxy', ['interface' => ChatInterface::class])
-            ->addTag('ai.chat');
-
-        $container->setDefinition('ai.chat.'.$name, $definition);
-        $container->registerAliasForArgument('ai.chat.'.$name, ChatInterface::class, $name);
     }
 
     /**

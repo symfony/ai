@@ -42,8 +42,6 @@ use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
-use Symfony\AI\Chat\AgentMessageStore;
-use Symfony\AI\Chat\ChatInterface;
 use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
@@ -437,76 +435,6 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $messageStore);
         $this->assertSame('ai.message_store.memory.main', (string) $messageStore);
         $this->assertSame(InMemoryMessageStore::class, $container->getDefinition('ai.message_store.memory.main')->getClass());
-    }
-
-    public function testChatKeepsItsConversationInAConfiguredMessageStore()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'my_agent' => [
-                        'model' => 'gpt-4',
-                    ],
-                ],
-                'message_store' => [
-                    'memory' => [
-                        'main' => [],
-                    ],
-                ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'ai.agent.my_agent',
-                        'message_store' => 'ai.message_store.memory.main',
-                    ],
-                    'custom' => [
-                        'agent' => 'ai.agent.my_agent',
-                        'message_store' => 'my_chat_message_store',
-                    ],
-                ],
-            ],
-        ]);
-
-        $messageStore = $container->getDefinition('ai.chat.main')->getArgument(1);
-        $this->assertInstanceOf(Definition::class, $messageStore);
-        $this->assertSame(AgentMessageStore::class, $messageStore->getClass());
-        $this->assertSame('ai.message_store.memory.main', (string) $messageStore->getArgument(0));
-
-        $customMessageStore = $container->getDefinition('ai.chat.custom')->getArgument(1);
-        $this->assertInstanceOf(Reference::class, $customMessageStore);
-        $this->assertSame('my_chat_message_store', (string) $customMessageStore);
-    }
-
-    public function testInjectionChatAliasIsRegistered()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'my_agent' => [
-                        'model' => 'gpt-4',
-                    ],
-                ],
-                'message_store' => [
-                    'memory' => [
-                        'main' => [],
-                    ],
-                ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'ai.agent.my_agent',
-                        'message_store' => 'ai.message_store.memory.main',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertCount(1, $container->findTaggedServiceIds('ai.chat'));
-
-        $this->assertTrue($container->hasAlias(ChatInterface::class.' $main'));
-
-        $chatDefinition = $container->getDefinition('ai.chat.main');
-        $this->assertCount(2, $chatDefinition->getArguments());
-        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(0));
-        $this->assertInstanceOf(Definition::class, $chatDefinition->getArgument(1));
     }
 
     public function testAgentHasTag()
@@ -10827,12 +10755,6 @@ class AiBundleTest extends TestCase
                         'main' => [],
                     ],
                 ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'ai.agent.my_agent',
-                        'message_store' => 'ai.message_store.memory.main',
-                    ],
-                ],
             ],
         ]);
 
@@ -10841,7 +10763,6 @@ class AiBundleTest extends TestCase
             'ai.traceable_toolbox.my_agent',
             'ai.fault_tolerant_toolbox.my_agent',
             'ai.traceable_message_store.main',
-            'ai.traceable_chat.main',
         ];
 
         foreach ($decorators as $decorator) {
@@ -11882,12 +11803,6 @@ class AiBundleTest extends TestCase
                             'table' => 'bar',
                             'namespaced_user' => true,
                         ],
-                    ],
-                ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'my_chat_agent',
-                        'message_store' => 'cache',
                     ],
                 ],
                 'vectorizer' => [

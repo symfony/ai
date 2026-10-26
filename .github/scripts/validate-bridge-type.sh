@@ -7,13 +7,13 @@
 # Arguments:
 #   bridge_type     Type of bridge (e.g., "store", "tool", "platform", "message-store")
 #                   This determines the expected composer.json type: symfony-ai-{bridge_type}
-#   component       Name of the parent component (e.g., agent, platform, store, chat)
+#   component       Name of the parent component (e.g., agent, platform, store)
 #                   If not provided, defaults to bridge_type
 #
 # Example:
 #   validate-bridge-type.sh store
 #   validate-bridge-type.sh tool agent
-#   validate-bridge-type.sh message-store chat
+#   validate-bridge-type.sh message-store agent
 #
 # The script builds the bridge path internally as: src/${component}/src/Bridge/*
 

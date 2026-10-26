@@ -47,7 +47,6 @@
         "symfony/ai-cache-store": "^0.15",
         "symfony/ai-cartesia-platform": "^0.15",
         "symfony/ai-cerebras-platform": "^0.15",
-        "symfony/ai-chat": "^0.15",
         "symfony/ai-chroma-db-store": "^0.15",
         "symfony/ai-click-house-store": "^0.15",
         "symfony/ai-cloudflare-message-store": "^0.15",
