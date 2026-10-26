@@ -1550,7 +1550,7 @@ final class AiBundle extends AbstractBundle
         if ($config['tools']['enabled']) {
             // Setup toolbox for agent
             $memoryFactoryDefinition = new Definition(MemoryToolFactory::class, [
-                new Reference('ai.platform.json_schema_factory'),
+                new Reference('ai.toolbox.json_schema_factory'),
             ]);
             $container->setDefinition('ai.toolbox.'.$name.'.memory_factory', $memoryFactoryDefinition);
 
