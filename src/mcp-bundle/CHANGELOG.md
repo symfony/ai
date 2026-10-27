@@ -8,6 +8,9 @@ CHANGELOG
  * Add the `none` value for `servers.<name>.session.store` to serve handshake-era HTTP clients without sessions
  * Bind handshake-era sessions to the user identifier of the authenticated user, or to the `mcp.principal`
    request attribute
+ * Add support for PSR-6 pools in `servers.<name>.session.cache_pool` and `servers.<name>.subscriptions.cache_pool`;
+   `cache.mcp.sessions` and `cache.mcp.notifications` are now cache pools of their own, children of `cache.app`, and
+   `psr/simple-cache` is no longer required
 
 0.15
 ----
