@@ -1819,6 +1819,18 @@ Snapshots are de-duplicated — the listener only emits when the parsed structur
 ``ValidatorSubscriber`` is registered, validation runs once on the final object only; partial snapshots
 are never validated, since they are by definition incomplete.
 
+A snapshot only has the properties that the model wrote so far. A typed property without a default
+value stays uninitialized until the model writes it. Give a default value to the properties that you
+read while streaming, or make them nullable::
+
+    class Recipe
+    {
+        public string $name = '';
+
+        /** @var list<string> */
+        public array $ingredients = [];
+    }
+
 Parsing Partial JSON from Streams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
