@@ -2058,6 +2058,19 @@ calls work the same way::
     $platform = MockPlatformFactory::createPlatform(fn () => new VectorResult([new Vector([0.1, 0.2, 0.3])]));
     $vectors = $platform->invoke('text-embedding-3-small', 'vectorize')->asVectors();
 
+With the ``stream`` option, a string answer is streamed word by word, as
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\TextDelta` objects. So a streamed call with a
+``response_format`` gets partial objects, like with a real provider. To stream tool calls, return a
+``StreamResult`` instead::
+
+    use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
+    use Symfony\AI\Platform\Result\StreamResult;
+    use Symfony\AI\Platform\Result\ToolCall;
+
+    $platform = MockPlatformFactory::createPlatform(fn () => new StreamResult((function () {
+        yield new ToolCallComplete([new ToolCall('call_1', 'clock')]);
+    })()));
+
 The mock records every call, so a test can assert on the exact payload and options the platform
 built (tool option translation, merged model options, and so on). Build the provider yourself to
 keep a reference to its :class:`Symfony\\AI\\Platform\\Test\\MockModelClient`::
