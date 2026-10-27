@@ -17,6 +17,7 @@
         "mcp/sdk": "^0.9",
         "php-http/discovery": "^1.20",
         "psr/http-factory-implementation": "*",
+        "psr/simple-cache": "^1.0|^2.0|^3.0",
         "symfony/config": "^7.3|^8.0",
         "symfony/console": "^7.3|^8.0",
         "symfony/dependency-injection": "^7.3|^8.0",
