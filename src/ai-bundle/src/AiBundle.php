@@ -2298,39 +2298,31 @@ final class AiBundle extends AbstractBundle
             foreach ($stores as $name => $store) {
                 $definition = new Definition(PostgresStore::class);
 
+                $arguments = [
+                    $store['table_name'] ?? $name,
+                    $store['vector_field'],
+                    PostgresMetric::tryFrom($store['metric']),
+                    $store['lang'],
+                    $store['dimensions'],
+                    $store['vector_type'],
+                    $store['index_method'],
+                    $store['index_opclass'],
+                ];
+
                 if (\array_key_exists('dbal_connection', $store)) {
                     $definition
                         ->setFactory([PostgresStoreFactory::class, 'createStoreFromDbal'])
-                        ->setArguments([
-                            new Reference($store['dbal_connection']),
-                            $store['table_name'] ?? $name,
-                            $store['vector_field'],
-                            PostgresMetric::tryFrom($store['metric']),
-                            $store['lang'],
-                        ]);
+                        ->setArguments([new Reference($store['dbal_connection']), ...$arguments]);
                 } else {
-                    $pdo = new Definition(\PDO::class);
-                    $pdo->setArguments([
-                        $store['dsn'],
-                        $store['username'] ?? null,
-                        $store['password'] ?? null,
-                    ]);
-
-                    $definition
-                        ->setFactory([PostgresStoreFactory::class, 'createStoreFromPdo'])
-                        ->setArguments([
-                            $pdo,
-                            $store['table_name'] ?? $name,
-                            $store['vector_field'],
-                            PostgresMetric::tryFrom($store['metric']),
-                            $store['lang'],
-                        ]);
-                }
-
-                foreach (['dimensions' => '$dimensions', 'vector_type' => '$vectorType', 'index_method' => '$indexMethod', 'index_opclass' => '$indexOpclass'] as $key => $argument) {
-                    if (isset($store[$key])) {
-                        $definition->setArgument($argument, $store[$key]);
+                    $connectionOptions = [];
+                    if (isset($store['username'])) {
+                        $connectionOptions['db_username'] = $store['username'];
                     }
+                    if (isset($store['password'])) {
+                        $connectionOptions['db_password'] = $store['password'];
+                    }
+
+                    $definition->setArguments([$store['dsn'], ...$arguments, $connectionOptions]);
                 }
 
                 $definition

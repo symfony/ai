@@ -983,6 +983,24 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
     }
 
+    public function testConnectsToTheDsnOnTheFirstQuery()
+    {
+        $store = new Store('missing-driver:dbname=test', 'embeddings_table');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('could not find driver');
+
+        $store->count();
+    }
+
+    public function testRejectsConnectionOptionsWithAPdoInstance()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The connection options can only be used with a DSN, not with a PDO instance.');
+
+        new Store(new \PDO('sqlite::memory:'), 'embeddings_table', 'embedding', Metric::L2, 'english', 1536, 'vector', 'hnsw', null, ['db_username' => 'postgres']);
+    }
+
     private function normalizeQuery(string $query): string
     {
         $replacedQuery = preg_replace('/\s+/', ' ', $query);
