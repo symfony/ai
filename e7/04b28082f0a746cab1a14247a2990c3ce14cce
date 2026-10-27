@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-23T20:05:14Z
+
+Restricted pruning to OpenRouter and retained curated entries omitted by models.dev. Empty feeds or removals exceeding 25% now fail before writing, and `--dry-run` lists the removed model IDs.
+
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-25T21:55:34Z
+
+Added `--allow-large-prune` and a matching manual workflow input for the initial catch-up; empty catalogs remain rejected even with the override. Rejected dry-runs now list all removed IDs and explain how to accept a reviewed larger removal. Removed the obsolete `updateStaticModelCatalog` export-ignore entry.
+
+---------------------------------------------------------------------------
+
+by andreybolonin at 2026-10-26T05:41:34Z
+
+Replaced the retired catalog-test pins with `anthropic/claude-sonnet-4.6` and `mistralai/mistral-large-2512`, which are present in the current OpenRouter feed. Updated the Mistral image-input expectation so the assertions remain valid after pruning the old IDs.
