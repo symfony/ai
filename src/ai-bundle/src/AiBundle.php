@@ -2821,7 +2821,7 @@ final class AiBundle extends AbstractBundle
                     ->addTag('ai.message_store');
 
                 $container->setDefinition('ai.message_store.'.$type.'.dbal.'.$name, $definition);
-                $container->registerAliasForArgument('ai.message_store.'.$type.'.'.$name, MessageStoreInterface::class, $name);
+                $container->registerAliasForArgument('ai.message_store.'.$type.'.dbal.'.$name, MessageStoreInterface::class, $name);
             }
         }
 

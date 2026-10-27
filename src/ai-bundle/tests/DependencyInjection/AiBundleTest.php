@@ -9698,6 +9698,8 @@ class AiBundleTest extends TestCase
             ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
+
+        $this->assertSame('ai.message_store.doctrine.dbal.default', (string) $container->getAlias(MessageStoreInterface::class.' $default'));
     }
 
     public function testDoctrineDbalMessageStoreWithCustomTableNameCanBeConfiguredWithCustomKey()
