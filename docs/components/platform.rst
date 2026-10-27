@@ -2094,6 +2094,27 @@ explicit models instead::
     // $provider->supports('mock-model') === true
     // $provider->supports('gpt-4o') === false
 
+The fallback catalog gives every model all capabilities, including ``Capability::INPUT_MESSAGES``.
+In an application, the AI Bundle registers the
+:class:`Symfony\\AI\\Platform\\EventListener\\StringToMessageBagListener`, which turns a string input
+into a message bag for these models. An embedding model of the mock then gets a message bag instead
+of the text to embed. To mock an embedding model, give it its own capabilities in front of the
+fallback catalog::
+
+    use Symfony\AI\Platform\Capability;
+    use Symfony\AI\Platform\Model;
+    use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+    use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
+    use Symfony\AI\Platform\Test\MockModelCatalog;
+    use Symfony\AI\Platform\Test\MockPlatformFactory;
+
+    $platform = MockPlatformFactory::createPlatform($responses, new CompositeModelCatalog([
+        new MockModelCatalog([
+            'text-embedding-3-small' => ['class' => Model::class, 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS]],
+        ]),
+        new FallbackModelCatalog(),
+    ]), eventDispatcher: $eventDispatcher);
+
 Recording Real Provider Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
