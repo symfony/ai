@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Trip;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validation;
@@ -49,6 +50,24 @@ final class PartialObjectStreamListenerTest extends TestCase
         $this->assertSame('Berlin', $last->name);
         $this->assertSame(3500000, $last->population);
         $this->assertSame('Germany', $last->country);
+    }
+
+    public function testPopulatesNestedObjectsInPlace()
+    {
+        $berlin = new City(name: 'Berlin');
+        $trip = new Trip(destination: $berlin);
+        $listener = new PartialObjectStreamListener(new Serializer(), Trip::class, $trip);
+        $stream = $this->buildStream([
+            '{"title":"City trip","destination":{"popu',
+            'lation":3500000}}',
+        ], [$listener]);
+
+        iterator_to_array($stream->getContent(), false);
+
+        $this->assertSame($trip, $listener->getFinalObjectResult()?->getContent());
+        $this->assertSame($berlin, $trip->destination);
+        $this->assertSame('Berlin', $berlin->name);
+        $this->assertSame(3500000, $berlin->population);
     }
 
     public function testStillYieldsOriginalTextDeltas()
