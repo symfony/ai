@@ -42,6 +42,8 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -549,6 +551,69 @@ class ResultConverterTest extends TestCase
 
         $this->expectException(BadRequestException::class);
         $this->expectExceptionMessage('Bad Request');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideTopLevelErrorMessages')]
+    public function testThrowsWithTheErrorMessageFromATopLevelMessage(int $statusCode, string $message, string $exception)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse(json_encode(['message' => $message, 'type' => 'invalid_request_error']), $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($message);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>}>
+     */
+    public static function provideTopLevelErrorMessages(): iterable
+    {
+        yield 'unauthorized' => [401, 'Invalid credentials in Authorization header', AuthenticationException::class];
+        yield 'bad request' => [400, 'Failed to apply chat template to messages due to error: Tool "ping" is missing function parameters.', BadRequestException::class];
+        yield 'rate limit' => [429, 'Rate limit reached, try again later', RateLimitExceededException::class];
+        yield 'server error' => [503, 'Model is overloaded', ServerException::class];
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideNonStringErrorMessages')]
+    public function testFallsBackToTheDefaultMessageOnANonStringErrorMessage(int $statusCode, string $body, string $exception, string $message)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse($body, $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($message);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>, string}>
+     */
+    public static function provideNonStringErrorMessages(): iterable
+    {
+        yield 'unauthorized' => [401, '{"message":["a","b"]}', AuthenticationException::class, 'Authentication failed.'];
+        yield 'bad request' => [400, '{"message":{"detail":[{"msg":"x"}]}}', BadRequestException::class, 'Bad Request'];
+        yield 'rate limit' => [429, '{"message":["a","b"]}', RateLimitExceededException::class, 'Rate limit exceeded.'];
+        yield 'server error' => [503, '{"error":{"message":{"detail":[{"msg":"x"}]}}}', ServerException::class, 'Server error (HTTP 503).'];
+    }
+
+    public function testThrowsExceedContextSizeExceptionOnATopLevelErrorCode()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse('{"message":"This request exceeds the model\'s maximum of 8192 tokens.","code":"context_length_exceeded"}', 400);
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('This request exceeds the model\'s maximum of 8192 tokens.');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -1154,6 +1219,11 @@ class ResultConverterTest extends TestCase
         $this->assertInstanceOf(FinishReason::class, $finishReason);
         $this->assertTrue($finishReason->is(FinishReasonCase::LENGTH));
         $this->assertSame('length', $finishReason->getRaw());
+    }
+
+    private function createResponse(string $body, int $statusCode): ResponseInterface
+    {
+        return (new MockHttpClient(new MockResponse($body, ['http_code' => $statusCode])))->request('POST', 'https://api.example.com/v1/chat/completions');
     }
 
     private function httpResponseStub(): object

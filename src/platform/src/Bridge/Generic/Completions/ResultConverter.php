@@ -50,15 +50,19 @@ class ResultConverter implements ResultConverterInterface
         if (401 === $response->getStatusCode()) {
             $error = json_decode($response->getContent(false), true);
             // Some gateways report the reason under "detail", which is not always a string.
-            $errorMessage = $error['error']['message'] ?? $error['detail'] ?? null;
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? $error['detail'] ?? null;
             throw new AuthenticationException(\is_string($errorMessage) ? $errorMessage : 'Authentication failed.');
         }
 
         if (400 === $response->getStatusCode()) {
-            $error = json_decode($response->getContent(false), true)['error'] ?? [];
-            $errorMessage = $error['message'] ?? 'Bad Request';
+            $error = json_decode($response->getContent(false), true);
+            $errorCode = $error['error']['code'] ?? $error['code'] ?? null;
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            if (!\is_string($errorMessage)) {
+                $errorMessage = 'Bad Request';
+            }
 
-            if ('context_length_exceeded' === ($error['code'] ?? null) || preg_match('/context[_ ]length[_ ]exceeded/i', $errorMessage)) {
+            if ('context_length_exceeded' === $errorCode || preg_match('/context[_ ]length[_ ]exceeded/i', $errorMessage)) {
                 throw new ExceedContextSizeException($errorMessage);
             }
 
@@ -66,13 +70,15 @@ class ResultConverter implements ResultConverterInterface
         }
 
         if (429 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
-            throw new RateLimitExceededException(null, $errorMessage);
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            throw new RateLimitExceededException(null, \is_string($errorMessage) ? $errorMessage : null);
         }
 
         if (($code = $response->getStatusCode()) >= 500) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
-            throw new ServerException($code, $errorMessage);
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            throw new ServerException($code, \is_string($errorMessage) ? $errorMessage : null);
         }
 
         if ($options['stream'] ?? false) {
