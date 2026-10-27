@@ -18,9 +18,14 @@ use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
+use Symfony\AI\Platform\Result\Stream\CompleteEvent;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TraceablePlatform;
 use Symfony\Component\Stopwatch\Stopwatch;
@@ -71,6 +76,113 @@ final class TraceablePlatformTest extends TestCase
         $generator->next();
         $this->assertFalse($generator->valid());
         $this->assertCount(0, $traceablePlatform->getResultCache());
+    }
+
+    public function testAStreamKeepsItsListeners()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+
+        $listener = new class extends AbstractStreamListener {
+        };
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('Hello');
+        })(), [$listener]);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($stream), $this->createStub(RawResultInterface::class)));
+
+        $result = $traceablePlatform->invoke('gpt-4o', 'Hello', ['stream' => true])->getResult();
+
+        $this->assertSame($stream, $result);
+        $this->assertContains($listener, $result->getListeners());
+    }
+
+    public function testAStreamedCallCanGetAResultThatIsNotAStream()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $stopwatch = new Stopwatch();
+        $traceablePlatform = new TraceablePlatform($platform, $stopwatch);
+
+        $toolCalls = new ToolCallResult([new ToolCall('call_1', 'tool')]);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($toolCalls), $this->createStub(RawResultInterface::class)));
+
+        $this->assertSame($toolCalls, $traceablePlatform->invoke('gpt-4o', 'Hello', ['stream' => true])->getResult());
+        $this->assertFalse($stopwatch->getEvent('ai.platform.invoke "gpt-4o"')->isStarted());
+    }
+
+    public function testTheTextOfAStreamIsRecordedWhenAListenerReplacesItsDeltas()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $traceablePlatform = new TraceablePlatform($platform);
+
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('Hello ');
+            yield new TextDelta('World');
+        })(), [new class extends AbstractStreamListener {
+            public function onDelta(DeltaEvent $event): void
+            {
+                $delta = $event->getDelta();
+                $event->setDelta((static function () use ($delta) {
+                    yield $delta;
+                })());
+            }
+        }]);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($stream), $this->createStub(RawResultInterface::class)));
+
+        $deferredResult = $traceablePlatform->invoke('gpt-4o', 'Hello', ['stream' => true]);
+        iterator_to_array($deferredResult->asStream(), false);
+
+        $this->assertSame('Hello World', $traceablePlatform->getResultCache()[$deferredResult->getResult()]);
+    }
+
+    public function testAFailingStreamStopsItsEventAndKeepsItsText()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $stopwatch = new Stopwatch();
+        $traceablePlatform = new TraceablePlatform($platform, $stopwatch);
+
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('Hello ');
+
+            throw new RuntimeException('Connection lost.');
+        })());
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($stream), $this->createStub(RawResultInterface::class)));
+
+        $deferredResult = $traceablePlatform->invoke('gpt-4o', 'Hello', ['stream' => true]);
+        try {
+            iterator_to_array($deferredResult->asStream(), false);
+            $this->fail('The stream should have failed.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertFalse($stopwatch->getEvent('ai.platform.invoke "gpt-4o"')->isStarted());
+        $this->assertSame('Hello ', $traceablePlatform->getResultCache()[$stream]);
+    }
+
+    public function testAListenerThatFailsToCompleteTheStreamKeepsTheTrace()
+    {
+        $platform = $this->createStub(PlatformInterface::class);
+        $stopwatch = new Stopwatch();
+        $traceablePlatform = new TraceablePlatform($platform, $stopwatch);
+
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('{"name":');
+        })(), [new class extends AbstractStreamListener {
+            public function onComplete(CompleteEvent $event): void
+            {
+                throw new RuntimeException('Cannot json decode the streamed content.');
+            }
+        }]);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($stream), $this->createStub(RawResultInterface::class)));
+
+        $deferredResult = $traceablePlatform->invoke('gpt-4o', 'Hello', ['stream' => true]);
+        try {
+            iterator_to_array($deferredResult->asStream(), false);
+            $this->fail('The stream should have failed.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertFalse($stopwatch->getEvent('ai.platform.invoke "gpt-4o"')->isStarted());
+        $this->assertSame('{"name":', $traceablePlatform->getResultCache()[$stream]);
     }
 
     public function testInvokeWithModelInstanceRecordsModelName()

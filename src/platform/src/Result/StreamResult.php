@@ -172,8 +172,14 @@ final class StreamResult extends BaseResult
         }
 
         $event = new CompleteEvent($this);
+        $failure = null;
         foreach ($this->listeners as $listener) {
-            $listener->onComplete($event);
+            // a listener that fails must not keep the other listeners from completing
+            try {
+                $listener->onComplete($event);
+            } catch (\Throwable $e) {
+                $failure ??= $e;
+            }
         }
         $this->getMetadata()->merge($event->getMetadata());
 
@@ -181,5 +187,9 @@ final class StreamResult extends BaseResult
 
         // cleared after the listeners: they run inside this generator and must not resume it
         $this->consuming = false;
+
+        if (null !== $failure) {
+            throw $failure;
+        }
     }
 }
