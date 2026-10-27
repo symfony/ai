@@ -20,6 +20,7 @@ use Symfony\AI\Store\Distance\DistanceStrategy;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 final class DistanceCalculatorTest extends TestCase
@@ -187,6 +188,47 @@ final class DistanceCalculatorTest extends TestCase
         $this->assertNotNull($result[1]->getScore());
         $this->assertEquals($doc3->getId(), $result[2]->getId());
         $this->assertNotNull($result[2]->getScore());
+    }
+
+    public function testChebyshevDistancePreservesEqualDistanceOrder()
+    {
+        $calculator = new DistanceCalculator(DistanceStrategy::CHEBYSHEV_DISTANCE, 2);
+        $documents = [
+            new VectorDocument('first', new Vector([-3.0, 1.0])),
+            new VectorDocument('second', new Vector([1.0, 3.0])),
+            new VectorDocument('third', new Vector([3.0, -1.0])),
+        ];
+
+        $result = $calculator->calculate($documents, new Vector([0.0, 0.0]), 2);
+
+        $this->assertSame(['first', 'second'], array_map(static fn ($document) => $document->getId(), $result));
+        $this->assertSame(3.0, $result[0]->getScore());
+        $this->assertSame(3.0, $result[1]->getScore());
+    }
+
+    /**
+     * @param list<float> $documentData
+     * @param list<float> $queryData
+     */
+    #[DataProvider('provideMismatchedChebyshevDimensions')]
+    public function testChebyshevDistanceRejectsMismatchedDimensions(array $documentData, array $queryData)
+    {
+        $calculator = new DistanceCalculator(DistanceStrategy::CHEBYSHEV_DISTANCE);
+        $document = new VectorDocument('document', new Vector($documentData));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Vectors must have the same number of dimensions.');
+
+        $calculator->calculate([$document], new Vector($queryData));
+    }
+
+    /**
+     * @return \Generator<string, array{list<float>, list<float>}>
+     */
+    public static function provideMismatchedChebyshevDimensions(): \Generator
+    {
+        yield 'shorter query' => [[1.0, 2.0], [1.0]];
+        yield 'longer query' => [[1.0], [1.0, 2.0]];
     }
 
     #[TestDox('Returns empty array when no documents are provided')]
