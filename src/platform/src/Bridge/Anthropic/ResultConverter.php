@@ -265,6 +265,23 @@ class ResultConverter implements ResultConverterInterface
     }
 
     /**
+     * @param array<string, mixed> $usage
+     *
+     * @return array<string, int>
+     */
+    private static function cumulativeUsage(array $usage): array
+    {
+        $counts = [
+            'input_tokens' => $usage['input_tokens'] ?? null,
+            'cache_creation_input_tokens' => $usage['cache_creation_input_tokens'] ?? null,
+            'cache_read_input_tokens' => $usage['cache_read_input_tokens'] ?? null,
+            'web_search_requests' => $usage['server_tool_use']['web_search_requests'] ?? null,
+        ];
+
+        return array_map(intval(...), array_filter($counts, static fn (mixed $count): bool => null !== $count));
+    }
+
+    /**
      * @param array{id: string, name: string, input: string} $toolCall
      *
      * @throws MalformedToolCallException
@@ -298,6 +315,8 @@ class ResultConverter implements ResultConverterInterface
         $inMessage = false;
         $stopReason = null;
         $outputTokens = null;
+        /** @var array<string, int> $reportedUsage */
+        $reportedUsage = [];
         // Only message_start names the model; carry it so the message_delta usage reports it too.
         $model = null;
 
@@ -325,15 +344,17 @@ class ResultConverter implements ResultConverterInterface
 
             // Anthropic reports usage in both message_start and message_delta:
             // message_start carries the prompt and cache token counts plus a
-            // provisional output_tokens, and message_delta repeats the same
-            // cumulative prompt/cache counts with the final output_tokens. As
-            // the stream aggregation sums every yielded usage, emitting the full
-            // payload from both events would double-count input and cache tokens.
-            // Yield the prompt/cache counts once (message_start, without the
-            // provisional output) and the final output once (message_delta).
+            // provisional output_tokens, and message_delta carries cumulative
+            // counts with the final output_tokens. Its prompt and cache counts
+            // usually repeat message_start's, but grow when a server tool such as
+            // web search adds to the prompt mid-turn. As the stream aggregation
+            // sums every yielded usage, yield the prompt/cache counts from
+            // message_start (without the provisional output), then the final
+            // output plus only what message_delta adds to those counts.
             if ('message_start' === $type && isset($data['message']['usage'])) {
                 $usage = $data['message']['usage'];
                 unset($usage['output_tokens']);
+                $reportedUsage = self::cumulativeUsage($usage);
                 yield $this->getTokenUsageExtractor()->extractFromArray($usage, $model);
             }
 
@@ -342,9 +363,22 @@ class ResultConverter implements ResultConverterInterface
 
                 if (isset($data['usage'])) {
                     $outputTokens = $data['usage']['output_tokens'] ?? $outputTokens;
-                    yield $this->getTokenUsageExtractor()->extractFromArray([
-                        'output_tokens' => $outputTokens ?? 0,
-                    ], $model);
+                    $usage = ['output_tokens' => $outputTokens ?? 0];
+
+                    foreach (self::cumulativeUsage($data['usage']) as $key => $count) {
+                        $reported = $reportedUsage[$key] ?? 0;
+                        if ($count > $reported) {
+                            $usage[$key] = $count - $reported;
+                            $reportedUsage[$key] = $count;
+                        }
+                    }
+
+                    if (isset($usage['web_search_requests'])) {
+                        $usage['server_tool_use'] = ['web_search_requests' => $usage['web_search_requests']];
+                        unset($usage['web_search_requests']);
+                    }
+
+                    yield $this->getTokenUsageExtractor()->extractFromArray($usage, $model);
                 }
             }
 
