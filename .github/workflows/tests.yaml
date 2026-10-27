@@ -4,7 +4,8 @@ on:
     pull_request:
         paths-ignore:
             - 'src/*/doc/**'
-            - 'src/**/*.md'
+    push:
+        branches: [main]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -34,6 +35,7 @@ jobs:
     # so the lowest matrix below keeps installing each package on its own.
     unit:
         name: Unit / PHP ${{ matrix.php-version }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
+        needs: matrix
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -54,7 +56,17 @@ jobs:
             - name: Configure environment
               run: echo COLUMNS=120 >> $GITHUB_ENV
 
+            - name: Find affected packages
+              id: packages
+              env:
+                  AFFECTED_PACKAGES: ${{ needs.matrix.outputs.affected-packages }}
+              run: |
+                  find src -name phpunit.xml.dist -not -path '*/vendor/*' | sort | .github/filter-affected.sh > "$RUNNER_TEMP/packages.txt"
+                  echo "count=$(wc -l < "$RUNNER_TEMP/packages.txt")" >> $GITHUB_OUTPUT
+                  cat "$RUNNER_TEMP/packages.txt"
+
             - name: Install workspace
+              if: steps.packages.outputs.count != '0'
               uses: ./.github/actions/workspace
               with:
                   php-version: ${{ matrix.php-version }}
@@ -64,7 +76,7 @@ jobs:
             # The Sqlite bridge tests only load the extension on PHP >= 8.4 and fall back to plain
             # PDO otherwise, so installing it on 8.2 would have no effect.
             - name: Install sqlite-vec extension
-              if: matrix.php-version == '8.5'
+              if: steps.packages.outputs.count != '0' && matrix.php-version == '8.5'
               run: |
                   # Without --fail curl exits 0 on an HTTP error and pipes the error page into sh, and
                   # without pipefail only sh's status is checked. The extension would then be missing
@@ -75,13 +87,14 @@ jobs:
                   echo "SQLITE_VEC_PATH=$(pwd)/vec0.so" >> $GITHUB_ENV
 
             - name: Run PHPUnit
-              run: |
-                  find src -name phpunit.xml.dist -not -path '*/vendor/*' | sort \
-                      | .github/run-in-packages.sh vendor/bin/phpunit -c '{}' --exclude-group integration
+              if: steps.packages.outputs.count != '0'
+              run: .github/run-in-packages.sh vendor/bin/phpunit -c '{}' --exclude-group integration < "$RUNNER_TEMP/packages.txt"
 
     # Mate is the only package supporting Symfony 5.4 and 6.4, so it cannot share the workspace.
     unit-mate-legacy-symfony:
         name: Unit / Component / Mate / PHP 8.2 / Symfony ${{ matrix.symfony-version }}
+        needs: matrix
+        if: contains(fromJson(needs.matrix.outputs.affected-packages), 'src/mate')
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -141,6 +154,7 @@ jobs:
     # without raising those constraints first.
     lowest:
         name: Unit / Lowest / ${{ matrix.shard.name }}
+        needs: matrix
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -167,7 +181,17 @@ jobs:
             - name: Configure environment
               run: echo COLUMNS=120 >> $GITHUB_ENV
 
+            - name: Find affected packages
+              id: packages
+              env:
+                  AFFECTED_PACKAGES: ${{ needs.matrix.outputs.affected-packages }}
+              run: |
+                  ${{ matrix.shard.find }} -printf '%h\n' | sort | .github/filter-affected.sh > "$RUNNER_TEMP/packages.txt"
+                  echo "count=$(wc -l < "$RUNNER_TEMP/packages.txt")" >> $GITHUB_OUTPUT
+                  cat "$RUNNER_TEMP/packages.txt"
+
             - name: Setup PHP
+              if: steps.packages.outputs.count != '0'
               uses: shivammathur/setup-php@v2
               with:
                   php-version: '8.2'
@@ -175,13 +199,16 @@ jobs:
                   extensions: ${{ env.REQUIRED_PHP_EXTENSIONS }}
 
             - name: Install root dependencies
+              if: steps.packages.outputs.count != '0'
               uses: ramsey/composer-install@v4
 
             - name: Build packages
+              if: steps.packages.outputs.count != '0'
               run: php .github/build-packages.php
 
             - name: Run lowest install + tests
-              run: ${{ matrix.shard.find }} -printf '%h\n' | sort | .github/run-lowest.sh
+              if: steps.packages.outputs.count != '0'
+              run: .github/run-lowest.sh < "$RUNNER_TEMP/packages.txt"
 
     # ===========================================
     # Integration Tests
@@ -189,6 +216,7 @@ jobs:
     store-bridges-integration:
         name: Integration / Store / ${{ matrix.bridge }}
         needs: matrix
+        if: needs.matrix.outputs.store-bridges-integration != '[]'
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -242,6 +270,8 @@ jobs:
 
     demo:
         name: Integration / Demo
+        needs: matrix
+        if: contains(fromJson(needs.matrix.outputs.affected-packages), 'demo')
         runs-on: ubuntu-latest
 
         steps:
@@ -324,7 +354,9 @@ jobs:
 
     examples:
         name: Integration / Examples / PHP ${{ matrix.php-version }}${{ matrix.dependency-version == 'lowest' && ' / lowest' || '' }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
-        needs: demo
+        needs: [matrix, demo]
+        # The demo is skipped when it is not affected, which must not skip the examples
+        if: ${{ !cancelled() && needs.matrix.result == 'success' && needs.demo.result != 'failure' && contains(fromJson(needs.matrix.outputs.affected-packages), 'examples') }}
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -382,7 +414,9 @@ jobs:
 
     examples-replay:
         name: Integration / Examples (replay)
-        needs: demo
+        needs: [matrix, demo]
+        # The demo is skipped when it is not affected, which must not skip the examples
+        if: ${{ !cancelled() && needs.matrix.result == 'success' && needs.demo.result != 'failure' && contains(fromJson(needs.matrix.outputs.affected-packages), 'examples') }}
         runs-on: ubuntu-latest
 
         steps:
