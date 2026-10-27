@@ -18,7 +18,8 @@ namespace Symfony\AI\Platform\Bridge\VertexAi;
  * - Converts array-style nullable types ['string', 'null'] to
  *   ['type' => 'string', 'nullable' => true], which VertexAI's OpenAPI-flavored
  *   schema parser requires. Sent as-is, an array type triggers
- *   "Proto field is not repeating, cannot start list".
+ *   "Proto field is not repeating, cannot start list". The null value of an
+ *   enum is removed too, as "nullable" allows it.
  *
  * Used both for tool parameter schemas and for structured-output response
  * schemas so the two stay in sync.
@@ -50,6 +51,10 @@ final class SchemaNormalizer
                 if (1 === \count($types)) {
                     $schema['type'] = $types[0];
                     $schema['nullable'] = true;
+
+                    if (isset($schema['enum'])) {
+                        $schema['enum'] = array_values(array_filter($schema['enum'], static fn (mixed $value): bool => null !== $value));
+                    }
                 }
             }
         }
