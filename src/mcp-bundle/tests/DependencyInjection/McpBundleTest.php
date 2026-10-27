@@ -43,7 +43,11 @@ use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
 use Symfony\Component\Cache\Psr16Cache;
+use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\ArrayShapeGenerator;
+use Symfony\Component\Config\Definition\Configuration;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
@@ -263,6 +267,25 @@ class McpBundleTest extends TestCase
         $this->expectExceptionMessage('The "*" wildcard cannot be combined with explicit entries');
 
         $this->buildContainer($this->config(['default' => ['registry' => ['tools' => ['*', 'App\\Mcp\\SearchTool']]]]));
+    }
+
+    public function testServersAndClientsAreDescribedAsMaps()
+    {
+        if (!class_exists(ArrayShapeGenerator::class)) {
+            $this->markTestSkipped('The array shapes of the configuration need symfony/config 7.4 or higher.');
+        }
+
+        $tree = (new Configuration(new McpBundle(), new ContainerBuilder(), 'mcp'))->getConfigTreeBuilder()->buildTree();
+        $this->assertInstanceOf(ArrayNode::class, $tree);
+
+        $clients = $tree->getChildren()['clients'];
+        $this->assertInstanceOf(PrototypedArrayNode::class, $clients);
+        $client = $clients->getPrototype();
+        $this->assertInstanceOf(ArrayNode::class, $client);
+
+        foreach ([$tree->getChildren()['servers'], $clients, $client->getChildren()['servers']] as $node) {
+            $this->assertStringStartsWith('array<string, array{', ArrayShapeGenerator::generate($node), $node->getPath());
+        }
     }
 
     public function testInvalidServerNameIsRejected()
