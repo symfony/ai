@@ -3187,12 +3187,12 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
+        $this->assertNull($definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
-        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('pgsql:host=localhost;port=5432;dbname=testdb;user=app;password=mypass', $definition->getArgument(0));
+        $this->assertSame([], $definition->getArgument('$connectionOptions'));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('embedding', $definition->getArgument(2));
         $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
@@ -3227,13 +3227,12 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
+        $this->assertNull($definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
-        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
-        $this->assertSame(['pgsql:host=localhost;port=5432;dbname=testdb', 'foo', 'bar'], $definition->getArgument(0)->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame('pgsql:host=localhost;port=5432;dbname=testdb', $definition->getArgument(0));
+        $this->assertSame(['db_username' => 'foo', 'db_password' => 'bar'], $definition->getArgument('$connectionOptions'));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
         $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));

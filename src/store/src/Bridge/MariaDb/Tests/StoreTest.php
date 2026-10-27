@@ -616,6 +616,16 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
     }
 
+    public function testConnectsToTheDsnOnTheFirstQuery()
+    {
+        $store = new Store('missing-driver:dbname=test', 'embeddings_table', 'embedding_index', 'embedding');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('could not find driver');
+
+        $store->count();
+    }
+
     private function normalizeQuery(string $query): string
     {
         return trim(preg_replace('/\s+/', ' ', $query));

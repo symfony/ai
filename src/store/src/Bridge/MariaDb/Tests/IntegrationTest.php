@@ -24,8 +24,13 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        $pdo = new \PDO('mysql:host=127.0.0.1;port=3306;dbname=test_database', 'root', '');
-
-        return new Store($pdo, 'test_vectors', 'test_vector_idx', 'embedding', dimensions: 3);
+        return new Store(
+            'mysql:host=127.0.0.1;port=3306;dbname=test_database',
+            'test_vectors',
+            'test_vector_idx',
+            'embedding',
+            dimensions: 3,
+            connectionOptions: ['db_username' => 'root', 'db_password' => ''],
+        );
     }
 }

@@ -682,6 +682,25 @@ final class StoreTest extends TestCase
         $this->assertSame(0, (int) $result->fetchColumn());
     }
 
+    public function testConnectsToTheDsnOnTheFirstQuery()
+    {
+        $store = new Store('missing-driver:dbname=test', 'test_vectors');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('could not find driver');
+
+        $store->count();
+    }
+
+    public function testReusesTheConnectionOpenedFromTheDsn()
+    {
+        $store = new Store('sqlite::memory:', 'test_vectors');
+        $store->setup();
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3])));
+
+        $this->assertSame(1, $store->count());
+    }
+
     /**
      * @param array<string, mixed> $options
      */

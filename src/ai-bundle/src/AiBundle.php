@@ -2301,22 +2301,23 @@ final class AiBundle extends AbstractBundle
                             $store['lang'],
                         ]);
                 } else {
-                    $pdo = new Definition(\PDO::class);
-                    $pdo->setArguments([
-                        $store['dsn'],
-                        $store['username'] ?? null,
-                        $store['password'] ?? null,
-                    ]);
+                    $connectionOptions = [];
+                    if (isset($store['username'])) {
+                        $connectionOptions['db_username'] = $store['username'];
+                    }
+                    if (isset($store['password'])) {
+                        $connectionOptions['db_password'] = $store['password'];
+                    }
 
                     $definition
-                        ->setFactory([PostgresStoreFactory::class, 'createStoreFromPdo'])
                         ->setArguments([
-                            $pdo,
+                            $store['dsn'],
                             $store['table_name'] ?? $name,
                             $store['vector_field'],
                             PostgresMetric::tryFrom($store['metric']),
                             $store['lang'],
-                        ]);
+                        ])
+                        ->setArgument('$connectionOptions', $connectionOptions);
                 }
 
                 foreach (['dimensions' => '$dimensions', 'vector_type' => '$vectorType', 'index_method' => '$indexMethod', 'index_opclass' => '$indexOpclass'] as $key => $argument) {

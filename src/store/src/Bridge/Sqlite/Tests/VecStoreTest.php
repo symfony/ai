@@ -823,6 +823,16 @@ final class VecStoreTest extends TestCase
         $this->assertSame('doc-1', $results[0]->getId());
     }
 
+    public function testConnectsToTheDsnOnTheFirstQuery()
+    {
+        $store = new VecStore('missing-driver:dbname=test', 'test_vectors');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('could not find driver');
+
+        $store->count();
+    }
+
     /**
      * @param array<string, mixed> $options
      */
