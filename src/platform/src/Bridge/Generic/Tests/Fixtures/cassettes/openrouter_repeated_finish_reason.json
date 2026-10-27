@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://openrouter.ai/api/v1/chat/completions",
-                "signature": "0f4327c78d20eb55289eef4f2097248f",
-                "signature_v2": "496409fa63ddebc8b02749e31fbd1be1",
+                "signature": "d54622819510442bc738d8c60de86aa3",
+                "signature_v2": "12b55cfc27cac0034fb74e57e4e044d0",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"stream\":true,\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"stream_options\":{\"include_usage\":true},\"tool_choice\":\"auto\",\"messages\":[{\"role\":\"user\",\"content\":\"What time is it right now?\"}],\"model\":\"openai\\/gpt-4o-mini\"}"
+                "body": "{\"stream\":true,\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"stream_options\":{\"include_usage\":true},\"tool_choice\":\"auto\",\"messages\":[{\"role\":\"user\",\"content\":\"What time is it right now?\"}],\"model\":\"openai\\/gpt-4o-mini\"}"
             },
             "response": {
                 "status": 200,

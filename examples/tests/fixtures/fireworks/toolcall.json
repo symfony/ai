@@ -36,8 +36,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.fireworks.ai/inference/v1/chat/completions",
-                "signature": "eb4005ba941b0f67dc281d9b2d3b9347",
-                "signature_v2": "e1b08524b3672d987ef11da9a2dfb36d",
+                "signature": "84797b02caf00a81634de3a40049c84a",
+                "signature_v2": "92fbefa047bda3055c8015e2dbb3ba55",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -46,7 +46,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
             },
             "response": {
                 "status": 200,
@@ -87,8 +87,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.fireworks.ai/inference/v1/chat/completions",
-                "signature": "5e9700e761c236c824f86ea348a0bdaf",
-                "signature_v2": "8b0026a0e4a0cf237b949b879ac5f764",
+                "signature": "792ea81a3a1d9a04d9c69a9be189035b",
+                "signature_v2": "65b2964c418eab31f7203ad72216083d",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -97,7 +97,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_a51f28bede7a4469b3cc1686\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-10-22 (YYYY-MM-DD) and the time is 23:58:17 (HH:MM:SS).\",\"tool_call_id\":\"call_a51f28bede7a4469b3cc1686\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_a51f28bede7a4469b3cc1686\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-10-22 (YYYY-MM-DD) and the time is 23:58:17 (HH:MM:SS).\",\"tool_call_id\":\"call_a51f28bede7a4469b3cc1686\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
             },
             "response": {
                 "status": 200,

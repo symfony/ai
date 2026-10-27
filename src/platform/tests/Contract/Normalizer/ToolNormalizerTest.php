@@ -40,10 +40,37 @@ class ToolNormalizerTest extends TestCase
         $tool = new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'description',
             effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false));
 
-        $this->assertSame([
-            'type' => 'function',
-            'function' => ['name' => 'tool', 'description' => 'description'],
-        ], (new ToolNormalizer())->normalize($tool));
+        $this->assertSame(
+            '{"type":"function","function":{"name":"tool","description":"description","parameters":{"type":"object","properties":{}}}}',
+            json_encode((new ToolNormalizer())->normalize($tool)),
+        );
+    }
+
+    #[DataProvider('provideToolsWithoutParameters')]
+    public function testNormalizeToolWithoutParametersAsEmptyObjectSchema(Tool $tool, string $expected)
+    {
+        $this->assertSame($expected, json_encode((new ToolNormalizer())->normalize($tool)));
+    }
+
+    public static function provideToolsWithoutParameters(): \Generator
+    {
+        yield 'no params' => [
+            new Tool(
+                new ExecutionReference(ToolNoParams::class),
+                'tool_no_params',
+                'A tool without parameters',
+            ),
+            '{"type":"function","function":{"name":"tool_no_params","description":"A tool without parameters","parameters":{"type":"object","properties":{}}}}',
+        ];
+
+        yield 'exception' => [
+            new Tool(
+                new ExecutionReference(ToolException::class, 'bar'),
+                'tool_exception',
+                'This tool is broken',
+            ),
+            '{"type":"function","function":{"name":"tool_exception","description":"This tool is broken","parameters":{"type":"object","properties":{}}}}',
+        ];
     }
 
     public static function provideTools(): \Generator
@@ -230,36 +257,6 @@ class ToolNormalizerTest extends TestCase
                         'required' => ['person'],
                         'additionalProperties' => false,
                     ],
-                ],
-            ],
-        ];
-
-        yield 'no params' => [
-            new Tool(
-                new ExecutionReference(ToolNoParams::class),
-                'tool_no_params',
-                'A tool without parameters',
-            ),
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'tool_no_params',
-                    'description' => 'A tool without parameters',
-                ],
-            ],
-        ];
-
-        yield 'exception' => [
-            new Tool(
-                new ExecutionReference(ToolException::class, 'bar'),
-                'tool_exception',
-                'This tool is broken',
-            ),
-            [
-                'type' => 'function',
-                'function' => [
-                    'name' => 'tool_exception',
-                    'description' => 'This tool is broken',
                 ],
             ],
         ];

@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.deepseek.com/chat/completions",
-                "signature": "62fa945c103d6e463a3e047f6dbd3e2b",
-                "signature_v2": "3db7d19d9778490f97fe7a5c8eac1f37",
+                "signature": "b7f89bc13f8f5108fbc0f87ae65b1e38",
+                "signature_v2": "997c182295206a108707df2143983222",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"response_format\":{\"type\":\"json_object\",\"json_object\":{\"name\":\"clock\",\"strict\":true,\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"system\",\"content\":\"Respond in JSON as instructed in the response format.\"},{\"role\":\"user\",\"content\":\"What date and time is it?\"}],\"model\":\"deepseek-chat\"}"
+                "body": "{\"response_format\":{\"type\":\"json_object\",\"json_object\":{\"name\":\"clock\",\"strict\":true,\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"system\",\"content\":\"Respond in JSON as instructed in the response format.\"},{\"role\":\"user\",\"content\":\"What date and time is it?\"}],\"model\":\"deepseek-chat\"}"
             },
             "response": {
                 "status": 200,
@@ -64,8 +64,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.deepseek.com/chat/completions",
-                "signature": "e7657c5c9f4526d8756046b53e2cf67f",
-                "signature_v2": "e33d3b5ef0d491bfa446b8c2a6a1b3c1",
+                "signature": "73a1c54d0c45fef1f5e3e480ec7bbf45",
+                "signature_v2": "e2a82769c0456fa8a33b7cb1a5705058",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -74,7 +74,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"response_format\":{\"type\":\"json_object\",\"json_object\":{\"name\":\"clock\",\"strict\":true,\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"system\",\"content\":\"Respond in JSON as instructed in the response format.\"},{\"role\":\"user\",\"content\":\"What date and time is it?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_00_K6t52uXr0grIpflepJyl2519\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 20:42:37 (HH:MM:SS).\",\"tool_call_id\":\"call_00_K6t52uXr0grIpflepJyl2519\"}],\"model\":\"deepseek-chat\"}"
+                "body": "{\"response_format\":{\"type\":\"json_object\",\"json_object\":{\"name\":\"clock\",\"strict\":true,\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"system\",\"content\":\"Respond in JSON as instructed in the response format.\"},{\"role\":\"user\",\"content\":\"What date and time is it?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_00_K6t52uXr0grIpflepJyl2519\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 20:42:37 (HH:MM:SS).\",\"tool_call_id\":\"call_00_K6t52uXr0grIpflepJyl2519\"}],\"model\":\"deepseek-chat\"}"
             },
             "response": {
                 "status": 200,

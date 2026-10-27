@@ -42,24 +42,20 @@ class ToolNormalizer implements NormalizerInterface
      *     function: array{
      *         name: string,
      *         description: string,
-     *         parameters?: JsonSchema
+     *         parameters: JsonSchema|array{type: 'object', properties: \stdClass}
      *     }
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        $function = [
-            'name' => $data->getName(),
-            'description' => $data->getDescription(),
-        ];
-
-        if (null !== $data->getParameters()) {
-            $function['parameters'] = $data->getParameters();
-        }
-
         return [
             'type' => 'function',
-            'function' => $function,
+            'function' => [
+                'name' => $data->getName(),
+                'description' => $data->getDescription(),
+                // An empty array would be encoded as a JSON list, not as an object
+                'parameters' => $data->getParameters() ?? ['type' => 'object', 'properties' => new \stdClass()],
+            ],
         ];
     }
 }
