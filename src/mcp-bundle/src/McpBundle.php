@@ -36,16 +36,16 @@ use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\FileSessionLock;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
-use Mcp\Server\Session\Psr16SessionStore;
+use Mcp\Server\Session\SessionStoreInterface;
 use Mcp\Server\Session\SymfonyLockSessionLock;
 use Mcp\Server\Stateless\RequestStateCodec;
 use Mcp\Server\Subscription\InMemoryNotificationBus;
 use Mcp\Server\Subscription\NotificationBusInterface;
-use Mcp\Server\Subscription\Psr16NotificationBus;
 use Mcp\Server\Subscription\PublishingEventDispatcher;
 use Mcp\Server\Wire\CachePolicy;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Cache\CacheStoreFactory;
 use Symfony\AI\McpBundle\Client\McpClient;
 use Symfony\AI\McpBundle\Client\McpClientInterface;
 use Symfony\AI\McpBundle\Client\ServerConnection;
@@ -61,7 +61,6 @@ use Symfony\AI\McpBundle\Http\MiddlewareFactory;
 use Symfony\AI\McpBundle\Profiler\DataCollector;
 use Symfony\AI\McpBundle\Routing\RouteLoader;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
-use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -87,7 +86,7 @@ final class McpBundle extends AbstractBundle
     ];
 
     /**
-     * The PSR-16 pools the bundle creates on demand — see {@see self::registerPsr16Fallback()}.
+     * The cache pools the bundle creates on demand, see {@see self::registerDefaultCachePool()}.
      *
      * Named constants because the auto-registration only fires for the configured default: a
      * default changed in config/options.php alone would silently stop creating the pool.
@@ -566,9 +565,10 @@ final class McpBundle extends AbstractBundle
         if ('memory' === $subscriptions['bus']) {
             $container->register($id, InMemoryNotificationBus::class);
         } else {
-            $this->registerPsr16Fallback($subscriptions['cache_pool'], self::DEFAULT_NOTIFICATION_CACHE_POOL, $container);
+            $this->registerDefaultCachePool($subscriptions['cache_pool'], self::DEFAULT_NOTIFICATION_CACHE_POOL, $container);
 
-            $container->register($id, Psr16NotificationBus::class)
+            $container->register($id, NotificationBusInterface::class)
+                ->setFactory([CacheStoreFactory::class, 'notificationBus'])
                 ->setArguments([
                     '$cache' => new Reference($subscriptions['cache_pool']),
                     // Namespaced per server: two servers left on the default pool would otherwise
@@ -588,19 +588,20 @@ final class McpBundle extends AbstractBundle
     }
 
     /**
-     * Creates a default PSR-16 pool as a wrapper around cache.app, so the common case
-     * needs no services.yaml entry.
+     * Creates the default pool as a child of cache.app, so the common case needs no services.yaml entry.
      *
      * Only ever for the configured default: any other id is the application's own service,
      * and inventing one would hide a typo behind a working-looking cache.
      */
-    private function registerPsr16Fallback(string $id, string $default, ContainerBuilder $container): void
+    private function registerDefaultCachePool(string $id, string $default, ContainerBuilder $container): void
     {
         if ($id !== $default || $container->hasDefinition($id) || $container->hasAlias($id)) {
             return;
         }
 
-        $container->register($id, Psr16Cache::class)->setArguments([new Reference('cache.app')]);
+        $container->setDefinition($id, new ChildDefinition('cache.app'))
+            ->addTag('cache.pool')
+            ->addTag('kernel.test_state', ['method' => 'clear']);
     }
 
     /**
@@ -816,9 +817,10 @@ final class McpBundle extends AbstractBundle
         }
 
         if ('cache' === $session['store']) {
-            $this->registerPsr16Fallback($session['cache_pool'], self::DEFAULT_SESSION_CACHE_POOL, $container);
+            $this->registerDefaultCachePool($session['cache_pool'], self::DEFAULT_SESSION_CACHE_POOL, $container);
 
-            $container->register($id, Psr16SessionStore::class)
+            $container->register($id, SessionStoreInterface::class)
+                ->setFactory([CacheStoreFactory::class, 'sessionStore'])
                 ->setArguments([new Reference($session['cache_pool']), $prefix, $session['ttl']]);
 
             return $id;
