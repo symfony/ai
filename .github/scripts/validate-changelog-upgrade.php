@@ -232,7 +232,8 @@ $tags = git('git tag --sort=-v:refname');
 $latestMinor = null;
 foreach ($tags as $tag) {
     $tuple = minorTuple($tag);
-    if (null !== $tuple) {
+    // "1.0.0-BETA1" sorts below "1.0.0", so it does not release the section "1.0"
+    if (null !== $tuple && version_compare(ltrim($tag, 'v'), $tuple[0].'.'.$tuple[1].'.0', '>=')) {
         $latestMinor = $tuple;
         break;
     }
