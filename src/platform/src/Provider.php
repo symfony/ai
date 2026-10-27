@@ -37,6 +37,11 @@ final class Provider implements ProviderInterface
     private ?Model $resolvedModel = null;
 
     /**
+     * The name given to supports(), with the options that the name of the resolved model no longer has.
+     */
+    private ?string $resolvedModelName = null;
+
+    /**
      * @param non-empty-string                   $name
      * @param iterable<ModelClientInterface>     $modelClients
      * @param iterable<ResultConverterInterface> $resultConverters
@@ -71,6 +76,7 @@ final class Provider implements ProviderInterface
 
         try {
             $this->resolvedModel = $this->modelCatalog->getModel($model);
+            $this->resolvedModelName = $model;
 
             return true;
         } catch (ModelNotFoundException) {
@@ -84,7 +90,7 @@ final class Provider implements ProviderInterface
     {
         if ($model instanceof Model) {
             $this->resolvedModel = null;
-        } elseif (null !== $this->resolvedModel && $this->resolvedModel->getName() === $model) {
+        } elseif (null !== $this->resolvedModel && $this->resolvedModelName === $model) {
             $model = $this->resolvedModel;
             $this->resolvedModel = null;
         } else {
