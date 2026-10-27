@@ -38,7 +38,8 @@ class FallbackModelCatalog extends AbstractModelCatalog
         $parsed = self::parseModelName($modelName);
 
         if (str_contains(strtolower($parsed['name']), 'embed')) {
-            return new EmbeddingsModel($parsed['name'], Capability::cases(), $parsed['options']);
+            // without the messages capability, a text to embed is not turned into a message bag
+            return new EmbeddingsModel($parsed['name'], [Capability::INPUT_TEXT, Capability::INPUT_MULTIPLE, Capability::EMBEDDINGS], $parsed['options']);
         }
 
         return new CompletionsModel($parsed['name'], Capability::cases(), $parsed['options']);
