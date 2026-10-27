@@ -38,8 +38,7 @@
         "symfony/twig-bundle": "^7.3|^8.0"
     },
     "suggest": {
-        "symfony/lock": "Required for a session lock with any store but \"file\".",
-        "symfony/security-bundle": "Required for #[IsGranted] on tools exposed over HTTP."
+        "symfony/lock": "Required for a session lock with any store but \"file\"."
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
