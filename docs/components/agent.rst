@@ -877,23 +877,10 @@ to the LLM::
 
     $agent = new Agent($platform, $model, toolbox: $toolbox);
 
-If you want to expose the underlying error to the LLM, you can throw a custom exception that implements :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolExecutionExceptionInterface`::
+To tell the LLM why a tool call failed, throw a :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolErrorException`.
+Its message is the result of the tool call::
 
-    use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
-
-    class EntityNotFoundException extends \RuntimeException implements ToolExecutionExceptionInterface
-    {
-        public function __construct(
-            private string $entityName,
-            private int $id,
-        ){
-        }
-
-        public function getToolCallResult(): string
-        {
-            return \sprintf('No %s found with id %d', $this->entityName, $this->id);
-        }
-    }
+    use Symfony\AI\Agent\Toolbox\Exception\ToolErrorException;
 
     #[AsTool('get_user_age', 'Get age by user id')]
     class GetUserAge
@@ -908,12 +895,17 @@ If you want to expose the underlying error to the LLM, you can throw a custom ex
             $user = $this->userRepository->find($id)
 
             if (null === $user) {
-                throw new EntityNotFoundException('user', $id);
+                throw new ToolErrorException(\sprintf('No user found with id %d', $id));
             }
 
             return $user->getAge();
         }
     }
+
+For another result, like an array with an error code, throw an exception that implements
+:class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolExecutionExceptionInterface`. Its
+``getToolCallResult()`` method returns the result of the tool call. Any other exception gives the LLM a
+generic error message, which doesn't expose the details of the error.
 
 .. _agent-tool-sources:
 
