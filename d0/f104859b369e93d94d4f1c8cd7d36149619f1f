@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2026-10-27T21:01:56Z
+
+Thanks for the review, fixture updated.
+
+The replay of this example passes locally. `partial-json-stream.out` is the only other fixture with a snapshot count, and that count doesn't change: `asPartialJsonStream()` doesn't use `PartialObjectStreamListener`.
