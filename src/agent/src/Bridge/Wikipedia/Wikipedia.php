@@ -50,12 +50,12 @@ final class Wikipedia implements HasSourcesInterface
             return 'No articles were found on Wikipedia.';
         }
 
-        $result = 'Articles with the following titles were found on Wikipedia:'.\PHP_EOL;
+        $result = 'Articles with the following titles were found on Wikipedia:'."\n";
         foreach ($titles as $title) {
-            $result .= ' - '.$title.\PHP_EOL;
+            $result .= ' - '.$title."\n";
         }
 
-        return $result.\PHP_EOL.'Use the title of the article with tool "wikipedia_article" to load the content.';
+        return $result."\n".'Use the title of the article with tool "wikipedia_article" to load the content.';
     }
 
     /**
@@ -81,16 +81,16 @@ final class Wikipedia implements HasSourcesInterface
         $result = '';
         if (\array_key_exists('redirects', $response['query'])) {
             foreach ($response['query']['redirects'] as $redirect) {
-                $result .= \sprintf('The article "%s" redirects to article "%s".', $redirect['from'], $redirect['to']).\PHP_EOL;
+                $result .= \sprintf('The article "%s" redirects to article "%s".', $redirect['from'], $redirect['to'])."\n";
             }
-            $result .= \PHP_EOL;
+            $result .= "\n";
         }
 
         $this->addSource(
             new Source($article['title'], $this->getUrl($article['title']), $article['extract'])
         );
 
-        return $result.'This is the content of article "'.$article['title'].'":'.\PHP_EOL.$article['extract'];
+        return $result.'This is the content of article "'.$article['title'].'":'."\n".$article['extract'];
     }
 
     /**
