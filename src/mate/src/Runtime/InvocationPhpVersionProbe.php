@@ -145,7 +145,7 @@ final class InvocationPhpVersionProbe
     private function probeCommand(array $wrapper): array
     {
         $lastToken = basename((string) end($wrapper));
-        if (1 === preg_match('/^php(\d+(\.\d+)?)?$/', $lastToken)) {
+        if (1 === preg_match('/^php(\d+(\.\d+)?)?(\.exe)?$/i', $lastToken)) {
             return array_merge($wrapper, ['-d', 'display_errors=0', '-r', self::PROBE_SCRIPT]);
         }
 
