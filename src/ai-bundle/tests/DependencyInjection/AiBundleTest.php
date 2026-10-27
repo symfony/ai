@@ -149,7 +149,11 @@ use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\Configuration;
+use Symfony\Component\Config\Definition\Dumper\JsonSchemaDumper;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -677,6 +681,25 @@ class AiBundleTest extends TestCase
         $tools = $container->getDefinition('ai.toolbox.research')->getArgument(0);
         $this->assertInstanceOf(TaggedIteratorArgument::class, $tools);
         $this->assertSame('ai.tool', $tools->getTag());
+    }
+
+    public function testTheJsonSchemaAcceptsAListOfTools()
+    {
+        if (!class_exists(JsonSchemaDumper::class)) {
+            $this->markTestSkipped('The JSON schema of the configuration needs symfony/config 8.2 or higher.');
+        }
+
+        $tree = (new Configuration(new AiBundle(), new ContainerBuilder(), 'ai'))->getConfigTreeBuilder()->buildTree();
+        $this->assertInstanceOf(ArrayNode::class, $tree);
+        $agents = $tree->getChildren()['agent'];
+        $this->assertInstanceOf(PrototypedArrayNode::class, $agents);
+        $agent = $agents->getPrototype();
+        $this->assertInstanceOf(ArrayNode::class, $agent);
+
+        $schema = (new JsonSchemaDumper())->dumpNode($agent->getChildren()['tools']);
+
+        $lists = array_filter($schema['anyOf'] ?? [], static fn (array $alternative): bool => str_starts_with($alternative['$ref'] ?? '', '#/$defs/types/array'));
+        $this->assertCount(1, $lists, json_encode($schema));
     }
 
     public function testMcpToolboxesSitNextToAnExplicitToolList()
