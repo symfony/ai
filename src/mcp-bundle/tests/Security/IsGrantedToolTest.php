@@ -14,6 +14,8 @@ namespace Symfony\AI\McpBundle\Tests\Security;
 use Mcp\Capability\Attribute\McpTool;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Attribute\AsMcpAppTool;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -69,6 +71,25 @@ final class IsGrantedToolTest extends TestCase
     public function testClassLevelAttributeAppliesToTheToolsOfTheClass()
     {
         $this->assertSame(403, $this->callTool('reviewers_only', 'alice')->getStatusCode());
+    }
+
+    public function testAppClassAttributeAppliesToTheToolsOfTheApp()
+    {
+        $this->assertSame(403, $this->callTool('admin_dashboard', 'alice')->getStatusCode());
+        $this->assertSame(403, $this->callTool('refresh_dashboard', 'alice')->getStatusCode());
+
+        $response = $this->callTool('admin_dashboard', 'admin');
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString('dashboard', (string) $response->getContent());
+    }
+
+    public function testAppToolMethodAttributeAppliesToThatTool()
+    {
+        $this->assertSame(403, $this->callTool('set_unit', 'alice')->getStatusCode());
+
+        $response = $this->callTool('weather', 'alice');
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString('sunny', (string) $response->getContent());
     }
 
     public function testGrantedToolIsCalled()
@@ -160,7 +181,7 @@ class IsGrantedToolKernel extends Kernel
 
         $container->extension('mcp', [
             'servers' => ['default' => [
-                'registry' => [AdminTools::class, ReviewerTools::class],
+                'registry' => [AdminTools::class, ReviewerTools::class, AdminDashboardApp::class, WeatherApp::class],
                 'http' => ['path' => '/mcp'],
             ]],
         ]);
@@ -168,7 +189,9 @@ class IsGrantedToolKernel extends Kernel
         $container->services()
             ->set('logger', NullLogger::class)
             ->set(AdminTools::class)->autoconfigure()
-            ->set(ReviewerTools::class)->autoconfigure();
+            ->set(ReviewerTools::class)->autoconfigure()
+            ->set(AdminDashboardApp::class)->autoconfigure()
+            ->set(WeatherApp::class)->autoconfigure();
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
@@ -200,5 +223,47 @@ class ReviewerTools
     public function reviewersOnly(): string
     {
         return 'reviewed';
+    }
+}
+
+#[AsMcpApp(uri: 'ui://admin-dashboard', name: 'admin_dashboard')]
+#[IsGranted('ROLE_ADMIN')]
+class AdminDashboardApp
+{
+    public function __invoke(): string
+    {
+        return '<html></html>';
+    }
+
+    public function render(): string
+    {
+        return 'dashboard';
+    }
+
+    #[AsMcpAppTool(name: 'refresh_dashboard')]
+    public function refresh(): string
+    {
+        return 'refreshed';
+    }
+}
+
+#[AsMcpApp(uri: 'ui://weather', name: 'weather')]
+class WeatherApp
+{
+    public function __invoke(): string
+    {
+        return '<html></html>';
+    }
+
+    public function render(): string
+    {
+        return 'sunny';
+    }
+
+    #[AsMcpAppTool(name: 'set_unit')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function setUnit(): string
+    {
+        return 'celsius';
     }
 }

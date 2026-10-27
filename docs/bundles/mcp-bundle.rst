@@ -144,7 +144,8 @@ Securing Tools
 ^^^^^^^^^^^^^^
 
 When SecurityBundle is enabled, you can restrict a tool with the ``#[IsGranted]`` attribute, on its method
-or on its class::
+or on its class. This also works for the tools of an ``#[AsMcpApp]`` class and for its ``#[AsMcpAppTool]``
+methods::
 
     use Mcp\Capability\Attribute\McpTool;
     use Symfony\Component\Security\Http\Attribute\IsGranted;

@@ -90,6 +90,16 @@ final class McpPass implements CompilerPassInterface
         $unassigned = [];
         $guardedTools = [];
 
+        /** @var array<string, array<string, array{class-string, string}>> $appTools */
+        $appTools = $container->hasParameter('mcp.servers.app_tools') ? $container->getParameter('mcp.servers.app_tools') : [];
+        foreach ($appTools as $server => $tools) {
+            foreach ($tools as $toolName => [$class, $method]) {
+                if ($this->hasIsGrantedAttributes($class, $method)) {
+                    $guardedTools[$server][$toolName] = [$class, $method];
+                }
+            }
+        }
+
         foreach (self::ELEMENT_TAGS as $tag => $attributeClass) {
             foreach ($container->findTaggedServiceIds($tag) as $serviceId => $tags) {
                 $definition = $container->getDefinition($serviceId);

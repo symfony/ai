@@ -376,6 +376,27 @@ final class McpPassTest extends TestCase
         ]], $container->getDefinition('mcp.security.is_granted_tool_listener')->getArguments());
     }
 
+    public function testRegistersTheIsGrantedToolListenerForAppTools()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition('controller.is_granted_attribute_listener', new Definition());
+        $container->setDefinition('mcp.server.default.controller', new Definition());
+        $container->setParameter('mcp.servers.app_tools', ['default' => [
+            'dashboard' => [GrantedClassTool::class, '__invoke'],
+            'delete_from_app' => [GrantedTool::class, 'deleteAccount'],
+            'time_from_app' => [TimeTool::class, 'getCurrentTime'],
+        ]]);
+
+        (new McpPass())->process($container);
+
+        $this->assertSame([[
+            'mcp.server.default.controller::handle' => [
+                'dashboard' => [GrantedClassTool::class, '__invoke'],
+                'delete_from_app' => [GrantedTool::class, 'deleteAccount'],
+            ],
+        ]], $container->getDefinition('mcp.security.is_granted_tool_listener')->getArguments());
+    }
+
     public function testDoesNotRegisterTheIsGrantedToolListenerWithoutSecurity()
     {
         $container = $this->containerWithBuilder();
