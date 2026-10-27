@@ -169,6 +169,9 @@ use to ask the user for more scopes.
 The ``subject`` option of ``#[IsGranted]`` refers to the arguments of the controller, so it can't refer to an
 argument of the tool. The attributes are not checked over the STDIO transport, which has no firewall.
 
+Without SecurityBundle, the container fails to compile when a tool that is exposed over HTTP has an
+``#[IsGranted]`` attribute.
+
 Prompts
 ^^^^^^^
 

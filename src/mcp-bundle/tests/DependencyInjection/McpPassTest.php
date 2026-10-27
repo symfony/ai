@@ -397,10 +397,21 @@ final class McpPassTest extends TestCase
         ]], $container->getDefinition('mcp.security.is_granted_tool_listener')->getArguments());
     }
 
-    public function testDoesNotRegisterTheIsGrantedToolListenerWithoutSecurity()
+    public function testIsGrantedWithoutSecurityThrows()
     {
         $container = $this->containerWithBuilder();
         $container->setDefinition('mcp.server.default.controller', new Definition());
+        $container->setDefinition(GrantedTool::class, (new Definition(GrantedTool::class))->addTag('mcp.tool', ['method' => 'deleteAccount']));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage(\sprintf('The "%s::deleteAccount()" MCP tool has an #[IsGranted] attribute, but SecurityBundle is not enabled. Run "composer require symfony/security-bundle".', GrantedTool::class));
+
+        (new McpPass())->process($container);
+    }
+
+    public function testIsGrantedWithoutHttpTransportNeedsNoSecurity()
+    {
+        $container = $this->containerWithBuilder();
         $container->setDefinition(GrantedTool::class, (new Definition(GrantedTool::class))->addTag('mcp.tool', ['method' => 'deleteAccount']));
 
         (new McpPass())->process($container);

@@ -233,29 +233,31 @@ final class McpPass implements CompilerPassInterface
      */
     private function hasIsGrantedAttributes(string $class, string $method): bool
     {
-        if (!class_exists(IsGranted::class)) {
-            return false;
-        }
-
         return [] !== (new \ReflectionClass($class))->getAttributes(IsGranted::class) || [] !== (new \ReflectionMethod($class, $method))->getAttributes(IsGranted::class);
     }
 
     /**
-     * Lets Symfony check the #[IsGranted] attributes of the tools that an HTTP request calls, when SecurityBundle is enabled.
+     * Lets Symfony check the #[IsGranted] attributes of the tools that an HTTP request calls.
      *
      * @param array<string, array<string, array{class-string, string}>> $guardedTools
      */
     private function registerIsGrantedToolListener(ContainerBuilder $container, array $guardedTools): void
     {
-        if (!$container->hasDefinition('controller.is_granted_attribute_listener')) {
-            return;
-        }
+        $hasSecurity = $container->hasDefinition('controller.is_granted_attribute_listener');
 
         $tools = [];
         foreach ($guardedTools as $server => $serverTools) {
-            if ($container->hasDefinition($controller = 'mcp.server.'.$server.'.controller')) {
-                $tools[$controller.'::handle'] = $serverTools;
+            if (!$container->hasDefinition($controller = 'mcp.server.'.$server.'.controller')) {
+                continue;
             }
+
+            if (!$hasSecurity) {
+                [$class, $method] = $serverTools[array_key_first($serverTools)];
+
+                throw new LogicException(\sprintf('The "%s::%s()" MCP tool has an #[IsGranted] attribute, but SecurityBundle is not enabled. Run "composer require symfony/security-bundle".', $class, $method));
+            }
+
+            $tools[$controller.'::handle'] = $serverTools;
         }
 
         if ([] === $tools) {
