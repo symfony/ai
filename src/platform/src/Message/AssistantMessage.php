@@ -66,10 +66,14 @@ final class AssistantMessage implements MessageInterface
      */
     public function getToolCalls(): array
     {
-        return array_values(array_filter(
-            $this->content,
-            static fn (ContentInterface $part) => $part instanceof ToolCall,
-        ));
+        $parts = [];
+        foreach ($this->content as $part) {
+            if ($part instanceof ToolCall) {
+                $parts[] = $part;
+            }
+        }
+
+        return $parts;
     }
 
     public function hasThinking(): bool
@@ -88,10 +92,14 @@ final class AssistantMessage implements MessageInterface
      */
     public function getThinking(): array
     {
-        return array_values(array_filter(
-            $this->content,
-            static fn (ContentInterface $part) => $part instanceof Thinking,
-        ));
+        $parts = [];
+        foreach ($this->content as $part) {
+            if ($part instanceof Thinking) {
+                $parts[] = $part;
+            }
+        }
+
+        return $parts;
     }
 
     public function asText(): ?string
