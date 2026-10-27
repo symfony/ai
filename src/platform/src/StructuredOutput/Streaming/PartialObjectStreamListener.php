@@ -85,7 +85,8 @@ final class PartialObjectStreamListener extends AbstractStreamListener
 
         $partial = PartialJsonParser::parse($this->buffer);
 
-        if (!\is_array($partial)) {
+        // an empty structure would give an object with no property set, so it waits for the first one
+        if (!\is_array($partial) || [] === $partial) {
             return;
         }
 

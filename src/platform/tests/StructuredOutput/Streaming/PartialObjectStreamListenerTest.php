@@ -51,6 +51,31 @@ final class PartialObjectStreamListenerTest extends TestCase
         $this->assertSame('Germany', $last->country);
     }
 
+    public function testAnEmptyStructureYieldsNoPartialObject()
+    {
+        $article = new class {
+            public string $title;
+
+            /** @var list<string> */
+            public array $tags = [];
+        };
+        $listener = new PartialObjectStreamListener(new Serializer(), $article::class);
+        $stream = $this->buildStream([
+            '{',
+            '"title":"Str',
+            'eams"}',
+        ], [$listener]);
+
+        $deltas = iterator_to_array($stream->getContent(), false);
+
+        $partials = array_values(array_filter($deltas, static fn ($d) => $d instanceof PartialObjectDelta));
+        $this->assertCount(2, $partials);
+        $article->title = 'Str';
+        $this->assertEquals($article, $partials[0]->getObject());
+        $article->title = 'Streams';
+        $this->assertEquals($article, $partials[1]->getObject());
+    }
+
     public function testStillYieldsOriginalTextDeltas()
     {
         $listener = new PartialObjectStreamListener(new Serializer(), City::class);
