@@ -176,10 +176,10 @@ trait CompletionsConversionTrait
     }
 
     /**
-     * @param array<string, mixed> $toolCalls
-     * @param array<string, mixed> $data
+     * @param array<int, array<string, mixed>> $toolCalls
+     * @param array<string, mixed>             $data
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     protected function convertStreamToToolCalls(array $toolCalls, array $data): array
     {
@@ -187,17 +187,15 @@ trait CompletionsConversionTrait
             return $toolCalls;
         }
 
-        foreach ($data['choices'][0]['delta']['tool_calls'] as $i => $toolCall) {
-            $index = $toolCall['index'] ?? $i;
+        $slots = $this->resolveToolCallSlots($toolCalls, $data);
 
-            // A new tool call starts only on a NON-EMPTY id. OpenAI omits the id on continuation
-            // deltas, but some compatible providers (Alibaba Cloud Qwen / DashScope) repeat it as an
-            // empty string — isset() is true for "", so the empty-string case must be excluded or each
-            // continuation is misread as a start (losing the name and clobbering accumulated arguments).
-            if (isset($toolCall['id']) && '' !== $toolCall['id']) {
+        foreach ($data['choices'][0]['delta']['tool_calls'] as $i => $toolCall) {
+            [$index, $starts] = $slots[$i];
+
+            if ($starts) {
                 // initialize tool call
                 $toolCalls[$index] = [
-                    'id' => $toolCall['id'],
+                    'id' => $toolCall['id'] ?? '',
                     'function' => $toolCall['function'],
                 ];
                 continue;
@@ -217,18 +215,22 @@ trait CompletionsConversionTrait
     }
 
     /**
-     * @param array<string, mixed> $toolCalls Already-accumulated tool calls (before this chunk)
-     * @param array<string, mixed> $data
+     * @param array<int, array<string, mixed>> $toolCalls Already-accumulated tool calls (before this chunk)
+     * @param array<string, mixed>             $data
      *
      * @return \Generator<ToolCallStart|ToolInputDelta>
      */
     protected function yieldToolCallDeltas(array $toolCalls, array $data): \Generator
     {
-        foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
-            $index = $toolCall['index'] ?? $i;
+        $slots = $this->resolveToolCallSlots($toolCalls, $data);
 
-            if (isset($toolCall['id']) && '' !== $toolCall['id']) {
-                yield new ToolCallStart($toolCall['id'], $toolCall['function']['name']);
+        foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
+            [$index, $starts] = $slots[$i];
+
+            if ($starts) {
+                if (isset($toolCall['id']) && '' !== $toolCall['id']) {
+                    yield new ToolCallStart($toolCall['id'], $toolCall['function']['name']);
+                }
             } elseif (isset($toolCall['function']['arguments'])) {
                 yield new ToolInputDelta($toolCalls[$index]['id'] ?? '', $toolCalls[$index]['function']['name'] ?? '', $toolCall['function']['arguments']);
             }
@@ -319,6 +321,53 @@ trait CompletionsConversionTrait
         }
 
         return new ToolCall($toolCall['id'], $toolCall['function']['name'], $arguments);
+    }
+
+    /**
+     * Maps each `delta.tool_calls` entry of a chunk to its tool call slot, and whether it starts that call.
+     *
+     * Only a non-empty id that differs from the slot's id starts a call: Qwen / DashScope repeat the id as "" on
+     * continuations. Without `index` (Gemini's OpenAI-compatible endpoint) a new id or a name starts the next slot.
+     *
+     * @param array<int, array<string, mixed>> $toolCalls Already-accumulated tool calls (before this chunk)
+     * @param array<string, mixed>             $data
+     *
+     * @return array<int, array{0: int, 1: bool}>
+     */
+    private function resolveToolCallSlots(array $toolCalls, array $data): array
+    {
+        $ids = array_map(static fn (array $toolCall): string => $toolCall['id'] ?? '', $toolCalls);
+        $slots = [];
+
+        foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
+            $id = $toolCall['id'] ?? '';
+            $last = array_key_last($ids);
+
+            if (isset($toolCall['index'])) {
+                $slot = $toolCall['index'];
+                $starts = '' !== $id && $id !== ($ids[$slot] ?? null);
+            } else {
+                if ('' !== $id) {
+                    $starts = null === $last || $id !== $ids[$last];
+                } else {
+                    $starts = '' !== ($toolCall['function']['name'] ?? '');
+                }
+
+                if ($starts) {
+                    $slot = null === $last ? 0 : max(array_keys($ids)) + 1;
+                } else {
+                    $slot = $last ?? 0;
+                }
+            }
+
+            if ($starts) {
+                $ids[$slot] = $id;
+            }
+
+            $slots[$i] = [$slot, $starts];
+        }
+
+        return $slots;
     }
 
     private function isRateLimitError(mixed $code, mixed $type): bool
