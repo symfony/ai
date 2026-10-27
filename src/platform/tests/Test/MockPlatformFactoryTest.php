@@ -23,8 +23,10 @@ use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\VectorResult;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\Test\MockModelCatalog;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -104,6 +106,32 @@ final class MockPlatformFactoryTest extends TestCase
         }
 
         $this->assertSame(['Hel', 'lo'], $deltas);
+    }
+
+    public function testAStringAnswerIsStreamedWordByWordWhenTheCallStreams()
+    {
+        $platform = MockPlatformFactory::createPlatform('Hello streaming  world');
+
+        $deltas = [];
+        foreach ($platform->invoke('any-model', 'q', ['stream' => true])->asStream() as $delta) {
+            $deltas[] = (string) $delta;
+        }
+
+        $this->assertSame(['Hello ', 'streaming  ', 'world'], $deltas);
+        $this->assertSame('Hello streaming  world', $platform->invoke('any-model', 'q')->asText());
+    }
+
+    public function testAStreamedStringAnswerGivesPartialObjects()
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new PlatformSubscriber());
+        $platform = MockPlatformFactory::createPlatform('{"name": "Berlin", "population": 3850000}', eventDispatcher: $dispatcher);
+
+        $deferred = $platform->invoke('any-model', 'q', ['stream' => true, 'response_format' => City::class]);
+        $partials = iterator_to_array($deferred->asStreamedObject(), false);
+
+        $this->assertGreaterThan(1, \count($partials));
+        $this->assertEquals(new City('Berlin', 3850000), $deferred->asObject(City::class));
     }
 
     public function testVectorResultRoundTrips()

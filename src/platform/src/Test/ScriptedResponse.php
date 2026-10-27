@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Test;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
+use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 
 /**
@@ -24,8 +26,9 @@ use Symfony\AI\Platform\Result\TextResult;
  *  - a map keyed by model name: per-model {@see ResultInterface} or string;
  *  - a \Closure(Model $model, array|string|object $input, array $options): ResultInterface|string.
  *
- * Bare strings are wrapped in a {@see TextResult}; a {@see ResultInterface} is returned verbatim,
- * so every result type is supported.
+ * Bare strings are wrapped in a {@see TextResult}, or streamed word by word as {@see TextDelta}s when the
+ * invocation has the "stream" option; a {@see ResultInterface} is returned verbatim, so every result type
+ * is supported.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -47,11 +50,22 @@ final class ScriptedResponse
     {
         $resolved = $this->resolveRaw($model, $input, $options);
 
-        if (\is_string($resolved)) {
-            return new TextResult($resolved);
+        if (!\is_string($resolved)) {
+            return $resolved;
         }
 
-        return $resolved;
+        if ($options['stream'] ?? false) {
+            return new StreamResult((static function () use ($resolved): \Generator {
+                // each word with the spaces after it, like the tokens of a provider
+                foreach (preg_split('/(?<=\s)(?=\S)/u', $resolved) as $word) {
+                    if ('' !== $word) {
+                        yield new TextDelta($word);
+                    }
+                }
+            })());
+        }
+
+        return new TextResult($resolved);
     }
 
     /**
