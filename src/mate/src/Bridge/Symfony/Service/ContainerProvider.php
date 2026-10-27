@@ -166,7 +166,15 @@ class ContainerProvider
             );
         }
 
-        return new Container($services);
+        $parameters = [];
+        foreach ($xml->parameters->parameter ?? [] as $parameter) {
+            // Collections carry no scalar value; nothing reads them yet.
+            if (isset($parameter['key']) && 0 === \count($parameter->children())) {
+                $parameters[(string) $parameter['key']] = (string) $parameter;
+            }
+        }
+
+        return new Container($services, $parameters);
     }
 
     /**
