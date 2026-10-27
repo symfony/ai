@@ -425,9 +425,10 @@ each bridge translates them to the field its provider expects. For example,
 ``maxOutputTokens`` for Gemini. If you also pass the provider-specific option, like
 ``max_tokens``, it wins over the canonical one.
 
-The Anthropic, Amazon Bedrock (Claude and Nova), Gemini, Vertex AI (Gemini), Mistral and
-generic OpenAI-compatible completions bridges translate ``max_output_tokens``. OpenAI
-uses this name natively. Other bridges do not translate it yet.
+The Anthropic, Amazon Bedrock (Claude and Nova), Cohere, Gemini, Vertex AI (Gemini),
+Mistral and generic OpenAI-compatible completions bridges translate
+``max_output_tokens``. OpenAI uses this name natively. Other bridges do not
+translate it yet.
 
 Language Models and Messages
 ----------------------------
