@@ -102,6 +102,7 @@ final class ResultSerializer
                 'type' => 'text',
                 'content' => $result->getContent(),
                 'signature' => $result->getSignature(),
+                'phase' => $result->getPhase(),
             ];
         }
 
@@ -142,6 +143,12 @@ final class ResultSerializer
                     throw new InvalidArgumentException(\sprintf('Cannot record stream delta of type "%s"; only text deltas are supported.', get_debug_type($delta)));
                 }
 
+                if ($delta instanceof TextDelta && null !== $delta->getPhase()) {
+                    $deltas[] = ['text' => $delta->getText(), 'phase' => $delta->getPhase()];
+
+                    continue;
+                }
+
                 $deltas[] = (string) $delta;
             }
 
@@ -162,7 +169,7 @@ final class ResultSerializer
         $type = $data['type'] ?? null;
 
         if ('text' === $type) {
-            return new TextResult((string) $data['content'], $data['signature'] ?? null);
+            return new TextResult((string) $data['content'], $data['signature'] ?? null, $data['phase'] ?? null);
         }
 
         if ('object' === $type) {
@@ -194,8 +201,14 @@ final class ResultSerializer
             $deltas = $data['deltas'] ?? [];
 
             return new StreamResult((static function () use ($deltas): \Generator {
-                foreach ($deltas as $text) {
-                    yield new TextDelta((string) $text);
+                foreach ($deltas as $delta) {
+                    if (\is_array($delta)) {
+                        yield new TextDelta((string) $delta['text'], $delta['phase'] ?? null);
+
+                        continue;
+                    }
+
+                    yield new TextDelta((string) $delta);
                 }
             })());
         }

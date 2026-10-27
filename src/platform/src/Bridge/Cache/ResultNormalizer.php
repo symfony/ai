@@ -77,7 +77,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
                     'text' => $data->getText(),
                 ],
                 StreamResult::class => throw new InvalidArgumentException(\sprintf('"%s" cannot be normalized.', StreamResult::class)),
-                TextResult::class => $data->getContent(),
+                TextResult::class => $this->normalizeTextResult($data),
                 ToolCallResult::class => array_map(
                     fn (ToolCall $toolCall): array => $this->normalizer->normalize($toolCall, $format, $context),
                     $data->getContent(),
@@ -114,7 +114,7 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
             ThinkingResult::class => new ThinkingResult($data['payload']['content'], $data['payload']['signature']),
             CommentaryResult::class => new CommentaryResult($data['payload']),
             ObjectResult::class => new ObjectResult('array' === $data['payload']['type'] ? $data['payload']['content'] : $this->objectNormalizer->denormalize($data['payload']['content'], $data['payload']['type'], $format, $context), $data['payload']['text'] ?? null),
-            TextResult::class => new TextResult($data['payload']),
+            TextResult::class => $this->denormalizeTextResult($data['payload']),
             ToolCallResult::class => new ToolCallResult(array_map(
                 static fn (array $toolCall): ToolCall => new ToolCall(
                     $toolCall['id'],
@@ -141,5 +141,33 @@ final class ResultNormalizer implements NormalizerInterface, DenormalizerInterfa
         return [
             ResultInterface::class => true,
         ];
+    }
+
+    /**
+     * @return string|array{content: string, signature: ?string, phase: ?string}
+     */
+    private function normalizeTextResult(TextResult $result): string|array
+    {
+        if (null === $result->getSignature() && null === $result->getPhase()) {
+            return $result->getContent();
+        }
+
+        return [
+            'content' => $result->getContent(),
+            'signature' => $result->getSignature(),
+            'phase' => $result->getPhase(),
+        ];
+    }
+
+    /**
+     * @param string|array{content: string, signature?: ?string, phase?: ?string} $payload
+     */
+    private function denormalizeTextResult(string|array $payload): TextResult
+    {
+        if (\is_string($payload)) {
+            return new TextResult($payload);
+        }
+
+        return new TextResult($payload['content'], $payload['signature'] ?? null, $payload['phase'] ?? null);
     }
 }

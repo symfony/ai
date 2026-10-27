@@ -94,6 +94,16 @@ final class ResultNormalizerTest extends TestCase
         $this->assertEquals($result, $resultNormalizer->denormalize($expectedOutput, ResultInterface::class));
     }
 
+    public function testNormalizerCanDenormalizeTextResultCachedAsArrayWithoutSignatureAndPhase()
+    {
+        $resultNormalizer = new ResultNormalizer(new ObjectNormalizer());
+
+        $this->assertEquals(new TextResult('foo'), $resultNormalizer->denormalize([
+            'class' => TextResult::class,
+            'payload' => ['content' => 'foo'],
+        ], ResultInterface::class));
+    }
+
     public static function provideResultForNormalization(): \Generator
     {
         yield BinaryResult::class => [
@@ -223,6 +233,20 @@ final class ResultNormalizerTest extends TestCase
             [
                 'class' => TextResult::class,
                 'payload' => 'foo',
+            ],
+        ];
+        yield TextResult::class.' with phase' => [
+            new TextResult('foo', phase: 'final_answer'),
+            [
+                'class' => TextResult::class,
+                'payload' => ['content' => 'foo', 'signature' => null, 'phase' => 'final_answer'],
+            ],
+        ];
+        yield TextResult::class.' with signature' => [
+            new TextResult('foo', 'sig-1'),
+            [
+                'class' => TextResult::class,
+                'payload' => ['content' => 'foo', 'signature' => 'sig-1', 'phase' => null],
             ],
         ];
         yield ToolCallResult::class => [

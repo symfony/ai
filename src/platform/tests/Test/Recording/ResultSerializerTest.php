@@ -41,6 +41,24 @@ final class ResultSerializerTest extends TestCase
         $this->assertSame('sig-1', $result->getSignature());
     }
 
+    public function testTextRoundTripPreservesPhase()
+    {
+        $result = ResultSerializer::fromArray(ResultSerializer::toArray(new TextResult('Hello', phase: 'final_answer')));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello', $result->getContent());
+        $this->assertSame('final_answer', $result->getPhase());
+    }
+
+    public function testTextRecordedWithoutPhaseHasNoPhase()
+    {
+        $result = ResultSerializer::fromArray(['type' => 'text', 'content' => 'Hello', 'signature' => null]);
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('Hello', $result->getContent());
+        $this->assertNull($result->getPhase());
+    }
+
     public function testObjectRoundTripWithObject()
     {
         $result = ResultSerializer::fromArray(ResultSerializer::toArray(new ObjectResult((object) ['answer' => 42])));
@@ -115,6 +133,46 @@ final class ResultSerializerTest extends TestCase
         }
 
         $this->assertSame('Hello', $text);
+    }
+
+    public function testTextStreamRoundTripPreservesPhase()
+    {
+        $stream = new StreamResult((static function (): \Generator {
+            yield new TextDelta('Hel', 'final_answer');
+            yield new TextDelta('lo');
+        })());
+
+        $result = ResultSerializer::fromArray(ResultSerializer::toArray($stream));
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+
+        $deltas = iterator_to_array($result->getContent(), false);
+
+        $this->assertEquals([new TextDelta('Hel', 'final_answer'), new TextDelta('lo')], $deltas);
+    }
+
+    public function testTextStreamRecordsDeltasWithPhaseAsArrays()
+    {
+        $stream = new StreamResult((static function (): \Generator {
+            yield new TextDelta('Hel', 'final_answer');
+            yield new TextDelta('lo');
+        })());
+
+        $this->assertSame([
+            'type' => 'stream',
+            'deltas' => [
+                ['text' => 'Hel', 'phase' => 'final_answer'],
+                'lo',
+            ],
+        ], ResultSerializer::toArray($stream));
+    }
+
+    public function testTextStreamRecordedAsPlainStringsHasNoPhase()
+    {
+        $result = ResultSerializer::fromArray(['type' => 'stream', 'deltas' => ['Hel', 'lo']]);
+
+        $this->assertInstanceOf(StreamResult::class, $result);
+        $this->assertEquals([new TextDelta('Hel'), new TextDelta('lo')], iterator_to_array($result->getContent(), false));
     }
 
     public function testRoundTripPreservesScalarAndArrayMetadata()
