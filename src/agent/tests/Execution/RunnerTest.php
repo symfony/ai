@@ -89,7 +89,7 @@ final class RunnerTest extends TestCase
 
         $options = $this->captureOptions($toolbox, []);
 
-        $this->assertSame(['tools' => [$this->functionTool('tool1', 'description1'), $this->functionTool('tool2', 'description2')]], $options);
+        $this->assertEquals(['tools' => [$this->functionTool('tool1', 'description1'), $this->functionTool('tool2', 'description2')]], $options);
     }
 
     public function testRegisteredToolsGetFilteredByTheToolsOption()
@@ -101,7 +101,7 @@ final class RunnerTest extends TestCase
 
         $options = $this->captureOptions($toolbox, ['tools' => ['tool2']]);
 
-        $this->assertSame(['tools' => [$this->functionTool('tool2', 'description2')]], $options);
+        $this->assertEquals(['tools' => [$this->functionTool('tool2', 'description2')]], $options);
     }
 
     public function testAnEmptyToolsOptionExposesNoRegisteredTool()
@@ -297,7 +297,7 @@ final class RunnerTest extends TestCase
 
         $options = $this->captureOptions($toolbox, ['tools' => [$serverTool]]);
 
-        $this->assertSame(['tools' => [$this->functionTool('tool1', 'description1'), $this->functionTool('tool2', 'description2'), $serverTool]], $options);
+        $this->assertEquals(['tools' => [$this->functionTool('tool1', 'description1'), $this->functionTool('tool2', 'description2'), $serverTool]], $options);
     }
 
     public function testServerToolsAreKeptWhileRegisteredToolsGetFilteredByName()
@@ -311,7 +311,7 @@ final class RunnerTest extends TestCase
 
         $options = $this->captureOptions($toolbox, ['tools' => ['tool2', $serverTool]]);
 
-        $this->assertSame(['tools' => [$this->functionTool('tool2', 'description2'), $serverTool]], $options);
+        $this->assertEquals(['tools' => [$this->functionTool('tool2', 'description2'), $serverTool]], $options);
     }
 
     public function testToolCallMessagesReachTheNextRoundButNotTheCallersMessageBag()
@@ -1006,11 +1006,11 @@ final class RunnerTest extends TestCase
     }
 
     /**
-     * @return array{type: 'function', function: array{name: string, description: string}}
+     * @return array{type: 'function', function: array{name: string, description: string, parameters: array{type: 'object', properties: \stdClass}}}
      */
     private function functionTool(string $name, string $description): array
     {
-        return ['type' => 'function', 'function' => ['name' => $name, 'description' => $description]];
+        return ['type' => 'function', 'function' => ['name' => $name, 'description' => $description, 'parameters' => ['type' => 'object', 'properties' => new \stdClass()]]];
     }
 
     /**
