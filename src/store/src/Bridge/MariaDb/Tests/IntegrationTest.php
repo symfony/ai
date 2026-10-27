@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\MariaDb\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use Symfony\AI\Store\Bridge\MariaDb\Metric;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
@@ -29,8 +30,9 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'test_vectors',
             'test_vector_idx',
             'embedding',
-            dimensions: 3,
-            connectionOptions: ['db_username' => 'root', 'db_password' => ''],
+            Metric::Euclidean,
+            3,
+            ['db_username' => 'root', 'db_password' => ''],
         );
     }
 }

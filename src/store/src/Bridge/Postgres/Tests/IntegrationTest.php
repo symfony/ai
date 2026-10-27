@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Postgres\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use Symfony\AI\Store\Bridge\Postgres\Metric;
 use Symfony\AI\Store\Bridge\Postgres\Store;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
@@ -27,8 +28,14 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
         return new Store(
             'pgsql:host=127.0.0.1;port=5432;dbname=test_database',
             'test_vectors',
-            dimensions: 3,
-            connectionOptions: ['db_username' => 'postgres', 'db_password' => 'postgres'],
+            'embedding',
+            Metric::L2,
+            'english',
+            3,
+            'vector',
+            'hnsw',
+            null,
+            ['db_username' => 'postgres', 'db_password' => 'postgres'],
         );
     }
 }
