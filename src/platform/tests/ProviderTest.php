@@ -139,6 +139,25 @@ final class ProviderTest extends TestCase
         $this->assertInstanceOf(DeferredResult::class, $result);
     }
 
+    public function testInvokeReusesTheModelThatSupportsResolvedForANameWithOptions()
+    {
+        $catalog = $this->createMock(ModelCatalogInterface::class);
+        $catalog->expects($this->once())->method('getModel')->with('qwen3:8b?think=false')->willReturn(new Model('qwen3:8b', [Capability::INPUT_MESSAGES], ['think' => false]));
+
+        $modelClient = $this->createStub(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(true);
+        $modelClient->method('request')->willReturn($this->createStub(RawResultInterface::class));
+
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+        $resultConverter->method('supports')->willReturn(true);
+        $resultConverter->method('convert')->willReturn(new TextResult('Hello'));
+
+        $provider = new Provider('ollama', [$modelClient], [$resultConverter], $catalog);
+
+        $this->assertTrue($provider->supports('qwen3:8b?think=false'));
+        $provider->invoke('qwen3:8b?think=false', 'Hello');
+    }
+
     public function testInvokeThrowsWhenNoModelClientSupportsModel()
     {
         $model = new Model('gpt-4o', [Capability::INPUT_MESSAGES]);

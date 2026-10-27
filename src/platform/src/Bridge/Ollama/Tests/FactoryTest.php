@@ -20,6 +20,8 @@ use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -120,6 +122,26 @@ final class FactoryTest extends TestCase
 
         // Only model discovery is allowed; no decision request is sent.
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testTheOptionsOfAModelNameAreSentAsOptions()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['completion', 'tools', 'thinking']]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('http://127.0.0.1:11434/api/chat', $url);
+
+                $body = json_decode($options['body'], true);
+                $this->assertSame('qwen3:8b', $body['model']);
+                $this->assertFalse($body['think']);
+
+                return new JsonMockResponse(['message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => true]);
+            },
+        ]);
+
+        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('qwen3:8b?think=false', new MessageBag(Message::ofUser('Hello')));
+
+        $this->assertSame('Hello', $result->asText());
     }
 
     public function testCreatePlatformUsesGivenModelCatalog()

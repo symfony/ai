@@ -46,6 +46,21 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testModelCatalogKeepsTheOptionsOutOfTheModelName()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('http://127.0.0.1:11434/api/show', $url);
+            $this->assertSame(['model' => 'qwen3:8b'], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['capabilities' => ['completion', 'tools', 'thinking']]);
+        }, 'http://127.0.0.1:11434');
+
+        $model = (new ModelCatalog($httpClient))->getModel('qwen3:8b?think=false&temperature=0.2');
+
+        $this->assertSame('qwen3:8b', $model->getName());
+        $this->assertSame(['think' => false, 'temperature' => 0.2], $model->getOptions());
+    }
+
     public function testModelCatalogReturnsDecisionModelWithoutCapabilities()
     {
         $httpClient = new MockHttpClient([
