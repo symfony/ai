@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation
  * Add `MessageStore\ManagedMessageStoreInterface`, `MessageStore\TraceableMessageStore` and the `ai:message-store:setup` & `ai:message-store:drop` commands
