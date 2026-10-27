@@ -17,6 +17,7 @@ use Mcp\Capability\Attribute\McpResource;
 use Mcp\Capability\Attribute\McpResourceTemplate;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Discovery\DocBlockParser;
+use Mcp\Capability\Discovery\ElementMetadataResolver;
 use Mcp\Capability\Discovery\SchemaGenerator;
 use Mcp\Capability\Registry\ReferenceHandler;
 use Mcp\Exception\ExceptionInterface as McpExceptionInterface;
@@ -26,11 +27,13 @@ use Mcp\Schema\ToolAnnotations;
 use Symfony\AI\McpBundle\App\McpAppReferenceHandler;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Exception\LogicException;
+use Symfony\AI\McpBundle\Security\IsGrantedToolListener;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Registers container services carrying the SDK's MCP attributes with the MCP server builder.
@@ -85,6 +88,17 @@ final class McpPass implements CompilerPassInterface
         $serviceReferences = [];
         $registered = [];
         $unassigned = [];
+        $guardedTools = [];
+
+        /** @var array<string, array<string, array{class-string, string}>> $appTools */
+        $appTools = $container->hasParameter('mcp.servers.app_tools') ? $container->getParameter('mcp.servers.app_tools') : [];
+        foreach ($appTools as $server => $tools) {
+            foreach ($tools as $toolName => [$class, $method]) {
+                if ($this->hasIsGrantedAttributes($class, $method)) {
+                    $guardedTools[$server][$toolName] = [$class, $method];
+                }
+            }
+        }
 
         foreach (self::ELEMENT_TAGS as $tag => $attributeClass) {
             foreach ($container->findTaggedServiceIds($tag) as $serviceId => $tags) {
@@ -169,6 +183,13 @@ final class McpPass implements CompilerPassInterface
                     foreach ($targets as $server) {
                         $builders[$server]->addMethodCall(self::TAG_CALLS[$tag], LiteralArguments::escape($arguments));
                     }
+
+                    if ('mcp.tool' === $tag && $this->hasIsGrantedAttributes($class, $method)) {
+                        $toolName = ElementMetadataResolver::resolveName(new \ReflectionMethod($class, $method), $attribute->name);
+                        foreach ($targets as $server) {
+                            $guardedTools[$server][$toolName] = [$class, $method];
+                        }
+                    }
                 }
             }
         }
@@ -183,6 +204,8 @@ final class McpPass implements CompilerPassInterface
         $this->assertPatternsAreUsed($matcher);
 
         $container->setParameter('mcp.servers.unassigned', $unassigned);
+
+        $this->registerIsGrantedToolListener($container, $guardedTools);
 
         /** @var array<string, array<string, string>> $appHandlers */
         $appHandlers = $container->hasParameter('mcp.servers.app_handlers') ? $container->getParameter('mcp.servers.app_handlers') : [];
@@ -203,6 +226,47 @@ final class McpPass implements CompilerPassInterface
 
             $this->configureAppReferenceHandler($container, $server, $serviceLocatorRef, $appTemplates[$server] ?? []);
         }
+    }
+
+    /**
+     * @param class-string $class
+     */
+    private function hasIsGrantedAttributes(string $class, string $method): bool
+    {
+        return [] !== (new \ReflectionClass($class))->getAttributes(IsGranted::class) || [] !== (new \ReflectionMethod($class, $method))->getAttributes(IsGranted::class);
+    }
+
+    /**
+     * Lets Symfony check the #[IsGranted] attributes of the tools that an HTTP request calls.
+     *
+     * @param array<string, array<string, array{class-string, string}>> $guardedTools
+     */
+    private function registerIsGrantedToolListener(ContainerBuilder $container, array $guardedTools): void
+    {
+        $hasSecurity = $container->hasDefinition('controller.is_granted_attribute_listener');
+
+        $tools = [];
+        foreach ($guardedTools as $server => $serverTools) {
+            if (!$container->hasDefinition($controller = 'mcp.server.'.$server.'.controller')) {
+                continue;
+            }
+
+            if (!$hasSecurity) {
+                [$class, $method] = $serverTools[array_key_first($serverTools)];
+
+                throw new LogicException(\sprintf('The "%s::%s()" MCP tool has an #[IsGranted] attribute, but SecurityBundle is not enabled. Run "composer require symfony/security-bundle".', $class, $method));
+            }
+
+            $tools[$controller.'::handle'] = $serverTools;
+        }
+
+        if ([] === $tools) {
+            return;
+        }
+
+        $container->register('mcp.security.is_granted_tool_listener', IsGrantedToolListener::class)
+            ->setArguments([LiteralArguments::escape($tools)])
+            ->addTag('kernel.event_subscriber');
     }
 
     private function assertPatternsAreUsed(ElementMatcher $matcher): void

@@ -66,6 +66,7 @@ final class McpAppPass implements CompilerPassInterface
 
         $handlers = [];
         $allToolTemplates = [];
+        $allTools = [];
 
         foreach ($appsPerServer as $server => $serviceIds) {
             $builder = $container->getDefinition('mcp.server.'.$server.'.builder');
@@ -76,6 +77,7 @@ final class McpAppPass implements CompilerPassInterface
 
             $templateApps = [];
             $toolTemplates = [];
+            $tools = [];
 
             foreach ($serviceIds as $serviceId) {
                 $class = $this->resolveClass($container, $serviceId);
@@ -104,8 +106,8 @@ final class McpAppPass implements CompilerPassInterface
                     ['ui' => $descriptorMarker],
                 ]));
 
-                $this->registerTool($container, $serviceId, $class, $app, $uri, $slug, $builder, $toolTemplates);
-                $this->registerAppToolMethods($container, $serviceId, $class, $app, $uri, $builder, $toolTemplates);
+                $this->registerTool($container, $serviceId, $class, $app, $uri, $slug, $builder, $toolTemplates, $tools);
+                $this->registerAppToolMethods($container, $serviceId, $class, $app, $uri, $builder, $toolTemplates, $tools);
 
                 // App services are not matched against the "tools"/"resources" lists, so hand their
                 // handler references to McpPass explicitly for this server's locator.
@@ -128,12 +130,15 @@ final class McpAppPass implements CompilerPassInterface
             }
 
             $allToolTemplates[$server] = $toolTemplates;
+            $allTools[$server] = $tools;
         }
 
-        // Consumed by McpPass: the handler references join each server's service locator, and the tool
-        // templates wire the McpAppReferenceHandler rendering them into the tool result's `html` field.
+        // Consumed by McpPass: the handler references join each server's service locator, the tool
+        // templates wire the McpAppReferenceHandler rendering them into the tool result's `html` field,
+        // and the tools are checked for #[IsGranted] attributes.
         $container->setParameter('mcp.servers.app_handlers', $handlers);
         $container->setParameter('mcp.servers.app_tool_templates', $allToolTemplates);
+        $container->setParameter('mcp.servers.app_tools', $allTools);
     }
 
     /**
@@ -168,9 +173,10 @@ final class McpAppPass implements CompilerPassInterface
      * Registers the app's linked tool from its handler method ($method, default "render"), auto-setting
      * the `ui` link to this app. No-op when the method is absent (a static, tool-less app).
      *
-     * @param array<string, string> $toolTemplates map of "<serviceId>::<method>" => fragment template, appended to here
+     * @param array<string, string>                $toolTemplates map of "<serviceId>::<method>" => fragment template, appended to here
+     * @param array<string, array{string, string}> $tools         map of tool name => [class, method], appended to here
      */
-    private function registerTool(ContainerBuilder $container, string $serviceId, string $class, AsMcpApp $app, string $uri, string $slug, Definition $builder, array &$toolTemplates): void
+    private function registerTool(ContainerBuilder $container, string $serviceId, string $class, AsMcpApp $app, string $uri, string $slug, Definition $builder, array &$toolTemplates, array &$tools): void
     {
         $method = $app->method ?? 'render';
 
@@ -182,17 +188,21 @@ final class McpAppPass implements CompilerPassInterface
             return; // no default "render" method → static, tool-less app
         }
 
+        $name = $app->name ?? str_replace('-', '_', $slug);
+        $tools[$name] = [$class, $method];
+
         // The primary tool is always visible to both the model and the app.
-        $this->addTool($container, $builder, $serviceId, $method, $app->name ?? str_replace('-', '_', $slug), $app->title, $app->description, $uri, false, $app->toolTemplate, $toolTemplates);
+        $this->addTool($container, $builder, $serviceId, $method, $name, $app->title, $app->description, $uri, false, $app->toolTemplate, $toolTemplates);
     }
 
     /**
      * Registers each method carrying {@see AsMcpAppTool} as an additional tool linked to this app, with
      * the `ui` link pointing at the app's resource and visibility derived from `appOnly`.
      *
-     * @param array<string, string> $toolTemplates map of "<serviceId>::<method>" => fragment template, appended to here
+     * @param array<string, string>                $toolTemplates map of "<serviceId>::<method>" => fragment template, appended to here
+     * @param array<string, array{string, string}> $tools         map of tool name => [class, method], appended to here
      */
-    private function registerAppToolMethods(ContainerBuilder $container, string $serviceId, string $class, AsMcpApp $app, string $uri, Definition $builder, array &$toolTemplates): void
+    private function registerAppToolMethods(ContainerBuilder $container, string $serviceId, string $class, AsMcpApp $app, string $uri, Definition $builder, array &$toolTemplates, array &$tools): void
     {
         $primaryMethod = $app->method ?? 'render';
 
@@ -208,8 +218,10 @@ final class McpAppPass implements CompilerPassInterface
             }
 
             $tool = $attributes[0]->newInstance();
+            $name = $tool->name ?? $this->snake($method);
+            $tools[$name] = [$class, $method];
 
-            $this->addTool($container, $builder, $serviceId, $method, $tool->name ?? $this->snake($method), $tool->title, $tool->description, $uri, $tool->appOnly, $tool->template, $toolTemplates);
+            $this->addTool($container, $builder, $serviceId, $method, $name, $tool->title, $tool->description, $uri, $tool->appOnly, $tool->template, $toolTemplates);
         }
     }
 

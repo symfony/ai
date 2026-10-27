@@ -28,6 +28,7 @@ use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class McpPassTest extends TestCase
 {
@@ -352,6 +353,84 @@ final class McpPassTest extends TestCase
         (new McpPass())->process($container);
     }
 
+    public function testRegistersTheIsGrantedToolListenerWithSecurity()
+    {
+        $container = $this->containerWithBuilder(['default' => [], 'stdio' => []]);
+        $container->setDefinition('controller.is_granted_attribute_listener', new Definition());
+        $container->setDefinition('mcp.server.default.controller', new Definition());
+        $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
+        $container->setDefinition(GrantedTool::class, (new Definition(GrantedTool::class))
+            ->addTag('mcp.tool', ['method' => 'deleteAccount'])
+            ->addTag('mcp.tool', ['method' => 'listAccounts']));
+        $container->setDefinition(GrantedClassTool::class, (new Definition(GrantedClassTool::class))->addTag('mcp.tool', ['method' => '__invoke']));
+
+        (new McpPass())->process($container);
+
+        $this->assertTrue($container->getDefinition('mcp.security.is_granted_tool_listener')->hasTag('kernel.event_subscriber'));
+        $this->assertSame([[
+            'mcp.server.default.controller::handle' => [
+                'delete-account' => [GrantedTool::class, 'deleteAccount'],
+                'listAccounts' => [GrantedTool::class, 'listAccounts'],
+                'GrantedClassTool' => [GrantedClassTool::class, '__invoke'],
+            ],
+        ]], $container->getDefinition('mcp.security.is_granted_tool_listener')->getArguments());
+    }
+
+    public function testRegistersTheIsGrantedToolListenerForAppTools()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition('controller.is_granted_attribute_listener', new Definition());
+        $container->setDefinition('mcp.server.default.controller', new Definition());
+        $container->setParameter('mcp.servers.app_tools', ['default' => [
+            'dashboard' => [GrantedClassTool::class, '__invoke'],
+            'delete_from_app' => [GrantedTool::class, 'deleteAccount'],
+            'time_from_app' => [TimeTool::class, 'getCurrentTime'],
+        ]]);
+
+        (new McpPass())->process($container);
+
+        $this->assertSame([[
+            'mcp.server.default.controller::handle' => [
+                'dashboard' => [GrantedClassTool::class, '__invoke'],
+                'delete_from_app' => [GrantedTool::class, 'deleteAccount'],
+            ],
+        ]], $container->getDefinition('mcp.security.is_granted_tool_listener')->getArguments());
+    }
+
+    public function testIsGrantedWithoutSecurityThrows()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition('mcp.server.default.controller', new Definition());
+        $container->setDefinition(GrantedTool::class, (new Definition(GrantedTool::class))->addTag('mcp.tool', ['method' => 'deleteAccount']));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage(\sprintf('The "%s::deleteAccount()" MCP tool has an #[IsGranted] attribute, but SecurityBundle is not enabled. Run "composer require symfony/security-bundle".', GrantedTool::class));
+
+        (new McpPass())->process($container);
+    }
+
+    public function testIsGrantedWithoutHttpTransportNeedsNoSecurity()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition(GrantedTool::class, (new Definition(GrantedTool::class))->addTag('mcp.tool', ['method' => 'deleteAccount']));
+
+        (new McpPass())->process($container);
+
+        $this->assertFalse($container->hasDefinition('mcp.security.is_granted_tool_listener'));
+    }
+
+    public function testDoesNotRegisterTheIsGrantedToolListenerWithoutGrantedTools()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition('controller.is_granted_attribute_listener', new Definition());
+        $container->setDefinition('mcp.server.default.controller', new Definition());
+        $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
+
+        (new McpPass())->process($container);
+
+        $this->assertFalse($container->hasDefinition('mcp.security.is_granted_tool_listener'));
+    }
+
     /**
      * @param array<string, array<string, list<string>>> $elements
      */
@@ -478,6 +557,33 @@ class InvokableTool
     public function __invoke(int $count): string
     {
         return str_repeat('x', $count);
+    }
+}
+
+class GrantedTool
+{
+    #[McpTool(name: 'delete-account')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function deleteAccount(string $id): string
+    {
+        return $id;
+    }
+
+    #[McpTool]
+    #[IsGranted('ROLE_USER')]
+    public function listAccounts(): string
+    {
+        return '';
+    }
+}
+
+#[McpTool]
+#[IsGranted('ROLE_ADMIN')]
+class GrantedClassTool
+{
+    public function __invoke(): string
+    {
+        return 'ok';
     }
 }
 
