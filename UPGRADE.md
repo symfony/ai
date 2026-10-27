@@ -333,6 +333,24 @@ Chat
    ], [new JsonEncoder()]));
    ```
 
+MCP Bundle
+----------
+
+ * Server and client names keep their hyphens. Before, `my-server` was turned into `my_server`. For a server named
+   `my-server`, the default path is now `/mcp/my-server` and the route is `_mcp_endpoint_my-server`. The service ids
+   are `mcp.server.my-server.*`, and the STDIO command is `mcp:server my-server`. The default session directory and
+   session prefix change too, so existing sessions are lost and MCP clients have to start a new session. For a client
+   named `my-client`, the service ids are now `mcp.client.my-client.*`, and the `mcp_server` option of the AI Bundle
+   must be `my-client.<server>`. The `initialize` handshake also sends the names with their hyphens. To keep the
+   previous names, replace the hyphens with underscores in your configuration:
+
+   ```diff
+    mcp:
+        servers:
+   -        my-server:
+   +        my_server:
+   ```
+
 Platform
 --------
 
