@@ -126,6 +126,7 @@ final class ToolNormalizerTest extends TestCase
                         ],
                     ],
                     'required' => ['text', 'number'],
+                    'propertyOrdering' => ['text', 'number', 'nestedObject'],
                 ],
             ],
         ];
@@ -159,6 +160,7 @@ final class ToolNormalizerTest extends TestCase
                             'description' => 'A nullable name',
                         ],
                     ],
+                    'propertyOrdering' => ['name'],
                 ],
             ],
         ];
@@ -201,8 +203,10 @@ final class ToolNormalizerTest extends TestCase
                                     'description' => 'User age',
                                 ],
                             ],
+                            'propertyOrdering' => ['age'],
                         ],
                     ],
+                    'propertyOrdering' => ['user'],
                 ],
             ],
         ];

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add `propertyOrdering` to object schemas, so structured output follows the declared property order
+
 0.14
 ----
 
