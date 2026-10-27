@@ -11,9 +11,11 @@
 
 namespace Symfony\AI\Platform\Bridge\Generic\Tests\Embeddings;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Embeddings\ResultConverter;
 use Symfony\AI\Platform\Exception\AuthenticationException;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -116,6 +118,58 @@ class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Authentication failed.');
 
         (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideTopLevelErrorMessages')]
+    public function testThrowsWithTheErrorMessageFromATopLevelMessage(int $statusCode, string $message, string $exception)
+    {
+        $response = $this->createResponse(json_encode(['message' => $message, 'type' => 'invalid_request_error']), $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($message);
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>}>
+     */
+    public static function provideTopLevelErrorMessages(): iterable
+    {
+        yield 'unauthorized' => [401, 'Invalid credentials in Authorization header', AuthenticationException::class];
+        yield 'bad request' => [400, 'Input must not be empty', BadRequestException::class];
+        yield 'not found' => [404, 'Model "some-embeddings" not found', BadRequestException::class];
+        yield 'rate limit' => [429, 'Rate limit reached, try again later', RateLimitExceededException::class];
+        yield 'server error' => [503, 'Model is overloaded', ServerException::class];
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideNonStringErrorMessages')]
+    public function testFallsBackToTheDefaultMessageOnANonStringErrorMessage(int $statusCode, string $body, string $exception, string $message)
+    {
+        $response = $this->createResponse($body, $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($message);
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>, string}>
+     */
+    public static function provideNonStringErrorMessages(): iterable
+    {
+        yield 'unauthorized' => [401, '{"message":["a","b"]}', AuthenticationException::class, 'Authentication failed.'];
+        yield 'bad request' => [400, '{"message":{"detail":[{"msg":"x"}]}}', BadRequestException::class, 'Bad Request'];
+        yield 'not found' => [404, '{"error":{"message":["a","b"]}}', BadRequestException::class, 'Bad Request'];
+        yield 'rate limit' => [429, '{"message":["a","b"]}', RateLimitExceededException::class, 'Rate limit exceeded.'];
+        yield 'server error' => [503, '{"error":{"message":{"detail":[{"msg":"x"}]}}}', ServerException::class, 'Server error (HTTP 503).'];
     }
 
     private function createResponse(string $body, int $statusCode): ResponseInterface

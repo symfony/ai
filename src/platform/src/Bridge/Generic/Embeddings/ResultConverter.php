@@ -42,24 +42,28 @@ class ResultConverter implements ResultConverterInterface
         $response = $result->getObject();
 
         if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Authentication failed.';
-            throw new AuthenticationException($errorMessage);
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            throw new AuthenticationException(\is_string($errorMessage) ? $errorMessage : 'Authentication failed.');
         }
 
         if (400 === $response->getStatusCode() || 404 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? 'Bad Request';
-            throw new BadRequestException($errorMessage);
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            throw new BadRequestException(\is_string($errorMessage) ? $errorMessage : 'Bad Request');
         }
 
         if (429 === $response->getStatusCode()) {
             $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
-            throw new RateLimitExceededException(null !== $retryAfter ? (int) $retryAfter : null, $errorMessage);
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            throw new RateLimitExceededException(null !== $retryAfter ? (int) $retryAfter : null, \is_string($errorMessage) ? $errorMessage : null);
         }
 
         if (($code = $response->getStatusCode()) >= 500) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
-            throw new ServerException($code, $errorMessage);
+            $error = json_decode($response->getContent(false), true);
+            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
+            throw new ServerException($code, \is_string($errorMessage) ? $errorMessage : null);
         }
 
         $data = $result->getData();
