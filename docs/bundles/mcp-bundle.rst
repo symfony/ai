@@ -166,6 +166,9 @@ challenge, and other users get a ``403``. With the ``access_token`` authenticato
 ``#[IsGranted('OAUTH2_SCOPE(accounts:write)')]`` gets the ``insufficient_scope`` challenge that MCP clients
 use to ask the user for more scopes.
 
+``#[IsGranted]`` has no effect on prompts and resources, including the ``ui://`` resource of an MCP App. The
+``#[IsGranted]`` attributes of a parent class are not inherited.
+
 The ``subject`` option of ``#[IsGranted]`` refers to the arguments of the controller, so it can't refer to an
 argument of the tool. The attributes are not checked over the STDIO transport, which has no firewall.
 
