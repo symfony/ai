@@ -231,11 +231,6 @@ $featureFlag = frontmatterAnswer($body, 'New feature?');
 $tags = git('git tag --sort=-v:refname');
 $latestMinor = null;
 foreach ($tags as $tag) {
-    // a pre-release, e.g. "v1.0.0-BETA1", does not release its version
-    if (1 === preg_match('/-(?:alpha|beta|rc)\d*$/i', $tag)) {
-        continue;
-    }
-
     $tuple = minorTuple($tag);
     if (null !== $tuple) {
         $latestMinor = $tuple;
