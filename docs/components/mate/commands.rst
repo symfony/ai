@@ -143,6 +143,41 @@ These are the four commands a coding agent uses.
         # Nested values
         $ vendor/bin/mate tools:call <tool-name> --json='{"filters": {"level": "error"}}'
 
+``mate tools:call-batch``
+    Execute several tools in one command call. Useful when one investigation needs results from
+    multiple tools together (e.g. correlating a profiler request with logs from the same time
+    window): a single call replaces one ``tools:call`` per tool. Calls run sequentially, in array
+    order, and one call failing does not abort the others.
+
+    A tool whose name looks mutating (contains ``-apply``, ``-fix``, ``-install``, ``-enable``,
+    ``-disable``, ``-override``, ``-reset`` or ``-prune``) is rejected from the batch, since there
+    is no metadata yet distinguishing a read-only tool from one that writes; call it individually
+    with ``tools:call`` instead.
+
+    **Options:**
+
+    ``--json=JSON``
+        A JSON array of ``{"tool": "...", "params": {...}}`` call objects (``params`` is optional
+        for a tool that takes none).
+
+    ``--format=FORMAT``
+        ``pretty`` (default, one section per tool), ``json`` or ``toon``.
+
+    **Result shape:**
+
+    A JSON array, one entry per call, in the same order as the request:
+    ``{"tool": "...", "ok": true|false, "result": <decoded tool output>|null, "error": "..."|null}``.
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Correlate a slow request with logs from the same time window
+        $ vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-get", "params": {"token": "abc123"}}, {"tool": "monolog-search", "params": {"level": "ERROR"}}]'
+
+        # JSON output format
+        $ vendor/bin/mate tools:call-batch --json='[{"tool": "server-info"}]' --format=json
+
 ``mate resources:read <uri>``
     Read a resource by its URI. The URI may belong to a static resource or match a resource
     template. For a template, the variables in the URI are passed to the handler.
