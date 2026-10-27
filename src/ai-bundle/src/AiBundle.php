@@ -2300,6 +2300,12 @@ final class AiBundle extends AbstractBundle
                             PostgresMetric::tryFrom($store['metric']),
                             $store['lang'],
                         ]);
+
+                    foreach (['dimensions' => '$dimensions', 'vector_type' => '$vectorType', 'index_method' => '$indexMethod', 'index_opclass' => '$indexOpclass'] as $key => $argument) {
+                        if (isset($store[$key])) {
+                            $definition->setArgument($argument, $store[$key]);
+                        }
+                    }
                 } else {
                     $connectionOptions = [];
                     if (isset($store['username'])) {
@@ -2316,14 +2322,12 @@ final class AiBundle extends AbstractBundle
                             $store['vector_field'],
                             PostgresMetric::tryFrom($store['metric']),
                             $store['lang'],
-                        ])
-                        ->setArgument('$connectionOptions', $connectionOptions);
-                }
-
-                foreach (['dimensions' => '$dimensions', 'vector_type' => '$vectorType', 'index_method' => '$indexMethod', 'index_opclass' => '$indexOpclass'] as $key => $argument) {
-                    if (isset($store[$key])) {
-                        $definition->setArgument($argument, $store[$key]);
-                    }
+                            $store['dimensions'] ?? 1536,
+                            $store['vector_type'] ?? 'vector',
+                            $store['index_method'] ?? 'hnsw',
+                            $store['index_opclass'] ?? null,
+                            $connectionOptions,
+                        ]);
                 }
 
                 $definition

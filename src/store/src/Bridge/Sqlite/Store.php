@@ -33,6 +33,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 {
     private const RRF_K = 60;
 
+    private ?\PDO $connection = null;
+    private string $dsn;
+
     /**
      * @param \PDO|string $connection A PDO instance, or a DSN to connect with on the first query
      * @param array{
@@ -42,11 +45,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
      * } $connectionOptions Used only when $connection is a DSN
      */
     public function __construct(
-        #[\SensitiveParameter] private \PDO|string $connection,
+        #[\SensitiveParameter] \PDO|string $connection,
         private readonly string $tableName,
         private readonly DistanceCalculator $distanceCalculator = new DistanceCalculator(),
         #[\SensitiveParameter] private readonly array $connectionOptions = [],
     ) {
+        if ($connection instanceof \PDO) {
+            $this->connection = $connection;
+        } else {
+            $this->dsn = $connection;
+        }
     }
 
     public function setup(array $options = []): void
@@ -451,9 +459,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     private function getConnection(): \PDO
     {
-        if (\is_string($this->connection)) {
+        if (null === $this->connection) {
             $this->connection = new \PDO(
-                $this->connection,
+                $this->dsn,
                 $this->connectionOptions['db_username'] ?? null,
                 $this->connectionOptions['db_password'] ?? null,
                 $this->connectionOptions['db_connection_options'] ?? [],
