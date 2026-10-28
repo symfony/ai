@@ -14,6 +14,7 @@ namespace Symfony\AI\AiBundle;
 use AsyncAws\S3Vectors\S3VectorsClient;
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
+use Mcp\Capability\Attribute\Schema as McpSchema;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
@@ -445,6 +446,12 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.command.clear_store');
             $builder->removeDefinition('ai.command.index');
             $builder->removeDefinition('ai.command.retrieve');
+        }
+
+        if (ContainerBuilder::willBeAvailable('mcp/sdk', McpSchema::class, ['symfony/ai-bundle'])) {
+            $builder->getDefinition('ai.platform.json_schema.describer.schema_attribute')->clearTag('ai.platform.json_schema.describer');
+        } else {
+            $builder->removeDefinition('ai.platform.json_schema.describer.mcp_schema');
         }
 
         if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
