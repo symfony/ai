@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -44,10 +45,14 @@ final class FireworksClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         return match (true) {
-            $model->supports(Capability::RERANKING) => $this->requestRerank($model, $payload, $options),
-            $model->supports(Capability::EMBEDDINGS) => $this->requestEmbeddings($model, $payload, $options),
-            $model->supports(Capability::INPUT_MESSAGES) => $this->requestChatCompletions($model, $payload, $options),
+            $model->supports(Capability::RERANKING) => $this->requestRerank($model, $payload, $options, $httpOptions),
+            $model->supports(Capability::EMBEDDINGS) => $this->requestEmbeddings($model, $payload, $options, $httpOptions),
+            $model->supports(Capability::INPUT_MESSAGES) => $this->requestChatCompletions($model, $payload, $options, $httpOptions),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
     }
@@ -55,8 +60,9 @@ final class FireworksClient implements ModelClientInterface
     /**
      * @param array<string, mixed> $payload
      * @param array<string, mixed> $options
+     * @param array<string, mixed> $httpOptions
      */
-    private function requestChatCompletions(Model $model, array|string $payload, array $options): RawHttpResult
+    private function requestChatCompletions(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
@@ -66,14 +72,15 @@ final class FireworksClient implements ModelClientInterface
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
             'body' => $this->encodeJsonBody(array_merge($options, $payload)),
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array<string|int, mixed>|string $payload
      * @param array<string, mixed>            $options
+     * @param array<string, mixed>            $httpOptions
      */
-    private function requestEmbeddings(Model $model, array|string $payload, array $options): RawHttpResult
+    private function requestEmbeddings(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', $this->inferenceEndpoint.'/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
@@ -82,14 +89,15 @@ final class FireworksClient implements ModelClientInterface
                 'model' => $model->getName(),
                 'input' => $payload,
             ])),
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array{query: string, documents: list<string>}|string $payload
      * @param array<string, mixed>                                 $options
+     * @param array<string, mixed>                                 $httpOptions
      */
-    private function requestRerank(Model $model, array|string $payload, array $options): RawHttpResult
+    private function requestRerank(Model $model, array|string $payload, array $options, array $httpOptions): RawHttpResult
     {
         if (!\is_array($payload) || !isset($payload['query'], $payload['documents'])) {
             throw new InvalidArgumentException('Rerank payload must be an array with "query" and "documents" keys.');
@@ -103,6 +111,6 @@ final class FireworksClient implements ModelClientInterface
                 'query' => $payload['query'],
                 'documents' => $payload['documents'],
             ])),
-        ]));
+        ] + $httpOptions));
     }
 }

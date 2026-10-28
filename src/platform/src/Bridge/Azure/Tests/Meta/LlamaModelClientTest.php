@@ -50,4 +50,17 @@ final class LlamaModelClientTest extends TestCase
         $client = new LlamaModelClient($httpClient, 'test.azure.com', 'test-api-key');
         $client->request(new Llama('llama-3.3-70b-instruct'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new LlamaModelClient($httpClient, 'test.azure.com', 'test-api-key');
+        $client->request(new Llama('llama-3.3-70b-instruct'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

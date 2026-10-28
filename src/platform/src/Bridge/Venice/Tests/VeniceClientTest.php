@@ -62,6 +62,22 @@ final class VeniceClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"messages":[{"role":"user","content":"Hello"}],"model":"llama-3.3-70b"}', $options['body']);
+
+            return new JsonMockResponse([]);
+        }, 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(new Venice('llama-3.3-70b', [
+            Capability::INPUT_MESSAGES,
+        ]), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
+
     public function testClientCanTriggerCompletionAsStream()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {

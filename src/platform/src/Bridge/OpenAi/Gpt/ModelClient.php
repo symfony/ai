@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ModelClient as OpenResponsesModelCl
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\HttpStreamInterface;
 use Symfony\AI\Platform\Result\Stream\SseStream;
@@ -97,6 +98,10 @@ final class ModelClient extends OpenResponsesModelClient
             throw new InvalidArgumentException('A batch is answered as a file hours later, so it cannot be streamed.');
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $requests = [];
 
         foreach ($payload as $customId => $input) {
@@ -112,6 +117,6 @@ final class ModelClient extends OpenResponsesModelClient
             $requests[$customId] = $this->createBody($model, $input, $options);
         }
 
-        return $this->batchClient->submit($requests);
+        return $this->batchClient->submit($requests, $httpOptions);
     }
 }

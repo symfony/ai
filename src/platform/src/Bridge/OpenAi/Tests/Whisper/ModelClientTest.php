@@ -190,4 +190,25 @@ final class ModelClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([
+            static function (string $method, string $url, array $options): MockResponse {
+                self::assertSame(30.0, $options['max_duration']);
+                $body = '';
+                while ('' !== ($chunk = $options['body'](8192))) {
+                    $body .= $chunk;
+                }
+                self::assertStringContainsString('audio-data', $body);
+                self::assertStringContainsString('whisper-1', $body);
+                self::assertStringNotContainsString('overridden', $body);
+
+                return new MockResponse('{"text": "Hello World"}');
+            },
+        ]);
+
+        $client = new ModelClient($httpClient, 'sk-test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

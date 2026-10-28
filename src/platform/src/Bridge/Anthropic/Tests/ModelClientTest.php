@@ -393,6 +393,21 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['message' => 'test'], json_decode($options['body'], true));
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $options = ['http_options' => ['max_duration' => 30, 'body' => 'overridden']];
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
     public function testExplicitMaxTokensWinsOverCanonicalMaxOutputTokens()
     {
         $this->httpClient = new MockHttpClient(function ($method, $url, $options) {

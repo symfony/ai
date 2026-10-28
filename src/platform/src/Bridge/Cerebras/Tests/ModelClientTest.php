@@ -112,4 +112,17 @@ class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'csk-1234567890abcdef');
         $client->request(new Model('llama-3.3-70b'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new JsonMockResponse(['choices' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'csk-1234567890abcdef');
+        $client->request(new Model('llama-3.3-70b'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }
