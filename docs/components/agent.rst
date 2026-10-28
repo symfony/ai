@@ -1,5 +1,5 @@
 Symfony AI - Agent Component
-=====================
+============================
 
 The Agent component provides a framework for building AI agents that,
 sits on top of the Platform and Store components, allowing you to create
