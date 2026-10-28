@@ -22,10 +22,23 @@ use Symfony\AI\Mate\Bridge\Monolog\Model\SearchCriteria;
  */
 final class LogReader
 {
+    /** Decompressed bytes read from one `.log.gz`; guards against a compression bomb. */
+    private const COMPRESSED_BYTES = 256 * 1024 * 1024;
+
+    /** Longest line taken from a `.log.gz`; the rest of a longer line is discarded. */
+    private const COMPRESSED_LINE_BYTES = 1024 * 1024;
+
     /**
      * @var array<string|int, string>
      */
     private readonly array $logDirs;
+
+    /**
+     * Compressed files the last read stopped in at the size cap.
+     *
+     * @var string[]
+     */
+    private array $unfinished = [];
 
     /**
      * @param string|array<string, string> $logDir A single log directory, or a map of context name to log
@@ -34,6 +47,7 @@ final class LogReader
     public function __construct(
         private LogParser $parser,
         string|array $logDir,
+        private int $compressedBytes = self::COMPRESSED_BYTES,
     ) {
         $this->logDirs = \is_string($logDir) ? [0 => $logDir] : $logDir;
     }
@@ -44,6 +58,41 @@ final class LogReader
     public function getLogFiles(?string $kernelContext = null): array
     {
         return $this->collectLogFiles($this->resolveLogDirs($kernelContext));
+    }
+
+    /**
+     * The compressed rotations (`*.log.gz`) of the log directories, as left by a nightly compression
+     * job. They are read after the plain files, and listed separately from them.
+     *
+     * @return string[]
+     */
+    public function getCompressedLogFiles(?string $environment = null, ?string $kernelContext = null): array
+    {
+        $files = $this->collectLogFiles($this->resolveLogDirs($kernelContext), ['/*.log.gz', '/*.log.*.gz']);
+
+        return null !== $environment ? $this->filterForEnvironment($files, $environment) : $files;
+    }
+
+    /**
+     * Compressed rotations that cannot be read at all because zlib is missing. Relative to their log
+     * directory, like the `source_file` of an entry.
+     *
+     * @return string[]
+     */
+    public function getUnreadableLogFiles(?string $environment = null, ?string $kernelContext = null): array
+    {
+        return \function_exists('gzopen') ? [] : array_map($this->getRelativePath(...), $this->getCompressedLogFiles($environment, $kernelContext));
+    }
+
+    /**
+     * Log files the last read did not (fully) read: the unreadable ones, and the compressed files it
+     * stopped in at the size cap.
+     *
+     * @return string[]
+     */
+    public function getSkippedLogFiles(?string $environment = null, ?string $kernelContext = null): array
+    {
+        return array_values(array_unique([...$this->getUnreadableLogFiles($environment, $kernelContext), ...$this->unfinished]));
     }
 
     /**
@@ -59,7 +108,7 @@ final class LogReader
      */
     public function readAll(?SearchCriteria $criteria = null, ?string $kernelContext = null): \Generator
     {
-        $files = $this->getLogFiles($kernelContext);
+        $files = [...$this->getLogFiles($kernelContext), ...$this->readableCompressedFiles(null, $kernelContext)];
 
         yield from $this->readFiles($files, $criteria);
     }
@@ -69,7 +118,7 @@ final class LogReader
      */
     public function readForEnvironment(string $environment, ?SearchCriteria $criteria = null, ?string $kernelContext = null): \Generator
     {
-        $files = $this->getLogFilesForEnvironment($environment, $kernelContext);
+        $files = [...$this->getLogFilesForEnvironment($environment, $kernelContext), ...$this->readableCompressedFiles($environment, $kernelContext)];
 
         yield from $this->readFiles($files, $criteria);
     }
@@ -97,6 +146,7 @@ final class LogReader
         $limit = null !== $criteria ? $criteria->getLimit() : \PHP_INT_MAX;
         $offset = null !== $criteria ? $criteria->getOffset() : 0;
         $skipped = 0;
+        $this->unfinished = [];
 
         foreach ($files as $file) {
             if ($count >= $limit) {
@@ -107,18 +157,26 @@ final class LogReader
                 continue;
             }
 
-            $handle = fopen($file, 'r');
+            $compressed = str_ends_with($file, '.gz');
+            $handle = fopen($compressed ? 'compress.zlib://'.$file : $file, 'r');
             if (false === $handle) {
                 continue;
             }
 
             try {
                 $lineNumber = 0;
+                $bytes = 0;
                 $relativePath = $this->getRelativePath($file);
                 $fileContext = $this->getKernelContext($file);
 
-                while (false !== ($line = fgets($handle))) {
+                while (false !== ($line = $compressed ? $this->readCompressedLine($handle, $bytes) : fgets($handle))) {
                     ++$lineNumber;
+
+                    if ($compressed && $bytes > $this->compressedBytes) {
+                        $this->unfinished[] = $relativePath;
+
+                        break;
+                    }
 
                     $entry = $this->parser->parse($line, $relativePath, $lineNumber, $fileContext);
                     if (null === $entry) {
@@ -274,6 +332,41 @@ final class LogReader
         }
     }
 
+    /**
+     * @return string[]
+     */
+    private function readableCompressedFiles(?string $environment, ?string $kernelContext): array
+    {
+        return \function_exists('gzopen') ? $this->getCompressedLogFiles($environment, $kernelContext) : [];
+    }
+
+    /**
+     * @param resource $handle
+     * @param int      $bytes  Decompressed bytes read so far, including the discarded ones
+     */
+    private function readCompressedLine($handle, int &$bytes): string|false
+    {
+        $line = fgets($handle, self::COMPRESSED_LINE_BYTES);
+        if (false !== $line) {
+            $bytes += \strlen($line);
+        }
+
+        // Discard the rest of a line longer than the cap, so one huge line cannot fill the memory.
+        while (false !== $line && !str_ends_with($line, "\n") && !feof($handle) && \strlen($line) >= self::COMPRESSED_LINE_BYTES - 1 && $bytes <= $this->compressedBytes) {
+            $rest = fgets($handle, self::COMPRESSED_LINE_BYTES);
+            if (false === $rest) {
+                break;
+            }
+
+            $bytes += \strlen($rest);
+            if (str_ends_with($rest, "\n")) {
+                break;
+            }
+        }
+
+        return $line;
+    }
+
     private function getRelativePath(string $filePath): string
     {
         $logDir = $this->findLogDir($filePath);
@@ -336,10 +429,11 @@ final class LogReader
 
     /**
      * @param array<string|int, string> $logDirs
+     * @param string[]                  $patterns
      *
      * @return string[]
      */
-    private function collectLogFiles(array $logDirs): array
+    private function collectLogFiles(array $logDirs, array $patterns = ['/*.log']): array
     {
         $allFiles = [];
 
@@ -348,13 +442,15 @@ final class LogReader
                 continue;
             }
 
-            $files = glob($dir.'/*.log');
-            if (false === $files) {
-                continue;
-            }
+            foreach ($patterns as $pattern) {
+                $found = glob($dir.$pattern);
+                if (false === $found) {
+                    continue;
+                }
 
-            foreach ($files as $file) {
-                $allFiles[] = $file;
+                foreach ($found as $file) {
+                    $allFiles[] = $file;
+                }
             }
         }
 
