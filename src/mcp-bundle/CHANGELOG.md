@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add support for PSR-6 pools in `servers.<name>.session.cache_pool` and `servers.<name>.subscriptions.cache_pool`;
+   `cache.mcp.sessions` and `cache.mcp.notifications` are now cache pools of their own, children of `cache.app`, and
+   `psr/simple-cache` is no longer required
+
 0.15
 ----
 
