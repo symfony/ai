@@ -57,7 +57,7 @@ final class MessageBagTest extends TestCase
 
         $systemMessage = $messageBag->getSystemMessage();
 
-        $this->assertSame('First system prompt.'.\PHP_EOL.\PHP_EOL.'Second system prompt.'.\PHP_EOL.\PHP_EOL.'Third system prompt.', $systemMessage->getContent());
+        $this->assertSame("First system prompt.\n\nSecond system prompt.\n\nThird system prompt.", $systemMessage->getContent());
     }
 
     public function testGetSystemMessageWithoutSystemMessage()
