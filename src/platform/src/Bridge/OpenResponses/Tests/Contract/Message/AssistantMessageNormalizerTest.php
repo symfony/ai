@@ -210,13 +210,34 @@ class AssistantMessageNormalizerTest extends TestCase
             [['role' => 'assistant', 'type' => 'message', 'content' => '425']],
         ];
 
-        yield 'an assistant turn with nothing replayable keeps the empty message' => [
+        yield 'an assistant turn with nothing replayable is omitted' => [
             Message::ofAssistant(new Thinking('Pondering.')),
-            [[
-                'role' => 'assistant',
-                'type' => 'message',
-                'content' => null,
-            ]],
+            [],
+        ];
+
+        yield 'an assistant without parts is omitted' => [new AssistantMessage(), []];
+
+        $emptyContent = [['type' => 'output_text', 'text' => '', 'annotations' => []]];
+        yield 'explicit empty text is replayable' => [
+            new AssistantMessage(new Text('')),
+            [['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent]],
+        ];
+
+        yield 'empty text retains its phase and position around tools' => [
+            new AssistantMessage(new Text('', null, 'commentary'), $toolCall, new Text('', null, 'final_answer')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent, 'phase' => 'commentary'],
+                ['arguments' => json_encode($toolCall->getArguments()), 'call_id' => $toolCall->getId(), 'name' => $toolCall->getName(), 'type' => 'function_call'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent, 'phase' => 'final_answer'],
+            ],
+        ];
+
+        yield 'empty text without phase precedes phased text' => [
+            new AssistantMessage(new Text(''), new Text('Answer', null, 'final_answer')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent],
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'Answer', 'phase' => 'final_answer'],
+            ],
         ];
     }
 

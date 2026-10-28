@@ -41,7 +41,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $items = [];
-        $text = '';
+        $text = null;
         $phase = null;
 
         foreach ($data->getContent() as $part) {
@@ -104,10 +104,6 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         $this->flushText($items, $text, $data, $phase);
-
-        if ([] === $items) {
-            $items[] = self::message($data, null);
-        }
 
         return $items;
     }
@@ -178,10 +174,12 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
 
     /**
      * @param list<array<string, mixed>> $items
+     *
+     * @param-out null $text
      */
-    private function flushText(array &$items, string &$text, AssistantMessage $data, ?string $phase): void
+    private function flushText(array &$items, ?string &$text, AssistantMessage $data, ?string $phase): void
     {
-        if ('' === $text) {
+        if (null === $text) {
             return;
         }
 
@@ -191,18 +189,18 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
         }
 
         $items[] = $item;
-        $text = '';
+        $text = null;
     }
 
     /**
      * @return array<string, mixed>
      */
-    private static function message(AssistantMessage $data, ?string $content): array
+    private static function message(AssistantMessage $data, string $content): array
     {
         return [
             'role' => $data->getRole()->value,
             'type' => 'message',
-            'content' => $content,
+            'content' => '' === $content ? [['type' => 'output_text', 'text' => '', 'annotations' => []]] : $content,
         ];
     }
 }
