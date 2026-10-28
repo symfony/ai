@@ -44,6 +44,44 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame(80, $data['usage']['cached_input_tokens']);
     }
 
+    public function testGetDataParsesLinesSeparatedByLineFeed()
+    {
+        $jsonOutput = implode("\n", [
+            json_encode(['type' => 'turn.started']),
+            json_encode(['type' => 'item.completed', 'item' => ['type' => 'agent_message', 'text' => 'Hello, World!']]),
+            json_encode(['type' => 'turn.completed', 'usage' => ['input_tokens' => 100, 'output_tokens' => 50]]),
+        ])."\n";
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', var_export($jsonOutput, true))]);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame('agent_message', $data['item']['type']);
+        $this->assertSame('Hello, World!', $data['item']['text']);
+        $this->assertSame(100, $data['usage']['input_tokens']);
+    }
+
+    public function testGetDataStreamParsesLinesSeparatedByLineFeed()
+    {
+        $jsonOutput = implode("\n", [
+            json_encode(['type' => 'turn.started']),
+            json_encode(['type' => 'turn.completed', 'usage' => ['input_tokens' => 1, 'output_tokens' => 2]]),
+        ])."\n";
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', var_export($jsonOutput, true))]);
+        $process->start();
+
+        $collected = [];
+        foreach ((new RawProcessResult($process))->getDataStream() as $data) {
+            $collected[] = $data;
+        }
+
+        $this->assertCount(2, $collected);
+        $this->assertSame('turn.started', $collected[0]['type']);
+        $this->assertSame('turn.completed', $collected[1]['type']);
+    }
+
     public function testGetDataReturnsLastAgentMessageFromMultiple()
     {
         $jsonOutput = implode(\PHP_EOL, [
