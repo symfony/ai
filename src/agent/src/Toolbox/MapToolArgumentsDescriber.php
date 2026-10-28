@@ -28,10 +28,22 @@ final class MapToolArgumentsDescriber implements ObjectDescriberInterface
     public function describeObject(ObjectSubject $subject, ?array &$schema): iterable
     {
         $reflector = $subject->getReflector();
+        $mapped = null;
         if ($reflector instanceof \ReflectionMethod && null !== $mapped = MappedToolArgument::forMethod($reflector)) {
             $subject = new ObjectSubject($mapped->className, new \ReflectionClass($mapped->className), $subject->getContext());
         }
 
-        return $this->inner->describeObject($subject, $schema);
+        $properties = $this->inner->describeObject($subject, $schema);
+        if ($reflector instanceof \ReflectionMethod && \in_array(ToolCallArgumentResolver::TOOL_CALL_ID_PARAMETER, array_column($reflector->getParameters(), 'name'), true) && null === $mapped) {
+            unset($schema['properties'][ToolCallArgumentResolver::TOOL_CALL_ID_PARAMETER]);
+            if (isset($schema['required'])) {
+                $schema['required'] = array_values(array_diff($schema['required'], [ToolCallArgumentResolver::TOOL_CALL_ID_PARAMETER]));
+            }
+            if ([] === ($schema['properties'] ?? [])) {
+                $schema = null;
+            }
+        }
+
+        return $properties;
     }
 }

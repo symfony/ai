@@ -36,6 +36,7 @@ use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\Toolbox\ChainToolbox;
 use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
@@ -78,6 +79,7 @@ use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\InMemoryModelCatalog;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
@@ -162,8 +164,12 @@ use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpClient\NativeHttpClient;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -5723,6 +5729,44 @@ class AiBundleTest extends TestCase
         $this->assertSame(\Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber::class, $container->getDefinition('ai.toolbox.json_schema.describer')->getClass());
         $this->assertSame('ai.platform.json_schema.describer', (string) $container->getDefinition('ai.toolbox.json_schema.describer')->getArgument(0));
         $this->assertSame('ai.platform.json_schema.describer', (string) $container->getDefinition('ai.platform.json_schema_factory')->getArgument(0));
+    }
+
+    public function testServiceToolSchemaHidesTheInjectedCallId()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'my_agent' => [
+                        'model' => 'gpt-4',
+                        'tools' => [
+                            ['service' => 'app.call_id_tool', 'name' => 'lookup', 'description' => 'Look up a record'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $tool = new class {
+            public function __invoke(string $query, string $_toolCallId): string
+            {
+                return $query.':'.$_toolCallId;
+            }
+        };
+        $container->set('app.call_id_tool', $tool);
+        $container->setAlias('logger', LoggerInterface::class);
+        $container->register('property_info', PropertyInfoExtractor::class);
+        $container->register('property_info.reflection_extractor', ReflectionExtractor::class);
+        $container->register('serializer.mapping.class_metadata_factory', ClassMetadataFactory::class)
+            ->setArguments([new Definition(AttributeLoader::class)]);
+        $container->getDefinition('ai.toolbox.my_agent')->setPublic(true);
+        $container->compile();
+        $toolbox = $container->get('ai.toolbox.my_agent');
+        $this->assertInstanceOf(ToolboxInterface::class, $toolbox);
+        $schema = $toolbox->getTools()[0]->getParameters();
+
+        $this->assertSame(['query'], array_keys($schema['properties']));
+        $this->assertSame(['query'], $schema['required']);
+        $result = $toolbox->execute(new ToolCall('real_id', 'lookup', ['query' => 'record', '_toolCallId' => 'spoofed']));
+        $this->assertSame('record:real_id', $result->getResult());
     }
 
     public function testAgentWithoutToolsConfigDoesNotRegisterToolbox()

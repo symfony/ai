@@ -36,6 +36,8 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
  */
 final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterface
 {
+    public const TOOL_CALL_ID_PARAMETER = '_toolCallId';
+
     private readonly DenormalizerInterface $denormalizer;
     private readonly TypeResolver $typeResolver;
 
@@ -70,6 +72,13 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
     {
         $reference = $metadata->getReference();
         $method = new \ReflectionMethod($reference->getClass(), $reference->getMethod());
+        /** @var array<string, \ReflectionParameter> $parameters */
+        $parameters = array_column($method->getParameters(), null, 'name');
+        $arguments = [];
+        if (isset($parameters[self::TOOL_CALL_ID_PARAMETER])) {
+            $arguments[self::TOOL_CALL_ID_PARAMETER] = $toolCall->getId();
+        }
+
         $mapped = MappedToolArgument::forMethod($method);
         if (null !== $mapped) {
             try {
@@ -80,14 +89,14 @@ final class ToolCallArgumentResolver implements ToolCallArgumentResolverInterfac
 
             return [
                 $mapped->parameter->getName() => $argument,
+                ...$arguments,
             ];
         }
 
-        /** @var array<string, \ReflectionParameter> $parameters */
-        $parameters = array_column($method->getParameters(), null, 'name');
-        $arguments = [];
-
         foreach ($parameters as $name => $reflectionParameter) {
+            if (self::TOOL_CALL_ID_PARAMETER === $name) {
+                continue;
+            }
             if (!\array_key_exists($name, $toolCall->getArguments())) {
                 if (!$reflectionParameter->isOptional()) {
                     throw new InvalidToolCallArgumentsException(\sprintf('Parameter "%s" is mandatory for tool "%s".', $name, $toolCall->getName()));
