@@ -25,6 +25,12 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
    - Regex: `vendor/bin/mate tools:call monolog-search --term="user \d+ locked" --regex`. A bare pattern is wrapped as `/.../i`; pass your own `/.../` or `#...#` to control anchoring and flags.
 4. Pivot on a field: once you have an identifier (request id, user id, order id), follow it with `vendor/bin/mate tools:call monolog-context-search --key=request_id --value=abc123`. This is how you reconstruct one request or one user across many lines.
 
+## Hand back to the profiler
+
+Hand back to the profiler as soon as it is one request. A log line gives you a timestamp, a URL and a status; the profile for that request gives you the query that caused it, the stack trace and the timings the log will never carry. If the Symfony bridge is installed, find the profile with `symfony-profiler-list`, filtered by the URL and status code from the log line and narrowed by time with `--from`/`--to`, then switch to profiler debugging.
+
+The profile only exists if the request was recorded (usually dev) and the storage has not been cleared. If there is none, stay in the logs and say so.
+
 ## Reading
 
 - Correlate `channel` + `level` + `datetime`. The channel tells you the subsystem (`doctrine` = DB, `security` = auth, `request`/`php` = framework), the level tells you severity, the timestamp anchors it to a deploy or an incident.
@@ -36,4 +42,4 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
 - No matches: widen before concluding. Drop `--level`, widen the date window, try a shorter or partial `term`. `level` matches exactly (case-insensitive); `WARN` will not match `WARNING`.
 - Wrong channel: `--channel` is an exact (case-insensitive) name. Run `monolog-list-channels` if unsure rather than guessing.
 - `monolog-tail` looks empty or stale: it only reads the newest file. Rotated history (`prod-2026-07-01.log`) is invisible to tail; use `monolog-search` with a date range to reach it.
-- Nothing logged at all: the app may log to stderr/syslog rather than a file, or the level threshold filters it out before it is written. The profiler `logger` collector still captures per-request logs even when file logging is quiet.
+- Nothing logged at all: the app may log to stderr/syslog rather than a file, or the level threshold filters it out before it is written. The profiler `logger` collector still captures per-request logs even when file logging is quiet. That is the profiler handoff, not a last resort.
