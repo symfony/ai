@@ -259,6 +259,9 @@ Collector        Notes
                  Capped at 50 queries. Query parameters are redacted.
 ``mailer``       Symfony Mailer messages: recipients, body preview, attachments.
 ``translation``  Locales and the state of the translated messages.
+``http_client``  Outbound HttpClient calls: method, URL, status, duration, error, redirects,
+                 slowest first. Capped at 50 calls. Headers and bodies are never exposed;
+                 secret-looking URL parts are masked.
 ===============  ===================================================================
 
 A collector without a formatter is exposed with its raw data.
