@@ -88,7 +88,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return $result['count'] ?? 0;
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
@@ -110,7 +110,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             foreach ($documents as $document) {
                 yield json_encode($documentToIndex($document)).\PHP_EOL.json_encode($documentToPayload($document)).\PHP_EOL;
             }
-        });
+        }, $options['http_options'] ?? []);
 
         $this->assertBulkSucceeded($result);
     }
@@ -134,7 +134,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     ],
                 ]).\PHP_EOL;
             }
-        });
+        }, $options['http_options'] ?? []);
 
         $this->assertBulkSucceeded($result);
     }
@@ -147,7 +147,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'query' => [
                 'match_all' => new \stdClass(),
             ],
-        ]);
+        ], $options['http_options'] ?? []);
 
         // a delete-by-query is answered with 200 even when deleting individual documents failed
         if (\is_array($result['failures'] ?? null) && [] !== $result['failures']) {
@@ -177,7 +177,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     ],
                 ],
             ],
-        ]);
+        ], $options['http_options'] ?? []);
 
         foreach ($documents['hits']['hits'] as $document) {
             yield $this->convertToVectorDocument($document);
@@ -186,10 +186,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param \Closure|array<string, mixed> $payload
+     * @param array<string, mixed>          $httpOptions
      *
      * @return array<string, mixed>
      */
-    private function request(string $method, string $path, \Closure|array $payload = []): array
+    private function request(string $method, string $path, \Closure|array $payload = [], array $httpOptions = []): array
     {
         $finalOptions = [];
 
@@ -200,13 +201,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
         if ($payload instanceof \Closure) {
             $finalOptions = [
                 'headers' => [
+                    ...$httpOptions['headers'] ?? [],
                     'Content-Type' => 'application/x-ndjson',
                 ],
                 'body' => $payload(),
             ];
         }
 
-        $response = $this->httpClient->request($method, $path, $finalOptions);
+        $response = $this->httpClient->request($method, $path, [...$httpOptions, ...$finalOptions]);
 
         return $response->toArray();
     }

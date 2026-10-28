@@ -52,7 +52,7 @@ final class OrmStore implements StoreInterface
      *
      * @throws InvalidArgumentException when there is no entity with the id of a document
      */
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];

@@ -489,7 +489,7 @@ final class SearchStoreTest extends TestCase
         $store = new SearchStore(new MockHttpClient(), 'test-index');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+        $this->expectExceptionMessage('Only the "batch_size" and "http_options" options are supported.');
 
         $store->clear(['foo' => 'bar']);
     }
@@ -586,6 +586,31 @@ final class SearchStoreTest extends TestCase
         $this->expectExceptionMessage('Azure Search request failed:');
 
         $store->remove('nonexistent-doc');
+    }
+
+    public function testStorePassesHttpOptionsToAllRequests()
+    {
+        $timeouts = [];
+        $searches = 0;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$timeouts, &$searches): JsonMockResponse {
+            $timeouts[] = $options['timeout'] ?? null;
+
+            if (str_ends_with($url, '/search') && 2 === ++$searches) {
+                return new JsonMockResponse(['value' => [['id' => 'doc1']]], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse(['value' => []], ['http_code' => 200]);
+        }, 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+        $httpOptions = ['http_options' => ['timeout' => 7.0]];
+
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])), $httpOptions);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), $httpOptions));
+        $store->remove('doc1', $httpOptions);
+        $store->clear($httpOptions);
+
+        $this->assertSame([7.0, 7.0, 7.0, 7.0, 7.0, 7.0], $timeouts);
     }
 
     public function testStoreSupportsVectorQuery()

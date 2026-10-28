@@ -40,6 +40,7 @@ final class TraceableStoreTest extends TestCase
             [
                 'method' => 'add',
                 'documents' => $document,
+                'options' => [],
                 'called_at' => $clock->now(),
             ],
         ], $traceableStore->getCalls());
@@ -123,7 +124,7 @@ final class TraceableStoreTest extends TestCase
             {
             }
 
-            public function add(VectorDocumentInterface|array $documents): void
+            public function add(VectorDocumentInterface|array $documents, array $options = []): void
             {
             }
 
@@ -187,7 +188,7 @@ final class TraceableStoreTest extends TestCase
                 $this->dropOptions = $options;
             }
 
-            public function add(VectorDocumentInterface|array $documents): void
+            public function add(VectorDocumentInterface|array $documents, array $options = []): void
             {
             }
 

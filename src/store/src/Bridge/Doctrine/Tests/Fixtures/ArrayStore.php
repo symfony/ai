@@ -27,7 +27,7 @@ final class ArrayStore implements StoreInterface
 
     public ?\Throwable $failure = null;
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if (null !== $this->failure) {
             throw $this->failure;
