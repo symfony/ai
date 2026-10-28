@@ -175,7 +175,7 @@ class AiBundleTest extends TestCase
 
         // Mock services that are used as platform create arguments, but should not be tested here or are not available.
         $container->set('event_dispatcher', $this->createMock(EventDispatcherInterface::class));
-        $container->getDefinition('ai.platform.vertexai')->replaceArgument(3, $this->createMock(HttpClientInterface::class));
+        $container->findDefinition('ai.platform.vertexai')->replaceArgument(3, $this->createMock(HttpClientInterface::class));
 
         $platforms = $container->findTaggedServiceIds('ai.platform');
 
@@ -4931,10 +4931,10 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.decart'));
+        $this->assertTrue($container->has('ai.platform.decart'));
         $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.decart'));
 
-        $definition = $container->getDefinition('ai.platform.decart');
+        $definition = $container->findDefinition('ai.platform.decart');
 
         $this->assertTrue($definition->isLazy());
         $this->assertSame([
@@ -4955,7 +4955,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'decart']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'decart.default'], ['name' => 'decart']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $decart'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
@@ -4974,10 +4974,10 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.minimax'));
+        $this->assertTrue($container->has('ai.platform.minimax'));
         $this->assertTrue($container->hasDefinition('ai.platform.model_catalog.minimax'));
 
-        $definition = $container->getDefinition('ai.platform.minimax');
+        $definition = $container->findDefinition('ai.platform.minimax');
 
         $this->assertTrue($definition->isLazy());
         $this->assertSame([
@@ -4999,7 +4999,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'minimax']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'minimax.default'], ['name' => 'minimax']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $minimax'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
@@ -5018,12 +5018,12 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.job_client.venice');
+        $definition = $container->findDefinition('ai.platform.job_client.venice');
 
         $this->assertSame([VeniceFactory::class, 'createJobClient'], $definition->getFactory());
         $this->assertSame('venice_key', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
-        $this->assertSame([['key' => 'venice']], $definition->getTag('ai.platform.job_client'));
+        $this->assertSame([['key' => 'venice.default'], ['key' => 'venice']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $venice'));
     }
@@ -5041,12 +5041,12 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.job_client.higgsfield');
+        $definition = $container->findDefinition('ai.platform.job_client.higgsfield');
 
         $this->assertSame([HiggsfieldFactory::class, 'createJobClient'], $definition->getFactory());
         $this->assertSame('higgsfield_key', $definition->getArgument(0));
         $this->assertSame('higgsfield_secret', $definition->getArgument(1));
-        $this->assertSame([['key' => 'higgsfield']], $definition->getTag('ai.platform.job_client'));
+        $this->assertSame([['key' => 'higgsfield.default'], ['key' => 'higgsfield']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $higgsfield'));
     }
@@ -5068,12 +5068,12 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.job_client.minimax');
+        $definition = $container->findDefinition('ai.platform.job_client.minimax');
 
         $this->assertSame([MiniMaxFactory::class, 'createJobClient'], $definition->getFactory());
         $this->assertSame('minimax_key_full', $definition->getArgument(0));
         $this->assertSame('https://api.minimax.io/v2', $definition->getArgument(2));
-        $this->assertSame([['key' => 'minimax']], $definition->getTag('ai.platform.job_client'));
+        $this->assertSame([['key' => 'minimax.default'], ['key' => 'minimax']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $minimax'));
     }
@@ -5094,15 +5094,109 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.job_client.openai');
+        $definition = $container->findDefinition('ai.platform.job_client.openai');
 
         $this->assertSame([OpenAiFactory::class, 'createJobClient'], $definition->getFactory());
         $this->assertSame('sk-openai_key_full', $definition->getArgument(0));
         $this->assertSame('EU', $definition->getArgument(2));
         $this->assertCount(3, $definition->getArguments());
-        $this->assertSame([['key' => 'openai']], $definition->getTag('ai.platform.job_client'));
+        $this->assertSame([['key' => 'openai.default'], ['key' => 'openai']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $openai'));
+    }
+
+    public function testPlatformCanBeConfiguredWithNamedInstances()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'gemini' => [
+                        'default' => [
+                            'api_key' => 'gemini_key',
+                        ],
+                        'secondary' => [
+                            'api_key' => 'gemini_secondary_key',
+                            'http_client' => 'app.http_client',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.platform.gemini.default', (string) $container->getAlias('ai.platform.gemini'));
+
+        $definition = $container->getDefinition('ai.platform.gemini.default');
+        $this->assertSame('gemini_key', $definition->getArgument(0));
+        $this->assertSame([['name' => 'gemini.default'], ['name' => 'gemini']], $definition->getTag('ai.platform'));
+
+        $definition = $container->getDefinition('ai.platform.gemini.secondary');
+        $this->assertSame('gemini_secondary_key', $definition->getArgument(0));
+        $this->assertEquals(new Reference('app.http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE), $definition->getArgument(1));
+        $this->assertSame([['name' => 'gemini.secondary']], $definition->getTag('ai.platform'));
+
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $gemini'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $geminiDefault'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $geminiSecondary'));
+    }
+
+    public function testDefaultInstanceOfNamedPlatformIsAliasedToThePlatformType()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'azure' => [
+                        'default' => [
+                            'api_key' => 'azure_key',
+                            'base_url' => 'myazure.openai.azure.com/',
+                            'deployment' => 'gpt-4o',
+                            'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.azure.default'));
+        $this->assertSame('ai.platform.azure.default', (string) $container->getAlias('ai.platform.azure'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $azure'));
+        $this->assertTrue($container->hasAlias(PlatformInterface::class.' $azureDefault'));
+    }
+
+    public function testPlatformWithoutRequiredOptionsCanBeConfiguredWithNull()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => null,
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->has('ai.platform.ollama'));
+    }
+
+    public function testNamedPlatformInstanceRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'eu' => [
+                            'api_key' => 'sk-openai_key_full',
+                            'region' => 'EU',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.platform.openai.eu'));
+
+        $definition = $container->getDefinition('ai.platform.job_client.openai.eu');
+        $this->assertSame('sk-openai_key_full', $definition->getArgument(0));
+        $this->assertSame([['key' => 'openai.eu']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $openaiEu'));
     }
 
     public function testBedrockMantlePlatformUsesCompletionsRouteByDefault()
@@ -5143,7 +5237,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(7));
         $this->assertNull($definition->getArgument(8));
         $this->assertNull($definition->getArgument(9));
-        $this->assertSame([['name' => 'bedrock.default']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'bedrock.default'], ['name' => 'bedrock']], $definition->getTag('ai.platform'));
     }
 
     public function testBedrockMantlePlatformCanTargetResponsesRouteWithSigV4()
@@ -5303,9 +5397,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
+        $this->assertTrue($container->has('ai.platform.ollama'));
 
-        $definition = $container->getDefinition('ai.platform.ollama');
+        $definition = $container->findDefinition('ai.platform.ollama');
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -5335,9 +5429,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
+        $this->assertTrue($container->has('ai.platform.ollama'));
 
-        $definition = $container->getDefinition('ai.platform.ollama');
+        $definition = $container->findDefinition('ai.platform.ollama');
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -5365,9 +5459,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.ollama'));
+        $this->assertTrue($container->has('ai.platform.ollama'));
 
-        $definition = $container->getDefinition('ai.platform.ollama');
+        $definition = $container->findDefinition('ai.platform.ollama');
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -5883,9 +5977,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->has('ai.platform.elevenlabs'));
 
-        $definition = $container->getDefinition('ai.platform.elevenlabs');
+        $definition = $container->findDefinition('ai.platform.elevenlabs');
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -5903,7 +5997,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs.default'], ['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
@@ -5920,9 +6014,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->has('ai.platform.elevenlabs'));
 
-        $definition = $container->getDefinition('ai.platform.elevenlabs');
+        $definition = $container->findDefinition('ai.platform.elevenlabs');
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -5939,7 +6033,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs.default'], ['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
@@ -5956,9 +6050,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->has('ai.platform.elevenlabs'));
 
-        $definition = $container->getDefinition('ai.platform.elevenlabs');
+        $definition = $container->findDefinition('ai.platform.elevenlabs');
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -5975,7 +6069,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs.default'], ['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
@@ -5991,9 +6085,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.elevenlabs'));
+        $this->assertTrue($container->has('ai.platform.elevenlabs'));
 
-        $definition = $container->getDefinition('ai.platform.elevenlabs');
+        $definition = $container->findDefinition('ai.platform.elevenlabs');
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -6010,7 +6104,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'elevenlabs.default'], ['name' => 'elevenlabs']], $definition->getTag('ai.platform'));
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $elevenlabs'));
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
@@ -6028,9 +6122,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.deepgram'));
+        $this->assertTrue($container->has('ai.platform.deepgram'));
 
-        $definition = $container->getDefinition('ai.platform.deepgram');
+        $definition = $container->findDefinition('ai.platform.deepgram');
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -6048,9 +6142,9 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform.speech'));
-        $this->assertSame([['name' => 'deepgram']], $definition->getTag('ai.platform.speech'));
+        $this->assertSame([['name' => 'deepgram.default']], $definition->getTag('ai.platform.speech'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'deepgram']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'deepgram.default'], ['name' => 'deepgram']], $definition->getTag('ai.platform'));
 
         // Custom endpoint
         $container = $this->buildContainer([
@@ -6064,7 +6158,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.deepgram');
+        $definition = $container->findDefinition('ai.platform.deepgram');
         $this->assertSame('https://eu.api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
 
@@ -6079,9 +6173,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.deepgram'));
+        $this->assertTrue($container->has('ai.platform.deepgram'));
 
-        $definition = $container->getDefinition('ai.platform.deepgram');
+        $definition = $container->findDefinition('ai.platform.deepgram');
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -6098,9 +6192,9 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform.speech'));
-        $this->assertSame([['name' => 'deepgram']], $definition->getTag('ai.platform.speech'));
+        $this->assertSame([['name' => 'deepgram.default']], $definition->getTag('ai.platform.speech'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'deepgram']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'deepgram.default'], ['name' => 'deepgram']], $definition->getTag('ai.platform'));
     }
 
     public function testFailoverPlatformCanBeCreated()
@@ -6171,9 +6265,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.openai'));
+        $this->assertTrue($container->has('ai.platform.openai'));
 
-        $definition = $container->getDefinition('ai.platform.openai');
+        $definition = $container->findDefinition('ai.platform.openai');
         $arguments = $definition->getArguments();
 
         $this->assertCount(6, $arguments);
@@ -6197,9 +6291,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.openai'));
+        $this->assertTrue($container->has('ai.platform.openai'));
 
-        $definition = $container->getDefinition('ai.platform.openai');
+        $definition = $container->findDefinition('ai.platform.openai');
         $arguments = $definition->getArguments();
 
         $this->assertCount(6, $arguments);
@@ -6236,9 +6330,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.perplexity'));
+        $this->assertTrue($container->has('ai.platform.perplexity'));
 
-        $definition = $container->getDefinition('ai.platform.perplexity');
+        $definition = $container->findDefinition('ai.platform.perplexity');
         $arguments = $definition->getArguments();
 
         $this->assertCount(5, $arguments);
@@ -6263,9 +6357,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.edenai'));
+        $this->assertTrue($container->has('ai.platform.edenai'));
 
-        $definition = $container->getDefinition('ai.platform.edenai');
+        $definition = $container->findDefinition('ai.platform.edenai');
 
         $this->assertTrue($definition->isLazy());
         $this->assertSame([
@@ -6288,7 +6382,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => PlatformInterface::class]], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.platform'));
-        $this->assertSame([['name' => 'edenai']], $definition->getTag('ai.platform'));
+        $this->assertSame([['name' => 'edenai.default'], ['name' => 'edenai']], $definition->getTag('ai.platform'));
     }
 
     public function testEdenAiPlatformRegistersItsJobClient()
@@ -6303,13 +6397,13 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.job_client.edenai'));
+        $this->assertTrue($container->has('ai.platform.job_client.edenai'));
 
-        $definition = $container->getDefinition('ai.platform.job_client.edenai');
+        $definition = $container->findDefinition('ai.platform.job_client.edenai');
 
         $this->assertSame(EdenAiJobClient::class, $definition->getClass());
         $this->assertSame([EdenAiFactory::class, 'createJobClient'], $definition->getFactory());
-        $this->assertSame([['key' => 'edenai']], $definition->getTag('ai.platform.job_client'));
+        $this->assertSame([['key' => 'edenai.default'], ['key' => 'edenai']], $definition->getTag('ai.platform.job_client'));
 
         $arguments = $definition->getArguments();
 
@@ -6331,9 +6425,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.deepseek'));
+        $this->assertTrue($container->has('ai.platform.deepseek'));
 
-        $definition = $container->getDefinition('ai.platform.deepseek');
+        $definition = $container->findDefinition('ai.platform.deepseek');
         $arguments = $definition->getArguments();
 
         $this->assertCount(5, $arguments);
@@ -6361,9 +6455,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.deepseek'));
+        $this->assertTrue($container->has('ai.platform.deepseek'));
 
-        $definition = $container->getDefinition('ai.platform.deepseek');
+        $definition = $container->findDefinition('ai.platform.deepseek');
         $arguments = $definition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[1]);
@@ -6382,9 +6476,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.fireworks'));
+        $this->assertTrue($container->has('ai.platform.fireworks'));
 
-        $definition = $container->getDefinition('ai.platform.fireworks');
+        $definition = $container->findDefinition('ai.platform.fireworks');
         $arguments = $definition->getArguments();
 
         $this->assertCount(5, $arguments);
@@ -6411,9 +6505,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.fireworks'));
+        $this->assertTrue($container->has('ai.platform.fireworks'));
 
-        $definition = $container->getDefinition('ai.platform.fireworks');
+        $definition = $container->findDefinition('ai.platform.fireworks');
         $arguments = $definition->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[1]);
@@ -6433,9 +6527,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.higgsfield'));
+        $this->assertTrue($container->has('ai.platform.higgsfield'));
 
-        $definition = $container->getDefinition('ai.platform.higgsfield');
+        $definition = $container->findDefinition('ai.platform.higgsfield');
         $arguments = $definition->getArguments();
 
         $this->assertCount(7, $arguments);
@@ -6463,7 +6557,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $arguments = $container->getDefinition('ai.platform.huggingface')->getArguments();
+        $arguments = $container->findDefinition('ai.platform.huggingface')->getArguments();
 
         $this->assertSame('hf-test-key', $arguments[0]);
         $this->assertNull($arguments[1]);
@@ -6485,7 +6579,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $arguments = $container->getDefinition('ai.platform.huggingface')->getArguments();
+        $arguments = $container->findDefinition('ai.platform.huggingface')->getArguments();
         $this->assertSame('nscale', $arguments[1]);
 
         $catalog = $arguments[3];
@@ -6512,7 +6606,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $arguments = $container->getDefinition('ai.platform.higgsfield')->getArguments();
+        $arguments = $container->findDefinition('ai.platform.higgsfield')->getArguments();
 
         $this->assertInstanceOf(Reference::class, $arguments[4]);
         $this->assertSame('my_custom_model_catalog', (string) $arguments[4]);
@@ -6534,9 +6628,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.higgsfield'));
+        $this->assertTrue($container->has('ai.platform.higgsfield'));
 
-        $definition = $container->getDefinition('ai.platform.higgsfield');
+        $definition = $container->findDefinition('ai.platform.higgsfield');
         $arguments = $definition->getArguments();
 
         $this->assertSame('https://example.test', $arguments[2]);
@@ -6556,9 +6650,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.together'));
+        $this->assertTrue($container->has('ai.platform.together'));
 
-        $definition = $container->getDefinition('ai.platform.together');
+        $definition = $container->findDefinition('ai.platform.together');
         $arguments = $definition->getArguments();
 
         $this->assertCount(6, $arguments);
@@ -6588,9 +6682,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.together'));
+        $this->assertTrue($container->has('ai.platform.together'));
 
-        $definition = $container->getDefinition('ai.platform.together');
+        $definition = $container->findDefinition('ai.platform.together');
         $arguments = $definition->getArguments();
 
         $this->assertSame('https://example.test', $arguments[0]);
@@ -6609,9 +6703,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.transformersphp'));
+        $this->assertTrue($container->has('ai.platform.transformersphp'));
 
-        $definition = $container->getDefinition('ai.platform.transformersphp');
+        $definition = $container->findDefinition('ai.platform.transformersphp');
         $arguments = $definition->getArguments();
 
         $this->assertCount(2, $arguments);
@@ -9085,7 +9179,7 @@ class AiBundleTest extends TestCase
     public function testFailoverPlatformNameConflictWithPlatformThrowsException()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The platforms "ai.platform.anthropic" and "ai.platform.failover.anthropic" have conflicting names, platform names must be unique.');
+        $this->expectExceptionMessage('The platforms "ai.platform.anthropic.default" and "ai.platform.failover.anthropic" have conflicting names, platform names must be unique.');
 
         $this->buildContainer([
             'ai' => [
@@ -10093,7 +10187,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $modelCatalog = $container->getDefinition('ai.platform.openai')->getArgument(2);
+        $modelCatalog = $container->findDefinition('ai.platform.openai')->getArgument(2);
 
         $this->assertInstanceOf(Reference::class, $modelCatalog);
         $this->assertSame('my_model_catalog', (string) $modelCatalog);
@@ -10109,7 +10203,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('ai.platform.model_catalog.openai', (string) $container->getDefinition('ai.platform.openai')->getArgument(2));
+        $this->assertSame('ai.platform.model_catalog.openai', (string) $container->findDefinition('ai.platform.openai')->getArgument(2));
     }
 
     public function testModelCatalogModelsTakePrecedenceOverBundledCatalog()
@@ -10132,7 +10226,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.openai')->getArgument(2));
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->findDefinition('ai.platform.openai')->getArgument(2));
 
         $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
         $this->assertEquals([
@@ -10161,7 +10255,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.vertexai')->getArgument(4));
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->findDefinition('ai.platform.vertexai')->getArgument(4));
 
         $this->assertSame(Model::class, $configuredCatalog->getArgument(0)['my-custom-model']['class']);
         $this->assertSame('ai.platform.model_catalog.vertexai.gemini', (string) $modelCatalog);
@@ -10219,7 +10313,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.openai')->getArgument(2));
+        [, $modelCatalog] = $this->getCompositeModelCatalogs($container->findDefinition('ai.platform.openai')->getArgument(2));
 
         $this->assertSame('my_model_catalog', (string) $modelCatalog);
     }
@@ -10250,8 +10344,8 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [, $ollamaCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
-        [, $edenAiCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.edenai')->getArgument(2));
+        [, $ollamaCatalog] = $this->getCompositeModelCatalogs($container->findDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+        [, $edenAiCatalog] = $this->getCompositeModelCatalogs($container->findDefinition('ai.platform.edenai')->getArgument(2));
 
         $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $ollamaCatalog->getFactory());
         $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $edenAiCatalog->getFactory());
@@ -10274,7 +10368,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->findDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
 
         $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
         $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
@@ -10322,14 +10416,14 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $modelCatalog = $container->getDefinition('ai.platform.openai')->getArgument(2);
+        $modelCatalog = $container->findDefinition('ai.platform.openai')->getArgument(2);
 
         $this->assertInstanceOf(Definition::class, $modelCatalog);
         $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
         $this->assertSame('my_model_catalog', (string) $modelCatalog->getArgument(0));
         $this->assertSame('cache.app', (string) $modelCatalog->getArgument(1));
         $this->assertSame(3600, $modelCatalog->getArgument(2));
-        $this->assertSame('ai.platform.openai', $modelCatalog->getArgument(3));
+        $this->assertSame('ai.platform.openai.default', $modelCatalog->getArgument(3));
     }
 
     public function testModelCatalogCacheServiceAndTtlAreConfigurable()
@@ -10350,7 +10444,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $modelCatalog = $container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog');
+        $modelCatalog = $container->findDefinition('ai.platform.ollama')->getArgument('$modelCatalog');
 
         $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
         $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $modelCatalog->getArgument(0)->getFactory());
@@ -10360,7 +10454,7 @@ class AiBundleTest extends TestCase
         ));
         $this->assertSame('cache.model_catalog', (string) $modelCatalog->getArgument(1));
         $this->assertSame(60, $modelCatalog->getArgument(2));
-        $this->assertSame('ai.platform.ollama', $modelCatalog->getArgument(3));
+        $this->assertSame('ai.platform.ollama.default', $modelCatalog->getArgument(3));
     }
 
     public function testModelCatalogApiIsOptIn()
@@ -10377,8 +10471,8 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('ai.platform.model_catalog.openrouter', (string) $container->getDefinition('ai.platform.openrouter')->getArgument(2));
-        $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $container->getDefinition('ai.platform.edenai')->getArgument(2)->getFactory());
+        $this->assertSame('ai.platform.model_catalog.openrouter', (string) $container->findDefinition('ai.platform.openrouter')->getArgument(2));
+        $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $container->findDefinition('ai.platform.edenai')->getArgument(2)->getFactory());
     }
 
     public function testModelCatalogOfAmazeeAiIsApiBased()
@@ -10394,7 +10488,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $modelCatalog = $container->getDefinition('ai.platform.amazeeai')->getArgument(3);
+        $modelCatalog = $container->findDefinition('ai.platform.amazeeai')->getArgument(3);
 
         $this->assertSame([AmazeeAiFactory::class, 'createModelCatalog'], $modelCatalog->getFactory());
         $this->assertSame(['https://llm.us104.amazee.ai', 'test', 'http_client'], array_map(
@@ -10438,7 +10532,7 @@ class AiBundleTest extends TestCase
         ];
         yield 'api on a bridge without API catalog' => [
             ['openai' => ['api_key' => 'sk-test', 'model_catalog' => ['api' => true]]],
-            'Unrecognized option "api" under "ai.platform.openai.model_catalog"',
+            'Unrecognized option "api" under "ai.platform.openai.default.model_catalog"',
         ];
     }
 
@@ -10455,9 +10549,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+        $this->assertTrue($container->has('ai.platform.venice'));
 
-        $definition = $container->getDefinition('ai.platform.venice');
+        $definition = $container->findDefinition('ai.platform.venice');
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -10492,9 +10586,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+        $this->assertTrue($container->has('ai.platform.venice'));
 
-        $definition = $container->getDefinition('ai.platform.venice');
+        $definition = $container->findDefinition('ai.platform.venice');
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -10528,9 +10622,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+        $this->assertTrue($container->has('ai.platform.venice'));
 
-        $definition = $container->getDefinition('ai.platform.venice');
+        $definition = $container->findDefinition('ai.platform.venice');
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -10564,9 +10658,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.venice'));
+        $this->assertTrue($container->has('ai.platform.venice'));
 
-        $definition = $container->getDefinition('ai.platform.venice');
+        $definition = $container->findDefinition('ai.platform.venice');
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
@@ -10604,9 +10698,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.vertexai'));
+        $this->assertTrue($container->has('ai.platform.vertexai'));
 
-        $definition = $container->getDefinition('ai.platform.vertexai');
+        $definition = $container->findDefinition('ai.platform.vertexai');
         $arguments = $definition->getArguments();
 
         $this->assertSame('us-central1', $arguments[0]);
@@ -10636,9 +10730,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.vertexai'));
+        $this->assertTrue($container->has('ai.platform.vertexai'));
 
-        $definition = $container->getDefinition('ai.platform.vertexai');
+        $definition = $container->findDefinition('ai.platform.vertexai');
         $arguments = $definition->getArguments();
 
         $this->assertNull($arguments[0]);
@@ -10726,8 +10820,8 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.traceable_platform.azure.eu'));
         $this->assertTrue($container->hasDefinition('ai.traceable_platform.azure.us'));
 
-        // For single-instance platforms like anthropic, the service name should be ai.traceable_platform.anthropic
-        $this->assertTrue($container->hasDefinition('ai.traceable_platform.anthropic'));
+        // The default instance of anthropic is named ai.traceable_platform.anthropic.default
+        $this->assertTrue($container->hasDefinition('ai.traceable_platform.anthropic.default'));
 
         // Verify the old naming pattern (just the suffix) is NOT used - this would have caused collisions
         $this->assertFalse($container->hasDefinition('ai.traceable_platform.eu'));
@@ -10759,7 +10853,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $decorators = [
-            'ai.traceable_platform.anthropic',
+            'ai.traceable_platform.anthropic.default',
             'ai.traceable_toolbox.my_agent',
             'ai.fault_tolerant_toolbox.my_agent',
             'ai.traceable_message_store.main',
@@ -10785,9 +10879,9 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition('ai.platform.ovh'));
+        $this->assertTrue($container->has('ai.platform.ovh'));
 
-        $definition = $container->getDefinition('ai.platform.ovh');
+        $definition = $container->findDefinition('ai.platform.ovh');
         $arguments = $definition->getArguments();
 
         $this->assertCount(5, $arguments);

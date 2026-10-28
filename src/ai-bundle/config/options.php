@@ -16,13 +16,27 @@ use Symfony\AI\Platform\ModelOptionsParser;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Component\Config\Definition\ArrayNode;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
     $import = fn (string $resource): ArrayNodeDefinition => require __DIR__.'/'.$resource.'.php';
+    $importPlatform = static function (string $resource) use ($import): ArrayNodeDefinition {
+        $node = $import($resource)->getNode(true);
+        \assert($node instanceof PrototypedArrayNode && $node->getPrototype() instanceof ArrayNode);
+        $options = $node->getPrototype()->getChildren();
+
+        // Single unnamed instance, kept as "default" for backward compatibility
+        return $import($resource)
+            ->beforeNormalization()
+                ->ifTrue(static fn ($v): bool => null === $v || [] === $v || (\is_array($v) && [] !== array_intersect_key($v, $options)))
+                ->then(static fn (?array $v): array => ['default' => $v ?? []])
+            ->end();
+    };
     $assertUniqueNames = static fn (string $message, array $subTypes = []): \Closure => static function (array $types) use ($message, $subTypes): array {
         $namesByArgument = [];
         foreach ($types as $type => $services) {
@@ -49,43 +63,43 @@ return static function (DefinitionConfigurator $configurator): void {
         ->children()
             ->arrayNode('platform')
                 ->children()
-                    ->append($import('platform/albert'))
-                    ->append($import('platform/amazeeai'))
-                    ->append($import('platform/anthropic'))
-                    ->append($import('platform/azure'))
-                    ->append($import('platform/bedrock'))
-                    ->append($import('platform/cache'))
-                    ->append($import('platform/cartesia'))
-                    ->append($import('platform/cerebras'))
-                    ->append($import('platform/cohere'))
-                    ->append($import('platform/decart'))
-                    ->append($import('platform/deepgram'))
-                    ->append($import('platform/deepseek'))
-                    ->append($import('platform/dockermodelrunner'))
-                    ->append($import('platform/edenai'))
-                    ->append($import('platform/elevenlabs'))
-                    ->append($import('platform/failover'))
-                    ->append($import('platform/fireworks'))
-                    ->append($import('platform/gemini'))
-                    ->append($import('platform/generic'))
-                    ->append($import('platform/higgsfield'))
-                    ->append($import('platform/huggingface'))
-                    ->append($import('platform/lmstudio'))
-                    ->append($import('platform/minimax'))
-                    ->append($import('platform/mistral'))
-                    ->append($import('platform/ollama'))
-                    ->append($import('platform/openai'))
-                    ->append($import('platform/openresponses'))
-                    ->append($import('platform/openrouter'))
-                    ->append($import('platform/ovh'))
-                    ->append($import('platform/perplexity'))
-                    ->append($import('platform/scaleway'))
-                    ->append($import('platform/together'))
-                    ->append($import('platform/transformersphp'))
-                    ->append($import('platform/typesafe'))
-                    ->append($import('platform/venice'))
-                    ->append($import('platform/vertexai'))
-                    ->append($import('platform/voyage'))
+                    ->append($importPlatform('platform/albert'))
+                    ->append($importPlatform('platform/amazeeai'))
+                    ->append($importPlatform('platform/anthropic'))
+                    ->append($importPlatform('platform/azure'))
+                    ->append($importPlatform('platform/bedrock'))
+                    ->append($importPlatform('platform/cache'))
+                    ->append($importPlatform('platform/cartesia'))
+                    ->append($importPlatform('platform/cerebras'))
+                    ->append($importPlatform('platform/cohere'))
+                    ->append($importPlatform('platform/decart'))
+                    ->append($importPlatform('platform/deepgram'))
+                    ->append($importPlatform('platform/deepseek'))
+                    ->append($importPlatform('platform/dockermodelrunner'))
+                    ->append($importPlatform('platform/edenai'))
+                    ->append($importPlatform('platform/elevenlabs'))
+                    ->append($importPlatform('platform/failover'))
+                    ->append($importPlatform('platform/fireworks'))
+                    ->append($importPlatform('platform/gemini'))
+                    ->append($importPlatform('platform/generic'))
+                    ->append($importPlatform('platform/higgsfield'))
+                    ->append($importPlatform('platform/huggingface'))
+                    ->append($importPlatform('platform/lmstudio'))
+                    ->append($importPlatform('platform/minimax'))
+                    ->append($importPlatform('platform/mistral'))
+                    ->append($importPlatform('platform/ollama'))
+                    ->append($importPlatform('platform/openai'))
+                    ->append($importPlatform('platform/openresponses'))
+                    ->append($importPlatform('platform/openrouter'))
+                    ->append($importPlatform('platform/ovh'))
+                    ->append($importPlatform('platform/perplexity'))
+                    ->append($importPlatform('platform/scaleway'))
+                    ->append($importPlatform('platform/together'))
+                    ->append($importPlatform('platform/transformersphp'))
+                    ->append($importPlatform('platform/typesafe'))
+                    ->append($importPlatform('platform/venice'))
+                    ->append($importPlatform('platform/vertexai'))
+                    ->append($importPlatform('platform/voyage'))
                 ->end()
             ->end()
             ->arrayNode('agent')
