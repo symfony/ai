@@ -16,11 +16,14 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 $modelCatalog = require __DIR__.'/model_catalog.php';
 
 return (new ArrayNodeDefinition('ovh'))
-    ->children()
-        ->scalarNode('api_key')->isRequired()->end()
-        ->stringNode('http_client')
-            ->defaultValue('http_client')
-            ->info('Service ID of the HTTP client to use')
+    ->useAttributeAsKey('name')
+    ->arrayPrototype()
+        ->children()
+            ->scalarNode('api_key')->isRequired()->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
+                ->info('Service ID of the HTTP client to use')
+            ->end()
+            ->append($modelCatalog('static'))
         ->end()
-        ->append($modelCatalog('static'))
     ->end();
