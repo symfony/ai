@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
+ * Add the `symfony-profiler-summary` tool: counts the latest top-level requests (500 by default, sub-requests and console commands skipped), reports how many failed (status 400 or above) and groups the failures by `METHOD STATUS path` without the query string, most frequent first, at most 20 groups, with `failing_requests_truncated`, so "what fails most" no longer takes paging through `symfony-profiler-list`. `truncated` says whether older requests were left out; `limit=0` looks at all of them
 
 0.14
 ----

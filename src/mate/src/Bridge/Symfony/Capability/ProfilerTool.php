@@ -25,6 +25,8 @@ use Symfony\AI\Mate\Exception\RuntimeException;
  */
 final class ProfilerTool
 {
+    private const MAX_FAILING_GROUPS = 20;
+
     public function __construct(
         private readonly ?ProfilerDataProvider $dataProvider = null,
     ) {
@@ -114,6 +116,67 @@ final class ProfilerTool
         }
 
         return ResponseEncoder::encodeUntrusted($data);
+    }
+
+    /**
+     * @param int         $limit   How many of the latest top-level requests to look at, 0 for all of them
+     * @param string|null $context Only look at this Symfony kernel context
+     */
+    #[MateTool(name: 'symfony-profiler-summary', title: 'Symfony Profiler Summary', description: 'Summarize the latest recorded requests in one call: how many "requests" there were, how many "failed" (status 400 or above), and which requests fail most often as "failing_requests_by_count" (key is "METHOD STATUS path" without the query string, value is the count, highest first, at most 20 groups, with "failing_requests_truncated" true when more exist). Sub-requests and console commands are not counted. Only the latest "limit" requests are looked at, and "truncated" says whether older ones were left out; limit=0 looks at all of them. Use it to answer how many requests failed and which fails most, then list the cases with symfony-profiler-list.')]
+    public function summarizeTraffic(int $limit = 500, ?string $context = null): string
+    {
+        if ($limit < 0) {
+            throw new InvalidArgumentException('limit must be 0 or greater.');
+        }
+
+        $requests = 0;
+        $truncated = false;
+        $failing = [];
+
+        foreach ($this->getDataProvider()->readIndex() as $profile) {
+            if (null !== $context && $context !== $profile->getContext()) {
+                continue;
+            }
+
+            $parentToken = $profile->getParentToken();
+            if (null !== $parentToken && '' !== $parentToken) {
+                continue;
+            }
+
+            $type = $profile->getType();
+            if (null !== $type && 'request' !== $type) {
+                continue;
+            }
+
+            if ($limit > 0 && $requests >= $limit) {
+                $truncated = true;
+                break;
+            }
+
+            ++$requests;
+
+            $statusCode = $profile->getStatusCode();
+            if (null === $statusCode || $statusCode < 400) {
+                continue;
+            }
+
+            $url = $profile->getUrl();
+            $key = \sprintf('%s %d %s', $profile->getMethod(), $statusCode, (string) parse_url($url, \PHP_URL_PATH));
+            $failing[$key] = ($failing[$key] ?? 0) + 1;
+        }
+
+        uksort($failing, static fn (string $a, string $b): int => [$failing[$b], $a] <=> [$failing[$a], $b]);
+
+        $failed = array_sum($failing);
+        $failingTruncated = \count($failing) > self::MAX_FAILING_GROUPS;
+
+        return ResponseEncoder::encodeUntrusted([
+            'requests' => $requests,
+            'failed' => $failed,
+            'truncated' => $truncated,
+            'failing_requests_truncated' => $failingTruncated,
+            'failing_requests_by_count' => \array_slice($failing, 0, self::MAX_FAILING_GROUPS, true),
+        ]);
     }
 
     private function getDataProvider(): ProfilerDataProvider
