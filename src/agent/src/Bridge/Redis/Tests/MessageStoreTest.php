@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -83,6 +84,18 @@ final class MessageStoreTest extends TestCase
         $redis->expects($this->once())->method('exec')->willReturn(false);
 
         $this->expectException(ConflictException::class);
+
+        (new MessageStore($redis, 'chat'))->save(new MessageBag(Message::ofUser('Hello')));
+    }
+
+    public function testSaveUnwatchesTheKeyWhenTheStoredConversationCannotBeLoaded()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $redis->method('get')->willReturn('{invalid');
+        $redis->expects($this->once())->method('unwatch');
+        $redis->expects($this->never())->method('multi');
+
+        $this->expectException(NotEncodableValueException::class);
 
         (new MessageStore($redis, 'chat'))->save(new MessageBag(Message::ofUser('Hello')));
     }

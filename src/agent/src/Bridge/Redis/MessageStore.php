@@ -77,18 +77,20 @@ final class MessageStore implements ManagedMessageStoreInterface, MessageStoreIn
         $payload = $this->serializer->serialize($messages, 'json');
 
         $this->redis->watch($key);
+        $watching = true;
 
         try {
             ConflictDetector::assertContinues($this->load($messages->getId()), $messages);
-        } catch (ConflictException $exception) {
-            $this->redis->unwatch();
 
-            throw $exception;
+            $watching = false;
+            $result = $this->redis->multi()
+                ->set($key, $payload)
+                ->exec();
+        } finally {
+            if ($watching) {
+                $this->redis->unwatch();
+            }
         }
-
-        $result = $this->redis->multi()
-            ->set($key, $payload)
-            ->exec();
 
         if (!\is_array($result)) {
             throw ConflictException::forMessages($messages);
