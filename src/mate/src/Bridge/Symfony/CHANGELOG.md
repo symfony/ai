@@ -6,6 +6,7 @@ CHANGELOG
 
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
+ * Add `total` and `truncated` to `symfony-profiler-list`, ahead of the `profiles`; `limit` is capped at 500 (also for `limit=0`) and a negative `limit` is rejected
 
 0.14
 ----
