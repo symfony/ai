@@ -43,7 +43,7 @@ final class McpSchemaWiringTest extends TestCase
         $tools = iterator_to_array($factory->getTool(ToolWithMcpSchema::class));
         $schema = $tools[0]->getParameters();
 
-        $this->assertSame(['article', 'advertisement', 'obituary'], $schema['properties']['kind']['enum']);
+        $this->assertSame(['article', 'advertisement', 'obituary', null], $schema['properties']['kind']['enum']);
         $this->assertSame('["string","null"]', json_encode($schema['properties']['kind']['type']));
         $this->assertSame(0, $schema['properties']['limit']['minimum']);
         $this->assertSame(200, $schema['properties']['limit']['maximum']);
@@ -86,6 +86,24 @@ final class McpSchemaWiringTest extends TestCase
         $this->assertSame(0, $schema['properties']['value']['minimum']);
         $this->assertSame('[0,1]', json_encode($schema['properties']['value']['enum']));
         $this->assertArrayNotHasKey('definition', $schema['properties']['value']);
+    }
+
+    public function testExclusiveBoundsUseNumericKeywords()
+    {
+        $schema = $this->schemaFactory()->buildParameters(ToolWithMcpSchema::class, 'exclusiveBounds');
+
+        $this->assertSame(0, $schema['properties']['exclusive']['exclusiveMinimum']);
+        $this->assertSame(10, $schema['properties']['exclusive']['exclusiveMaximum']);
+        $this->assertArrayNotHasKey('minimum', $schema['properties']['exclusive']);
+        $this->assertArrayNotHasKey('maximum', $schema['properties']['exclusive']);
+        $this->assertSame(0, $schema['properties']['inclusive']['minimum']);
+        $this->assertSame(10, $schema['properties']['inclusive']['maximum']);
+        foreach (['inclusive', 'unbounded'] as $parameter) {
+            $this->assertArrayNotHasKey('exclusiveMinimum', $schema['properties'][$parameter]);
+            $this->assertArrayNotHasKey('exclusiveMaximum', $schema['properties'][$parameter]);
+        }
+        $this->assertSame(0, $schema['properties']['numeric']['exclusiveMinimum']);
+        $this->assertSame(10, $schema['properties']['numeric']['exclusiveMaximum']);
     }
 
     public function testPlatformOnlyAttributeKeepsItsBehavior()

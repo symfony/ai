@@ -45,6 +45,23 @@ final class McpSchemaAttributeDescriber implements PropertyDescriberInterface
             $mcpSchema = array_replace($mcpSchema, $attribute->definition ?? $attribute->toArray());
         }
 
+        foreach (['minimum' => 'exclusiveMinimum', 'maximum' => 'exclusiveMaximum'] as $bound => $exclusiveBound) {
+            if (!isset($mcpSchema[$exclusiveBound]) || !\is_bool($mcpSchema[$exclusiveBound])) {
+                continue;
+            }
+
+            if (true === $mcpSchema[$exclusiveBound] && isset($mcpSchema[$bound])) {
+                $mcpSchema[$exclusiveBound] = $mcpSchema[$bound];
+                unset($mcpSchema[$bound]);
+            } else {
+                unset($mcpSchema[$exclusiveBound]);
+            }
+        }
+
+        if (\is_array($schema['type'] ?? null) && \in_array('null', $schema['type'], true)) {
+            $mcpSchema['type'] = $schema['type'];
+        }
+
         $platformSchema = null;
         $this->schemaAttributeDescriber->describeProperty($subject, $platformSchema);
 

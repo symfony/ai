@@ -27,7 +27,7 @@ final class ToolWithMcpSchema
      * @param array<string, mixed> $options
      */
     public function search(
-        #[McpSchema(enum: ['article', 'advertisement', 'obituary'])] ?string $kind = null,
+        #[McpSchema(type: 'string', enum: ['article', 'advertisement', 'obituary'])] ?string $kind = null,
         #[McpSchema(minimum: 0, maximum: 200)] int $limit = 20,
         #[McpSchema(minLength: 0, maxLength: 10, pattern: '^[a-z]*$')] string $term = '',
         #[McpSchema(items: ['type' => 'string'], minItems: 0, maxItems: 5, uniqueItems: false)] array $tags = [],
@@ -52,6 +52,14 @@ final class ToolWithMcpSchema
     public function defined(
         #[McpSchema(definition: ['type' => 'integer', 'minimum' => 0, 'enum' => [0, 1]])]
         int $value,
+    ): void {
+    }
+
+    public function exclusiveBounds(
+        #[McpSchema(minimum: 0, maximum: 10, exclusiveMinimum: true, exclusiveMaximum: true)] float $exclusive,
+        #[McpSchema(minimum: 0, maximum: 10, exclusiveMinimum: false, exclusiveMaximum: false)] float $inclusive,
+        #[McpSchema(exclusiveMinimum: true, exclusiveMaximum: true)] float $unbounded,
+        #[McpSchema(definition: ['exclusiveMinimum' => 0, 'exclusiveMaximum' => 10])] float $numeric,
     ): void {
     }
 
