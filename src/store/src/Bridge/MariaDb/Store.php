@@ -34,19 +34,34 @@ use Symfony\Component\Uid\Uuid;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private ?\PDO $connection = null;
+    private string $dsn;
+
     /**
-     * @param string $tableName       The name of the table
-     * @param string $indexName       The name of the vector search index
-     * @param string $vectorFieldName The name of the field in the index that contains the vector
+     * @param \PDO|string $connection      A PDO instance, or a DSN to connect with on the first query
+     * @param string      $tableName       The name of the table
+     * @param string      $indexName       The name of the vector search index
+     * @param string      $vectorFieldName The name of the field in the index that contains the vector
+     * @param array{
+     *     db_username?: string,
+     *     db_password?: string,
+     *     db_connection_options?: array<int, mixed>,
+     * } $connectionOptions Used only when $connection is a DSN
      */
     public function __construct(
-        private readonly \PDO $connection,
+        #[\SensitiveParameter] \PDO|string $connection,
         private readonly string $tableName,
         private readonly string $indexName,
         private readonly string $vectorFieldName,
         private readonly Metric $metric = Metric::Euclidean,
         private readonly int $dimensions = 1536,
+        #[\SensitiveParameter] private readonly array $connectionOptions = [],
     ) {
+        if ($connection instanceof \PDO) {
+            $this->connection = $connection;
+        } else {
+            $this->dsn = $connection;
+        }
     }
 
     public function setup(array $options = []): void
@@ -55,7 +70,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
-        $serverVersion = $this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        $serverVersion = $this->getConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
 
         if (!str_contains((string) $serverVersion, 'MariaDB') || version_compare($serverVersion, '11.7.0') < 0) {
             throw new InvalidArgumentException('You need MariaDB >=11.7 to use this feature.');
@@ -73,7 +88,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             Metric::Distance => '',
         };
 
-        $this->connection->exec(
+        $this->getConnection()->exec(
             \sprintf(
                 <<<'SQL'
                     CREATE TABLE IF NOT EXISTS %1$s (
@@ -94,12 +109,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
     public function count(): int
     {
-        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+        $statement = $this->getConnection()->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
 
         return (int) $statement->fetchColumn();
     }
@@ -130,7 +145,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 <<<'SQL'
                     INSERT INTO %1$s (id, metadata, `%2$s`)
@@ -165,7 +180,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $placeholders = implode(', ', array_fill(0, \count($ids), '?'));
 
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 'DELETE FROM %s WHERE id IN (%s)',
                 $this->tableName,
@@ -182,7 +197,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function clear(array $options = []): void
     {
-        $this->connection->exec(\sprintf('TRUNCATE TABLE %s', $this->tableName));
+        $this->getConnection()->exec(\sprintf('TRUNCATE TABLE %s', $this->tableName));
     }
 
     public function supports(string $queryClass): bool
@@ -221,7 +236,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         // A derived table parses the query vector once, instead of once per row
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 <<<'SQL'
                     SELECT id, VEC_ToText(`%1$s`) embedding, metadata, %5$s(`%1$s`, q.query_vector) AS score
@@ -262,5 +277,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 score: $result['score'],
             );
         }
+    }
+
+    private function getConnection(): \PDO
+    {
+        if (null === $this->connection) {
+            $this->connection = new \PDO(
+                $this->dsn,
+                $this->connectionOptions['db_username'] ?? null,
+                $this->connectionOptions['db_password'] ?? null,
+                $this->connectionOptions['db_connection_options'] ?? [],
+            );
+            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        }
+
+        return $this->connection;
     }
 }

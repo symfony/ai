@@ -34,8 +34,19 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private ?\PDO $connection = null;
+    private string $dsn;
+
+    /**
+     * @param \PDO|string $connection A PDO instance, or a DSN to connect with on the first query
+     * @param array{
+     *     db_username?: string,
+     *     db_password?: string,
+     *     db_connection_options?: array<int, mixed>,
+     * } $connectionOptions Used only when $connection is a DSN
+     */
     public function __construct(
-        private readonly \PDO $connection,
+        #[\SensitiveParameter] \PDO|string $connection,
         private readonly string $tableName,
         private readonly string $vectorFieldName = 'embedding',
         private readonly Metric $metric = Metric::L2,
@@ -45,7 +56,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         // Unlike ivfflat, hnsw needs no data to build a good index, and supports every distance
         private readonly string $indexMethod = 'hnsw',
         private readonly ?string $indexOpclass = null,
+        #[\SensitiveParameter] private readonly array $connectionOptions = [],
     ) {
+        if ($connection instanceof \PDO) {
+            $this->connection = $connection;
+        } else {
+            $this->dsn = $connection;
+        }
     }
 
     public function setup(array $options = []): void
@@ -61,9 +78,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $indexOpclass = $this->indexOpclass ?? $this->getIndexOpclass($this->vectorType, $this->indexMethod);
 
-        $this->connection->exec('CREATE EXTENSION IF NOT EXISTS vector');
+        $this->getConnection()->exec('CREATE EXTENSION IF NOT EXISTS vector');
 
-        $this->connection->exec(
+        $this->getConnection()->exec(
             \sprintf(
                 'CREATE TABLE IF NOT EXISTS "%s" (
                     id UUID PRIMARY KEY,
@@ -76,7 +93,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->dimensions,
             ),
         );
-        $this->connection->exec(
+        $this->getConnection()->exec(
             \sprintf(
                 'CREATE INDEX IF NOT EXISTS "%s_%s_idx" ON "%s" USING %s ("%s" %s)',
                 $this->tableName,
@@ -91,12 +108,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS "%s"', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS "%s"', $this->tableName));
     }
 
     public function count(): int
     {
-        $statement = $this->connection->prepare(\sprintf('SELECT COUNT(*) FROM "%s"', $this->tableName));
+        $statement = $this->getConnection()->prepare(\sprintf('SELECT COUNT(*) FROM "%s"', $this->tableName));
         $statement->execute();
 
         return max(0, (int) $statement->fetchColumn());
@@ -108,7 +125,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 'INSERT INTO "%1$s" (id, metadata, "%2$s")
                 VALUES (:id, :metadata, :vector)
@@ -140,7 +157,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $placeholders = implode(',', array_fill(0, \count($ids), '?'));
         $sql = \sprintf('DELETE FROM "%s" WHERE id IN (%s)', $this->tableName, $placeholders);
 
-        $statement = $this->connection->prepare($sql);
+        $statement = $this->getConnection()->prepare($sql);
 
         foreach ($ids as $index => $id) {
             $statement->bindValue($index + 1, $id);
@@ -151,7 +168,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function clear(array $options = []): void
     {
-        $this->connection->exec(\sprintf('TRUNCATE TABLE "%s"', $this->tableName));
+        $this->getConnection()->exec(\sprintf('TRUNCATE TABLE "%s"', $this->tableName));
     }
 
     public function supports(string $queryClass): bool
@@ -217,7 +234,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['limit'] ?? 5,
         );
 
-        $statement = $this->connection->prepare($sql);
+        $statement = $this->getConnection()->prepare($sql);
 
         foreach ($params as $key => $value) {
             $statement->bindValue(':'.$key, $value);
@@ -273,7 +290,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['limit'] ?? 5,
         );
 
-        $statement = $this->connection->prepare($sql);
+        $statement = $this->getConnection()->prepare($sql);
         foreach ($params as $paramName => $value) {
             $statement->bindValue(':'.$paramName, $value);
         }
@@ -346,7 +363,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['limit'] ?? 5,
         );
 
-        $statement = $this->connection->prepare($sql);
+        $statement = $this->getConnection()->prepare($sql);
 
         foreach ($params as $key => $value) {
             $statement->bindValue(':'.$key, $value);
@@ -389,5 +406,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function fromPgvector(string $vector): array
     {
         return json_decode($vector, true, 512, \JSON_THROW_ON_ERROR);
+    }
+
+    private function getConnection(): \PDO
+    {
+        if (null === $this->connection) {
+            $this->connection = new \PDO(
+                $this->dsn,
+                $this->connectionOptions['db_username'] ?? null,
+                $this->connectionOptions['db_password'] ?? null,
+                $this->connectionOptions['db_connection_options'] ?? [],
+            );
+            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        }
+
+        return $this->connection;
     }
 }

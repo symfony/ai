@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\MariaDb\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use Symfony\AI\Store\Bridge\MariaDb\Metric;
 use Symfony\AI\Store\Bridge\MariaDb\Store;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
@@ -24,8 +25,14 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        $pdo = new \PDO('mysql:host=127.0.0.1;port=3306;dbname=test_database', 'root', '');
-
-        return new Store($pdo, 'test_vectors', 'test_vector_idx', 'embedding', dimensions: 3);
+        return new Store(
+            'mysql:host=127.0.0.1;port=3306;dbname=test_database',
+            'test_vectors',
+            'test_vector_idx',
+            'embedding',
+            Metric::Euclidean,
+            3,
+            ['db_username' => 'root', 'db_password' => ''],
+        );
     }
 }

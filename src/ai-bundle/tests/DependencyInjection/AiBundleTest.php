@@ -3187,12 +3187,12 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
+        $this->assertNull($definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
-        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertSame('pgsql:host=localhost;port=5432;dbname=testdb;user=app;password=mypass', $definition->getArgument(0));
+        $this->assertSame([], $definition->getArgument(9));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('embedding', $definition->getArgument(2));
         $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
@@ -3227,13 +3227,12 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
+        $this->assertNull($definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
-        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
-        $this->assertSame(['pgsql:host=localhost;port=5432;dbname=testdb', 'foo', 'bar'], $definition->getArgument(0)->getArguments());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertSame('pgsql:host=localhost;port=5432;dbname=testdb', $definition->getArgument(0));
+        $this->assertSame(['db_username' => 'foo', 'db_password' => 'bar'], $definition->getArgument(9));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
         $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
@@ -3418,6 +3417,16 @@ class AiBundleTest extends TestCase
                         'db_without_vector_column_configuration' => [
                             'dbal_connection' => 'my_connection',
                         ],
+                        'db_from_dsn' => [
+                            'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb',
+                            'dimensions' => 1024,
+                            'vector_type' => 'halfvec',
+                            'index_method' => 'ivfflat',
+                            'index_opclass' => 'halfvec_cosine_ops',
+                        ],
+                        'db_from_dsn_without_vector_column_configuration' => [
+                            'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb',
+                        ],
                     ],
                 ],
             ],
@@ -3430,6 +3439,18 @@ class AiBundleTest extends TestCase
         $this->assertSame('halfvec_cosine_ops', $definition->getArgument('$indexOpclass'));
 
         $this->assertCount(5, $container->getDefinition('ai.store.postgres.db_without_vector_column_configuration')->getArguments());
+
+        $definition = $container->getDefinition('ai.store.postgres.db_from_dsn');
+        $this->assertSame(1024, $definition->getArgument(5));
+        $this->assertSame('halfvec', $definition->getArgument(6));
+        $this->assertSame('ivfflat', $definition->getArgument(7));
+        $this->assertSame('halfvec_cosine_ops', $definition->getArgument(8));
+
+        $definition = $container->getDefinition('ai.store.postgres.db_from_dsn_without_vector_column_configuration');
+        $this->assertSame(1536, $definition->getArgument(5));
+        $this->assertSame('vector', $definition->getArgument(6));
+        $this->assertSame('hnsw', $definition->getArgument(7));
+        $this->assertNull($definition->getArgument(8));
     }
 
     public function testQdrantStoreCanBeConfigured()

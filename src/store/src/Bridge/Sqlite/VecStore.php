@@ -36,12 +36,29 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 {
     private const RRF_K = 60;
 
+    private ?\PDO $connection = null;
+    private string $dsn;
+
+    /**
+     * @param \PDO|string $connection A PDO instance, or a DSN to connect with on the first query
+     * @param array{
+     *     db_username?: string,
+     *     db_password?: string,
+     *     db_connection_options?: array<int, mixed>,
+     * } $connectionOptions Used only when $connection is a DSN
+     */
     public function __construct(
-        private readonly \PDO $connection,
+        #[\SensitiveParameter] \PDO|string $connection,
         private readonly string $tableName,
         private readonly Metric $metric = Metric::Cosine,
         private readonly int $dimensions = 1536,
+        #[\SensitiveParameter] private readonly array $connectionOptions = [],
     ) {
+        if ($connection instanceof \PDO) {
+            $this->connection = $connection;
+        } else {
+            $this->dsn = $connection;
+        }
     }
 
     public function setup(array $options = []): void
@@ -50,14 +67,14 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
-        $this->connection->exec(\sprintf(
+        $this->getConnection()->exec(\sprintf(
             'CREATE VIRTUAL TABLE IF NOT EXISTS %s USING vec0(id TEXT PRIMARY KEY, embedding float[%d] distance_metric=%s, +metadata TEXT)',
             $this->tableName,
             $this->dimensions,
             $this->metric->value,
         ));
 
-        $this->connection->exec(\sprintf(
+        $this->getConnection()->exec(\sprintf(
             'CREATE VIRTUAL TABLE IF NOT EXISTS %s_fts USING fts5(id UNINDEXED, content)',
             $this->tableName,
         ));
@@ -103,15 +120,15 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     public function count(): int
     {
-        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+        $statement = $this->getConnection()->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
 
         return (int) $statement->fetchColumn();
     }
 
     public function drop(array $options = []): void
     {
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s_fts', $this->tableName));
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS %s_fts', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
     public function add(VectorDocumentInterface|array $documents): void
@@ -120,25 +137,25 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
-        $this->connection->beginTransaction();
+        $this->getConnection()->beginTransaction();
 
         try {
-            $deleteStatement = $this->connection->prepare(\sprintf(
+            $deleteStatement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s WHERE id = :id',
                 $this->tableName,
             ));
 
-            $insertStatement = $this->connection->prepare(\sprintf(
+            $insertStatement = $this->getConnection()->prepare(\sprintf(
                 'INSERT INTO %s (id, embedding, metadata) VALUES (:id, :embedding, :metadata)',
                 $this->tableName,
             ));
 
-            $ftsDeleteStatement = $this->connection->prepare(\sprintf(
+            $ftsDeleteStatement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s_fts WHERE id = :id',
                 $this->tableName,
             ));
 
-            $ftsInsertStatement = $this->connection->prepare(\sprintf(
+            $ftsInsertStatement = $this->getConnection()->prepare(\sprintf(
                 'INSERT INTO %s_fts (id, content) VALUES (:id, :content)',
                 $this->tableName,
             ));
@@ -167,9 +184,9 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
                 }
             }
 
-            $this->connection->commit();
+            $this->getConnection()->commit();
         } catch (\Throwable $e) {
-            $this->connection->rollBack();
+            $this->getConnection()->rollBack();
 
             throw $e;
         }
@@ -185,15 +202,15 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $this->connection->beginTransaction();
+        $this->getConnection()->beginTransaction();
 
         try {
-            $statement = $this->connection->prepare(\sprintf(
+            $statement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s WHERE id = :id',
                 $this->tableName,
             ));
 
-            $ftsStatement = $this->connection->prepare(\sprintf(
+            $ftsStatement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s_fts WHERE id = :id',
                 $this->tableName,
             ));
@@ -206,9 +223,9 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
                 $ftsStatement->execute();
             }
 
-            $this->connection->commit();
+            $this->getConnection()->commit();
         } catch (\Throwable $e) {
-            $this->connection->rollBack();
+            $this->getConnection()->rollBack();
 
             throw $e;
         }
@@ -216,15 +233,15 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     public function clear(array $options = []): void
     {
-        $this->connection->beginTransaction();
+        $this->getConnection()->beginTransaction();
 
         try {
-            $this->connection->exec(\sprintf('DELETE FROM %s_fts', $this->tableName));
-            $this->connection->exec(\sprintf('DELETE FROM %s', $this->tableName));
+            $this->getConnection()->exec(\sprintf('DELETE FROM %s_fts', $this->tableName));
+            $this->getConnection()->exec(\sprintf('DELETE FROM %s', $this->tableName));
 
-            $this->connection->commit();
+            $this->getConnection()->commit();
         } catch (\Throwable $e) {
-            $this->connection->rollBack();
+            $this->getConnection()->rollBack();
 
             throw $e;
         }
@@ -272,7 +289,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         // Over-fetch when filtering to compensate for post-query filtering
         $fetchLimit = $hasFilter ? $maxItems * 3 : $maxItems;
 
-        $statement = $this->connection->prepare(\sprintf(
+        $statement = $this->getConnection()->prepare(\sprintf(
             'SELECT id, distance, metadata FROM %s WHERE embedding MATCH :embedding AND k = :k ORDER BY distance',
             $this->tableName,
         ));
@@ -333,7 +350,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $sql .= \sprintf(' LIMIT %d', $options['maxItems']);
         }
 
-        $statement = $this->connection->prepare($sql);
+        $statement = $this->getConnection()->prepare($sql);
         $statement->bindValue(':query', $ftsQuery);
         $statement->execute();
 
@@ -468,7 +485,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
         $placeholders = implode(', ', array_fill(0, \count($ids), '?'));
 
-        $statement = $this->connection->prepare(\sprintf(
+        $statement = $this->getConnection()->prepare(\sprintf(
             'SELECT id, embedding, metadata FROM %s WHERE id IN (%s)',
             $this->tableName,
             $placeholders,
@@ -490,5 +507,20 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         }
 
         return $documents;
+    }
+
+    private function getConnection(): \PDO
+    {
+        if (null === $this->connection) {
+            $this->connection = new \PDO(
+                $this->dsn,
+                $this->connectionOptions['db_username'] ?? null,
+                $this->connectionOptions['db_password'] ?? null,
+                $this->connectionOptions['db_connection_options'] ?? [],
+            );
+            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        }
+
+        return $this->connection;
     }
 }
