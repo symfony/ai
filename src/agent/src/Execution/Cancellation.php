@@ -23,18 +23,24 @@ final class Cancellation
 {
     private bool $requested = false;
 
+    private ?string $reason = null;
+
+    /**
+     * @var (\Closure(?string): void)|null
+     */
     private ?\Closure $onCancel = null;
 
-    public function request(): void
+    public function request(?string $reason = null): void
     {
         if ($this->requested) {
             return;
         }
 
         $this->requested = true;
+        $this->reason = $reason;
 
         if (null !== $this->onCancel) {
-            ($this->onCancel)();
+            ($this->onCancel)($reason);
         }
     }
 
@@ -44,7 +50,10 @@ final class Cancellation
             return;
         }
 
-        $this->watch($result->getObject()->cancel(...));
+        $response = $result->getObject();
+        $this->watch(static function () use ($response): void {
+            $response->cancel();
+        });
     }
 
     /**
@@ -67,12 +76,20 @@ final class Cancellation
         return $this->requested;
     }
 
+    public function getReason(): ?string
+    {
+        return $this->reason;
+    }
+
+    /**
+     * @param \Closure(?string): void $onCancel
+     */
     private function watch(\Closure $onCancel): void
     {
         $this->onCancel = $onCancel;
 
         if ($this->requested) {
-            $onCancel();
+            $onCancel($this->reason);
         }
     }
 }

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\Exception\CancellationException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
@@ -86,11 +87,12 @@ interface ExecutionInterface extends \IteratorAggregate, ResultInterface
     /**
      * Cancels the execution and its active HTTP response.
      */
-    public function cancel(): void;
+    public function cancel(?string $reason = null): void;
 
     /**
      * Drives the execution to completion and returns the final result.
      *
+     * @throws CancellationException when the execution was canceled
      * @throws ExceptionInterface
      */
     public function getResult(): ResultInterface;

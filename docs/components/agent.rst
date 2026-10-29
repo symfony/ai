@@ -269,15 +269,25 @@ the stream without producing a final result::
     $execution = $agent->call('Tell me a story.', ['stream' => true]);
 
     pcntl_async_signals(true);
-    pcntl_signal(\SIGINT, static fn () => $execution->cancel());
+    pcntl_signal(\SIGINT, static fn () => $execution->cancel('Interrupted by the user'));
 
     foreach ($execution->asTextStream() as $delta) {
         echo $delta->getText();
     }
 
 Cancellation is idempotent, propagates to the agents a ``MultiAgent`` or ``SpeechAgent`` delegates to, and makes
-``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\RuntimeException` instead of returning a partial
-answer. See the
+``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\CancellationException` instead of returning a
+partial answer. The optional reason given to ``cancel()`` is available on that exception::
+
+    try {
+        $execution->getResult();
+    } catch (CancellationException $exception) {
+        if ($exception->hasReason()) {
+            $logger->info('Agent canceled: '.$exception->getReason());
+        }
+    }
+
+See the
 `execution-cancellation.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-cancellation.php>`_
 example.
 
