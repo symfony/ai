@@ -4,6 +4,13 @@ UPGRADE FROM 0.15 to 1.0
 Agent
 -----
 
+ * Implementations of `ExecutionInterface::cancel()` must accept an optional cancellation reason. Calls without a reason remain supported:
+
+   ```diff
+   -public function cancel(): void
+   +public function cancel(?string $reason = null): void
+   ```
+
  * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` is removed. The retrieved documents are added as
    `Bridge\SimilaritySearch\DocumentSource` sources of the tool instead, enable `includeSources` on the agent to read
    them from the result metadata:

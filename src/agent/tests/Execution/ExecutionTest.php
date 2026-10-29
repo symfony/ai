@@ -217,6 +217,58 @@ final class ExecutionTest extends TestCase
         $execution->getResult();
     }
 
+    public function testCancellationReasonBeforeConsumption()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel('User pressed stop.');
+        $this->assertSame(ExecutionStatus::Cancelled, $execution->getStatus());
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled: User pressed stop.');
+
+        $execution->getResult();
+    }
+
+    public function testRepeatedCancellationPreservesTheFirstReason()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel('First reason');
+        $execution->cancel('Second reason');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled: First reason');
+
+        $execution->getResult();
+    }
+
+    public function testCancellationReasonDuringStreaming()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('First'));
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Second'));
+            yield new ResultUpdate(new TextResult('FirstSecond'));
+        }, streamed: true);
+
+        $deltas = [];
+        foreach ($execution->asStream() as $delta) {
+            $deltas[] = $delta->getText();
+            $execution->cancel('Time budget reached');
+        }
+
+        $this->assertSame(['First'], $deltas);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The agent execution was canceled: Time budget reached');
+
+        $execution->getResult();
+    }
+
     public function testCancellationStopsAnActiveStreamWithoutProducingAResult()
     {
         $execution = new Execution(static function (): \Generator {
