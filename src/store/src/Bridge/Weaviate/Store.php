@@ -125,6 +125,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{limit?: positive-int} $options
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
@@ -138,14 +141,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     %s (
                         nearVector: {
                             vector: [%s]
-                        }
+                        }%s
                     ) {
                         uuid,
                         vector,
                         _metadata
                     }
                 }
-            }', $this->collection, implode(', ', $vector->getData())),
+            }', $this->collection, implode(', ', $vector->getData()), isset($options['limit']) ? \sprintf(', limit: %d', $options['limit']) : ''),
         ]);
 
         foreach ($results['data']['Get'][$this->collection] as $item) {

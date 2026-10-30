@@ -86,10 +86,45 @@ The retriever accepts optional parameters to customize the retrieval:
 
 * ``$options``: An array of options to pass to the underlying store query (e.g., limit, filters)
 
+All stores read the ``limit`` option, which sets the maximum number of returned documents::
+
+    $documents = $retriever->retrieve('What is the capital of France?', ['limit' => 5]);
+
+Reranking
+~~~~~~~~~
+
+The :class:`Symfony\\AI\\Store\\EventListener\\RerankerListener` sorts the retrieved documents again with a
+cross-encoder model and keeps the ``limit`` best ones. Without a ``limit`` option, it keeps the number given
+to its ``limit`` argument.
+
+The reranker gives better results when it can choose from more documents than it keeps. Set the
+``overFetchFactor`` argument and register the listener on both events. Then the store returns ``limit``
+times ``overFetchFactor`` documents, and the reranker keeps the ``limit`` best ones::
+
+    use Symfony\AI\Store\Event\PostQueryEvent;
+    use Symfony\AI\Store\Event\PreQueryEvent;
+    use Symfony\AI\Store\EventListener\RerankerListener;
+
+    $rerankerListener = new RerankerListener($reranker, limit: 5, overFetchFactor: 4);
+    $dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+    $dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
+
+    $retriever = new Retriever($store, $vectorizer, $dispatcher);
+
+    // the store returns 20 documents, the reranker keeps the 5 best ones
+    $documents = $retriever->retrieve('What is the capital of France?', ['limit' => 5]);
+
+.. note::
+
+    When the listener is only registered on ``PostQueryEvent``, the ``overFetchFactor`` has no effect.
+    The over-fetched ``limit`` must stay within the limits of the store, for example 50 for Cloudflare
+    Vectorize or 250 for Typesense.
+
 Example Usage
 ~~~~~~~~~~~~~
 
 * `Basic Retriever Example`_
+* `Hybrid Retrieval with Reranking Example`_
 
 Similarity Search Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -426,6 +461,7 @@ does not include documents added moments ago::
 
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
+.. _`Hybrid Retrieval with Reranking Example`: https://github.com/symfony/ai/blob/main/examples/retriever/hybrid-rrf-reranking.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
 .. _`Similarity Search with Doctrine (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/doctrine-orm.php
 .. _`Similarity Search with Manticore Search (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php

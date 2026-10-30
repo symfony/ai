@@ -5,6 +5,12 @@ CHANGELOG
 ---
 
  * Add `Document\Transformer\RegexSplitTransformer` to split documents on a regex pattern
+ * Add the `limit` option to cap the number of documents returned by `StoreInterface::query()`, and pass it from `ai:store:retrieve`
+ * [BC BREAK] Rename the `maxItems` option of `InMemory\Store::query()` to `limit`
+ * [BC BREAK] Rename the `topK` option read by `EventListener\RerankerListener` to `limit`, as well as the `topK` arguments of its constructor and of `Reranker\RerankerInterface::rerank()`
+ * Add the `overFetchFactor` argument to `CombinedStore` to fetch more documents from the sub-stores of a hybrid query than its `limit`
+ * [BC BREAK] Rename the `maxItems` argument of `Distance\DistanceCalculator::calculate()` to `limit`
+ * Add the `overFetchFactor` argument to `EventListener\RerankerListener`, registered on `PreQueryEvent` as well it fetches that many times the `limit` from the store before reranking
  * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
  * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
  * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead

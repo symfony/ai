@@ -679,7 +679,7 @@ Vector storage using `Pinecone`_.
     use Symfony\AI\Store\Bridge\Pinecone\Store;
     use Symfony\Component\HttpClient\HttpClient;
 
-    $store = new Store(HttpClient::create(), 'your-api-key', 'my-index', namespace: 'default', topK: 3);
+    $store = new Store(HttpClient::create(), 'your-api-key', 'my-index', namespace: 'default', limit: 3);
 
 The store looks up the host of the index through the Pinecone control plane. To skip the lookup,
 pass the ``indexHost`` argument.
@@ -695,7 +695,7 @@ pass the ``indexHost`` argument.
                     http_client: 'http_client'  # default: http_client
                     index_name: 'my-index'
                     namespace: 'default'
-                    top_k: 3
+                    limit: 3
                     dimensions: 1536              # default: 1536
                     metric: cosine              # cosine, euclidean or dotproduct
                     cloud: aws
@@ -838,6 +838,12 @@ The index is created by ``setup()``::
                     dimensions: 1536
                     metric: 'cosine'
 
+.. note::
+
+    The store returns the values and all metadata of the matches, so Vectorize
+    accepts a ``limit`` of 50 at most. A larger ``limit`` throws an exception.
+    Without ``limit``, Vectorize returns 5 matches.
+
 S3 Vectors
 ~~~~~~~~~~
 
@@ -852,7 +858,7 @@ Vector storage using `S3 Vectors`_.
     use AsyncAws\S3Vectors\S3VectorsClient;
     use Symfony\AI\Store\Bridge\S3Vectors\Store;
 
-    $store = new Store(new S3VectorsClient(), 'my-bucket', 'my-index', topK: 3);
+    $store = new Store(new S3VectorsClient(), 'my-bucket', 'my-index', limit: 3);
 
 .. code-block:: yaml
 
@@ -863,7 +869,7 @@ Vector storage using `S3 Vectors`_.
                 my_store:
                     vector_bucket_name: 'my-bucket'
                     index_name: 'my-index'
-                    top_k: 3
+                    limit: 3
                     configuration:
                         region: 'us-east-1'
                     dimensions: 1536              # default: 1536

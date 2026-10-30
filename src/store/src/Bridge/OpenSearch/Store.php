@@ -160,20 +160,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{
+     *     limit?: positive-int,
+     *     k?: positive-int,
+     * } $options The "k" option sets the number of neighbors searched per shard and defaults to "limit"
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        $limit = $options['limit'] ?? 100;
+
         $vector = $query->getVector();
         $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), [
-            'size' => $options['size'] ?? 100,
+            'size' => $limit,
             'query' => [
                 'knn' => [
                     $this->vectorsField => [
                         'vector' => $vector->getData(),
-                        'k' => $options['k'] ?? 100,
+                        'k' => $options['k'] ?? $limit,
                     ],
                 ],
             ],

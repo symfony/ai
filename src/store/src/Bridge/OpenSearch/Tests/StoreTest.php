@@ -395,4 +395,28 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testQueryReturnsAsManyHitsAsTheLimit()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(new MockHttpClient($response), 'foo');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertSame(20, $body['size']);
+        $this->assertSame(20, $body['query']['knn']['_vectors']['k']);
+    }
+
+    public function testQuerySearchesMoreNeighborsThanTheLimit()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(new MockHttpClient($response), 'foo');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20, 'k' => 50]));
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertSame(20, $body['size']);
+        $this->assertSame(50, $body['query']['knn']['_vectors']['k']);
+    }
 }

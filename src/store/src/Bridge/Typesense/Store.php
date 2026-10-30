@@ -122,19 +122,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = $query->getVector();
 
-        $k = $options['k'] ?? 10;
+        $k = $options['limit'] ?? 10;
         if (!\is_int($k)) {
-            throw new InvalidArgumentException('The "k" option must be an integer.');
+            throw new InvalidArgumentException('The "limit" option must be an integer.');
+        }
+
+        // the hits are capped by "per_page", which defaults to 10 and can't exceed 250
+        if ($k > 250) {
+            throw new InvalidArgumentException(\sprintf('The "limit" option must not exceed 250, %d given.', $k));
+        }
+
+        $search = [
+            'collection' => $this->collection,
+            'q' => '*',
+            'vector_query' => \sprintf('%s:([%s], k:%d)', $this->vectorFieldName, implode(', ', $vector->getData()), $k),
+        ];
+
+        if (isset($options['limit'])) {
+            $search['per_page'] = $k;
         }
 
         $documents = $this->request('POST', 'multi_search', [
-            'searches' => [
-                [
-                    'collection' => $this->collection,
-                    'q' => '*',
-                    'vector_query' => \sprintf('%s:([%s], k:%d)', $this->vectorFieldName, implode(', ', $vector->getData()), $k),
-                ],
-            ],
+            'searches' => [$search],
         ]);
 
         $results = $documents['results'] ?? null;

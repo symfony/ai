@@ -11,11 +11,13 @@
 
 namespace Symfony\AI\Store\Tests;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\CombinedStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
@@ -50,6 +52,67 @@ final class CombinedStoreTest extends TestCase
         // docB appears in both lists (rank 2 in vector, rank 1 in text) so should score highest
         $this->assertCount(3, $results);
         $this->assertSame('doc-b', $results[0]->getId());
+    }
+
+    public function testHybridQueryReturnsAtMostTheLimit()
+    {
+        $docA = new VectorDocument('doc-a', new Vector([0.1, 0.2]));
+        $docB = new VectorDocument('doc-b', new Vector([0.3, 0.4]));
+        $docC = new VectorDocument('doc-c', new Vector([0.5, 0.6]));
+
+        $vectorStore = $this->createMock(StoreInterface::class);
+        $vectorStore->method('supports')->willReturnMap([
+            [VectorQuery::class, true],
+        ]);
+        $vectorStore->method('query')->willReturn([$docA, $docB]);
+
+        $textStore = $this->createMock(StoreInterface::class);
+        $textStore->method('supports')->willReturnMap([
+            [TextQuery::class, true],
+        ]);
+        $textStore->method('query')->willReturn([$docC, $docB]);
+
+        $store = new CombinedStore($vectorStore, $textStore, 60);
+
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2]), 'test query'), ['limit' => 2]));
+
+        $this->assertCount(2, $results);
+        $this->assertSame('doc-b', $results[0]->getId());
+    }
+
+    public function testHybridQueryOverFetchesFromTheSubStores()
+    {
+        $vectorStore = $this->createMock(StoreInterface::class);
+        $vectorStore->method('supports')->willReturnMap([
+            [VectorQuery::class, true],
+        ]);
+        $vectorStore->expects($this->once())
+            ->method('query')
+            ->with($this->isInstanceOf(VectorQuery::class), ['limit' => 6])
+            ->willReturn([]);
+
+        $textStore = $this->createMock(StoreInterface::class);
+        $textStore->method('supports')->willReturnMap([
+            [TextQuery::class, true],
+        ]);
+        $textStore->expects($this->once())
+            ->method('query')
+            ->with($this->isInstanceOf(TextQuery::class), ['limit' => 6])
+            ->willReturn([]);
+
+        $store = new CombinedStore($vectorStore, $textStore, overFetchFactor: 3);
+
+        iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2]), 'test query'), ['limit' => 2]));
+    }
+
+    #[TestWith([0])]
+    #[TestWith([-1])]
+    public function testThrowsOnOverFetchFactorBelowOne(int $overFetchFactor)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('The over-fetch factor must be at least 1, %d given.', $overFetchFactor));
+
+        new CombinedStore($this->createStub(StoreInterface::class), $this->createStub(StoreInterface::class), overFetchFactor: $overFetchFactor);
     }
 
     public function testRrfScoresAreUpdatedOnDocuments()

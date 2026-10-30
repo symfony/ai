@@ -436,4 +436,32 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $mockHttpClient->getRequestsCount());
     }
+
+    public function testQueryPassesTheLimitAsTopK()
+    {
+        $response = new JsonMockResponse(['result' => ['matches' => []]]);
+        $store = new Store(new MockHttpClient($response), 'random');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame([
+            'vector' => [0.1, 0.2, 0.3],
+            'returnValues' => true,
+            'returnMetadata' => 'all',
+            'topK' => 20,
+        ], json_decode($body, true));
+    }
+
+    public function testQueryThrowsWhenTheLimitExceedsTheTopKCap()
+    {
+        $httpClient = new MockHttpClient();
+        $store = new Store($httpClient, 'random');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "limit" option must not exceed 50, 51 given.');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 51]));
+    }
 }

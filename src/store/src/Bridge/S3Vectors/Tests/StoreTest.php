@@ -375,7 +375,7 @@ final class StoreTest extends TestCase
             ->willReturn($result);
 
         $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
-            'topK' => 10,
+            'limit' => 10,
             'filter' => ['type' => 'document'],
         ]));
 
@@ -528,8 +528,8 @@ final class StoreTest extends TestCase
     /**
      * @param array<string, mixed> $filter
      */
-    private static function createStore(S3VectorsClient $client, string $vectorBucketName = 'test-bucket', string $indexName = 'test-index', array $filter = [], int $topK = 3): Store
+    private static function createStore(S3VectorsClient $client, string $vectorBucketName = 'test-bucket', string $indexName = 'test-index', array $filter = [], int $limit = 3): Store
     {
-        return new Store($client, $vectorBucketName, $indexName, $filter, $topK);
+        return new Store($client, $vectorBucketName, $indexName, $filter, $limit);
     }
 }

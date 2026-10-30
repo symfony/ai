@@ -254,7 +254,7 @@ final class DistanceCalculatorTest extends TestCase
         $this->assertNotNull($result[0]->getScore());
     }
 
-    #[TestDox('Returns all documents when maxItems exceeds document count')]
+    #[TestDox('Returns all documents when limit exceeds document count')]
     public function testMaxItemsGreaterThanDocumentCount()
     {
         $calculator = new DistanceCalculator();
@@ -264,7 +264,7 @@ final class DistanceCalculatorTest extends TestCase
 
         $result = $calculator->calculate([$doc1, $doc2], new Vector([1.0, 0.0]), 10);
 
-        // Should return all documents even though maxItems is 10
+        // Should return all documents even though limit is 10
         $this->assertCount(2, $result);
     }
 
@@ -332,7 +332,7 @@ final class DistanceCalculatorTest extends TestCase
     #[TestDox('Batched calculation prunes candidates after each batch')]
     public function testBatchedCalculationPrunesCandidates()
     {
-        // 10 documents, batch size 3, maxItems 2
+        // 10 documents, batch size 3, limit 2
         // After each batch of 3, only the top 2 candidates are kept
         $documents = [];
         for ($i = 0; $i < 10; ++$i) {
@@ -352,7 +352,7 @@ final class DistanceCalculatorTest extends TestCase
         $this->assertSame(['0', '1'], $ids);
     }
 
-    #[TestDox('Batched calculation falls back to full when maxItems is null')]
+    #[TestDox('Batched calculation falls back to full when limit is null')]
     public function testBatchedCalculationFallsBackWithoutMaxItems()
     {
         $doc1 = new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0]), new Metadata(['id' => 'a']));
@@ -361,7 +361,7 @@ final class DistanceCalculatorTest extends TestCase
         $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1);
         $result = $calculator->calculate([$doc1, $doc2], new Vector([1.0, 0.0]));
 
-        // Without maxItems, all documents are returned (full calculation path)
+        // Without limit, all documents are returned (full calculation path)
         $this->assertCount(2, $result);
         $this->assertSame('a', $result[0]->getMetadata()['id']);
         $this->assertSame('b', $result[1]->getMetadata()['id']);

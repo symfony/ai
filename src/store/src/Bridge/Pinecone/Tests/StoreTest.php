@@ -194,7 +194,7 @@ final class StoreTest extends TestCase
             [new JsonMockResponse(['matches' => []])],
             namespace: 'test-namespace',
             filter: ['category' => 'test'],
-            topK: 5,
+            limit: 5,
         );
 
         $this->assertCount(0, iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))));
@@ -215,7 +215,7 @@ final class StoreTest extends TestCase
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
-            'topK' => 10,
+            'limit' => 10,
             'includeValues' => true,
             'includeMetadata' => false,
         ]));
@@ -422,7 +422,7 @@ final class StoreTest extends TestCase
         array $responses,
         ?string $namespace = null,
         array $filter = [],
-        int $topK = 3,
+        int $limit = 3,
         int $dimensions = 1536,
         ?string $metric = null,
         ?string $cloud = null,
@@ -458,7 +458,7 @@ final class StoreTest extends TestCase
             'test-index',
             $namespace,
             $filter,
-            $topK,
+            $limit,
             $dimensions,
             $metric,
             $cloud,

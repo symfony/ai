@@ -46,7 +46,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $indexName,
         private readonly ?string $namespace = null,
         private readonly array $filter = [],
-        private readonly int $topK = 3,
+        private readonly int $limit = 3,
         private readonly int $dimensions = 1536,
         private readonly ?string $metric = null,
         private readonly ?string $cloud = null,
@@ -156,7 +156,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $payload = [
             'vector' => $query->getVector()->getData(),
-            'topK' => $options['topK'] ?? $this->topK,
+            'topK' => $options['limit'] ?? $this->limit,
             'includeMetadata' => $options['includeMetadata'] ?? true,
             'includeValues' => $options['includeValues'] ?? false,
         ];

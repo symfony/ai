@@ -283,6 +283,57 @@ final class StoreTest extends TestCase
         $this->assertCount(0, $documents);
     }
 
+    public function testQueryRaisesTheCandidatesWithTheLimit()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('aggregate')
+            ->with(
+                [
+                    [
+                        '$vectorSearch' => [
+                            'index' => 'test-index',
+                            'path' => 'vector',
+                            'queryVector' => [0.1, 0.2, 0.3],
+                            'numCandidates' => 300,
+                            'limit' => 150,
+                        ],
+                    ],
+                    [
+                        '$addFields' => [
+                            'score' => ['$meta' => 'vectorSearchScore'],
+                        ],
+                    ],
+                ],
+                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']],
+            )
+            ->willReturnCallback(function () {
+                $cursor = $this->createMock(CursorInterface::class);
+                $cursor->method('rewind'); // void return type
+                $cursor->method('valid')->willReturn(false);
+
+                return $cursor;
+            });
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 150]));
+
+        $this->assertCount(0, $documents);
+    }
+
     public function testQueryWithOptions()
     {
         $collection = $this->createMock(Collection::class);

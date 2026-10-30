@@ -11605,7 +11605,7 @@ class AiBundleTest extends TestCase
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
-                            'top_k' => 10,
+                            'limit' => 10,
                         ],
                         'my_pinecone_store_with_filter' => [
                             'api_key' => 'pckey',
@@ -11613,12 +11613,12 @@ class AiBundleTest extends TestCase
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                         ],
-                        'my_pinecone_store_with_top_k' => [
+                        'my_pinecone_store_with_limit' => [
                             'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
-                            'top_k' => 10,
+                            'limit' => 10,
                         ],
                     ],
                     'postgres' => [

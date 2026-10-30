@@ -16,6 +16,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Vectorizer;
 use Symfony\AI\Store\Event\PostQueryEvent;
+use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\EventListener\RerankerListener;
 use Symfony\AI\Store\Indexer\DocumentIndexer;
 use Symfony\AI\Store\Indexer\DocumentProcessor;
@@ -105,7 +106,9 @@ echo "--- Hybrid RRF + HuggingFace Reranking Results ---\n";
 $reranker = new Reranker($platform, 'cross-encoder/ms-marco-MiniLM-L6-v2', logger());
 
 $dispatcher = new EventDispatcher();
-$dispatcher->addListener(PostQueryEvent::class, new RerankerListener($reranker, topK: 5));
+$rerankerListener = new RerankerListener($reranker, limit: 5, overFetchFactor: 4);
+$dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+$dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
 
 $hybridWithReranker = new Retriever($combinedStore, $vectorizer, $dispatcher, logger: logger());
 
