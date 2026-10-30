@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `Document\Transformer\RegexSplitTransformer`, splitting a document's content on a regex pattern before `TextSplitTransformer` runs, attaching the matched heading as `Metadata::KEY_TITLE`/`KEY_DEPTH`
  * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
  * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
  * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead
