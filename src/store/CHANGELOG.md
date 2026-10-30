@@ -4,6 +4,8 @@ CHANGELOG
 1.0
 ---
 
+ * Read the `limit` option in every store to cap the number of documents returned by `StoreInterface::query()`, and pass it from `ai:store:retrieve`
+ * Deprecate the `maxItems` option of `InMemory\Store::query()`, use `limit` instead
  * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
  * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
  * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead

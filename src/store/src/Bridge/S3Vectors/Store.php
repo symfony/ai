@@ -211,6 +211,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     filter?: array<string, mixed>,
+     *     limit?: int,
      *     topK?: int,
      *     returnMetadata?: bool,
      *     returnDistance?: bool,
@@ -222,11 +223,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        if (isset($options['topK'])) {
+            @trigger_error('Since symfony/ai-s3vectors-store 1.0: The "topK" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
         $result = $this->client->queryVectors([
             'vectorBucketName' => $this->vectorBucketName,
             'indexName' => $this->indexName,
             'queryVector' => new VectorDataMemberFloat32(['float32' => $query->getVector()->getData()]),
-            'topK' => $options['topK'] ?? $this->topK,
+            'topK' => $options['limit'] ?? $options['topK'] ?? $this->topK,
             'filter' => $options['filter'] ?? $this->filter,
             'returnMetadata' => $options['returnMetadata'] ?? true,
             'returnDistance' => $options['returnDistance'] ?? true,

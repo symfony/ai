@@ -48,7 +48,7 @@ $retriever = new Retriever(
 );
 
 echo "Searching for: 'Roman gladiator revenge'\n\n";
-$results = $retriever->retrieve('Roman gladiator revenge', ['maxItems' => 1]);
+$results = $retriever->retrieve('Roman gladiator revenge', ['limit' => 1]);
 
 foreach ($results as $i => $document) {
     echo sprintf("%d. Score: %s\n", $i + 1, $document->getScore() ?? 'n/a');

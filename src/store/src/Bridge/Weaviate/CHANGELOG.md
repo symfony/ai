@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add the `limit` option to `Store::query()`
+
 0.15
 ----
 

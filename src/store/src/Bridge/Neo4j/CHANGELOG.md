@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add the `limit` option to `Store::query()`
  * [BC BREAK] Rename the `embeddingsDimension` and `embeddingsDistance` arguments of `Store` and `StoreFactory` to `dimensions` and `metric`
 
 0.14

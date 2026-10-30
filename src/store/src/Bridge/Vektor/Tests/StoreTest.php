@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Vektor\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Vektor\Store;
@@ -118,6 +119,45 @@ final class StoreTest extends TestCase
         $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])));
 
         $this->assertCount(1, iterator_to_array($results));
+
+        $store->drop();
+    }
+
+    public function testStoreReturnsAsManyResultsAsTheLimit()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument(Uuid::v4(), new Vector([0.4, 0.5, 0.6])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, 0.8, 0.9])),
+        ]);
+
+        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 2]);
+
+        $this->assertCount(2, iterator_to_array($results));
+
+        $store->drop();
+    }
+
+    #[IgnoreDeprecations]
+    public function testStoreStillReadsTheDeprecatedKOption()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument(Uuid::v4(), new Vector([0.4, 0.5, 0.6])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, 0.8, 0.9])),
+        ]);
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-vektor-store 1.0: The "k" option is deprecated, use "limit" instead.');
+
+        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['k' => 2]);
+
+        $this->assertCount(2, iterator_to_array($results));
 
         $store->drop();
     }

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Pinecone\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Probots\Pinecone\Client;
 use Probots\Pinecone\Resources\Control\IndexResource;
@@ -371,6 +372,50 @@ final class StoreTest extends TestCase
         $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
+            'limit' => 10,
+            'includeValues' => true,
+        ]));
+
+        $this->assertCount(0, $results);
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryStillReadsTheDeprecatedTopKOption()
+    {
+        $vectorResource = $this->createMock(VectorResource::class);
+        $dataResource = $this->createMock(DataResource::class);
+        $client = $this->createMock(Client::class);
+
+        $dataResource->expects($this->once())
+            ->method('vectors')
+            ->willReturn($vectorResource);
+
+        $client->expects($this->once())
+            ->method('data')
+            ->willReturn($dataResource);
+
+        $response = $this->createMock(Response::class);
+        $response->method('json')->willReturn([
+            'matches' => [],
+        ]);
+
+        $vectorResource->expects($this->once())
+            ->method('query')
+            ->with(
+                [0.1, 0.2, 0.3], // vector
+                'custom-namespace', // namespace
+                ['type' => 'document'], // filter
+                10, // topK
+                true, // includeMetadata
+                true, // includeValues
+            )
+            ->willReturn($response);
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-pinecone-store 1.0: The "topK" option is deprecated, use "limit" instead.');
+
+        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+            'namespace' => 'custom-namespace',
+            'filter' => ['type' => 'document'],
             'topK' => 10,
             'includeValues' => true,
         ]));
@@ -417,7 +462,7 @@ final class StoreTest extends TestCase
         $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
-            'topK' => 10,
+            'limit' => 10,
             'includeMetadata' => false,
         ]));
 

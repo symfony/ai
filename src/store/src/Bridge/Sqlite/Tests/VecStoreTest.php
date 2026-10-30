@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Sqlite\Tests;
 
 use Doctrine\DBAL\Connection;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Sqlite\Metric;
@@ -98,7 +99,7 @@ final class VecStoreTest extends TestCase
         $store->remove([]);
 
         // Document should still be there
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
         $this->assertCount(1, $results);
     }
 
@@ -175,7 +176,7 @@ final class VecStoreTest extends TestCase
             metadata: $metadata,
         ));
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
         $this->assertCount(1, $results);
 
         $result = $pdo->query('SELECT COUNT(*) FROM test_vectors_fts');
@@ -198,7 +199,7 @@ final class VecStoreTest extends TestCase
             new VectorDocument('doc-2', new Vector([0.4, 0.5, 0.6]), new Metadata(['name' => 'second'])),
         ]);
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
         $this->assertCount(2, $results);
     }
 
@@ -223,7 +224,7 @@ final class VecStoreTest extends TestCase
 
         $store->add(new VectorDocument('doc-1', new Vector([0.4, 0.5, 0.6]), $metadata2));
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.4, 0.5, 0.6])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.4, 0.5, 0.6])), ['limit' => 10]));
         $this->assertCount(1, $results);
         $this->assertSame('updated', $results[0]->getMetadata()['name']);
 
@@ -249,13 +250,13 @@ final class VecStoreTest extends TestCase
             new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
         ]);
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['limit' => 10]));
 
         $this->assertCount(3, $results);
         $this->assertSame('doc-1', $results[0]->getId());
     }
 
-    public function testQueryVectorWithMaxItems()
+    public function testQueryVectorWithLimit()
     {
         $pdo = $this->createPdo();
 
@@ -271,6 +272,31 @@ final class VecStoreTest extends TestCase
             new VectorDocument('doc-2', new Vector([0.0, 1.0, 0.0]), new Metadata(['name' => 'second'])),
             new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
         ]);
+
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['limit' => 2]));
+
+        $this->assertCount(2, $results);
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryVectorStillReadsTheDeprecatedMaxItemsOption()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
+        $store->setup();
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([1.0, 0.0, 0.0]), new Metadata(['name' => 'first'])),
+            new VectorDocument('doc-2', new Vector([0.0, 1.0, 0.0]), new Metadata(['name' => 'second'])),
+            new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
+        ]);
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-sqlite-store 1.0: The "maxItems" option is deprecated, use "limit" instead.');
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['maxItems' => 2]));
 
@@ -508,7 +534,7 @@ final class VecStoreTest extends TestCase
         $this->assertSame('doc-both', $results[0]->getId());
     }
 
-    public function testQueryHybridRespectsMaxItems()
+    public function testQueryHybridRespectsLimit()
     {
         $pdo = $this->createPdo();
 
@@ -531,7 +557,7 @@ final class VecStoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['maxItems' => 3],
+            ['limit' => 3],
         ));
 
         $this->assertCount(3, $results);
@@ -616,7 +642,7 @@ final class VecStoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['maxItems' => 3, 'rrfCandidatePoolSize' => 5],
+            ['limit' => 3, 'rrfCandidatePoolSize' => 5],
         ));
 
         $this->assertCount(3, $results);
@@ -687,7 +713,7 @@ final class VecStoreTest extends TestCase
 
         $store->remove(['doc-1', 'doc-3']);
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.4, 0.5, 0.6])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.4, 0.5, 0.6])), ['limit' => 10]));
         $this->assertCount(1, $results);
         $this->assertSame('doc-2', $results[0]->getId());
     }
@@ -713,7 +739,7 @@ final class VecStoreTest extends TestCase
 
         $store->clear();
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
         $this->assertCount(0, $results);
 
         $result = $pdo->query('SELECT COUNT(*) FROM test_vectors_fts');
@@ -792,7 +818,7 @@ final class VecStoreTest extends TestCase
 
         $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), new Metadata(['name' => 'no-text'])));
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
         $this->assertCount(1, $results);
 
         // No FTS entry since no text metadata
@@ -817,7 +843,7 @@ final class VecStoreTest extends TestCase
             new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
         ]);
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['maxItems' => 10]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['limit' => 10]));
 
         $this->assertCount(3, $results);
         $this->assertSame('doc-1', $results[0]->getId());

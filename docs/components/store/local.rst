@@ -59,7 +59,7 @@ Batch Processing
 
 For large datasets, the distance calculator can process documents in batches
 instead of scoring the entire dataset at once. After each batch, only the best
-candidates are kept, reducing peak memory from O(N) to O(maxItems + batchSize)::
+candidates are kept, reducing peak memory from O(N) to O(limit + batchSize)::
 
     use Symfony\AI\Store\Distance\DistanceCalculator;
     use Symfony\AI\Store\Distance\DistanceStrategy;
@@ -71,14 +71,14 @@ candidates are kept, reducing peak memory from O(N) to O(maxItems + batchSize)::
     );
     $store = new Store($calculator);
 
-    // Batch processing is activated when both batchSize and maxItems are set
+    // Batch processing is activated when both batchSize and limit are set
     $results = $store->query($vectorQuery, [
-        'maxItems' => 10,
+        'limit' => 10,
     ]);
 
 .. note::
 
-    Batch processing requires ``maxItems`` to be set in the query options.
+    Batch processing requires ``limit`` to be set in the query options.
     Without it, the calculator falls back to the standard full-sort behavior
     since all results are needed and no pruning can occur.
 
@@ -100,7 +100,7 @@ You can combine multiple conditions::
             $doc->getMetadata()['price'] <= 100
             && $doc->getMetadata()['stock'] > 0
             && $doc->getMetadata()['enabled'] === true,
-        'maxItems' => 10,
+        'limit' => 10,
     ]);
 
 Filter nested metadata::
@@ -128,12 +128,12 @@ Query Options
 
 Both stores support the following query options:
 
-* ``maxItems`` (int) - Limit the number of results returned
+* ``limit`` (int) - Limit the number of results returned
 * ``filter`` (callable) - Filter documents by metadata before distance calculation
 
 Example combining both options::
 
     $results = $store->query($vectorQuery, [
-        'maxItems' => 5,
+        'limit' => 5,
         'filter' => fn(VectorDocumentInterface $doc) => $doc->getMetadata()['active'] === true,
     ]);

@@ -170,11 +170,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $vector = $query->getVector();
-        $results = $this->request('POST', \sprintf('vectorize/v2/indexes/%s/query', $this->index), [
+        $payload = [
             'vector' => $vector->getData(),
             'returnValues' => true,
             'returnMetadata' => 'all',
-        ]);
+        ];
+
+        if (isset($options['limit'])) {
+            $payload['topK'] = $options['limit'];
+        }
+
+        $results = $this->request('POST', \sprintf('vectorize/v2/indexes/%s/query', $this->index), $payload);
 
         $result = $results['result'] ?? null;
         if (!\is_array($result)) {

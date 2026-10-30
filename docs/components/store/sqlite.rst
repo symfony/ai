@@ -102,13 +102,13 @@ Query Options
 
 The SQLite store supports the following query options:
 
-* ``maxItems`` (int) - Limit the number of results returned
+* ``limit`` (int) - Limit the number of results returned
 * ``filter`` (callable) - Filter documents by metadata before distance calculation
 
 Example combining both options::
 
     $results = $store->query($vectorQuery, [
-        'maxItems' => 5,
+        'limit' => 5,
         'filter' => fn(VectorDocumentInterface $doc) => $doc->getMetadata()['active'] === true,
     ]);
 
