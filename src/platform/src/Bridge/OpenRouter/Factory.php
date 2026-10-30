@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
 use Symfony\AI\Platform\Bridge\Generic;
+use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ModelClient as DecisionModelClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ResultConverter as DecisionResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient as RerankModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter as RerankResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ModelClient as SpeechModelClient;
@@ -52,12 +54,14 @@ final class Factory
             new Generic\Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/embeddings'),
             new RerankModelClient($httpClient, $apiKey, $baseUrl),
             new SpeechModelClient($httpClient, $apiKey, $baseUrl),
+            new DecisionModelClient($httpClient, $apiKey, $baseUrl),
         ];
         $resultConverters = [
             new Generic\Completions\ResultConverter(),
             new Generic\Embeddings\ResultConverter(),
             new RerankResultConverter(),
             new SpeechResultConverter(),
+            new DecisionResultConverter(),
         ];
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);

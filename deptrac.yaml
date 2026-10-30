@@ -560,6 +560,7 @@ deptrac:
     OpenResponsesPlatform:
       - PlatformComponent
     OpenRouterPlatform:
+      - DecisionPlatform
       - PlatformComponent
       - GenericPlatform
     OvhPlatform:
