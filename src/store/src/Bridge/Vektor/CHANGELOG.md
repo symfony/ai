@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Deprecate the `k` option of `Store::query()`, use `limit` instead
+
 0.14
 ----
 

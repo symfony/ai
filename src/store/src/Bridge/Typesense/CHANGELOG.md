@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Deprecate the `k` option of `Store::query()`, use `limit` instead, which also sets `per_page`
  * [BC BREAK] Rename the `embeddingsDimension` argument of `Store` and `StoreFactory` to `dimensions`
 
 0.14

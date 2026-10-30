@@ -21,6 +21,7 @@ use AsyncAws\S3Vectors\Result\QueryVectorsOutput;
 use AsyncAws\S3Vectors\S3VectorsClient;
 use AsyncAws\S3Vectors\ValueObject\ListOutputVector;
 use AsyncAws\S3Vectors\ValueObject\QueryOutputVector;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\S3Vectors\Store;
@@ -373,6 +374,36 @@ final class StoreTest extends TestCase
                     && ['type' => 'document'] === $input['filter'];
             }))
             ->willReturn($result);
+
+        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+            'limit' => 10,
+            'filter' => ['type' => 'document'],
+        ]));
+
+        $this->assertCount(0, $results);
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryStillReadsTheDeprecatedTopKOption()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $result = ResultMockFactory::create(QueryVectorsOutput::class, [
+            'vectors' => [],
+            'distanceMetric' => DistanceMetric::COSINE,
+        ]);
+
+        $client->expects($this->once())
+            ->method('queryVectors')
+            ->with($this->callback(static function ($input) {
+                return 'test-bucket' === $input['vectorBucketName']
+                    && 'test-index' === $input['indexName']
+                    && 10 === $input['topK']
+                    && ['type' => 'document'] === $input['filter'];
+            }))
+            ->willReturn($result);
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-s3vectors-store 1.0: The "topK" option is deprecated, use "limit" instead.');
 
         $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'topK' => 10,

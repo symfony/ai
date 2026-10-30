@@ -100,7 +100,7 @@ final class RetrieverTest extends TestCase
         );
 
         $retriever = new Retriever($store, $vectorizer);
-        $results = iterator_to_array($retriever->retrieve('test query', ['maxItems' => 10]));
+        $results = iterator_to_array($retriever->retrieve('test query', ['limit' => 10]));
 
         $this->assertCount(1, $results);
     }

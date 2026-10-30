@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Pinecone\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
@@ -215,7 +216,7 @@ final class StoreTest extends TestCase
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
-            'topK' => 10,
+            'limit' => 10,
             'includeValues' => true,
             'includeMetadata' => false,
         ]));
@@ -228,6 +229,20 @@ final class StoreTest extends TestCase
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
         ], $this->requests[0]['body']);
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryStillReadsTheDeprecatedTopKOption()
+    {
+        $store = $this->createStore([new JsonMockResponse(['matches' => []])]);
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-pinecone-store 1.0: The "topK" option is deprecated, use "limit" instead.');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+            'topK' => 10,
+        ]));
+
+        $this->assertSame(10, $this->requests[0]['body']['topK']);
     }
 
     public function testQueryWithoutMetadataReturnsEmptyMetadata()

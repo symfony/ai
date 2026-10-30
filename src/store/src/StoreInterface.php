@@ -45,6 +45,8 @@ interface StoreInterface extends \Countable
     /**
      * Returns the documents of the store matching the given query.
      *
+     * The "limit" option caps the number of returned documents.
+     *
      * @param array<string, mixed> $options
      *
      * @return iterable<VectorDocumentInterface>

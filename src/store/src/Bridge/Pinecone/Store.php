@@ -147,9 +147,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        if (isset($options['topK'])) {
+            @trigger_error('Since symfony/ai-pinecone-store 1.0: The "topK" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
         $payload = [
             'vector' => $query->getVector()->getData(),
-            'topK' => $options['topK'] ?? $this->topK,
+            'topK' => $options['limit'] ?? $options['topK'] ?? $this->topK,
             'includeMetadata' => $options['includeMetadata'] ?? true,
             'includeValues' => $options['includeValues'] ?? false,
         ];

@@ -82,7 +82,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('test query', ['maxItems' => 10])
+            ->with('test query', ['limit' => 10])
             ->willReturn([$document]);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -122,7 +122,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('my query', ['maxItems' => 5])
+            ->with('my query', ['limit' => 5])
             ->willReturn($documents);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -148,7 +148,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('unknown query', ['maxItems' => 10])
+            ->with('unknown query', ['limit' => 10])
             ->willReturn([]);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -295,7 +295,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('test', ['maxItems' => 3])
+            ->with('test', ['limit' => 3])
             ->willReturn($documents);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -322,7 +322,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('test query', ['maxItems' => 10])
+            ->with('test query', ['limit' => 10])
             ->willReturn([]);
 
         $command = new RetrieveCommand(new ServiceLocator([

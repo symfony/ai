@@ -122,19 +122,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = $query->getVector();
 
-        $k = $options['k'] ?? 10;
+        if (isset($options['k'])) {
+            @trigger_error('Since symfony/ai-typesense-store 1.0: The "k" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
+        $k = $options['limit'] ?? $options['k'] ?? 10;
         if (!\is_int($k)) {
-            throw new InvalidArgumentException('The "k" option must be an integer.');
+            throw new InvalidArgumentException('The "limit" option must be an integer.');
+        }
+
+        $search = [
+            'collection' => $this->collection,
+            'q' => '*',
+            'vector_query' => \sprintf('%s:([%s], k:%d)', $this->vectorFieldName, implode(', ', $vector->getData()), $k),
+        ];
+
+        // the hits are capped by "per_page", which defaults to 10 and can't exceed 250
+        if (isset($options['limit'])) {
+            $search['per_page'] = min($k, 250);
         }
 
         $documents = $this->request('POST', 'multi_search', [
-            'searches' => [
-                [
-                    'collection' => $this->collection,
-                    'q' => '*',
-                    'vector_query' => \sprintf('%s:([%s], k:%d)', $this->vectorFieldName, implode(', ', $vector->getData()), $k),
-                ],
-            ],
+            'searches' => [$search],
         ]);
 
         $results = $documents['results'] ?? null;
