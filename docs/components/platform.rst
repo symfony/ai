@@ -173,6 +173,7 @@ Supported Models & Platforms
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
   * Text-to-speech and speech-to-text with `Together`_ as Platform
+  * `Ollama TTS`_ with `Ollama`_ as Platform
   * `Venice TTS`_ with `Venice`_ as Platform
   * `Venice STT`_ with `Venice`_ as Platform
   * Multi-provider TTS and STT with `Eden AI`_ as Platform
@@ -1480,6 +1481,7 @@ Code Examples
 ~~~~~~~~~~~~~
 
 * `Audio Output with GPT`_
+* `Ollama Text-to-Speech`_
 
 Speech-to-Text
 --------------
@@ -2390,6 +2392,7 @@ Code Examples
 .. _`LiteLLM example`: https://github.com/symfony/ai/blob/main/examples/litellm/chat.php
 .. _`Meta's Llama`: https://www.llama.com/
 .. _`Ollama`: https://ollama.com/
+.. _`Ollama TTS`: https://docs.ollama.com/capabilities/speech
 .. _`Replicate`: https://replicate.com/
 .. _`Gemini`: https://gemini.google.com/
 .. _`Vertex AI`: https://cloud.google.com/vertex-ai/generative-ai/docs
@@ -2433,6 +2436,7 @@ Code Examples
 .. _`Asynchronous Text Generation with Replicate`: https://github.com/symfony/ai/blob/main/examples/replicate/chat-llama.php
 .. _`Batch Requests with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/batch.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
+.. _`Ollama Text-to-Speech`: https://github.com/symfony/ai/blob/main/examples/ollama/text-to-speech.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php

@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
@@ -209,6 +210,55 @@ final class OllamaApiCatalogTest extends TestCase
             Capability::OUTPUT_STRUCTURED,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogCanReturnTextToSpeechModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['speech'],
+                'voices' => ['default', 'Zoey', 'Easton'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $model = $modelCatalog->getModel('phonon');
+
+        $this->assertInstanceOf(TextToSpeech::class, $model);
+        $this->assertSame('phonon', $model->getName());
+        $this->assertSame([
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_AUDIO,
+            Capability::TEXT_TO_SPEECH,
+        ], $model->getCapabilities());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testGetModelsCanReturnTextToSpeechModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    [
+                        'name' => 'phonon',
+                        'details' => [],
+                    ],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['speech'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $models = (new ModelCatalog($httpClient))->getModels();
+
+        $this->assertSame(TextToSpeech::class, $models['phonon']['class']);
+        $this->assertSame([
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_AUDIO,
+            Capability::TEXT_TO_SPEECH,
+        ], $models['phonon']['capabilities']);
     }
 
     public function testModelCatalogCanReturnInsertModelsFromApi()
