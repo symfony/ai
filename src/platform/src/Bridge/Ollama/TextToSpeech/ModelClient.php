@@ -38,11 +38,19 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        if (isset($options['stream']) || isset($options['stream_format'])) {
+        if (($options['stream'] ?? false) || isset($options['stream_format'])) {
             throw new InvalidArgumentException('Streaming text to speech results is not supported yet.');
         }
 
-        $input = \is_string($payload) ? $payload : ($payload['text'] ?? throw new InvalidArgumentException('The payload must contain a "text" key.'));
+        unset($options['stream'], $options['stream_format']);
+
+        if (\is_string($payload)) {
+            $input = $payload;
+        } elseif (!\array_key_exists('text', $payload)) {
+            throw new InvalidArgumentException('The payload must contain a "text" key.');
+        } else {
+            $input = $payload['text'];
+        }
 
         if (!\is_string($input)) {
             throw new InvalidArgumentException('The payload "text" key must be a string.');

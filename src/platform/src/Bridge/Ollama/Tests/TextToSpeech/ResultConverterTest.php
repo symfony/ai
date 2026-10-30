@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\Format;
 use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -62,6 +63,34 @@ final class ResultConverterTest extends TestCase
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertNull($result->getMimeType());
+    }
+
+    public function testItUsesTheResponseContentTypeOverTheOption()
+    {
+        $httpClient = new MockHttpClient(
+            new MockResponse('fake-audio-bytes', ['response_headers' => ['content-type' => ['audio/pcm; charset=binary']]]),
+            'http://127.0.0.1:11434',
+        );
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpClient->request('POST', '/v1/audio/speech')), [
+            'response_format' => Format::WAV,
+        ]);
+
+        $this->assertInstanceOf(BinaryResult::class, $result);
+        $this->assertSame('audio/pcm', $result->getMimeType());
+    }
+
+    public function testItThrowsOnServerError()
+    {
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Ollama is overloaded');
+
+        $httpClient = new MockHttpClient(
+            new JsonMockResponse(['error' => 'Ollama is overloaded'], ['http_code' => 500]),
+            'http://127.0.0.1:11434',
+        );
+
+        (new ResultConverter())->convert(new RawHttpResult($httpClient->request('POST', '/v1/audio/speech')));
     }
 
     public function testItThrowsOnBadRequestWithTheOpenAiCompatibleError()

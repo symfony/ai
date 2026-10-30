@@ -62,8 +62,8 @@ $result->asFile('speech.wav');
 Ollama answers with 16-bit mono audio at 24 kHz, in `wav` (default) or `pcm` format, for an input
 of up to 4,096 characters. Omitting `voice` uses the model's `default` voice. The API streams the
 audio while it is generated; the bridge buffers it into a binary result, so `stream` and
-`stream_format` are rejected. An unknown voice or an unsupported option is rejected by Ollama
-with a 400 error listing the available voices or supported values.
+`stream_format` are rejected locally. An unknown voice or another unsupported option is rejected
+by Ollama with a 400 error listing the available voices or supported values.
 
 Ollama Documentation
 --------------------

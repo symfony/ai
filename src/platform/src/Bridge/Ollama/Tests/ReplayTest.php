@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use Symfony\AI\Platform\Bridge\Ollama\Factory;
+use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\Format;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
@@ -38,6 +39,20 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $binary = $result->getResult();
         $this->assertInstanceOf(BinaryResult::class, $binary);
         $this->assertSame('audio/wav', $binary->getMimeType());
+        $this->assertNotSame('', $result->asBinary());
+    }
+
+    public function testPcmSpeech()
+    {
+        $platform = $this->platformForCassette('pcm');
+
+        $result = $platform->invoke('phonon', 'Raw samples.', [
+            'response_format' => Format::PCM,
+        ]);
+
+        $binary = $result->getResult();
+        $this->assertInstanceOf(BinaryResult::class, $binary);
+        $this->assertSame('audio/pcm', $binary->getMimeType());
         $this->assertNotSame('', $result->asBinary());
     }
 

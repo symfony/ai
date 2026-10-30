@@ -82,6 +82,33 @@ final class ModelClientTest extends TestCase
         (new ModelClient(new MockHttpClient()))->request(new TextToSpeech('phonon'), ['type' => 'text']);
     }
 
+    public function testItFailsWithANullTextPayload()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The payload "text" key must be a string.');
+
+        (new ModelClient(new MockHttpClient()))->request(new TextToSpeech('phonon'), ['text' => null]);
+    }
+
+    public function testItAcceptsDisabledStreaming()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): HttpResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('Hello from Ollama.', $body['input']);
+            $this->assertArrayNotHasKey('stream', $body);
+            $this->assertArrayNotHasKey('stream_format', $body);
+
+            return new MockResponse('fake-audio-bytes');
+        }, 'http://127.0.0.1:11434');
+
+        (new ModelClient($httpClient))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
+            'stream' => false,
+            'stream_format' => null,
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testItFailsWithANonStringTextPayload()
     {
         $this->expectException(InvalidArgumentException::class);

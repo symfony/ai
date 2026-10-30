@@ -46,7 +46,9 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException(\sprintf('The Ollama Text-to-Speech API returned an error: "%s"', $response->getContent(false)));
         }
 
-        return new BinaryResult($response->getContent(), match ($options['response_format'] ?? Format::WAV) {
+        $mimeType = $response->getHeaders(false)['content-type'][0] ?? null;
+
+        return new BinaryResult($response->getContent(), null !== $mimeType ? explode(';', $mimeType, 2)[0] : match ($options['response_format'] ?? Format::WAV) {
             Format::PCM => 'audio/pcm',
             Format::WAV => 'audio/wav',
             default => null,
