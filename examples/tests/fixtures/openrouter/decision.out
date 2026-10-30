@@ -1,0 +1,15 @@
+Department: technical (confidence: 0.62)
+Frustration: 1.00 out of 2 (confidence: 1.00)
+Urgent: yes (probability: 0.99)
++-------------------- Token Usage ---------------------+
+| Model                   | typesafe/jev-1.13-20260917 |
+| Prompt tokens           | 431                        |
+| Completion tokens       | 73                         |
+| Thinking tokens         | n/a                        |
+| Tool tokens             | n/a                        |
+| Cached tokens           | n/a                        |
+| Remaining tokens minute | n/a                        |
+| Remaining tokens month  | n/a                        |
+| Remaining tokens        | n/a                        |
+| Total tokens            | n/a                        |
++-------------------------+----------------------------+
