@@ -6,6 +6,7 @@
     "keywords": [
         "ai",
         "bridge",
+        "decision",
         "openrouter",
         "platform"
     ],
@@ -30,6 +31,7 @@
         "symfony/http-client": "^7.3|^8.0"
     },
     "require-dev": {
+        "symfony/ai-decision-platform": "^1.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",

@@ -4,6 +4,8 @@ CHANGELOG
 1.0
 ---
 
+ * Add experimental decision model support through the alpha Decisions API (`DecisionModel`, `Decision\ModelClient`, `Decision\ResultConverter` and `Decision\DecisionModelCatalog`), requiring `symfony/ai-decision-platform`
+ * Add decision models to `ModelApiCatalog`, loaded from `/v1/models?output_modalities=decisions`
  * Add `Factory::createModelCatalog()` to build the API-based catalog on its own, e.g. to wrap it in a `CachedModelCatalog`
 
 0.13
