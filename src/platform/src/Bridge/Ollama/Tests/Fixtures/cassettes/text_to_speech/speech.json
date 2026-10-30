@@ -1,0 +1,50 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:11434/api/show",
+                "signature": "67985f4482ba2934def0442080bdbf69",
+                "signature_v2": "ec0bf58f7e7bd78885a57a9da109b7a7",
+                "body": {
+                    "model": "phonon"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"capabilities\":[\"speech\"],\"voices\":[\"default\",\"Zoey\"]}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:11434/v1/audio/speech",
+                "signature": "e9b821be9fcfef25d643824ce3bc9406",
+                "signature_v2": "86f631a5d60e9e0965cbdbbb2bf4a858",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body": "{\"voice\":\"Zoey\",\"response_format\":\"wav\",\"model\":\"phonon\",\"input\":\"Hello from Ollama.\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "audio/wav"
+                    ]
+                },
+                "body_format": "binary",
+                "body": null,
+                "body_size": 16
+            }
+        }
+    ]
+}
