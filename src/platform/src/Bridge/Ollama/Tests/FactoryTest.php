@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -142,6 +143,36 @@ final class FactoryTest extends TestCase
         $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('qwen3:8b?think=false', new MessageBag(Message::ofUser('Hello')));
 
         $this->assertSame('Hello', $result->asText());
+    }
+
+    public function testItGeneratesSpeechWithASpeechModel()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['speech'], 'voices' => ['default', 'Zoey']]),
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('http://127.0.0.1:11434/v1/audio/speech', $url);
+
+                $body = json_decode($options['body'], true);
+                $this->assertSame('phonon', $body['model']);
+                $this->assertSame('Hello from Ollama.', $body['input']);
+                $this->assertSame('Zoey', $body['voice']);
+                $this->assertSame('wav', $body['response_format']);
+
+                return new MockResponse('fake-wav-bytes');
+            },
+        ], 'http://127.0.0.1:11434');
+
+        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('phonon', 'Hello from Ollama.', [
+            'voice' => 'Zoey',
+            'response_format' => 'wav',
+        ]);
+
+        $binary = $result->getResult();
+        $this->assertInstanceOf(BinaryResult::class, $binary);
+        $this->assertSame('fake-wav-bytes', $binary->getContent());
+        $this->assertSame('audio/wav', $binary->getMimeType());
+        $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
     public function testCreatePlatformUsesGivenModelCatalog()

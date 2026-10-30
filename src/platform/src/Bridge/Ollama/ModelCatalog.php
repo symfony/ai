@@ -70,6 +70,15 @@ final class ModelCatalog extends AbstractModelCatalog
             return new Decision($modelName, \in_array('vision', $payload['capabilities'], true) ? [Capability::INPUT_IMAGE] : [], $options);
         }
 
+        // Speech models only generate speech: chat, completion and embedding requests are rejected by Ollama.
+        if (\in_array('speech', $payload['capabilities'], true)) {
+            return new TextToSpeech($modelName, [
+                Capability::INPUT_TEXT,
+                Capability::OUTPUT_AUDIO,
+                Capability::TEXT_TO_SPEECH,
+            ], $options);
+        }
+
         $capabilities = array_map(
             static fn (string $capability): Capability => match ($capability) {
                 'embedding' => Capability::EMBEDDINGS,

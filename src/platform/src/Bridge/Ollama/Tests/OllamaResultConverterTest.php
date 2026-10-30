@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
+use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -50,6 +51,11 @@ final class OllamaResultConverterTest extends TestCase
     public function testDoesNotSupportDecisionModels()
     {
         $this->assertFalse((new OllamaResultConverter())->supports(new Decision('nimble')));
+    }
+
+    public function testDoesNotSupportTextToSpeechModels()
+    {
+        $this->assertFalse((new OllamaResultConverter())->supports(new TextToSpeech('phonon')));
     }
 
     public function testConvertTextResponse()

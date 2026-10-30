@@ -1,0 +1,49 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:11434/api/show",
+                "signature": "67985f4482ba2934def0442080bdbf69",
+                "signature_v2": "ec0bf58f7e7bd78885a57a9da109b7a7",
+                "body": {
+                    "model": "phonon"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"capabilities\":[\"speech\"],\"voices\":[\"default\"]}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:11434/v1/audio/speech",
+                "signature": "df901880b22fb30947a60178e3f20b2d",
+                "signature_v2": "2641d472db0a4bcf89068d209f37dfac",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body": "{\"voice\":\"nope\",\"model\":\"phonon\",\"input\":\"Hello\"}"
+            },
+            "response": {
+                "status": 400,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"error\":{\"message\":\"voice \\\"nope\\\" not found; available voices: default\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":null}}"
+            }
+        }
+    ]
+}
