@@ -139,7 +139,7 @@ See :doc:`store/bridges` for installation and configuration details for all supp
 * `MongoDB Atlas`_ (requires ``mongodb/mongodb``)
 * `Neo4j`_
 * `OpenSearch`_
-* `Pinecone`_ (requires ``probots-io/pinecone-php``)
+* `Pinecone`_
 * `Postgres`_ with pgvector (requires ``ext-pdo``)
 * `Qdrant`_
 * `Redis Stack`_ (requires ``ext-redis``)

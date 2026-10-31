@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
  */
 
-use Probots\Pinecone\Pinecone;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
 use Symfony\AI\Agent\Toolbox\Toolbox;
@@ -29,7 +28,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(Pinecone::client(env('PINECONE_API_KEY'), 'http://127.0.0.1:5080'), 'symfony');
+$store = new Store(http_client(), env('PINECONE_API_KEY'), 'symfony', indexHost: 'http://127.0.0.1:5080');
 
 // create embeddings and documents
 $documents = [];

@@ -19,7 +19,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
@@ -3054,6 +3053,7 @@ class AiBundleTest extends TestCase
                 'store' => [
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                         ],
                     ],
@@ -3067,12 +3067,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_index', $definition->getArgument(1));
-        $this->assertSame('my_pinecone_store', $definition->getArgument(2));
-        $this->assertSame([], $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('pckey', $definition->getArgument(1));
+        $this->assertSame('my_index', $definition->getArgument(2));
+        $this->assertSame('my_pinecone_store', $definition->getArgument(3));
+        $this->assertSame([], $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
@@ -3090,6 +3091,7 @@ class AiBundleTest extends TestCase
                 'store' => [
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my-index',
                             'dimensions' => 1536,
                             'metric' => 'cosine',
@@ -3097,6 +3099,7 @@ class AiBundleTest extends TestCase
                             'region' => 'us-east-1',
                         ],
                         'my_pinecone_store_without_index_configuration' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my-other-index',
                         ],
                     ],
@@ -3110,7 +3113,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('aws', $definition->getArgument('$cloud'));
         $this->assertSame('us-east-1', $definition->getArgument('$region'));
 
-        $this->assertCount(4, $container->getDefinition('ai.store.pinecone.my_pinecone_store_without_index_configuration')->getArguments());
+        $this->assertCount(5, $container->getDefinition('ai.store.pinecone.my_pinecone_store_without_index_configuration')->getArguments());
     }
 
     public function testPineconeStoreRejectsUnknownDistance()
@@ -3123,6 +3126,7 @@ class AiBundleTest extends TestCase
                 'store' => [
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my-index',
                             'metric' => 'dot_product',
                         ],
@@ -3139,6 +3143,7 @@ class AiBundleTest extends TestCase
                 'store' => [
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'custom_index',
                             'namespace' => 'my_namespace',
                         ],
@@ -3153,12 +3158,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('custom_index', $definition->getArgument(1));
-        $this->assertSame('my_namespace', $definition->getArgument(2));
-        $this->assertSame([], $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('pckey', $definition->getArgument(1));
+        $this->assertSame('custom_index', $definition->getArgument(2));
+        $this->assertSame('my_namespace', $definition->getArgument(3));
+        $this->assertSame([], $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
@@ -11555,17 +11561,20 @@ class AiBundleTest extends TestCase
                     ],
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                             'top_k' => 10,
                         ],
                         'my_pinecone_store_with_filter' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                         ],
                         'my_pinecone_store_with_top_k' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
