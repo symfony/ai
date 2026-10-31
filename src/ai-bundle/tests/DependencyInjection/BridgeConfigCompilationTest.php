@@ -593,7 +593,7 @@ class BridgeConfigCompilationTest extends TestCase
         yield 'mongodb' => ['mongodb', ['default' => ['database' => 'db', 'collection' => 'col', 'index_name' => 'idx', 'vector_field' => 'emb']], 'ai.store.mongodb.default'];
         yield 'neo4j' => ['neo4j', ['default' => ['endpoint' => 'http://localhost:7474', 'username' => 'u', 'password' => 'p', 'database' => 'db', 'vector_index_name' => 'idx', 'node_name' => 'n', 'dimensions' => 768]], 'ai.store.neo4j.default'];
         yield 'opensearch' => ['opensearch', ['default' => ['endpoint' => 'http://localhost:9200']], 'ai.store.opensearch.default'];
-        yield 'pinecone' => ['pinecone', ['default' => ['index_name' => 'idx', 'namespace' => 'ns']], 'ai.store.pinecone.default'];
+        yield 'pinecone' => ['pinecone', ['default' => ['api_key' => 'pckey', 'index_name' => 'idx', 'namespace' => 'ns']], 'ai.store.pinecone.default'];
         yield 'postgres' => ['postgres', ['default' => ['dsn' => 'pgsql:host=localhost', 'username' => 'u', 'password' => 'p']], 'ai.store.postgres.default'];
         yield 'qdrant' => ['qdrant', ['default' => ['endpoint' => 'http://localhost:6333', 'api_key' => 'k', 'collection_name' => 'col', 'dimensions' => 768]], 'ai.store.qdrant.default'];
         yield 'redis' => ['redis', ['default' => ['connection_parameters' => ['host' => 'localhost', 'port' => 6379], 'index_name' => 'idx']], 'ai.store.redis.default'];
@@ -719,7 +719,6 @@ class BridgeConfigCompilationTest extends TestCase
         $container->register('filesystem')->setSynthetic(true);
         $container->register('MongoDB\Client')->setSynthetic(true);
         $container->register('Codewithkyrian\ChromaDB\Client')->setSynthetic(true);
-        $container->register('Probots\Pinecone\Client')->setSynthetic(true);
 
         $extension = (new AiBundle())->getContainerExtension();
         $extension->load($configuration, $container);

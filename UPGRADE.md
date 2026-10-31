@@ -66,6 +66,19 @@ Agent
 AI Bundle
 ---------
 
+ * The `client` option of the `pinecone` store is removed, the store uses the `http_client` option and the new required
+   `api_key` option instead:
+
+   ```diff
+    ai:
+        store:
+            pinecone:
+                my_store:
+   -                client: 'Probots\Pinecone\Client'
+   +                api_key: '%env(PINECONE_API_KEY)%'
+                    index_name: 'my-index'
+   ```
+
  * The `setup_options` key of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis`, `s3vectors` and
    `surrealdb` stores is removed. Its values are store keys, some of them renamed:
 
@@ -364,6 +377,20 @@ Platform
 
 Store
 -----
+
+ * The Pinecone store no longer uses `probots-io/pinecone-php`, which pulls in the vulnerable `saloonphp/saloon` 3.x.
+   `Bridge\Pinecone\Store` takes an `HttpClientInterface` and the API key instead of a `Probots\Pinecone\Client`.
+   The index host is looked up through the Pinecone control plane. Use the `indexHost` and `controlPlaneUrl` arguments
+   to skip the lookup or to use Pinecone Local. The `filter` is no longer sent when removing documents, since Pinecone
+   rejects a filter combined with ids. `Bridge\Pinecone\DescribeIndexStats` is removed:
+
+   ```diff
+   -use Probots\Pinecone\Pinecone;
+   +use Symfony\Component\HttpClient\HttpClient;
+
+   -$store = new Store(Pinecone::client($apiKey, $indexHost), 'my-index');
+   +$store = new Store(HttpClient::create(), $apiKey, 'my-index', indexHost: $indexHost);
+   ```
 
  * `Document\EmbeddableDocumentInterface` is renamed to `Document\DocumentInterface`:
 
