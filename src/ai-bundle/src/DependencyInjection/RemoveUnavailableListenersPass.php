@@ -13,6 +13,7 @@ namespace Symfony\AI\AiBundle\DependencyInjection;
 
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -20,7 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  * Removes the tool call listeners when the service they depend on is not defined,
  * e.g. symfony/security-core is installed without the SecurityBundle.
  *
- * Runs before the attribute autoconfiguration, so that #[IsGrantedTool] fails without an authorization checker.
+ * @author Lazizbek Ergashev <lazerg2@gmail.com>
  */
 final class RemoveUnavailableListenersPass implements CompilerPassInterface
 {
@@ -30,7 +31,9 @@ final class RemoveUnavailableListenersPass implements CompilerPassInterface
             $container->removeDefinition('ai.security.is_granted_attribute_listener');
             $container->registerAttributeForAutoconfiguration(
                 IsGrantedTool::class,
-                static fn () => throw new InvalidArgumentException('Using #[IsGrantedTool] attribute requires additional dependencies. Try running "composer install symfony/security-core".'),
+                static function (ChildDefinition $definition, IsGrantedTool $attribute, \Reflector $reflector): void {
+                    throw new InvalidArgumentException('Using #[IsGrantedTool] attribute requires the SecurityBundle. Try running "composer require symfony/security-bundle".');
+                },
             );
         }
 

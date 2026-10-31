@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Tests\DependencyInjection;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\AiBundle\AiBundle;
@@ -19,6 +20,7 @@ use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\AiBundle\Tests\Fixture\Tool\ToolWithIsGrantedOnClass;
+use Symfony\AI\AiBundle\Tests\Fixture\Tool\ToolWithIsGrantedOnMethod;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -30,20 +32,22 @@ final class RemoveUnavailableListenersPassTest extends TestCase
 {
     public function testContainerCompilesWithoutSecurityBundleAndValidator()
     {
-        $container = $this->loadContainer();
+        $container = $this->buildContainer();
         $container->compile();
 
         $this->assertFalse($container->has('ai.security.is_granted_attribute_listener'));
         $this->assertFalse($container->has('ai.tool.validate_tool_call_arguments_listener'));
     }
 
-    public function testIsGrantedToolFailsWithoutAuthorizationChecker()
+    #[TestWith([ToolWithIsGrantedOnClass::class])]
+    #[TestWith([ToolWithIsGrantedOnMethod::class])]
+    public function testIsGrantedToolFailsWithoutAuthorizationChecker(string $tool)
     {
-        $container = $this->loadContainer();
-        $container->register(ToolWithIsGrantedOnClass::class)->setAutoconfigured(true);
+        $container = $this->buildContainer();
+        $container->register($tool)->setAutoconfigured(true);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Using #[IsGrantedTool] attribute requires additional dependencies.');
+        $this->expectExceptionMessage('Using #[IsGrantedTool] attribute requires the SecurityBundle.');
 
         $container->compile();
     }
@@ -61,7 +65,7 @@ final class RemoveUnavailableListenersPassTest extends TestCase
         $this->assertArrayNotHasKey(IsGrantedTool::class, $container->getAttributeAutoconfigurators());
     }
 
-    private function loadContainer(): ContainerBuilder
+    private function buildContainer(): ContainerBuilder
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
@@ -70,8 +74,9 @@ final class RemoveUnavailableListenersPassTest extends TestCase
         $container->setDefinition('event_dispatcher', (new Definition(EventDispatcher::class))->setPublic(true));
         $container->addCompilerPass(new RegisterListenersPass(), PassConfig::TYPE_BEFORE_REMOVING);
 
-        (new AiBundle())->getContainerExtension()->load([], $container);
-        (new AiBundle())->build($container);
+        $bundle = new AiBundle();
+        $bundle->getContainerExtension()->load([], $container);
+        $bundle->build($container);
 
         return $container;
     }

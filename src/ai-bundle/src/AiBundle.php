@@ -219,6 +219,7 @@ final class AiBundle extends AbstractBundle
         $container->addCompilerPass(new ProcessorCompilerPass());
         $container->addCompilerPass(new SchemaProviderValidationPass());
         $container->addCompilerPass(new DoctrineVectorDistancePass());
+        // before AttributeAutoconfigurationPass, which applies the #[IsGrantedTool] fallback
         $container->addCompilerPass(new RemoveUnavailableListenersPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 200);
     }
 
