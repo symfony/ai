@@ -52,6 +52,7 @@ use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\DoctrineVectorDistancePass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
 use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
+use Symfony\AI\AiBundle\DependencyInjection\RemoveUnavailableListenersPass;
 use Symfony\AI\AiBundle\DependencyInjection\SchemaProviderValidationPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
@@ -193,6 +194,7 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -217,6 +219,7 @@ final class AiBundle extends AbstractBundle
         $container->addCompilerPass(new ProcessorCompilerPass());
         $container->addCompilerPass(new SchemaProviderValidationPass());
         $container->addCompilerPass(new DoctrineVectorDistancePass());
+        $container->addCompilerPass(new RemoveUnavailableListenersPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 200);
     }
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
@@ -436,6 +439,7 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.tool_call_argument_resolver');
             $builder->removeDefinition('ai.tool.agent_processor.abstract');
             $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
+            $builder->removeDefinition('ai.security.is_granted_attribute_listener');
             $builder->removeDefinition('ai.agent.source_collection_normalizer');
         }
 
