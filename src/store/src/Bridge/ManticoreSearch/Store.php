@@ -149,16 +149,27 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        if (isset($options['k'])) {
+            @trigger_error('Since symfony/ai-manticore-search-store 1.0: The "k" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
         $vector = $query->getVector();
-        $documents = $this->request('search', [
+        $payload = [
             'table' => $this->table,
             'knn' => [
                 'field' => $this->field,
                 'query' => $vector->getData(),
-                'k' => $options['k'] ?? 250,
+                'k' => $options['limit'] ?? $options['k'] ?? 250,
                 'ef' => $options['ef'] ?? 1000,
             ],
-        ]);
+        ];
+
+        // the hits are capped by "limit", which defaults to 20
+        if (isset($options['limit'])) {
+            $payload['limit'] = $options['limit'];
+        }
+
+        $documents = $this->request('search', $payload);
 
         foreach ($documents['hits']['hits'] as $item) {
             yield $this->convertToVectorDocument($item);

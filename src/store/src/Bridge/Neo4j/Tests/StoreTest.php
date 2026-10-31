@@ -395,4 +395,16 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testQueryPassesTheLimit()
+    {
+        $response = new JsonMockResponse(['data' => ['values' => []]]);
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertStringContainsString('queryNodes("symfony", $limit, $vectors)', $body['statement']);
+        $this->assertSame(20, $body['parameters']['limit']);
+    }
 }

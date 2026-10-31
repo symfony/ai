@@ -166,14 +166,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        if (isset($options['size'])) {
+            @trigger_error('Since symfony/ai-open-search-store 1.0: The "size" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
+        if (isset($options['k'])) {
+            @trigger_error('Since symfony/ai-open-search-store 1.0: The "k" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
         $vector = $query->getVector();
         $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), [
-            'size' => $options['size'] ?? 100,
+            'size' => $options['limit'] ?? $options['size'] ?? 100,
             'query' => [
                 'knn' => [
                     $this->vectorsField => [
                         'vector' => $vector->getData(),
-                        'k' => $options['k'] ?? 100,
+                        'k' => $options['limit'] ?? $options['k'] ?? 100,
                     ],
                 ],
             ],

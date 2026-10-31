@@ -241,6 +241,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
+     *     limit?: positive-int,
      *     maxItems?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
@@ -248,6 +249,12 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      */
     public function query(QueryInterface $query, array $options = []): iterable
     {
+        if (isset($options['maxItems'])) {
+            @trigger_error('Since symfony/ai-sqlite-store 1.0: The "maxItems" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+            $options['limit'] ??= $options['maxItems'];
+            unset($options['maxItems']);
+        }
+
         return match (true) {
             $query instanceof VectorQuery => $this->queryVector($query, $options),
             $query instanceof TextQuery => $this->queryText($query, $options),
@@ -258,7 +265,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -266,11 +273,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      */
     private function queryVector(VectorQuery $query, array $options): iterable
     {
-        $maxItems = $options['maxItems'] ?? 5;
+        $limit = $options['limit'] ?? 5;
         $hasFilter = isset($options['filter']);
 
         // Over-fetch when filtering to compensate for post-query filtering
-        $fetchLimit = $hasFilter ? $maxItems * 3 : $maxItems;
+        $fetchLimit = $hasFilter ? $limit * 3 : $limit;
 
         $statement = $this->connection->prepare(\sprintf(
             'SELECT id, distance, metadata FROM %s WHERE embedding MATCH :embedding AND k = :k ORDER BY distance',
@@ -290,7 +297,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $count = 0;
 
         foreach ($results as $row) {
-            if ($count >= $maxItems) {
+            if ($count >= $limit) {
                 break;
             }
 
@@ -312,7 +319,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -329,8 +336,8 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $this->tableName,
         );
 
-        if (isset($options['maxItems'])) {
-            $sql .= \sprintf(' LIMIT %d', $options['maxItems']);
+        if (isset($options['limit'])) {
+            $sql .= \sprintf(' LIMIT %d', $options['limit']);
         }
 
         $statement = $this->connection->prepare($sql);
@@ -358,11 +365,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $orderedDocuments = array_values(array_filter($orderedDocuments, $options['filter']));
         }
 
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
         $count = 0;
 
         foreach ($orderedDocuments as $document) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 
@@ -380,11 +387,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      * and the no-overlap scenario where vector and text results are entirely disjoint.
      *
      * Each sub-query fetches a candidate pool of `rrfCandidatePoolSize` documents (defaults
-     * to `maxItems * 10`, minimum 100, or 100 when `maxItems` is not set). RRF merges and
-     * re-ranks the pool, then `maxItems` is applied. Override via `$options['rrfCandidatePoolSize']`.
+     * to `limit * 10`, minimum 100, or 100 when `limit` is not set). RRF merges and
+     * re-ranks the pool, then `limit` is applied. Override via `$options['rrfCandidatePoolSize']`.
      *
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
@@ -393,17 +400,17 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
 
-        // Each sub-query fetches a candidate pool larger than maxItems so RRF has
-        // enough documents to rank before trimming. Defaults to 100 when maxItems
+        // Each sub-query fetches a candidate pool larger than limit so RRF has
+        // enough documents to rank before trimming. Defaults to 100 when limit
         // is not set, since sqlite-vec always requires a k parameter.
         $candidatePoolSize = $options['rrfCandidatePoolSize']
-            ?? (null !== $maxItems ? max($maxItems * 10, 100) : 100);
+            ?? (null !== $limit ? max($limit * 10, 100) : 100);
 
         $subOptions = $options;
         unset($subOptions['rrfCandidatePoolSize']);
-        $subOptions['maxItems'] = $candidatePoolSize;
+        $subOptions['limit'] = $candidatePoolSize;
 
         $vectorResults = iterator_to_array($this->queryVector(
             new VectorQuery($query->getVector()),
@@ -441,7 +448,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $count = 0;
 
         foreach ($scores as ['doc' => $doc, 'score' => $score]) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 

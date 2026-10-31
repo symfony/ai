@@ -106,6 +106,15 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     }
 
     #[Depends('testAddDocuments')]
+    public function testQueryDocumentsWithLimit()
+    {
+        $results = iterator_to_array(self::$store->query(new VectorQuery(new Vector([0.0, 0.0, 1.0])), ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame(self::DOCUMENT_ID_3, $results[0]->getId());
+    }
+
+    #[Depends('testAddDocuments')]
     public function testQueryDocumentsWithTextQuery()
     {
         // this test must not be skipped, since the tests depending on it would be skipped as well,
@@ -172,6 +181,7 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     }
 
     #[Depends('testQueryDocuments')]
+    #[Depends('testQueryDocumentsWithLimit')]
     #[Depends('testQueryDocumentsWithTextQuery')]
     #[Depends('testQueryDocumentsWithHybridQuery')]
     #[Depends('testCountDocumentsAfterInsert')]

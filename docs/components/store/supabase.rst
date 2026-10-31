@@ -153,7 +153,7 @@ Querying Documents
     use Symfony\AI\Store\Query\VectorQuery;
 
     $results = $store->query(new VectorQuery($queryVector), [
-        'max_items' => 10,
+        'limit' => 10,
         'min_score' => 0.7
     ]);
 
