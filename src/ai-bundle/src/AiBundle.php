@@ -2222,14 +2222,15 @@ final class AiBundle extends AbstractBundle
 
             foreach ($stores as $name => $store) {
                 $arguments = [
-                    new Reference($store['client']),
+                    new Reference($store['http_client']),
+                    $store['api_key'],
                     $store['index_name'],
                     $store['namespace'] ?? $name,
                     $store['filter'],
                 ];
 
                 if (\array_key_exists('top_k', $store)) {
-                    $arguments[4] = $store['top_k'];
+                    $arguments[5] = $store['top_k'];
                 }
 
                 foreach (['dimensions', 'metric', 'cloud', 'region'] as $key) {

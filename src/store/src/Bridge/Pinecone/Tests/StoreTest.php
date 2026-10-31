@@ -12,256 +12,146 @@
 namespace Symfony\AI\Store\Bridge\Pinecone\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Probots\Pinecone\Client;
-use Probots\Pinecone\Resources\Control\IndexResource;
-use Probots\Pinecone\Resources\ControlResource;
-use Probots\Pinecone\Resources\Data\VectorResource;
-use Probots\Pinecone\Resources\DataResource;
-use Saloon\Http\Response;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\Pinecone\DescribeIndexStats;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 
 final class StoreTest extends TestCase
 {
+    private const INDEX_HOST = 'https://my-index-abc123.svc.aped-1234.pinecone.io';
+
+    /**
+     * @var list<array{method: string, url: string, headers: array<string, string>, raw_body: string, body: array<string, mixed>|null}>
+     */
+    private array $requests = [];
+
     public function testAddSingleDocument()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
-
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
         $uuid = Uuid::v4();
 
-        $vectorResource->expects($this->once())
-            ->method('upsert')
-            ->with(
-                [
-                    [
-                        'id' => (string) $uuid,
-                        'values' => [0.1, 0.2, 0.3],
-                        'metadata' => ['title' => 'Test Document'],
-                    ],
-                ],
-                null,
-            );
+        $store = $this->createStore([new JsonMockResponse(['upsertedCount' => 1])]);
+        $store->add(new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document'])));
 
-        $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']));
-        self::createStore($client)->add($document);
+        $this->assertCount(1, $this->requests);
+        $this->assertSame('POST', $this->requests[0]['method']);
+        $this->assertSame(self::INDEX_HOST.'/vectors/upsert', $this->requests[0]['url']);
+        $this->assertSame([
+            'vectors' => [
+                ['id' => (string) $uuid, 'values' => [0.1, 0.2, 0.3], 'metadata' => ['title' => 'Test Document']],
+            ],
+        ], $this->requests[0]['body']);
     }
 
-    public function testAddMultipleDocuments()
+    public function testAddMultipleDocumentsWithoutMetadata()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
-
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
         $uuid1 = Uuid::v4();
         $uuid2 = Uuid::v4();
 
-        $vectorResource->expects($this->once())
-            ->method('upsert')
-            ->with(
-                [
-                    [
-                        'id' => (string) $uuid1,
-                        'values' => [0.1, 0.2, 0.3],
-                        'metadata' => [],
-                    ],
-                    [
-                        'id' => (string) $uuid2,
-                        'values' => [0.4, 0.5, 0.6],
-                        'metadata' => ['title' => 'Second Document'],
-                    ],
-                ],
-                null,
-            );
+        $store = $this->createStore([new JsonMockResponse(['upsertedCount' => 2])]);
+        $store->add([
+            new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second Document'])),
+        ]);
 
-        $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
-        $document2 = new VectorDocument($uuid2, new Vector([0.4, 0.5, 0.6]), new Metadata(['title' => 'Second Document']));
-
-        self::createStore($client)->add([$document1, $document2]);
+        $this->assertCount(1, $this->requests);
+        $this->assertSame([
+            'vectors' => [
+                ['id' => (string) $uuid1, 'values' => [0.1, 0.2, 0.3]],
+                ['id' => (string) $uuid2, 'values' => [0.4, 0.5, 0.6], 'metadata' => ['title' => 'Second Document']],
+            ],
+        ], $this->requests[0]['body']);
     }
 
     public function testAddWithNamespace()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $store = $this->createStore([new JsonMockResponse(['upsertedCount' => 1])], namespace: 'test-namespace');
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $uuid = Uuid::v4();
-
-        $vectorResource->expects($this->once())
-            ->method('upsert')
-            ->with(
-                [
-                    [
-                        'id' => (string) $uuid,
-                        'values' => [0.1, 0.2, 0.3],
-                        'metadata' => [],
-                    ],
-                ],
-                'test-namespace',
-            );
-
-        $document = new VectorDocument($uuid, new Vector([0.1, 0.2, 0.3]));
-        self::createStore($client, namespace: 'test-namespace')->add($document);
+        $this->assertSame('test-namespace', $this->requests[0]['body']['namespace']);
     }
 
-    public function testAddWithEmptyDocuments()
+    public function testAddWithEmptyDocumentsSendsNothing()
     {
-        $client = $this->createMock(Client::class);
+        $this->createStore([])->add([]);
 
-        $client->expects($this->never())
-            ->method('data');
+        $this->assertSame([], $this->requests);
+    }
 
-        self::createStore($client)->add([]);
+    public function testRequestsCarryTheCredentialsAndTheApiVersion()
+    {
+        $store = $this->createStore([new JsonMockResponse(['upsertedCount' => 1])]);
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1])));
+
+        $this->assertSame('secret', $this->requests[0]['headers']['api-key']);
+        $this->assertSame('2025-10', $this->requests[0]['headers']['x-pinecone-api-version']);
     }
 
     public function testRemoveSingleDocument()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $store = $this->createStore([new JsonMockResponse([])], namespace: 'test-namespace');
+        $store->remove('vector-id');
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $vectorId = 'vector-id';
-
-        $vectorResource->expects($this->once())
-            ->method('delete')
-            ->with([$vectorId],
-                'test-namespace',
-                false,
-                [],
-            );
-
-        self::createStore($client, namespace: 'test-namespace')->remove($vectorId);
+        $this->assertCount(1, $this->requests);
+        $this->assertSame(self::INDEX_HOST.'/vectors/delete', $this->requests[0]['url']);
+        $this->assertSame(['ids' => ['vector-id'], 'namespace' => 'test-namespace'], $this->requests[0]['body']);
     }
 
-    public function testRemoveMultipleDocuments()
+    public function testRemoveSplitsIdsIntoChunksOfThousand()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
-
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $vectorResource->expects($this->exactly(2))
-            ->method('delete');
-
-        $documents = [];
+        $ids = [];
         for ($i = 0; $i < 1001; ++$i) {
-            $documents[] = 'vector-id-'.$i;
+            $ids[] = 'vector-id-'.$i;
         }
 
-        self::createStore($client)->remove($documents);
+        $this->createStore([new JsonMockResponse([]), new JsonMockResponse([])])->remove($ids);
+
+        $this->assertCount(2, $this->requests);
+        $this->assertCount(1000, $this->requests[0]['body']['ids']);
+        $this->assertSame(['vector-id-1000'], $this->requests[1]['body']['ids']);
     }
 
-    public function testRemoveWithEmptyDocuments()
+    public function testRemoveWithEmptyIdsSendsNothing()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $this->createStore([])->remove([]);
 
-        $dataResource->method('vectors')
-            ->willReturn($vectorResource);
+        $this->assertSame([], $this->requests);
+    }
 
-        $client->method('data')
-            ->willReturn($dataResource);
+    public function testRemoveWithDeleteAllOption()
+    {
+        $this->createStore([new JsonMockResponse([])])->remove(['a', 'b'], ['deleteAll' => true]);
 
-        $vectorResource->expects($this->never())
-            ->method('delete');
-
-        self::createStore($client)->remove([]);
+        $this->assertCount(1, $this->requests);
+        $this->assertSame(['deleteAll' => true], $this->requests[0]['body']);
     }
 
     public function testClear()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $this->createStore([new JsonMockResponse([])], namespace: 'test-namespace')->clear();
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $vectorResource->expects($this->once())
-            ->method('delete')
-            ->with([],
-                'test-namespace',
-                true,
-            );
-
-        self::createStore($client, namespace: 'test-namespace')->clear();
+        $this->assertSame(self::INDEX_HOST.'/vectors/delete', $this->requests[0]['url']);
+        $this->assertSame(['deleteAll' => true, 'namespace' => 'test-namespace'], $this->requests[0]['body']);
     }
 
     public function testQueryReturnsDocuments()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
-
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
         $uuid1 = Uuid::v4();
         $uuid2 = Uuid::v4();
 
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn([
+        $store = $this->createStore([new JsonMockResponse([
             'matches' => [
                 [
                     'id' => (string) $uuid1,
@@ -276,369 +166,307 @@ final class StoreTest extends TestCase
                     'score' => 0.85,
                 ],
             ],
-        ]);
+        ])]);
 
-        $vectorResource->expects($this->once())
-            ->method('query')
-            ->with(
-                [0.1, 0.2, 0.3], // vector
-                null, // namespace
-                [], // filter
-                3, // topK
-                true, // includeMetadata
-            )
-            ->willReturn($response);
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
-        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+        $this->assertSame(self::INDEX_HOST.'/query', $this->requests[0]['url']);
+        $this->assertSame([
+            'vector' => [0.1, 0.2, 0.3],
+            'topK' => 3,
+            'includeMetadata' => true,
+            'includeValues' => false,
+        ], $this->requests[0]['body']);
 
         $this->assertCount(2, $results);
         $this->assertInstanceOf(VectorDocument::class, $results[0]);
-        $this->assertInstanceOf(VectorDocument::class, $results[1]);
         $this->assertEquals($uuid1, $results[0]->getId());
         $this->assertEquals($uuid2, $results[1]->getId());
         $this->assertSame(0.95, $results[0]->getScore());
         $this->assertSame(0.85, $results[1]->getScore());
         $this->assertSame('First Document', $results[0]->getMetadata()['title']);
-        $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
+        $this->assertSame([0.1, 0.2, 0.3], $results[0]->getVector()->getData());
     }
 
     public function testQueryWithNamespaceAndFilter()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $store = $this->createStore(
+            [new JsonMockResponse(['matches' => []])],
+            namespace: 'test-namespace',
+            filter: ['category' => 'test'],
+            topK: 5,
+        );
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn([
-            'matches' => [],
-        ]);
-
-        $vectorResource->expects($this->once())
-            ->method('query')
-            ->with(
-                [0.1, 0.2, 0.3], // vector
-                'test-namespace', // namespace
-                ['category' => 'test'], // filter
-                5, // topK
-                true, // includeMetadata
-            )
-            ->willReturn($response);
-
-        $results = iterator_to_array(self::createStore($client, namespace: 'test-namespace', filter: ['category' => 'test'], topK: 5)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
-
-        $this->assertCount(0, $results);
+        $this->assertCount(0, iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))));
+        $this->assertSame([
+            'vector' => [0.1, 0.2, 0.3],
+            'topK' => 5,
+            'includeMetadata' => true,
+            'includeValues' => false,
+            'namespace' => 'test-namespace',
+            'filter' => ['category' => 'test'],
+        ], $this->requests[0]['body']);
     }
 
     public function testQueryWithCustomOptions()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $store = $this->createStore([new JsonMockResponse(['matches' => []])]);
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn([
-            'matches' => [],
-        ]);
-
-        $vectorResource->expects($this->once())
-            ->method('query')
-            ->with(
-                [0.1, 0.2, 0.3], // vector
-                'custom-namespace', // namespace
-                ['type' => 'document'], // filter
-                10, // topK
-                true, // includeMetadata
-                true, // includeValues
-            )
-            ->willReturn($response);
-
-        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
             'namespace' => 'custom-namespace',
             'filter' => ['type' => 'document'],
             'topK' => 10,
             'includeValues' => true,
-        ]));
-
-        $this->assertCount(0, $results);
-    }
-
-    public function testQueryWithOptionIncludeMetadataFalse()
-    {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
-
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn([
-            'matches' => [
-                [
-                    'id' => 'vector-id',
-                    'values' => [0.1, 0.2, 0.3],
-                    'score' => 0.95,
-                ],
-            ],
-        ]);
-
-        $vectorResource->expects($this->once())
-            ->method('query')
-            ->with(
-                [0.1, 0.2, 0.3], // vector
-                'custom-namespace', // namespace
-                ['type' => 'document'], // filter
-                10, // topK
-                false, // includeMetadata
-            )
-            ->willReturn($response);
-
-        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), [
-            'namespace' => 'custom-namespace',
-            'filter' => ['type' => 'document'],
-            'topK' => 10,
             'includeMetadata' => false,
         ]));
 
-        $this->assertCount(1, $results);
-        $this->assertEmpty($results[0]->getMetadata());
+        $this->assertSame([
+            'vector' => [0.1, 0.2, 0.3],
+            'topK' => 10,
+            'includeMetadata' => false,
+            'includeValues' => true,
+            'namespace' => 'custom-namespace',
+            'filter' => ['type' => 'document'],
+        ], $this->requests[0]['body']);
     }
 
-    public function testQueryWithoutValuesReturnsNullVector()
+    public function testQueryWithoutMetadataReturnsEmptyMetadata()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $store = $this->createStore([new JsonMockResponse([
+            'matches' => [['id' => 'vector-id', 'score' => 0.95]],
+        ])]);
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
-
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
-
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn([
-            'matches' => [
-                [
-                    'id' => 'vector-id',
-                    'values' => [],
-                    'metadata' => ['title' => 'Test Document'],
-                    'score' => 0.95,
-                ],
-            ],
-        ]);
-
-        $vectorResource->expects($this->once())
-            ->method('query')
-            ->willReturn($response);
-
-        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['includeMetadata' => false]));
 
         $this->assertCount(1, $results);
+        $this->assertCount(0, $results[0]->getMetadata());
         $this->assertInstanceOf(NullVector::class, $results[0]->getVector());
     }
 
-    public function testQueryWithEmptyResults()
+    public function testQueryWithEmptyValuesReturnsNullVector()
     {
-        $vectorResource = $this->createMock(VectorResource::class);
-        $dataResource = $this->createMock(DataResource::class);
-        $client = $this->createMock(Client::class);
+        $store = $this->createStore([new JsonMockResponse([
+            'matches' => [['id' => 'vector-id', 'values' => [], 'metadata' => ['title' => 'Test Document'], 'score' => 0.95]],
+        ])]);
 
-        $dataResource->expects($this->once())
-            ->method('vectors')
-            ->willReturn($vectorResource);
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($dataResource);
+        $this->assertInstanceOf(NullVector::class, $results[0]->getVector());
+    }
 
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn([
-            'matches' => [],
-        ]);
+    public function testQueryRejectsUnsupportedQueries()
+    {
+        $this->expectException(UnsupportedQueryTypeException::class);
 
-        $vectorResource->expects($this->once())
-            ->method('query')
-            ->willReturn($response);
+        iterator_to_array($this->createStore([])->query(new TextQuery('hello')));
+    }
 
-        $results = iterator_to_array(self::createStore($client)->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+    public function testQueryFailsOnErrorResponse()
+    {
+        $store = $this->createStore([new JsonMockResponse(['message' => 'Invalid API Key'], ['http_code' => 401])]);
 
-        $this->assertCount(0, $results);
+        $this->expectException(ClientExceptionInterface::class);
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1]))));
     }
 
     public function testSetup()
     {
-        $indexResource = $this->createMock(IndexResource::class);
-        $controlResource = $this->createMock(ControlResource::class);
-        $client = $this->createMock(Client::class);
-
-        $client->expects($this->once())
-            ->method('control')
-            ->willReturn($controlResource);
-
-        $controlResource->expects($this->once())
-            ->method('index')
-            ->with('my-index')
-            ->willReturn($indexResource);
-
-        $indexResource->expects($this->once())
-            ->method('createServerless')
-            ->with(768, 'cosine', 'aws', 'us-east-1');
-
-        $store = new Store($client, 'my-index', dimensions: 768, metric: 'cosine', cloud: 'aws', region: 'us-east-1');
+        $store = $this->createStore(
+            [new JsonMockResponse([], ['http_code' => 201])],
+            dimensions: 768,
+            metric: 'dotproduct',
+            cloud: 'gcp',
+            region: 'europe-west4',
+        );
         $store->setup();
+
+        $this->assertSame('POST', $this->requests[0]['method']);
+        $this->assertSame('https://api.pinecone.io/indexes', $this->requests[0]['url']);
+        $this->assertSame([
+            'name' => 'test-index',
+            'dimension' => 768,
+            'metric' => 'dotproduct',
+            'spec' => ['serverless' => ['cloud' => 'gcp', 'region' => 'europe-west4']],
+        ], $this->requests[0]['body']);
     }
 
-    public function testSetupUsesDefaultDimensions()
+    public function testSetupUsesDefaults()
     {
-        $indexResource = $this->createMock(IndexResource::class);
-        $controlResource = $this->createMock(ControlResource::class);
-        $client = $this->createMock(Client::class);
+        $this->createStore([new JsonMockResponse([], ['http_code' => 201])])->setup();
 
-        $client->method('control')->willReturn($controlResource);
-        $controlResource->method('index')->willReturn($indexResource);
-
-        $indexResource->expects($this->once())
-            ->method('createServerless')
-            ->with(1536, null, null, null);
-
-        self::createStore($client, indexName: 'my-index')->setup();
+        $this->assertSame([
+            'name' => 'test-index',
+            'dimension' => 1536,
+            'metric' => 'cosine',
+            'spec' => ['serverless' => ['cloud' => 'aws', 'region' => 'us-west-2']],
+        ], $this->requests[0]['body']);
     }
 
     public function testSetupRejectsOptions()
     {
-        $client = $this->createMock(Client::class);
-        $client->expects($this->never())->method('control');
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('No supported options.');
 
-        self::createStore($client, indexName: 'my-index')->setup(['dimension' => 1536]);
+        $this->createStore([])->setup(['dimension' => 1536]);
     }
 
     public function testDrop()
     {
-        $indexResource = $this->createMock(IndexResource::class);
-        $controlResource = $this->createMock(ControlResource::class);
-        $client = $this->createMock(Client::class);
+        $this->createStore([new MockResponse('', ['http_code' => 202])])->drop();
 
-        $client->expects($this->once())
-            ->method('control')
-            ->willReturn($controlResource);
+        $this->assertCount(1, $this->requests);
+        $this->assertSame('DELETE', $this->requests[0]['method']);
+        $this->assertSame('https://api.pinecone.io/indexes/test-index', $this->requests[0]['url']);
+    }
 
-        $controlResource->expects($this->once())
-            ->method('index')
-            ->with('my-index')
-            ->willReturn($indexResource);
+    public function testIndexHostIsLookedUpOnceAndGetsTheSchemeOfTheControlPlane()
+    {
+        $store = $this->createStore([
+            new JsonMockResponse(['host' => 'localhost:5081']),
+            new JsonMockResponse(['upsertedCount' => 1]),
+            new JsonMockResponse(['upsertedCount' => 1]),
+        ], indexHost: false, controlPlaneUrl: 'http://127.0.0.1:5080/');
 
-        $indexResource->expects($this->once())
-            ->method('delete');
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1])));
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1])));
 
-        self::createStore($client, indexName: 'my-index')->drop();
+        $this->assertCount(3, $this->requests);
+        $this->assertSame('GET', $this->requests[0]['method']);
+        $this->assertSame('http://127.0.0.1:5080/indexes/test-index', $this->requests[0]['url']);
+        $this->assertSame('http://localhost:5081/vectors/upsert', $this->requests[1]['url']);
+        $this->assertSame('http://localhost:5081/vectors/upsert', $this->requests[2]['url']);
+    }
+
+    public function testIndexHostLookupKeepsTheSchemeOfTheHost()
+    {
+        $store = $this->createStore([
+            new JsonMockResponse(['host' => 'my-index-abc123.svc.pinecone.io']),
+            new JsonMockResponse(['totalVectorCount' => 1]),
+        ], indexHost: false);
+
+        $store->count();
+
+        $this->assertSame('https://my-index-abc123.svc.pinecone.io/describe_index_stats', $this->requests[1]['url']);
+    }
+
+    public function testIndexHostLookupFailsWithoutHost()
+    {
+        $store = $this->createStore([new JsonMockResponse(['name' => 'test-index'])], indexHost: false);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The host of the Pinecone index "test-index" is unknown.');
+
+        $store->count();
+    }
+
+    public function testRemoveToleratesAnEmptyJsonStringAsResponse()
+    {
+        $this->createStore([new MockResponse('""')])->remove('vector-id');
+
+        $this->assertCount(1, $this->requests);
     }
 
     public function testStoreSupportsVectorQuery()
     {
-        $client = $this->createMock(Client::class);
-        $store = new Store($client, 'test-index');
-        $this->assertTrue($store->supports(VectorQuery::class));
+        $this->assertTrue($this->createStore([])->supports(VectorQuery::class));
     }
 
-    public function testStoreDoesNotTextQuery()
+    public function testStoreDoesNotSupportTextQuery()
     {
-        $client = $this->createMock(Client::class);
-        $store = new Store($client, 'test-index');
-        $this->assertFalse($store->supports(TextQuery::class));
+        $this->assertFalse($this->createStore([])->supports(TextQuery::class));
     }
 
     public function testStoreDoesNotSupportHybridQuery()
     {
-        $client = $this->createMock(Client::class);
-        $store = new Store($client, 'test-index');
-        $this->assertFalse($store->supports(HybridQuery::class));
+        $this->assertFalse($this->createStore([])->supports(HybridQuery::class));
     }
 
     public function testCountReturnsDocumentCount()
     {
-        $client = self::createClientReturningStats([
-            'totalVectorCount' => 42,
-            'namespaces' => [],
-        ]);
+        $store = $this->createStore([new JsonMockResponse(['totalVectorCount' => 42, 'namespaces' => []])]);
 
-        $this->assertSame(42, self::createStore($client)->count());
-    }
-
-    public function testCountReturnsNamespaceDocumentCount()
-    {
-        $client = self::createClientReturningStats([
-            'totalVectorCount' => 100,
-            'namespaces' => [
-                'my-namespace' => ['vectorCount' => 42],
-            ],
-        ]);
-
-        $this->assertSame(42, self::createStore($client, namespace: 'my-namespace')->count());
+        $this->assertSame(42, $store->count());
+        $this->assertSame(self::INDEX_HOST.'/describe_index_stats', $this->requests[0]['url']);
     }
 
     public function testCountSendsAnEmptyJsonObjectAsBody()
     {
-        $request = new DescribeIndexStats();
+        $this->createStore([new JsonMockResponse(['totalVectorCount' => 0])])->count();
 
-        $this->assertSame('{}', (string) $request->body());
-        $this->assertSame('application/json', $request->headers()->get('Content-Type'));
+        $this->assertSame('POST', $this->requests[0]['method']);
+        $this->assertSame('{}', $this->requests[0]['raw_body']);
+    }
+
+    public function testCountReturnsNamespaceDocumentCount()
+    {
+        $store = $this->createStore([new JsonMockResponse([
+            'totalVectorCount' => 100,
+            'namespaces' => ['my-namespace' => ['vectorCount' => 42]],
+        ])], namespace: 'my-namespace');
+
+        $this->assertSame(42, $store->count());
+    }
+
+    public function testCountReturnsZeroForUnknownNamespace()
+    {
+        $store = $this->createStore([new JsonMockResponse(['totalVectorCount' => 100, 'namespaces' => []])], namespace: 'my-namespace');
+
+        $this->assertSame(0, $store->count());
     }
 
     /**
+     * @param list<MockResponse>   $responses
      * @param array<string, mixed> $filter
+     * @param string|false|null    $indexHost false resolves the host through the control plane
      */
-    private static function createStore(Client $client, string $indexName = 'test-index', ?string $namespace = null, array $filter = [], int $topK = 3): Store
-    {
-        return new Store($client, $indexName, $namespace, $filter, $topK);
-    }
+    private function createStore(
+        array $responses,
+        ?string $namespace = null,
+        array $filter = [],
+        int $topK = 3,
+        int $dimensions = 1536,
+        ?string $metric = null,
+        ?string $cloud = null,
+        ?string $region = null,
+        string|false|null $indexHost = null,
+        string $controlPlaneUrl = 'https://api.pinecone.io',
+    ): Store {
+        $this->requests = [];
 
-    /**
-     * @param array<string, mixed> $stats
-     */
-    private function createClientReturningStats(array $stats): Client
-    {
-        $client = $this->createMock(Client::class);
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$responses): MockResponse {
+            $headers = [];
+            foreach ($options['headers'] as $header) {
+                [$name, $value] = explode(': ', $header, 2);
+                $headers[strtolower($name)] = $value;
+            }
 
-        // the store calls data() to have the client resolve and point at the index host
-        $client->expects($this->once())
-            ->method('data')
-            ->willReturn($this->createMock(DataResource::class));
+            $rawBody = $options['body'] ?? '';
 
-        $response = $this->createMock(Response::class);
-        $response->method('json')->willReturn($stats);
+            $this->requests[] = [
+                'method' => $method,
+                'url' => $url,
+                'headers' => $headers,
+                'raw_body' => $rawBody,
+                'body' => '' === $rawBody ? null : json_decode($rawBody, true),
+            ];
 
-        $client->expects($this->once())
-            ->method('send')
-            ->with($this->isInstanceOf(DescribeIndexStats::class))
-            ->willReturn($response);
+            return array_shift($responses) ?? throw new \LogicException('Unexpected request.');
+        });
 
-        return $client;
+        return new Store(
+            $httpClient,
+            'secret',
+            'test-index',
+            $namespace,
+            $filter,
+            $topK,
+            $dimensions,
+            $metric,
+            $cloud,
+            $region,
+            false === $indexHost ? null : $indexHost ?? self::INDEX_HOST,
+            $controlPlaneUrl,
+        );
     }
 }

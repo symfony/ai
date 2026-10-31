@@ -11,16 +11,15 @@
 
 namespace Symfony\Component\Config\Definition\Configurator;
 
-use Probots\Pinecone\Client as PineconeClient;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 return (new ArrayNodeDefinition('pinecone'))
     ->useAttributeAsKey('name')
     ->arrayPrototype()
         ->children()
-            ->stringNode('client')
-                ->cannotBeEmpty()
-                ->defaultValue(PineconeClient::class)
+            ->stringNode('api_key')->isRequired()->cannotBeEmpty()->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
             ->end()
             ->stringNode('index_name')->isRequired()->end()
             ->stringNode('namespace')->end()

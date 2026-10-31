@@ -657,16 +657,17 @@ Vector storage using `Pinecone`_.
 
 .. code-block:: terminal
 
-    $ composer require symfony/ai-pinecone-store probots-io/pinecone-php
-
-**Additional dependency:** ``probots-io/pinecone-php``
+    $ composer require symfony/ai-pinecone-store
 
 ::
 
-    use Probots\Pinecone\Pinecone;
     use Symfony\AI\Store\Bridge\Pinecone\Store;
+    use Symfony\Component\HttpClient\HttpClient;
 
-    $store = new Store(Pinecone::client('your-api-key', 'your-index-host'), 'my-index', namespace: 'default', topK: 3);
+    $store = new Store(HttpClient::create(), 'your-api-key', 'my-index', namespace: 'default', topK: 3);
+
+The store looks up the host of the index through the Pinecone control plane. To skip the lookup,
+or to use Pinecone Local, pass the ``indexHost`` and ``controlPlaneUrl`` arguments.
 
 .. code-block:: yaml
 
@@ -675,8 +676,8 @@ Vector storage using `Pinecone`_.
         store:
             pinecone:
                 my_store:
-                    # service id of a Probots\Pinecone\Client
-                    client: 'Probots\Pinecone\Client'
+                    api_key: '%env(PINECONE_API_KEY)%'
+                    http_client: 'http_client'  # default: http_client
                     index_name: 'my-index'
                     namespace: 'default'
                     top_k: 3

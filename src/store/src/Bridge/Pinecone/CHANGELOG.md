@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * [BC BREAK] Replace `probots-io/pinecone-php` by the HTTP client: `Store` takes an `HttpClientInterface` and the API key instead of a `Probots\Pinecone\Client`, and the `indexHost` and `controlPlaneUrl` arguments
  * [BC BREAK] Replace the `dimension`, `metric`, `cloud` and `region` options of `Store::setup()` by the `dimensions`, `metric`, `cloud` and `region` arguments of `Store`, the dimensions default to 1536
 
 0.14
