@@ -16,11 +16,14 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 $modelCatalog = require __DIR__.'/model_catalog.php';
 
 return (new ArrayNodeDefinition('fireworks'))
-    ->children()
-        ->stringNode('api_key')->isRequired()->end()
-        ->stringNode('http_client')
-            ->defaultValue('http_client')
-            ->info('Service ID of the HTTP client to use')
+    ->useAttributeAsKey('name')
+    ->arrayPrototype()
+        ->children()
+            ->stringNode('api_key')->isRequired()->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
+                ->info('Service ID of the HTTP client to use')
+            ->end()
+            ->append($modelCatalog('api'))
         ->end()
-        ->append($modelCatalog('api'))
     ->end();

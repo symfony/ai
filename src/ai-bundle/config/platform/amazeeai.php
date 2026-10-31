@@ -16,12 +16,15 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 $modelCatalog = require __DIR__.'/model_catalog.php';
 
 return (new ArrayNodeDefinition('amazeeai'))
-    ->children()
-        ->stringNode('base_url')->isRequired()->end()
-        ->stringNode('api_key')->isRequired()->end()
-        ->stringNode('http_client')
-            ->defaultValue('http_client')
-            ->info('Service ID of the HTTP client to use')
+    ->useAttributeAsKey('name')
+    ->arrayPrototype()
+        ->children()
+            ->stringNode('base_url')->isRequired()->end()
+            ->stringNode('api_key')->isRequired()->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
+                ->info('Service ID of the HTTP client to use')
+            ->end()
+            ->append($modelCatalog('api'))
         ->end()
-        ->append($modelCatalog('api'))
     ->end();

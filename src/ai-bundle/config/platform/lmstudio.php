@@ -16,11 +16,14 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 $modelCatalog = require __DIR__.'/model_catalog.php';
 
 return (new ArrayNodeDefinition('lmstudio'))
-    ->children()
-        ->stringNode('host_url')->defaultValue('http://127.0.0.1:1234')->end()
-        ->stringNode('http_client')
-            ->defaultValue('http_client')
-            ->info('Service ID of the HTTP client to use')
+    ->useAttributeAsKey('name')
+    ->arrayPrototype()
+        ->children()
+            ->stringNode('host_url')->defaultValue('http://127.0.0.1:1234')->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
+                ->info('Service ID of the HTTP client to use')
+            ->end()
+            ->append($modelCatalog('static'))
         ->end()
-        ->append($modelCatalog('static'))
     ->end();

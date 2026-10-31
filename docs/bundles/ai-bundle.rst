@@ -188,6 +188,37 @@ Advanced Example with Multiple Agents
                     - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
                 filters: []
 
+Multiple Instances of a Platform
+--------------------------------
+
+Every platform can be configured several times, for example to use different API keys or HTTP
+clients for the same provider. Each instance is named, and a configuration without instance name
+is the ``default`` instance:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            gemini:
+                default:
+                    api_key: '%env(GEMINI_API_KEY)%'
+                    http_client: 'app.http_client.gemini'
+                secondary:
+                    api_key: '%env(GEMINI_SECONDARY_API_KEY)%'
+                    http_client: 'app.http_client.gemini_secondary'
+        agent:
+            main:
+                platform: 'ai.platform.gemini'
+                model: 'gemini-2.5-flash'
+            fallback:
+                platform: 'ai.platform.gemini.secondary'
+                model: 'gemini-2.5-flash'
+
+Each instance is registered as ``ai.platform.<type>.<name>`` and can be autowired with
+``PlatformInterface $geminiSecondary``. The ``default`` instance is also available as
+``ai.platform.gemini`` and ``PlatformInterface $gemini``.
+
 Generic Platform
 ----------------
 

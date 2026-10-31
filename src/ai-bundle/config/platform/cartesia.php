@@ -16,12 +16,15 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 $modelCatalog = require __DIR__.'/model_catalog.php';
 
 return (new ArrayNodeDefinition('cartesia'))
-    ->children()
-        ->stringNode('api_key')->isRequired()->end()
-        ->stringNode('version')->isRequired()->end()
-        ->stringNode('http_client')
-            ->defaultValue('http_client')
-            ->info('Service ID of the HTTP client to use')
+    ->useAttributeAsKey('name')
+    ->arrayPrototype()
+        ->children()
+            ->stringNode('api_key')->isRequired()->end()
+            ->stringNode('version')->isRequired()->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
+                ->info('Service ID of the HTTP client to use')
+            ->end()
+            ->append($modelCatalog('static'))
         ->end()
-        ->append($modelCatalog('static'))
     ->end();

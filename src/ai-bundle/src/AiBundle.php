@@ -246,15 +246,25 @@ final class AiBundle extends AbstractBundle
     {
         $container->import('../config/services.php');
 
-        foreach ($config['platform'] ?? [] as $type => $platform) {
-            $this->processPlatformConfig($type, $platform, $builder);
+        foreach ($config['platform'] ?? [] as $type => $platforms) {
+            foreach ($platforms as $name => $platform) {
+                $this->processPlatformConfig($type, $name, $platform, $builder);
+            }
+
+            if (isset($platforms['default'])) {
+                $this->registerDefaultPlatformAliases($type, $builder);
+            }
         }
 
         $taggedPlatforms = $builder->findTaggedServiceIds('ai.platform');
         $platformsByName = [];
         foreach ($taggedPlatforms as $serviceId => $tags) {
-            $tagName = $tags[0]['name'] ?? '';
-            if ('' !== $tagName) {
+            foreach ($tags as $tag) {
+                $tagName = $tag['name'] ?? '';
+                if ('' === $tagName) {
+                    continue;
+                }
+
                 $argumentName = (new Target(str_replace('.', '_', $tagName)))->getParsedName();
                 if (isset($platformsByName[$argumentName])) {
                     throw new InvalidArgumentException(\sprintf('The platforms "%s" and "%s" have conflicting names, platform names must be unique.', $platformsByName[$argumentName], $serviceId));
@@ -452,17 +462,35 @@ final class AiBundle extends AbstractBundle
         }
     }
 
+    private function registerDefaultPlatformAliases(string $type, ContainerBuilder $container): void
+    {
+        $platformId = 'ai.platform.'.$type.'.default';
+        $container->setAlias('ai.platform.'.$type, $platformId);
+        $container->getDefinition($platformId)->addTag('ai.platform', ['name' => $type]);
+
+        $jobClientId = 'ai.platform.job_client.'.$type.'.default';
+        if (!$container->hasDefinition($jobClientId)) {
+            return;
+        }
+
+        $container->setAlias('ai.platform.job_client.'.$type, $jobClientId);
+        $container->getDefinition($jobClientId)->addTag('ai.platform.job_client', ['key' => $type]);
+        $container->registerAliasForArgument($jobClientId, JobClientInterface::class, $type);
+    }
+
     /**
      * @param array<string, mixed> $platform
      */
-    private function processPlatformConfig(string $type, array $platform, ContainerBuilder $container): void
+    private function processPlatformConfig(string $type, string $name, array $platform, ContainerBuilder $container): void
     {
+        $platformName = $type.'.'.$name;
+        $platformId = 'ai.platform.'.$platformName;
+
         if ('albert' === $type) {
             if (!ContainerBuilder::willBeAvailable('symfony/ai-albert-platform', AlbertFactory::class, ['symfony/ai-bundle'])) {
                 throw new RuntimeException('Albert platform configuration requires "symfony/ai-albert-platform" package. Try running "composer require symfony/ai-albert-platform".');
             }
 
-            $platformId = 'ai.platform.albert';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AlbertFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -474,7 +502,7 @@ final class AiBundle extends AbstractBundle
                     $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.albert')),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'albert']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -486,7 +514,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('amazee.ai platform configuration requires "symfony/ai-amazee-ai-platform" package. Try running "composer require symfony/ai-amazee-ai-platform".');
             }
 
-            $platformId = 'ai.platform.amazeeai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AmazeeAiFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -503,7 +530,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'amazeeai']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -515,7 +542,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Anthropic platform configuration requires "symfony/ai-anthropic-platform" package. Try running "composer require symfony/ai-anthropic-platform".');
             }
 
-            $platformId = 'ai.platform.anthropic';
             $definition = (new Definition(Platform::class))
                 ->setFactory(AnthropicFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -528,7 +554,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                     $platform['cache_retention'],
                 ])
-                ->addTag('ai.platform', ['name' => 'anthropic']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -536,101 +562,93 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('azure' === $type) {
-            foreach ($platform as $name => $config) {
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-azure-platform', AzureOpenAiFactory::class, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('Azure platform configuration requires "symfony/ai-azure-platform" package. Try running "composer require symfony/ai-azure-platform".');
-                }
-
-                $platformId = 'ai.platform.azure.'.$name;
-                $definition = (new Definition(Platform::class))
-                    ->setFactory(AzureOpenAiFactory::class.'::createPlatform')
-                    ->setLazy(true)
-                    ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->setArguments([
-                        $config['base_url'],
-                        $config['deployment'],
-                        $config['api_version'],
-                        $config['api_key'],
-                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.azure.openai')),
-                        new Reference('ai.platform.contract.openai'),
-                        new Reference('event_dispatcher'),
-                    ])
-                    ->addTag('ai.platform', ['name' => 'azure.'.$name]);
-
-                $container->setDefinition($platformId, $definition);
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-azure-platform', AzureOpenAiFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Azure platform configuration requires "symfony/ai-azure-platform" package. Try running "composer require symfony/ai-azure-platform".');
             }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(AzureOpenAiFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['base_url'],
+                    $platform['deployment'],
+                    $platform['api_version'],
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.azure.openai')),
+                    new Reference('ai.platform.contract.openai'),
+                    new Reference('event_dispatcher'),
+                ])
+                ->addTag('ai.platform', ['name' => $platformName]);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
 
         if ('bedrock' === $type) {
-            foreach ($platform as $name => $config) {
-                $platformId = 'ai.platform.bedrock.'.$name;
-                $isInvokeModel = 'invoke_model' === $config['api'];
-                $factory = $isInvokeModel ? BedrockFactory::class : BedrockMantleFactory::class;
+            $isInvokeModel = 'invoke_model' === $platform['api'];
+            $factory = $isInvokeModel ? BedrockFactory::class : BedrockMantleFactory::class;
 
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', $factory, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('Bedrock platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
-                }
-
-                if ($isInvokeModel) {
-                    $arguments = [
-                        $config['bedrock_runtime_client'] ? new Reference($config['bedrock_runtime_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE) : null,
-                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.bedrock')),
-                        null,
-                        new Reference('event_dispatcher'),
-                    ];
-                } else {
-                    $arguments = [
-                        $config['api_key'] ?? null,
-                        $config['region'] ?? 'us-west-2',
-                        $config['api'],
-                        isset($config['credential_provider']) ? new Reference($config['credential_provider']) : null,
-                        new Reference($config['http_client'] ?? 'http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.bedrock.'.$config['api'])),
-                        null, // $contract
-                        new Reference('event_dispatcher'),
-                        $config['cache_retention'] ?? null,
-                        $config['workspace'] ?? null,
-                        $config['path'] ?? null,
-                    ];
-                }
-
-                $definition = (new Definition(Platform::class))
-                    ->setFactory($factory.'::createPlatform')
-                    ->setLazy(true)
-                    ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->setArguments($arguments)
-                    ->addTag('ai.platform', ['name' => 'bedrock.'.$name]);
-
-                $container->setDefinition($platformId, $definition);
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-bedrock-platform', $factory, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Bedrock platform configuration requires "symfony/ai-bedrock-platform" package. Try running "composer require symfony/ai-bedrock-platform".');
             }
+
+            if ($isInvokeModel) {
+                $arguments = [
+                    $platform['bedrock_runtime_client'] ? new Reference($platform['bedrock_runtime_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE) : null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.bedrock')),
+                    null,
+                    new Reference('event_dispatcher'),
+                ];
+            } else {
+                $arguments = [
+                    $platform['api_key'] ?? null,
+                    $platform['region'] ?? 'us-west-2',
+                    $platform['api'],
+                    isset($platform['credential_provider']) ? new Reference($platform['credential_provider']) : null,
+                    new Reference($platform['http_client'] ?? 'http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.bedrock.'.$platform['api'])),
+                    null, // $contract
+                    new Reference('event_dispatcher'),
+                    $platform['cache_retention'] ?? null,
+                    $platform['workspace'] ?? null,
+                    $platform['path'] ?? null,
+                ];
+            }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory($factory.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments($arguments)
+                ->addTag('ai.platform', ['name' => $platformName]);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
 
         if ('cache' === $type) {
-            foreach ($platform as $name => $cachePlatformConfig) {
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('CachePlatform platform configuration requires "symfony/ai-cache-platform" package. Try running "composer require symfony/ai-cache-platform".');
-                }
-
-                $definition = (new Definition(CachePlatform::class))
-                    ->setLazy(true)
-                    ->setArguments([
-                        new Reference($cachePlatformConfig['platform']),
-                        new Reference(ClockInterface::class),
-                        new Reference($cachePlatformConfig['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        new Reference('serializer'),
-                        $cachePlatformConfig['cache_key'] ?? $name,
-                        $cachePlatformConfig['ttl'] ?? null,
-                    ])
-                    ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->addTag('ai.platform', ['name' => 'cache.'.$name]);
-
-                $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-cache-platform', CachePlatform::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('CachePlatform platform configuration requires "symfony/ai-cache-platform" package. Try running "composer require symfony/ai-cache-platform".');
             }
+
+            $definition = (new Definition(CachePlatform::class))
+                ->setLazy(true)
+                ->setArguments([
+                    new Reference($platform['platform']),
+                    new Reference(ClockInterface::class),
+                    new Reference($platform['service'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference('serializer'),
+                    $platform['cache_key'] ?? $name,
+                    $platform['ttl'] ?? null,
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => $platformName]);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -648,7 +666,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Cartesia platform configuration requires "symfony/ai-cartesia-platform" package. Try running "composer require symfony/ai-cartesia-platform".');
             }
 
-            $platformId = 'ai.platform.cartesia';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CartesiaFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -662,8 +679,8 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('ai.platform.speech', ['name' => $type])
-                ->addTag('ai.platform', ['name' => 'cartesia']);
+                ->addTag('ai.platform.speech', ['name' => $platformName])
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -671,7 +688,6 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('decart' === $type) {
-            $platformId = 'ai.platform.decart';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DecartFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -684,7 +700,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('event_dispatcher'),
                 ])
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('ai.platform', ['name' => $type]);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -696,7 +712,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('ElevenLabs platform configuration requires "symfony/ai-eleven-labs-platform" package. Try running "composer require symfony/ai-eleven-labs-platform".');
             }
 
-            $platformId = 'ai.platform.elevenlabs';
             $definition = (new Definition(Platform::class))
                 ->setFactory(ElevenLabsFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -713,8 +728,8 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                 ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('ai.platform.speech', ['name' => $type])
-                ->addTag('ai.platform', ['name' => $type]);
+                ->addTag('ai.platform.speech', ['name' => $platformName])
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -722,28 +737,26 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('failover' === $type) {
-            foreach ($platform as $name => $config) {
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-failover-platform', FailoverPlatformFactory::class, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('Failover platform configuration requires "symfony/ai-failover-platform" package. Try running "composer require symfony/ai-failover-platform".');
-                }
-
-                $definition = (new Definition(FailoverPlatform::class))
-                    ->setFactory(FailoverPlatformFactory::class.'::create')
-                    ->setLazy(true)
-                    ->setArguments([
-                        array_map(
-                            static fn (string $wrappedPlatform): Reference => new Reference($wrappedPlatform),
-                            $config['platforms'],
-                        ),
-                        new Reference($config['rate_limiter']),
-                        new Reference(ClockInterface::class),
-                        new Reference(LoggerInterface::class),
-                    ])
-                    ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->addTag('ai.platform', ['name' => $name]);
-
-                $container->setDefinition('ai.platform.'.$type.'.'.$name, $definition);
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-failover-platform', FailoverPlatformFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Failover platform configuration requires "symfony/ai-failover-platform" package. Try running "composer require symfony/ai-failover-platform".');
             }
+
+            $definition = (new Definition(FailoverPlatform::class))
+                ->setFactory(FailoverPlatformFactory::class.'::create')
+                ->setLazy(true)
+                ->setArguments([
+                    array_map(
+                        static fn (string $wrappedPlatform): Reference => new Reference($wrappedPlatform),
+                        $platform['platforms'],
+                    ),
+                    new Reference($platform['rate_limiter']),
+                    new Reference(ClockInterface::class),
+                    new Reference(LoggerInterface::class),
+                ])
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->addTag('ai.platform', ['name' => $name]);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -753,7 +766,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Gemini platform configuration requires "symfony/ai-gemini-platform" package. Try running "composer require symfony/ai-gemini-platform".');
             }
 
-            $platformId = 'ai.platform.gemini';
             $definition = (new Definition(Platform::class))
                 ->setFactory(GeminiFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -765,7 +777,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.gemini'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'gemini']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -773,32 +785,29 @@ final class AiBundle extends AbstractBundle
         }
 
         if ('generic' === $type) {
-            foreach ($platform as $name => $config) {
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-generic-platform', GenericFactory::class, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('Generic platform configuration requires "symfony/ai-generic-platform" package. Try running "composer require symfony/ai-generic-platform".');
-                }
-
-                $platformId = 'ai.platform.generic.'.$name;
-                $definition = (new Definition(Platform::class))
-                    ->setFactory(GenericFactory::class.'::createPlatform')
-                    ->setLazy(true)
-                    ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->setArguments([
-                        $config['base_url'],
-                        $config['api_key'] ?? null,
-                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.generic')),
-                        null, // $contract
-                        new Reference('event_dispatcher'),
-                        $config['supports_completions'],
-                        $config['supports_embeddings'],
-                        $config['completions_path'],
-                        $config['embeddings_path'],
-                    ])
-                    ->addTag('ai.platform', ['name' => 'generic.'.$name]);
-
-                $container->setDefinition($platformId, $definition);
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-generic-platform', GenericFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('Generic platform configuration requires "symfony/ai-generic-platform" package. Try running "composer require symfony/ai-generic-platform".');
             }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(GenericFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['base_url'],
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.generic')),
+                    null, // $contract
+                    new Reference('event_dispatcher'),
+                    $platform['supports_completions'],
+                    $platform['supports_embeddings'],
+                    $platform['completions_path'],
+                    $platform['embeddings_path'],
+                ])
+                ->addTag('ai.platform', ['name' => $platformName]);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -808,7 +817,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Higgsfield platform configuration requires "symfony/ai-higgsfield-platform" package. Try running "composer require symfony/ai-higgsfield-platform".');
             }
 
-            $platformId = 'ai.platform.higgsfield';
             $definition = (new Definition(Platform::class))
                 ->setFactory(HiggsfieldFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -827,11 +835,11 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.higgsfield'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'higgsfield']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
-            $jobClientId = 'ai.platform.job_client.higgsfield';
+            $jobClientId = 'ai.platform.job_client.'.$platformName;
             $container->setDefinition($jobClientId, (new Definition(HiggsfieldJobClient::class))
                 ->setFactory(HiggsfieldFactory::class.'::createJobClient')
                 ->setArguments([
@@ -840,8 +848,8 @@ final class AiBundle extends AbstractBundle
                     $platform['base_url'] ?? null,
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
-                ->addTag('ai.platform.job_client', ['key' => 'higgsfield']));
-            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'higgsfield');
+                ->addTag('ai.platform.job_client', ['key' => $platformName]));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, str_replace('.', '_', $platformName));
 
             return;
         }
@@ -851,7 +859,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('HuggingFace platform configuration requires "symfony/ai-hugging-face-platform" package. Try running "composer require symfony/ai-hugging-face-platform".');
             }
 
-            $platformId = 'ai.platform.huggingface';
             $definition = (new Definition(Platform::class))
                 ->setFactory(HuggingFaceFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -868,7 +875,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.huggingface'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'huggingface']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -880,7 +887,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Venice platform configuration requires "symfony/ai-venice-platform" package. Try running "composer require symfony/ai-venice-platform".');
             }
 
-            $platformId = 'ai.platform.venice';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VeniceFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -897,11 +903,11 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                 ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('ai.platform', ['name' => $type]);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
-            $jobClientId = 'ai.platform.job_client.'.$type;
+            $jobClientId = 'ai.platform.job_client.'.$platformName;
             $container->setDefinition($jobClientId, (new Definition(VeniceJobClient::class))
                 ->setFactory(VeniceFactory::class.'::createJobClient')
                 ->setArguments([
@@ -909,8 +915,8 @@ final class AiBundle extends AbstractBundle
                     $platform['endpoint'],
                     new Reference($platform['http_client']),
                 ])
-                ->addTag('ai.platform.job_client', ['key' => $type]));
-            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, $type);
+                ->addTag('ai.platform.job_client', ['key' => $platformName]));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, str_replace('.', '_', $platformName));
 
             return;
         }
@@ -946,7 +952,6 @@ final class AiBundle extends AbstractBundle
                 $httpClient = new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE);
             }
 
-            $platformId = 'ai.platform.vertexai';
             $definition = (new Definition(Platform::class))
                 ->setFactory([VertexAiFactory::class, 'createPlatform'])
                 ->setLazy(true)
@@ -960,7 +965,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.vertexai.gemini'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'vertexai']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -972,7 +977,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('OpenAI platform configuration requires "symfony/ai-open-ai-platform" package. Try running "composer require symfony/ai-open-ai-platform".');
             }
 
-            $platformId = 'ai.platform.openai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenAiFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -985,11 +989,11 @@ final class AiBundle extends AbstractBundle
                     $platform['region'] ?? null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'openai']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
-            $jobClientId = 'ai.platform.job_client.openai';
+            $jobClientId = 'ai.platform.job_client.'.$platformName;
             $container->setDefinition($jobClientId, (new Definition(OpenAiJobClient::class))
                 ->setFactory(OpenAiFactory::class.'::createJobClient')
                 ->setArguments([
@@ -997,36 +1001,33 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     $platform['region'] ?? null,
                 ])
-                ->addTag('ai.platform.job_client', ['key' => 'openai']));
-            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'openai');
+                ->addTag('ai.platform.job_client', ['key' => $platformName]));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, str_replace('.', '_', $platformName));
 
             return;
         }
 
         if ('openresponses' === $type) {
-            foreach ($platform as $name => $config) {
-                if (!ContainerBuilder::willBeAvailable('symfony/ai-open-responses-platform', OpenResponsesFactory::class, ['symfony/ai-bundle'])) {
-                    throw new RuntimeException('OpenResponses platform configuration requires "symfony/ai-open-responses-platform" package. Try running "composer require symfony/ai-open-responses-platform".');
-                }
-
-                $platformId = 'ai.platform.openresponses.'.$name;
-                $definition = (new Definition(Platform::class))
-                    ->setFactory(OpenResponsesFactory::class.'::createPlatform')
-                    ->setLazy(true)
-                    ->addTag('proxy', ['interface' => PlatformInterface::class])
-                    ->setArguments([
-                        $config['base_url'],
-                        $config['api_key'] ?? null,
-                        new Reference($config['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                        $this->createModelCatalog($platformId, $config['model_catalog'], new Reference('ai.platform.model_catalog.openresponses')),
-                        null, // $contract
-                        new Reference('event_dispatcher'),
-                        $config['responses_path'],
-                    ])
-                    ->addTag('ai.platform', ['name' => 'openresponses.'.$name]);
-
-                $container->setDefinition($platformId, $definition);
+            if (!ContainerBuilder::willBeAvailable('symfony/ai-open-responses-platform', OpenResponsesFactory::class, ['symfony/ai-bundle'])) {
+                throw new RuntimeException('OpenResponses platform configuration requires "symfony/ai-open-responses-platform" package. Try running "composer require symfony/ai-open-responses-platform".');
             }
+
+            $definition = (new Definition(Platform::class))
+                ->setFactory(OpenResponsesFactory::class.'::createPlatform')
+                ->setLazy(true)
+                ->addTag('proxy', ['interface' => PlatformInterface::class])
+                ->setArguments([
+                    $platform['base_url'],
+                    $platform['api_key'] ?? null,
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.openresponses')),
+                    null, // $contract
+                    new Reference('event_dispatcher'),
+                    $platform['responses_path'],
+                ])
+                ->addTag('ai.platform', ['name' => $platformName]);
+
+            $container->setDefinition($platformId, $definition);
 
             return;
         }
@@ -1036,7 +1037,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('OpenRouter platform configuration requires "symfony/ai-open-router-platform" package. Try running "composer require symfony/ai-open-router-platform".');
             }
 
-            $platformId = 'ai.platform.openrouter';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OpenRouterFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1050,7 +1050,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'openrouter']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1062,7 +1062,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Eden AI platform configuration requires "symfony/ai-eden-ai-platform" package. Try running "composer require symfony/ai-eden-ai-platform".');
             }
 
-            $platformId = 'ai.platform.edenai';
             $definition = (new Definition(Platform::class))
                 ->setFactory(EdenAiFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1076,11 +1075,11 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'edenai']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
-            $jobClientId = 'ai.platform.job_client.edenai';
+            $jobClientId = 'ai.platform.job_client.'.$platformName;
             $container->setDefinition($jobClientId, (new Definition(EdenAiJobClient::class))
                 ->setFactory(EdenAiFactory::class.'::createJobClient')
                 ->setArguments([
@@ -1089,8 +1088,8 @@ final class AiBundle extends AbstractBundle
                     'https://api.edenai.run',
                     'edenai',
                 ])
-                ->addTag('ai.platform.job_client', ['key' => 'edenai']));
-            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'edenai');
+                ->addTag('ai.platform.job_client', ['key' => $platformName]));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, str_replace('.', '_', $platformName));
 
             return;
         }
@@ -1100,7 +1099,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Mistral platform configuration requires "symfony/ai-mistral-platform" package. Try running "composer require symfony/ai-mistral-platform".');
             }
 
-            $platformId = 'ai.platform.mistral';
             $definition = (new Definition(Platform::class))
                 ->setFactory(MistralFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1112,7 +1110,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'mistral']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1124,7 +1122,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('LmStudio platform configuration requires "symfony/ai-lm-studio-platform" package. Try running "composer require symfony/ai-lm-studio-platform".');
             }
 
-            $platformId = 'ai.platform.lmstudio';
             $definition = (new Definition(Platform::class))
                 ->setFactory(LmStudioFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1136,7 +1133,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'lmstudio']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1148,7 +1145,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Ollama platform configuration requires "symfony/ai-ollama-platform" package. Try running "composer require symfony/ai-ollama-platform".');
             }
 
-            $platformId = 'ai.platform.ollama';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OllamaFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1165,7 +1161,7 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                 ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('ai.platform', ['name' => 'ollama']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1177,7 +1173,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('MiniMax platform configuration requires "symfony/ai-mini-max-platform" package. Try running "composer require symfony/ai-mini-max-platform".');
             }
 
-            $platformId = 'ai.platform.minimax';
             $definition = (new Definition(Platform::class))
                 ->setFactory(MiniMaxFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1190,11 +1185,11 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.minimax'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'minimax']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
-            $jobClientId = 'ai.platform.job_client.minimax';
+            $jobClientId = 'ai.platform.job_client.'.$platformName;
             $container->setDefinition($jobClientId, (new Definition(MiniMaxJobClient::class))
                 ->setFactory(MiniMaxFactory::class.'::createJobClient')
                 ->setArguments([
@@ -1202,8 +1197,8 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     $platform['endpoint'],
                 ])
-                ->addTag('ai.platform.job_client', ['key' => 'minimax']));
-            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'minimax');
+                ->addTag('ai.platform.job_client', ['key' => $platformName]));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, str_replace('.', '_', $platformName));
 
             return;
         }
@@ -1213,7 +1208,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Cerebras platform configuration requires "symfony/ai-cerebras-platform" package. Try running "composer require symfony/ai-cerebras-platform".');
             }
 
-            $platformId = 'ai.platform.cerebras';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CerebrasFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1225,7 +1219,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'cerebras']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1237,7 +1231,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Cohere platform configuration requires "symfony/ai-cohere-platform" package. Try running "composer require symfony/ai-cohere-platform".');
             }
 
-            $platformId = 'ai.platform.cohere';
             $definition = (new Definition(Platform::class))
                 ->setFactory(CohereFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1249,7 +1242,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'cohere']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1261,7 +1254,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Deepgram platform configuration requires "symfony/ai-deepgram-platform" package. Try running "composer require symfony/ai-deepgram-platform".');
             }
 
-            $platformId = 'ai.platform.deepgram';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DeepgramFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1278,8 +1270,8 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                 ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
-                ->addTag('ai.platform.speech', ['name' => $type])
-                ->addTag('ai.platform', ['name' => 'deepgram']);
+                ->addTag('ai.platform.speech', ['name' => $platformName])
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1291,7 +1283,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('DeepSeek platform configuration requires "symfony/ai-deep-seek-platform" package. Try running "composer require symfony/ai-deep-seek-platform".');
             }
 
-            $platformId = 'ai.platform.deepseek';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DeepSeekFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1303,7 +1294,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'deepseek']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1315,7 +1306,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Fireworks platform configuration requires "symfony/ai-fireworks-platform" package. Try running "composer require symfony/ai-fireworks-platform".');
             }
 
-            $platformId = 'ai.platform.fireworks';
             $definition = (new Definition(Platform::class))
                 ->setFactory(FireworksFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1330,7 +1320,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])))
-                ->addTag('ai.platform', ['name' => 'fireworks']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1342,7 +1332,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('TypeSafe platform configuration requires "symfony/ai-type-safe-platform" package. Try running "composer require symfony/ai-type-safe-platform".');
             }
 
-            $platformId = 'ai.platform.typesafe';
             $definition = (new Definition(Platform::class))
                 ->setFactory(TypeSafeFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1354,7 +1343,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'typesafe']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1366,7 +1355,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Voyage platform configuration requires "symfony/ai-voyage-platform" package. Try running "composer require symfony/ai-voyage-platform".');
             }
 
-            $platformId = 'ai.platform.voyage';
             $definition = (new Definition(Platform::class))
                 ->setFactory(VoyageFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1378,7 +1366,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'voyage']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1390,7 +1378,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Perplexity platform configuration requires "symfony/ai-perplexity-platform" package. Try running "composer require symfony/ai-perplexity-platform".');
             }
 
-            $platformId = 'ai.platform.perplexity';
             $definition = (new Definition(Platform::class))
                 ->setFactory(PerplexityFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1402,7 +1389,7 @@ final class AiBundle extends AbstractBundle
                     new Reference('ai.platform.contract.perplexity'),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'perplexity']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1414,7 +1401,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Docker Model Runner platform configuration requires "symfony/ai-docker-model-runner-platform" package. Try running "composer require symfony/ai-docker-model-runner-platform".');
             }
 
-            $platformId = 'ai.platform.dockermodelrunner';
             $definition = (new Definition(Platform::class))
                 ->setFactory(DockerModelRunnerFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1426,7 +1412,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'dockermodelrunner']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1438,7 +1424,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Scaleway platform configuration requires "symfony/ai-scaleway-platform" package. Try running "composer require symfony/ai-scaleway-platform".');
             }
 
-            $platformId = 'ai.platform.scaleway';
             $definition = (new Definition(Platform::class))
                 ->setFactory(ScalewayFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1450,7 +1435,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'scaleway']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1462,7 +1447,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('Together platform configuration requires "symfony/ai-together-platform" package. Try running "composer require symfony/ai-together-platform".');
             }
 
-            $platformId = 'ai.platform.together';
             $definition = (new Definition(Platform::class))
                 ->setFactory(TogetherFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1479,7 +1463,7 @@ final class AiBundle extends AbstractBundle
                     $platform['api_key'],
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])))
-                ->addTag('ai.platform', ['name' => 'together']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1491,7 +1475,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('TransformersPhp platform configuration requires "symfony/ai-transformers-php-platform" package. Try running "composer require symfony/ai-transformers-php-platform".');
             }
 
-            $platformId = 'ai.platform.transformersphp';
             $definition = (new Definition(Platform::class))
                 ->setFactory(TransformersPhpFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1500,7 +1483,7 @@ final class AiBundle extends AbstractBundle
                     $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.transformersphp')),
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'transformersphp']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
@@ -1512,7 +1495,6 @@ final class AiBundle extends AbstractBundle
                 throw new RuntimeException('OVH platform configuration requires "symfony/ai-ovh-platform" package. Try running "composer require symfony/ai-ovh-platform".');
             }
 
-            $platformId = 'ai.platform.ovh';
             $definition = (new Definition(Platform::class))
                 ->setFactory(OvhFactory::class.'::createPlatform')
                 ->setLazy(true)
@@ -1524,7 +1506,7 @@ final class AiBundle extends AbstractBundle
                     null,
                     new Reference('event_dispatcher'),
                 ])
-                ->addTag('ai.platform', ['name' => 'ovh']);
+                ->addTag('ai.platform', ['name' => $platformName]);
 
             $container->setDefinition($platformId, $definition);
 
