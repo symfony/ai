@@ -437,6 +437,7 @@ final class AiBundle extends AbstractBundle
             $builder->removeDefinition('ai.tool_call_argument_resolver');
             $builder->removeDefinition('ai.tool.agent_processor.abstract');
             $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
+            $builder->removeDefinition('ai.security.is_granted_attribute_listener');
             $builder->removeDefinition('ai.agent.source_collection_normalizer');
         }
 
