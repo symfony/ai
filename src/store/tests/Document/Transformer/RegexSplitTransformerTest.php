@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\RegexSplitTransformer;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
 
 final class RegexSplitTransformerTest extends TestCase
@@ -53,9 +54,9 @@ final class RegexSplitTransformerTest extends TestCase
         $chunks = iterator_to_array($transformer->transform([$document]));
 
         $this->assertCount(2, $chunks);
-        $this->assertSame('# Title', $chunks[0]->getMetadata()->getTitle());
+        $this->assertSame('Title', $chunks[0]->getMetadata()->getTitle());
         $this->assertSame(1, $chunks[0]->getMetadata()['_depth']);
-        $this->assertSame('## Section A', $chunks[1]->getMetadata()->getTitle());
+        $this->assertSame('Section A', $chunks[1]->getMetadata()->getTitle());
         $this->assertSame(2, $chunks[1]->getMetadata()['_depth']);
     }
 
@@ -81,7 +82,7 @@ final class RegexSplitTransformerTest extends TestCase
         $this->assertCount(2, $chunks);
         $this->assertSame('Leading text.', $chunks[0]->getContent());
         $this->assertFalse($chunks[0]->getMetadata()->hasTitle());
-        $this->assertSame('## Section A', $chunks[1]->getMetadata()->getTitle());
+        $this->assertSame('Section A', $chunks[1]->getMetadata()->getTitle());
     }
 
     public function testKeepDelimiterFalseExcludesHeadingFromContent()
@@ -93,7 +94,7 @@ final class RegexSplitTransformerTest extends TestCase
 
         $this->assertCount(1, $chunks);
         $this->assertSame('Content A.', $chunks[0]->getContent());
-        $this->assertSame('## Section A', $chunks[0]->getMetadata()->getTitle());
+        $this->assertSame('Section A', $chunks[0]->getMetadata()->getTitle());
     }
 
     public function testKeepDelimiterOptionOverridesConstructorDefault()
@@ -121,6 +122,8 @@ final class RegexSplitTransformerTest extends TestCase
         $this->assertCount(2, $chunks);
         $this->assertSame('Section one', $chunks[0]->getContent());
         $this->assertSame("---\nSection two", $chunks[1]->getContent());
+        $this->assertFalse($chunks[1]->getMetadata()->hasTitle());
+        $this->assertFalse($chunks[1]->getMetadata()->hasDepth());
     }
 
     public function testEmptySectionsBetweenHeadingsAreSkipped()
@@ -146,5 +149,50 @@ final class RegexSplitTransformerTest extends TestCase
 
         $this->assertCount(1, $chunks);
         $this->assertSame('file.md', $chunks[0]->getMetadata()->getSource());
+    }
+
+    public function testTextMetadataIsSetOnEachChunk()
+    {
+        $transformer = new RegexSplitTransformer(self::MARKDOWN_HEADING_PATTERN);
+        $document = new TextDocument(Uuid::v4(), "# Title\nIntro.\n## Section A\nContent A.");
+
+        $chunks = iterator_to_array($transformer->transform([$document]));
+
+        $this->assertCount(2, $chunks);
+        $this->assertSame('# Title'."\n".'Intro.', $chunks[0]->getMetadata()->getText());
+        $this->assertSame('## Section A'."\n".'Content A.', $chunks[1]->getMetadata()->getText());
+    }
+
+    public function testConstructorThrowsOnInvalidPattern()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new RegexSplitTransformer('/(unterminated');
+    }
+
+    public function testConstructorThrowsWhenPatternHasNoCapturingGroup()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new RegexSplitTransformer('/^#+ .+$/m');
+    }
+
+    public function testConstructorThrowsWhenPatternHasMultipleCapturingGroups()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new RegexSplitTransformer('/^(#+) (.+)$/m');
+    }
+
+    public function testTransformThrowsWhenPatternOptionHasNoCapturingGroup()
+    {
+        $transformer = new RegexSplitTransformer(self::MARKDOWN_HEADING_PATTERN);
+        $document = new TextDocument(Uuid::v4(), "## Section A\nContent A.");
+
+        $this->expectException(InvalidArgumentException::class);
+
+        iterator_to_array($transformer->transform([$document], [
+            RegexSplitTransformer::OPTION_PATTERN => '/^#+ .+$/m',
+        ]));
     }
 }
