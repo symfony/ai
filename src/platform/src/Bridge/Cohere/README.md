@@ -19,6 +19,23 @@ Cohere embeds documents and queries differently. The `input_type` option default
 for example `embed-v4.0?input_type=search_query`. Accepted values are listed in the
 `InputType` enum.
 
+With the AI bundle, configure one vectorizer for indexing and one for the retriever:
+
+```yaml
+ai:
+    vectorizer:
+        documents:
+            platform: 'ai.platform.cohere'
+            model: 'embed-v4.0'
+        queries:
+            platform: 'ai.platform.cohere'
+            model: 'embed-v4.0?input_type=search_query'
+    retriever:
+        default:
+            vectorizer: 'ai.vectorizer.queries'
+            store: 'ai.store.memory.default'
+```
+
 Resources
 ---------
 
