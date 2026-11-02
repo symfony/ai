@@ -520,23 +520,18 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, $payload);
     }
 
-    public function testCacheRetentionAnnotatesLastUserMessageOnly()
+    public function testCacheRetentionAnnotatesLastTwoUserMessagesOnly()
     {
         $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
             $body = json_decode($options['body'], true);
             $messages = $body['messages'];
 
-            $this->assertCount(3, $messages);
-
-            // First user message must NOT have cache_control
+            $this->assertCount(5, $messages);
             $this->assertSame('First user message', $messages[0]['content']);
-
-            // Assistant message is unchanged
             $this->assertSame('Acknowledged', $messages[1]['content']);
-
-            // Second (last) user message carries the annotation
-            $this->assertIsArray($messages[2]['content']);
             $this->assertSame(['type' => 'ephemeral'], $messages[2]['content'][0]['cache_control']);
+            $this->assertSame('Acknowledged again', $messages[3]['content']);
+            $this->assertSame(['type' => 'ephemeral'], $messages[4]['content'][0]['cache_control']);
 
             return new JsonMockResponse('{"success": true}');
         });
@@ -547,6 +542,8 @@ class ModelClientTest extends TestCase
             ['role' => 'user', 'content' => 'First user message'],
             ['role' => 'assistant', 'content' => 'Acknowledged'],
             ['role' => 'user', 'content' => 'Second user message'],
+            ['role' => 'assistant', 'content' => 'Acknowledged again'],
+            ['role' => 'user', 'content' => 'Third user message'],
         ]];
         $this->modelClient->request($this->model, $payload);
     }
