@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\Ocr;
+use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -40,6 +41,10 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'pixtral-12b-latest' => ['pixtral-12b-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_IMAGE, Capability::TOOL_CALLING]];
         yield 'voxtral-small-latest' => ['voxtral-small-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
         yield 'voxtral-mini-latest' => ['voxtral-mini-latest', Mistral::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::INPUT_AUDIO, Capability::TOOL_CALLING]];
+        yield 'voxtral-mini-tts-3-0' => ['voxtral-mini-tts-3-0', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO]];
+        yield 'voxtral-mini-tts-3' => ['voxtral-mini-tts-3', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO]];
+        yield 'voxtral-mini-tts-2603' => ['voxtral-mini-tts-2603', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO]];
+        yield 'voxtral-mini-tts-latest' => ['voxtral-mini-tts-latest', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO]];
         yield 'mistral-embed' => ['mistral-embed', Embeddings::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'mistral-ocr-latest' => ['mistral-ocr-latest', Ocr::class, [Capability::INPUT_PDF, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT]];
     }

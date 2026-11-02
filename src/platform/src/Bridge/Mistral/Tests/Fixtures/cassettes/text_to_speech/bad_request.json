@@ -1,0 +1,51 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/audio/speech",
+                "signature": "1884d5de1ecf9ef65c3556ddaded3c3f",
+                "signature_v2": "90f46db1b3dca19037200280474d0b7d",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "response_format": "nope",
+                    "voice_id": "gb_jane_neutral",
+                    "model": "voxtral-mini-tts-3-0",
+                    "input": "Hello"
+                }
+            },
+            "response": {
+                "status": 422,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "197"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"detail\":[{\"type\":\"enum\",\"loc\":[\"body\",\"response_format\"],\"msg\":\"Input should be 'pcm', 'wav', 'mp3', 'flac' or 'opus'\",\"input\":\"nope\",\"ctx\":{\"expected\":\"'pcm', 'wav', 'mp3', 'flac' or 'opus'\"}}]}"
+            }
+        }
+    ]
+}

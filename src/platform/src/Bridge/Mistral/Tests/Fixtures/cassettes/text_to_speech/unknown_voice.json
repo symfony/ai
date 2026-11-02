@@ -1,0 +1,50 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/audio/speech",
+                "signature": "f5180b8a52dc89e87cb50e6b70b14c64",
+                "signature_v2": "b7107a1c12f5cb12a7115753b4a7c4f9",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "voice_id": "nope",
+                    "model": "voxtral-mini-tts-3-0",
+                    "input": "Hello"
+                }
+            },
+            "response": {
+                "status": 404,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"object\":\"error\",\"message\":\"Voice 'nope' not found.\",\"type\":\"invalid_voice\",\"param\":null,\"code\":\"1902\",\"raw_status_code\":404}"
+            }
+        }
+    ]
+}
