@@ -16,8 +16,8 @@ namespace Symfony\AI\Platform\Bridge\Anthropic;
  *
  * Anthropic prompt caching requires a {"cache_control": {...}} annotation on
  * the last block of the cached region: the last system block, the last tool
- * definition, and the last block of the last user message. Each region can be
- * cached independently, so callers may inject any subset.
+ * definition, and the last block of the last two user messages. Each region can
+ * be cached independently, so callers may inject any subset.
  *
  * The cache-control marker itself (retention window, endpoint support) is
  * resolved by the caller and passed in, so different model clients (e.g. the
@@ -53,7 +53,10 @@ trait PromptCachingTrait
     }
 
     /**
-     * Annotates the last block of the last user message.
+     * Annotates the last block of the last two user messages.
+     *
+     * Marking the previous user message keeps a cache hit on the entry written
+     * by the prior request, as Anthropic only looks back 20 blocks per breakpoint.
      *
      * @param array<int|string, mixed>                  $payload
      * @param array{type: 'ephemeral', ttl?: '1h'}|null $cacheControl Null disables caching
@@ -72,7 +75,9 @@ trait PromptCachingTrait
             return $payload;
         }
 
-        for ($i = \count($messages) - 1; $i >= 0; --$i) {
+        $remaining = 2;
+
+        for ($i = \count($messages) - 1; $i >= 0 && $remaining > 0; --$i) {
             if ('user' !== ($messages[$i]['role'] ?? '')) {
                 continue;
             }
@@ -83,7 +88,8 @@ trait PromptCachingTrait
                 $messages[$i]['content'] = [
                     ['type' => 'text', 'text' => $content, 'cache_control' => $cacheControl],
                 ];
-                break;
+                --$remaining;
+                continue;
             }
 
             if (\is_array($content) && [] !== $content) {
@@ -92,7 +98,7 @@ trait PromptCachingTrait
                     $content[$lastIdx]['cache_control'] = $cacheControl;
                     $messages[$i]['content'] = $content;
                 }
-                break;
+                --$remaining;
             }
         }
 

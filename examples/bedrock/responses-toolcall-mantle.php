@@ -21,12 +21,12 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(
     apiKey: optional_env('AWS_BEARER_TOKEN_BEDROCK'),
     region: env('AWS_DEFAULT_REGION'),
-    api: 'messages',
+    api: 'responses',
     httpClient: http_client(),
 );
 
 $toolbox = new Toolbox([new Multiply()], logger: logger());
-$agent = new Agent($platform, 'anthropic.claude-haiku-4-5', toolbox: $toolbox);
+$agent = new Agent($platform, 'google.gemma-4-31b', toolbox: $toolbox);
 
 $result = $agent->call(new MessageBag(Message::ofUser('What is 6 multiplied by 7?')));
 

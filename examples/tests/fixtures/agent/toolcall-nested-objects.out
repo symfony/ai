@@ -7,8 +7,8 @@ Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\ShippingOrder 
     +name: "Express"
     +value: "express"
   }
-  +deliverBy: DateTimeImmutable @1773619199 {
-    date: 2026-03-15 23:59:59.0 +00:00
+  +deliverBy: DateTimeImmutable @1773532800 {
+    date: 2026-03-15 00:00:00.0 +00:00
   }
   +address: Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\Address {
     +street: "123 Main St"
@@ -30,16 +30,15 @@ Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\ShippingOrder 
 }
 Perfect! I've successfully created an express shipping order with the following details:
 
-**Recipient:** John Doe  
-**Delivery Address:** 123 Main St, Springfield, 62701  
-**Priority:** Express  
-**Deliver By:** March 15, 2026  
+- **Recipient:** John Doe
+- **Delivery Address:** 123 Main St, Springfield, 62701
+- **Priority:** Express
+- **Deliver By:** March 15, 2026
+- **Items:**
+  - 3x Widget at $9.99 each
+  - 1x Gadget at $24.99
 
-**Items:**
-- 3x Widget @ $9.99 each
-- 1x Gadget @ $24.99
-
-The shipping order has been created and is ready for processing.
+The shipping order has been created and is ready for processing!
 
 === Testing with model: gpt-5-mini ===
 
@@ -49,8 +48,8 @@ Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\ShippingOrder 
     +name: "Express"
     +value: "express"
   }
-  +deliverBy: DateTimeImmutable @1773619199 {
-    date: 2026-03-15 23:59:59.0 +00:00
+  +deliverBy: DateTimeImmutable @1773532800 {
+    date: 2026-03-15 00:00:00.0 +00:00
   }
   +address: Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\Address {
     +street: "123 Main St"
@@ -70,18 +69,18 @@ Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\ShippingOrder 
     }
   ]
 }
-Done — your express shipping order has been created.
+Shipping order created.
 
 Summary:
 - Recipient: John Doe
 - Priority: express
-- Deliver by: 2026-03-15 (by end of day)
+- Deliver by: 2026-03-15
 - Address: 123 Main St, Springfield, 62701
 - Items:
   - Widget — quantity: 3 — $9.99 each
   - Gadget — quantity: 1 — $24.99 each
 
-If you need a tracking number, changes to delivery date/time, or to add insurance, let me know.
+If you want a printable label, tracking number, or to change delivery options, tell me what you'd like.
 
 === Testing with model: gemini-2.5-flash ===
 
@@ -112,4 +111,4 @@ Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ShippingOrder\ShippingOrder 
     }
   ]
 }
-I've created an express shipping order for John Doe at 123 Main St, Springfield, 62701 to be delivered by 2026-03-15 with 3x Widget ($9.99 each) and 1x Gadget ($24.99).
+OK. I have created an express shipping order for John Doe at 123 Main St, Springfield, 62701 to be delivered by 2026-03-15 with 3 Widgets and 1 Gadget.

@@ -7,11 +7,9 @@ for _ in range(10):
 print(f'The 10th Fibonacci number is: {a}')"
 Result: The 10th Fibonacci number is: 55
 
-Assistant: The 10th Fibonacci number is **55**.
+Assistant: The **10th Fibonacci number is 55**.
 
-The snippet uses the classic iterative approach where we start with `a=0` and `b=1`, then iterate 10 times, swapping values so that `a` becomes `b` and `b` becomes `a+b`. After 10 iterations, `a` contains the 10th Fibonacci number.
-
-The Fibonacci sequence goes: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, **55**, ...
+The snippet uses the iterative approach where we start with `a=0, b=1` (the 0th and 1st Fibonacci numbers) and iterate 10 times, swapping values to get the next number in the sequence: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55.
 
 ====== Turn 2 ======
 Assistant: 55

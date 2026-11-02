@@ -1,0 +1,82 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.us-east-1.api.aws/openai/v1/responses",
+                "signature": "8837cc2fa84f6be390ebb07be67c9b32",
+                "signature_v2": "96803ca9ec93dc2be7a56bb6765411f7",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"multiply\",\"description\":\"Multiply two integers.\",\"parameters\":{\"type\":\"object\",\"properties\":{\"left\":{\"type\":\"integer\"},\"right\":{\"type\":\"integer\"}},\"required\":[\"left\",\"right\"],\"additionalProperties\":false}}],\"model\":\"google.gemma-4-31b\",\"input\":[{\"role\":\"user\",\"content\":\"What is 6 multiplied by 7?\"}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "1472"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "x-amzn-requestid,x-request-id,date,x-amzn-usage-reservation-quota,x-amzn-usage-reservation-remaining-quota,x-amzn-usage-reservation-spillover,x-amzn-gateway-arn,x-amzn-gateway-limit-name,x-amzn-gateway-limit-unit,x-amzn-gateway-limit,x-amzn-gateway-limit-remaining,x-amzn-gateway-limit-used-percent,x-amzn-gateway-limit-refill,x-amzn-gateway-limit-reset-at,retry-after,x-codex-primary-used-percent,x-codex-primary-window-minutes,x-codex-primary-reset-at,anthropic-ratelimit-unified-status,anthropic-ratelimit-unified-reset,anthropic-ratelimit-unified-representative-claim,anthropic-ratelimit-unified-overage-status,anthropic-ratelimit-unified-overage-reset,anthropic-ratelimit-unified-overage-utilization,anthropic-ratelimit-unified-overage-surpassed-threshold"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"background\":false,\"billing\":{\"payer\":\"developer\"},\"completed_at\":1794352565,\"created_at\":1794352565,\"error\":null,\"frequency_penalty\":0.0,\"id\":\"resp_mq3bvvabhyh4adz2tigjm5t2bdraoowbktbrjtncfkupmnct2zsa\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"metadata\":{},\"model\":\"google.gemma-4-31b\",\"object\":\"response\",\"output\":[{\"arguments\":\"{\\\"left\\\":6,\\\"right\\\":7}\",\"call_id\":\"call_0be2ff938daa569c80c7612b6d76073d\",\"id\":\"fc_cb9fcb632d60598888f46bc7048b7b14\",\"name\":\"multiply\",\"status\":\"completed\",\"type\":\"function_call\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"summary\":null,\"effort\":\"medium\"},\"safety_identifier\":null,\"service_tier\":\"default\",\"status\":\"completed\",\"store\":true,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[{\"description\":\"Multiply two integers.\",\"name\":\"multiply\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"left\":{\"type\":\"integer\"},\"right\":{\"type\":\"integer\"}},\"required\":[\"left\",\"right\"],\"additionalProperties\":false},\"strict\":true,\"type\":\"function\"}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":93,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":15,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":108},\"user\":null,\"moderation\":null}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://bedrock-mantle.us-east-1.api.aws/openai/v1/responses",
+                "signature": "9e86737c20dfb881df1063ecc0e77d60",
+                "signature_v2": "19fa1715815d7de5dfbbdb194f510e27",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"multiply\",\"description\":\"Multiply two integers.\",\"parameters\":{\"type\":\"object\",\"properties\":{\"left\":{\"type\":\"integer\"},\"right\":{\"type\":\"integer\"}},\"required\":[\"left\",\"right\"],\"additionalProperties\":false}}],\"model\":\"google.gemma-4-31b\",\"input\":[{\"role\":\"user\",\"content\":\"What is 6 multiplied by 7?\"},{\"arguments\":\"{\\u0022left\\u0022:6,\\u0022right\\u0022:7}\",\"call_id\":\"call_0be2ff938daa569c80c7612b6d76073d\",\"name\":\"multiply\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_0be2ff938daa569c80c7612b6d76073d\",\"output\":\"42\"}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "1503"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "x-amzn-requestid,x-request-id,date,x-amzn-usage-reservation-quota,x-amzn-usage-reservation-remaining-quota,x-amzn-usage-reservation-spillover,x-amzn-gateway-arn,x-amzn-gateway-limit-name,x-amzn-gateway-limit-unit,x-amzn-gateway-limit,x-amzn-gateway-limit-remaining,x-amzn-gateway-limit-used-percent,x-amzn-gateway-limit-refill,x-amzn-gateway-limit-reset-at,retry-after,x-codex-primary-used-percent,x-codex-primary-window-minutes,x-codex-primary-reset-at,anthropic-ratelimit-unified-status,anthropic-ratelimit-unified-reset,anthropic-ratelimit-unified-representative-claim,anthropic-ratelimit-unified-overage-status,anthropic-ratelimit-unified-overage-reset,anthropic-ratelimit-unified-overage-utilization,anthropic-ratelimit-unified-overage-surpassed-threshold"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"background\":false,\"billing\":{\"payer\":\"developer\"},\"completed_at\":1794352566,\"created_at\":1794352566,\"error\":null,\"frequency_penalty\":0.0,\"id\":\"resp_xptz556jbzv45z2t3lxnl2y7vtodrhtze2xipxhvybbeufo4otha\",\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":null,\"max_tool_calls\":null,\"metadata\":{},\"model\":\"google.gemma-4-31b\",\"object\":\"response\",\"output\":[{\"content\":[{\"annotations\":[],\"logprobs\":[],\"text\":\"6 multiplied by 7 is 42.\",\"type\":\"output_text\"}],\"id\":\"msg_b09b97e4610052e1a1a378eebd359336\",\"phase\":\"final_answer\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0.0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"summary\":null,\"effort\":\"medium\"},\"safety_identifier\":null,\"service_tier\":\"default\",\"status\":\"completed\",\"store\":true,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tools\":[{\"description\":\"Multiply two integers.\",\"name\":\"multiply\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"left\":{\"type\":\"integer\"},\"right\":{\"type\":\"integer\"}},\"required\":[\"left\",\"right\"],\"additionalProperties\":false},\"strict\":true,\"type\":\"function\"}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":130,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":11,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":141},\"user\":null,\"moderation\":null}"
+            }
+        }
+    ]
+}
