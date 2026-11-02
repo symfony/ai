@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -68,7 +69,7 @@ final class TogetherClient implements ModelClientInterface
     private function doEmbeddingsRequest(Model $model, array|string $payload, array $options): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', '/v1/embeddings', [
-            'json' => array_merge($options, [
+            'json' => array_merge(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),

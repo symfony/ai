@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Pipeline;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -60,6 +61,8 @@ final class ModelClient implements ModelClientInterface
                 'body' => $payload['body'],
             ]));
         }
+
+        $options = array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]);
 
         $body = ['inputs' => $payload];
         if ([] !== $options) {

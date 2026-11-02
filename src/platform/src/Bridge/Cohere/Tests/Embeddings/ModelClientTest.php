@@ -11,12 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\Cohere\Tests\Embeddings;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\Cohere\InputType;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -132,6 +134,55 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test-key');
 
         $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', ['input_type' => 'clustering']);
+    }
+
+    #[DataProvider('providePlatformInputTypes')]
+    public function testItMapsThePlatformInputType(string $platformInputType, string $expected)
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ) use ($expected): MockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame($expected, $body['input_type']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', [PlatformOptions::INPUT_TYPE => $platformInputType]);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providePlatformInputTypes(): iterable
+    {
+        yield 'query' => [PlatformOptions::INPUT_TYPE_QUERY, 'search_query'];
+        yield 'document' => [PlatformOptions::INPUT_TYPE_DOCUMENT, 'search_document'];
+    }
+
+    public function testItPrefersTheCohereInputTypeOverThePlatformInputType()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('classification', $body['input_type']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', [
+            'input_type' => InputType::Classification,
+            PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_QUERY,
+        ]);
     }
 
     public function testItRejectsUnknownInputType()

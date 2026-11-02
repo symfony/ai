@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Scaleway\Embeddings;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -49,7 +50,7 @@ final class ModelClient implements ModelClientInterface
     {
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
-            'json' => array_merge($options, [
+            'json' => array_merge(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),

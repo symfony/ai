@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -167,7 +168,7 @@ final class VeniceClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', 'embeddings', [
             'json' => [
                 'encoding_format' => 'float',
-                ...$options,
+                ...array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]),
                 'input' => $payload->asEmbeddingsPayload(),
                 'model' => $model->getName(),
             ],

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -78,7 +79,7 @@ final class FireworksClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->inferenceEndpoint.'/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'body' => $this->encodeJsonBody(array_merge($options, [
+            'body' => $this->encodeJsonBody(array_merge(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ])),

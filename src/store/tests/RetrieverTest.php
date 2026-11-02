@@ -12,11 +12,14 @@
 namespace Symfony\AI\Store\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\Vectorizer;
+use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Event\PostQueryEvent;
 use Symfony\AI\Store\Event\PreQueryEvent;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -64,6 +67,26 @@ final class RetrieverTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $results[1]);
         $this->assertSame('Document 1', $results[0]->getMetadata()['title']);
         $this->assertSame('Document 2', $results[1]->getMetadata()['title']);
+    }
+
+    public function testRetrieveVectorizesTheQueryAsQuery()
+    {
+        $store = new TestStore();
+        $vectorizer = new class implements VectorizerInterface {
+            /** @var array<string, mixed> */
+            public array $options = [];
+
+            public function vectorize(string|\Stringable|DocumentInterface|array $values, array $options = []): Vector
+            {
+                $this->options = $options;
+
+                return new Vector([0.1, 0.2, 0.3]);
+            }
+        };
+
+        iterator_to_array((new Retriever($store, $vectorizer))->retrieve('test query'));
+
+        $this->assertSame([PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_QUERY], $vectorizer->options);
     }
 
     public function testRetrieveWithEmptyStore()

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Cohere\InputType;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -49,7 +50,7 @@ final class ModelClient implements ModelClientInterface
         $body = [
             'model' => $model->getName(),
             'texts' => $texts,
-            'input_type' => $this->resolveInputType($options['input_type'] ?? $model->getOptions()['input_type'] ?? null)->value,
+            'input_type' => $this->resolveInputType($options['input_type'] ?? $model->getOptions()['input_type'] ?? $this->fromPlatformOption($options))->value,
         ];
 
         if (isset($options['embedding_types'])) {
@@ -63,6 +64,18 @@ final class ModelClient implements ModelClientInterface
             ],
             'json' => $body,
         ]));
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function fromPlatformOption(array $options): ?InputType
+    {
+        return match ($options[PlatformOptions::INPUT_TYPE] ?? null) {
+            PlatformOptions::INPUT_TYPE_QUERY => InputType::SearchQuery,
+            PlatformOptions::INPUT_TYPE_DOCUMENT => InputType::SearchDocument,
+            default => null,
+        };
     }
 
     private function resolveInputType(mixed $inputType): InputType

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Bridge\Mistral\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -50,7 +51,7 @@ final class ModelClient implements ModelClientInterface
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
-            'json' => array_merge($options, [
+            'json' => array_merge(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),
