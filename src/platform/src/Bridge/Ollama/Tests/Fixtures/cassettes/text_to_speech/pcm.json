@@ -1,0 +1,50 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:11434/api/show",
+                "signature": "67985f4482ba2934def0442080bdbf69",
+                "signature_v2": "ec0bf58f7e7bd78885a57a9da109b7a7",
+                "body": {
+                    "model": "phonon"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"capabilities\":[\"speech\"],\"voices\":[\"default\",\"Zoey\"]}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "http://127.0.0.1:11434/v1/audio/speech",
+                "signature": "0263d0c6a43b7c47701e3d8731948721",
+                "signature_v2": "ca3ba3b097943de1e7cac9f78097fbcd",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body": "{\"response_format\":\"pcm\",\"model\":\"phonon\",\"input\":\"Raw samples.\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "audio/pcm"
+                    ]
+                },
+                "body_format": "binary",
+                "body": null,
+                "body_size": 14
+            }
+        }
+    ]
+}

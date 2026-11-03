@@ -46,7 +46,7 @@ final class OllamaResultConverter implements ResultConverterInterface
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Ollama && !$model instanceof Decision;
+        return $model instanceof Ollama && !$model instanceof Decision && !$model instanceof TextToSpeech;
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface

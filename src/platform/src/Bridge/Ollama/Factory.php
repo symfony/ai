@@ -45,8 +45,8 @@ final class Factory
 
         return new Provider(
             $name,
-            [new DecisionModelClient($httpClient), new OllamaClient($httpClient)],
-            [new DecisionResultConverter(), new OllamaResultConverter()],
+            [new DecisionModelClient($httpClient), new TextToSpeech\ModelClient($httpClient), new OllamaClient($httpClient)],
+            [new DecisionResultConverter(), new TextToSpeech\ResultConverter(), new OllamaResultConverter()],
             $modelCatalog ?? new ModelCatalog($httpClient),
             $contract ?? OllamaContract::create(),
             $eventDispatcher,

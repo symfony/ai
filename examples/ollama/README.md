@@ -12,12 +12,14 @@ To run the examples you will need to download the following models:
 - [Llama 3.2](https://ollama.com/library/llama3.2)
 - [nomic-embed-text](https://ollama.com/library/nomic-embed-text)
 - [Gemma 3](https://ollama.com/library/gemma3)
+- [Phonon](https://ollama.com/library/phonon) (text-to-speech, Ollama >= 0.40.9)
 
 You can do this by running the following commands:
 ```bash
 ollama pull llama3.2
 ollama pull nomic-embed-text
 ollama pull gemma3
+ollama pull phonon
 ```
 
 Then you can start the Ollama server by running:
