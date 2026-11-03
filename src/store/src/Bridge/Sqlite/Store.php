@@ -259,7 +259,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function queryText(TextQuery $query, array $options): iterable
     {
         $searchTerms = $query->getTexts();
-        $ftsQuery = implode(' OR ', array_map(static fn (string $term): string => '"'.$term.'"', $searchTerms));
+        // FTS5 ends the query text at a NUL byte, which would leave the phrase unterminated
+        $ftsQuery = implode(' OR ', array_map(static fn (string $term): string => '"'.str_replace(['"', "\0"], ['""', ''], $term).'"', $searchTerms));
 
         $sql = \sprintf(
             'SELECT id, rank FROM %s_fts WHERE %s_fts MATCH :query ORDER BY rank',

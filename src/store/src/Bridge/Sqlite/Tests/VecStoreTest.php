@@ -353,6 +353,71 @@ final class VecStoreTest extends TestCase
         $this->assertSame('doc-2', $results[0]->getId());
     }
 
+    public function testQueryTextEscapesDoubleQuotesInTerms()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'quoted']);
+        $metadata->setText('The file src/Quote"d.php is edited');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery('src/Quote"d.php')));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    public function testQueryTextIgnoresNulBytesInTerms()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'test']);
+        $metadata->setText('The quick brown fox');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery("fo\0x")));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    public function testQueryTextKeepsQuotedOperatorsInsideThePhrase()
+    {
+        $pdo = $this->createPdo();
+
+        if (!VecStore::isExtensionAvailable($pdo)) {
+            $this->markTestSkipped('sqlite-vec extension is not available.');
+        }
+
+        $store = new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'secret']);
+        $metadata->setText('The secret plan');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery('alpha" OR "secret')));
+
+        $this->assertCount(0, $results);
+    }
+
     public function testQueryHybrid()
     {
         $pdo = $this->createPdo();
