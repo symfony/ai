@@ -1,0 +1,35 @@
+---------------------------------------------------------------------------
+
+by JuampiHernandez at 2026-10-16T18:15:04Z
+
+Thanks for the review! I re-recorded the `firecrawl-scrape` and `firecrawl-map` cassettes and added one for `firecrawl-search.php`, so the search, scrape and map examples replay again. The three examples now run on Anthropic. If you'd rather keep them on OpenAI, I can switch them back.
+
+I also rebased on main.
+
+Status: Needs Review
+
+---------------------------------------------------------------------------
+
+by JuampiHernandez at 2026-10-26T11:13:34Z
+
+Switched the three examples back to OpenAI with `gpt-5-mini`, like the other toolbox examples. The `firecrawl-scrape` and `firecrawl-map` cassettes are back to the ones on main, and `firecrawl-search.php` has no cassette for now.
+
+I don't have an OpenAI key to record with, so these still need a re-record. Feel free to push the recordings straight to this branch or re-record while merging, whichever is easier. `./runner --record --filter=firecrawl toolbox` covers all three (it also picks up `firecrawl-crawl.php`, which has no cassette yet). Until then the replay job fails on the scrape and map cassettes, since the first request now also lists the `firecrawl_search` tool.
+
+I also rebased on main and moved the changelog entry to 0.16, since 0.15 is out.
+
+Status: Needs Review
+
+---------------------------------------------------------------------------
+
+by JuampiHernandez at 2026-10-30T15:06:52Z
+
+I re-recorded the cassettes with `./runner --record`, and the examples still run on OpenAI with `gpt-5-mini`. The `firecrawl-scrape` and `firecrawl-map` cassettes now list `firecrawl_search` in the first request, and `firecrawl-search.php` has its own cassette and golden. `vendor/bin/phpunit` in `examples/` passes locally (305 tests). I only recorded those three examples, so `firecrawl-crawl.php` still has no cassette, same as on main.
+
+The changelog entry is now under `1.0`, and I updated the description to match.
+
+---------------------------------------------------------------------------
+
+by JuampiHernandez at 2026-11-03T10:40:16Z
+
+Rebased on main. The jobs that are still red fail at composer install on the saloonphp/saloon advisory, the same failure as main's nightly Pinecone job, so they should clear once #2866 lands. I can rebase again after that if it helps.
