@@ -3,6 +3,9 @@ Cohere Platform
 
 Cohere platform bridge for Symfony AI.
 
+The chat client maps `PlatformOptions::MAX_OUTPUT_TOKENS` to Cohere's `max_tokens`.
+An explicit `max_tokens` option takes precedence.
+
 Cohere Documentation
 --------------------
 
