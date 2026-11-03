@@ -412,7 +412,10 @@ final class Execution implements ExecutionInterface
             $this->finished = true;
 
             if (!$this->canceled && null === $this->result) {
-                $this->error ??= 'The agent execution finished without producing a result.';
+                if (null === $this->error) {
+                    $this->error = 'The agent execution finished without producing a result.';
+                    $this->errorCode = 'finished_without_result';
+                }
             }
         }
     }

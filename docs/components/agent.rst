@@ -332,11 +332,12 @@ sequence it saw as its cursor. An adapter that numbers its events itself records
 ``getErrorCode()`` returns the code of the exception that failed the execution, if it implements
 :class:`Symfony\\AI\\Platform\\Exception\\ErrorCodeAwareInterface`. Otherwise it returns ``null``. The exceptions of the
 platform implement it, so the codes are the same for every provider. ``isRetryable()`` on the exception tells whether
-repeating the same request may succeed. The agent adds three codes, none of them is retryable:
+repeating the same request may succeed. The agent adds four codes, none of them is retryable:
 
 * ``max_iterations_exceeded`` (``MaxIterationsExceededException``)
 * ``tool_not_found`` (``ToolNotFoundException``)
 * ``tool_execution_failed`` (``ToolExecutionException``)
+* ``finished_without_result`` (the execution ended without producing a result)
 
 Tools
 -----

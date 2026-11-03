@@ -716,6 +716,7 @@ final class ExecutionTest extends TestCase
 
         $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
         $this->assertSame('The agent execution finished without producing a result.', $execution->getError());
+        $this->assertSame('finished_without_result', $execution->getErrorCode());
     }
 
     public function testStatusIsFailedWhenTheIterationStopsBeforeTheResult()
