@@ -11,12 +11,14 @@
 
 namespace Symfony\AI\Platform\Tests\Result;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\Result\BaseResult;
+use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -29,12 +31,14 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
+use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Contracts\HttpClient\ResponseInterface as SymfonyHttpResponse;
 
 final class DeferredResultTest extends TestCase
@@ -647,6 +651,114 @@ final class DeferredResultTest extends TestCase
         $this->assertInstanceOf(City::class, $city);
         $this->assertSame('Berlin', $city->name);
         $this->assertSame(3500000, $city->population);
+    }
+
+    #[DataProvider('provideUniqueVectorPositions')]
+    public function testAsVectorsSelectsUniquePart(int $position)
+    {
+        $vectors = [new Vector([1.0, 2.0])];
+        $parts = [new TextResult('first'), new TextResult('second'), new TextResult('third')];
+        $parts[$position] = new VectorResult($vectors);
+        $multipart = new MultiPartResult($parts);
+        $deferred = new DeferredResult(new PlainConverter($multipart), new InMemoryRawResult());
+
+        $this->assertSame($vectors, $deferred->asVectors());
+        $this->assertSame($multipart, $deferred->getResult());
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function provideUniqueVectorPositions(): iterable
+    {
+        yield 'first part' => [0];
+        yield 'middle part' => [1];
+        yield 'last part' => [2];
+    }
+
+    #[DataProvider('provideMultipartAccessorCases')]
+    public function testTypedAccessorSelectsMatchingMultipartContent(string $accessor, ResultInterface $part)
+    {
+        $multipart = new MultiPartResult([new TextResult('other'), $part]);
+        $deferred = new DeferredResult(new PlainConverter($multipart), new InMemoryRawResult());
+
+        $this->assertSame($part->getContent(), $deferred->{$accessor}());
+    }
+
+    /**
+     * @return iterable<string, array{string, ResultInterface}>
+     */
+    public static function provideMultipartAccessorCases(): iterable
+    {
+        yield 'binary' => ['asBinary', new BinaryResult('binary content')];
+        yield 'object' => ['asObject', new ObjectResult(new \stdClass())];
+        yield 'tool calls' => ['asToolCalls', new ToolCallResult([new ToolCall('id', 'tool')])];
+    }
+
+    /**
+     * @param non-empty-list<ResultInterface> $parts
+     */
+    #[DataProvider('provideAmbiguousVectorParts')]
+    public function testAsVectorsRejectsMissingOrMultipleMatches(array $parts)
+    {
+        $deferred = new DeferredResult(new PlainConverter(new MultiPartResult($parts)), new InMemoryRawResult());
+
+        $this->expectException(UnexpectedResultTypeException::class);
+        $this->expectExceptionMessage(\sprintf('Unexpected response type: expected "%s", got "%s".', VectorResult::class, MultiPartResult::class));
+
+        $deferred->asVectors();
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-list<ResultInterface>}>
+     */
+    public static function provideAmbiguousVectorParts(): iterable
+    {
+        yield 'no match' => [[new TextResult('other')]];
+        yield 'two matching parts' => [[new VectorResult(), new VectorResult()]];
+        $part = new VectorResult();
+        yield 'same instance occurs twice' => [[$part, new TextResult('other'), $part]];
+        yield 'matching part is nested' => [[new MultiPartResult([new VectorResult()])]];
+    }
+
+    public function testAsMultiPartUnwrapsSingleNestedMultipart()
+    {
+        $nested = new MultiPartResult([new TextResult('nested')]);
+        $outer = new MultiPartResult([new TextResult('outer'), $nested]);
+        $deferred = new DeferredResult(new PlainConverter($outer), new InMemoryRawResult());
+
+        $this->assertSame($nested->getContent(), $deferred->asMultiPart());
+    }
+
+    public function testAsMultiPartKeepsOuterResultForMultipleNestedMultiparts()
+    {
+        $parts = [new MultiPartResult([new TextResult('first')]), new MultiPartResult([new TextResult('second')])];
+        $deferred = new DeferredResult(new PlainConverter(new MultiPartResult($parts)), new InMemoryRawResult());
+
+        $this->assertSame($parts, $deferred->asMultiPart());
+    }
+
+    /**
+     * @param non-empty-list<mixed> $parts
+     */
+    #[DataProvider('provideMalformedParts')]
+    public function testAsVectorsRejectsMalformedParts(array $parts)
+    {
+        $deferred = new DeferredResult(new PlainConverter(new MultiPartResult($parts)), new InMemoryRawResult());
+
+        $this->expectException(\TypeError::class);
+
+        $deferred->asVectors();
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-list<mixed>}>
+     */
+    public static function provideMalformedParts(): iterable
+    {
+        yield 'invalid first part' => [[null, new VectorResult()]];
+        yield 'invalid part after unique match' => [[new VectorResult(), new \stdClass()]];
+        yield 'invalid part after two matches' => [[new VectorResult(), new VectorResult(), null]];
     }
 
     /**
