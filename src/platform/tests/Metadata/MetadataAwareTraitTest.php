@@ -33,6 +33,18 @@ final class MetadataAwareTraitTest extends TestCase
         $this->assertCount(1, $metadata);
     }
 
+    public function testCloningGivesTheCopyItsOwnIndependentMetadata()
+    {
+        $original = $this->createTestClass();
+        $original->getMetadata()->add('key', 'original value');
+
+        $copy = clone $original;
+        $copy->getMetadata()->add('key', 'copy value');
+
+        $this->assertSame('original value', $original->getMetadata()->get('key'));
+        $this->assertSame('copy value', $copy->getMetadata()->get('key'));
+    }
+
     private function createTestClass(): object
     {
         return new class {

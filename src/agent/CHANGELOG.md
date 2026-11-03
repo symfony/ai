@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `Execution\Update\ModelResult`, yielded by `Runner` right after each round's own result, and accumulated by `Execution` into `getMetadata()` as it happens, so a canceled or otherwise abandoned streamed execution still reports the token usage of the rounds it actually made
  * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation
