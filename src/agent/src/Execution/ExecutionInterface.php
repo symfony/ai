@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Agent\Execution;
 
-use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
@@ -66,6 +65,8 @@ interface ExecutionInterface extends \IteratorAggregate, ResultInterface
     /**
      * The machine readable code of the exception that failed the execution, when it implements {@see ErrorCodeAwareInterface}.
      *
+     * The codes are an open set, an adapter may report codes of its own.
+     *
      * @return non-empty-string|null
      */
     public function getErrorCode(): ?string;
@@ -76,13 +77,6 @@ interface ExecutionInterface extends \IteratorAggregate, ResultInterface
      * @return list<ExecutionEvent>
      */
     public function getEventsSince(int $sequence = 0): array;
-
-    /**
-     * Records a progress update, with the next sequence unless an explicit one is given.
-     *
-     * @throws InvalidArgumentException when the explicit sequence is not greater than the last recorded one
-     */
-    public function record(Progress $progress, ?int $sequence = null): void;
 
     /**
      * Drives the execution to completion and returns the given messages followed by the new ones, ending with the answer.

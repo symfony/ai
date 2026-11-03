@@ -4,7 +4,7 @@ CHANGELOG
 1.0
 ---
 
- * Add `ExecutionEvent` with `Execution::getEventsSince()` and `record()` to poll the progress of an execution with a cursor, `getErrorCode()` on the executions, and the codes on `MaxIterationsExceededException`, `ToolNotFoundException` and `ToolExecutionException`
+ * Add `ExecutionEvent` with `ExecutionInterface::getEventsSince()` to poll the progress of an execution with a cursor, `ExecutionInterface::getErrorCode()`, and the codes on `MaxIterationsExceededException`, `ToolNotFoundException` and `ToolExecutionException`
  * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation
