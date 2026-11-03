@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -34,7 +35,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
      * @return array{
      *     role: 'assistant',
      *     content: string|list<array{
-     *         type: 'thinking'|'text'|'tool_use'|'server_tool_use'|'web_search_tool_result'|'bash_code_execution_tool_result'|'text_editor_code_execution_tool_result',
+     *         type: 'thinking'|'text'|'tool_use'|'server_tool_use'|'web_search_tool_result'|'tool_search_tool_result'|'bash_code_execution_tool_result'|'text_editor_code_execution_tool_result',
      *         id?: string,
      *         tool_use_id?: string,
      *         name?: string,
@@ -98,6 +99,14 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
             if ($part instanceof WebSearch) {
                 foreach (self::toWebSearchBlocks($part) as $webSearchBlock) {
                     $blocks[] = $webSearchBlock;
+                }
+
+                continue;
+            }
+
+            if ($part instanceof ToolSearch) {
+                foreach (self::toToolSearchBlocks($part) as $toolSearchBlock) {
+                    $blocks[] = $toolSearchBlock;
                 }
 
                 continue;
@@ -193,6 +202,52 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
             $isCall = 'server_tool_use' === ($block['type'] ?? null) && 'web_search' === ($block['name'] ?? null);
 
             if (!$isCall && 'web_search_tool_result' !== ($block['type'] ?? null)) {
+                return [];
+            }
+
+            /* @var array<string, mixed> $block */
+            $blocks[] = $block;
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * A hosted tool search replays as the blocks Anthropic sent for it - the `server_tool_use` call
+     * and its `tool_search_tool_result` - which `ResultConverter` keeps in the result's signature.
+     * Anthropic expands the tool references of the result itself, so the blocks must stay untouched.
+     * A signature that is absent, unreadable, or written by another provider replays nothing.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function toToolSearchBlocks(ToolSearch $toolSearch): array
+    {
+        $signature = $toolSearch->getSignature();
+
+        if (null === $signature) {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($signature, true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return [];
+        }
+
+        if (!\is_array($decoded)) {
+            return [];
+        }
+
+        $blocks = [];
+        foreach ($decoded as $block) {
+            if (!\is_array($block)) {
+                return [];
+            }
+
+            $isCall = 'server_tool_use' === ($block['type'] ?? null)
+                && \in_array($block['name'] ?? null, ['tool_search_tool_bm25', 'tool_search_tool_regex'], true);
+
+            if (!$isCall && 'tool_search_tool_result' !== ($block['type'] ?? null)) {
                 return [];
             }
 

@@ -134,7 +134,14 @@ trait PromptCachingTrait
             return $tools;
         }
 
-        $tools[\count($tools) - 1]['cache_control'] = $cacheControl;
+        // Anthropic rejects a cache breakpoint on a deferred tool
+        for ($index = \count($tools) - 1; $index >= 0; --$index) {
+            if (true !== ($tools[$index]['defer_loading'] ?? false)) {
+                $tools[$index]['cache_control'] = $cacheControl;
+
+                break;
+            }
+        }
 
         return $tools;
     }

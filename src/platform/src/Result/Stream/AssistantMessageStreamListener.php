@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
@@ -28,6 +29,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolSearchComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 
 /**
@@ -165,6 +167,20 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
                 $webSearch->getStatus(),
                 $webSearch->getQueries(),
                 $webSearch->getSignature(),
+            );
+            $this->openThinking = null;
+
+            return;
+        }
+
+        if ($delta instanceof ToolSearchComplete) {
+            $toolSearch = $delta->getToolSearch();
+            $this->content[] = new ToolSearch(
+                $toolSearch->getQuery(),
+                $toolSearch->getId(),
+                $toolSearch->getStatus(),
+                $toolSearch->getToolNames(),
+                $toolSearch->getSignature(),
             );
             $this->openThinking = null;
 

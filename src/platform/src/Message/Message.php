@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Message\Content\McpCall;
 use Symfony\AI\Platform\Message\Content\McpListTools;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
@@ -46,6 +47,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\ToolSearchResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 
 /**
@@ -149,6 +151,10 @@ final class Message
 
         if ($part instanceof WebSearchResult) {
             return [new WebSearch($part->getQuery(), $part->getId(), $part->getStatus(), $part->getQueries(), $part->getSignature())];
+        }
+
+        if ($part instanceof ToolSearchResult) {
+            return [new ToolSearch($part->getQuery(), $part->getId(), $part->getStatus(), $part->getToolNames(), $part->getSignature())];
         }
 
         if ($part instanceof FileSearchResult) {

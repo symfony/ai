@@ -207,6 +207,23 @@ final class ClaudeModelClientTest extends TestCase
         $this->assertInstanceOf(RawBedrockResult::class, $response);
     }
 
+    public function testDeferredToolsAreSentAsNormalTools()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $body = json_decode($arg->getBody(), true);
+                $this->assertSame([['name' => 'get_weather']], $body['tools']);
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
+
+        $this->modelClient->request($this->model, ['message' => 'test'], ['tools' => [['name' => 'get_weather', 'defer_loading' => true]]]);
+    }
+
     public function testToolChoiceFromCallerIsPreserved()
     {
         $this->bedrockClient->expects($this->once())

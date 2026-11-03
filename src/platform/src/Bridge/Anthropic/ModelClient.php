@@ -41,6 +41,16 @@ final class ModelClient implements ModelClientInterface
         'code_execution' => ['type' => 'code_execution_20250825', 'name' => 'code_execution'],
     ];
 
+    /**
+     * @var array<string, array{type: string, name: string}>
+     */
+    private const TOOL_SEARCH_TOOLS = [
+        'bm25' => ['type' => 'tool_search_tool_bm25_20251119', 'name' => 'tool_search_tool_bm25'],
+        'regex' => ['type' => 'tool_search_tool_regex_20251119', 'name' => 'tool_search_tool_regex'],
+    ];
+
+    private const TOOL_SEARCH_MODELS = '/^claude-(?:(?:opus|sonnet|haiku)-(?:4-[5-9]|[5-9])|fable-[5-9])(?:-|$)/';
+
     private readonly EventSourceHttpClient $httpClient;
     private readonly string $baseUrl;
 
@@ -92,8 +102,15 @@ final class ModelClient implements ModelClientInterface
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);
         $payload = $this->injectSystemCacheControl($payload, $cacheControl);
 
+        $toolSearch = $options['tool_search'] ?? 'bm25';
+        unset($options['tool_search']);
+        if (!isset(self::TOOL_SEARCH_TOOLS[$toolSearch])) {
+            throw new InvalidArgumentException(\sprintf('Unsupported tool search "%s". Supported values are "%s".', \is_string($toolSearch) ? $toolSearch : get_debug_type($toolSearch), implode('", "', array_keys(self::TOOL_SEARCH_TOOLS))));
+        }
+
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];
+            $options['tools'] = $this->resolveDeferredTools($model, $options['tools']);
             $options['tools'] = $this->injectToolsCacheControl($options['tools'], $cacheControl);
         }
 
@@ -105,6 +122,10 @@ final class ModelClient implements ModelClientInterface
                 $options['tools'] = array_merge($options['tools'] ?? [], $serverTools);
                 $options['tool_choice'] ??= ['type' => 'auto'];
             }
+        }
+
+        if ($this->hasDeferredTools($options['tools'] ?? []) && !$this->hasToolSearchTool($options['tools'])) {
+            $options['tools'][] = self::TOOL_SEARCH_TOOLS[$toolSearch];
         }
 
         // Adaptive thinking enables interleaved thinking on its own; the beta
@@ -131,6 +152,54 @@ final class ModelClient implements ModelClientInterface
             'headers' => $headers,
             'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
+    }
+
+    /**
+     * Models without tool search get their deferred tools like any other tool.
+     *
+     * @param list<array<string, mixed>> $tools
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function resolveDeferredTools(Model $model, array $tools): array
+    {
+        if (1 === preg_match(self::TOOL_SEARCH_MODELS, $model->getName())) {
+            return $tools;
+        }
+
+        return array_map(static function (array $tool): array {
+            unset($tool['defer_loading']);
+
+            return $tool;
+        }, $tools);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $tools
+     */
+    private function hasDeferredTools(array $tools): bool
+    {
+        foreach ($tools as $tool) {
+            if (true === ($tool['defer_loading'] ?? false)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $tools
+     */
+    private function hasToolSearchTool(array $tools): bool
+    {
+        foreach ($tools as $tool) {
+            if (\is_string($tool['type'] ?? null) && str_starts_with($tool['type'], 'tool_search_tool_')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

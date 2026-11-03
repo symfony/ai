@@ -40,6 +40,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\ToolSearchResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 
@@ -91,6 +92,7 @@ final class AssistantContentMappingTest extends TestCase
         yield ExecutableCodeResult::class => [new ExecutableCodeResult('print(1)', 'python', 'code_1')];
         yield CodeExecutionResult::class => [new CodeExecutionResult(true, '1', 'code_1')];
         yield WebSearchResult::class => [new WebSearchResult('symfony', 'ws_1', 'completed')];
+        yield ToolSearchResult::class => [new ToolSearchResult('weather', 'srvtoolu_1', 'completed', ['get_weather'])];
         yield FileSearchResult::class => [new FileSearchResult(['symfony'], [], 'fs_1', 'completed')];
         yield McpCallResult::class => [new McpCallResult('server', 'tool', '{}', 'output', null, 'mcp_1', 'completed')];
         yield CustomToolCallResult::class => [new CustomToolCallResult('tool', 'input', 'ctc_1', 'completed')];

@@ -37,12 +37,14 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolSearchComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\ToolSearchResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 
@@ -52,6 +54,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
 class ResultConverter implements ResultConverterInterface
 {
     use FinishReasonAwareTrait;
+
+    private const TOOL_SEARCH_TOOLS = ['tool_search_tool_bm25', 'tool_search_tool_regex'];
 
     public function supports(Model $model): bool
     {
@@ -127,6 +131,8 @@ class ResultConverter implements ResultConverterInterface
         $results = [];
         /** @var array<string, array{index: int, blocks: list<array<string, mixed>>}> $webSearchCalls */
         $webSearchCalls = [];
+        /** @var array<string, array{index: int, blocks: list<array<string, mixed>>}> $toolSearchCalls */
+        $toolSearchCalls = [];
         foreach ($data['content'] as $content) {
             if ('tool_use' === $content['type']) {
                 $results[] = new ToolCallResult([new ToolCall($content['id'], $content['name'], $content['input'])]);
@@ -140,6 +146,15 @@ class ResultConverter implements ResultConverterInterface
                     $results[] = new ExecutableCodeResult($content['input']['command'], 'bash', $content['id']);
                 } elseif ('text_editor_code_execution' === $content['name']) {
                     $results[] = new ExecutableCodeResult($content['input']['file_text'] ?? $content['input']['command'], null, $content['id']);
+                } elseif (\in_array($content['name'], self::TOOL_SEARCH_TOOLS, true)) {
+                    $query = self::toolSearchQuery($content['input'] ?? []);
+                    $id = \is_string($content['id'] ?? null) ? $content['id'] : null;
+
+                    if (null !== $id) {
+                        $toolSearchCalls[$id] = ['index' => \count($results), 'blocks' => [$content]];
+                    }
+
+                    $results[] = new ToolSearchResult($query, $id, signature: self::encodeBlocks([$content]));
                 } elseif ('web_search' === $content['name']) {
                     $query = \is_string($content['input']['query'] ?? null) ? $content['input']['query'] : null;
                     $id = \is_string($content['id'] ?? null) ? $content['id'] : null;
@@ -190,6 +205,30 @@ class ResultConverter implements ResultConverterInterface
                         signature: self::encodeWebSearchBlocks([$content]),
                     );
                 }
+            } elseif ('tool_search_tool_result' === $content['type']) {
+                $id = \is_string($content['tool_use_id'] ?? null) ? $content['tool_use_id'] : null;
+                $status = self::toolSearchStatus($content);
+                $toolNames = self::toolSearchToolNames($content);
+                $call = null === $id ? null : ($toolSearchCalls[$id] ?? null);
+
+                if (null !== $call) {
+                    $previous = $results[$call['index']];
+                    \assert($previous instanceof ToolSearchResult);
+                    $results[$call['index']] = new ToolSearchResult(
+                        $previous->getQuery(),
+                        $previous->getId(),
+                        $status,
+                        $toolNames,
+                        self::encodeBlocks([...$call['blocks'], $content]),
+                    );
+                } else {
+                    $results[] = new ToolSearchResult(
+                        id: $id,
+                        status: $status,
+                        toolNames: $toolNames,
+                        signature: self::encodeBlocks([$content]),
+                    );
+                }
             } elseif ('thinking' === $content['type']) {
                 $results[] = new ThinkingResult($content['thinking'], $content['signature'] ?? null);
             }
@@ -220,6 +259,80 @@ class ResultConverter implements ResultConverterInterface
     private static function encodeWebSearchBlocks(array $blocks): string
     {
         return json_encode($blocks, \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * The replay payload of one hosted tool search: the `server_tool_use` call and its
+     * `tool_search_tool_result`, in the order Anthropic sent them.
+     *
+     * @param list<array<string, mixed>> $blocks
+     */
+    private static function encodeBlocks(array $blocks): string
+    {
+        return json_encode($blocks, \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * The BM25 search sends a natural language "query", the regex search a "pattern".
+     */
+    private static function toolSearchQuery(mixed $input): ?string
+    {
+        if (!\is_array($input)) {
+            return null;
+        }
+
+        $query = $input['query'] ?? $input['pattern'] ?? null;
+
+        return \is_string($query) ? $query : null;
+    }
+
+    /**
+     * @param array<string, mixed> $content
+     */
+    private static function toolSearchStatus(array $content): ?string
+    {
+        if ('tool_search_tool_result_error' !== ($content['content']['type'] ?? null)) {
+            return 'completed';
+        }
+
+        return \is_string($content['content']['error_code'] ?? null) ? $content['content']['error_code'] : null;
+    }
+
+    /**
+     * @param array<string, mixed> $content
+     *
+     * @return list<string>
+     */
+    private static function toolSearchToolNames(array $content): array
+    {
+        $names = [];
+        foreach ($content['content']['tool_references'] ?? [] as $reference) {
+            if (\is_array($reference) && \is_string($reference['tool_name'] ?? null)) {
+                $names[] = $reference['tool_name'];
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * @param array{id: string|null, query: string|null, blocks: list<array<string, mixed>>} $call
+     * @param array<string, mixed>|null                                                      $result
+     */
+    private static function toolSearchComplete(array $call, ?array $result = null): ToolSearchComplete
+    {
+        $blocks = $call['blocks'];
+        if (null !== $result) {
+            $blocks[] = $result;
+        }
+
+        return new ToolSearchComplete(new ToolSearchResult(
+            $call['query'],
+            $call['id'],
+            null === $result ? null : self::toolSearchStatus($result),
+            null === $result ? [] : self::toolSearchToolNames($result),
+            self::encodeBlocks($blocks),
+        ));
     }
 
     /**
@@ -293,6 +406,11 @@ class ResultConverter implements ResultConverterInterface
         $currentWebSearchJson = '';
         /** @var array{id: string|null, query: string|null, queries: list<string>, blocks: list<array<string, mixed>>}|null $pendingWebSearch */
         $pendingWebSearch = null;
+        /** @var array{id: string|null, block: array<string, mixed>}|null $currentToolSearch */
+        $currentToolSearch = null;
+        $currentToolSearchJson = '';
+        /** @var array{id: string|null, query: string|null, blocks: list<array<string, mixed>>}|null $pendingToolSearch */
+        $pendingToolSearch = null;
         $currentThinking = null;
         $currentThinkingSignature = null;
         $inMessage = false;
@@ -364,6 +482,15 @@ class ResultConverter implements ResultConverterInterface
                 $pendingWebSearch = null;
             }
 
+            // Same for a tool search call: its result follows right away or not at all
+            if ('content_block_start' === $type
+                && null !== $pendingToolSearch
+                && 'tool_search_tool_result' !== ($data['content_block']['type'] ?? null)
+            ) {
+                yield self::toolSearchComplete($pendingToolSearch);
+                $pendingToolSearch = null;
+            }
+
             // Handle thinking content block start
             if ('content_block_start' === $type
                 && isset($data['content_block']['type'])
@@ -394,6 +521,39 @@ class ResultConverter implements ResultConverterInterface
                 $signature = $data['delta']['signature'] ?? '';
                 $currentThinkingSignature = ($currentThinkingSignature ?? '').$signature;
                 yield new ThinkingSignature($signature);
+                continue;
+            }
+
+            if ('content_block_start' === $type
+                && 'server_tool_use' === ($data['content_block']['type'] ?? null)
+                && \in_array($data['content_block']['name'] ?? null, self::TOOL_SEARCH_TOOLS, true)
+            ) {
+                $currentToolSearch = [
+                    'id' => \is_string($data['content_block']['id'] ?? null) ? $data['content_block']['id'] : null,
+                    'block' => $data['content_block'],
+                ];
+                $currentToolSearchJson = '';
+                continue;
+            }
+
+            if ('content_block_start' === $type
+                && 'tool_search_tool_result' === ($data['content_block']['type'] ?? null)
+            ) {
+                $id = \is_string($data['content_block']['tool_use_id'] ?? null) ? $data['content_block']['tool_use_id'] : null;
+
+                if (null !== $pendingToolSearch && (null === $id || $pendingToolSearch['id'] === $id)) {
+                    yield self::toolSearchComplete($pendingToolSearch, $data['content_block']);
+                    $pendingToolSearch = null;
+
+                    continue;
+                }
+
+                if (null !== $pendingToolSearch) {
+                    yield self::toolSearchComplete($pendingToolSearch);
+                    $pendingToolSearch = null;
+                }
+
+                yield self::toolSearchComplete(['id' => $id, 'query' => null, 'blocks' => []], $data['content_block']);
                 continue;
             }
 
@@ -462,6 +622,8 @@ class ResultConverter implements ResultConverterInterface
                     yield new ToolInputDelta($currentToolCall['id'], $currentToolCall['name'], $partialJson);
                 } elseif (null !== $currentWebSearch) {
                     $currentWebSearchJson .= $partialJson;
+                } elseif (null !== $currentToolSearch) {
+                    $currentToolSearchJson .= $partialJson;
                 }
                 continue;
             }
@@ -479,6 +641,27 @@ class ResultConverter implements ResultConverterInterface
                     // Decoded at message_stop, once stop_reason tells a max_tokens cut from malformed JSON
                     $toolCalls[] = $currentToolCall;
                     $currentToolCall = null;
+                    continue;
+                }
+
+                if (null !== $currentToolSearch) {
+                    $input = \is_array($currentToolSearch['block']['input'] ?? null) ? $currentToolSearch['block']['input'] : [];
+                    if ('' !== $currentToolSearchJson) {
+                        try {
+                            $input = json_decode($currentToolSearchJson, true, flags: \JSON_THROW_ON_ERROR);
+                        } catch (\JsonException $e) {
+                            throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "%s" tool: "%s"', $currentToolSearch['block']['name'], $e->getMessage()), 0, $e);
+                        }
+                    }
+                    $currentToolSearch['block']['input'] = \is_array($input) ? $input : [];
+
+                    $pendingToolSearch = [
+                        'id' => $currentToolSearch['id'],
+                        'query' => self::toolSearchQuery($currentToolSearch['block']['input']),
+                        'blocks' => [$currentToolSearch['block']],
+                    ];
+                    $currentToolSearch = null;
+                    $currentToolSearchJson = '';
                     continue;
                 }
 
@@ -519,6 +702,11 @@ class ResultConverter implements ResultConverterInterface
                 if (null !== $pendingWebSearch) {
                     yield self::webSearchComplete($pendingWebSearch);
                     $pendingWebSearch = null;
+                }
+
+                if (null !== $pendingToolSearch) {
+                    yield self::toolSearchComplete($pendingToolSearch);
+                    $pendingToolSearch = null;
                 }
 
                 if ([] !== $toolCalls) {

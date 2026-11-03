@@ -88,6 +88,14 @@ final class ClaudeModelClient implements ModelClientInterface
 
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];
+            // Tool search is not available on Bedrock, deferred tools are sent like any other tool
+            $options['tools'] = array_map(static function (mixed $tool): mixed {
+                if (\is_array($tool)) {
+                    unset($tool['defer_loading']);
+                }
+
+                return $tool;
+            }, $options['tools']);
         }
 
         if (isset($options['response_format'])) {

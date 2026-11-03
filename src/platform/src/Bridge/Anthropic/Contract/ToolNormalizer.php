@@ -30,16 +30,23 @@ class ToolNormalizer extends ModelContractNormalizer
      * @return array{
      *     name: string,
      *     description: string,
-     *     input_schema: JsonSchema|array{type: 'object'}
+     *     input_schema: JsonSchema|array{type: 'object'},
+     *     defer_loading?: true
      * }
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
-        return [
+        $tool = [
             'name' => $data->getName(),
             'description' => $data->getDescription(),
             'input_schema' => $data->getParameters() ?? ['type' => 'object'],
         ];
+
+        if ($data->isDeferred()) {
+            $tool['defer_loading'] = true;
+        }
+
+        return $tool;
     }
 
     protected function supportedDataClass(): string

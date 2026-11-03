@@ -28,6 +28,7 @@ use Symfony\AI\Platform\Message\Content\McpCall;
 use Symfony\AI\Platform\Message\Content\McpListTools;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Result\BinaryResult;
@@ -47,6 +48,7 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Result\ToolSearchResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 
 final class MessageTest extends TestCase
@@ -185,6 +187,23 @@ final class MessageTest extends TestCase
         $this->assertTrue($parts[5]->isSucceeded());
         $this->assertSame('hi', $parts[5]->getOutput());
         $this->assertSame('srvtoolu_1', $parts[5]->getId());
+    }
+
+    public function testCreateAssistantMessageMapsToolSearchResult()
+    {
+        $message = Message::ofAssistant(new MultiPartResult([
+            new ToolSearchResult('weather', 'srvtoolu_1', 'completed', ['get_weather'], 'provider-signature'),
+            new TextResult('Visible answer.'),
+        ]));
+
+        $parts = $message->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(ToolSearch::class, $parts[0]);
+        $this->assertSame('weather', $parts[0]->getQuery());
+        $this->assertSame('srvtoolu_1', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+        $this->assertSame(['get_weather'], $parts[0]->getToolNames());
+        $this->assertSame('provider-signature', $parts[0]->getSignature());
     }
 
     public function testCreateAssistantMessageMapsServerToolResultTypes()

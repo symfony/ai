@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\AssistantMessageStreamListener;
@@ -32,10 +33,12 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
+use Symfony\AI\Platform\Result\Stream\Delta\ToolSearchComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolSearchResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 
 /**
@@ -198,6 +201,19 @@ final class AssistantMessageStreamListenerTest extends TestCase
                 )),
             ],
             [new WebSearch('Symfony AI', 'ws_1', 'completed', ['Symfony AI'], 'provider-signature')],
+        ];
+
+        yield 'completed tool searches keep their replay signature' => [
+            [
+                new ToolSearchComplete(new ToolSearchResult(
+                    'weather',
+                    'srvtoolu_1',
+                    'completed',
+                    ['get_weather'],
+                    'provider-signature',
+                )),
+            ],
+            [new ToolSearch('weather', 'srvtoolu_1', 'completed', ['get_weather'], 'provider-signature')],
         ];
 
         yield 'a mix of announced and unannounced calls keeps both' => [

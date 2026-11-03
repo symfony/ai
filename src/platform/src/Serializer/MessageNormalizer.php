@@ -33,6 +33,7 @@ use Symfony\AI\Platform\Message\Content\McpCall;
 use Symfony\AI\Platform\Message\Content\McpListTools;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
+use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\Video;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Message\MessageInterface;
@@ -187,6 +188,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             $part instanceof ExecutableCode => ['code' => $part->getCode(), 'language' => $part->getLanguage(), 'id' => $part->getId()],
             $part instanceof CodeExecution => ['succeeded' => $part->isSucceeded(), 'output' => $part->getOutput(), 'id' => $part->getId()],
             $part instanceof WebSearch => ['query' => $part->getQuery(), 'id' => $part->getId(), 'status' => $part->getStatus(), 'queries' => $part->getQueries(), 'signature' => $part->getSignature()],
+            $part instanceof ToolSearch => ['query' => $part->getQuery(), 'id' => $part->getId(), 'status' => $part->getStatus(), 'toolNames' => $part->getToolNames(), 'signature' => $part->getSignature()],
             $part instanceof FileSearch => ['queries' => $part->getQueries(), 'results' => $part->getResults(), 'id' => $part->getId(), 'status' => $part->getStatus()],
             $part instanceof McpCall => ['serverLabel' => $part->getServerLabel(), 'name' => $part->getName(), 'arguments' => $part->getArguments(), 'output' => $part->getOutput(), 'error' => $part->getError(), 'id' => $part->getId(), 'status' => $part->getStatus()],
             $part instanceof McpListTools => ['serverLabel' => $part->getServerLabel(), 'tools' => $part->getTools(), 'id' => $part->getId()],
@@ -216,6 +218,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             ExecutableCode::class => new ExecutableCode($part['code'], $part['language'], $part['id']),
             CodeExecution::class => new CodeExecution($part['succeeded'], $part['output'], $part['id']),
             WebSearch::class => new WebSearch($part['query'], $part['id'], $part['status'], $part['queries'], $part['signature']),
+            ToolSearch::class => new ToolSearch($part['query'], $part['id'], $part['status'], $part['toolNames'], $part['signature']),
             FileSearch::class => new FileSearch($part['queries'], $part['results'], $part['id'], $part['status']),
             McpCall::class => new McpCall($part['serverLabel'], $part['name'], $part['arguments'], $part['output'], $part['error'], $part['id'], $part['status']),
             McpListTools::class => new McpListTools($part['serverLabel'], $part['tools'], $part['id']),

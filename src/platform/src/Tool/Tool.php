@@ -28,6 +28,7 @@ final class Tool
     /**
      * @param JsonSchema|null      $parameters
      * @param array<string, mixed> $metadata   Arbitrary custom data attached to the tool
+     * @param bool                 $deferred   Whether the tool is only made available to the model once it was found by a tool search
      */
     public function __construct(
         private readonly ExecutionReference $reference,
@@ -36,6 +37,7 @@ final class Tool
         private readonly ?array $parameters = null,
         array $metadata = [],
         ToolEffectHints $effectHints = new ToolEffectHints(),
+        private readonly bool $deferred = false,
     ) {
         $this->metadata = array_replace($metadata, $effectHints->toArray());
     }
@@ -61,6 +63,20 @@ final class Tool
     public function getParameters(): ?array
     {
         return $this->parameters;
+    }
+
+    public function isDeferred(): bool
+    {
+        return $this->deferred;
+    }
+
+    public function withDeferred(bool $deferred = true): self
+    {
+        if ($deferred === $this->deferred) {
+            return $this;
+        }
+
+        return new self($this->reference, $this->name, $this->description, $this->parameters, $this->metadata, deferred: $deferred);
     }
 
     public function getEffectHints(): ToolEffectHints
