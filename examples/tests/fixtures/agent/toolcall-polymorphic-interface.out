@@ -2,34 +2,25 @@
 === Testing with model: claude-sonnet-4-5-20250929 ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-I found 1 order matching your search criteria:
-- **Order Number**: ORD-12345
-- **User Responsible**: John Doe
-
-The search returned 1 result for this order.
+I found 1 order matching your search criteria - order number ORD-12345 with John Doe as the responsible user.
 
 Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found 1 purchase contract matching your search criteria:
-- **Contract Number**: PC-67890
-- **Subsidiary**: Acme Corp
-
-The search was successful and returned 1 result for this purchase contract.
+I found 1 purchase contract matching your search criteria for contract number **PC-67890** with subsidiary **Acme Corp**.
 
 === Testing with model: gpt-5-mini ===
 
 Search for order number ORD-12345 with user responsible John Doe : 
-I searched for order ORD-12345 with user responsible John Doe and found 1 matching result.
-
-Would you like me to show the order details (status, items, shipping/departure date, documents), export the record, or perform another search/filter?
-
-Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
-I found 1 matching purchase contract.
+I found 1 matching order.
 
 Summary:
-- Contract number: PC-67890
-- Subsidiary: Acme Corp
+- Order number: ORD-12345
+- User responsible: John Doe
+- Status: Found
 
-Would you like details from the contract (dates, value, parties, status), a copy of the contract, or any specific fields extracted?
+Would you like details of the order (items, dates, shipping info, attached documents), or any specific field?
+
+Search for purchase contract number PC-67890 with subsidiary Acme Corp : 
+I found 1 purchase contract matching PC-67890 for subsidiary "Acme Corp." Would you like details from the contract (dates, parties, line items, status) or a copy/download link?
 
 === Testing with model: gemini-2.5-flash ===
 
