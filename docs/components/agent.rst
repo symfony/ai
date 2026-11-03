@@ -294,8 +294,13 @@ model-request and tool-call updates::
         }
     }
 
-The stages this package itself reports are available as ``Progress::STAGE_MODEL_REQUEST``, ``Progress::STAGE_DELTA``,
-``Progress::STAGE_TOOL_CALL`` and ``Progress::STAGE_HANDOFF``, so matching on one does not need its raw string.
+The stages this package itself reports are available as ``Progress::STAGE_MODEL_REQUEST``, ``Progress::STAGE_MODEL_RESULT``,
+``Progress::STAGE_DELTA``, ``Progress::STAGE_TOOL_CALL`` and ``Progress::STAGE_HANDOFF``, so matching on one does not need
+its raw string.
+
+The ``model_result`` stage follows every completed model round and carries a copy of its result. Its metadata holds the
+token usage of that round, so ``$execution->getMetadata()`` also returns the usage of the finished rounds of a failed or
+canceled execution.
 
 Streaming and tool calling compose: when the model streams a tool call, the agent executes it and streams the next
 round into the very same execution.

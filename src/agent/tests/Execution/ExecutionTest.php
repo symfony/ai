@@ -17,9 +17,13 @@ use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\ExecutionStatus;
+use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
+use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Exception\UnexpectedResultTypeException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -32,6 +36,8 @@ use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 final class ExecutionTest extends TestCase
 {
@@ -607,5 +613,95 @@ final class ExecutionTest extends TestCase
         $this->expectException(LogicException::class);
 
         $execution->asStream()->current();
+    }
+
+    public function testMetadataOfAllRoundsIsCountedOnceAfterSuccess()
+    {
+        $execution = $this->runRounds([$this->toolRound(10), $this->answerRound(5)]);
+
+        $execution->getResult();
+
+        $this->assertSame(15, $execution->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testMetadataOfCompletedRoundsIsAvailableAfterCancelBetweenRounds()
+    {
+        $execution = $this->runRounds([$this->toolRound(10), $this->answerRound(5)]);
+
+        foreach ($execution as $update) {
+            if ($update instanceof Progress && Progress::STAGE_MODEL_RESULT === $update->getStage()) {
+                $execution->cancel();
+            }
+        }
+
+        $this->assertSame(ExecutionStatus::Cancelled, $execution->getStatus());
+        $this->assertSame(10, $execution->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testMetadataOfCompletedRoundsIsAvailableAfterAFailedRound()
+    {
+        $execution = $this->runRounds([$this->toolRound(10), new RuntimeException('Boom')]);
+
+        try {
+            $execution->getResult();
+            $this->fail('The execution should have thrown.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
+        $this->assertSame(10, $execution->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testMetadataIsEmptyWhenCanceledBeforeConsumption()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel();
+        iterator_to_array($execution);
+
+        $this->assertCount(0, $execution->getMetadata());
+    }
+
+    /**
+     * @param list<ResultInterface|\Throwable> $rounds
+     */
+    private function runRounds(array $rounds): Execution
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('execute')->willReturn(new ToolResult(new ToolCall('call_1', 'tool', []), 'Tool responded'));
+
+        $invocation = 0;
+        $platform = MockPlatformFactory::createPlatform(static function () use (&$invocation, $rounds): ResultInterface {
+            $round = $rounds[$invocation++];
+            if ($round instanceof \Throwable) {
+                throw $round;
+            }
+
+            return $round;
+        });
+
+        $runner = new Runner($platform, $toolbox, new SequentialToolExecutor($toolbox));
+
+        return new Execution(static function () use ($runner): \Generator {
+            yield from $runner->run('gpt-4', new MessageBag(), []);
+        });
+    }
+
+    private function toolRound(int $tokens): ToolCallResult
+    {
+        $result = new ToolCallResult([new ToolCall('call_1', 'tool', [])]);
+        $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: $tokens));
+
+        return $result;
+    }
+
+    private function answerRound(int $tokens): TextResult
+    {
+        $result = new TextResult('Final');
+        $result->getMetadata()->add('token_usage', new TokenUsage(totalTokens: $tokens));
+
+        return $result;
     }
 }
