@@ -12,11 +12,11 @@
 namespace Symfony\AI\Store\Bridge\Pinecone\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
-use Saloon\Exceptions\Request\Statuses\NotFoundException;
 use Symfony\AI\Store\Bridge\Pinecone\Store;
-use Symfony\AI\Store\Bridge\Pinecone\Tests\Fixtures\PineconeLocalClient;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -28,20 +28,25 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 
     protected static function createStore(): StoreInterface
     {
-        // Pinecone Local ignores the API key, but the client requires one
+        // Pinecone Local ignores the API key, but the requests carry one
         $store = new Store(
-            new PineconeLocalClient('pclocal', 'http://127.0.0.1:5080', self::INDEX_NAME),
+            HttpClient::create(),
+            'pclocal',
             self::INDEX_NAME,
             dimensions: 3,
             metric: 'cosine',
             cloud: 'aws',
             region: 'us-east-1',
+            controlPlaneUrl: 'http://127.0.0.1:5080',
         );
 
         // The index outlives a previous run that did not reach drop(), and creating it again would fail
         try {
             $store->drop();
-        } catch (NotFoundException) {
+        } catch (ClientExceptionInterface $e) {
+            if (404 !== $e->getResponse()->getStatusCode()) {
+                throw $e;
+            }
         }
 
         return $store;
