@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Execution;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\BatchItem;
@@ -28,7 +29,7 @@ use Symfony\Component\Uid\TimeBasedUidInterface;
  * The run of an agent and the result it produces, returned by {@see \Symfony\AI\Agent\AgentInterface::call()}.
  *
  * The {@see MessageBag} is the state of the run.
- * Reading the status, the pending tool calls and the error never drives the agent and never throws.
+ * Reading the status, the pending tool calls, the error and the events never drives the agent and never throws.
  * Reading the result or the messages drives the agent.
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -60,6 +61,20 @@ interface ExecutionInterface extends \IteratorAggregate, ResultInterface
      * The message of the error of a failed execution.
      */
     public function getError(): ?string;
+
+    /**
+     * The machine readable code of the exception that failed the execution, when it implements {@see ErrorCodeAwareInterface}.
+     *
+     * @return non-empty-string|null
+     */
+    public function getErrorCode(): ?string;
+
+    /**
+     * The progress updates recorded after the given sequence, in order.
+     *
+     * @return list<ExecutionEvent>
+     */
+    public function getEventsSince(int $sequence = 0): array;
 
     /**
      * Drives the execution to completion and returns the given messages followed by the new ones, ending with the answer.
