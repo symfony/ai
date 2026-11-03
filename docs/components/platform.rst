@@ -419,17 +419,17 @@ repeating the same request may succeed. It is ``true`` for exceptions implementi
         $logger->warning($exception->getErrorCode(), ['retry' => $exception->isRetryable()]);
     }
 
-========================================  ========================  =========
-Exception                                 Code                      Retryable
-========================================  ========================  =========
-``RateLimitExceededException``            ``rate_limit_exceeded``   yes
-``ServerException``                       ``provider_error``        yes
-``AuthenticationException``               ``authentication_failed`` no
-``BadRequestException``                   ``bad_request``           no
-``ModelNotFoundException``                ``model_not_found``       no
-``MissingModelSupportException``          ``model_not_found``       no
-``ContentFilterException``                ``content_filtered``      no
-========================================  ========================  =========
+========================================  ==========================  =========
+Exception                                 Code                        Retryable
+========================================  ==========================  =========
+``RateLimitExceededException``            ``rate_limit_exceeded``     yes
+``ServerException``                       ``provider_error``          yes
+``AuthenticationException``               ``authentication_failed``   no
+``BadRequestException``                   ``bad_request``             no
+``ModelNotFoundException``                ``model_not_found``         no
+``MissingModelSupportException``          ``model_not_found``         no
+``ContentFilterException``                ``content_filtered``        no
+========================================  ==========================  =========
 
 Options
 -------
