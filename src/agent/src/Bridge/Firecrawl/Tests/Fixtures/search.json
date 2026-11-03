@@ -1,0 +1,27 @@
+{
+    "success": true,
+    "data": {
+        "web": [
+            {
+                "url": "https://symfony.com/doc/current/messenger.html",
+                "title": "Messenger: Sync & Queued Message Handling (Symfony Docs)",
+                "description": "Messenger provides a message bus with the ability to send messages and then handle them immediately in your application or send them through transports (e.g. queues) to be handled later.",
+                "position": 1
+            },
+            {
+                "url": "https://github.com/symfony/messenger",
+                "title": "GitHub - symfony/messenger: Helps applications send and receive messages",
+                "description": "The Messenger component helps applications send and receive messages to/from other applications or via message queues.",
+                "position": 2
+            },
+            {
+                "url": "https://symfony.com/packages/messenger",
+                "title": "Messenger component (Symfony Packages)",
+                "description": "Messenger Component: documentation, source code and Packagist links.",
+                "position": 3
+            }
+        ]
+    },
+    "id": "0199a0b1-5d6e-7c4a-9f3b-2e8d1c7a4b60",
+    "creditsUsed": 2
+}
