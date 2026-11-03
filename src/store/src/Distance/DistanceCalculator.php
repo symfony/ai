@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Distance;
 
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
@@ -189,16 +190,18 @@ final class DistanceCalculator
 
     private function chebyshevDistance(VectorDocumentInterface $embedding, VectorInterface $against): float
     {
-        $embeddingsAsPower = array_map(
-            static fn (float $currentValue, float $againstValue): float => abs($currentValue - $againstValue),
-            $embedding->getVector()->getData(),
-            $against->getData(),
-        );
+        $embeddingData = $embedding->getVector()->getData();
+        $againstData = $against->getData();
 
-        return array_reduce(
-            $embeddingsAsPower,
-            static fn (float $value, float $current): float => max($value, $current),
-            0.0,
-        );
+        if (\count($embeddingData) !== \count($againstData)) {
+            throw new InvalidArgumentException('Vectors must have the same number of dimensions.');
+        }
+
+        $distance = 0.0;
+        foreach ($embeddingData as $i => $value) {
+            $distance = max($distance, abs($value - $againstData[$i]));
+        }
+
+        return $distance;
     }
 }
