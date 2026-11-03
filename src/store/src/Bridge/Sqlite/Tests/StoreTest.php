@@ -331,6 +331,53 @@ final class StoreTest extends TestCase
         $this->assertCount(0, $results);
     }
 
+    public function testQueryTextEscapesDoubleQuotesInTerms()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'quoted']);
+        $metadata->setText('The file src/Quote"d.php is edited');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery('src/Quote"d.php')));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    public function testQueryTextIgnoresNulBytesInTerms()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'test']);
+        $metadata->setText('The quick brown fox');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery("fo\0x")));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    public function testQueryTextKeepsQuotedOperatorsInsideThePhrase()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'secret']);
+        $metadata->setText('The secret plan');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery('alpha" OR "secret')));
+
+        $this->assertCount(0, $results);
+    }
+
     public function testQueryHybrid()
     {
         $store = $this->createStore();
