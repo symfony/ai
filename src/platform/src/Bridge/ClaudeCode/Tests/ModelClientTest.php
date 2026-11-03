@@ -11,12 +11,17 @@
 
 namespace Symfony\AI\Platform\Bridge\ClaudeCode\Tests;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\ClaudeCode\ClaudeCode;
+use Symfony\AI\Platform\Bridge\ClaudeCode\Contract\ClaudeCodeContract;
 use Symfony\AI\Platform\Bridge\ClaudeCode\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Bridge\ClaudeCode\ModelClient;
 use Symfony\AI\Platform\Bridge\ClaudeCode\RawProcessResult;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -277,5 +282,50 @@ final class ModelClientTest extends TestCase
         $commandLine = $result->getObject()->getCommandLine();
 
         $this->assertStringContainsString('Hello, World!', $commandLine);
+    }
+
+    public function testRequestWithToolDefinitionsThrowsException()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new ClaudeCode('sonnet');
+
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "sonnet" (Symfony\AI\Platform\Bridge\ClaudeCode\ClaudeCode) does not support "tool calling".');
+
+        $client->request($model, 'Hello', ['tools' => self::toolDefinitions($model)]);
+    }
+
+    public function testRequestWithToolNamesAndDefinitionsThrowsException()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new ClaudeCode('sonnet');
+
+        $this->expectException(MissingModelSupportException::class);
+
+        $client->request($model, 'Hello', ['tools' => ['Read', ...self::toolDefinitions($model)]]);
+    }
+
+    /**
+     * @param list<string> $tools
+     */
+    #[TestWith([['Read'], "'--tools' 'Read'"])]
+    #[TestWith([[], "'--tools' \"\""])]
+    public function testRequestPassesBuiltInToolNames(array $tools, string $expectedFlag)
+    {
+        $client = new ModelClient(self::$binary);
+
+        $result = $client->request(new ClaudeCode('sonnet'), 'Hello', ['tools' => $tools]);
+
+        $this->assertStringContainsString($expectedFlag, $result->getObject()->getCommandLine());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function toolDefinitions(ClaudeCode $model): array
+    {
+        return ClaudeCodeContract::create()->createToolOption([
+            new Tool(new ExecutionReference(self::class), 'clock', 'Provides the current date and time.'),
+        ], $model);
     }
 }

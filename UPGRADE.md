@@ -375,6 +375,19 @@ Platform
    +}
    ```
 
+ * The Claude Code and Codex bridges throw a `MissingModelSupportException` when the `tools` option holds tool
+   definitions, for example from an agent with a toolbox. The CLIs only run their own tools and cannot call the tools
+   of the application. Before, Claude Code got `--tools Array` and ran without any built-in tool, and `codex exec`
+   rejected the call. Use these platforms with an agent without a toolbox.
+
+ * The Codex bridge throws an `InvalidArgumentException` for the `tools` and `allowed_tools` options. They were passed
+   as `--allowedTools`, which `codex exec` rejects. Remove them:
+
+   ```diff
+   -$platform->invoke('gpt-5.4', $messages, ['allowed_tools' => ['Bash']]);
+   +$platform->invoke('gpt-5.4', $messages);
+   ```
+
 Store
 -----
 

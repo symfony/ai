@@ -14,10 +14,15 @@ namespace Symfony\AI\Platform\Bridge\Codex\Tests;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
+use Symfony\AI\Platform\Bridge\Codex\Contract\CodexContract;
 use Symfony\AI\Platform\Bridge\Codex\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Bridge\Codex\ModelClient;
 use Symfony\AI\Platform\Bridge\Codex\RawProcessResult;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -94,15 +99,14 @@ final class ModelClientTest extends TestCase
         $this->assertContains('/path/to/image.png', $command);
     }
 
-    public function testBuildCommandWithAllowedTools()
+    public function testBuildCommandWithAllowedToolsThrowsException()
     {
         $client = new ModelClient(self::$binary);
 
-        $command = $client->buildCommand('Hello', ['allowed_tools' => ['Bash', 'Read']]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "tools" and "allowed_tools" options are not supported, "codex exec" has no option to restrict its tools.');
 
-        $this->assertSame(2, \count(array_keys($command, '--allowedTools', true)));
-        $this->assertContains('Bash', $command);
-        $this->assertContains('Read', $command);
+        $client->buildCommand('Hello', ['allowed_tools' => ['Bash', 'Read']]);
     }
 
     public function testBuildCommandWithAllOptions()
@@ -112,7 +116,6 @@ final class ModelClientTest extends TestCase
         $command = $client->buildCommand('Hello', [
             'model' => 'gpt-5-codex',
             'sandbox' => 'workspace-write',
-            'allowed_tools' => ['Bash'],
         ]);
 
         $expected = [
@@ -120,7 +123,6 @@ final class ModelClientTest extends TestCase
             'exec', '--json',
             '--model', 'gpt-5-codex',
             '--sandbox', 'workspace-write',
-            '--allowedTools', 'Bash',
             'Hello',
         ];
 
@@ -156,16 +158,14 @@ final class ModelClientTest extends TestCase
         ], $command);
     }
 
-    public function testBuildCommandRewritesToolsToAllowedTools()
+    public function testBuildCommandWithToolNamesThrowsException()
     {
         $client = new ModelClient(self::$binary);
 
-        $command = $client->buildCommand('Hello', ['tools' => ['Bash', 'Read']]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "tools" and "allowed_tools" options are not supported, "codex exec" has no option to restrict its tools.');
 
-        $this->assertNotContains('--tools', $command);
-        $this->assertSame(2, \count(array_keys($command, '--allowedTools', true)));
-        $this->assertContains('Bash', $command);
-        $this->assertContains('Read', $command);
+        $client->buildCommand('Hello', ['tools' => ['Bash', 'Read']]);
     }
 
     public function testBuildCommandPassesUnknownOptionsAsFlags()
@@ -270,5 +270,36 @@ final class ModelClientTest extends TestCase
         $this->assertStringContainsString('What is PHP?', $commandLine);
         // system_prompt should not be passed as a flag
         $this->assertStringNotContainsString('--system-prompt', $commandLine);
+    }
+
+    public function testRequestWithToolDefinitionsThrowsException()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new Codex('gpt-5-codex');
+
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "gpt-5-codex" (Symfony\AI\Platform\Bridge\Codex\Codex) does not support "tool calling".');
+
+        $client->request($model, 'Hello', ['tools' => self::toolDefinitions($model)]);
+    }
+
+    public function testRequestWithToolNamesAndDefinitionsThrowsMissingModelSupportException()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new Codex('gpt-5-codex');
+
+        $this->expectException(MissingModelSupportException::class);
+
+        $client->request($model, 'Hello', ['tools' => ['Read', ...self::toolDefinitions($model)]]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function toolDefinitions(Codex $model): array
+    {
+        return CodexContract::create()->createToolOption([
+            new Tool(new ExecutionReference(self::class), 'clock', 'Provides the current date and time.'),
+        ], $model);
     }
 }
