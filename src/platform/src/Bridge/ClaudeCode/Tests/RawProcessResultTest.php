@@ -61,6 +61,32 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame(['channel' => 'app'], $data['tool_calls'][0]['arguments']);
     }
 
+    public function testGetDataPairsToolCallsWithTheirToolResults()
+    {
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode(['type' => 'assistant', 'message' => ['content' => [
+                ['type' => 'tool_use', 'id' => 'toolu_1', 'name' => 'Read', 'input' => ['file_path' => 'README.md']],
+                ['type' => 'tool_use', 'id' => 'toolu_2', 'name' => 'Bash', 'input' => ['command' => 'false']],
+                ['type' => 'tool_use', 'id' => 'toolu_3', 'name' => 'Glob', 'input' => []],
+            ]]]),
+            json_encode(['type' => 'user', 'message' => ['content' => [
+                ['type' => 'tool_result', 'tool_use_id' => 'toolu_1', 'content' => [['type' => 'text', 'text' => '# Readme']]],
+                ['type' => 'tool_result', 'tool_use_id' => 'toolu_2', 'content' => 'Exit code 1', 'is_error' => true],
+            ]]]),
+            json_encode(['type' => 'result', 'result' => 'Hello, World!']),
+        ]);
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', escapeshellarg($jsonOutput))]);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame(
+            [['toolu_1', '# Readme', false], ['toolu_2', 'Exit code 1', true], ['toolu_3', null, null]],
+            array_map(static fn (array $toolCall): array => [$toolCall['id'], $toolCall['output'], $toolCall['is_error']], $data['tool_calls']),
+        );
+    }
+
     public function testGetDataDeduplicatesToolCallsAcrossStreamAndAssistantEvents()
     {
         $jsonOutput = implode(\PHP_EOL, [
@@ -249,5 +275,68 @@ final class RawProcessResultTest extends TestCase
         $rawResult = new RawProcessResult($process);
 
         $this->assertSame($process, $rawResult->getObject());
+    }
+
+    /**
+     * Recorded from Claude Code 2.1.316: it writes the assistant message with the call before the block stops.
+     */
+    public function testGetDataReportsEachRecordedToolCallOnce()
+    {
+        $process = new Process(['php', '-r', 'readfile($argv[1]);', __DIR__.'/Fixtures/read_tool.jsonl']);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame(['toolu_01'], array_column($data['tool_calls'], 'id'));
+    }
+
+    public function testGetDataNamesTheConfiguredServerOfEachRecordedMcpToolCall()
+    {
+        $process = new Process(['php', '-r', 'readfile($argv[1]);', __DIR__.'/Fixtures/mcp_tool_server_names.jsonl']);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame(
+            [
+                ['ToolSearch', null, null],
+                ['mcp__file__store__read_file', 'file__store', 'read_file'],
+                ['mcp__my_files_v2__read_file', 'my files.v2', 'read_file'],
+                ['mcp__caf___read_file', 'café', 'read_file'],
+                ['mcp__srv__x__read_file', 'srv😀x', 'read_file'],
+                ['mcp__claude_ai_My_Drive__read_file', 'claude.ai My  Drive!', 'read_file'],
+            ],
+            array_map(static fn (array $toolCall): array => [$toolCall['name'], $toolCall['server'] ?? null, $toolCall['tool'] ?? null], $data['tool_calls']),
+        );
+    }
+
+    public function testGetDataMatchesTheLongestServerNameOfAnMcpToolCall()
+    {
+        $lines = [
+            ['type' => 'system', 'subtype' => 'init', 'mcp_servers' => [['name' => 'a', 'status' => 'connected'], ['name' => 'a__b', 'status' => 'connected']]],
+            ['type' => 'assistant', 'message' => ['content' => [['type' => 'tool_use', 'id' => 'toolu_01', 'name' => 'mcp__a__b__read', 'input' => []]]]],
+            ['type' => 'result', 'result' => 'Done.'],
+        ];
+        $process = new Process(['php', '-r', 'echo $argv[1];', implode(\PHP_EOL, array_map(static fn (array $line): string => json_encode($line, \JSON_THROW_ON_ERROR), $lines))]);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame(['a__b', 'read'], [$data['tool_calls'][0]['server'] ?? null, $data['tool_calls'][0]['tool'] ?? null]);
+    }
+
+    public function testGetDataLeavesTheServerOfAnMcpToolCallOfAnUnlistedServerOpen()
+    {
+        $lines = [
+            ['type' => 'system', 'subtype' => 'init', 'mcp_servers' => [['name' => 'files', 'status' => 'connected']]],
+            ['type' => 'assistant', 'message' => ['content' => [['type' => 'tool_use', 'id' => 'toolu_01', 'name' => 'mcp__other__read', 'input' => []]]]],
+            ['type' => 'result', 'result' => 'Done.'],
+        ];
+        $process = new Process(['php', '-r', 'echo $argv[1];', implode(\PHP_EOL, array_map(static fn (array $line): string => json_encode($line, \JSON_THROW_ON_ERROR), $lines))]);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame([null, null], [$data['tool_calls'][0]['server'] ?? null, $data['tool_calls'][0]['tool'] ?? null]);
     }
 }

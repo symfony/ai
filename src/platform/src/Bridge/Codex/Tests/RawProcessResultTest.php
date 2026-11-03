@@ -80,6 +80,29 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame('call-1', $data['tool_calls'][0]['id']);
         $this->assertSame('symfony_logs', $data['tool_calls'][0]['name']);
         $this->assertSame(['channel' => 'app'], $data['tool_calls'][0]['arguments']);
+        $this->assertNull($data['tool_calls'][0]['server']);
+    }
+
+    public function testGetDataCollectsTheOutcomeOfMcpToolCallItems()
+    {
+        $call = ['type' => 'mcp_tool_call', 'server' => 'files', 'tool' => 'read_file', 'arguments' => ['path' => 'README.md']];
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode(['type' => 'item.started', 'item' => ['id' => 'item_0', ...$call, 'result' => null, 'error' => null, 'status' => 'in_progress']]),
+            json_encode(['type' => 'item.completed', 'item' => ['id' => 'item_0', ...$call, 'result' => ['content' => [['type' => 'text', 'text' => '# Readme']], 'structured_content' => null], 'error' => null, 'status' => 'completed']]),
+            json_encode(['type' => 'item.started', 'item' => ['id' => 'item_1', ...$call, 'result' => null, 'error' => null, 'status' => 'in_progress']]),
+            json_encode(['type' => 'item.completed', 'item' => ['id' => 'item_1', ...$call, 'result' => null, 'error' => ['message' => 'No such file'], 'status' => 'failed']]),
+            json_encode(['type' => 'item.completed', 'item' => ['id' => 'item_2', 'type' => 'agent_message', 'text' => 'Final answer']]),
+        ]);
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', escapeshellarg($jsonOutput))]);
+        $process->start();
+
+        $data = (new RawProcessResult($process))->getData();
+
+        $this->assertSame(
+            [['item_0', 'files', '# Readme', null, 'completed'], ['item_1', 'files', null, 'No such file', 'failed']],
+            array_map(static fn (array $toolCall): array => [$toolCall['id'], $toolCall['server'], $toolCall['output'], $toolCall['error'], $toolCall['status']], $data['tool_calls']),
+        );
     }
 
     public function testGetDataCollectsMcpToolCallsThatUseToolField()
@@ -100,6 +123,7 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame('call-21', $data['tool_calls'][0]['id']);
         $this->assertSame('list_mcp_resources', $data['tool_calls'][0]['name']);
         $this->assertSame(['server' => 'symfony-ai-mate'], $data['tool_calls'][0]['arguments']);
+        $this->assertSame('symfony-ai-mate', $data['tool_calls'][0]['server']);
     }
 
     public function testGetDataCollectsEventMessageMcpToolCalls()

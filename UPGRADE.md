@@ -375,6 +375,19 @@ Platform
    +}
    ```
 
+ * The ClaudeCode and Codex bridges no longer return the tools the CLI ran itself as `ToolCallResult` parts, so an
+   agent no longer tries to run them. MCP tool calls come back as `McpCallResult` parts, other tools as
+   `CustomToolCallResult` parts. The ClaudeCode stream no longer emits `ToolCallComplete` for them, it still
+   reports them with `ToolCallStart` and `ToolInputDelta`. Read the calls from the parts of a `MultiPartResult`:
+
+   ```diff
+   -$toolCalls = $result->asToolCallResult()?->getContent() ?? [];
+   +$toolCalls = array_filter(
+   +    $result->getContent(),
+   +    static fn (ResultInterface $part): bool => $part instanceof McpCallResult || $part instanceof CustomToolCallResult,
+   +);
+   ```
+
  * The Claude Code and Codex bridges throw a `MissingModelSupportException` when the `tools` option holds tool
    definitions, for example from an agent with a toolbox. The CLIs only run their own tools and cannot call the tools
    of the application. Before, Claude Code got `--tools Array` and ran without any built-in tool, and `codex exec`

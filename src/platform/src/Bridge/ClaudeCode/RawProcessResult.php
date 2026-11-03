@@ -187,7 +187,7 @@ final class RawProcessResult implements RawResultInterface
     /**
      * @param list<array<string, mixed>> $events
      *
-     * @return list<array{id: string, name: string, arguments: array<string, mixed>}>
+     * @return list<array{id: string, name: string, arguments: array<string, mixed>, output: string|null, is_error: bool|null, server?: string, tool?: string}>
      */
     private function extractToolCalls(array $events): array
     {
@@ -259,14 +259,123 @@ final class RawProcessResult implements RawResultInterface
 
                 unset($toolCall['partial_input']);
 
-                if ('' !== $toolCall['name'] && '' !== $toolCall['id']) {
+                // the CLI writes the assistant message with the call before the block stops, so the call may be known already
+                if ('' !== $toolCall['name'] && '' !== $toolCall['id'] && !isset($seenIds[$toolCall['id']])) {
                     $toolCalls[] = $toolCall;
                     $seenIds[$toolCall['id']] = true;
                 }
             }
         }
 
+        return $this->attachMcpServers($this->attachToolResults($toolCalls, $events), $events);
+    }
+
+    /**
+     * Adds the server and tool of each MCP tool call. The CLI names such a tool "mcp__<server>__<tool>", with the
+     * server and tool names rewritten as {@see self::toolNamePart()} does. A server name may contain "__" itself, so
+     * the name is matched against the servers of the init event, the longest first. A call that matches none of them
+     * keeps only its name. Two servers the CLI writes the same way cannot be told apart, the last one listed is used.
+     *
+     * @param list<array{id: string, name: string, arguments: array<string, mixed>, output: string|null, is_error: bool|null}> $toolCalls
+     * @param list<array<string, mixed>>                                                                                       $events
+     *
+     * @return list<array{id: string, name: string, arguments: array<string, mixed>, output: string|null, is_error: bool|null, server?: string, tool?: string}>
+     */
+    private function attachMcpServers(array $toolCalls, array $events): array
+    {
+        $servers = [];
+        foreach ($events as $event) {
+            if ('system' !== ($event['type'] ?? null) || 'init' !== ($event['subtype'] ?? null) || !\is_array($event['mcp_servers'] ?? null)) {
+                continue;
+            }
+
+            foreach ($event['mcp_servers'] as $server) {
+                if (\is_array($server) && \is_string($server['name'] ?? null) && '' !== $server['name']) {
+                    $servers['mcp__'.self::toolNamePart($server['name']).'__'] = $server['name'];
+                }
+            }
+        }
+
+        uksort($servers, static fn (string $a, string $b): int => \strlen($b) <=> \strlen($a));
+
+        foreach ($toolCalls as $index => $toolCall) {
+            foreach ($servers as $prefix => $server) {
+                if (str_starts_with($toolCall['name'], $prefix) && \strlen($toolCall['name']) > \strlen($prefix)) {
+                    $toolCalls[$index] += ['server' => $server, 'tool' => substr($toolCall['name'], \strlen($prefix))];
+
+                    break;
+                }
+            }
+        }
+
         return $toolCalls;
+    }
+
+    /**
+     * Rewrites a name as the CLI does in tool names: every character other than an ASCII letter, a digit, "_" or "-"
+     * becomes "_", one per UTF-16 code unit, so a character outside the Basic Multilingual Plane becomes "__". For a
+     * name that starts with "claude.ai ", runs of "_" become one and leading and trailing "_" are removed.
+     */
+    private static function toolNamePart(string $name): string
+    {
+        $part = preg_replace_callback('/[^a-zA-Z0-9_-]/u', static fn (array $match): string => 4 === \strlen($match[0]) ? '__' : '_', $name) ?? $name;
+
+        if (str_starts_with($name, 'claude.ai ')) {
+            $part = trim(preg_replace('/_+/', '_', $part) ?? $part, '_');
+        }
+
+        return $part;
+    }
+
+    /**
+     * Adds what the CLI reported in the `tool_result` block of each tool it ran, null when it reported nothing.
+     *
+     * @param list<array{id: string, name: string, arguments: array<string, mixed>}> $toolCalls
+     * @param list<array<string, mixed>>                                             $events
+     *
+     * @return list<array{id: string, name: string, arguments: array<string, mixed>, output: string|null, is_error: bool|null}>
+     */
+    private function attachToolResults(array $toolCalls, array $events): array
+    {
+        $toolResults = [];
+        foreach ($events as $event) {
+            $message = 'user' === ($event['type'] ?? null) ? ($event['message'] ?? null) : null;
+            $content = \is_array($message) ? ($message['content'] ?? null) : null;
+            if (!\is_array($content)) {
+                continue;
+            }
+
+            foreach ($content as $block) {
+                if (\is_array($block) && 'tool_result' === ($block['type'] ?? null) && \is_string($block['tool_use_id'] ?? null)) {
+                    $toolResults[$block['tool_use_id']] = $block;
+                }
+            }
+        }
+
+        return array_map(fn (array $toolCall): array => $toolCall + [
+            'output' => isset($toolResults[$toolCall['id']]) ? $this->extractText($toolResults[$toolCall['id']]['content'] ?? null) : null,
+            'is_error' => isset($toolResults[$toolCall['id']]) ? true === ($toolResults[$toolCall['id']]['is_error'] ?? false) : null,
+        ], $toolCalls);
+    }
+
+    private function extractText(mixed $content): ?string
+    {
+        if (\is_string($content)) {
+            return $content;
+        }
+
+        if (!\is_array($content)) {
+            return null;
+        }
+
+        $text = '';
+        foreach ($content as $block) {
+            if (\is_array($block) && 'text' === ($block['type'] ?? null) && \is_string($block['text'] ?? null)) {
+                $text .= $block['text'];
+            }
+        }
+
+        return $text;
     }
 
     /**
