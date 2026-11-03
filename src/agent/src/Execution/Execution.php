@@ -387,7 +387,10 @@ final class Execution implements ExecutionInterface
                 }
 
                 if ($update instanceof Progress) {
-                    $this->record($update);
+                    // a delta is sent for every token, recording them would grow the events without bound
+                    if (Progress::STAGE_DELTA !== $update->getStage()) {
+                        $this->record($update);
+                    }
 
                     foreach ($this->progressCallbacks as $callback) {
                         $callback($update);

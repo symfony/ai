@@ -538,6 +538,22 @@ final class ExecutionTest extends TestCase
         $this->assertSame([], $execution->getEventsSince(2));
     }
 
+    public function testItDoesNotRecordStreamDeltas()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new Progress('model_request');
+            yield new Progress(Progress::STAGE_DELTA, '', new TextDelta('Hel'));
+            yield new Progress(Progress::STAGE_DELTA, '', new TextDelta('lo'));
+            yield new Progress('tool_call', 'Calling tool.', 'weather');
+            yield new ResultUpdate(new TextResult('Hello'));
+        });
+
+        $execution->getResult();
+
+        $this->assertSame(['model_request', 'tool_call'], array_map(static fn ($event): string => $event->getStage(), $execution->getEventsSince()));
+        $this->assertSame([1, 2], array_map(static fn ($event): int => $event->getSequence(), $execution->getEventsSince()));
+    }
+
     public function testItRecordsEventsBeforeTheCallbacksRun()
     {
         $seen = [];
