@@ -13,9 +13,9 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AssistantMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\ToolNormalizer;
+use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
 use Symfony\AI\Platform\Bridge\Anthropic\ResultConverter;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -109,7 +109,7 @@ final class ToolSearchTest extends TestCase
      */
     public static function modelsWithoutToolSearch(): iterable
     {
-        yield 'claude 3.5 sonnet' => ['claude-3-5-sonnet-latest'];
+        yield 'claude 3.5 sonnet' => ['claude-3-5-sonnet-20241022'];
         yield 'claude sonnet 4' => ['claude-sonnet-4-20250514'];
         yield 'claude sonnet 4.0 alias' => ['claude-sonnet-4-0'];
         yield 'claude opus 4.1' => ['claude-opus-4-1'];
@@ -266,7 +266,7 @@ final class ToolSearchTest extends TestCase
             return new JsonMockResponse('{}');
         }), 'key');
 
-        $client->request(new Claude($model), ['messages' => []], ['tools' => $tools] + $options);
+        $client->request((new ModelCatalog())->getModel($model), ['messages' => []], ['tools' => $tools] + $options);
 
         return $body;
     }

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
@@ -48,8 +49,6 @@ final class ModelClient implements ModelClientInterface
         'bm25' => ['type' => 'tool_search_tool_bm25_20251119', 'name' => 'tool_search_tool_bm25'],
         'regex' => ['type' => 'tool_search_tool_regex_20251119', 'name' => 'tool_search_tool_regex'],
     ];
-
-    private const TOOL_SEARCH_MODELS = '/^claude-(?:(?:opus|sonnet|haiku)-(?:4-[5-9]|[5-9])|fable-[5-9])(?:-|$)/';
 
     private readonly EventSourceHttpClient $httpClient;
     private readonly string $baseUrl;
@@ -163,7 +162,7 @@ final class ModelClient implements ModelClientInterface
      */
     private function resolveDeferredTools(Model $model, array $tools): array
     {
-        if (1 === preg_match(self::TOOL_SEARCH_MODELS, $model->getName())) {
+        if ($model->supports(Capability::TOOL_SEARCH)) {
             return $tools;
         }
 
