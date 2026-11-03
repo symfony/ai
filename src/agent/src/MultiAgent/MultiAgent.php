@@ -20,6 +20,7 @@ use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\ExecutionInterface;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\InputNormalizer;
@@ -164,7 +165,7 @@ final class MultiAgent implements AgentInterface
      *
      * @param array<string, mixed> $options
      *
-     * @return \Generator<int, Progress|ResultUpdate, mixed, void>
+     * @return \Generator<int, Progress|ModelResult|ResultUpdate, mixed, void>
      */
     private function answerWith(AgentInterface $agent, MessageBag $messages, MessageBag $input, array $options, Cancellation $cancellation): \Generator
     {
@@ -191,7 +192,7 @@ final class MultiAgent implements AgentInterface
      * @param array<string, mixed> $options
      * @param bool                 $forwardDeltas whether the delegated deltas are part of this agent's answer
      *
-     * @return \Generator<int, Progress, mixed, ResultUpdate|null> the result, or null when the execution was canceled
+     * @return \Generator<int, Progress|ModelResult, mixed, ResultUpdate|null> the result, or null when the execution was canceled
      */
     private function delegate(AgentInterface $agent, MessageBag $messages, array $options, Cancellation $cancellation, bool $forwardDeltas = true): \Generator
     {
@@ -200,6 +201,12 @@ final class MultiAgent implements AgentInterface
         foreach ($cancellation->forward($agent->call($messages, $options)) as $update) {
             if ($update instanceof ResultUpdate) {
                 $result = $update;
+
+                continue;
+            }
+
+            if ($update instanceof ModelResult) {
+                yield $update;
 
                 continue;
             }

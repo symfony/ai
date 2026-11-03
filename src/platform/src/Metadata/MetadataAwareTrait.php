@@ -18,6 +18,13 @@ trait MetadataAwareTrait
 {
     private ?Metadata $metadata = null;
 
+    public function __clone(): void
+    {
+        if (null !== $this->metadata) {
+            $this->metadata = clone $this->metadata;
+        }
+    }
+
     public function getMetadata(): Metadata
     {
         return $this->metadata ??= new Metadata();

@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Execution;
 
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -323,11 +324,16 @@ final class Execution implements ExecutionInterface
                     break;
                 }
 
+                if ($update instanceof ModelResult) {
+                    // Merged per round so usage survives an execution that never reaches a final result.
+                    $this->metadata->merge($update->getResult()->getMetadata());
+                }
+
                 if ($update instanceof Result) {
-                    // the final result carries the metadata aggregated over all rounds, e.g. token usage
+                    // Set, not merged: the final result's metadata already aggregates all rounds.
                     $this->result = $update->getResult();
                     $this->resultUpdate = $update;
-                    $this->metadata->merge($update->getResult()->getMetadata());
+                    $this->metadata->set($update->getResult()->getMetadata()->all());
 
                     foreach ($this->resultCallbacks as $callback) {
                         $callback($update);

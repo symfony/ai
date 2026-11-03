@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests\Execution;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Runner;
+use Symfony\AI\Agent\Execution\Update\ModelResult;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Execution\UpdateInterface;
@@ -972,7 +973,62 @@ final class RunnerTest extends TestCase
             $updates,
         );
 
-        $this->assertSame(['model_request', 'tool_call', 'model_request', 'result'], $stages);
+        $this->assertSame(['model_request', 'model_result', 'tool_call', 'model_request', 'model_result', 'result'], $stages);
+    }
+
+    public function testEachRoundYieldsItsOwnResultAsAModelResultUpdate()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $modelResults = array_values(array_filter($updates, static fn (UpdateInterface $update): bool => $update instanceof ModelResult));
+
+        $this->assertCount(2, $modelResults);
+        $this->assertInstanceOf(ToolCallResult::class, $modelResults[0]->getResult());
+        $this->assertSame(10, $modelResults[0]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertInstanceOf(TextResult::class, $modelResults[1]->getResult());
+        $this->assertSame('Final content after tool', $modelResults[1]->getResult()->getContent());
+        $this->assertSame(5, $modelResults[1]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testTheFinalRoundsModelResultKeepsItsOwnMetadataAfterTheRunAggregatesIt()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+
+        $final = new TextResult('Final content after tool');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $modelResults = array_values(array_filter($updates, static fn (UpdateInterface $update): bool => $update instanceof ModelResult));
+        /** @var ResultUpdate $resultUpdate */
+        $resultUpdate = array_values(array_filter(
+            $updates,
+            static fn (UpdateInterface $update): bool => $update instanceof ResultUpdate,
+        ))[0];
+
+        $this->assertSame(15, $resultUpdate->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertSame(5, $modelResults[1]->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
     }
 
     public function testItYieldsEveryStreamedDeltaAsAProgressUpdate()
