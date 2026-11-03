@@ -127,6 +127,7 @@ $modelsDevBridges = [
         'single' => false,
         'rules' => [
             [static fn (array $m): bool => str_contains($m['id'] ?? '', 'ocr'), BRIDGE_NS.'Mistral\\Ocr'],
+            [static fn (array $m): bool => str_contains($m['id'] ?? '', '-tts'), BRIDGE_NS.'Mistral\\TextToSpeech'],
             [static fn (array $m): bool => CapabilityMapper::isEmbeddingModel($m), BRIDGE_NS.'Mistral\\Embeddings'],
         ],
     ],

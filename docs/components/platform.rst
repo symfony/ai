@@ -172,6 +172,7 @@ Supported Models & Platforms
   * `Cartesia STT`_ with `Cartesia`_ as Platform
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
+  * `Mistral Voxtral TTS`_ with `Mistral`_ as Platform
   * Text-to-speech and speech-to-text with `Together`_ as Platform
   * `Ollama TTS`_ with `Ollama`_ as Platform
   * `Venice TTS`_ with `Venice`_ as Platform
@@ -1477,11 +1478,29 @@ result exposes the generated audio as binary data, which can be written to a fil
     // Write the audio binary to a file
     file_put_contents('output.mp3', $result->asBinary());
 
+Mistral's Voxtral models use the dedicated ``/v1/audio/speech`` endpoint. Select a preset or
+saved voice with the ``voice`` option, or clone a voice for a single request by passing a
+base64-encoded MP3 or WAV clip as ``ref_audio``. The ``response_format`` option accepts ``mp3``
+(default), ``wav``, ``flac``, ``opus`` and ``pcm``::
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech\Format;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    $result = $platform->invoke('voxtral-mini-tts-3-0', 'Welcome to Symfony AI!', [
+        'voice' => 'gb_jane_neutral',
+        'response_format' => Format::WAV,
+    ]);
+
+    file_put_contents('output.wav', $result->asBinary());
+
 Code Examples
 ~~~~~~~~~~~~~
 
 * `Audio Output with GPT`_
 * `Ollama Text-to-Speech`_
+* `Text-to-Speech with Mistral`_
 
 Speech-to-Text
 --------------
@@ -2421,6 +2440,7 @@ Code Examples
 .. _`OpenAI's GPT Image`: https://platform.openai.com/docs/guides/image-generation
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
 .. _`Mistral OCR`: https://docs.mistral.ai/api/endpoint/ocr
+.. _`Mistral Voxtral TTS`: https://docs.mistral.ai/studio/audio/text-to-speech/overview
 .. _`HuggingFace`: https://huggingface.co/
 .. _`Mercure`: https://mercure.rocks/
 .. _`Streaming Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/stream.php
@@ -2437,6 +2457,7 @@ Code Examples
 .. _`Batch Requests with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/batch.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`Ollama Text-to-Speech`: https://github.com/symfony/ai/blob/main/examples/ollama/text-to-speech.php
+.. _`Text-to-Speech with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/text-to-speech.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
