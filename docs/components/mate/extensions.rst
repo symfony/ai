@@ -346,6 +346,82 @@ own.
     $container->parameters()
         ->set('ai_mate_monolog.log_dir', '%mate.root_dir%/var/log');
 
+Knowledge Extension
+-------------------
+
+The Knowledge extension (``symfony/ai-knowledge-mate-extension``) lets the agent read official
+documentation instead of guessing from training data. It is offline after the first call and uses
+substring search, not semantic search.
+
+``knowledge-toc``
+    Without arguments, list the registered providers. With ``provider``, return its table of
+    contents at ``path``, or at the root when no path is given.
+
+``knowledge-read``
+    Read a documentation page, split into RST sections.
+
+``knowledge-search``
+    Case-insensitive substring search across the sections of a provider. Returns at most 50 matches.
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call knowledge-toc --provider=symfony
+    $ vendor/bin/mate tools:call knowledge-search --provider=symfony --query=voters
+
+The first call for a provider clones its source repository into the cache. Later calls read from
+disk. The cache is pulled and indexed again once it is older than
+``ai_mate_knowledge.cache_ttl_seconds`` (default: 24 hours). The Symfony extension adds a
+``symfony`` provider when both extensions are installed.
+
+**Configuration**::
+
+    $container->parameters()
+        ->set('ai_mate_knowledge.cache_dir', '%mate.root_dir%/var/cache/knowledge')
+        ->set('ai_mate_knowledge.cache_ttl_seconds', 86400);
+
+**Adding a provider**
+
+Implement ``Symfony\AI\Mate\Bridge\Knowledge\Provider\DocsProviderInterface`` and tag the service
+with ``ai_mate.knowledge_provider``::
+
+    use Symfony\AI\Mate\Bridge\Knowledge\Provider\DocsProviderInterface;
+    use Symfony\AI\Mate\Bridge\Knowledge\Service\GitFetcher;
+
+    final class MyDocsProvider implements DocsProviderInterface
+    {
+        public function __construct(private GitFetcher $fetcher)
+        {
+        }
+
+        public function getName(): string
+        {
+            return 'my-docs';
+        }
+
+        public function getTitle(): string
+        {
+            return 'My Docs';
+        }
+
+        public function getDescription(): string
+        {
+            return 'My project documentation';
+        }
+
+        public function getFormat(): string
+        {
+            return 'rst';
+        }
+
+        public function sync(string $cacheDir): string
+        {
+            $repo = $cacheDir.'/docs';
+            $this->fetcher->fetch('https://github.com/me/docs.git', 'main', $repo);
+
+            return $repo.'/index.rst';
+        }
+    }
+
 Community Extensions
 --------------------
 

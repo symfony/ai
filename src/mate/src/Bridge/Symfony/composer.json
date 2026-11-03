@@ -37,6 +37,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
+        "symfony/ai-knowledge-mate-extension": "@dev",
         "symfony/dotenv": "^7.3|^8.0",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/http-kernel": "^7.3|^8.0",
@@ -48,6 +49,7 @@
     },
     "suggest": {
         "doctrine/doctrine-bundle": "Required for Doctrine database profiler formatter",
+        "symfony/ai-knowledge-mate-extension": "Required to expose the Symfony documentation as a knowledge provider",
         "symfony/dotenv": "Required for the symfony-dotenv-check tool",
         "symfony/http-kernel": "Required for profiler data access tools",
         "symfony/mailer": "Required for mailer profiler formatter",
