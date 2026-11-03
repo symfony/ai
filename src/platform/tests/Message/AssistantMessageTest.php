@@ -60,6 +60,36 @@ final class AssistantMessageTest extends TestCase
         $this->assertSame('answer', $message->asText());
     }
 
+    public function testTypedContentKeepsOrderAndIdentityWithNamedArguments()
+    {
+        $firstToolCall = new ToolCall('first', 'tool');
+        $secondToolCall = new ToolCall('second', 'tool');
+        $firstThinking = new Thinking('First thought.', 'first-signature');
+        $secondThinking = new Thinking('Second thought.', 'second-signature');
+        $message = new AssistantMessage(
+            text: new Text('Answer.'),
+            firstToolCall: $firstToolCall,
+            firstThinking: $firstThinking,
+            secondToolCall: $secondToolCall,
+            secondThinking: $secondThinking,
+            repeatedToolCall: $firstToolCall,
+        );
+
+        $this->assertSame([$firstToolCall, $secondToolCall, $firstToolCall], $message->getToolCalls());
+        $this->assertSame([$firstThinking, $secondThinking], $message->getThinking());
+        $this->assertSame('Answer.', $message->asText());
+    }
+
+    public function testTypedContentWithoutMatchingParts()
+    {
+        $message = new AssistantMessage(new Text('Answer.'));
+
+        $this->assertSame([], $message->getToolCalls());
+        $this->assertSame([], $message->getThinking());
+        $this->assertSame([], (new AssistantMessage())->getToolCalls());
+        $this->assertSame([], (new AssistantMessage())->getThinking());
+    }
+
     public function testGetContentReturnsAllParts()
     {
         $thinking = new Thinking('reasoning');
