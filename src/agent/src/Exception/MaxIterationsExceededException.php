@@ -11,12 +11,14 @@
 
 namespace Symfony\AI\Agent\Exception;
 
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
+
 /**
  * Exception thrown when the maximum number of tool calling iterations is exceeded.
  *
  * @author Tim Lochmüller <tim@fruit-lab.de>
  */
-final class MaxIterationsExceededException extends RuntimeException
+final class MaxIterationsExceededException extends RuntimeException implements ErrorCodeAwareInterface
 {
     public function __construct(int $maxToolCalls, ?\Throwable $previous = null)
     {
@@ -25,5 +27,15 @@ final class MaxIterationsExceededException extends RuntimeException
             0,
             $previous
         );
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'max_iterations_exceeded';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
     }
 }
