@@ -18,6 +18,7 @@ use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Execution\ExecutionStatus;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
@@ -354,6 +355,27 @@ final class AgentTest extends TestCase
         $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
 
         $agent->call(new MessageBag(), [])->getResult();
+    }
+
+    public function testAHitIterationLimitIsReportedWithItsErrorCode()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', []);
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, 'Test response'));
+        $platform = MockPlatformFactory::createPlatform(static fn (): ResultInterface => new ToolCallResult([$toolCall]));
+        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, maxToolCalls: 2);
+
+        $execution = $agent->call(new MessageBag(Message::ofUser('Hi')));
+
+        try {
+            $execution->getResult();
+            $this->fail('The run should hit the iteration limit.');
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(ExecutionStatus::Failed, $execution->getStatus());
+        $this->assertSame('max_iterations_exceeded', $execution->getErrorCode());
     }
 
     public function testConvertsToolResultsWithTheGivenConverter()

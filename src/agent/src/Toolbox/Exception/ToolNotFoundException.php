@@ -11,13 +11,14 @@
 
 namespace Symfony\AI\Agent\Toolbox\Exception;
 
+use Symfony\AI\Platform\Exception\ErrorCodeAwareInterface;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class ToolNotFoundException extends \RuntimeException implements ExceptionInterface
+final class ToolNotFoundException extends \RuntimeException implements ExceptionInterface, ErrorCodeAwareInterface
 {
     private ?ToolCall $toolCall = null;
 
@@ -37,5 +38,15 @@ final class ToolNotFoundException extends \RuntimeException implements Exception
     public function getToolCall(): ?ToolCall
     {
         return $this->toolCall;
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'tool_not_found';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
     }
 }

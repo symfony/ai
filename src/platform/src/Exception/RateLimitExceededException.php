@@ -14,7 +14,7 @@ namespace Symfony\AI\Platform\Exception;
 /**
  * @author Floran Pagliai <floran.pagliai@gmail.com>
  */
-final class RateLimitExceededException extends RuntimeException implements RetryableExceptionInterface
+final class RateLimitExceededException extends RuntimeException implements ErrorCodeAwareInterface, RetryableExceptionInterface
 {
     public function __construct(
         private readonly ?int $retryAfter = null,
@@ -31,5 +31,15 @@ final class RateLimitExceededException extends RuntimeException implements Retry
     public function getRetryAfter(): ?int
     {
         return $this->retryAfter;
+    }
+
+    public function getErrorCode(): string
+    {
+        return 'rate_limit_exceeded';
+    }
+
+    public function isRetryable(): bool
+    {
+        return true;
     }
 }

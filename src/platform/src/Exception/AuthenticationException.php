@@ -17,6 +17,15 @@ namespace Symfony\AI\Platform\Exception;
  * @author Vitalii Kyktov <vitalii.kyktov@gmail.com>
  * @author Dmytro Liashko <dmlyashko@gmail.com>
  */
-class AuthenticationException extends RuntimeException
+class AuthenticationException extends RuntimeException implements ErrorCodeAwareInterface
 {
+    public function getErrorCode(): string
+    {
+        return 'authentication_failed';
+    }
+
+    public function isRetryable(): bool
+    {
+        return false;
+    }
 }
