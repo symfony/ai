@@ -94,4 +94,22 @@ final class ModelClientTest extends TestCase
 
         $client->request(new Cohere('command-a-03-2025'), ['model' => 'command-a-03-2025', 'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['model' => 'command-a-03-2025', 'messages' => []], json_decode($options['body'], true));
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Cohere('command-a-03-2025'), ['model' => 'command-a-03-2025', 'messages' => []], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

@@ -64,4 +64,31 @@ final class ModelClientTest extends TestCase
 
         $client->request(new SpeechToText('cohere-transcribe-03-2026'), 'string payload');
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertIsCallable($options['body']);
+
+            $body = '';
+            while ('' !== $chunk = $options['body'](8192)) {
+                $body .= $chunk;
+            }
+
+            $this->assertStringContainsString('cohere-transcribe-03-2026', $body);
+            $this->assertStringNotContainsString('http_options', $body);
+            $this->assertStringNotContainsString('overridden', $body);
+
+            return new MockResponse('{"text": "Hello world"}');
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new SpeechToText('cohere-transcribe-03-2026'), ['file' => 'audio-data'], ['language' => 'en', 'http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

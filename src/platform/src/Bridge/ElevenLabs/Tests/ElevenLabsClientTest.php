@@ -413,4 +413,28 @@ final class ElevenLabsClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame([
+                'text' => 'foo',
+                'model_id' => 'eleven_multilingual_v2',
+            ], json_decode($options['body'], true));
+
+            return new MockResponse('audio');
+        }, 'https://api.elevenlabs.io/v1/');
+
+        $client = new ElevenLabsClient($httpClient);
+
+        $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
+            'text' => 'foo',
+        ], [
+            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            'http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\NdjsonStream;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -56,9 +57,13 @@ final class OllamaClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         return match (true) {
-            $model->supports(Capability::INPUT_MESSAGES) => $this->doCompletionRequest($payload, $options),
-            $model->supports(Capability::EMBEDDINGS) => $this->doEmbeddingsRequest($model, $payload, $options),
+            $model->supports(Capability::INPUT_MESSAGES) => $this->doCompletionRequest($payload, $options, $httpOptions),
+            $model->supports(Capability::EMBEDDINGS) => $this->doEmbeddingsRequest($model, $payload, $options, $httpOptions),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
     }
@@ -66,8 +71,9 @@ final class OllamaClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function doCompletionRequest(array|string $payload, array $options = []): RawHttpResult
+    private function doCompletionRequest(array|string $payload, array $options = [], array $httpOptions = []): RawHttpResult
     {
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
@@ -86,7 +92,7 @@ final class OllamaClient implements ModelClientInterface
         $response = $this->httpClient->request('POST', '/api/chat', [
             'headers' => ['Content-Type' => 'application/json'],
             'body' => $this->encodeJsonBody(array_merge($options, $payload)),
-        ]);
+        ] + $httpOptions);
 
         return new RawHttpResult($response, new NdjsonStream());
     }
@@ -94,8 +100,9 @@ final class OllamaClient implements ModelClientInterface
     /**
      * @param array<string|int, mixed> $payload
      * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $httpOptions
      */
-    private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
+    private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = [], array $httpOptions = []): RawHttpResult
     {
         $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
 
@@ -104,7 +111,7 @@ final class OllamaClient implements ModelClientInterface
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),
-        ]));
+        ] + $httpOptions));
     }
 
     /**

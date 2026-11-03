@@ -271,4 +271,15 @@ final class ModelClientTest extends TestCase
         // system_prompt should not be passed as a flag
         $this->assertStringNotContainsString('--system-prompt', $commandLine);
     }
+
+    public function testRequestDoesNotPassHttpOptionsAsFlags()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new Codex('gpt-5-codex');
+
+        $result = $client->request($model, 'Hello', ['http_options' => ['max_duration' => 30]]);
+        $commandLine = $result->getObject()->getCommandLine();
+
+        $this->assertStringNotContainsString('--http-options', $commandLine);
+    }
 }

@@ -190,4 +190,17 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'pplx-api-key');
         $modelClient->request(new Perplexity('fast'), ['input' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"preset":"fast","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'pplx-api-key');
+        $modelClient->request(new Perplexity('fast'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

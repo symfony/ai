@@ -107,4 +107,26 @@ class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'http://localhost:1234');
         $client->request(new Completions('test-model'), ['model' => 'test-model', 'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"test-model","messages":[{"role":"user","content":"Hello, world!"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $client = new ModelClient($httpClient, 'http://localhost:1234');
+
+        $payload = [
+            'model' => 'test-model',
+            'messages' => [
+                ['role' => 'user', 'content' => 'Hello, world!'],
+            ],
+        ];
+
+        $client->request(new Completions('test-model'), $payload, ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

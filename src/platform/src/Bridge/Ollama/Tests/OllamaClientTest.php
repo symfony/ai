@@ -342,6 +342,25 @@ final class OllamaClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['stream' => false, 'model' => 'llama3.2', 'messages' => [['role' => 'user', 'content' => 'Hello']]], $this->decodeRequestJson($options));
+
+            return new JsonMockResponse([
+                'model' => 'llama3.2',
+                'message' => ['role' => 'assistant', 'content' => 'ok'],
+                'done' => true,
+            ]);
+        }, 'http://127.0.0.1:1234');
+
+        $client = new OllamaClient($httpClient);
+        $client->request(new Ollama('llama3.2', [Capability::INPUT_MESSAGES]), ['model' => 'llama3.2', 'messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testMalformedUtf8InPayloadDoesNotAbortTheRequest()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {

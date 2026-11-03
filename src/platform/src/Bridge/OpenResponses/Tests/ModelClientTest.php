@@ -167,4 +167,21 @@ final class ModelClientTest extends TestCase
             $options,
         );
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"temperature":1,"model":"test-model","input":[{"role":"user","content":"test message"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'https://api.example.com', 'test-api-key');
+        $modelClient->request(
+            new ResponsesModel('test-model'),
+            ['input' => [['role' => 'user', 'content' => 'test message']]],
+            ['temperature' => 1, 'http_options' => ['max_duration' => 30, 'body' => 'overridden']],
+        );
+    }
 }

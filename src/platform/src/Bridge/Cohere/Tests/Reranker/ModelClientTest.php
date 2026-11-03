@@ -112,4 +112,29 @@ final class ModelClientTest extends TestCase
 
         $client->request(new Reranker('rerank-v3.5'), ['query' => 'test']);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame([
+                'model' => 'rerank-v3.5',
+                'query' => 'What is AI?',
+                'documents' => ['Doc 1'],
+            ], json_decode($options['body'], true));
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Reranker('rerank-v3.5'), [
+            'query' => 'What is AI?',
+            'texts' => ['Doc 1'],
+        ], ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
 }

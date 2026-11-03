@@ -49,7 +49,10 @@ final class FileUploader
         }
     }
 
-    public function upload(string $content, ?string $filename, string $mimeType): string
+    /**
+     * @param array<string, mixed> $httpOptions
+     */
+    public function upload(string $content, ?string $filename, string $mimeType, array $httpOptions = []): string
     {
         $fields = ['file' => new DataPart($content, $filename ?? 'file', $mimeType)];
 
@@ -64,7 +67,7 @@ final class FileUploader
                 'auth_bearer' => $this->apiKey,
                 'headers' => $formData->getPreparedHeaders()->toArray(),
                 'body' => $formData->bodyToIterable(),
-            ]);
+            ] + $httpOptions);
 
             $this->assertSuccessfulResponse($response);
 

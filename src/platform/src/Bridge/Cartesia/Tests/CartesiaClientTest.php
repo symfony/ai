@@ -220,4 +220,34 @@ final class CartesiaClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $body = json_decode($options['body'], true);
+            $this->assertSame('bar', $body['transcript']);
+            $this->assertArrayNotHasKey('http_options', $body);
+
+            return new MockResponse('audio');
+        });
+
+        $client = new CartesiaClient(
+            $httpClient,
+            'my-api-key',
+            'foo',
+        );
+
+        $client->request(new Cartesia('sonic-3', [Capability::TEXT_TO_SPEECH]), 'bar', [
+            'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b',
+            'output_format' => [
+                'container' => 'mp3',
+                'sample_rate' => 48000,
+                'bit_rate' => 192000,
+            ],
+            'http_options' => ['max_duration' => 30, 'json' => 'overridden'],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

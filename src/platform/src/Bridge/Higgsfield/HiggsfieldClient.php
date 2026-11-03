@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Higgsfield;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -42,21 +43,26 @@ final class HiggsfieldClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $endpoint = ltrim($model->getName(), '/');
 
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('/%s', $endpoint), [
-            'body' => $this->encodeJsonBody($this->createInput($payload, $options)),
+            'body' => $this->encodeJsonBody($this->createInput($payload, $options, $httpOptions)),
             'headers' => ['Content-Type' => 'application/json'],
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array<string|int, mixed>|string $payload
      * @param array<string, mixed>            $options
+     * @param array<string, mixed>            $httpOptions
      *
      * @return array<string, mixed>
      */
-    private function createInput(array|string $payload, array $options): array
+    private function createInput(array|string $payload, array $options, array $httpOptions): array
     {
         if (\is_string($payload)) {
             return ['prompt' => $payload, ...$options];
@@ -64,7 +70,7 @@ final class HiggsfieldClient implements ModelClientInterface
 
         // Image content normalized by the ImageNormalizer, e.g. for image-to-video generation.
         if (isset($payload['type'], $payload['mime_type'], $payload['data']) && 'image' === $payload['type']) {
-            return ['image_url' => $this->uploadFile($payload['mime_type'], base64_decode($payload['data'])), ...$options];
+            return ['image_url' => $this->uploadFile($payload['mime_type'], base64_decode($payload['data']), $httpOptions), ...$options];
         }
 
         // Text content normalized to ['text' => '...'] by the default contract.
@@ -77,17 +83,19 @@ final class HiggsfieldClient implements ModelClientInterface
 
     /**
      * The API accepts input media only as HTTP(S) URLs, so files go to a pre-signed upload URL first.
+     *
+     * @param array<string, mixed> $httpOptions
      */
-    private function uploadFile(string $contentType, string $content): string
+    private function uploadFile(string $contentType, string $content, array $httpOptions): string
     {
         $upload = $this->httpClient->request('POST', '/files/generate-upload-url', [
             'json' => ['content_type' => $contentType],
-        ])->toArray();
+        ] + $httpOptions)->toArray();
 
         $this->httpClient->request('PUT', $upload['upload_url'], [
             'body' => $content,
             'headers' => $upload['upload_headers'] ?? ['Content-Type' => $contentType],
-        ])->getContent();
+        ] + $httpOptions)->getContent();
 
         return $upload['public_url'];
     }

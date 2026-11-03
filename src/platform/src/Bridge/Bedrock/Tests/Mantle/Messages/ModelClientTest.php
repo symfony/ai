@@ -157,6 +157,19 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new Claude('anthropic.claude-haiku-4-5'), 'payload');
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"model":"anthropic.claude-haiku-4-5","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key', cacheRetention: 'none');
+        $modelClient->request(new Claude('anthropic.claude-haiku-4-5'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     private function staticCredentialProvider(): CredentialProvider
     {
         return new class implements CredentialProvider {

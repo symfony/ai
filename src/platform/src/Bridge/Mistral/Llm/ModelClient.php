@@ -54,6 +54,10 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         // Mistral expects "max_tokens"
         if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
             $options['max_tokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
@@ -67,6 +71,6 @@ final class ModelClient implements ModelClientInterface
                 'Accept' => 'application/json',
             ],
             'body' => $this->encodeJsonBody(array_merge($options, $payload)),
-        ]));
+        ] + $httpOptions));
     }
 }

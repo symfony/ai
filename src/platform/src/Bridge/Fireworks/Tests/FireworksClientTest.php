@@ -134,6 +134,23 @@ final class FireworksClientTest extends TestCase
         $this->assertTrue($requestMade);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(static function ($method, $url, $options) {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame(['messages' => [['role' => 'user', 'content' => 'Hi']]], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['choices' => [['message' => ['content' => 'Hello'], 'finish_reason' => 'stop']]]);
+        });
+
+        $client = new FireworksClient($httpClient, 'test-api-key');
+        $model = new Fireworks('accounts/fireworks/models/kimi-k2p6', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]);
+
+        $client->request($model, ['messages' => [['role' => 'user', 'content' => 'Hi']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testRequestRerankThrowsOnStringPayload()
     {
         $client = new FireworksClient(new MockHttpClient(), 'test-api-key');

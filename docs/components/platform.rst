@@ -429,6 +429,23 @@ The Anthropic, Amazon Bedrock (Claude and Nova), Gemini, Vertex AI (Gemini), Mis
 generic OpenAI-compatible completions bridges translate ``max_output_tokens``. OpenAI
 uses this name natively. Other bridges do not translate it yet.
 
+``PlatformOptions::HTTP_OPTIONS`` sets options of the HTTP request sent to the
+provider, for a single invocation::
+
+    use Symfony\AI\Platform\PlatformOptions;
+
+    $result = $platform->invoke('gemini-2.5-flash', $input, [
+        PlatformOptions::HTTP_OPTIONS => ['max_duration' => 30],
+    ]);
+
+It accepts the options of the Symfony HttpClient, like ``timeout`` or ``max_duration``.
+The options the bridge sets itself, like ``headers`` or ``auth_bearer``, cannot be
+overridden, and the request payload belongs to the bridge: passing ``body`` or ``json``
+is not supported. Bridges that do not call their provider over HTTP, like Amazon
+Bedrock through the AWS SDK, Claude Code, Codex or TransformersPHP, ignore it. For
+asynchronous jobs and batches, it only applies to the requests starting the job: the
+requests of the job client polling its status and fetching its result are not affected.
+
 Language Models and Messages
 ----------------------------
 

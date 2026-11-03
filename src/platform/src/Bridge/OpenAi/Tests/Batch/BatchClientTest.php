@@ -119,6 +119,27 @@ final class BatchClientTest extends TestCase
         $this->assertNotContains('DELETE https://api.openai.com/v1/files/file-abc', $recorded);
     }
 
+    public function testHttpOptionsAreSentWithEveryRequest()
+    {
+        $recorded = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$recorded): MockResponse {
+            $recorded[] = [$method, $options['max_duration'], self::body($options)];
+
+            return str_contains($url, '/v1/files') && 'POST' === $method
+                ? new MockResponse('{"id": "file-abc"}')
+                : new MockResponse('{"error": {"message": "Unsupported endpoint."}}', ['http_code' => 400]);
+        });
+
+        (new BatchClient($httpClient, 'sk-test', 'https://api.openai.com', '/v1/responses'))->submit([
+            'first' => ['model' => 'gpt-4o-mini'],
+        ], ['max_duration' => 30, 'body' => 'overridden']);
+
+        $this->assertSame(['POST', 'POST', 'DELETE'], array_column($recorded, 0));
+        $this->assertSame([30.0, 30.0, 30.0], array_column($recorded, 1));
+        $this->assertStringContainsString('"custom_id":"first"', $recorded[0][2]);
+        $this->assertSame('{"input_file_id":"file-abc","endpoint":"\/v1\/responses","completion_window":"24h"}', $recorded[1][2]);
+    }
+
     public function testAFailingDeleteDoesNotFailTheSubmission()
     {
         $httpClient = new MockHttpClient(static fn (string $method, string $url): MockResponse => match (true) {

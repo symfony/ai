@@ -103,4 +103,17 @@ final class ModelClientTest extends TestCase
             'stream' => true,
         ]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"voice":"alloy","model":"tts-1","input":"Hello World!"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new TextToSpeech('tts-1'), 'Hello World!', ['voice' => 'alloy', 'http_options' => ['max_duration' => 30, 'json' => 'overridden']]);
+    }
 }

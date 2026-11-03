@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Task;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -66,6 +67,10 @@ final class WhisperModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $task = $options['task'] ?? Task::TRANSCRIPTION;
         $endpoint = Task::TRANSCRIPTION === $task ? 'transcriptions' : 'translations';
         $url = \sprintf('%s/openai/deployments/%s/audio/%s', $this->baseUrl, $this->deployment, $endpoint);
@@ -84,6 +89,6 @@ final class WhisperModelClient implements ModelClientInterface
             ],
             'query' => ['api-version' => $this->apiVersion],
             'body' => array_merge($options, $payload),
-        ]));
+        ] + $httpOptions));
     }
 }

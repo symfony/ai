@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\TypeSafe;
 use Symfony\AI\Platform\Bridge\Decision\RequestBodyBuilder;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,9 +43,13 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/systemone', [
             'auth_bearer' => $this->apiKey,
             'json' => RequestBodyBuilder::build($model, $payload),
-        ]));
+        ] + $httpOptions));
     }
 }

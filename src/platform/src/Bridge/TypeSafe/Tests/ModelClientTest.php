@@ -102,6 +102,23 @@ final class ModelClientTest extends TestCase
         ]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertJsonStringEqualsJsonString('{"model": "jev-latest", "state": "state", "questions": {"is_urgent": {"type": "noul", "instructions": "Urgent?"}}}', $options['body']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Jev('jev-latest'), [
+            'state' => 'state',
+            'questions' => ['is_urgent' => ['type' => 'noul', 'instructions' => 'Urgent?']],
+        ], ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
+
     public function testItUsesCustomBaseUrl()
     {
         $httpClient = new MockHttpClient([function (string $method, string $url): MockResponse {

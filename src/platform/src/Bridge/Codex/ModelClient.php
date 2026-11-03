@@ -16,6 +16,7 @@ use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Bridge\Codex\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -54,6 +55,8 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         if (!isset($options['model'])) {
             $options['model'] = $model->getName();
         }

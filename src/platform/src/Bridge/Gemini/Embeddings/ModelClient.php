@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,6 +43,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $url = \sprintf('%s/v1beta/models/%s:%s', $this->baseUrl, $model->getName(), 'batchEmbedContents');
         $modelOptions = $model->getOptions();
 
@@ -61,6 +66,6 @@ final class ModelClient implements ModelClientInterface
                     \is_array($payload) ? $payload : [$payload],
                 ),
             ],
-        ]));
+        ] + $httpOptions));
     }
 }

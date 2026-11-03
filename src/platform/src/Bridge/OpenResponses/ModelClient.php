@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\HttpStreamInterface;
 use Symfony\AI\Platform\Result\Stream\RawSseStream;
@@ -56,6 +57,9 @@ class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $requestOptions = [
             'headers' => ['Content-Type' => 'application/json'],
             'body' => $this->encodeJsonBody($this->createBody($model, $payload, $options)),
@@ -67,7 +71,7 @@ class ModelClient implements ModelClientInterface
 
         // The ChatGPT Codex backend streams SSE without a text/event-stream
         // content type, so use a stream parser that handles that framing too.
-        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, $requestOptions), $this->createStreamParser());
+        return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.$this->path, $requestOptions + $httpOptions), $this->createStreamParser());
     }
 
     /**

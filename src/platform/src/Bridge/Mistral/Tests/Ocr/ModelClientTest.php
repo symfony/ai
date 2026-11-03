@@ -75,6 +75,27 @@ final class ModelClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame([
+                'model' => 'mistral-ocr-latest',
+                'document' => ['type' => 'document_url', 'document_url' => 'https://example.com/document.pdf'],
+            ], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['pages' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'sk-test-key');
+        $client->request(new Ocr('mistral-ocr-latest'), [
+            'type' => 'document_url',
+            'document_url' => 'https://example.com/document.pdf',
+        ], ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testItThrowsExceptionForStringPayload()
     {
         $client = new ModelClient(new MockHttpClient(), 'sk-test-key');

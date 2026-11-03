@@ -69,6 +69,19 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new EmbeddingsModel('text-embedding-3-large'), 'test text', ['dimensions' => 256]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"text-embedding-3-small","input":"test text"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-api-key');
+        $modelClient->request(new EmbeddingsModel('text-embedding-3-small'), 'test text', ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
+
     public function testItIsExecutingTheCorrectRequestWithArrayInput()
     {
         $resultCallback = static function (string $method, string $url, array $options): HttpResponse {

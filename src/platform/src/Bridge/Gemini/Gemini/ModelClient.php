@@ -59,6 +59,10 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $url = \sprintf(
             '%s/v1beta/models/%s:%s',
             $this->baseUrl,
@@ -117,6 +121,6 @@ final class ModelClient implements ModelClientInterface
                 'Content-Type' => 'application/json',
             ],
             'body' => $this->encodeJsonBody(array_merge($config, $payload)),
-        ]));
+        ] + $httpOptions));
     }
 }

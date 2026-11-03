@@ -96,6 +96,19 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new CompletionsModel('openai.gpt-oss-120b'), ['messages' => []]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $responseCallback = function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"model":"openai.gpt-oss-120b","messages":[{"role":"user","content":"Hello"}]}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-west-2.api.aws', 'us-west-2', 'bedrock-api-key');
+        $modelClient->request(new CompletionsModel('openai.gpt-oss-120b'), ['messages' => [['role' => 'user', 'content' => 'Hello']]], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     private function staticCredentialProvider(?string $sessionToken = null): CredentialProvider
     {
         return new class($sessionToken) implements CredentialProvider {
