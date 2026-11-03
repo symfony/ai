@@ -320,6 +320,24 @@ failed execution::
 
 ``getId()`` returns a UUID that identifies this run. The conversation is identified by the id of its ``MessageBag``.
 
+While an execution runs, every ``Progress`` update is recorded as an
+:class:`Symfony\\AI\\Agent\\Execution\\ExecutionEvent` with a sequence number that starts at ``1``.
+``getEventsSince($sequence)`` returns the events after that sequence, in order. A client that polls keeps the last
+sequence it saw as its cursor. An adapter that numbers its events itself records them with
+``record($progress, $sequence)``. An explicit sequence must be greater than the last recorded one::
+
+    $events = $execution->getEventsSince($cursor);
+    $cursor = [] === $events ? $cursor : end($events)->getSequence();
+
+``getErrorCode()`` returns the code of the exception that failed the execution, if it implements
+:class:`Symfony\\AI\\Platform\\Exception\\ErrorCodeAwareInterface`. Otherwise it returns ``null``. The exceptions of the
+platform implement it, so the codes are the same for every provider. ``isRetryable()`` on the exception tells whether
+repeating the same request may succeed. The agent adds three codes, none of them is retryable:
+
+* ``max_iterations_exceeded`` (``MaxIterationsExceededException``)
+* ``tool_not_found`` (``ToolNotFoundException``)
+* ``tool_execution_failed`` (``ToolExecutionException``)
+
 Tools
 -----
 
