@@ -907,6 +907,30 @@ For another result, like an array with an error code, throw an exception that im
 ``getToolCallResult()`` method returns the result of the tool call. Any other exception gives the LLM a
 generic error message, which doesn't expose the details of the error.
 
+Tool Call ID
+~~~~~~~~~~~~
+
+Declare the reserved ``$_toolCallId`` parameter to receive the current tool call ID::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+
+    #[AsTool('lookup', 'Look up a record')]
+    final class Lookup
+    {
+        public function __invoke(string $query, string $_toolCallId): string
+        {
+            // Use $_toolCallId as the idempotency key for an external operation.
+
+            return 'Found: '.$query;
+        }
+    }
+
+``ToolCallArgumentResolver`` supplies the ID from the current call, overriding any
+model-provided value with the same name. The reserved parameter is omitted from the
+model's input schema. It also works alongside a ``#[MapToolArguments]`` parameter.
+The ID is an ordinary method argument: tools need no mutable call context, and can
+pass it explicitly to decorators or Fibers they create themselves.
+
 .. _agent-tool-sources:
 
 Tool Sources
