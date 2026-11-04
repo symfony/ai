@@ -405,6 +405,27 @@ class McpBundleTest extends TestCase
         $this->assertFalse($container->getDefinition('mcp.server.default.middleware_factory')->getArgument(0));
     }
 
+    public function testMaxBodyBytesDefaultsToTheSdkLimit()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $this->assertNull($container->getDefinition('mcp.server.default.controller')->getArgument(7));
+    }
+
+    public function testMaxBodyBytesIsPassedToTheController()
+    {
+        $container = $this->buildContainer($this->config(['default' => ['http' => ['max_body_bytes' => 20971520]]]));
+
+        $this->assertSame(20971520, $container->getDefinition('mcp.server.default.controller')->getArgument(7));
+    }
+
+    public function testMaxBodyBytesMustBePositive()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->buildContainer($this->config(['default' => ['http' => ['max_body_bytes' => 0]]]));
+    }
+
     public function testSessionStoreFileDefaultsAreScopedToTheServer()
     {
         $container = $this->buildContainer($this->config(['editors' => []]));
