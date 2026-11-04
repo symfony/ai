@@ -38,6 +38,7 @@ use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
+use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
@@ -333,6 +334,26 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.message_normalizer'));
         $this->assertTrue($container->hasDefinition('ai.platform.message_bag_normalizer'));
         $this->assertTrue($container->hasDefinition('ai.agent.source_collection_normalizer'));
+    }
+
+    public function testModelOverrideInputProcessorIsAppliedToEveryAgent()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'first_agent' => ['model' => 'gpt-4'],
+                    'second_agent' => ['model' => 'gpt-4'],
+                ],
+            ],
+        ]);
+
+        (new ProcessorCompilerPass())->process($container);
+
+        foreach (['ai.agent.first_agent', 'ai.agent.second_agent'] as $agentId) {
+            $inputProcessors = array_map('strval', $container->getDefinition($agentId)->getArgument('$inputProcessors'));
+
+            $this->assertContains('ai.agent.model_override_input_processor', $inputProcessors);
+        }
     }
 
     public function testResponseFormatFactoryServiceIsRegistered()

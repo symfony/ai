@@ -1036,6 +1036,17 @@ the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
         }
     }
 
+Overriding the Model of a Call
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An agent uses its configured model by default. Pass the ``model`` option to use another model for a
+single call::
+
+    $result = $agent->call($messages, ['model' => 'gpt-4o']);
+
+The model must be available on the platform of the agent. If the option isn't a string, the call throws
+an :class:`Symfony\\AI\\Agent\\Exception\\InvalidArgumentException`.
+
 Register Tools
 ~~~~~~~~~~~~~~
 
