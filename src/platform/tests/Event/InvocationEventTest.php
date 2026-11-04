@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ProviderInterface;
 
 final class InvocationEventTest extends TestCase
 {
@@ -27,12 +28,22 @@ final class InvocationEventTest extends TestCase
 
         $input = 'Hello, world!';
         $options = ['temperature' => 0.7];
+        $provider = $this->createStub(ProviderInterface::class);
 
-        $event = new InvocationEvent($model, $input, $options);
+        $event = new InvocationEvent($model, $input, $options, $provider);
 
         $this->assertSame($model, $event->getModel());
         $this->assertSame($input, $event->getInput());
         $this->assertSame($options, $event->getOptions());
+        $this->assertSame($provider, $event->getProvider());
+    }
+
+    public function testProviderIsOptional()
+    {
+        $model = new class('test-model', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]) extends Model {
+        };
+
+        $this->assertNull((new InvocationEvent($model, 'Hello, world!'))->getProvider());
     }
 
     public function testSetInputChangesInput()

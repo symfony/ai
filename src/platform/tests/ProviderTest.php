@@ -232,7 +232,9 @@ final class ProviderTest extends TestCase
 
         $this->assertCount(2, $dispatchedEvents);
         $this->assertInstanceOf(InvocationEvent::class, $dispatchedEvents[0]);
+        $this->assertSame($provider, $dispatchedEvents[0]->getProvider());
         $this->assertInstanceOf(ResultEvent::class, $dispatchedEvents[1]);
+        $this->assertSame($provider, $dispatchedEvents[1]->getProvider());
     }
 
     public function testInvokeDispatchesResultConvertedEventOnConversion()
