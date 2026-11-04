@@ -33,5 +33,8 @@ final class ModelOverrideInputProcessor implements InputProcessorInterface
         }
 
         $input->setModel($options['model']);
+
+        unset($options['model']);
+        $input->setOptions($options);
     }
 }

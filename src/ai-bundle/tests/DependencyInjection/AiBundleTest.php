@@ -38,6 +38,7 @@ use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
+use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
@@ -337,6 +338,38 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.platform.message_normalizer'));
         $this->assertTrue($container->hasDefinition('ai.platform.message_bag_normalizer'));
         $this->assertTrue($container->hasDefinition('ai.agent.source_collection_normalizer'));
+    }
+
+    public function testModelOverrideInputProcessorIsAppliedToEveryAgent()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'dispatcher' => ['model' => 'gpt-4o-mini'],
+                    'technical' => ['model' => 'gpt-4'],
+                    'general' => ['model' => 'gpt-4'],
+                ],
+                'multi_agent' => [
+                    'support' => [
+                        'orchestrator' => 'dispatcher',
+                        'fallback' => 'general',
+                        'handoffs' => [
+                            'technical' => ['code', 'debug'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        (new ProcessorCompilerPass())->process($container);
+
+        $this->assertArrayNotHasKey('$inputProcessors', $container->getDefinition('ai.multi_agent.support')->getArguments());
+
+        foreach (['ai.agent.dispatcher', 'ai.agent.technical', 'ai.agent.general'] as $agentId) {
+            $inputProcessors = array_map('strval', $container->getDefinition($agentId)->getArgument('$inputProcessors'));
+
+            $this->assertContains('ai.agent.model_override_input_processor', $inputProcessors);
+        }
     }
 
     public function testResponseFormatFactoryServiceIsRegistered()

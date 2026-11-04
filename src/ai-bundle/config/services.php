@@ -13,6 +13,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Symfony\AI\Agent\Command\DropMessageStoreCommand;
 use Symfony\AI\Agent\Command\SetupMessageStoreCommand;
+use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
@@ -314,6 +315,8 @@ return static function (ContainerConfigurator $container): void {
             ->tag('serializer.normalizer')
         ->set('ai.agent.source_collection_normalizer', SourceCollectionNormalizer::class)
             ->tag('serializer.normalizer')
+        ->set('ai.agent.model_override_input_processor', ModelOverrideInputProcessor::class)
+            ->tag('ai.agent.input_processor')
 
         // commands
         ->set('ai.command.chat', AgentCallCommand::class)
