@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Event;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -29,7 +30,13 @@ final class InvocationEvent extends Event
         private Model $model,
         private array|string|object $input,
         private array $options = [],
+        private readonly ?ProviderInterface $provider = null,
     ) {
+    }
+
+    public function getProvider(): ?ProviderInterface
+    {
+        return $this->provider;
     }
 
     public function getModel(): Model

@@ -373,7 +373,9 @@ iterating providers, it wants to be a router.
 
 Provider-level events (:class:`Symfony\\AI\\Platform\\Event\\InvocationEvent` and
 :class:`Symfony\\AI\\Platform\\Event\\ResultEvent`) still fire inside the selected
-provider for per-invocation concerns.
+provider for per-invocation concerns. They name the provider serving the call through
+``getProvider()``, as the result conversion events below do. On ``ModelRoutingEvent``,
+which fires before routing, ``getProvider()`` only returns a provider pinned by a listener.
 
 Result Conversion Events
 ~~~~~~~~~~~~~~~~~~~~~~~~

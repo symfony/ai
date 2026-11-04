@@ -97,7 +97,7 @@ final class Provider implements ProviderInterface
             $model = $this->modelCatalog->getModel($model);
         }
 
-        $invocationEvent = new InvocationEvent($model, $input, $options);
+        $invocationEvent = new InvocationEvent($model, $input, $options, $this);
         $this->eventDispatcher?->dispatch($invocationEvent);
 
         $model = $invocationEvent->getModel();
@@ -113,7 +113,7 @@ final class Provider implements ProviderInterface
 
         $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);
 
-        $resultEvent = new ResultEvent($model, $result, $options, $input);
+        $resultEvent = new ResultEvent($model, $result, $options, $input, $this);
         $this->eventDispatcher?->dispatch($resultEvent);
 
         // Register on the deferred result the ResultEvent listeners ultimately produced, since a
