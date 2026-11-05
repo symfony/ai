@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.16
+----
+
+ * Add a "Hand back to the profiler" section to the `symfony-log-investigation` skill, so the profiler is reached once an incident narrows to one request
+
 0.14
 ----
 

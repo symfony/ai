@@ -22,12 +22,18 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
 2. `vendor/bin/mate resources:read symfony-profiler://profile/<token>` to see which collectors exist. Apps differ; only read what is present.
 3. Read collectors in diagnosis order, not all of them.
 
+## When the profile does not explain it
+
+Continue in the logs instead of stopping at the profile boundary. Trigger cases: `has_exception` is false on a 5xx, `logger` reports errors or warnings the collectors do not otherwise explain, or the work that failed happened in a different request (queue worker, sub-request, earlier write). If the Monolog bridge is installed, carry the identifier over: search with `monolog-search` for the message from the logger collector, or follow a request id from the logger context with `monolog-context-search`.
+
+The profiler sees exactly one request. The logs see every request, including the one that swallowed the exception. Follow the skill for log investigation from there and come back with what it names.
+
 ## Reading order
 
 Branch on the symptom.
 
 **Errored (5xx / exception):** read `exception` first.
-`data.class`, `message` (secrets scrubbed), `file`, `line`, and `trace` (top 10 frames) are the fix. If `has_exception` is false on an error response, the failure is upstream: check `request` for the status and `logger` for what was logged.
+`data.class`, `message` (secrets scrubbed), `file`, `line`, and `trace` (top 10 frames) are the fix. If `has_exception` is false on an error response, the failure is upstream and this profile will not name it: check `request` for the status and `logger` for what was logged, then follow it into the logs (see "When the profile does not explain it"). A swallowed exception leaves a log line even when it leaves no collector entry.
 
 **Slow but succeeded:** skip `exception`, go to `time`, then `db`, then `memory`.
 - `time`: `duration_ms` is total. `events` are sorted slowest first with a `category` (e.g. `doctrine`, `template`, `controller`) that tells you which subsystem ate the time. That category picks the next collector.
@@ -38,6 +44,8 @@ Branch on the symptom.
 `summary` has `method`, `path`, `route`, `status_code`, `content_type`. `data` has the sanitized bags (`request_query`, `request_request`, `request_headers`, `session_attributes`). Sensitive values, the raw body, and the curl command are redacted or omitted by design, so do not expect to read a password back.
 
 **Tie a log line to the request:** `logger` has `error_count` / `warning_count` / `deprecation_count` and the per-request `logs` (message, level, `channel`, context; capped at 100). Use it to see what the code logged during exactly this request, which the global log files cannot pin to one request.
+
+A non-zero `error_count` or `warning_count` with no matching exception is the handoff signal: this request logged something the collectors do not explain. Take the message or a context key from `logs` into `monolog-search` / `monolog-context-search` (see "When the profile does not explain it") to find out whether it is a one-off or has been happening all week.
 
 Other collectors present in the profile (router, security, twig, ...) are readable at the same URI shape; they return raw dumps rather than a curated shape.
 
