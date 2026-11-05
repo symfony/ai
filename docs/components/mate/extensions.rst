@@ -23,6 +23,7 @@ Question                                                 Tool or resource
 Which service handles this, is a listener registered?    ``symfony-services``
 How is one service wired?                                ``symfony-service-detail``
 Which ``.env`` file sets a variable, is it resolved?     ``symfony-dotenv-check``
+How many requests failed, which fails most?              ``symfony-profiler-summary``
 Which requests failed or were slow?                      ``symfony-profiler-list``
 What happened in one request?                            ``symfony-profiler://profile/{token}``
 What did one collector record (``db``, ``exception``)?   ``symfony-profiler://profile/{token}/{collector}``
@@ -207,6 +208,21 @@ The profiler tools are registered when ``symfony/http-kernel`` is installed. The
     ``statusCode``  HTTP response status code.
     ``from``        Start of the time range.
     ``to``          End of the time range.
+    ``context``     Kernel context. Only relevant with several profiler directories.
+    ==============  =======================================================================
+
+``symfony-profiler-summary``
+    Summarize the latest requests in one call. It returns ``requests`` (how many it looked at),
+    ``failed`` (status ``400`` or above), ``truncated`` and ``failing_requests_by_count``, which
+    groups the failures by ``METHOD STATUS path`` (no query string) and lists the most frequent first, at most 20, with
+    ``failing_requests_truncated`` when more exist. Ties are ordered by key. Sub-requests and
+    console commands are not counted.
+
+    ==============  =======================================================================
+    Parameter       Description
+    ==============  =======================================================================
+    ``limit``       How many of the latest requests to look at. Default ``500``. ``0`` means
+                    all of them. ``truncated`` tells whether older requests were left out.
     ``context``     Kernel context. Only relevant with several profiler directories.
     ==============  =======================================================================
 
