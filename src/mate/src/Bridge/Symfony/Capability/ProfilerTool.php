@@ -31,7 +31,7 @@ final class ProfilerTool
     }
 
     /**
-     * @param int         $limit      Maximum number of profiles to return (use limit=1 to get the latest profile)
+     * @param int         $limit      Maximum number of profiles to return (use limit=1 to get the latest profile, 0 or more than 500 for the maximum of 500)
      * @param string|null $method     Filter by HTTP method (GET, POST, PUT, DELETE, PATCH)
      * @param string|null $url        Filter by URL path (partial match supported)
      * @param string|null $ip         Filter by client IP address
@@ -40,7 +40,7 @@ final class ProfilerTool
      * @param string|null $from       Start date filter for profile creation time
      * @param string|null $to         End date filter for profile creation time
      */
-    #[MateTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Profiles are sorted by most recent first, so limit=1 returns the latest profile. Returns summary data with resource_uri for fetching full details via the resource template.')]
+    #[MateTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Returns total (the number of matching profiles) and truncated, then the profiles, newest first (limit=1 returns the latest), each with summary data and a resource_uri for the full details. At most 500 profiles are returned. When truncated is true, narrow the filters instead of listing everything to count or aggregate.')]
     public function listProfiles(
         int $limit = 20,
         ?string $method = null,
@@ -51,6 +51,10 @@ final class ProfilerTool
         ?string $from = null,
         ?string $to = null,
     ): string {
+        if ($limit < 0) {
+            throw new InvalidArgumentException('limit must be 0 or greater.');
+        }
+
         $dataProvider = $this->getDataProvider();
         $criteria = [
             'context' => $context,
@@ -62,14 +66,19 @@ final class ProfilerTool
             'to' => $to,
         ];
 
-        $profiles = $dataProvider->searchProfiles(array_filter($criteria), $limit);
+        $page = $dataProvider->searchProfiles(array_filter($criteria), $limit);
 
-        return ResponseEncoder::encodeUntrusted([
+        // Counts come first so an agent that stops reading early still sees the truncation.
+        $result = [
+            'total' => $page['total'],
+            'truncated' => $page['total'] > \count($page['profiles']),
             'profiles' => array_values(array_map(
                 static fn (ProfileIndex $profile): array => $profile->toArray(),
-                $profiles,
+                $page['profiles'],
             )),
-        ]);
+        ];
+
+        return ResponseEncoder::encodeUntrusted($result);
     }
 
     /**
