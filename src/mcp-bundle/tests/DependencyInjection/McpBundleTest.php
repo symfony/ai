@@ -340,6 +340,20 @@ class McpBundleTest extends TestCase
         ], $container->getDefinition('mcp.server.route_loader')->getArgument(0));
     }
 
+    public function testServerNamesKeepTheirHyphens()
+    {
+        $container = $this->buildContainer($this->config([
+            'my-server' => [],
+            'other_server' => [],
+        ]));
+
+        $this->assertSame([
+            ['name' => 'my-server', 'path' => '/mcp/my-server', 'controller' => 'mcp.server.my-server.controller::handle'],
+            ['name' => 'other_server', 'path' => '/mcp/other_server', 'controller' => 'mcp.server.other_server.controller::handle'],
+        ], $container->getDefinition('mcp.server.route_loader')->getArgument(0));
+        $this->assertSame('my-server', $this->callsNamed($container, 'setServerInfo', 'my-server')[0][1][0]);
+    }
+
     public function testStdioCommandOnlyKnowsStdioServers()
     {
         $container = $this->buildContainer($this->config([
