@@ -28,7 +28,7 @@ use Symfony\Component\Uid\Uuid;
 require_once dirname(__DIR__).'/bootstrap.php';
 
 // initialize the store
-$store = new Store(http_client(), env('PINECONE_API_KEY'), 'symfony', indexHost: 'http://127.0.0.1:5080');
+$store = new Store(http_client(), env('PINECONE_API_KEY'), 'symfony', indexHost: env('PINECONE_HOST'));
 
 // create embeddings and documents
 $documents = [];

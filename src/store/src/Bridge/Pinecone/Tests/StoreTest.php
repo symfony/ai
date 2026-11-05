@@ -96,7 +96,7 @@ final class StoreTest extends TestCase
         $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1])));
 
         $this->assertSame('secret', $this->requests[0]['headers']['api-key']);
-        $this->assertSame('2025-10', $this->requests[0]['headers']['x-pinecone-api-version']);
+        $this->assertSame('2026-07', $this->requests[0]['headers']['x-pinecone-api-version']);
     }
 
     public function testRemoveSingleDocument()
@@ -285,9 +285,8 @@ final class StoreTest extends TestCase
         $this->assertSame('https://api.pinecone.io/indexes', $this->requests[0]['url']);
         $this->assertSame([
             'name' => 'test-index',
-            'dimension' => 768,
-            'metric' => 'dotproduct',
-            'spec' => ['serverless' => ['cloud' => 'gcp', 'region' => 'europe-west4']],
+            'deployment' => ['deployment_type' => 'managed', 'cloud' => 'gcp', 'region' => 'europe-west4'],
+            'schema' => ['fields' => ['_values' => ['type' => 'dense_vector', 'dimension' => 768, 'metric' => 'dotproduct']]],
         ], $this->requests[0]['body']);
     }
 
@@ -297,9 +296,8 @@ final class StoreTest extends TestCase
 
         $this->assertSame([
             'name' => 'test-index',
-            'dimension' => 1536,
-            'metric' => 'cosine',
-            'spec' => ['serverless' => ['cloud' => 'aws', 'region' => 'us-west-2']],
+            'deployment' => ['deployment_type' => 'managed', 'cloud' => 'aws', 'region' => 'us-west-2'],
+            'schema' => ['fields' => ['_values' => ['type' => 'dense_vector', 'dimension' => 1536, 'metric' => 'cosine']]],
         ], $this->requests[0]['body']);
     }
 
