@@ -5,8 +5,11 @@ description: Diagnose a Symfony request that failed, errored (5xx), or was slow,
 
 # Profiler debugging
 
-Reads the profiler through Mate's CLI. Two tools, two resources:
+Reads the profiler through Mate's CLI. Three tools, two resources.
 
+Start with `symfony-profiler-triage`: it answers the first question in one call, where listing, getting and reading a collector separately takes three rounds before the first number is on the table.
+
+- `symfony-profiler-triage` triages one request: query count, duplicate queries, the most expensive statements, total duration, whether an exception occurred, and the logger error/warning counts. `--url=/checkout` picks the newest profile for that path, `--token=<t>` an exact one; with neither it takes the most recent profile. Collectors the profile does not have are omitted, so a missing key means "not collected", not "zero".
 - `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns summaries with a `resource_uri` per profile.
 - `symfony-profiler-get --token=<t>` returns one profile's metadata. It does NOT list collectors.
 - `symfony-profiler://profile/{token}` lists the collectors this profile actually has, each with its URI.
@@ -16,11 +19,28 @@ These commands accept `--format`: `json` to parse the result, `toon` (when `helg
 
 ## Workflow
 
-1. Find the profile. Do not scroll all profiles.
-   - Error: `vendor/bin/mate tools:call symfony-profiler-list --statusCode=500 --limit=5`
+1. Triage first: `mate tools:call symfony-profiler-triage` for the latest request, `--url=/checkout` for a known path. The numbers it returns usually already name the subsystem to look at.
+2. Only when triage is not enough, find the exact profile. Do not scroll all profiles.
+   - Error: `mate tools:call symfony-profiler-list --statusCode=500 --limit=5`
    - Known URL: `--url=/checkout`. Latest request: `--limit=1`.
-2. `vendor/bin/mate resources:read symfony-profiler://profile/<token>` to see which collectors exist. Apps differ; only read what is present.
-3. Read collectors in diagnosis order, not all of them.
+3. `mate resources:read symfony-profiler://profile/<token>` to see which collectors exist. Apps differ; only read what is present.
+4. Read collectors in diagnosis order, not all of them.
+
+### Commands, workers, cron
+
+The profiler is not HTTP-only. `--profile` is a standard Symfony option that
+`FrameworkBundle`'s console `Application` registers on *every* command, and
+`ConsoleProfilerListener` then writes an ordinary profile into the same profiler storage —
+with `method: BATCH` instead of an HTTP method. So a command, a worker or a cron job is
+debugged with exactly the tools above:
+
+```
+bin/console app:import --profile
+mate tools:call symfony-profiler-triage
+```
+
+Without `--url`/`--token`, triage takes the most recent profile, which is the command that
+just ran. From there the reading order below applies unchanged.
 
 ## Reading order
 
