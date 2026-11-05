@@ -30,7 +30,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
-    private const API_VERSION = '2025-10';
+    private const API_VERSION = '2026-07';
 
     private ?string $resolvedIndexHost = null;
 
@@ -64,12 +64,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->request('POST', $this->controlPlaneUrl().'/indexes', [
             'name' => $this->indexName,
-            'dimension' => $this->dimensions,
-            'metric' => $this->metric ?? 'cosine',
-            'spec' => [
-                'serverless' => [
-                    'cloud' => $this->cloud ?? 'aws',
-                    'region' => $this->region ?? 'us-west-2',
+            'deployment' => [
+                'deployment_type' => 'managed',
+                'cloud' => $this->cloud ?? 'aws',
+                'region' => $this->region ?? 'us-west-2',
+            ],
+            // A schema with only the "_values" field creates a vector index, served by the "/vectors" endpoints
+            'schema' => [
+                'fields' => [
+                    '_values' => [
+                        'type' => 'dense_vector',
+                        'dimension' => $this->dimensions,
+                        'metric' => $this->metric ?? 'cosine',
+                    ],
                 ],
             ],
         ]);
