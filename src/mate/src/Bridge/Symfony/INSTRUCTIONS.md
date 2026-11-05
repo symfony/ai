@@ -45,6 +45,7 @@ When `symfony/http-kernel` is installed, profiler tools become available:
 |-----------------------------|---------------------------------------------------------|
 | `symfony-profiler-list`     | List and filter profiles by method, URL, IP, status, date range |
 | `symfony-profiler-get`      | Get profile by token                                    |
+| `symfony-profiler-compare`  | Compare the collector summary of two profiles, or two comma-separated sets averaged (before/after a change) |
 
 **Resources:**
 - `symfony-profiler://profile/{token}` - Full profile with collector list

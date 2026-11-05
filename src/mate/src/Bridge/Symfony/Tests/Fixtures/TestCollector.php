@@ -65,6 +65,16 @@ class TestCollector extends DataCollector
         return $this->collectorName;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getData(): array
+    {
+        \assert(\is_array($this->data));
+
+        return $this->data;
+    }
+
     public function reset(): void
     {
         $this->data = [];
