@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
@@ -75,11 +76,18 @@ final class Runner
      */
     public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null, ?\Closure $onToolRound = null): \Generator
     {
+        [$options, $maxRounds, $deferToolCalls] = $this->extractStepOptions($options);
         [$options, $allowedTools] = $this->exposeTools($options);
 
         $sources = new SourceCollection();
         $metadata = new Metadata();
         $iterations = 0;
+        $rounds = 0;
+        $round = 0;
+        $firstRound = $this->firstRound($messages);
+        $stopped = false;
+        $stoppedStatus = null;
+        $stoppedPending = [];
 
         while (true) {
             $deferredResult = $this->platform->invoke($model, $messages, $options);
@@ -111,6 +119,9 @@ final class Runner
                 return;
             }
 
+            $round = $firstRound + $rounds;
+            ++$rounds;
+
             $toolCallResult = $this->extractToolCallResult($result);
             if (null === $toolCallResult || null === $this->toolExecutor) {
                 break;
@@ -125,39 +136,90 @@ final class Runner
 
             $toolCalls = array_values($toolCallResult->getContent());
             $this->denyRestrictedToolCalls($toolCalls, $allowedTools);
-            $toolResults = yield from $this->toolExecutor->execute($toolCalls);
 
-            $messages = $messages->with($this->toAssistantMessage($result, $assistantMessage, $result->getMetadata()->all()));
-            foreach ($toolResults as $i => $toolResult) {
-                $messages = $messages->with(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult)));
+            $toolRoundMetadata = [...$result->getMetadata()->all(), 'round' => $round];
+
+            $deferredCalls = [];
+            $deferredList = [];
+            $executableCalls = [];
+            foreach ($toolCalls as $i => $toolCall) {
+                if (null !== $deferToolCalls && $deferToolCalls($toolCall)) {
+                    $deferredCalls[$i] = true;
+                    $deferredList[] = $toolCall;
+
+                    continue;
+                }
+
+                $executableCalls[] = $toolCall;
+            }
+            $roundIsDeferred = [] !== $deferredCalls;
+
+            $toolResults = [] === $executableCalls ? [] : yield from $this->toolExecutor->execute($executableCalls);
+
+            $messages = $messages->with($this->toAssistantMessage($result, $assistantMessage, $toolRoundMetadata));
+            $executed = 0;
+            foreach ($toolCalls as $i => $toolCall) {
+                if (isset($deferredCalls[$i])) {
+                    continue;
+                }
+
+                $toolResult = $toolResults[$executed++];
+                $messages = $messages->with(Message::ofToolCall($toolCall, $this->resultConverter->convert($toolResult)));
 
                 if (null !== $toolResult->getSources()) {
                     $sources = $sources->merge($toolResult->getSources());
                 }
             }
 
-            if (null !== $onToolRound) {
+            if ($roundIsDeferred && [] === $toolResults) {
+                $stopped = true;
+                $stoppedStatus = ExecutionStatus::WaitingForInput;
+                $stoppedPending = $deferredList;
+
+                break;
+            }
+
+            if (!$roundIsDeferred && null !== $onToolRound) {
                 $onToolRound($messages);
             }
 
             $event = new ToolCallsExecuted($toolResults);
             $this->eventDispatcher?->dispatch($event);
 
+            if ($roundIsDeferred) {
+                // the deferred calls have no answer yet, so a listener cannot replace it
+                $stopped = true;
+                $stoppedStatus = ExecutionStatus::WaitingForInput;
+                $stoppedPending = $deferredList;
+
+                break;
+            }
+
             if ($event->hasResult()) {
                 $result = $event->getResult();
                 $assistantMessage = null;
+                ++$round;
+
+                break;
+            }
+
+            if (null !== $maxRounds && $rounds >= $maxRounds) {
+                $stopped = true;
+                $stoppedStatus = ExecutionStatus::Pending;
 
                 break;
             }
         }
 
-        $roundMetadata = $result->getMetadata()->all();
+        $roundMetadata = [...$result->getMetadata()->all(), 'round' => $round];
         if ($this->includeSources) {
             $roundMetadata['sources'] = $sources;
         }
-        $answer = fn (?ResultInterface $replacement = null): MessageBag => $messages->with(null === $replacement
-            ? $this->toAssistantMessage($result, $assistantMessage, $roundMetadata)
-            : $this->toAssistantMessage($replacement, null, $roundMetadata));
+        $answer = fn (?ResultInterface $replacement = null): MessageBag => $stopped
+            ? $messages
+            : $messages->with(null === $replacement
+                ? $this->toAssistantMessage($result, $assistantMessage, $roundMetadata)
+                : $this->toAssistantMessage($replacement, null, $roundMetadata));
 
         // Merged in order, so mergeable values like the token usage add up and the final result's own values win
         $metadata->merge($result->getMetadata());
@@ -167,7 +229,29 @@ final class Runner
             $result->getMetadata()->add('sources', $sources);
         }
 
-        yield new ResultUpdate($result, $answer);
+        yield new ResultUpdate($result, $answer, $stoppedStatus, $stoppedPending);
+    }
+
+    /**
+     * Continues after the highest round already on the messages, so a bag that holds one assistant message for several rounds keeps counting.
+     */
+    private function firstRound(MessageBag $messages): int
+    {
+        $assistantMessages = 0;
+        $highest = 0;
+        foreach ($messages->getMessages() as $message) {
+            if (!$message instanceof AssistantMessage) {
+                continue;
+            }
+
+            ++$assistantMessages;
+            $round = $message->getMetadata()->get('round');
+            if (\is_int($round) && $round > $highest) {
+                $highest = $round;
+            }
+        }
+
+        return 1 + max($assistantMessages, $highest);
     }
 
     /**
@@ -278,6 +362,42 @@ final class Runner
         }
 
         return null;
+    }
+
+    /**
+     * Takes the step options out of the options, so they reach neither the platform nor the output processors.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return array{array<string, mixed>, int|null, (\Closure(ToolCall): bool)|null} the remaining options, the maximum of model rounds and the check which tool calls are left to the caller
+     */
+    private function extractStepOptions(array $options): array
+    {
+        $maxRounds = $options['max_rounds'] ?? null;
+        $deferToolCalls = $options['defer_tool_calls'] ?? false;
+        unset($options['max_rounds'], $options['defer_tool_calls']);
+
+        if (null !== $maxRounds && (!\is_int($maxRounds) || $maxRounds < 1)) {
+            throw new InvalidArgumentException('The "max_rounds" option must be a positive integer.');
+        }
+
+        if (false === $deferToolCalls) {
+            return [$options, $maxRounds, null];
+        }
+
+        if (true === $deferToolCalls) {
+            return [$options, $maxRounds, static fn (ToolCall $toolCall): bool => true];
+        }
+
+        if ($deferToolCalls instanceof \Closure) {
+            return [$options, $maxRounds, $deferToolCalls];
+        }
+
+        if (!\is_array($deferToolCalls) || !array_is_list($deferToolCalls) || [] !== array_filter($deferToolCalls, static fn (mixed $name): bool => !\is_string($name) || '' === $name)) {
+            throw new InvalidArgumentException('The "defer_tool_calls" option must be a boolean, a list of tool names or a closure.');
+        }
+
+        return [$options, $maxRounds, static fn (ToolCall $toolCall): bool => \in_array($toolCall->getName(), $deferToolCalls, true)];
     }
 
     /**

@@ -149,8 +149,10 @@ final class Agent implements AgentInterface
 
             \assert($result instanceof ResultInterface && $resultUpdate instanceof ResultUpdate);
 
-            $output = new Output($model, $result, $messages, $processedOptions);
-            foreach ($this->outputProcessors as $outputProcessor) {
+            // a stepped run stopped before the final answer has none to process
+            $outputProcessors = null !== $resultUpdate->getStatus() ? [] : $this->outputProcessors;
+            $output = new Output($model, $result, $messages, array_diff_key($processedOptions, ['max_rounds' => true, 'defer_tool_calls' => true]));
+            foreach ($outputProcessors as $outputProcessor) {
                 if (!$outputProcessor instanceof OutputProcessorInterface) {
                     throw new InvalidArgumentException(\sprintf('Output processor "%s" must implement "%s".', $outputProcessor::class, OutputProcessorInterface::class));
                 }
@@ -177,7 +179,7 @@ final class Agent implements AgentInterface
                 $this->messageStore->save($conversation);
             }
 
-            yield new ResultUpdate($finalResult, $conversation);
+            yield new ResultUpdate($finalResult, $conversation, $resultUpdate->getStatus(), $resultUpdate->getPendingToolCalls());
         };
 
         return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);
