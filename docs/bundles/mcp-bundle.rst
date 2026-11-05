@@ -635,7 +635,7 @@ storage — see the caution in `Multiple Servers`_.
                     store: memory
                     ttl: 3600
 
-**PSR-16 Cache Storage** - Stores sessions in any PSR-16 compliant cache (Redis, Doctrine, APCu, etc.):
+**Cache Storage** - Stores sessions in any PSR-6 or PSR-16 compliant cache (Redis, Doctrine, APCu, etc.):
 
 .. code-block:: yaml
 
@@ -644,30 +644,33 @@ storage — see the caution in `Multiple Servers`_.
             default:
                 session:
                     store: cache
-                    cache_pool: 'cache.mcp.sessions' # Reference to your cache pool service (PSR-16)
+                    cache_pool: 'cache.mcp.sessions' # Reference to your cache pool service (PSR-6 or PSR-16)
                     prefix: 'mcp-default-' # Optional; defaults to "mcp-<name>-"
                     ttl: 3600
 
-By default, if you don't configure a custom cache pool, the bundle automatically creates ``cache.mcp.sessions`` as a PSR-16 wrapper around Symfony's default ``cache.app`` pool.
+By default, if you don't configure a custom cache pool, the bundle creates ``cache.mcp.sessions``. It's a pool of its
+own, with the adapter of Symfony's default ``cache.app`` pool, so you can clear it without clearing ``cache.app``.
 
-To use a custom cache backend, you need to configure a PSR-16 cache service in your ``config/services.yaml``:
-
-.. note::
-
-    Symfony cache pools are PSR-6 by default. The MCP session store requires PSR-16.
-    Use ``Symfony\Component\Cache\Psr16Cache`` to wrap a PSR-6 pool into PSR-16.
+To use another cache backend, define a cache pool and set its id as ``cache_pool``:
 
 .. code-block:: yaml
 
-    # config/services.yaml
-    services:
-        # Define a custom PSR-16 cache service wrapping a PSR-6 pool
-        cache.mcp.sessions:
-            class: Symfony\Component\Cache\Psr16Cache
-            arguments:
-                - '@cache.app' # or '@my_redis_pool', '@my_doctrine_pool', etc.
+    # config/packages/cache.yaml
+    framework:
+        cache:
+            pools:
+                mcp.session_pool:
+                    adapter: cache.adapter.redis # or cache.adapter.doctrine_dbal, etc.
 
-This allows you to store sessions in Redis, a SQL database via Doctrine, or any other PSR-6 cache adapter.
+    # config/packages/mcp.yaml
+    mcp:
+        servers:
+            default:
+                session:
+                    store: cache
+                    cache_pool: 'mcp.session_pool'
+
+This allows you to store sessions in Redis, a SQL database via Doctrine, or any other cache adapter.
 See the `Symfony Cache documentation`_ for more details on configuring cache pools.
 
 **Framework Storage** - Uses Symfony's ``SessionHandlerInterface`` for session persistence:
@@ -860,8 +863,8 @@ Under PHP-FPM the process publishing a notification is not the one holding the s
 cannot reach it — use ``cache``. ``memory`` suits a single-process runtime; ``lifetime: 0`` holds the
 stream until the client or the runtime ends it.
 
-``cache.mcp.notifications`` is auto-created as a PSR-16 wrapper around ``cache.app`` when you leave it
-at its default, exactly as the session store is. Each server namespaces its own keys inside that pool,
+When you leave it at its default, the bundle creates ``cache.mcp.notifications`` as a pool of its own, with
+the adapter of ``cache.app``, as for the session store. Each server namespaces its own keys inside that pool,
 so two servers can share it without reading each other's notifications.
 
 Only registry changes — the four ``list_changed`` notifications — are published for you. Everything
@@ -1086,13 +1089,13 @@ Configuration
 
                 subscriptions: # Delivery for "subscriptions/listen" streams
                     bus: none # 'none' (default), 'memory' or 'cache'
-                    cache_pool: 'cache.mcp.notifications' # PSR-16 service for the 'cache' bus
+                    cache_pool: 'cache.mcp.notifications' # PSR-6 or PSR-16 service for the 'cache' bus
                     lifetime: 30.0 # Seconds a stream is held; 0 means until the client or runtime ends it
 
                 session: # The handshake era's sessions; the modern era has none
                     store: file # 'file', 'memory', 'cache' or 'framework' (default: file)
                     directory: '%kernel.cache_dir%/mcp-sessions/default' # File store (default: cache_dir/mcp-sessions/<name>)
-                    cache_pool: 'cache.mcp.sessions' # Cache pool service for the cache store (PSR-16)
+                    cache_pool: 'cache.mcp.sessions' # Cache pool service for the cache store (PSR-6 or PSR-16)
                     prefix: 'mcp-default-' # Key prefix for the cache/framework stores and a factory lock (default: mcp-<name>-)
                     ttl: 3600 # Session TTL in seconds (default: 3600)
                     lock: # Serializes the concurrent requests of one session (default: disabled)
