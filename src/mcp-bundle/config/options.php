@@ -86,7 +86,8 @@ return static function (DefinitionConfigurator $configurator): void {
         ->children()
             ->arrayNode('servers')
                 ->info('The MCP servers this application exposes, each with its own identity, transports, session store and capabilities.')
-                // No useAttributeAsKey() here: it would consume the "name" child as the array key.
+                // not "name", which is an option of the server
+                ->useAttributeAsKey('key')
                 ->validate()
                     ->ifTrue(static fn (array $v): bool => !$namesAreValid($v))
                     ->thenInvalid('MCP server names must only contain letters, digits, underscores and hyphens, got %s.')
@@ -227,6 +228,7 @@ return static function (DefinitionConfigurator $configurator): void {
 
             ->arrayNode('clients')
                 ->info('The MCP clients this application uses to reach remote MCP servers. Each client owns a named set of server connections.')
+                ->useAttributeAsKey('name')
                 ->defaultValue([])
                 ->validate()
                     ->ifTrue(static fn (array $v): bool => !$namesAreValid($v))
@@ -278,6 +280,7 @@ return static function (DefinitionConfigurator $configurator): void {
 
                         ->arrayNode('servers')
                             ->info('The remote MCP servers this client connects to.')
+                            ->useAttributeAsKey('name')
                             ->isRequired()
                             ->requiresAtLeastOneElement()
                             ->validate()
