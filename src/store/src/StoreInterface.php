@@ -24,8 +24,9 @@ interface StoreInterface extends \Countable
      * Adds documents to the store, so they can be queried afterwards.
      *
      * @param VectorDocumentInterface|VectorDocumentInterface[] $documents
+     * @param array<string, mixed>                              $options
      */
-    public function add(VectorDocumentInterface|array $documents): void;
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void;
 
     /**
      * Removes the documents with the given ids from the store.

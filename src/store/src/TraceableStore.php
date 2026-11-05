@@ -54,15 +54,16 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         return $this->store;
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         $this->calls[] = [
             'method' => 'add',
             'documents' => $documents,
+            'options' => $options,
             'called_at' => $this->clock->now(),
         ];
 
-        $this->store->add($documents);
+        $this->store->add($documents, $options);
     }
 
     public function query(QueryInterface $query, array $options = []): iterable

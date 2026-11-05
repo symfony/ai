@@ -223,6 +223,26 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStorePassesHttpOptionsToAllRequests()
+    {
+        $timeouts = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$timeouts): JsonMockResponse {
+            $timeouts[] = $options['timeout'] ?? null;
+
+            return new JsonMockResponse(['results' => [['hits' => []]]], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+        $httpOptions = ['http_options' => ['timeout' => 7.0]];
+
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))], $httpOptions);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), $httpOptions));
+        $store->remove(Uuid::v4()->toRfc4122(), $httpOptions);
+        $store->clear($httpOptions);
+
+        $this->assertSame([7.0, 7.0, 7.0, 7.0], $timeouts);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test_collection');

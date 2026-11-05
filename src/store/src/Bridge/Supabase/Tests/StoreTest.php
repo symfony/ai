@@ -366,6 +366,41 @@ class StoreTest extends TestCase
         $store->clear();
     }
 
+    public function testStorePassesHttpOptionsToAllRequests()
+    {
+        $timeouts = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$timeouts): MockResponse {
+            $timeouts[] = $options['timeout'] ?? null;
+
+            return new MockResponse('[]', ['http_code' => 200]);
+        });
+        $store = $this->createStore($httpClient, 3);
+        $httpOptions = ['http_options' => ['timeout' => 7.0]];
+
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])), $httpOptions);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), $httpOptions));
+        $store->remove('doc1', $httpOptions);
+        $store->clear($httpOptions);
+
+        $this->assertSame([7.0, 7.0, 7.0, 7.0], $timeouts);
+    }
+
+    public function testAddMergesHttpOptionHeaders()
+    {
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$headers): MockResponse {
+            $headers = $options['headers'];
+
+            return new MockResponse('', ['http_code' => 201]);
+        });
+        $store = $this->createStore($httpClient, 3);
+
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])), ['http_options' => ['headers' => ['X-Test' => 'yes']]]);
+
+        $this->assertContains('X-Test: yes', $headers);
+        $this->assertContains('Prefer: resolution=merge-duplicates', $headers);
+    }
+
     private function createStore(MockHttpClient $httpClient, ?int $dimensions = 2): SupabaseStore
     {
         return new SupabaseStore(

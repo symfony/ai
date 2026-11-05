@@ -170,7 +170,7 @@ final class StoreTest extends TestCase
         $store = new Store(new MockHttpClient(), 'symfony', 'symfony', 'document');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Only the "batch_size" option is supported.');
+        $this->expectExceptionMessage('Only the "batch_size" and "http_options" options are supported.');
         $store->clear(['foo' => 'bar']);
     }
 
@@ -352,6 +352,28 @@ final class StoreTest extends TestCase
 
         $this->assertCount(2, $results);
         $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testStorePassesHttpOptionsToAllRequests()
+    {
+        $timeouts = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$timeouts): JsonMockResponse {
+            $timeouts[] = $options['timeout'] ?? null;
+
+            return new JsonMockResponse(['data' => ['fields' => [], 'values' => []]], [
+                'http_code' => 200,
+            ]);
+        });
+
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
+        $httpOptions = ['http_options' => ['timeout' => 7.0]];
+
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]))], $httpOptions);
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), $httpOptions));
+        $store->remove('some-id', $httpOptions);
+        $store->clear($httpOptions);
+
+        $this->assertSame([7.0, 7.0, 7.0, 7.0], $timeouts);
     }
 
     public function testStoreSupportsVectorQuery()

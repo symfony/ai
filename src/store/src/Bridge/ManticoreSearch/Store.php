@@ -72,7 +72,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @throws \Random\RandomException {@see random_int()}
      */
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];

@@ -46,8 +46,8 @@ final class DocumentProcessor
     /**
      * Process documents through the pipeline: filter → transform → vectorize → store.
      *
-     * @param iterable<DocumentInterface>                                      $documents Documents to process
-     * @param array{chunk_size?: int, platform_options?: array<string, mixed>} $options   Processing options
+     * @param iterable<DocumentInterface>                                                                           $documents Documents to process
+     * @param array{chunk_size?: int, platform_options?: array<string, mixed>, http_options?: array<string, mixed>} $options   Processing options
      */
     public function process(iterable $documents, array $options = []): void
     {
@@ -62,6 +62,7 @@ final class DocumentProcessor
         }
 
         $chunkSize = $options['chunk_size'] ?? 50;
+        $storeOptions = isset($options['http_options']) ? ['http_options' => $options['http_options']] : [];
         $counter = 0;
         $chunk = [];
 
@@ -74,13 +75,13 @@ final class DocumentProcessor
             ++$counter;
 
             if ($chunkSize === \count($chunk)) {
-                $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []));
+                $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []), $storeOptions);
                 $chunk = [];
             }
         }
 
         if ([] !== $chunk) {
-            $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []));
+            $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []), $storeOptions);
         }
 
         $this->logger->debug('Document processing completed', ['total_documents' => $counter]);

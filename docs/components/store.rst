@@ -151,6 +151,20 @@ See :doc:`store/bridges` for installation and configuration details for all supp
 * `Vektor`_
 * `Weaviate`_
 
+HTTP Options per Call
+~~~~~~~~~~~~~~~~~~~~~
+
+The Neo4j, Typesense, SurrealDb, Cloudflare, OpenSearch, ClickHouse, AzureSearch and
+Supabase stores talk to their backend over HTTP. They accept an ``http_options`` option in
+``add()``, ``remove()``, ``clear()`` and ``query()``, which is merged into the options of
+the Symfony HttpClient request::
+
+    $store->add($documents, ['http_options' => ['timeout' => 60]]);
+    $store->query($query, ['http_options' => ['max_duration' => 5]]);
+
+Options owned by the bridge, like the request body, win over the given ones.
+Headers are merged.
+
 Document Loader
 ---------------
 
@@ -250,7 +264,7 @@ This leads to a store implementing the following methods::
 
     class MyStore implements StoreInterface
     {
-        public function add(VectorDocumentInterface|array $documents): void
+        public function add(VectorDocumentInterface|array $documents, array $options = []): void
         {
             // Implementation to add a document to the store
         }

@@ -114,7 +114,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
-    public function add(VectorDocumentInterface|array $documents): void
+    public function add(VectorDocumentInterface|array $documents, array $options = []): void
     {
         if ($documents instanceof VectorDocumentInterface) {
             $documents = [$documents];
