@@ -104,6 +104,16 @@ twig:
                 gradient: 'linear-gradient(180deg, #3B9D87, #35A781)'
                 source: 'src/Video/TwigComponent.php'
                 line: 41
+            party_game:
+                label: 'Party Game'
+                name: 'Will the AI Buy It?'
+                tag: 'Classification'
+                description: 'A pass-and-play party game judged live by a single multi-question classification call per answer.'
+                model: 'jev-latest · gpt-5-mini'
+                icon: 'gavel'
+                gradient: 'linear-gradient(180deg, #DB2777, #F59E0B)'
+                source: 'src/PartyGame/Judge.php'
+                line: 58
             stream:
                 label: 'Turbo Stream'
                 name: 'Turbo Stream Bot'
