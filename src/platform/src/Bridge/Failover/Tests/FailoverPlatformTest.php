@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -26,6 +27,7 @@ use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
@@ -311,7 +313,7 @@ final class FailoverPlatformTest extends TestCase
             });
 
         $failedPlatform = $this->createMock(PlatformInterface::class);
-        $failedPlatform->expects($this->any())->method('invoke')
+        $failedPlatform->expects($this->exactly(2))->method('invoke')
             ->willReturnCallback(static function (): DeferredResult {
                 static $call = 0;
 
@@ -327,7 +329,7 @@ final class FailoverPlatformTest extends TestCase
             });
 
         $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->exactly(3))->method('error');
+        $logger->expects($this->exactly(2))->method('error');
 
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
@@ -364,7 +366,7 @@ final class FailoverPlatformTest extends TestCase
             });
 
         $failedPlatform = $this->createMock(PlatformInterface::class);
-        $failedPlatform->expects($this->any())->method('getModelCatalog')
+        $failedPlatform->expects($this->exactly(2))->method('getModelCatalog')
             ->willReturnCallback(static function (): ModelCatalogInterface {
                 static $call = 0;
 
@@ -380,7 +382,7 @@ final class FailoverPlatformTest extends TestCase
             });
 
         $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->exactly(3))->method('error');
+        $logger->expects($this->exactly(2))->method('error');
 
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
@@ -398,6 +400,53 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform->getModelCatalog();
     }
 
+    public function testPlatformsOfTheSameClassUseTheirOwnRateLimiter()
+    {
+        $rateLimiterFactory = new RateLimiterFactory([
+            'policy' => 'fixed_window',
+            'id' => 'failover',
+            'interval' => '1 hour',
+            'limit' => 1,
+        ], new InMemoryStorage());
+
+        $keys = [];
+        $spyFactory = $this->createMock(RateLimiterFactoryInterface::class);
+        $spyFactory->method('create')
+            ->willReturnCallback(static function (?string $key = null) use ($rateLimiterFactory, &$keys): LimiterInterface {
+                $keys[] = $key;
+
+                return $rateLimiterFactory->create($key);
+            });
+
+        $failoverPlatform = new FailoverPlatform([
+            self::createPlatform(fails: true),
+            self::createPlatform(fails: false),
+        ], $spyFactory);
+
+        $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
+        $this->assertCount(2, array_unique($keys));
+    }
+
+    public function testPlatformIsSkippedWhileItsRateLimiterRefusesARetry()
+    {
+        $failingPlatform = $this->createMock(PlatformInterface::class);
+        $failingPlatform->expects($this->once())->method('invoke')
+            ->willThrowException(new RuntimeException('The platform is down.'));
+
+        $failoverPlatform = new FailoverPlatform([
+            $failingPlatform,
+            self::createPlatform(fails: false),
+        ], new RateLimiterFactory([
+            'policy' => 'fixed_window',
+            'id' => 'failover',
+            'interval' => '1 hour',
+            'limit' => 1,
+        ], new InMemoryStorage()));
+
+        $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
+        $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
+    }
+
     private static function createRateLimiterFactory(): RateLimiterFactoryInterface
     {
         return new RateLimiterFactory([
@@ -406,5 +455,29 @@ final class FailoverPlatformTest extends TestCase
             'interval' => '60 seconds',
             'limit' => 3,
         ], new InMemoryStorage());
+    }
+
+    private static function createPlatform(bool $fails): PlatformInterface
+    {
+        return new class($fails) implements PlatformInterface {
+            public function __construct(
+                private readonly bool $fails,
+            ) {
+            }
+
+            public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
+            {
+                if ($this->fails) {
+                    throw new RuntimeException('The platform is down.');
+                }
+
+                return new DeferredResult(new PlainConverter(new TextResult('ok')), new InMemoryRawResult());
+            }
+
+            public function getModelCatalog(): ModelCatalogInterface
+            {
+                return new FallbackModelCatalog();
+            }
+        };
     }
 }
