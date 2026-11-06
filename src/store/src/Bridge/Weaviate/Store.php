@@ -138,14 +138,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     %s (
                         nearVector: {
                             vector: [%s]
-                        }
+                        }%s
                     ) {
                         uuid,
                         vector,
                         _metadata
                     }
                 }
-            }', $this->collection, implode(', ', $vector->getData())),
+            }', $this->collection, implode(', ', $vector->getData()), isset($options['limit']) ? \sprintf(', limit: %d', $options['limit']) : ''),
         ]);
 
         foreach ($results['data']['Get'][$this->collection] as $item) {

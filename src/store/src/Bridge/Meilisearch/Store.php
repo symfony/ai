@@ -127,7 +127,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException(\sprintf('The semantic ratio must be between 0.0 and 1.0, "%s" given.', $semanticRatio));
         }
 
-        $result = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), [
+        $payload = [
             'q' => $text,
             'vector' => $vector->getData(),
             'showRankingScore' => true,
@@ -136,7 +136,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'embedder' => $this->embedder,
                 'semanticRatio' => $semanticRatio,
             ],
-        ]);
+        ];
+
+        if (isset($options['limit'])) {
+            $payload['limit'] = $options['limit'];
+        }
+
+        $result = $this->request('POST', \sprintf('indexes/%s/search', $this->indexName), $payload);
 
         foreach ($result['hits'] as $item) {
             yield $this->convertToVectorDocument($item);

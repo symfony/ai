@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Typesense\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Typesense\Store;
@@ -257,5 +258,58 @@ final class StoreTest extends TestCase
 
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testQueryReturnsAsManyHitsAsTheLimit()
+    {
+        $response = new JsonMockResponse(['results' => [['hits' => []]]]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame(['searches' => [[
+            'collection' => 'test',
+            'q' => '*',
+            'vector_query' => '_vectors:([0.1, 0.2, 0.3], k:20)',
+            'per_page' => 20,
+        ]]], json_decode($body, true));
+    }
+
+    public function testQueryCapsThePageSizeToTheMaximumOfTypesense()
+    {
+        $response = new JsonMockResponse(['results' => [['hits' => []]]]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 300]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame(['searches' => [[
+            'collection' => 'test',
+            'q' => '*',
+            'vector_query' => '_vectors:([0.1, 0.2, 0.3], k:300)',
+            'per_page' => 250,
+        ]]], json_decode($body, true));
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryStillReadsTheDeprecatedKOption()
+    {
+        $response = new JsonMockResponse(['results' => [['hits' => []]]]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-typesense-store 1.0: The "k" option is deprecated, use "limit" instead.');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['k' => 20]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame(['searches' => [[
+            'collection' => 'test',
+            'q' => '*',
+            'vector_query' => '_vectors:([0.1, 0.2, 0.3], k:20)',
+        ]]], json_decode($body, true));
     }
 }

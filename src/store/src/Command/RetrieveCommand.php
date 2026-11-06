@@ -102,7 +102,7 @@ final class RetrieveCommand extends Command
 
         try {
             $retrieverService = $this->retrievers->get($retriever);
-            $documents = $retrieverService->retrieve($query, ['maxItems' => $limit]);
+            $documents = $retrieverService->retrieve($query, ['limit' => $limit]);
 
             $count = 0;
             foreach ($documents as $document) {

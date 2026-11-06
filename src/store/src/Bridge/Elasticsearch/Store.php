@@ -167,9 +167,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = $query->getVector();
 
-        $k = $options['k'] ?? 100;
+        if (isset($options['k'])) {
+            @trigger_error('Since symfony/ai-elasticsearch-store 1.0: The "k" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
+        $k = $options['limit'] ?? $options['k'] ?? 100;
         if (!\is_int($k)) {
-            throw new InvalidArgumentException('The "k" option must be an integer.');
+            throw new InvalidArgumentException('The "limit" option must be an integer.');
         }
 
         $numCandidates = $options['num_candidates'] ?? max($k * 2, 100);
@@ -177,14 +181,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('The "num_candidates" option must be an integer.');
         }
 
-        $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), [
+        $payload = [
             'knn' => [
                 'field' => $this->vectorsField,
                 'query_vector' => $vector->getData(),
                 'k' => $k,
                 'num_candidates' => $numCandidates,
             ],
-        ]);
+        ];
+
+        // the hits are capped by "size", which defaults to 10
+        if (isset($options['limit'])) {
+            $payload['size'] = $k;
+        }
+
+        $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), $payload);
 
         $hits = $documents['hits'] ?? null;
         if (!\is_array($hits)) {

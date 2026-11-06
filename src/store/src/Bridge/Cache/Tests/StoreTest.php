@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Cache\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Cache\Store;
@@ -101,7 +102,7 @@ final class StoreTest extends TestCase
         $this->assertSame([0.7, -0.3, 0.0], $result[4]->getVector()->getData());
     }
 
-    public function testStoreCanSearchUsingCosineDistanceWithMaxItems()
+    public function testStoreCanSearchUsingCosineDistanceWithLimit()
     {
         $store = new Store(new ArrayAdapter());
         $store->add([
@@ -109,6 +110,23 @@ final class StoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])),
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
         ]);
+
+        $this->assertCount(1, iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
+            'limit' => 1,
+        ])));
+    }
+
+    #[IgnoreDeprecations]
+    public function testStoreStillReadsTheDeprecatedMaxItemsOption()
+    {
+        $store = new Store(new ArrayAdapter());
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1])),
+        ]);
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-cache-store 1.0: The "maxItems" option is deprecated, use "limit" instead.');
 
         $this->assertCount(1, iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
             'maxItems' => 1,
@@ -189,7 +207,7 @@ final class StoreTest extends TestCase
         $this->assertSame('products', $result[1]->getMetadata()['category']);
     }
 
-    public function testStoreCanSearchWithFilterAndMaxItems()
+    public function testStoreCanSearchWithFilterAndLimit()
     {
         $store = new Store(new ArrayAdapter());
         $store->add([
@@ -201,7 +219,7 @@ final class StoreTest extends TestCase
 
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([0.0, 0.1, 0.6])), [
             'filter' => static fn (VectorDocumentInterface $doc): bool => 'products' === $doc->getMetadata()['category'],
-            'maxItems' => 2,
+            'limit' => 2,
         ]));
 
         $this->assertCount(2, $result);
@@ -435,7 +453,7 @@ final class StoreTest extends TestCase
         $this->assertStringContainsString('quick brown', $result[0]->getMetadata()->getText());
     }
 
-    public function testStoreCanSearchUsingTextQueryWithMaxItems()
+    public function testStoreCanSearchUsingTextQueryWithLimit()
     {
         $store = new Store(new ArrayAdapter());
         $store->add([
@@ -444,7 +462,7 @@ final class StoreTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([0.3, 0.7, 0.1]), new Metadata(['_text' => 'Yet another test entry'])),
         ]);
 
-        $result = iterator_to_array($store->query(new TextQuery('test'), ['maxItems' => 2]));
+        $result = iterator_to_array($store->query(new TextQuery('test'), ['limit' => 2]));
 
         $this->assertCount(2, $result);
     }

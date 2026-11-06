@@ -100,7 +100,7 @@ Query Similar Vectors
     $results = $store->query(
         query: new VectorQuery(new Vector([0.1, 0.2, 0.3, ...])),
         options: [
-            'topK' => 5,
+            'limit' => 5,
             'filter' => ['category' => 'documentation'],
         ]
     );

@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Elasticsearch\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
@@ -441,7 +442,7 @@ final class StoreTest extends TestCase
      */
     public static function provideInvalidQueryOptions(): iterable
     {
-        yield 'k as string' => [['k' => '10'], 'The "k" option must be an integer.'];
+        yield 'limit as string' => [['limit' => '10'], 'The "limit" option must be an integer.'];
         yield 'num_candidates as float' => [['num_candidates' => 1.5], 'The "num_candidates" option must be an integer.'];
     }
 
@@ -502,5 +503,47 @@ final class StoreTest extends TestCase
         $this->assertInstanceOf(NullVector::class, $documents[0]->getVector());
         $this->assertSame(1.0, $documents[0]->getScore());
         $this->assertSame('bar', $documents[0]->getMetadata()['foo']);
+    }
+
+    public function testQueryReturnsAsManyHitsAsTheLimit()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(new MockHttpClient($response), 'foo');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame([
+            'knn' => [
+                'field' => '_vectors',
+                'query_vector' => [0.1, 0.2, 0.3],
+                'k' => 20,
+                'num_candidates' => 100,
+            ],
+            'size' => 20,
+        ], json_decode($body, true));
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryStillReadsTheDeprecatedKOption()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(new MockHttpClient($response), 'foo');
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-elasticsearch-store 1.0: The "k" option is deprecated, use "limit" instead.');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['k' => 20]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame([
+            'knn' => [
+                'field' => '_vectors',
+                'query_vector' => [0.1, 0.2, 0.3],
+                'k' => 20,
+                'num_candidates' => 100,
+            ],
+        ], json_decode($body, true));
     }
 }

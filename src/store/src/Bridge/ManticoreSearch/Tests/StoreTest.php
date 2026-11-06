@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\ManticoreSearch\Tests;
 
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store;
@@ -264,5 +265,32 @@ final class StoreTest extends TestCase
 
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testQueryReturnsAsManyHitsAsTheLimit()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:9308/'), 'bar', 'random');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 30]));
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertSame(30, $body['knn']['k']);
+        $this->assertSame(30, $body['limit']);
+    }
+
+    #[IgnoreDeprecations]
+    public function testQueryStillReadsTheDeprecatedKOption()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:9308/'), 'bar', 'random');
+
+        $this->expectUserDeprecationMessage('Since symfony/ai-manticore-search-store 1.0: The "k" option is deprecated, use "limit" instead.');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['k' => 30]));
+
+        $body = json_decode($response->getRequestOptions()['body'], true);
+        $this->assertSame(30, $body['knn']['k']);
+        $this->assertArrayNotHasKey('limit', $body);
     }
 }

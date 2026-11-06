@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Deprecate the `max_items` option of `Store::query()`, use `limit` instead
  * [BC BREAK] Rename the `vectorDimension` argument of `Store` and `StoreFactory` to `dimensions`
 
 0.14

@@ -122,9 +122,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        if (isset($options['k'])) {
+            @trigger_error('Since symfony/ai-vektor-store 1.0: The "k" option is deprecated, use "limit" instead.', \E_USER_DEPRECATED);
+        }
+
         $searcher = new Searcher();
 
-        $results = $searcher->search($query->getVector()->getData(), $options['k'] ?? 10, true, true);
+        $results = $searcher->search($query->getVector()->getData(), $options['limit'] ?? $options['k'] ?? 10, true, true);
 
         foreach ($results as $result) {
             yield $this->convertToVectorDocument($result);
