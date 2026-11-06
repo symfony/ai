@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Voyage;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -41,7 +42,7 @@ final class ModelClient implements ModelClientInterface
     }
 
     /**
-     * @param array{input_type?: 'query'|'document'|null, truncation?: bool, dimensions?: int, encoding?: string} $options
+     * @param array{input_type?: 'query'|'document'|null, embedding_input_type?: 'query'|'document', truncation?: bool, dimensions?: int, encoding?: string} $options
      */
     public function request(Model $model, object|string|array $payload, array $options = []): RawHttpResult
     {
@@ -54,7 +55,7 @@ final class ModelClient implements ModelClientInterface
             'json' => [
                 'model' => $model->getName(),
                 $inputKey => $payload,
-                'input_type' => $options['input_type'] ?? null,
+                'input_type' => $options['input_type'] ?? $options[PlatformOptions::INPUT_TYPE] ?? null,
                 'truncation' => $options['truncation'] ?? true,
             ],
         ];

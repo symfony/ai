@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Indexer;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\FilterInterface;
 use Symfony\AI\Store\Document\TransformerInterface;
@@ -74,13 +75,13 @@ final class DocumentProcessor
             ++$counter;
 
             if ($chunkSize === \count($chunk)) {
-                $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []));
+                $this->store->add($this->vectorizer->vectorize($chunk, ($options['platform_options'] ?? []) + [PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_DOCUMENT]));
                 $chunk = [];
             }
         }
 
         if ([] !== $chunk) {
-            $this->store->add($this->vectorizer->vectorize($chunk, $options['platform_options'] ?? []));
+            $this->store->add($this->vectorizer->vectorize($chunk, ($options['platform_options'] ?? []) + [PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_DOCUMENT]));
         }
 
         $this->logger->debug('Document processing completed', ['total_documents' => $counter]);

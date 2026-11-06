@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\NdjsonStream;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -97,7 +98,7 @@ final class OllamaClient implements ModelClientInterface
      */
     private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
+        $options = self::normalizeOllamaOptions(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), self::EMBED_TOP_LEVEL_KEYS);
 
         return new RawHttpResult($this->httpClient->request('POST', '/api/embed', [
             'json' => array_merge($options, [

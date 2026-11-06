@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,7 +43,7 @@ final class ModelClient implements ModelClientInterface
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('%s/engines/v1/embeddings', $this->baseUrl), [
-            'json' => array_merge($options, [
+            'json' => array_merge(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),
