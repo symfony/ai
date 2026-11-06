@@ -83,6 +83,29 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $this->assertSame('stop', $result->getResult()->getMetadata()->get('finish_reason')->getRaw());
     }
 
+    public function testStreamingParallelToolCallsWithoutIndex()
+    {
+        // Recorded from Gemini's OpenAI-compatible endpoint: each parallel call arrives whole in its own chunk, without tool_calls[].index.
+        $platform = $this->platformForCassette('gemini_openai_parallel_tool_calls');
+
+        $result = $platform->invoke('gemini-3.5-flash', new MessageBag(Message::ofUser('What is the weather in Paris and Tokyo?')), ['stream' => true]);
+
+        $deltas = iterator_to_array($result->asStream(), false);
+
+        $starts = array_values(array_filter($deltas, static fn ($delta): bool => $delta instanceof ToolCallStart));
+        $this->assertSame(['call_4234484', 'call_4234487'], array_map(static fn (ToolCallStart $start): string => $start->getId(), $starts));
+
+        $completed = array_values(array_filter($deltas, static fn ($delta): bool => $delta instanceof ToolCallComplete));
+        $this->assertCount(1, $completed);
+
+        $toolCalls = $completed[0]->getToolCalls();
+        $this->assertCount(2, $toolCalls);
+        $this->assertSame('call_4234484', $toolCalls[0]->getId());
+        $this->assertSame(['city' => 'Paris'], $toolCalls[0]->getArguments());
+        $this->assertSame('call_4234487', $toolCalls[1]->getId());
+        $this->assertSame(['city' => 'Tokyo'], $toolCalls[1]->getArguments());
+    }
+
     public function testStreamingUsageIsNotCountedTwice()
     {
         // Recorded from OpenCode Go: usage appears on both the terminal choice and the trailing usage-only chunk.
@@ -130,16 +153,19 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface
     {
-        return Factory::createPlatform('http://127.0.0.1:8799', 'test-api-key', $httpClient, new ModelCatalog([
-            'gpt-oss-120b' => [
-                'class' => CompletionsModel::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::TOOL_CALLING,
-                ],
+        $completions = [
+            'class' => CompletionsModel::class,
+            'capabilities' => [
+                Capability::INPUT_MESSAGES,
+                Capability::OUTPUT_TEXT,
+                Capability::OUTPUT_STREAMING,
+                Capability::TOOL_CALLING,
             ],
+        ];
+
+        return Factory::createPlatform('http://127.0.0.1:8799', 'test-api-key', $httpClient, new ModelCatalog([
+            'gpt-oss-120b' => $completions,
+            'gemini-3.5-flash' => $completions,
         ]));
     }
 
