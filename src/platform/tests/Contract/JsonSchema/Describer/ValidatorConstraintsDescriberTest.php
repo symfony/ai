@@ -96,13 +96,15 @@ final class ValidatorConstraintsDescriberTest extends TestCase
         yield 'Json' => ['json', null, ['contentMediaType' => 'application/json']];
         yield 'Length string' => ['lengthString', null, ['minLength' => 2, 'maxLength' => 4]];
         yield 'MacAddress' => ['macAddress', null, ['description' => 'MAC address, accepted type: all.']];
+        yield 'LessThan' => ['lessThanNumber', null, ['exclusiveMaximum' => 50]];
+        yield 'Negative' => ['strictlyNegativeNumber', null, ['exclusiveMaximum' => 0]];
         yield 'Negative or zero' => ['negativeNumber', null, ['maximum' => 0]];
         yield 'NotBlank string' => ['notBlankString', ['type' => 'string'], ['type' => 'string', 'nullable' => false, 'minLength' => 1]];
         yield 'NotNull nullable false' => ['notNull', null, ['nullable' => false]];
         yield 'NotNull with null type' => ['notNull', ['type' => ['string', 'null']], ['type' => 'string', 'nullable' => false]];
         yield 'NotEqualTo' => ['notEqualTo', null, ['not' => ['enum' => ['bar']]]];
-        yield 'Numeric range' => ['numberRange', null, ['multipleOf' => 3, 'minimum' => 10, 'exclusiveMinimum' => true, 'maximum' => 100]];
-        yield 'Positive' => ['positiveNumber', null, ['minimum' => 0, 'exclusiveMinimum' => true]];
+        yield 'Numeric range' => ['numberRange', null, ['multipleOf' => 3, 'exclusiveMinimum' => 10, 'maximum' => 100]];
+        yield 'Positive' => ['positiveNumber', null, ['exclusiveMinimum' => 0]];
         yield 'Range constraint' => ['rangedNumber', null, ['minimum' => 5, 'maximum' => 15]];
         yield 'Regex string' => ['regexString', null, ['pattern' => '[a-z]+']];
         yield 'Time pattern' => ['time', null, ['pattern' => '^([01]\d|2[0-3]):[0-5]\d$']];

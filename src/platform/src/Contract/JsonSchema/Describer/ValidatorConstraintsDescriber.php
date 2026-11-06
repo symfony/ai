@@ -239,10 +239,7 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
             return;
         }
 
-        $schema['minimum'] = $constraint->value;
-        if ($exclusive) {
-            $schema['exclusiveMinimum'] = true;
-        }
+        $schema[$exclusive ? 'exclusiveMinimum' : 'minimum'] = $constraint->value;
     }
 
     /**
@@ -260,10 +257,7 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
             return;
         }
 
-        $schema['maximum'] = $constraint->value;
-        if ($exclusive) {
-            $schema['exclusiveMaximum'] = true;
-        }
+        $schema[$exclusive ? 'exclusiveMaximum' : 'maximum'] = $constraint->value;
     }
 
     /**
