@@ -37,6 +37,7 @@ final class FinishReasonMapperTest extends TestCase
         yield 'tool_use' => ['tool_use', FinishReasonCase::TOOL_CALL];
         yield 'stop_sequence' => ['stop_sequence', FinishReasonCase::STOP_SEQUENCE];
         yield 'refusal' => ['refusal', FinishReasonCase::CONTENT_FILTER];
+        yield 'model_context_window_exceeded' => ['model_context_window_exceeded', FinishReasonCase::LENGTH];
         yield 'unknown' => ['pause_turn', FinishReasonCase::OTHER];
     }
 

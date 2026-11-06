@@ -31,7 +31,7 @@ final class FinishReasonMapper
 
         return new FinishReason(match ($rawFinishReason) {
             'end_turn' => FinishReasonCase::STOP,
-            'max_tokens' => FinishReasonCase::LENGTH,
+            'max_tokens', 'model_context_window_exceeded' => FinishReasonCase::LENGTH,
             'tool_use' => FinishReasonCase::TOOL_CALL,
             'stop_sequence' => FinishReasonCase::STOP_SEQUENCE,
             'refusal' => FinishReasonCase::CONTENT_FILTER,
