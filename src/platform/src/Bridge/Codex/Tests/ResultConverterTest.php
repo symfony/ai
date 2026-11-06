@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
 use Symfony\AI\Platform\Bridge\Codex\ResultConverter;
 use Symfony\AI\Platform\Bridge\Codex\TokenUsageExtractor;
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -214,6 +215,26 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(TextDelta::class, $chunks[0]);
         $this->assertSame('Hello', $chunks[0]->getText());
         $this->assertInstanceOf(TokenUsage::class, $chunks[1]);
+    }
+
+    public function testConvertStreamingThrowsWhenTurnCompletedIsMissing()
+    {
+        $converter = new ResultConverter();
+        $rawResult = new InMemoryRawResult(
+            [],
+            [
+                ['type' => 'thread.started', 'thread_id' => 'test-123'],
+                ['type' => 'turn.started'],
+                ['type' => 'item.completed', 'item' => ['type' => 'agent_message', 'text' => 'Partial answer']],
+            ],
+        );
+
+        $result = $converter->convert($rawResult, ['stream' => true]);
+
+        $this->expectException(IncompleteStreamException::class);
+        $this->expectExceptionMessage('Codex stream ended before turn.completed.');
+
+        iterator_to_array($result->getContent(), false);
     }
 
     public function testGetTokenUsageExtractor()

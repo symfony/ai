@@ -189,6 +189,25 @@ final class RawProcessResultTest extends TestCase
         $this->assertSame('Final answer', $data['item']['text']);
     }
 
+    public function testGetDataThrowsWhenTurnCompletedIsMissing()
+    {
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode(['type' => 'thread.started', 'thread_id' => 'test-123']),
+            json_encode(['type' => 'turn.started']),
+            json_encode(['type' => 'item.completed', 'item' => ['type' => 'agent_message', 'text' => 'Partial answer']]),
+        ]);
+
+        $process = new Process(['php', '-r', \sprintf('echo %s;', escapeshellarg($jsonOutput))]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Codex CLI turn ended before turn.completed.');
+
+        $rawResult->getData();
+    }
+
     public function testGetDataThrowsOnProcessFailure()
     {
         $process = new Process(['php', '-r', 'fwrite(STDERR, "error"); exit(1);']);
