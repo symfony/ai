@@ -61,14 +61,20 @@ final class FailoverPlatform implements PlatformInterface
 
     private function do(\Closure $func): DeferredResult|ModelCatalogInterface
     {
-        foreach ($this->platforms as $platform) {
-            $limiter = $this->rateLimiterFactory->create($platform::class);
+        $position = 0;
 
-            try {
-                if ($limiter->consume()->isAccepted() && $this->failedPlatforms->offsetExists($platform)) {
-                    $this->failedPlatforms->offsetUnset($platform);
+        foreach ($this->platforms as $platform) {
+            $limiter = $this->rateLimiterFactory->create((string) $position++);
+
+            if ($this->failedPlatforms->offsetExists($platform)) {
+                if (!$limiter->consume()->isAccepted()) {
+                    continue;
                 }
 
+                $this->failedPlatforms->offsetUnset($platform);
+            }
+
+            try {
                 return $func($platform);
             } catch (\Throwable $throwable) {
                 $limiter->consume();
