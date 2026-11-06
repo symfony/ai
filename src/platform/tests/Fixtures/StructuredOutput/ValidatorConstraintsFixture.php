@@ -129,6 +129,12 @@ final class ValidatorConstraintsFixture
     #[Assert\Positive]
     public int $positiveNumber;
 
+    #[Assert\Negative]
+    public int $strictlyNegativeNumber;
+
+    #[Assert\LessThan(50)]
+    public int $lessThanNumber;
+
     #[Assert\Range(min: 5, max: 15)]
     public int $rangedNumber;
 
