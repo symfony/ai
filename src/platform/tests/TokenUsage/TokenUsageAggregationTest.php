@@ -11,9 +11,12 @@
 
 namespace Symfony\AI\Platform\Tests\TokenUsage;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
+use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
 
 class TokenUsageAggregationTest extends TestCase
 {
@@ -135,5 +138,99 @@ class TokenUsageAggregationTest extends TestCase
         $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertNull($aggregation->getModel());
+    }
+
+    /**
+     * @param list<string|null> $models
+     */
+    #[DataProvider('provideModelNames')]
+    public function testPreservesModelNames(array $models, ?string $expected)
+    {
+        $usages = array_map(static fn (?string $model) => new TokenUsage(model: $model), $models);
+
+        $this->assertSame($expected, (new TokenUsageAggregation($usages))->getModel());
+    }
+
+    /**
+     * @return iterable<string, array{list<string|null>, string|null}>
+     */
+    public static function provideModelNames(): iterable
+    {
+        yield 'no usages' => [[], null];
+        yield 'single unknown model' => [[null], null];
+        yield 'unknown models mixed with known model' => [[null, 'model', null, 'model'], 'model'];
+        yield 'empty model name' => [[null, '', ''], ''];
+        yield 'zero model name' => [[null, '0', '0'], '0'];
+        yield 'distinct numeric strings' => [['1', '01'], null];
+        yield 'empty name and nonempty name' => [['', 'model'], null];
+        yield 'case-sensitive model names' => [['Model', 'model'], null];
+        yield 'mixed models ending with first model' => [['first', 'second', 'first'], null];
+    }
+
+    public function testVisitsAllUsagesInOrderWhenModelsDiffer()
+    {
+        $calls = [];
+        $usages = [];
+        foreach (['first', 'second', 'first'] as $index => $model) {
+            $usage = $this->createMock(TokenUsageInterface::class);
+            $usage->expects($this->once())->method('getModel')->willReturnCallback(static function () use (&$calls, $index, $model): string {
+                $calls[] = $index;
+
+                return $model;
+            });
+            $usages[] = $usage;
+        }
+
+        $this->assertNull((new TokenUsageAggregation($usages))->getModel());
+        $this->assertSame([0, 1, 2], $calls);
+    }
+
+    public function testPropagatesGetterExceptionsAfterModelsDiffer()
+    {
+        $usage = $this->createMock(TokenUsageInterface::class);
+        $usage->expects($this->once())->method('getModel')->willThrowException(new RuntimeException('Cannot read model.'));
+        $aggregation = new TokenUsageAggregation([
+            new TokenUsage(model: 'first'),
+            new TokenUsage(model: 'second'),
+            $usage,
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot read model.');
+
+        $aggregation->getModel();
+    }
+
+    public function testIgnoresUnknownModelFromNestedAggregation()
+    {
+        $aggregation = new TokenUsageAggregation([
+            new TokenUsageAggregation([new TokenUsage(model: 'first'), new TokenUsage(model: 'second')]),
+            new TokenUsage(model: 'first'),
+        ]);
+
+        $this->assertSame('first', $aggregation->getModel());
+    }
+
+    /**
+     * @param list<mixed> $usages
+     */
+    #[DataProvider('provideInvalidUsages')]
+    public function testRejectsInvalidUsages(array $usages)
+    {
+        $aggregation = new TokenUsageAggregation($usages);
+
+        $this->expectException(\TypeError::class);
+
+        $aggregation->getModel();
+    }
+
+    /**
+     * @return iterable<string, array{list<mixed>}>
+     */
+    public static function provideInvalidUsages(): iterable
+    {
+        yield 'null usage' => [[null]];
+        yield 'object without usage interface' => [[new \stdClass()]];
+        yield 'invalid entry after different models' => [[new TokenUsage(model: 'first'), new TokenUsage(model: 'second'), null]];
     }
 }
