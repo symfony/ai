@@ -15,10 +15,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\ServerToolCall;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
-use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
+use Symfony\AI\Platform\Result\ServerToolCallResult;
 use Symfony\AI\Platform\Result\Stream\AbstractStreamListener;
 use Symfony\AI\Platform\Result\Stream\AssistantMessageStreamListener;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
@@ -26,6 +27,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ServerToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -33,12 +35,10 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
-use Symfony\AI\Platform\Result\Stream\Delta\ToolSearchComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 use Symfony\AI\Platform\Result\Stream\DeltaEvent;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolSearchResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 
 /**
@@ -203,17 +203,17 @@ final class AssistantMessageStreamListenerTest extends TestCase
             [new WebSearch('Symfony AI', 'ws_1', 'completed', ['Symfony AI'], 'provider-signature')],
         ];
 
-        yield 'completed tool searches keep their replay signature' => [
+        yield 'completed server tool calls keep their replay payload' => [
             [
-                new ToolSearchComplete(new ToolSearchResult(
-                    'weather',
+                new ServerToolCallComplete(new ServerToolCallResult(
+                    'tool_search',
                     'srvtoolu_1',
                     'completed',
-                    ['get_weather'],
-                    'provider-signature',
+                    ['query' => 'weather', 'tools' => ['get_weather']],
+                    'provider-replay',
                 )),
             ],
-            [new ToolSearch('weather', 'srvtoolu_1', 'completed', ['get_weather'], 'provider-signature')],
+            [new ServerToolCall('tool_search', 'srvtoolu_1', 'completed', ['query' => 'weather', 'tools' => ['get_weather']], 'provider-replay')],
         ];
 
         yield 'a mix of announced and unannounced calls keeps both' => [

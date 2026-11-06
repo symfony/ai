@@ -11,22 +11,20 @@
 
 namespace Symfony\AI\Platform\Result\Stream\Delta;
 
-use Symfony\AI\Platform\Result\ToolSearchResult;
+use Symfony\AI\Platform\Result\ServerToolCallResult;
 
 /**
- * Signals that provider-hosted tool search output is ready for replay.
- *
  * @author Johannes Wachter <johannes@sulu.io>
  */
-final class ToolSearchComplete implements DeltaInterface
+final class ServerToolCallComplete implements DeltaInterface
 {
     public function __construct(
-        private readonly ToolSearchResult $toolSearch,
+        private readonly ServerToolCallResult $serverToolCall,
     ) {
     }
 
-    public function getToolSearch(): ToolSearchResult
+    public function getServerToolCall(): ServerToolCallResult
     {
-        return $this->toolSearch;
+        return $this->serverToolCall;
     }
 }

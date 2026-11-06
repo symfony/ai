@@ -14,14 +14,15 @@ namespace Symfony\AI\Platform\Result\Stream;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\ServerToolCall;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
-use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\ServerToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -29,7 +30,6 @@ use Symfony\AI\Platform\Result\Stream\Delta\ThinkingSignature;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
-use Symfony\AI\Platform\Result\Stream\Delta\ToolSearchComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\WebSearchComplete;
 
 /**
@@ -173,14 +173,14 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
             return;
         }
 
-        if ($delta instanceof ToolSearchComplete) {
-            $toolSearch = $delta->getToolSearch();
-            $this->content[] = new ToolSearch(
-                $toolSearch->getQuery(),
-                $toolSearch->getId(),
-                $toolSearch->getStatus(),
-                $toolSearch->getToolNames(),
-                $toolSearch->getSignature(),
+        if ($delta instanceof ServerToolCallComplete) {
+            $serverToolCall = $delta->getServerToolCall();
+            $this->content[] = new ServerToolCall(
+                $serverToolCall->getName(),
+                $serverToolCall->getId(),
+                $serverToolCall->getStatus(),
+                $serverToolCall->getDetails(),
+                $serverToolCall->getReplay(),
             );
             $this->openThinking = null;
 

@@ -92,7 +92,13 @@ tools are referenced inline in the conversation, the prompt cache stays intact::
 
     $result = $platform->invoke('claude-sonnet-4-5', $messages, [
         'tools' => [$tool, $clock],
-        'tool_search' => 'bm25', // or "regex"
+    ]);
+
+The request uses the BM25 search by default. The regex search is a server tool like the others::
+
+    $result = $platform->invoke('claude-sonnet-4-5', $messages, [
+        'tools' => [$tool, $clock],
+        'server_tools' => ['tool_search_tool_regex' => true],
     ]);
 
 At least one tool has to stay non-deferred, Anthropic recommends three to five frequently used ones. Tool search is
@@ -126,8 +132,9 @@ The individual parts can be any `ResultInterface` instances, but in practice the
 - :class:`Symfony\\AI\\Platform\\Result\\TextResult` - Normal text response.
 - :class:`Symfony\\AI\\Platform\\Result\\ExecutableCodeResult` - The code the model intended to run.
 - :class:`Symfony\\AI\\Platform\\Result\\CodeExecutionResult` - The output of the executed code (stdout/stderr).
-- :class:`Symfony\\AI\\Platform\\Result\\ToolSearchResult` - One tool search. The call and its result are merged
-  into a single part carrying the query, the status and the names of the found tools. It replays like a web search.
+- :class:`Symfony\\AI\\Platform\\Result\\ServerToolCallResult` - One tool search. The call and its result are merged
+  into a single part named ``tool_search``. Its details carry the query and the names of the found tools. It replays
+  like a web search. A replayed search is dropped if a tool it found is no longer part of the request.
 - :class:`Symfony\\AI\\Platform\\Result\\WebSearchResult` - One search the model performed. The converter merges
   the ``server_tool_use`` call and its matching ``web_search_tool_result`` into a single part carrying the query,
   id, and status together.

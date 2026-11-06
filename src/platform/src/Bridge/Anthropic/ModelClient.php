@@ -11,7 +11,6 @@
 
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
-use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
@@ -40,14 +39,8 @@ final class ModelClient implements ModelClientInterface
     private const SERVER_TOOLS = [
         'web_search' => ['type' => 'web_search_20250305', 'name' => 'web_search'],
         'code_execution' => ['type' => 'code_execution_20250825', 'name' => 'code_execution'],
-    ];
-
-    /**
-     * @var array<string, array{type: string, name: string}>
-     */
-    private const TOOL_SEARCH_TOOLS = [
-        'bm25' => ['type' => 'tool_search_tool_bm25_20251119', 'name' => 'tool_search_tool_bm25'],
-        'regex' => ['type' => 'tool_search_tool_regex_20251119', 'name' => 'tool_search_tool_regex'],
+        'tool_search_tool_bm25' => ['type' => 'tool_search_tool_bm25_20251119', 'name' => 'tool_search_tool_bm25'],
+        'tool_search_tool_regex' => ['type' => 'tool_search_tool_regex_20251119', 'name' => 'tool_search_tool_regex'],
     ];
 
     private readonly EventSourceHttpClient $httpClient;
@@ -97,19 +90,14 @@ final class ModelClient implements ModelClientInterface
             unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
+        $payload = $this->dropOrphanedToolSearches($payload, $options['tools'] ?? []);
+
         $cacheControl = $this->getCacheControl($this->cacheRetention);
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);
         $payload = $this->injectSystemCacheControl($payload, $cacheControl);
 
-        $toolSearch = $options['tool_search'] ?? 'bm25';
-        unset($options['tool_search']);
-        if (!isset(self::TOOL_SEARCH_TOOLS[$toolSearch])) {
-            throw new InvalidArgumentException(\sprintf('Unsupported tool search "%s". Supported values are "%s".', \is_string($toolSearch) ? $toolSearch : get_debug_type($toolSearch), implode('", "', array_keys(self::TOOL_SEARCH_TOOLS))));
-        }
-
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];
-            $options['tools'] = $this->resolveDeferredTools($model, $options['tools']);
             $options['tools'] = $this->injectToolsCacheControl($options['tools'], $cacheControl);
         }
 
@@ -124,7 +112,7 @@ final class ModelClient implements ModelClientInterface
         }
 
         if ($this->hasDeferredTools($options['tools'] ?? []) && !$this->hasToolSearchTool($options['tools'])) {
-            $options['tools'][] = self::TOOL_SEARCH_TOOLS[$toolSearch];
+            $options['tools'][] = self::SERVER_TOOLS['tool_search_tool_bm25'];
         }
 
         // Adaptive thinking enables interleaved thinking on its own; the beta
@@ -154,23 +142,55 @@ final class ModelClient implements ModelClientInterface
     }
 
     /**
-     * Models without tool search get their deferred tools like any other tool.
+     * Anthropic rejects a replayed tool search whose found tools are not part of the request.
      *
+     * @param array<string, mixed>       $payload
      * @param list<array<string, mixed>> $tools
      *
-     * @return list<array<string, mixed>>
+     * @return array<string, mixed>
      */
-    private function resolveDeferredTools(Model $model, array $tools): array
+    private function dropOrphanedToolSearches(array $payload, array $tools): array
     {
-        if ($model->supports(Capability::TOOL_SEARCH)) {
-            return $tools;
+        if (!\is_array($payload['messages'] ?? null)) {
+            return $payload;
         }
 
-        return array_map(static function (array $tool): array {
-            unset($tool['defer_loading']);
+        $available = [];
+        foreach ($tools as $tool) {
+            if (\is_string($tool['name'] ?? null)) {
+                $available[$tool['name']] = true;
+            }
+        }
 
-            return $tool;
-        }, $tools);
+        foreach ($payload['messages'] as $messageIndex => $message) {
+            if (!\is_array($message) || !\is_array($message['content'] ?? null)) {
+                continue;
+            }
+
+            $orphaned = [];
+            foreach ($message['content'] as $block) {
+                if ('tool_search_tool_result' !== ($block['type'] ?? null) || !\is_string($block['tool_use_id'] ?? null)) {
+                    continue;
+                }
+
+                foreach ($block['content']['tool_references'] ?? [] as $reference) {
+                    if (!isset($available[$reference['tool_name'] ?? ''])) {
+                        $orphaned[$block['tool_use_id']] = true;
+                    }
+                }
+            }
+
+            if ([] === $orphaned) {
+                continue;
+            }
+
+            $payload['messages'][$messageIndex]['content'] = array_values(array_filter(
+                $message['content'],
+                static fn (mixed $block): bool => !isset($orphaned[$block['id'] ?? $block['tool_use_id'] ?? '']),
+            ));
+        }
+
+        return $payload;
     }
 
     /**

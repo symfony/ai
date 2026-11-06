@@ -17,9 +17,9 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\CodeExecution;
 use Symfony\AI\Platform\Message\Content\ExecutableCode;
+use Symfony\AI\Platform\Message\Content\ServerToolCall;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
-use Symfony\AI\Platform\Message\Content\ToolSearch;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -104,9 +104,9 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
                 continue;
             }
 
-            if ($part instanceof ToolSearch) {
-                foreach (self::toToolSearchBlocks($part) as $toolSearchBlock) {
-                    $blocks[] = $toolSearchBlock;
+            if ($part instanceof ServerToolCall) {
+                foreach (self::toServerToolCallBlocks($part) as $serverToolBlock) {
+                    $blocks[] = $serverToolBlock;
                 }
 
                 continue;
@@ -213,23 +213,23 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
     }
 
     /**
-     * A hosted tool search replays as the blocks Anthropic sent for it - the `server_tool_use` call
-     * and its `tool_search_tool_result` - which `ResultConverter` keeps in the result's signature.
+     * A hosted tool search replays as the blocks Anthropic sent for it, the `server_tool_use` call
+     * and its `tool_search_tool_result`, which `ResultConverter` keeps as the replay payload.
      * Anthropic expands the tool references of the result itself, so the blocks must stay untouched.
-     * A signature that is absent, unreadable, or written by another provider replays nothing.
+     * A replay payload that is absent, unreadable, or written by another provider replays nothing.
      *
      * @return list<array<string, mixed>>
      */
-    private static function toToolSearchBlocks(ToolSearch $toolSearch): array
+    private static function toServerToolCallBlocks(ServerToolCall $serverToolCall): array
     {
-        $signature = $toolSearch->getSignature();
+        $replay = $serverToolCall->getReplay();
 
-        if (null === $signature) {
+        if ('tool_search' !== $serverToolCall->getName() || null === $replay) {
             return [];
         }
 
         try {
-            $decoded = json_decode($signature, true, flags: \JSON_THROW_ON_ERROR);
+            $decoded = json_decode($replay, true, flags: \JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             return [];
         }

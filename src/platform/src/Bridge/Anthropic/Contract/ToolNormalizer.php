@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic\Contract;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Model;
@@ -42,7 +44,8 @@ class ToolNormalizer extends ModelContractNormalizer
             'input_schema' => $data->getParameters() ?? ['type' => 'object'],
         ];
 
-        if ($data->isDeferred()) {
+        $model = $context[Contract::CONTEXT_MODEL] ?? null;
+        if ($data->isDeferred() && $model instanceof Model && $model->supports(Capability::TOOL_SEARCH)) {
             $tool['defer_loading'] = true;
         }
 
