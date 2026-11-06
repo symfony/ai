@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Message\Content\LocalShellCall;
 use Symfony\AI\Platform\Message\Content\McpApprovalRequest;
 use Symfony\AI\Platform\Message\Content\McpCall;
 use Symfony\AI\Platform\Message\Content\McpListTools;
+use Symfony\AI\Platform\Message\Content\ServerToolCall;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
@@ -43,6 +44,7 @@ use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
+use Symfony\AI\Platform\Result\ServerToolCallResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -185,6 +187,23 @@ final class MessageTest extends TestCase
         $this->assertTrue($parts[5]->isSucceeded());
         $this->assertSame('hi', $parts[5]->getOutput());
         $this->assertSame('srvtoolu_1', $parts[5]->getId());
+    }
+
+    public function testCreateAssistantMessageMapsServerToolCallResult()
+    {
+        $message = Message::ofAssistant(new MultiPartResult([
+            new ServerToolCallResult('tool_search', 'srvtoolu_1', 'completed', ['query' => 'weather', 'tools' => ['get_weather']], 'provider-replay'),
+            new TextResult('Visible answer.'),
+        ]));
+
+        $parts = $message->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(ServerToolCall::class, $parts[0]);
+        $this->assertSame('tool_search', $parts[0]->getName());
+        $this->assertSame('srvtoolu_1', $parts[0]->getId());
+        $this->assertSame('completed', $parts[0]->getStatus());
+        $this->assertSame(['query' => 'weather', 'tools' => ['get_weather']], $parts[0]->getDetails());
+        $this->assertSame('provider-replay', $parts[0]->getReplay());
     }
 
     public function testCreateAssistantMessageMapsServerToolResultTypes()

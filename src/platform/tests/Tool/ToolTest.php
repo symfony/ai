@@ -42,6 +42,36 @@ final class ToolTest extends TestCase
         $this->assertSame('tool description', $tool->getDescription());
     }
 
+    public function testIsNotDeferredByDefault()
+    {
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool_name', 'tool description');
+
+        $this->assertFalse($tool->isDeferred());
+        $this->assertSame($tool, $tool->withDeferred(false));
+    }
+
+    public function testWithDeferredKeepsTheRestOfTheTool()
+    {
+        $tool = new Tool(
+            new ExecutionReference('MyClass', 'run'),
+            'tool_name',
+            'tool description',
+            ['type' => 'object', 'properties' => [], 'required' => [], 'additionalProperties' => false],
+            ['custom' => 'value'],
+            new ToolEffectHints(readOnlyHint: true),
+        );
+
+        $deferred = $tool->withDeferred();
+
+        $this->assertTrue($deferred->isDeferred());
+        $this->assertFalse($tool->isDeferred());
+        $this->assertSame($tool->getReference(), $deferred->getReference());
+        $this->assertSame('tool_name', $deferred->getName());
+        $this->assertSame($tool->getParameters(), $deferred->getParameters());
+        $this->assertSame($tool->getMetadata(), $deferred->getMetadata());
+        $this->assertTrue($deferred->isReadOnly());
+    }
+
     public function testReturnsParametersWhenProvided()
     {
         $reference = new ExecutionReference('MyClass');

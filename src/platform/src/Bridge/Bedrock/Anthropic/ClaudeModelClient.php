@@ -90,6 +90,9 @@ final class ClaudeModelClient implements ModelClientInterface
             $options['tool_choice'] ??= ['type' => 'auto'];
         }
 
+        // Bedrock does not run Anthropic server tools
+        unset($options['server_tools']);
+
         if (isset($options['response_format'])) {
             $schema = $options['response_format']['json_schema']['schema'] ?? [];
             $options['output_config'] = [

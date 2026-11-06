@@ -34,6 +34,7 @@ use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RealtimeSessionResult;
 use Symfony\AI\Platform\Result\RerankingResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\ServerToolCallResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -91,6 +92,7 @@ final class AssistantContentMappingTest extends TestCase
         yield ExecutableCodeResult::class => [new ExecutableCodeResult('print(1)', 'python', 'code_1')];
         yield CodeExecutionResult::class => [new CodeExecutionResult(true, '1', 'code_1')];
         yield WebSearchResult::class => [new WebSearchResult('symfony', 'ws_1', 'completed')];
+        yield ServerToolCallResult::class => [new ServerToolCallResult('tool_search', 'srvtoolu_1', 'completed', ['query' => 'weather', 'tools' => ['get_weather']])];
         yield FileSearchResult::class => [new FileSearchResult(['symfony'], [], 'fs_1', 'completed')];
         yield McpCallResult::class => [new McpCallResult('server', 'tool', '{}', 'output', null, 'mcp_1', 'completed')];
         yield CustomToolCallResult::class => [new CustomToolCallResult('tool', 'input', 'ctc_1', 'completed')];

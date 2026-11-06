@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call
+ * Add deferred tools: `Tool::isDeferred()`, `#[AsTool(deferred: true)]` and the agent's `DeferredToolbox` mark tools that are only available through a tool search, which the Anthropic bridge supports natively with `defer_loading` and the hosted tool search for models with the new `Capability::TOOL_SEARCH`, including the generic `Result\ServerToolCallResult`, `Message\Content\ServerToolCall` and `Result\Stream\Delta\ServerToolCallComplete` for tool calls the provider runs itself
  * Stream the string answers of `Test\MockPlatformFactory` word by word when the invocation has the `stream` option
  * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
  * Add `Serializer\MessageNormalizer` and `Serializer\MessageBagNormalizer` for persisting messages and message bags losslessly, including ids, metadata and all content types; objects in the metadata keep their type, the platform's token usage and finish reason are handled directly and other objects are handed to the serializer; `addedAt` is derived from the message id instead of the time of normalization
