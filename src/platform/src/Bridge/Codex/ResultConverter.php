@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\Codex;
 
+use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -84,8 +85,18 @@ final class ResultConverter implements ResultConverterInterface
 
     private function convertStream(RawResultInterface $result): \Generator
     {
+        $inTurn = false;
+
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
+
+            if ('turn.started' === $type) {
+                $inTurn = true;
+            }
+
+            if ('turn.completed' === $type || 'turn.failed' === $type) {
+                $inTurn = false;
+            }
 
             if ('item.completed' === $type
                 && 'agent_message' === ($data['item']['type'] ?? '')
@@ -101,6 +112,10 @@ final class ResultConverter implements ResultConverterInterface
                     cachedTokens: $data['usage']['cached_input_tokens'] ?? null,
                 );
             }
+        }
+
+        if ($inTurn) {
+            throw new IncompleteStreamException('Codex stream ended before turn.completed.');
         }
     }
 }

@@ -48,6 +48,7 @@ final class RawProcessResult implements RawResultInterface
         $lastError = [];
         $usage = [];
         $events = [];
+        $inTurn = false;
 
         foreach (explode(\PHP_EOL, $output) as $line) {
             $line = trim($line);
@@ -66,6 +67,14 @@ final class RawProcessResult implements RawResultInterface
 
             $type = $decoded['type'] ?? '';
 
+            if ('turn.started' === $type) {
+                $inTurn = true;
+            }
+
+            if ('turn.completed' === $type || 'turn.failed' === $type) {
+                $inTurn = false;
+            }
+
             if ('item.completed' === $type
                 && 'agent_message' === ($decoded['item']['type'] ?? '')
             ) {
@@ -79,6 +88,10 @@ final class RawProcessResult implements RawResultInterface
             if ('turn.completed' === $type && isset($decoded['usage'])) {
                 $usage = $decoded['usage'];
             }
+        }
+
+        if ($inTurn) {
+            throw new RuntimeException('Codex CLI turn ended before turn.completed.');
         }
 
         if ([] !== $lastError && [] === $lastAgentMessage) {
