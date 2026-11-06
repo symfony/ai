@@ -27,6 +27,12 @@ final class Progress implements UpdateInterface
     public const STAGE_MODEL_REQUEST = 'model_request';
 
     /**
+     * A model round completed; the payload is a copy of its {@see \Symfony\AI\Platform\Result\ResultInterface},
+     * whose metadata (e.g. the token usage) is that of this round only.
+     */
+    public const STAGE_MODEL_RESULT = 'model_result';
+
+    /**
      * A streamed delta was received; the payload is the {@see \Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface}.
      */
     public const STAGE_DELTA = 'delta';
