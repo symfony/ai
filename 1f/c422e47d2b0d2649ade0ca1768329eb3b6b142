@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by haraldpdl at 2026-11-04T11:50:46Z
+
+Thanks for the review! I rebased onto `main` (resolving the `UPGRADE.md` conflict with #2876, both entries kept) and answered the inline comments. The changes since your review are in two commits: 811bd694 takes the MCP server names from the `init` event, and afcb2756 adds the comment on the decoding.
+
+About streaming: yes, that is intended. The stream reports these calls with `ToolCallStart` and `ToolInputDelta` only, and the resolved calls are part of the result without streaming. No stream type exists for an MCP or custom tool call the provider ran (only `WebSearchComplete` for web searches), and the OpenResponses bridge streams nothing for its MCP calls either. The description says so now.
