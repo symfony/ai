@@ -14,14 +14,14 @@ namespace Symfony\AI\Platform\Bridge\Codex;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\CustomToolCallResult;
+use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
@@ -62,11 +62,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $results = [];
         foreach ($data['tool_calls'] ?? [] as $toolCall) {
-            $results[] = new ToolCallResult([new ToolCall(
-                $toolCall['id'],
-                $toolCall['name'],
-                $toolCall['arguments'] ?? [],
-            )]);
+            $results[] = $this->convertExecutedToolCall($toolCall);
         }
 
         $results[] = new TextResult($text);
@@ -81,6 +77,22 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
+    }
+
+    /**
+     * The CLI already ran the tool, so the call is reported as resolved, not as a tool call for the caller to run.
+     *
+     * @param array{id: string, name: string, arguments?: array<string, mixed>, server?: string|null, output?: string|null, error?: string|null, status?: string|null} $toolCall
+     */
+    private function convertExecutedToolCall(array $toolCall): McpCallResult|CustomToolCallResult
+    {
+        $arguments = json_encode((object) ($toolCall['arguments'] ?? []), \JSON_THROW_ON_ERROR);
+
+        if (null !== ($toolCall['server'] ?? null)) {
+            return new McpCallResult($toolCall['server'], $toolCall['name'], $arguments, $toolCall['output'] ?? null, $toolCall['error'] ?? null, $toolCall['id'], $toolCall['status'] ?? null);
+        }
+
+        return new CustomToolCallResult($toolCall['name'], $arguments, $toolCall['id'], $toolCall['status'] ?? null);
     }
 
     private function convertStream(RawResultInterface $result): \Generator

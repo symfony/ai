@@ -13,7 +13,6 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 
@@ -45,10 +44,6 @@ foreach ($result->asStream() as $delta) {
     }
     if ($delta instanceof ToolInputDelta) {
         output()->write('<fg=#999999>'.$delta->getPartialJson().'</>');
-        continue;
-    }
-    if ($delta instanceof ToolCallComplete) {
-        output()->writeln(\PHP_EOL.'<info>[tool-calls ready: '.count($delta->getToolCalls()).']</info>');
     }
 }
 

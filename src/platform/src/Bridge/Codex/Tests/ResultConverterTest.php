@@ -13,18 +13,21 @@ namespace Symfony\AI\Platform\Bridge\Codex\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
+use Symfony\AI\Platform\Bridge\Codex\RawProcessResult;
 use Symfony\AI\Platform\Bridge\Codex\ResultConverter;
 use Symfony\AI\Platform\Bridge\Codex\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
+use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\Component\Process\Process;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -59,37 +62,65 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('Hello, World!', $result->getContent());
     }
 
-    public function testConvertReturnsMultiPartResultWithToolCalls()
+    public function testConvertReportsMcpToolCallsTheCliRanAsMcpCalls()
     {
         $converter = new ResultConverter();
         $rawResult = new InMemoryRawResult([
             'type' => 'item.completed',
             'item' => ['type' => 'agent_message', 'text' => 'Hello, World!'],
             'tool_calls' => [
-                [
-                    'id' => 'call-1',
-                    'name' => 'symfony_logs',
-                    'arguments' => ['channel' => 'app'],
-                ],
+                ['id' => 'item_0', 'name' => 'read_file', 'arguments' => ['path' => 'README.md'], 'server' => 'files', 'output' => '# Readme', 'error' => null, 'status' => 'completed'],
+                ['id' => 'item_1', 'name' => 'read_file', 'arguments' => ['path' => 'missing.md'], 'server' => 'files', 'output' => null, 'error' => 'No such file', 'status' => 'failed'],
             ],
         ]);
 
         $result = $converter->convert($rawResult);
 
         $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertNull($result->asToolCallResult());
+        $this->assertSame('Hello, World!', $result->asText());
+
+        $parts = $result->getContent();
+        $this->assertCount(3, $parts);
+
+        $this->assertInstanceOf(McpCallResult::class, $parts[0]);
+        $this->assertSame(
+            ['files', 'read_file', '{"path":"README.md"}', '# Readme', null, 'item_0', 'completed'],
+            [$parts[0]->getServerLabel(), $parts[0]->getName(), $parts[0]->getArguments(), $parts[0]->getContent(), $parts[0]->getError(), $parts[0]->getId(), $parts[0]->getStatus()],
+        );
+
+        $this->assertInstanceOf(McpCallResult::class, $parts[1]);
+        $this->assertSame(
+            ['files', 'read_file', '{"path":"missing.md"}', null, 'No such file', 'item_1', 'failed'],
+            [$parts[1]->getServerLabel(), $parts[1]->getName(), $parts[1]->getArguments(), $parts[1]->getContent(), $parts[1]->getError(), $parts[1]->getId(), $parts[1]->getStatus()],
+        );
+
+        $this->assertInstanceOf(TextResult::class, $parts[2]);
+        $this->assertSame('Hello, World!', $parts[2]->getContent());
+    }
+
+    public function testConvertReportsToolCallsWithoutServerTheCliRanAsCustomToolCalls()
+    {
+        $converter = new ResultConverter();
+        $rawResult = new InMemoryRawResult([
+            'type' => 'item.completed',
+            'item' => ['type' => 'agent_message', 'text' => 'Hello, World!'],
+            'tool_calls' => [
+                ['id' => 'call-1', 'name' => 'symfony_logs', 'arguments' => [], 'server' => null, 'output' => null, 'error' => null, 'status' => 'completed'],
+            ],
+        ]);
+
+        $result = $converter->convert($rawResult);
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertNull($result->asToolCallResult());
+        $this->assertSame('Hello, World!', $result->asText());
 
         $parts = $result->getContent();
         $this->assertCount(2, $parts);
 
-        $this->assertInstanceOf(ToolCallResult::class, $parts[0]);
-        $toolCalls = $parts[0]->getContent();
-        $this->assertCount(1, $toolCalls);
-        $this->assertSame('call-1', $toolCalls[0]->getId());
-        $this->assertSame('symfony_logs', $toolCalls[0]->getName());
-        $this->assertSame(['channel' => 'app'], $toolCalls[0]->getArguments());
-
-        $this->assertInstanceOf(TextResult::class, $parts[1]);
-        $this->assertSame('Hello, World!', $parts[1]->getContent());
+        $this->assertInstanceOf(CustomToolCallResult::class, $parts[0]);
+        $this->assertSame(['call-1', 'symfony_logs', '{}', 'completed'], [$parts[0]->getId(), $parts[0]->getName(), $parts[0]->getInput(), $parts[0]->getStatus()]);
     }
 
     public function testConvertThrowsOnEmptyData()
@@ -242,5 +273,29 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
 
         $this->assertInstanceOf(TokenUsageExtractor::class, $converter->getTokenUsageExtractor());
+    }
+
+    /**
+     * Recorded from Codex CLI 0.166.0 calling the read_file tool of an MCP server.
+     */
+    public function testConvertRecordedRunReportsTheMcpCallAsResolved()
+    {
+        $process = new Process(['php', '-r', 'readfile($argv[1]);', __DIR__.'/Fixtures/mcp_tool_call.jsonl']);
+        $process->start();
+
+        $result = (new ResultConverter())->convert(new RawProcessResult($process));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertNull($result->asToolCallResult());
+        $this->assertSame('The project codename is Lantern.', $result->asText());
+
+        $parts = $result->getContent();
+        $this->assertCount(2, $parts);
+        $this->assertInstanceOf(McpCallResult::class, $parts[0]);
+        $this->assertSame(
+            ['files', 'read_file', '{"path":"README.md"}', "# Lantern\n\nThe project codename is Lantern. It has one rule: keep answers short.\n", null, 'item_1', 'completed'],
+            [$parts[0]->getServerLabel(), $parts[0]->getName(), $parts[0]->getArguments(), $parts[0]->getContent(), $parts[0]->getError(), $parts[0]->getId(), $parts[0]->getStatus()],
+        );
+        $this->assertInstanceOf(TextResult::class, $parts[1]);
     }
 }
