@@ -140,6 +140,41 @@ information. Regular tool arguments should be used for application data.
             // ...
         }
 
+Securing Tools
+^^^^^^^^^^^^^^
+
+When SecurityBundle is enabled, you can restrict a tool with the ``#[IsGranted]`` attribute, on its method
+or on its class. This also works for the tools of an ``#[AsMcpApp]`` class and for its ``#[AsMcpAppTool]``
+methods::
+
+    use Mcp\Capability\Attribute\McpTool;
+    use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+    class AccountTools
+    {
+        #[McpTool(name: 'delete-account')]
+        #[IsGranted('ROLE_ADMIN')]
+        public function deleteAccount(string $id): void
+        {
+            // ...
+        }
+    }
+
+Symfony checks these attributes before the MCP server handles the HTTP request, as it does for the attributes
+of a controller. When access is denied, the firewall sends the response. Anonymous users get a ``401`` with a
+challenge, and other users get a ``403``. With the ``access_token`` authenticator of Symfony 8.2,
+``#[IsGranted('OAUTH2_SCOPE(accounts:write)')]`` gets the ``insufficient_scope`` challenge that MCP clients
+use to ask the user for more scopes.
+
+``#[IsGranted]`` has no effect on prompts and resources, including the ``ui://`` resource of an MCP App. The
+``#[IsGranted]`` attributes of a parent class are not inherited.
+
+The ``subject`` option of ``#[IsGranted]`` refers to the arguments of the controller, so it can't refer to an
+argument of the tool. The attributes are not checked over the STDIO transport, which has no firewall.
+
+Without SecurityBundle, the container fails to compile when a tool that is exposed over HTTP has an
+``#[IsGranted]`` attribute.
+
 Prompts
 ^^^^^^^
 

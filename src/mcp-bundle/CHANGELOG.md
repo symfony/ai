@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add support for `#[IsGranted]` on tools called over HTTP, checked by Symfony before the MCP server runs
+
 0.15
 ----
 

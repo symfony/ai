@@ -266,6 +266,20 @@ final class McpAppPassTest extends TestCase
         $this->assertSame([ToolVisibility::Model, ToolVisibility::App], $byName['plain'][7]['ui']->getArgument(1));
     }
 
+    public function testExportsTheHandlerOfEachAppTool()
+    {
+        $container = $this->containerWithBuilder(withRenderer: true);
+        $container->setDefinition('app.multi', (new Definition(MultiToolApp::class))->addTag('mcp.app'));
+
+        (new McpAppPass())->process($container);
+
+        $this->assertSame(['default' => [
+            'do_multi' => [MultiToolApp::class, 'render'],
+            'detail' => [MultiToolApp::class, 'showDetail'],
+            'plain' => [MultiToolApp::class, 'plain'],
+        ]], $container->getParameter('mcp.servers.app_tools'));
+    }
+
     public function testPrimaryMethodWithAppToolAttributeThrows()
     {
         $container = $this->containerWithBuilder(withRenderer: true);
