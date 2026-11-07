@@ -66,6 +66,8 @@ final class Execution implements ExecutionInterface
 
     private bool $canceled = false;
 
+    private string $cancellationMessage = 'The agent execution was canceled.';
+
     private bool $finished = false;
 
     private ?ResultInterface $result = null;
@@ -193,13 +195,17 @@ final class Execution implements ExecutionInterface
     /**
      * Cancels the execution and its active HTTP response.
      */
-    public function cancel(): void
+    public function cancel(?string $reason = null): void
     {
         if ($this->canceled || $this->finished || null !== $this->result) {
             return;
         }
 
         $this->canceled = true;
+        if (null !== $reason && '' !== $reason) {
+            $this->cancellationMessage = 'The agent execution was canceled: '.$reason;
+        }
+
         $this->cancellation->request();
     }
 
@@ -213,7 +219,7 @@ final class Execution implements ExecutionInterface
         }
 
         if ($this->consumed && $this->canceled) {
-            throw new RuntimeException('The agent execution was canceled.');
+            throw new RuntimeException($this->cancellationMessage);
         }
 
         foreach ($this->consume() as $update) {
@@ -223,7 +229,7 @@ final class Execution implements ExecutionInterface
         }
 
         if ($this->canceled) {
-            throw new RuntimeException('The agent execution was canceled.');
+            throw new RuntimeException($this->cancellationMessage);
         }
 
         throw new RuntimeException('The agent execution finished without producing a result.');

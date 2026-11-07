@@ -40,7 +40,7 @@ foreach ($execution->asTextStream() as $delta) {
 
     // Cancel the execution if the total number of characters exceeds 200
     if (($characters += strlen($delta->getText())) > 200) {
-        $execution->cancel();
+        $execution->cancel('Character limit exceeded');
     }
 }
 

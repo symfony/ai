@@ -86,7 +86,7 @@ interface ExecutionInterface extends \IteratorAggregate, ResultInterface
     /**
      * Cancels the execution and its active HTTP response.
      */
-    public function cancel(): void;
+    public function cancel(?string $reason = null): void;
 
     /**
      * Drives the execution to completion and returns the final result.

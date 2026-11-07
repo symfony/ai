@@ -269,11 +269,14 @@ the stream without producing a final result::
     $execution = $agent->call('Tell me a story.', ['stream' => true]);
 
     pcntl_async_signals(true);
-    pcntl_signal(\SIGINT, static fn () => $execution->cancel());
+    pcntl_signal(\SIGINT, static fn () => $execution->cancel('Interrupted by the user'));
 
     foreach ($execution->asTextStream() as $delta) {
         echo $delta->getText();
     }
+
+An optional reason passed to ``cancel()`` is included in the exception raised by ``getResult()``. Without a reason,
+the previous message is preserved. Repeated calls to ``cancel()`` do not replace the first reason.
 
 Cancellation is idempotent, propagates to the agents a ``MultiAgent`` or ``SpeechAgent`` delegates to, and makes
 ``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\RuntimeException` instead of returning a partial
