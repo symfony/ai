@@ -346,6 +346,26 @@ Chat
    ], [new JsonEncoder()]));
    ```
 
+Mate
+----
+
+ * `symfony/ai-mate` no longer requires `symfony/ai-mate-composer-plugin`. The `symfony/ai-mate` Symfony Flex
+   recipe wires `vendor/bin/mate discover --composer --ignore-missing-file` into `auto-scripts` instead.
+   Projects with Symfony Flex need no change. Projects without it add the script to their `composer.json`,
+   or require `symfony/ai-mate-composer-plugin` explicitly:
+
+   ```diff
+    {
+        "scripts": {
+   +        "auto-scripts": {
+   +            "vendor/bin/mate discover --composer --ignore-missing-file": "script"
+   +        },
+   +        "post-install-cmd": ["@auto-scripts"],
+   +        "post-update-cmd": ["@auto-scripts"]
+        }
+    }
+   ```
+
 Platform
 --------
 
