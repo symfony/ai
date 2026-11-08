@@ -1,5 +1,5 @@
 {
-    "name": "symfony/ai-specstream-tool",
+    "name": "symfony/ai-spec-stream-tool",
     "description": "SpecStream web search and extract tool bridge for Symfony applications.",
     "license": "MIT",
     "type": "symfony-ai-tool",

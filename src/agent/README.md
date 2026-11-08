@@ -30,7 +30,7 @@ To use a specific tool, install the corresponding bridge package:
 | OpenMeteo         | `symfony/ai-open-meteo-tool`        |
 | SerpApi           | `symfony/ai-serp-api-tool`          |
 | SimilaritySearch  | `symfony/ai-similarity-search-tool` |
-| SpecStream        | `symfony/ai-specstream-tool`        |
+| SpecStream        | `symfony/ai-spec-stream-tool`       |
 | Tavily            | `symfony/ai-tavily-tool`            |
 | Web Scraper       | `symfony/ai-scraper-tool`           |
 | Wikipedia         | `symfony/ai-wikipedia-tool`         |

@@ -42,7 +42,7 @@ Searches the live web and reads pages using the `SpecStream`_ Search and Extract
 
 .. code-block:: terminal
 
-    $ composer require symfony/ai-specstream-tool
+    $ composer require symfony/ai-spec-stream-tool
 
 Tavily
 ~~~~~~

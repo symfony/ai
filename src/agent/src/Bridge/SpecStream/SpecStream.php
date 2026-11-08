@@ -53,7 +53,7 @@ final class SpecStream implements HasSourcesInterface
             'query' => ['q' => $query],
         ]);
 
-        $data = $response->toArray()['data'] ?? [];
+        $data = $response->toArray();
 
         $results = [];
         foreach ($data['sources'] ?? [] as $source) {
@@ -97,7 +97,7 @@ final class SpecStream implements HasSourcesInterface
         ]);
 
         $pages = [];
-        foreach ($response->toArray()['data']['results'] ?? [] as $item) {
+        foreach ($response->toArray()['results'] ?? [] as $item) {
             $page = [
                 'url' => $item['url'] ?? '',
                 'status' => $item['status'] ?? 'failed',
