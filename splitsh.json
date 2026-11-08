@@ -15,6 +15,7 @@
         "ai-scraper-tool": "src/agent/src/Bridge/Scraper",
         "ai-serp-api-tool": "src/agent/src/Bridge/SerpApi",
         "ai-similarity-search-tool": "src/agent/src/Bridge/SimilaritySearch",
+        "ai-specstream-tool": "src/agent/src/Bridge/SpecStream",
         "ai-tavily-tool": "src/agent/src/Bridge/Tavily",
         "ai-youtube-tool": "src/agent/src/Bridge/Youtube",
         "ai-wikipedia-tool": "src/agent/src/Bridge/Wikipedia",

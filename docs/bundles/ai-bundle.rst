@@ -1052,6 +1052,7 @@ The following tools can be installed as dedicated packages, no configuration is 
     $ composer require symfony/ai-scraper-tool
     $ composer require symfony/ai-serp-api-tool
     $ composer require symfony/ai-similarity-search-tool
+    $ composer require symfony/ai-specstream-tool
     $ composer require symfony/ai-tavily-tool
     $ composer require symfony/ai-wikipedia-tool
     $ composer require symfony/ai-youtube-tool
