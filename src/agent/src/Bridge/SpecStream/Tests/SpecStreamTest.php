@@ -60,7 +60,7 @@ final class SpecStreamTest extends TestCase
 
     public function testSearchWithoutAnswerOrSources()
     {
-        $httpClient = new MockHttpClient(new JsonMockResponse(['kind' => 'fact', 'answer' => null, 'sources' => []]));
+        $httpClient = new MockHttpClient(new JsonMockResponse(['data' => ['kind' => 'fact', 'answer' => null, 'sources' => []]]));
         $specStream = new SpecStream($httpClient, 'test-api-key');
 
         $result = $specStream->search('a question without an answer');
