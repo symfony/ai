@@ -134,7 +134,7 @@ final class McpSchemaWiringTest extends TestCase
                 }
             });
         }
-        $this->assertFalse(class_exists('Mcp\\Capability\\Attribute\\Schema'));
+        $this->assertFalse(class_exists('Mcp\\Server\\Capability\\Attribute\\Schema'));
         $container = $this->buildContainer();
 
         $this->assertFalse($container->hasDefinition('ai.platform.json_schema.describer.mcp_schema'));

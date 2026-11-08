@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\McpBundle\Tests\Profiler;
 
-use Mcp\Capability\Registry;
-use Mcp\Server;
 use Mcp\Server\Builder;
+use Mcp\Server\Capability\Registry;
+use Mcp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;

@@ -1167,9 +1167,9 @@ Reusing MCP Schema Constraints
 ------------------------------
 
 When ``mcp/sdk`` is installed, agent tools also use parameter constraints declared with
-``Mcp\Capability\Attribute\Schema``::
+``Mcp\Server\Capability\Attribute\Schema``::
 
-    use Mcp\Capability\Attribute\Schema;
+    use Mcp\Server\Capability\Attribute\Schema;
     use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 
     #[AsTool('search', 'Search articles')]

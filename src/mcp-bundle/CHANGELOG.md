@@ -5,6 +5,9 @@ CHANGELOG
 ---
 
  * Add `servers.<name>.http.max_body_bytes` to configure the maximum HTTP request body size
+ * Add the `none` value for `servers.<name>.session.store` to serve handshake-era HTTP clients without sessions
+ * Bind handshake-era sessions to the user identifier of the authenticated user, or to the `mcp.principal`
+   request attribute
 
 0.15
 ----

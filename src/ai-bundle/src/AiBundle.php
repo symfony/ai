@@ -14,7 +14,7 @@ namespace Symfony\AI\AiBundle;
 use AsyncAws\S3Vectors\S3VectorsClient;
 use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
-use Mcp\Capability\Attribute\Schema as McpSchema;
+use Mcp\Server\Capability\Attribute\Schema as McpSchema;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;

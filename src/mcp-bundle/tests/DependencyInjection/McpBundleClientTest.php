@@ -11,9 +11,8 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
-use Http\Discovery\Exception\NotFoundException;
-use Http\Discovery\Psr18ClientDiscovery;
-use Mcp\Client as McpSdkClient;
+use Http\Discovery\ClassDiscovery;
+use Mcp\Client\Client as McpSdkClient;
 use Mcp\Client\Handler\Request\ListRootsRequestHandler;
 use Mcp\Client\Transport\HttpTransport;
 use Mcp\Client\Transport\StdioTransport;
@@ -117,11 +116,11 @@ final class McpBundleClientTest extends TestCase
         $this->assertSame('https://example.com/mcp', $transport->getArgument(0));
         $this->assertSame(['Authorization' => 'Bearer t'], $transport->getArgument(1));
 
-        $httpClient = $transport->getArgument(2);
-        $this->assertInstanceOf(Reference::class, $httpClient);
-        $this->assertSame('psr18.http_client', (string) $httpClient);
+        $defaultClient = $transport->getArgument(2);
+        $this->assertInstanceOf(Reference::class, $defaultClient);
+        $this->assertSame('psr18.http_client', (string) $defaultClient);
         // Degrades to the SDK's own discovery when symfony/http-client is absent.
-        $this->assertSame(ContainerBuilder::NULL_ON_INVALID_REFERENCE, $httpClient->getInvalidBehavior());
+        $this->assertSame(ContainerBuilder::NULL_ON_INVALID_REFERENCE, $defaultClient->getInvalidBehavior());
     }
 
     public function testCustomHttpClientIsUsed()
@@ -283,25 +282,24 @@ final class McpBundleClientTest extends TestCase
         $this->assertSame(['github', 'filesystem'], $client->getServerNames());
         $this->assertInstanceOf(McpSdkClient::class, $container->get('mcp.client.research.server.github.client'));
 
-        // The stdio connection resolves without I/O; the HTTP one is left alone because no PSR-18
-        // client is installed in this test environment (covered by testHttpWithoutPsr18ClientFails).
+        // The stdio connection resolves without I/O; connecting the HTTP one would need a server.
         $connection = $client->get('filesystem');
         $this->assertFalse($connection->isConnected());
     }
 
     public function testHttpWithoutPsr18ClientFailsWithAnActionableMessage()
     {
+        $strategies = ClassDiscovery::getStrategies();
+        ClassDiscovery::setStrategies([]);
+
         try {
-            Psr18ClientDiscovery::find();
-            $this->markTestSkipped('A PSR-18 client is installed, so discovery succeeds and the fallback cannot be reached.');
-        } catch (NotFoundException) {
-            // No PSR-18 client: this is the case the message is written for.
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('No PSR-18 HTTP client is available to reach the MCP server at "https://example.com/mcp".');
+
+            TransportFactory::http('https://example.com/mcp', [], null, null, null, null, null);
+        } finally {
+            ClassDiscovery::setStrategies($strategies);
         }
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No PSR-18 HTTP client is available to reach the MCP server at "https://example.com/mcp".');
-
-        TransportFactory::http('https://example.com/mcp', [], null, null, null, null, null);
     }
 
     /**

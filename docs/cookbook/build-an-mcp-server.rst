@@ -45,7 +45,7 @@ tool name and can invoke it with parameters::
 
     namespace App\Mcp;
 
-    use Mcp\Capability\Attribute\McpTool;
+    use Mcp\Server\Capability\Attribute\McpTool;
 
     class CurrentTimeTool
     {
@@ -95,7 +95,7 @@ attribute and return an array of messages::
 
     namespace App\Mcp;
 
-    use Mcp\Capability\Attribute\McpPrompt;
+    use Mcp\Server\Capability\Attribute\McpPrompt;
 
     class TimePrompts
     {
@@ -116,7 +116,7 @@ a URI and a name::
 
     namespace App\Mcp;
 
-    use Mcp\Capability\Attribute\McpResource;
+    use Mcp\Server\Capability\Attribute\McpResource;
 
     class TimeResource
     {

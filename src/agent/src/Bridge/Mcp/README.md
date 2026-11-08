@@ -24,7 +24,7 @@ are non-destructive and idempotent regardless of the other two raw hints.
 Standalone, a toolset is reached through the official `mcp/sdk` client:
 
 ```php
-use Mcp\Client;
+use Mcp\Client\Client;
 use Mcp\Client\Transport\StdioTransport;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Mcp\ClientToolset;
