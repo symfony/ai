@@ -119,7 +119,22 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
      */
     private function describeRegex(?array &$schema, Assert\Regex $constraint): void
     {
-        $schema['pattern'] = $constraint->getHtmlPattern();
+        // an HTML pattern has to match the whole value, a JSON schema pattern only a part of it
+        if (null !== $constraint->htmlPattern) {
+            if ('' !== $constraint->htmlPattern) {
+                $schema['pattern'] = '^(?:'.$constraint->htmlPattern.')$';
+            }
+
+            return;
+        }
+
+        $regex = (string) $constraint->pattern;
+        // JSON schema has no pattern for "must not match" and no modifiers like /i
+        if (!$constraint->match || '' === $regex || $regex[0] !== $regex[-1]) {
+            return;
+        }
+
+        $schema['pattern'] = str_replace('\\'.$regex[0], $regex[0], substr($regex, 1, -1));
     }
 
     /**
