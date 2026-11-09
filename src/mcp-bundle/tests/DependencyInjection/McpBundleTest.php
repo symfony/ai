@@ -25,24 +25,22 @@ use Mcp\Server\Protocol;
 use Mcp\Server\Session\FileSessionLock;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
-use Mcp\Server\Session\Psr16SessionStore;
 use Mcp\Server\Session\SymfonyLockSessionLock;
 use Mcp\Server\Stateless\RequestStateCodec;
 use Mcp\Server\Stateless\StatelessProtocol;
 use Mcp\Server\Subscription\InMemoryNotificationBus;
 use Mcp\Server\Subscription\NotificationBusInterface;
-use Mcp\Server\Subscription\Psr16NotificationBus;
 use Mcp\Server\Subscription\PublishingEventDispatcher;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Attribute\AsMcpApp;
+use Symfony\AI\McpBundle\Cache\CacheStoreFactory;
 use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
 use Symfony\AI\McpBundle\Session\FrameworkSessionStore;
-use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -439,15 +437,15 @@ class McpBundleTest extends TestCase
         $container = $this->buildContainer($this->config(['editors' => ['session' => ['store' => 'cache']]]));
 
         $definition = $container->getDefinition('mcp.server.editors.session.store');
-        $this->assertSame(Psr16SessionStore::class, $definition->getClass());
+        $this->assertSame([CacheStoreFactory::class, 'sessionStore'], $definition->getFactory());
         $this->assertSame('cache.mcp.sessions', (string) $definition->getArgument(0));
         $this->assertSame('mcp-editors-', $definition->getArgument(1));
         $this->assertSame(3600, $definition->getArgument(2));
 
-        // The default pool is auto-created as a PSR-16 wrapper around cache.app.
         $cachePool = $container->getDefinition('cache.mcp.sessions');
-        $this->assertSame(Psr16Cache::class, $cachePool->getClass());
-        $this->assertSame('cache.app', (string) $cachePool->getArgument(0));
+        $this->assertInstanceOf(ChildDefinition::class, $cachePool);
+        $this->assertSame('cache.app', $cachePool->getParent());
+        $this->assertSame(['cache.pool' => [[]], 'kernel.test_state' => [['method' => 'clear']]], $cachePool->getTags());
     }
 
     public function testSessionStoreCacheCustom()
@@ -460,12 +458,12 @@ class McpBundleTest extends TestCase
         ]]]));
 
         $definition = $container->getDefinition('mcp.server.default.session.store');
-        $this->assertSame(Psr16SessionStore::class, $definition->getClass());
+        $this->assertSame([CacheStoreFactory::class, 'sessionStore'], $definition->getFactory());
         $this->assertSame('app.custom_cache', (string) $definition->getArgument(0));
         $this->assertSame('session-', $definition->getArgument(1));
         $this->assertSame(7200, $definition->getArgument(2));
 
-        $this->assertFalse($container->hasDefinition('cache.mcp.sessions'));
+        $this->assertFalse($container->has('cache.mcp.sessions'));
     }
 
     public function testSessionStoreFramework()
@@ -853,7 +851,7 @@ class McpBundleTest extends TestCase
         $arguments = [];
         foreach (['first', 'second'] as $name) {
             $definition = $container->getDefinition(\sprintf('mcp.server.%s.notification_bus', $name));
-            $this->assertSame(Psr16NotificationBus::class, $definition->getClass());
+            $this->assertSame([CacheStoreFactory::class, 'notificationBus'], $definition->getFactory());
             $arguments[$name] = $definition->getArguments();
 
             $this->assertSame('cache.mcp.notifications', (string) $arguments[$name]['$cache']);
@@ -873,8 +871,9 @@ class McpBundleTest extends TestCase
         ]));
 
         $pool = $container->getDefinition('cache.mcp.notifications');
-        $this->assertSame(Psr16Cache::class, $pool->getClass());
-        $this->assertSame('cache.app', (string) $pool->getArgument(0));
+        $this->assertInstanceOf(ChildDefinition::class, $pool);
+        $this->assertSame('cache.app', $pool->getParent());
+        $this->assertSame(['cache.pool' => [[]], 'kernel.test_state' => [['method' => 'clear']]], $pool->getTags());
 
         $container = $this->buildContainer($this->config([
             'default' => ['subscriptions' => ['bus' => 'cache', 'cache_pool' => 'app.my_psr16']],
