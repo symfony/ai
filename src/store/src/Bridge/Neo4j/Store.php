@@ -133,10 +133,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    /**
+     * @param array{batch_size?: int} $options
+     */
     public function drop(array $options = []): void
     {
+        // the database can hold other data, so only the store's nodes are deleted
+        $this->clear($options);
+
         $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
-            'statement' => 'MATCH (n) DETACH DELETE n',
+            'statement' => \sprintf('DROP INDEX %s IF EXISTS', $this->vectorIndexName),
         ]);
     }
 

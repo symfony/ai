@@ -106,17 +106,23 @@ final class StoreTest extends TestCase
 
     public function testStoreCanDrop()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([], [
+        $statements = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$statements): JsonMockResponse {
+            $statements[] = json_decode($options['body'], true)['statement'];
+
+            return new JsonMockResponse([], [
                 'http_code' => 200,
-            ]),
-        ]);
+            ]);
+        });
 
-        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'symfony');
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'chunks', 'document');
 
-        $store->drop();
+        $store->drop(['batch_size' => 500]);
 
-        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame([
+            'MATCH (n:`document`) CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 500 ROWS',
+            'DROP INDEX chunks IF EXISTS',
+        ], $statements);
     }
 
     public function testStoreCanClear()
