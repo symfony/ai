@@ -910,7 +910,6 @@ final class StoreTest extends TestCase
                    ((:semantic_ratio * (1 - (\"embedding\" <-> :embedding))) +
                     (:keyword_ratio * ts_rank(to_tsvector('english', metadata->>'_text'), (plainto_tsquery('english', :search_text_0))))) AS score
             FROM \"embeddings_table\"
-            WHERE to_tsvector('english', metadata->>'_text') @@ (plainto_tsquery('english', :search_text_0))
             ORDER BY score DESC
             LIMIT 5";
 
@@ -935,6 +934,46 @@ final class StoreTest extends TestCase
             ->willReturn([]);
 
         $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test query', 0.7)));
+
+        $this->assertCount(0, $results);
+    }
+
+    public function testQueryWithKeywordOnlyHybridQueryKeepsMatchingDocumentsOnly()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = "SELECT id, \"embedding\" AS embedding, metadata,
+                   ((:semantic_ratio * (1 - (\"embedding\" <-> :embedding))) +
+                    (:keyword_ratio * ts_rank(to_tsvector('english', metadata->>'_text'), (plainto_tsquery('english', :search_text_0))))) AS score
+            FROM \"embeddings_table\"
+            WHERE to_tsvector('english', metadata->>'_text') @@ (plainto_tsquery('english', :search_text_0))
+            ORDER BY score DESC
+            LIMIT 5";
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $statement->expects($this->exactly(4))
+            ->method('bindValue');
+
+        $statement->expects($this->once())
+            ->method('execute');
+
+        $statement->expects($this->once())
+            ->method('fetchAll')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([]);
+
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test query', 0.0)));
 
         $this->assertCount(0, $results);
     }

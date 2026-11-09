@@ -166,6 +166,26 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     }
 
     #[Depends('testAddDocuments')]
+    public function testQueryDocumentsWithHybridQueryFindsVectorMatchesSharingNoKeyword()
+    {
+        if (!self::$store->supports(HybridQuery::class)) {
+            $this->addToAssertionCount(1);
+
+            return;
+        }
+
+        // Vector [0,0,1] matches document 3, while no document mentions "cooking recipes"
+        $results = self::$store->query(new HybridQuery(new Vector([0.0, 0.0, 1.0]), 'cooking recipes', 0.5));
+
+        $foundIds = [];
+        foreach ($results as $result) {
+            $foundIds[] = $result->getId();
+        }
+
+        $this->assertContains(self::DOCUMENT_ID_3, $foundIds, 'HybridQuery should find document 3 by its vector alone');
+    }
+
+    #[Depends('testAddDocuments')]
     public function testCountDocumentsAfterInsert()
     {
         $this->assertCount(3, self::$store);
@@ -174,6 +194,7 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     #[Depends('testQueryDocuments')]
     #[Depends('testQueryDocumentsWithTextQuery')]
     #[Depends('testQueryDocumentsWithHybridQuery')]
+    #[Depends('testQueryDocumentsWithHybridQueryFindsVectorMatchesSharingNoKeyword')]
     #[Depends('testCountDocumentsAfterInsert')]
     public function testRemoveDocuments()
     {
