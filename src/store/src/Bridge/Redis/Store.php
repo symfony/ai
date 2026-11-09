@@ -212,10 +212,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return [];
         }
 
-        $numResults = $results[0];
-
-        // Parse results (skip first element which is the count)
-        for ($i = 1; $i <= $numResults; $i += 2) {
+        // Parse results (first element is the total count, ignored)
+        for ($i = 1, $count = \count($results); $i + 1 < $count; $i += 2) {
             // $docKey = $results[$i];
             $docData = $results[$i + 1];
 
