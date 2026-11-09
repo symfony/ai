@@ -75,6 +75,23 @@ final class ModelClientTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testItHonorsCustomBaseUrl()
+    {
+        $httpClient = new MockHttpClient(static function (string $method, string $url): MockResponse {
+            self::assertSame('https://api.eu.mistral.ai/v1/ocr', $url);
+
+            return new JsonMockResponse(['pages' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'sk-test-key', 'https://api.eu.mistral.ai/');
+        $client->request(new Ocr('mistral-ocr-latest'), [
+            'type' => 'document_url',
+            'document_url' => 'https://example.com/document.pdf',
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     public function testItThrowsExceptionForStringPayload()
     {
         $client = new ModelClient(new MockHttpClient(), 'sk-test-key');

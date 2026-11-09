@@ -1118,6 +1118,9 @@ final class AiBundle extends AbstractBundle
                     $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.mistral')),
                     null,
                     new Reference('event_dispatcher'),
+                    'mistral',
+                    null,
+                    $platform['base_url'],
                 ])
                 ->addTag('ai.platform', ['name' => 'mistral']);
 
