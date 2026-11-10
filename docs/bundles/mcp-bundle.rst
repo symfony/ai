@@ -606,6 +606,24 @@ The ``Host`` header is still checked against ``allowed_hosts``. ``allowed_origin
 CORS headers to the response, so a browser client also needs them from your application, for
 example with NelmioCorsBundle.
 
+Request Body Size
+.................
+
+The HTTP transport rejects, with a ``413`` response, a request body larger than the limit of the SDK.
+Tools that receive files or other big payloads as arguments (base64 adds about a third on top of the
+raw size) can raise the limit per server, in bytes:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            default:
+                http:
+                    max_body_bytes: 20971520 # 20 MiB
+
+PHP's ``post_max_size`` and the limits of the web server or reverse proxy in front of the
+application (like ``client_max_body_size`` on nginx) still apply.
+
 Session Storage
 ...............
 

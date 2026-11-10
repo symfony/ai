@@ -32,6 +32,7 @@ final class McpController
         private readonly StreamFactoryInterface $streamFactory,
         private readonly MiddlewareFactory $middlewareFactory,
         private readonly ?LoggerInterface $logger = null,
+        private readonly ?int $maxBodyBytes = null,
     ) {
     }
 
@@ -43,6 +44,7 @@ final class McpController
             $this->streamFactory,
             logger: $this->logger,
             middleware: $this->middlewareFactory->create(),
+            maxBodyBytes: $this->maxBodyBytes ?? StreamableHttpTransport::DEFAULT_MAX_BODY_BYTES,
         );
 
         $psrResponse = $this->server->run($transport);
