@@ -112,9 +112,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
 
         $ignored = $context[AbstractNormalizer::IGNORED_ATTRIBUTES] ?? [];
 
-        $toolStatus = $data instanceof ToolCallMessage ? ['isError' => $data->isError()] : [];
-
-        return array_diff_key($toolStatus + [
+        $normalized = [
             $context['identifier'] ?? 'id' => $data->getId()->toRfc4122(),
             'type' => $data::class,
             'content' => $content,
@@ -122,7 +120,13 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             'toolCall' => $data instanceof ToolCallMessage ? $this->normalizePart($data->getToolCall()) : null,
             'metadata' => \in_array('metadata', $ignored, true) ? [] : $this->metadataNormalizer->normalize($data->getMetadata()->all(), $format, $context),
             'addedAt' => $data->getId()->getDateTime()->getTimestamp(),
-        ], array_flip($ignored));
+        ];
+
+        if ($data instanceof ToolCallMessage) {
+            $normalized['isError'] = $data->isError();
+        }
+
+        return array_diff_key($normalized, array_flip($ignored));
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
