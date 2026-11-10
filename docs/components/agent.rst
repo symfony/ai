@@ -910,8 +910,8 @@ generic error message, which doesn't expose the details of the error.
 ``FaultTolerantToolbox`` marks failed executions with ``ToolResult::isError()`` without
 changing their result payload. The status remains available on the corresponding
 ``ToolCallMessage::isError()``, including after serialization with ``MessageNormalizer``.
-Use ``ToolCallMessage::withIsError()`` to return a copy with an explicit error status
-without changing its content.
+Use ``ToolCallMessage::setIsError()`` to change the error status without changing
+its content.
 
 .. _agent-tool-sources:
 

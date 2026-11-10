@@ -45,12 +45,9 @@ final class ToolCallMessage implements MessageInterface
         return $this->isError;
     }
 
-    public function withIsError(bool $isError): self
+    public function setIsError(bool $isError): void
     {
-        $clone = clone $this;
-        $clone->isError = $isError;
-
-        return $clone;
+        $this->isError = $isError;
     }
 
     public function getRole(): Role

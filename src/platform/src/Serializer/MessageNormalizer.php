@@ -146,7 +146,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             SystemMessage::class => new SystemMessage($parts[0] ?? $data['content'] ?? ''),
             UserMessage::class => new UserMessage(...$parts),
             AssistantMessage::class => new AssistantMessage(...([] !== $parts ? $parts : $this->denormalizeLegacyAssistantParts($data))),
-            ToolCallMessage::class => $this->denormalizeToolCallMessage($data, $parts)->withIsError($data['isError'] ?? false),
+            ToolCallMessage::class => $this->denormalizeToolCallMessage($data, $parts),
             default => throw new InvalidArgumentException(\sprintf('Unknown message type "%s".', $data['type'])),
         };
 
@@ -256,13 +256,16 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
     private function denormalizeToolCallMessage(array $data, array $parts): ToolCallMessage
     {
         if (isset($data['toolCall'])) {
-            return new ToolCallMessage($this->denormalizeToolCall($data['toolCall']), ...$parts);
+            $message = new ToolCallMessage($this->denormalizeToolCall($data['toolCall']), ...$parts);
+        } else {
+            $message = new ToolCallMessage(
+                $this->denormalizeToolCall($data['toolsCalls']),
+                ...([] !== $parts ? $parts : [new Text($data['content'] ?? '')]),
+            );
         }
+        $message->setIsError($data['isError'] ?? false);
 
-        return new ToolCallMessage(
-            $this->denormalizeToolCall($data['toolsCalls']),
-            ...([] !== $parts ? $parts : [new Text($data['content'] ?? '')]),
-        );
+        return $message;
     }
 
     /**
