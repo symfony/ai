@@ -32,7 +32,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-24T22:11:28Z"
+                        "2026-11-03T21:09:21Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -41,7 +41,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-24T22:11:29Z"
+                        "2026-11-03T21:09:22Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -50,7 +50,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-24T22:11:27Z"
+                        "2026-11-03T21:09:21Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -59,28 +59,28 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-24T22:11:28Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-11-03T21:09:21Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-1f611ef248fcbb246d06cefda62125e3-e681cc01c66bbfb9-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-ac64b25d3b3dfd0ef5c3c6f2cf09165a-641205aa4f5d3a1c-01"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
                     "content-security-policy": [
                         "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -90,15 +90,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CfP2kavCedrfCTytbsy9p\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_013Y1xT8ork7JeAVFPz1zB1Y\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"order\",\"number\":\"ORD-12345\",\"userResponsible\":\"John Doe\"}},\"caller\":{\"type\":\"direct\"}}],\"container\":null,\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":772,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":86,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggNWwCBKsAhzops3y5s\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01FkBhGDTEZm5eheh5g6vdft\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"order\",\"number\":\"ORD-12345\",\"userResponsible\":\"John Doe\"}},\"caller\":{\"type\":\"direct\"}}],\"container\":null,\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":772,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":86,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "6445c1bba3ca4c925e113bc895a8a02b",
-                "signature_v2": "22cb1342954c3ae059b0482825cf219c",
+                "signature": "027f5647c289037d5080a9dff2cf5e2c",
+                "signature_v2": "5cb181663fd04f2fb56b3905fd738a9b",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -110,7 +110,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"Search for order number ORD-12345 with user responsible John Doe\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_013Y1xT8ork7JeAVFPz1zB1Y\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"order\",\"number\":\"ORD-12345\",\"userResponsible\":\"John Doe\"}}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_013Y1xT8ork7JeAVFPz1zB1Y\",\"content\":\"Searching for order: ORD-12345 (User: John Doe) Found 1 result.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful search assistant. Help users search for different resources.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"tools\":[{\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Search for order number ORD-12345 with user responsible John Doe\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01FkBhGDTEZm5eheh5g6vdft\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"order\",\"number\":\"ORD-12345\",\"userResponsible\":\"John Doe\"}}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01FkBhGDTEZm5eheh5g6vdft\",\"content\":\"Searching for order: ORD-12345 (User: John Doe) Found 1 result.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful search assistant. Help users search for different resources.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -125,7 +125,7 @@
                         "4999000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-24T22:11:30Z"
+                        "2026-11-03T21:09:23Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -134,7 +134,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-24T22:11:31Z"
+                        "2026-11-03T21:09:24Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -143,7 +143,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-24T22:11:29Z"
+                        "2026-11-03T21:09:22Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -152,28 +152,28 @@
                         "5999000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-24T22:11:30Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-11-03T21:09:23Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-4b39815cf758bd8c922c94d942a9d9d5-06755dbe82b0f491-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-c8aad83a7835b0de9144917d81e94319-48a0c4edb9b80e70-01"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
                     "content-security-policy": [
                         "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -183,7 +183,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CfP2kjEH5xjJesrMCQqoH\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I found 1 order matching your search criteria:\\n- **Order Number**: ORD-12345\\n- **User Responsible**: John Doe\\n\\nThe search returned 1 result for this order.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":887,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":48,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggNeDFDnQxh6ViM4RSL\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I found 1 order matching your search criteria - order number ORD-12345 with John Doe as the responsible user.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":887,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":32,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
             }
         },
         {
@@ -218,7 +218,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-24T22:11:32Z"
+                        "2026-11-03T21:09:25Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -227,7 +227,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-24T22:11:33Z"
+                        "2026-11-03T21:09:25Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -236,7 +236,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-24T22:11:31Z"
+                        "2026-11-03T21:09:24Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -245,28 +245,28 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-24T22:11:32Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-11-03T21:09:25Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-e31ff0d071e2712278e1dda377f6eb9d-db49273c99025151-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-c2a9fb41cb1f0b72fc0906a244160d78-4f753f38de712411-01"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
                     "content-security-policy": [
                         "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -276,15 +276,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CfP2ktFzTz2NdTHtceja1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_019PwKDv19Ddoh1y7HjJJzoX\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"purchase_contract\",\"contractNumber\":\"PC-67890\",\"subsidiary\":\"Acme Corp\"}},\"caller\":{\"type\":\"direct\"}}],\"container\":null,\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":771,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":85,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggNmLcrE5EPkMaPqsv7\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_016HppP3vnFbbWFEFhxfqroQ\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"purchase_contract\",\"contractNumber\":\"PC-67890\",\"subsidiary\":\"Acme Corp\"}},\"caller\":{\"type\":\"direct\"}}],\"container\":null,\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":771,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":85,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "c503ebb5a893021e5d00a8852bd312c4",
-                "signature_v2": "4eb3e3fa10feee57751a7a3f157218db",
+                "signature": "559627da33ab5dc90758da5b9571ebba",
+                "signature_v2": "93668008cd6357bd69f507ab225d2f3d",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -296,7 +296,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"Search for purchase contract number PC-67890 with subsidiary Acme Corp\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_019PwKDv19Ddoh1y7HjJJzoX\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"purchase_contract\",\"contractNumber\":\"PC-67890\",\"subsidiary\":\"Acme Corp\"}}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_019PwKDv19Ddoh1y7HjJJzoX\",\"content\":\"Searching for purchase contract: PC-67890 (Subsidiary: Acme Corp) Found 1 result.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful search assistant. Help users search for different resources.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"tools\":[{\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Search for purchase contract number PC-67890 with subsidiary Acme Corp\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_016HppP3vnFbbWFEFhxfqroQ\",\"name\":\"search\",\"input\":{\"filter\":{\"type\":\"purchase_contract\",\"contractNumber\":\"PC-67890\",\"subsidiary\":\"Acme Corp\"}}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_016HppP3vnFbbWFEFhxfqroQ\",\"content\":\"Searching for purchase contract: PC-67890 (Subsidiary: Acme Corp) Found 1 result.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful search assistant. Help users search for different resources.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -311,7 +311,7 @@
                         "4999000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-24T22:11:34Z"
+                        "2026-11-03T21:09:26Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -320,7 +320,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-24T22:11:35Z"
+                        "2026-11-03T21:09:27Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -329,7 +329,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-24T22:11:33Z"
+                        "2026-11-03T21:09:26Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -338,28 +338,28 @@
                         "5999000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-24T22:11:34Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-11-03T21:09:26Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-7fd4ca07545028645d0e263b176766dd-48b9e76c03c728a0-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-043ee235058889be5b90658dbd9b04a3-b4c0c2de3dd379c9-01"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
                     "content-security-policy": [
                         "default-src 'none'; frame-ancestors 'none'"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -369,7 +369,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CfP2m1tditsxCEGWoiysX\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I found 1 purchase contract matching your search criteria:\\n- **Contract Number**: PC-67890\\n- **Subsidiary**: Acme Corp\\n\\nThe search was successful and returned 1 result for this purchase contract.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":886,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":51,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggNt1hk1ZU6V3pAEFmA\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I found 1 purchase contract matching your search criteria for contract number **PC-67890** with subsidiary **Acme Corp**.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":886,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":31,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
             }
         },
         {
@@ -404,7 +404,7 @@
                         "nosniff"
                     ],
                     "access-control-expose-headers": [
-                        "X-Request-ID",
+                        "X-Request-ID, Server-Timing-Total",
                         "CF-Ray",
                         "CF-Ray"
                     ],
@@ -418,19 +418,19 @@
                         "2020-10-01"
                     ],
                     "x-ratelimit-limit-requests": [
-                        "10000"
+                        "5000"
                     ],
                     "x-ratelimit-limit-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-remaining-requests": [
-                        "9999"
+                        "4999"
                     ],
                     "x-ratelimit-remaining-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-reset-requests": [
-                        "6ms"
+                        "12ms"
                     ],
                     "x-ratelimit-reset-tokens": [
                         "0s"
@@ -443,15 +443,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"id\": \"resp_03b271613c91cb8e006ab5a0191fa487d2aecb03da98866d1f\",\n  \"object\": \"response\",\n  \"created_at\": 1790287897,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1790287899,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_03b271613c91cb8e006ab5a01a571087d2a66469e3b35b9a5e\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABqtaAbqs64lFVcobVyizhn8Y6NOM-GH_yF_8ximEw-U6a1_sF7vlOtls1BSb8n8kk2waPnD68sK5-wVDQu-sOBzFimo0x4CKowxI507JJ3HJvJHdgvz1LF_HSVGSIn5vV_YBCu7np9dwxcwxcAZnno_KYiRV9kGlvj3M-xwajpMr0ZO1PTtrUnG_AeHfb4T7fTkEW3BP2iHVx6TOeX0RScuCskcdBJI3EM0YHUvFSAaggh4EO7kQz3gXxJBxu8ZQVS4uNR-Jb6SXQwdXSOCppvZ2elqpTB3f__dd85li1Vc2KnyIk95NK0v6sKQzDv9QIc_lFChh-FJykTc2raoTlehQZcbHvO2rpuKvADjSMVBzizwvbbC_XYaxqyviO13OYtHa6KPXJ1fgOtvgXcmu6Oa1-KMIcOkso_bTgfTQ90Qk2V0-jvRSJj6USxz4Pvji2HRGYtTxU-UMSCHQ-dlNGnyiRIw7_VUcq9UJfoyFzIndfP0LOc4R2T69nc8dS5SQAwibTRihaZ-jz807SbrmAnp9djM6L7nt8ZfcgdfIYps-rA68uS1EOfh55KkbmQWP3GyO-7olHYTUk6C8c9t-I3hrYgsSeF4XpGn6BYNC2mXLQHmXgKUjLjUu_wbVrYwv0_t4gRhopxZBqChPuv9PmIX1a2btVXsdXkJd5bfSnhsoSn5P1rs2pE8r0FD6kCgve-A1p5YrEN5qnOOYzs5KOp3TxW39vM8NY3TkUPnUkBal87pBrcRETZQLQfIxxtheiQe-7piLd84MLLYPnL7nSll1PRuFxzKhqW5BXYFPeH6nlO7xepX6H6zGqWfvIZPokzZEOJ7HFfFkj3E6lUufXs7ZtKTez7n52rW2vsLtRj7Wu-3jvazLLzcLpx3teEluWNQ8QwP457Njn3Y6dihEvHuQ7tE_l4zqN3ay3uGryeTE_3bc6NcutfmX-E6pOtaxWi7v_E2ALdp7s5bIqbtE6Uor7a7_E4-pEmfR87n7BJvOgOdxFXyEdSHTNiT8UCUlTd6l47sjkD1kFgaul_gWVfAByIDjT0HnXb4gaSurQELGl3maReSIC3psmH6QLuNC_lKKPJMT9VgxtvT0mcz3to4BH8dKQKwwkdMcpQhuOfrNBLr2crotlJHBcFoL8wFsUgXo61q8wTrcfbcVQrTgIt5pOP10LsW1GoliIQ3Jx3hZDVHeZAZ4ZYAYCe7vGkLDkiR19Bd7yJUfeKlbU6gDccdiBUsivYnDHDtMG1p6aqLUc0PNjlXZVooeSwjEZ4akbR5IFxhReC6CL9oMgir8Ig09etGTZDtt25rddNbtpxxkKC-3X6hrMnHqp5fZxfyl6oIwD6hwLZ6lTuYi4VISrJdJbUxa1_xgn6AuNGVgacFGRZtUzZ3RtCUkPBO6R1YtzfyHXcVpNqpIvUM3BZY4ozIkhkhhhelqyxdrtX7AkTk3AiFBZv6Jki23I-lk-l3_wY7eZ2rXH5A_8ClU3YgCLoZ2v4Sb7l5_pc-OKibRRThrH5JITULeQh4HAiSC7zQ9OoNyz3thmoJyUgBq2yBaUXqdsoEacxKFqGvixhK2Eu5ZX4ieWIoXcvRLWb9xjfxjfgj_fEwnycli6oLvt8UaSABYsgDNEF2Wg-GZMAdAyT9UiEuSBBoLkZw9jU9yYbMgTNi1Mpw5AHo9biu427MZIyh28yHIlvh4qwvw5ruL8kwxL9ooP1599gKw105dJRzEJY97iZQsJ3yPmrncWP18Dnds3OTqY8gm7bT2gRm6QdwNhQ-WY=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"fc_03b271613c91cb8e006ab5a01b1c3c87d29b5190a73583620e\",\n      \"type\": \"function_call\",\n      \"status\": \"completed\",\n      \"arguments\": \"{\\\"filter\\\":{\\\"type\\\":\\\"order\\\",\\\"number\\\":\\\"ORD-12345\\\",\\\"userResponsible\\\":\\\"John Doe\\\",\\\"departureDate\\\":null}}\",\n      \"call_id\": \"call_dli1pQ2Lx53WUM2iEXhhil0b\",\n      \"name\": \"search\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 144,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 135,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 64\n    },\n    \"total_tokens\": 279\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+                "body": "{\n  \"id\": \"resp_0f8c904f6295638d006aea4d887a0487d28b1c6cc8b813cc3b\",\n  \"object\": \"response\",\n  \"created_at\": 1793740168,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1793740171,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_0f8c904f6295638d006aea4d8a7eec87d2b7a20889c3b4e349\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq6k2MrfTrSrHkJcquRUZt2QgZcdXJI7nW8AQ96WXVfMJGUlCX_hHWVzSJJtxe2lwZQ40N2-2-tqKEZuL2yuE_T1SinQevFqPB8YgikOKAIs6DkJMLI5g9e5Ffbpwt3A35HvAsNWn6vHPgJlZUf5dDVdjyAx2E4ZFEjbPyCCsrcXnpz_wIIRrbsLoKaiUs9nYxMhMifEaG3iJwiwu7WFR6LLaXt39ypUH9LZWmEltDX_JKOslMD8Q5BEIZITsUAXAz0y_uoUwk9qTOLPpw7x43emzJyel7v0jJDf0_OQpTdJlWB8oyWPWvCsZnJS7lL7QtXWY6tgq128kLcFWwyjF3NcWQESE-vDGjV0GQpQAnBDvrcCbvwAlA4veJpL7WuV_d2QSSCYGawDdogGW1dZsXCAjf6Q4-x22rdS0xzqONGBLtapQOs4otXRiVkywmPnlEqw2D-OIteIwRi1Fv27Dxjht-mJQbZ4ex54sYjzt1hBevSybgFMkkq84fl1WRUMtJQWHz0DFlZ9BPIo0OcRW-ttcqxtdYvJfAuRzqZ3WMs6j6tLIxjCIVYJBYjZluyfMe7vcOvggAui45bV95ZHcybIfJtumsYFpuu6FMYUqXsy8SNBZ3ICzUku8lKJYvbojSpEc8Y1eSsbi2C74VqgHN8lwA5yVE-TpDhcoPzMwPfTokf-6wp0OZo0XzqzaA7tqH-khvY4e5cSG4LKP76nZcCf_bpRLJbpYwAXYlBoTd6gqW_KGm7E8yr0gOaqYpZc2hHyNd7pzRfLKGqja3-onAXnKBquLazrehtxsKaxjoN00a4ycUjlXub4t1aXaSbeziqJJ9v-cK7BSczRGOHd0efNS4hG3hqx6pqtPYkBnbHa_ByRw0LDkh_9L6ukBvzLCMSszhblQkX6omSTog6KMYQ0M5TAjKk57B1aBSX0dk64nglXEFHyV2szTaq9Pd66bM7E_VzGHFBw-_nhx92qCXJz67TKvzigUeu3G3xN0hG0Y2XjUXiFN8O6mLxBBxJ6zhyza0KDD2yIuwS1bpKAkyfMgfEYZK2HPDj4x5uh6NxT1qy5yqGkTWO3UWuI1S1btc9OD6WrT12HKqIAGJtBuknu867PWXxMvsWNK8eUxN4koeoACafKsLwyxcdDGQaNfWDVz6TvZSZqJ6cTQ9z1Z9QfByUpCymyzjRKNkWf0kMtBxCJk8QLL-aspQ39BA2duM69HKxOGvds6VeEwqAeZI4qyemGbtyhDb-8dDQ2MfxClprZZCVkvND-ejhpzcgFO_0kcxntVC7ZD32I5WeImljL-9SZeH46HZPRbIcQf1l8XsoN8s08gqOOUrOd2JjOdaV0GhU7c37Zc6F89-Bbj9VJ5Ft731aLfmdlX3BDKY_B-bPivcshCrthQyj1YKH-lOXyVhkoArt7E5LCFXI_T_s5a--eKXAJyp_todx6N4h9ZsTyvyG8nnAksLV-Ov79nBKgCPQIAhA-pkrZawokjU43-LXZt1JP_SFTuGvphqKMTE9Hd_IjJwztcqPaZV8yVbVvL5BVI5tweFJCM80Pb0NJJgfF_NRajXaAfvGMPBvdSdiPOFDUtK1wdkxUBkjqft-9Sekk-GxdmYYw7pjXQw_O97K4ykSDTdXR1PPacYkoWxJJbJ5quv4TzbbyoODj3KCfoLRhA4agkai3vKINaaao-4XgmgjfgNl8blevM0HNdQoLjbY28-LeRLAnqUebcRVeg3y3CKT0d2cVazx-a6LXvfAVLY-ubRT2wvduqCE8Ur_Cf_YCXEvsnaLRLl064SFczJxjejXpeIlvP8raPQrLo5FfizLyTO3J08xbcNHmmsFgs40LGT8VLV9r-RNRp011pz8Lb4QMd9nHQP4IQyBuN7_b4qdO1Bk1diasNdTuFffC4UkTAXpvsKemp9kVbHt8-TLn3cdmzCRgQljPfKjUWL85V91d_o00fk16x3SMwCzI5_chKjRcQZbx_zOVpwheRzAV7Sbi0joajk-_K_rK-VedSlIBaKSPyJ9TJJj9fa1uQncvjfmU_NW6pcUKaE03E3un_JpdYChsv9cM49uIvFH63eUtzuRhnmK-H_x9ioC9yDLf7dxs_-cvTr-QQPBMc0EpvCgS8G1FGk2Jga6sS4t5uJCexK7a_tydWbYxihJesFbeD4JErriY59zGqhRsumFVQoyTd8gRJf9wqusk8te2gBt9TD4odw-vibgoGuWCtZPYHDPwYLcvuN7u3XI95nGrCBF9xWkh7Q9DtINApjNxF_OS92vMl3TXLlbjZfTYbtY5DxkTF9BcgX3pUMZWWp-gv8Gwywro1fNAXfXDe-GaJsj_fu8OVsI_Dw3oDFQtUsdN7LVx90YeukWDLbOv6ChIbfLMRwI4KawM-VHCZG712wwBCtt-U9RaR9MXghEtAr8wTK4Fs6FLmrBArWUQDKQDN9fTPMSJV4RvBjiZlMfyt8YStjKWr895_y_gj5iJaV7rOgfD2jNxK90aos4e3c4ZchDOwob7keMLjkAIO8nA==\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"fc_0f8c904f6295638d006aea4d8b727487d28b194c5e514637e2\",\n      \"type\": \"function_call\",\n      \"status\": \"completed\",\n      \"arguments\": \"{\\\"filter\\\":{\\\"type\\\":\\\"order\\\",\\\"number\\\":\\\"ORD-12345\\\",\\\"userResponsible\\\":\\\"John Doe\\\",\\\"departureDate\\\":null}}\",\n      \"call_id\": \"call_WdvQ43595lLPKhr9fPsdgQpO\",\n      \"name\": \"search\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 144,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 117,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 64\n    },\n    \"total_tokens\": 261\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/responses",
-                "signature": "edc501478982c8f3d86535f64b45ee5e",
-                "signature_v2": "6b01bab69bcfe5b18578e1c6b8857d66",
+                "signature": "699f615a92f0c90868d8386fba0fa640",
+                "signature_v2": "e15778b7eb0a7c31f291c07e8aaa7300",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -460,7 +460,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"parameters\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Search for order number ORD-12345 with user responsible John Doe\"},{\"id\":\"rs_03b271613c91cb8e006ab5a01a571087d2a66469e3b35b9a5e\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqtaAbqs64lFVcobVyizhn8Y6NOM-GH_yF_8ximEw-U6a1_sF7vlOtls1BSb8n8kk2waPnD68sK5-wVDQu-sOBzFimo0x4CKowxI507JJ3HJvJHdgvz1LF_HSVGSIn5vV_YBCu7np9dwxcwxcAZnno_KYiRV9kGlvj3M-xwajpMr0ZO1PTtrUnG_AeHfb4T7fTkEW3BP2iHVx6TOeX0RScuCskcdBJI3EM0YHUvFSAaggh4EO7kQz3gXxJBxu8ZQVS4uNR-Jb6SXQwdXSOCppvZ2elqpTB3f__dd85li1Vc2KnyIk95NK0v6sKQzDv9QIc_lFChh-FJykTc2raoTlehQZcbHvO2rpuKvADjSMVBzizwvbbC_XYaxqyviO13OYtHa6KPXJ1fgOtvgXcmu6Oa1-KMIcOkso_bTgfTQ90Qk2V0-jvRSJj6USxz4Pvji2HRGYtTxU-UMSCHQ-dlNGnyiRIw7_VUcq9UJfoyFzIndfP0LOc4R2T69nc8dS5SQAwibTRihaZ-jz807SbrmAnp9djM6L7nt8ZfcgdfIYps-rA68uS1EOfh55KkbmQWP3GyO-7olHYTUk6C8c9t-I3hrYgsSeF4XpGn6BYNC2mXLQHmXgKUjLjUu_wbVrYwv0_t4gRhopxZBqChPuv9PmIX1a2btVXsdXkJd5bfSnhsoSn5P1rs2pE8r0FD6kCgve-A1p5YrEN5qnOOYzs5KOp3TxW39vM8NY3TkUPnUkBal87pBrcRETZQLQfIxxtheiQe-7piLd84MLLYPnL7nSll1PRuFxzKhqW5BXYFPeH6nlO7xepX6H6zGqWfvIZPokzZEOJ7HFfFkj3E6lUufXs7ZtKTez7n52rW2vsLtRj7Wu-3jvazLLzcLpx3teEluWNQ8QwP457Njn3Y6dihEvHuQ7tE_l4zqN3ay3uGryeTE_3bc6NcutfmX-E6pOtaxWi7v_E2ALdp7s5bIqbtE6Uor7a7_E4-pEmfR87n7BJvOgOdxFXyEdSHTNiT8UCUlTd6l47sjkD1kFgaul_gWVfAByIDjT0HnXb4gaSurQELGl3maReSIC3psmH6QLuNC_lKKPJMT9VgxtvT0mcz3to4BH8dKQKwwkdMcpQhuOfrNBLr2crotlJHBcFoL8wFsUgXo61q8wTrcfbcVQrTgIt5pOP10LsW1GoliIQ3Jx3hZDVHeZAZ4ZYAYCe7vGkLDkiR19Bd7yJUfeKlbU6gDccdiBUsivYnDHDtMG1p6aqLUc0PNjlXZVooeSwjEZ4akbR5IFxhReC6CL9oMgir8Ig09etGTZDtt25rddNbtpxxkKC-3X6hrMnHqp5fZxfyl6oIwD6hwLZ6lTuYi4VISrJdJbUxa1_xgn6AuNGVgacFGRZtUzZ3RtCUkPBO6R1YtzfyHXcVpNqpIvUM3BZY4ozIkhkhhhelqyxdrtX7AkTk3AiFBZv6Jki23I-lk-l3_wY7eZ2rXH5A_8ClU3YgCLoZ2v4Sb7l5_pc-OKibRRThrH5JITULeQh4HAiSC7zQ9OoNyz3thmoJyUgBq2yBaUXqdsoEacxKFqGvixhK2Eu5ZX4ieWIoXcvRLWb9xjfxjfgj_fEwnycli6oLvt8UaSABYsgDNEF2Wg-GZMAdAyT9UiEuSBBoLkZw9jU9yYbMgTNi1Mpw5AHo9biu427MZIyh28yHIlvh4qwvw5ruL8kwxL9ooP1599gKw105dJRzEJY97iZQsJ3yPmrncWP18Dnds3OTqY8gm7bT2gRm6QdwNhQ-WY=\",\"summary\":[]},{\"arguments\":\"{\\u0022filter\\u0022:{\\u0022type\\u0022:\\u0022order\\u0022,\\u0022number\\u0022:\\u0022ORD-12345\\u0022,\\u0022userResponsible\\u0022:\\u0022John Doe\\u0022,\\u0022departureDate\\u0022:null}}\",\"call_id\":\"call_dli1pQ2Lx53WUM2iEXhhil0b\",\"name\":\"search\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_dli1pQ2Lx53WUM2iEXhhil0b\",\"output\":\"Searching for order: ORD-12345 (User: John Doe) Found 1 result.\"}],\"instructions\":\"You are a helpful search assistant. Help users search for different resources.\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"parameters\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Search for order number ORD-12345 with user responsible John Doe\"},{\"id\":\"rs_0f8c904f6295638d006aea4d8a7eec87d2b7a20889c3b4e349\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq6k2MrfTrSrHkJcquRUZt2QgZcdXJI7nW8AQ96WXVfMJGUlCX_hHWVzSJJtxe2lwZQ40N2-2-tqKEZuL2yuE_T1SinQevFqPB8YgikOKAIs6DkJMLI5g9e5Ffbpwt3A35HvAsNWn6vHPgJlZUf5dDVdjyAx2E4ZFEjbPyCCsrcXnpz_wIIRrbsLoKaiUs9nYxMhMifEaG3iJwiwu7WFR6LLaXt39ypUH9LZWmEltDX_JKOslMD8Q5BEIZITsUAXAz0y_uoUwk9qTOLPpw7x43emzJyel7v0jJDf0_OQpTdJlWB8oyWPWvCsZnJS7lL7QtXWY6tgq128kLcFWwyjF3NcWQESE-vDGjV0GQpQAnBDvrcCbvwAlA4veJpL7WuV_d2QSSCYGawDdogGW1dZsXCAjf6Q4-x22rdS0xzqONGBLtapQOs4otXRiVkywmPnlEqw2D-OIteIwRi1Fv27Dxjht-mJQbZ4ex54sYjzt1hBevSybgFMkkq84fl1WRUMtJQWHz0DFlZ9BPIo0OcRW-ttcqxtdYvJfAuRzqZ3WMs6j6tLIxjCIVYJBYjZluyfMe7vcOvggAui45bV95ZHcybIfJtumsYFpuu6FMYUqXsy8SNBZ3ICzUku8lKJYvbojSpEc8Y1eSsbi2C74VqgHN8lwA5yVE-TpDhcoPzMwPfTokf-6wp0OZo0XzqzaA7tqH-khvY4e5cSG4LKP76nZcCf_bpRLJbpYwAXYlBoTd6gqW_KGm7E8yr0gOaqYpZc2hHyNd7pzRfLKGqja3-onAXnKBquLazrehtxsKaxjoN00a4ycUjlXub4t1aXaSbeziqJJ9v-cK7BSczRGOHd0efNS4hG3hqx6pqtPYkBnbHa_ByRw0LDkh_9L6ukBvzLCMSszhblQkX6omSTog6KMYQ0M5TAjKk57B1aBSX0dk64nglXEFHyV2szTaq9Pd66bM7E_VzGHFBw-_nhx92qCXJz67TKvzigUeu3G3xN0hG0Y2XjUXiFN8O6mLxBBxJ6zhyza0KDD2yIuwS1bpKAkyfMgfEYZK2HPDj4x5uh6NxT1qy5yqGkTWO3UWuI1S1btc9OD6WrT12HKqIAGJtBuknu867PWXxMvsWNK8eUxN4koeoACafKsLwyxcdDGQaNfWDVz6TvZSZqJ6cTQ9z1Z9QfByUpCymyzjRKNkWf0kMtBxCJk8QLL-aspQ39BA2duM69HKxOGvds6VeEwqAeZI4qyemGbtyhDb-8dDQ2MfxClprZZCVkvND-ejhpzcgFO_0kcxntVC7ZD32I5WeImljL-9SZeH46HZPRbIcQf1l8XsoN8s08gqOOUrOd2JjOdaV0GhU7c37Zc6F89-Bbj9VJ5Ft731aLfmdlX3BDKY_B-bPivcshCrthQyj1YKH-lOXyVhkoArt7E5LCFXI_T_s5a--eKXAJyp_todx6N4h9ZsTyvyG8nnAksLV-Ov79nBKgCPQIAhA-pkrZawokjU43-LXZt1JP_SFTuGvphqKMTE9Hd_IjJwztcqPaZV8yVbVvL5BVI5tweFJCM80Pb0NJJgfF_NRajXaAfvGMPBvdSdiPOFDUtK1wdkxUBkjqft-9Sekk-GxdmYYw7pjXQw_O97K4ykSDTdXR1PPacYkoWxJJbJ5quv4TzbbyoODj3KCfoLRhA4agkai3vKINaaao-4XgmgjfgNl8blevM0HNdQoLjbY28-LeRLAnqUebcRVeg3y3CKT0d2cVazx-a6LXvfAVLY-ubRT2wvduqCE8Ur_Cf_YCXEvsnaLRLl064SFczJxjejXpeIlvP8raPQrLo5FfizLyTO3J08xbcNHmmsFgs40LGT8VLV9r-RNRp011pz8Lb4QMd9nHQP4IQyBuN7_b4qdO1Bk1diasNdTuFffC4UkTAXpvsKemp9kVbHt8-TLn3cdmzCRgQljPfKjUWL85V91d_o00fk16x3SMwCzI5_chKjRcQZbx_zOVpwheRzAV7Sbi0joajk-_K_rK-VedSlIBaKSPyJ9TJJj9fa1uQncvjfmU_NW6pcUKaE03E3un_JpdYChsv9cM49uIvFH63eUtzuRhnmK-H_x9ioC9yDLf7dxs_-cvTr-QQPBMc0EpvCgS8G1FGk2Jga6sS4t5uJCexK7a_tydWbYxihJesFbeD4JErriY59zGqhRsumFVQoyTd8gRJf9wqusk8te2gBt9TD4odw-vibgoGuWCtZPYHDPwYLcvuN7u3XI95nGrCBF9xWkh7Q9DtINApjNxF_OS92vMl3TXLlbjZfTYbtY5DxkTF9BcgX3pUMZWWp-gv8Gwywro1fNAXfXDe-GaJsj_fu8OVsI_Dw3oDFQtUsdN7LVx90YeukWDLbOv6ChIbfLMRwI4KawM-VHCZG712wwBCtt-U9RaR9MXghEtAr8wTK4Fs6FLmrBArWUQDKQDN9fTPMSJV4RvBjiZlMfyt8YStjKWr895_y_gj5iJaV7rOgfD2jNxK90aos4e3c4ZchDOwob7keMLjkAIO8nA==\",\"summary\":[]},{\"arguments\":\"{\\u0022filter\\u0022:{\\u0022type\\u0022:\\u0022order\\u0022,\\u0022number\\u0022:\\u0022ORD-12345\\u0022,\\u0022userResponsible\\u0022:\\u0022John Doe\\u0022,\\u0022departureDate\\u0022:null}}\",\"call_id\":\"call_WdvQ43595lLPKhr9fPsdgQpO\",\"name\":\"search\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_WdvQ43595lLPKhr9fPsdgQpO\",\"output\":\"Searching for order: ORD-12345 (User: John Doe) Found 1 result.\"}],\"instructions\":\"You are a helpful search assistant. Help users search for different resources.\"}"
             },
             "response": {
                 "status": 200,
@@ -478,7 +478,7 @@
                         "nosniff"
                     ],
                     "access-control-expose-headers": [
-                        "X-Request-ID",
+                        "X-Request-ID, Server-Timing-Total",
                         "CF-Ray",
                         "CF-Ray"
                     ],
@@ -492,19 +492,19 @@
                         "2020-10-01"
                     ],
                     "x-ratelimit-limit-requests": [
-                        "10000"
+                        "5000"
                     ],
                     "x-ratelimit-limit-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-remaining-requests": [
-                        "9999"
+                        "4999"
                     ],
                     "x-ratelimit-remaining-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-reset-requests": [
-                        "6ms"
+                        "12ms"
                     ],
                     "x-ratelimit-reset-tokens": [
                         "0s"
@@ -517,7 +517,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"id\": \"resp_03b271613c91cb8e006ab5a01bdd1c87d2a31e5f72ab3a8af2\",\n  \"object\": \"response\",\n  \"created_at\": 1790287899,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1790287902,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_03b271613c91cb8e006ab5a01cc47487d2b55f594c0fb898c2\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABqtaAeop4j0VdvBGpDTjRTYOP6ZaW_h6uwNXmj982lgV3IKAXZbSDMSw5iU1ldMfOdJ67uzGshBvj6gwfnruB1BFTTpUiMJRauMO3FQmDihKSCJ2DRPrONdy0vOk4VuIuiIatRc0Nq7Eb1lKmacBp_1VVes_N8_WMmrXThZuZiOZBxOL6NpuNoaavkaDdyf5JgZoop2iM17KbHJimkL45srMcEG2PU9qLNPvi66Uwgoadu_fDINnxS_UTTFAz-82YYWcbIrFvKLQ9Gq3sgkp0rhc0bWKxLxjSC4E5h-6aJCQ0BJjgTfIAkjBI-0m3e4pZ1Z0DoUOzAS8qNjXGnqEfHMp3koZwhwo48mCdffDGq5_s9GDJYgYx5C9KYucEGxDelLFE6Re_6-jInkvR-BycA_wc88Y1rUQbhP5-R9OFPzzW6352OkALIFTBKx75ERcALWOPPbR2U_EsYpxGfpcnexm63L2zNwXsUHFAMjfzi2zIjLT1yRwv2_w1gOuL7nKx6yVA5EPVA-VTwKt7VipcMkzmREqRQ59oDsedbGUaUNfVsn-AO4OKDqx80deyU8zh7_-gDJlFL2qxhcdbFM7jUyFrTRzXzYIg-b4IlAbQSdH9Wu9pHnQZn1Zb6quzrfvZUnd9QOO41CFk5vLeDAHWT4MaQtIpF4Clh8G0Me8lvGSAMIafMd_MJzpTn4Ji-lIYHyXhDMa6iGMzFvNkAo8fAf8lMV33M5sofmmP9oFzzcVQQNWn8kZ9qjKetHqCjMpsRok6xyB5oAATm33UUp_ehXLjjU2L32g6u3o07mLYdnFX8805r-O7Y9tfFdUgqy06VE2zxdTqb4vik97OUqkQtiu-XGCeW1RXvV5dzFboIROvb7Rc6_LyVi3aq6zwVNn6IEWBcKhjakq-eAzqfINUeRvg3gDpYsK5rYzRWZH5KaYiAT2WSYL7ESA0rH2h6XFkMlTC-hciATI0khjOXHbdP2Kn606InHjV7bB28hsgVc8bFuCsiTpy-jnDebZqeiVPH-rePaIAEj0WV8AotqBpjTvw19-aaYMJ6h0BMnjsRNMQhoBRAkE_zRq8wmETdDT_dJPMD-FEEdGXtNCZfiWerb0HLZSnkM5TFkMwxzEfcM_z2rV4HNnkBhf2TVk1AJ_a3DzztinwZged3qSNpweJuJXxnhvfFuSTbPGI2L_iUwv6Ib6zd7qZ_WH8dN1TbmNyFQeAT8dC9NC359yy4iCP5D0fKMWJiIOsmKoTokZ4yADcX0Oia3_Yfi6LtJwlZ_DcEvyn8O3-ubfVvJyqFyrhxRQsMg06dloc8Bhx894g92Sux-nadJezT5Pwkgn8Jj7Y891xftX3CytsycFYvzY0fHOFgIcr_k_NHCa6P_TL3c2J6ea3fB5_TdpIViNhfuVfiwFc_A9AZySCmrJOX3kXXIXIaM3DEsHuH_5ZuI5qhMabLTJIHfVaeA9k1P5GHnu0bjV3ZUQFpMb3-XcdjNC6zLz6ep7AXTMJuaCT5sx0ut5Mo6Z1U4IzrwuSGVQRvhhdoidF7eUSCzBsbIxo2h2CgOJ7MZIkudglEoSDjCysVewQFhniV0KkAI9rOt1JyZIuUTrioIlziAG2U6ls6dHKQx9GwM-QSvk9-hu_bH4UwS2pi2i3r2p0Dl7khU76UeewKyo9f4Q2wS1U6me5Kdojwh5k4VeLbASk0Z-Q0iSdkjSsT0jlt53vqhHbU3seeyEGo8hw5aUDYMPMxS-z_WqBBv2MuY3WXjTVhn2SgqLfUn_vFpJV_9VjB1xMcmOn1Zy_NL7YwqUNbvLqDFdP2Ta3Bq4WXyrXCzFyVWIiAI_mt8vr9AwGQE-b5FuEzfjZ4HLxbPlABnNu6HDwNPr1pJ2v6RQyYP0Xl2JisQTdw1vApHYrB_b8fuQubVxuRy970hkR1V8Xx8OGIfFqZUumeU4N9HXs3cARIlh9VEttpvpPSNblO526lEiiXNgTU7CxSfiD86ejgdq_dhJKD2IBXjZb3SHwqTjjo0cKX0TSC9l-zvLvWeNHixGtNurY2_BEdAYDrdWuvhSjGwg9VfYgkIsclgjVw9MhPFz-qDxYMvE0EOYkx9YwyMkvXgZqMj7a7SN6uRFvacaHebDsdwuZU1-7TyqC-4aau5iSfTzLvtn4NMWOibifYqa7kwiOl9lc7dXCF3j8HkQTk0Lh8sHAxL15wy7xsRw==\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"msg_03b271613c91cb8e006ab5a01ddf4487d29db0e03f3b856077\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"I searched for order ORD-12345 with user responsible John Doe and found 1 matching result.\\n\\nWould you like me to show the order details (status, items, shipping/departure date, documents), export the record, or perform another search/filter?\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 305,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 220,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 128\n    },\n    \"total_tokens\": 525\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+                "body": "{\n  \"id\": \"resp_0f8c904f6295638d006aea4d8c619087d2add9c21d1ff1429f\",\n  \"object\": \"response\",\n  \"created_at\": 1793740172,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1793740173,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"msg_0f8c904f6295638d006aea4d8ca63087d2b28e287888e8f97e\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"I found 1 matching order.\\n\\nSummary:\\n- Order number: ORD-12345\\n- User responsible: John Doe\\n- Status: Found\\n\\nWould you like details of the order (items, dates, shipping info, attached documents), or any specific field?\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 287,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 57,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 344\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
             }
         },
         {
@@ -552,7 +552,7 @@
                         "nosniff"
                     ],
                     "access-control-expose-headers": [
-                        "X-Request-ID",
+                        "X-Request-ID, Server-Timing-Total",
                         "CF-Ray",
                         "CF-Ray"
                     ],
@@ -566,19 +566,19 @@
                         "2020-10-01"
                     ],
                     "x-ratelimit-limit-requests": [
-                        "10000"
+                        "5000"
                     ],
                     "x-ratelimit-limit-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-remaining-requests": [
-                        "9999"
+                        "4999"
                     ],
                     "x-ratelimit-remaining-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-reset-requests": [
-                        "6ms"
+                        "12ms"
                     ],
                     "x-ratelimit-reset-tokens": [
                         "0s"
@@ -591,15 +591,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"id\": \"resp_085645f13e44af6e006ab5a01e9cec87d286be798722e0cf27\",\n  \"object\": \"response\",\n  \"created_at\": 1790287902,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1790287903,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_085645f13e44af6e006ab5a01ef71487d2a8777ee8118faf25\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABqtaAfMk7EmnaUucyh4zkAGrrKOPRe4QJwE0y9tsHgMInL2AQWv4cmZtv29QXjwJ2ScHgXdgA264K9dyQOFOuyR_Wzh_jCcg_di0PbSsbK3ErtLuB9bgssA5HPMixDzPIN7EEG2QVVrYZIlcbSHvK517azLIP6T6dwJkLhvwmk6TW-9ukWv6t6_kWRQ_LkuUCKcte89F_i7laqyUhBnK-nuurFi_RoVtD98uNqdXz7TJomML-_BygePnY50661KJNpcaviAeTQbt1BradqSGmppXQxx7xMXeUlSW_hpzrP_XlanwlETPphslpZKjlqM1Pk8wziOnaWrrV9mB9OI-Ft0KdMC6d5WJgGPvoV4BUe_eDLXlEBUeZe2LaBJnXshKBzBwfI49AjGwZhc_jX_3bCkLv7lBWB9haF8kh4cnHyVuKOUxiHXOSQg4vJdwpBbvjSpDnmBa3qysIGwZes0libvhW0aG9YLgcXp6gkqsap8Zht8ZmURpWM9nmuU_PGQWY9GSu-gNJ5WIeLxoxfKfZ3uzRXf6rv5Qytp89L4puPcKcr3NY_-okNAF0Yvi6tyyUtPgR2JOi9SpxUBN244Mah-0S1kyM_jOgrD4F1uJBIUQwNr6Y-beTUvgyZfQ7XEZn4zP2mbYc1GZMHzTtTpr2nXl6DNxWxkS0gIvdibWGdAZaq1v38TMOHlCo0vJwsM1jwAlHb0_NqlP41KAsZd6Ew04xjS2W-A-AzrhP_IzW6PbwLoL0gu1PfB34qrS3INqyFUNyWP058yASqITjEXuHQM1BuNZdSwQ0LiAb5p3EuK9SWtr_L-gFKUkMeN4d6nAShxfx65ZboonJBd0m18G_gfD-oCUJSDooN61hm3RI_X8gAC7JCUM22kTN6rZVjtcUVC2KVRCWAoaIEP8GcKMDsymBs8H2ADjuXuBKB6ixsWCP77PBxOgoSJFc3FRdtucloic8R6731f4UWGpMaHOdkM9MXdOI-MhyXMfoYZ3iwhtwb2VH4Yc3vP482ISfbRio6DwqGeuix3DRQuyhMbEjKEhqJbNU2olnUy6OBKkJwTH4iL94bCMBgT-29bA8MIsiB-1NfbIAyxXxoLBfyeVl6SgzBNhl3M_xAO3znFiX8_kYc3fGkfOJbhOZsG2fJ7pT3G6rkXcwl0E0QaokVZgzY3HchZK2jgB_RjSY2noVJT_cP6gLvOjAM_TsH0Uo3K3M64iiVDxrtIEjaiYJN2tJAfkOgXRf6T3svYWzzM2JJsWtXJo5mhBdUeAkprPO-iDAPG3dJQSJ6bBbj1CE3tv3LdxNxH8YWU0mutGuqxY5UDUNDomEAZWE2URhfoRjx0GpNcDOjdz2BDDhxFfRK3iHtTOfL1x5b1E9dmFhu3MUjWXdXrOHnCwgFk1JOmqAkh_arA5175jefuiFpRayV-jRWis6HPAKlsOEAGUT5rh7Va3rkH-1Ml6s4zFMw-K5wGWNAH8CPKoalCjqtXDQCoJ5oGAeFVLUcQm6GNYRDN6azf7yS2wPIdnwm6VOa2jyzw_v8vQwq79tmPSYr4uT8MHCoPM8u227Qbc2Kx81fttwVs5nP-E1T9raIMv7uzYGtlNk6NpNo7jmHZnLwkz_erKAyyZy6CjFqo1O8rb1EvC_T7N29npamayvJs2fH6AvhyoqLIFL9tkKYTs3pDGmcaDicgHGGeF0bqEWfqAprOk1QMq9_QX4b8FZnQCxeUF1Dg_ExUiot\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"fc_085645f13e44af6e006ab5a01f8bc487d2ae9b5d54c8dbc697\",\n      \"type\": \"function_call\",\n      \"status\": \"completed\",\n      \"arguments\": \"{\\\"filter\\\":{\\\"type\\\":\\\"purchase_contract\\\",\\\"contractNumber\\\":\\\"PC-67890\\\",\\\"subsidiary\\\":\\\"Acme Corp\\\"}}\",\n      \"call_id\": \"call_lvP955nL8ulV5yUZlIWNiErn\",\n      \"name\": \"search\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 145,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 118,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 64\n    },\n    \"total_tokens\": 263\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+                "body": "{\n  \"id\": \"resp_06adf5c095629682006aea4d8dd74087d2874537cda3fa00ed\",\n  \"object\": \"response\",\n  \"created_at\": 1793740173,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1793740175,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_06adf5c095629682006aea4d8e1d6887d2bbeedffd28af5948\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq6k2PrQoNwcXuqqaf3S2notCJKhwQmcQz4XMyomKpB2GaoeSQUW41ua-V9db4FoYO4XSTZafXdc2N1mKlS0e-yiCIjvKu0f_YhRQLPBJz8p6jRydWvxXOrOuDeaz36MwHX5IdLbSXb0P5UTfMXitj5yGAeTeG6LyAGcMIA0eK94Wil8SCrLYKLoGAEA_fIm0XYnGLk-lGPWzj99jcJFqLQnqRvhFc5lg3_p3k903S9UlnNR2b3_R6SW6b_ArT5vWgna-ZBrUobTdFZ6xI1gppq43T_1n47oSFCMQqrA8BSD2C_llgjLVS9n6QONeI4bS20BHwSAHS1-0p9JW5dpkETS3uTjTS6qozv721PZv35piLecae0niuF6sbKkaaX8olMPNOHcaSZsTH10EA92PWBKUhIjlcKIjMtUWT_vl0kZzcgK__vG6FvIHu5fICQCbQU6lXZeod_hUqxwnnz0bvurcyUronNV7iwFn3RHdAas6JzZhRy22Hxwr4TP9HDFnPM06aquqy-WPmu28DK8xiM_I_GQEeUzevOqFjE4gGjn1fBS6PPFLst208ipC2BhmLhmk08CjjVXf4v0cxdBdWYmn9-s2fjl8MRhJsCH_cVcwRx2DLWSe2hj9dvU9Tay4_vyBI3YRdWLD0PqV4isuKllW3HwXg99ZxUzTeHtwgcpOc3gqimTp1xF7ZmDpxKm7St17A0s6nGaGo12xX1FjIEWn5geX0rv0KDH93F9dDKmreOn-rN6qSEmhgmxSoj0Z7qVnCEnvi-JeQ8zZfemVG6tfDjFy8SXDw7_4_IKOmScxwZFL4QFZ6uOfnobcNPyFMfcwVtdH4aaP4gL5Wr0SN4UsX8r_AOhMjzfmjstgfD9UYiao03CV14bEKshN4GdhfMQfzGVXcsyEUNWTtQewk4ecfnW-oozkWv8bYoh0gVQGFPhgVa4OMCXzNG4HgFNL_m6joKQrkHi4Lj4VkHJMW0uxUmyiook6gyDhb-rHED33yJqAmRq--fFbIKjhrgIhCeWz2vn24rcHpcwzLphzzzRrHMKA2Cf_kywh1-CYVWEIxmfpmbPuxN_NALecygcb-cHtRfwQchm9XxrXYqOlkVQlnlavZuy8DTQmpi2m463K7SQRWMUjJY6bC4kAF9YBuIVOKMEsxwCrLA5lb7WhSlL6cCEUKkVDrEo1QIjivTMmo7Mm8rW5cYX1ErndsMGqU1WHM6O-Tvn_qAX12g91ZEIfxmasAQhiA0hOiwR4pXx1etGlefNHxIB7lMud6729KHfP6Y65lnPfDXzBt9OFt9eufSUxAY7fMt9dfO6B0Kh_udbwTg5B6j5-0EIJXvVJKiNIxebdsKJAyMGuiMBIHm7otSsYNgEDIO_QbGxFtk-VrYpq-nMG2hsOW4wPfLzqFQxxiSHIMqfKrrTVaXmtEl4317KZ68XA3Ct2_nOF76XsbVbFCSCmU-4PUNXu7xQ9pdLkiUMPGWAc_K6Jsjmvcyf051asktKnVwPQ1xnyCXb8MzmT1c5qmXqjfQNcD-2Id2WyIG7oHUxLnsbgGqaVptzFbuU2QJM-Y5yzpAucGH9YatKqG2QprYugsvpWnh3dTD4uH0ZDrHK54HKMtOxroetH2ylwS2xM8j0-Eo2nTaFHzJsWJ8b3RbDlFpn5AIdzAvFsNFmSxmAt0F0GBKl0-iUnNCUZ4wrl6i6JIVzxSuzwalcUJpkVW_-nKOKjhZfbraL4qK1QuzWZCtUOxJDxpfbUz4TxGtYnQ4ONnSlsAxlSPQMYI--SWnbmYDY8oWJSgsziBo63ex0qsES2KkLHm6OD2mgZIuKlnbdeM00sbep_qC1ls2gkWrJxn6gxEVF6BYI6XlXS3leLix4EtWM_pk9VT3QbkZNZ_uawWQjuoFLQfnVn0An07FjeN5696TPGEh_wTmIlqJU24B9Wc5JXZQD7MJBl45s0mgV0-_JdEPxH91YUYaL290YSaJNMmZrv3SpsIuC0hF84ZzAQh5mJupWFYfWHGO-lQg4i_AK1-w4Iy9kFS2_aznR6lz5kZLQwTl2R3-Ci6-b3vDszCu5DAVvvIubIrg1vnz2VSDA3Aff_MkQkF_tr2lJU5Q7QlA-ohwR2AL0y_JSMIhyQVZd16M9EBfgY4R23x6b65m2knJnfs4SuunswsQVD3XKZh4C8Zrk4o\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"fc_06adf5c095629682006aea4d8f424c87d28bad24c887dcd5fe\",\n      \"type\": \"function_call\",\n      \"status\": \"completed\",\n      \"arguments\": \"{\\\"filter\\\":{\\\"type\\\":\\\"purchase_contract\\\",\\\"contractNumber\\\":\\\"PC-67890\\\",\\\"subsidiary\\\":\\\"Acme Corp\\\"}}\",\n      \"call_id\": \"call_31pauz6xMElptU1D8odL11Wl\",\n      \"name\": \"search\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 145,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 104,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 249\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/responses",
-                "signature": "c7dd3eb0084f652d6f917dcda39013bd",
-                "signature_v2": "20478e509b6ccd6d618b7aa47fb446a6",
+                "signature": "b0cfb7dbae9c1b0051223de0b59787c9",
+                "signature_v2": "5cbfee0b79cb6621beaa12ddce5a0ee8",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -608,7 +608,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"parameters\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Search for purchase contract number PC-67890 with subsidiary Acme Corp\"},{\"id\":\"rs_085645f13e44af6e006ab5a01ef71487d2a8777ee8118faf25\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqtaAfMk7EmnaUucyh4zkAGrrKOPRe4QJwE0y9tsHgMInL2AQWv4cmZtv29QXjwJ2ScHgXdgA264K9dyQOFOuyR_Wzh_jCcg_di0PbSsbK3ErtLuB9bgssA5HPMixDzPIN7EEG2QVVrYZIlcbSHvK517azLIP6T6dwJkLhvwmk6TW-9ukWv6t6_kWRQ_LkuUCKcte89F_i7laqyUhBnK-nuurFi_RoVtD98uNqdXz7TJomML-_BygePnY50661KJNpcaviAeTQbt1BradqSGmppXQxx7xMXeUlSW_hpzrP_XlanwlETPphslpZKjlqM1Pk8wziOnaWrrV9mB9OI-Ft0KdMC6d5WJgGPvoV4BUe_eDLXlEBUeZe2LaBJnXshKBzBwfI49AjGwZhc_jX_3bCkLv7lBWB9haF8kh4cnHyVuKOUxiHXOSQg4vJdwpBbvjSpDnmBa3qysIGwZes0libvhW0aG9YLgcXp6gkqsap8Zht8ZmURpWM9nmuU_PGQWY9GSu-gNJ5WIeLxoxfKfZ3uzRXf6rv5Qytp89L4puPcKcr3NY_-okNAF0Yvi6tyyUtPgR2JOi9SpxUBN244Mah-0S1kyM_jOgrD4F1uJBIUQwNr6Y-beTUvgyZfQ7XEZn4zP2mbYc1GZMHzTtTpr2nXl6DNxWxkS0gIvdibWGdAZaq1v38TMOHlCo0vJwsM1jwAlHb0_NqlP41KAsZd6Ew04xjS2W-A-AzrhP_IzW6PbwLoL0gu1PfB34qrS3INqyFUNyWP058yASqITjEXuHQM1BuNZdSwQ0LiAb5p3EuK9SWtr_L-gFKUkMeN4d6nAShxfx65ZboonJBd0m18G_gfD-oCUJSDooN61hm3RI_X8gAC7JCUM22kTN6rZVjtcUVC2KVRCWAoaIEP8GcKMDsymBs8H2ADjuXuBKB6ixsWCP77PBxOgoSJFc3FRdtucloic8R6731f4UWGpMaHOdkM9MXdOI-MhyXMfoYZ3iwhtwb2VH4Yc3vP482ISfbRio6DwqGeuix3DRQuyhMbEjKEhqJbNU2olnUy6OBKkJwTH4iL94bCMBgT-29bA8MIsiB-1NfbIAyxXxoLBfyeVl6SgzBNhl3M_xAO3znFiX8_kYc3fGkfOJbhOZsG2fJ7pT3G6rkXcwl0E0QaokVZgzY3HchZK2jgB_RjSY2noVJT_cP6gLvOjAM_TsH0Uo3K3M64iiVDxrtIEjaiYJN2tJAfkOgXRf6T3svYWzzM2JJsWtXJo5mhBdUeAkprPO-iDAPG3dJQSJ6bBbj1CE3tv3LdxNxH8YWU0mutGuqxY5UDUNDomEAZWE2URhfoRjx0GpNcDOjdz2BDDhxFfRK3iHtTOfL1x5b1E9dmFhu3MUjWXdXrOHnCwgFk1JOmqAkh_arA5175jefuiFpRayV-jRWis6HPAKlsOEAGUT5rh7Va3rkH-1Ml6s4zFMw-K5wGWNAH8CPKoalCjqtXDQCoJ5oGAeFVLUcQm6GNYRDN6azf7yS2wPIdnwm6VOa2jyzw_v8vQwq79tmPSYr4uT8MHCoPM8u227Qbc2Kx81fttwVs5nP-E1T9raIMv7uzYGtlNk6NpNo7jmHZnLwkz_erKAyyZy6CjFqo1O8rb1EvC_T7N29npamayvJs2fH6AvhyoqLIFL9tkKYTs3pDGmcaDicgHGGeF0bqEWfqAprOk1QMq9_QX4b8FZnQCxeUF1Dg_ExUiot\",\"summary\":[]},{\"arguments\":\"{\\u0022filter\\u0022:{\\u0022type\\u0022:\\u0022purchase_contract\\u0022,\\u0022contractNumber\\u0022:\\u0022PC-67890\\u0022,\\u0022subsidiary\\u0022:\\u0022Acme Corp\\u0022}}\",\"call_id\":\"call_lvP955nL8ulV5yUZlIWNiErn\",\"name\":\"search\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_lvP955nL8ulV5yUZlIWNiErn\",\"output\":\"Searching for purchase contract: PC-67890 (Subsidiary: Acme Corp) Found 1 result.\"}],\"instructions\":\"You are a helpful search assistant. Help users search for different resources.\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"search\",\"description\":\"Search various resources based on filter criteria\",\"parameters\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Search for purchase contract number PC-67890 with subsidiary Acme Corp\"},{\"id\":\"rs_06adf5c095629682006aea4d8e1d6887d2bbeedffd28af5948\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq6k2PrQoNwcXuqqaf3S2notCJKhwQmcQz4XMyomKpB2GaoeSQUW41ua-V9db4FoYO4XSTZafXdc2N1mKlS0e-yiCIjvKu0f_YhRQLPBJz8p6jRydWvxXOrOuDeaz36MwHX5IdLbSXb0P5UTfMXitj5yGAeTeG6LyAGcMIA0eK94Wil8SCrLYKLoGAEA_fIm0XYnGLk-lGPWzj99jcJFqLQnqRvhFc5lg3_p3k903S9UlnNR2b3_R6SW6b_ArT5vWgna-ZBrUobTdFZ6xI1gppq43T_1n47oSFCMQqrA8BSD2C_llgjLVS9n6QONeI4bS20BHwSAHS1-0p9JW5dpkETS3uTjTS6qozv721PZv35piLecae0niuF6sbKkaaX8olMPNOHcaSZsTH10EA92PWBKUhIjlcKIjMtUWT_vl0kZzcgK__vG6FvIHu5fICQCbQU6lXZeod_hUqxwnnz0bvurcyUronNV7iwFn3RHdAas6JzZhRy22Hxwr4TP9HDFnPM06aquqy-WPmu28DK8xiM_I_GQEeUzevOqFjE4gGjn1fBS6PPFLst208ipC2BhmLhmk08CjjVXf4v0cxdBdWYmn9-s2fjl8MRhJsCH_cVcwRx2DLWSe2hj9dvU9Tay4_vyBI3YRdWLD0PqV4isuKllW3HwXg99ZxUzTeHtwgcpOc3gqimTp1xF7ZmDpxKm7St17A0s6nGaGo12xX1FjIEWn5geX0rv0KDH93F9dDKmreOn-rN6qSEmhgmxSoj0Z7qVnCEnvi-JeQ8zZfemVG6tfDjFy8SXDw7_4_IKOmScxwZFL4QFZ6uOfnobcNPyFMfcwVtdH4aaP4gL5Wr0SN4UsX8r_AOhMjzfmjstgfD9UYiao03CV14bEKshN4GdhfMQfzGVXcsyEUNWTtQewk4ecfnW-oozkWv8bYoh0gVQGFPhgVa4OMCXzNG4HgFNL_m6joKQrkHi4Lj4VkHJMW0uxUmyiook6gyDhb-rHED33yJqAmRq--fFbIKjhrgIhCeWz2vn24rcHpcwzLphzzzRrHMKA2Cf_kywh1-CYVWEIxmfpmbPuxN_NALecygcb-cHtRfwQchm9XxrXYqOlkVQlnlavZuy8DTQmpi2m463K7SQRWMUjJY6bC4kAF9YBuIVOKMEsxwCrLA5lb7WhSlL6cCEUKkVDrEo1QIjivTMmo7Mm8rW5cYX1ErndsMGqU1WHM6O-Tvn_qAX12g91ZEIfxmasAQhiA0hOiwR4pXx1etGlefNHxIB7lMud6729KHfP6Y65lnPfDXzBt9OFt9eufSUxAY7fMt9dfO6B0Kh_udbwTg5B6j5-0EIJXvVJKiNIxebdsKJAyMGuiMBIHm7otSsYNgEDIO_QbGxFtk-VrYpq-nMG2hsOW4wPfLzqFQxxiSHIMqfKrrTVaXmtEl4317KZ68XA3Ct2_nOF76XsbVbFCSCmU-4PUNXu7xQ9pdLkiUMPGWAc_K6Jsjmvcyf051asktKnVwPQ1xnyCXb8MzmT1c5qmXqjfQNcD-2Id2WyIG7oHUxLnsbgGqaVptzFbuU2QJM-Y5yzpAucGH9YatKqG2QprYugsvpWnh3dTD4uH0ZDrHK54HKMtOxroetH2ylwS2xM8j0-Eo2nTaFHzJsWJ8b3RbDlFpn5AIdzAvFsNFmSxmAt0F0GBKl0-iUnNCUZ4wrl6i6JIVzxSuzwalcUJpkVW_-nKOKjhZfbraL4qK1QuzWZCtUOxJDxpfbUz4TxGtYnQ4ONnSlsAxlSPQMYI--SWnbmYDY8oWJSgsziBo63ex0qsES2KkLHm6OD2mgZIuKlnbdeM00sbep_qC1ls2gkWrJxn6gxEVF6BYI6XlXS3leLix4EtWM_pk9VT3QbkZNZ_uawWQjuoFLQfnVn0An07FjeN5696TPGEh_wTmIlqJU24B9Wc5JXZQD7MJBl45s0mgV0-_JdEPxH91YUYaL290YSaJNMmZrv3SpsIuC0hF84ZzAQh5mJupWFYfWHGO-lQg4i_AK1-w4Iy9kFS2_aznR6lz5kZLQwTl2R3-Ci6-b3vDszCu5DAVvvIubIrg1vnz2VSDA3Aff_MkQkF_tr2lJU5Q7QlA-ohwR2AL0y_JSMIhyQVZd16M9EBfgY4R23x6b65m2knJnfs4SuunswsQVD3XKZh4C8Zrk4o\",\"summary\":[]},{\"arguments\":\"{\\u0022filter\\u0022:{\\u0022type\\u0022:\\u0022purchase_contract\\u0022,\\u0022contractNumber\\u0022:\\u0022PC-67890\\u0022,\\u0022subsidiary\\u0022:\\u0022Acme Corp\\u0022}}\",\"call_id\":\"call_31pauz6xMElptU1D8odL11Wl\",\"name\":\"search\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_31pauz6xMElptU1D8odL11Wl\",\"output\":\"Searching for purchase contract: PC-67890 (Subsidiary: Acme Corp) Found 1 result.\"}],\"instructions\":\"You are a helpful search assistant. Help users search for different resources.\"}"
             },
             "response": {
                 "status": 200,
@@ -626,7 +626,7 @@
                         "nosniff"
                     ],
                     "access-control-expose-headers": [
-                        "X-Request-ID",
+                        "X-Request-ID, Server-Timing-Total",
                         "CF-Ray",
                         "CF-Ray"
                     ],
@@ -640,19 +640,19 @@
                         "2020-10-01"
                     ],
                     "x-ratelimit-limit-requests": [
-                        "10000"
+                        "5000"
                     ],
                     "x-ratelimit-limit-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-remaining-requests": [
-                        "9999"
+                        "4999"
                     ],
                     "x-ratelimit-remaining-tokens": [
-                        "10000000"
+                        "2000000"
                     ],
                     "x-ratelimit-reset-requests": [
-                        "6ms"
+                        "12ms"
                     ],
                     "x-ratelimit-reset-tokens": [
                         "0s"
@@ -665,7 +665,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"id\": \"resp_085645f13e44af6e006ab5a020182487d2b1c08bd522f177f7\",\n  \"object\": \"response\",\n  \"created_at\": 1790287904,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1790287904,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"msg_085645f13e44af6e006ab5a0207d2487d298b8979866fd67e1\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"I found 1 matching purchase contract.\\n\\nSummary:\\n- Contract number: PC-67890\\n- Subsidiary: Acme Corp\\n\\nWould you like details from the contract (dates, value, parties, status), a copy of the contract, or any specific fields extracted?\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 293,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 60,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 353\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+                "body": "{\n  \"id\": \"resp_06adf5c095629682006aea4d901f1887d28530578a39a0c6c1\",\n  \"object\": \"response\",\n  \"created_at\": 1793740176,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1793740177,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful search assistant. Help users search for different resources.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"msg_06adf5c095629682006aea4d90e06c87d28569474e315bf1fb\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"I found 1 purchase contract matching PC-67890 for subsidiary \\\"Acme Corp.\\\" Would you like details from the contract (dates, parties, line items, status) or a copy/download link?\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [\n    {\n      \"type\": \"function\",\n      \"description\": \"Search various resources based on filter criteria\",\n      \"name\": \"search\",\n      \"output_schema\": null,\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"filter\": {\n            \"anyOf\": [\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"order\"\n                    ]\n                  },\n                  \"number\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"userResponsible\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"departureDate\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ],\n                    \"format\": \"date-time\"\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"number\",\n                  \"userResponsible\",\n                  \"departureDate\"\n                ]\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"type\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"purchase_contract\"\n                    ]\n                  },\n                  \"contractNumber\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  },\n                  \"subsidiary\": {\n                    \"type\": [\n                      \"string\",\n                      \"null\"\n                    ]\n                  }\n                },\n                \"additionalProperties\": false,\n                \"required\": [\n                  \"type\",\n                  \"contractNumber\",\n                  \"subsidiary\"\n                ]\n              }\n            ],\n            \"description\": \"The filter to use for search (order or purchase_contract)\"\n          }\n        },\n        \"required\": [\n          \"filter\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    }\n  ],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 262,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 45,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 307\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
             }
         },
         {
@@ -705,7 +705,7 @@
                         "scaffolding on HTTPServer2"
                     ],
                     "content-length": [
-                        "932"
+                        "1123"
                     ],
                     "x-xss-protection": [
                         "0"
@@ -718,15 +718,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"search\",\n              \"args\": {\n                \"filter\": {\n                  \"type\": \"order\",\n                  \"number\": \"ORD-12345\",\n                  \"userResponsible\": \"John Doe\"\n                }\n              }\n            },\n            \"thoughtSignature\": \"CrcDAWkUfROiyao3UDLPEyhem8VY4zRFamp3aRGEvooP8628+NuEtSt3X9p98mtr6fNOw72LlmYsJ1ad8QXvEOgDna+hD/Wj73JxDfnIE5XR/N+1j2MkRI9KUeaaO8B3imTsUOVgyNuDhMq8IOyXb05Gb6IdKEu+6OtUAvcnAYomVv2Qu5qN7yX5Ggjm1PPahXXh+q2H0kQJILIlI+3KSSHhNXofZuP9udLzhG8V+SZPYc5x5c/FpVAtcUsPJNVZF95vOWyDvNQjeVcELYBDv6WhtB4jDqriSZP39J7mzVQHWMxARvmlQ2lLlT1EiH2A4In5Yw53281rMg+nkVjKjS2zq0sM4rcPKPHLcoWPNOvbBCyZ5AgjQ4IdosekZzd9aPxMKqs2qEap3oQZ8KZdtJu8JxqGDrUqLrh+kMYRYPBbZKWJrphQPY8VJ7gosViJTspYqiROizBnvTjH32mzcsCLVfwopCUzcx8XejN7MGneFaaY/c6897489LGG5AWiZhnjtKyd1yvb8BFkHUWsznYwgWq8/i2q3CnX6LXTsqSdKpQs11rucpjhojbu3NTgkH6YgAyqFEXvbw==\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"finishMessage\": \"Model generated function call(s).\"\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 254,\n    \"candidatesTokenCount\": 37,\n    \"totalTokenCount\": 395,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 254\n      }\n    ],\n    \"thoughtsTokenCount\": 104,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"IaC1auruG5WH28oPoNbIyQ8\"\n}\n"
+                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"search\",\n              \"args\": {\n                \"filter\": {\n                  \"number\": \"ORD-12345\",\n                  \"userResponsible\": \"John Doe\",\n                  \"type\": \"order\"\n                }\n              }\n            },\n            \"thoughtSignature\": \"CvMEAWkUfROWRUKtHcuVafB27anb4zS90Y4XQmyo/j0TmCZsj6M9rNHT02iEGXNpXJKBdRIjvasC/JJK8jjKeBIqG8v+ItKmNJoOHk6Th5C59OzXQSGzrnp1VkdWXyUIH6/MU3qpNV5ggyvQMaMQpcPQ4vQHRmVQsYoOfhyeRS7VO9mCHa/Y59/0nQGgjv87TRjYTll+eE4WpfHHd9lvS6VK0kzj6rSCcE1JcpxKojMYYM6PhDGLJ6muY8vgSZrs0+g/orxlzG685jYUFMOT5Ahf7w+lYBnrNkbYXRNvzN2nA+Px1rSA3ZrX1EGZ2F/S5SSufdbjyh3JGGlYAbp7KPXm89Xby7lFCUfK3r5tmQaKEvicvHZk4F2y6gyzqouw9vsk1YFzyP3ZtzZkfVpraQ0K5HTUvF/du4ARZrSCN2BW0HcBfRNWrSnYq+nBHbCgXq4DK5llG+XmGI3jDnGLQCB+47dpqI9b0v5Bqm+qHv0ycNZjpXgnLYYZo1NmOm2M4UUKjqFjfdtXMZLqs30jiqFktwk9qpmreqsuipU1MEa1Xak5LTrt1EnmeBOD1PUvfyTrsYtcomwSmZYiN5A+nnoTK294QfA0cPvTG6ZG7+1PpTsSPqqL2U18kUgtLkx4YgkXEh4ceeod1oO2kg5dHdbib0v6sI2i+KjiwYhv40NiSd7ESF7SLF6jQJLvkbXHAcjE9DU2RYgS5FwXPsn3bMhZxpfJDUEqd8cB81m6qQ1xdJJICwLIx7E4cOS2PZUlrUNEPg+m0NtRdVK5caZ0fiSk7EQb4iWuABzZ10QOhM9TuDJ11TwHnqIa3AXT7//7sJpTP4un\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"finishMessage\": \"Model generated function call(s).\"\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 254,\n    \"candidatesTokenCount\": 37,\n    \"totalTokenCount\": 449,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 254\n      }\n    ],\n    \"thoughtsTokenCount\": 158,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"kk3qapWjCdagvdIPkLmb8Qk\"\n}\n"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-                "signature": "62aad7c0e8f58ba2e123d2f7993a1146",
-                "signature_v2": "352c4429033ad6fc1059cf1267f4c5d9",
+                "signature": "562878e0706169da6acdbba71d555c27",
+                "signature_v2": "84e246cce89f4d990b2df69a8c58c31c",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -735,7 +735,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Search various resources based on filter criteria\",\"name\":\"search\",\"parametersJsonSchema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Search for order number ORD-12345 with user responsible John Doe\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"\",\"name\":\"search\",\"args\":{\"filter\":{\"type\":\"order\",\"number\":\"ORD-12345\",\"userResponsible\":\"John Doe\"}}},\"thoughtSignature\":\"CrcDAWkUfROiyao3UDLPEyhem8VY4zRFamp3aRGEvooP8628+NuEtSt3X9p98mtr6fNOw72LlmYsJ1ad8QXvEOgDna+hD\\/Wj73JxDfnIE5XR\\/N+1j2MkRI9KUeaaO8B3imTsUOVgyNuDhMq8IOyXb05Gb6IdKEu+6OtUAvcnAYomVv2Qu5qN7yX5Ggjm1PPahXXh+q2H0kQJILIlI+3KSSHhNXofZuP9udLzhG8V+SZPYc5x5c\\/FpVAtcUsPJNVZF95vOWyDvNQjeVcELYBDv6WhtB4jDqriSZP39J7mzVQHWMxARvmlQ2lLlT1EiH2A4In5Yw53281rMg+nkVjKjS2zq0sM4rcPKPHLcoWPNOvbBCyZ5AgjQ4IdosekZzd9aPxMKqs2qEap3oQZ8KZdtJu8JxqGDrUqLrh+kMYRYPBbZKWJrphQPY8VJ7gosViJTspYqiROizBnvTjH32mzcsCLVfwopCUzcx8XejN7MGneFaaY\\/c6897489LGG5AWiZhnjtKyd1yvb8BFkHUWsznYwgWq8\\/i2q3CnX6LXTsqSdKpQs11rucpjhojbu3NTgkH6YgAyqFEXvbw==\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"search\",\"response\":{\"result\":\"Searching for order: ORD-12345 (User: John Doe) Found 1 result.\"}}}]}],\"system_instruction\":{\"parts\":[{\"text\":\"You are a helpful search assistant. Help users search for different resources.\"}]}}"
+                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Search various resources based on filter criteria\",\"name\":\"search\",\"parametersJsonSchema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Search for order number ORD-12345 with user responsible John Doe\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"\",\"name\":\"search\",\"args\":{\"filter\":{\"number\":\"ORD-12345\",\"userResponsible\":\"John Doe\",\"type\":\"order\"}}},\"thoughtSignature\":\"CvMEAWkUfROWRUKtHcuVafB27anb4zS90Y4XQmyo\\/j0TmCZsj6M9rNHT02iEGXNpXJKBdRIjvasC\\/JJK8jjKeBIqG8v+ItKmNJoOHk6Th5C59OzXQSGzrnp1VkdWXyUIH6\\/MU3qpNV5ggyvQMaMQpcPQ4vQHRmVQsYoOfhyeRS7VO9mCHa\\/Y59\\/0nQGgjv87TRjYTll+eE4WpfHHd9lvS6VK0kzj6rSCcE1JcpxKojMYYM6PhDGLJ6muY8vgSZrs0+g\\/orxlzG685jYUFMOT5Ahf7w+lYBnrNkbYXRNvzN2nA+Px1rSA3ZrX1EGZ2F\\/S5SSufdbjyh3JGGlYAbp7KPXm89Xby7lFCUfK3r5tmQaKEvicvHZk4F2y6gyzqouw9vsk1YFzyP3ZtzZkfVpraQ0K5HTUvF\\/du4ARZrSCN2BW0HcBfRNWrSnYq+nBHbCgXq4DK5llG+XmGI3jDnGLQCB+47dpqI9b0v5Bqm+qHv0ycNZjpXgnLYYZo1NmOm2M4UUKjqFjfdtXMZLqs30jiqFktwk9qpmreqsuipU1MEa1Xak5LTrt1EnmeBOD1PUvfyTrsYtcomwSmZYiN5A+nnoTK294QfA0cPvTG6ZG7+1PpTsSPqqL2U18kUgtLkx4YgkXEh4ceeod1oO2kg5dHdbib0v6sI2i+KjiwYhv40NiSd7ESF7SLF6jQJLvkbXHAcjE9DU2RYgS5FwXPsn3bMhZxpfJDUEqd8cB81m6qQ1xdJJICwLIx7E4cOS2PZUlrUNEPg+m0NtRdVK5caZ0fiSk7EQb4iWuABzZ10QOhM9TuDJ11TwHnqIa3AXT7\\/\\/7sJpTP4un\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"search\",\"response\":{\"result\":\"Searching for order: ORD-12345 (User: John Doe) Found 1 result.\"}}}]}],\"system_instruction\":{\"parts\":[{\"text\":\"You are a helpful search assistant. Help users search for different resources.\"}]}}"
             },
             "response": {
                 "status": 200,
@@ -758,7 +758,7 @@
                         "scaffolding on HTTPServer2"
                     ],
                     "content-length": [
-                        "349"
+                        "351"
                     ],
                     "x-xss-protection": [
                         "0"
@@ -771,7 +771,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"I found 1 result for order number ORD-12345 with user responsible John Doe.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 325,\n    \"candidatesTokenCount\": 21,\n    \"totalTokenCount\": 346,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 325\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"IqC1aoStGrXxvdIP0qTlqA4\"\n}\n"
+                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"I found 1 result for order number ORD-12345 with user responsible John Doe.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 325,\n    \"candidatesTokenCount\": 21,\n    \"totalTokenCount\": 346,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 325\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"k03qavDHH92fxN8P5-e8kAg\"\n}\n"
             }
         },
         {
@@ -811,7 +811,7 @@
                         "scaffolding on HTTPServer2"
                     ],
                     "content-length": [
-                        "1120"
+                        "1307"
                     ],
                     "x-xss-protection": [
                         "0"
@@ -824,15 +824,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"search\",\n              \"args\": {\n                \"filter\": {\n                  \"type\": \"purchase_contract\",\n                  \"contractNumber\": \"PC-67890\",\n                  \"subsidiary\": \"Acme Corp\"\n                }\n              }\n            },\n            \"thoughtSignature\": \"CuUEAWkUfRPCDkXZ4hHyVDmtHRIeQweu+OPFtMu3MoU5yU7dSZhckuku66obT7Fibn43qnK/afpcimHl8olXg1+LMLJkmbK2hrGWbtk+PLBsjPtcXEB+A2Wkqsi13HlKhQmbFs3EFKzZtycfcNvowXU6I+IM/zI4RnGYhLE4IfzMQb6jNRgR0gDupgBbsyvMphfMXx+SPG4fZcLsrIO2IHTQw1eilAljjmJpEz2Tp7fc/e7RjDbK/9OdNja0weQeKoDFjyr73g/fY5ZAAIf0RULSpDIgBgWmAMoTil053ZL+reqayFFeV0nDPAGxZNBsyz8ih7/aQ/o3DQl+1fXu494QVnxKWrOSdUA7k9tnbKgyUbF+Wv0Y4DeC8g3bSZI0tK24mXF6AVYPY/a5rdpyO9vtwrqTXqRoDCazWJB5d78Cd6YpQgOBxP4ilIc8Lb4HxRXBq5qDs1CyByROiq/lu4WSOQmUaatn1TVZ1zxTRdyr37mUzb40P9ZeP+bdH2MTQxM3lYFXApVyxTT/YM7MZy7QuRJeoZWQcg00EGEEYCmLA8Wwaz3hCuCk7hPMHrRtDTjD3JgupFyQTO5nrMY9i9+m6UYoM/jwef2JBHdX/nkHeMM9ZaI9qU8LB/8gv9+qLADelfhOnxIfcWnn3aWMPrg2GBH1Zwk/g/LIIg0+ieeZrLcFirATYdEurDweRuqNlch5WzDbk64WisAQ20ATXSjnLM8xeBdo9QerHTU6u1+XuRBC1lXlGQY2htDjGMF0aYYpwuT+W4wZkcAugJP8Lup1e2dhr6sHNvj+a4NhMRWCXvMxT31BoQ==\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"finishMessage\": \"Model generated function call(s).\"\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 254,\n    \"candidatesTokenCount\": 42,\n    \"totalTokenCount\": 461,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 254\n      }\n    ],\n    \"thoughtsTokenCount\": 165,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"IqC1atKhOP-Bxs0Pyrq2oQ4\"\n}\n"
+                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"search\",\n              \"args\": {\n                \"filter\": {\n                  \"type\": \"purchase_contract\",\n                  \"subsidiary\": \"Acme Corp\",\n                  \"contractNumber\": \"PC-67890\"\n                }\n              }\n            },\n            \"thoughtSignature\": \"CpcGAWkUfRNhpRo0MIYA2dQ3tcmWV2nLGj4fAs1GsFTkOBeikWikyc616I3keB0Pn9cj9dJ8rvvn3EUZhDeyD8H9O/7RRFlTf+VR6+SfXEQymT/nFNk5gKpq+DgpJ+fXrnfn4GW5P33FlwLpFWPIB59y+d1EAQGfFRNaKo2Ls7UAtTtVQA6fuMhs5WEX96mBCQId4K83Nz3F+CFO8kEm4xkWXZqj48WJxpSuhVSrA4P5lNRpYs8JTmr20ByrBmk4mwkCanW8tOBxb5RrXOH3SClfp2GJ1aEZZbkJbXQ0ihIiROeCNnqkHKW2oprMpKyxiHUCpgCOTx5LBfeVC5J+I1FNGr6v5ZESEWrL8JVHiorIz4DxYKLIOBKRN/t8T0IWcJqn+JfpK3BudOtKLKKZsGG+miyJ79atGnKOneYHEq3Ix/ydKLkKKtB0+wtSzD6FBZEw+WMHOMCIti7uQi9Rp16Xc8xhqjp/NPrgxVfc7vy/kFp1g0lcOU0MgXbCwQo4e+Gf63+SckG1uYebcL1zYdlwq/FPHZx8By2/mz8TFRU5xlv0B/C1Or5pXZG7PZ+LOJDd97TEfjYZydUaDgllnjVjd42RklvJznKkmDHzjW+mqrY2+BULyM100nbkJr9UDunk1VQQjsFmUEH9EUYn9bGf6Uva4FfhQ//MyyjuVBOfmy7x+UYQDeuFIUfeCBe4SH9JwbEFBDhIGuVen2cfUbsfGzVXUyRFqQlAGKfhqwUAyNM3ivWMpuAD0DnjWoE8mzocMhFdIyBBhCYJfWflUvwlhmXDGKi6dkWB/H/CbR201QieAxAdm48GDSQoMLHYsov99C8cxofyhUUZ2SnXGF8QmDEavaCShtlozU1mXzgUjTqXfBLk7B/bukLF9uEmUNVFI8/IaRzDUaj0ZiT6x9pNRpuOb9TIfcf/4xgEs3HpfMMGfhl3b0lre2q+BDmvOr8rUOfsUFZ8DmJByxkXv9lqcUm+xdOX23/7ZO5h0gBF4GslzMu56dE751Wnb+z6BZXeu8dgUhYQeRtoJVt40nybqKS+q4Fo+eg=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"finishMessage\": \"Model generated function call(s).\"\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 254,\n    \"candidatesTokenCount\": 42,\n    \"totalTokenCount\": 511,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 254\n      }\n    ],\n    \"thoughtsTokenCount\": 215,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"k03qataLObvcvdIPifi2sAQ\"\n}\n"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-                "signature": "509bfcfeaef4ffb58ea1bad1eb95a51e",
-                "signature_v2": "478e35e441637e76f50d4dbd1834fe64",
+                "signature": "f9bfc49e3d95f2a10ccd5cab348561a5",
+                "signature_v2": "34178583593c2d79501411c9ef78dff7",
                 "headers": {
                     "x-goog-api-key": [
                         "[redacted]"
@@ -841,7 +841,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Search various resources based on filter criteria\",\"name\":\"search\",\"parametersJsonSchema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Search for purchase contract number PC-67890 with subsidiary Acme Corp\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"\",\"name\":\"search\",\"args\":{\"filter\":{\"type\":\"purchase_contract\",\"contractNumber\":\"PC-67890\",\"subsidiary\":\"Acme Corp\"}}},\"thoughtSignature\":\"CuUEAWkUfRPCDkXZ4hHyVDmtHRIeQweu+OPFtMu3MoU5yU7dSZhckuku66obT7Fibn43qnK\\/afpcimHl8olXg1+LMLJkmbK2hrGWbtk+PLBsjPtcXEB+A2Wkqsi13HlKhQmbFs3EFKzZtycfcNvowXU6I+IM\\/zI4RnGYhLE4IfzMQb6jNRgR0gDupgBbsyvMphfMXx+SPG4fZcLsrIO2IHTQw1eilAljjmJpEz2Tp7fc\\/e7RjDbK\\/9OdNja0weQeKoDFjyr73g\\/fY5ZAAIf0RULSpDIgBgWmAMoTil053ZL+reqayFFeV0nDPAGxZNBsyz8ih7\\/aQ\\/o3DQl+1fXu494QVnxKWrOSdUA7k9tnbKgyUbF+Wv0Y4DeC8g3bSZI0tK24mXF6AVYPY\\/a5rdpyO9vtwrqTXqRoDCazWJB5d78Cd6YpQgOBxP4ilIc8Lb4HxRXBq5qDs1CyByROiq\\/lu4WSOQmUaatn1TVZ1zxTRdyr37mUzb40P9ZeP+bdH2MTQxM3lYFXApVyxTT\\/YM7MZy7QuRJeoZWQcg00EGEEYCmLA8Wwaz3hCuCk7hPMHrRtDTjD3JgupFyQTO5nrMY9i9+m6UYoM\\/jwef2JBHdX\\/nkHeMM9ZaI9qU8LB\\/8gv9+qLADelfhOnxIfcWnn3aWMPrg2GBH1Zwk\\/g\\/LIIg0+ieeZrLcFirATYdEurDweRuqNlch5WzDbk64WisAQ20ATXSjnLM8xeBdo9QerHTU6u1+XuRBC1lXlGQY2htDjGMF0aYYpwuT+W4wZkcAugJP8Lup1e2dhr6sHNvj+a4NhMRWCXvMxT31BoQ==\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"search\",\"response\":{\"result\":\"Searching for purchase contract: PC-67890 (Subsidiary: Acme Corp) Found 1 result.\"}}}]}],\"system_instruction\":{\"parts\":[{\"text\":\"You are a helpful search assistant. Help users search for different resources.\"}]}}"
+                "body": "{\"tools\":[{\"functionDeclarations\":[{\"description\":\"Search various resources based on filter criteria\",\"name\":\"search\",\"parametersJsonSchema\":{\"type\":\"object\",\"properties\":{\"filter\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"order\"]},\"number\":{\"type\":[\"string\",\"null\"]},\"userResponsible\":{\"type\":[\"string\",\"null\"]},\"departureDate\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}},\"additionalProperties\":false,\"required\":[\"type\"]},{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"purchase_contract\"]},\"contractNumber\":{\"type\":[\"string\",\"null\"]},\"subsidiary\":{\"type\":[\"string\",\"null\"]}},\"additionalProperties\":false,\"required\":[\"type\"]}],\"description\":\"The filter to use for search (order or purchase_contract)\"}},\"required\":[\"filter\"],\"additionalProperties\":false}}]}],\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Search for purchase contract number PC-67890 with subsidiary Acme Corp\"}]},{\"role\":\"model\",\"parts\":[{\"functionCall\":{\"id\":\"\",\"name\":\"search\",\"args\":{\"filter\":{\"type\":\"purchase_contract\",\"subsidiary\":\"Acme Corp\",\"contractNumber\":\"PC-67890\"}}},\"thoughtSignature\":\"CpcGAWkUfRNhpRo0MIYA2dQ3tcmWV2nLGj4fAs1GsFTkOBeikWikyc616I3keB0Pn9cj9dJ8rvvn3EUZhDeyD8H9O\\/7RRFlTf+VR6+SfXEQymT\\/nFNk5gKpq+DgpJ+fXrnfn4GW5P33FlwLpFWPIB59y+d1EAQGfFRNaKo2Ls7UAtTtVQA6fuMhs5WEX96mBCQId4K83Nz3F+CFO8kEm4xkWXZqj48WJxpSuhVSrA4P5lNRpYs8JTmr20ByrBmk4mwkCanW8tOBxb5RrXOH3SClfp2GJ1aEZZbkJbXQ0ihIiROeCNnqkHKW2oprMpKyxiHUCpgCOTx5LBfeVC5J+I1FNGr6v5ZESEWrL8JVHiorIz4DxYKLIOBKRN\\/t8T0IWcJqn+JfpK3BudOtKLKKZsGG+miyJ79atGnKOneYHEq3Ix\\/ydKLkKKtB0+wtSzD6FBZEw+WMHOMCIti7uQi9Rp16Xc8xhqjp\\/NPrgxVfc7vy\\/kFp1g0lcOU0MgXbCwQo4e+Gf63+SckG1uYebcL1zYdlwq\\/FPHZx8By2\\/mz8TFRU5xlv0B\\/C1Or5pXZG7PZ+LOJDd97TEfjYZydUaDgllnjVjd42RklvJznKkmDHzjW+mqrY2+BULyM100nbkJr9UDunk1VQQjsFmUEH9EUYn9bGf6Uva4FfhQ\\/\\/MyyjuVBOfmy7x+UYQDeuFIUfeCBe4SH9JwbEFBDhIGuVen2cfUbsfGzVXUyRFqQlAGKfhqwUAyNM3ivWMpuAD0DnjWoE8mzocMhFdIyBBhCYJfWflUvwlhmXDGKi6dkWB\\/H\\/CbR201QieAxAdm48GDSQoMLHYsov99C8cxofyhUUZ2SnXGF8QmDEavaCShtlozU1mXzgUjTqXfBLk7B\\/bukLF9uEmUNVFI8\\/IaRzDUaj0ZiT6x9pNRpuOb9TIfcf\\/4xgEs3HpfMMGfhl3b0lre2q+BDmvOr8rUOfsUFZ8DmJByxkXv9lqcUm+xdOX23\\/7ZO5h0gBF4GslzMu56dE751Wnb+z6BZXeu8dgUhYQeRtoJVt40nybqKS+q4Fo+eg=\"}]},{\"role\":\"user\",\"parts\":[{\"functionResponse\":{\"name\":\"search\",\"response\":{\"result\":\"Searching for purchase contract: PC-67890 (Subsidiary: Acme Corp) Found 1 result.\"}}}]}],\"system_instruction\":{\"parts\":[{\"text\":\"You are a helpful search assistant. Help users search for different resources.\"}]}}"
             },
             "response": {
                 "status": 200,
@@ -864,7 +864,7 @@
                         "scaffolding on HTTPServer2"
                     ],
                     "content-length": [
-                        "354"
+                        "353"
                     ],
                     "x-xss-protection": [
                         "0"
@@ -877,7 +877,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"I found one result for purchase contract PC-67890 with subsidiary Acme Corp.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 333,\n    \"candidatesTokenCount\": 19,\n    \"totalTokenCount\": 352,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 333\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"JKC1aq60C7jgxs0P94uN2Qg\"\n}\n"
+                "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"I found one result for purchase contract PC-67890 with subsidiary Acme Corp.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 333,\n    \"candidatesTokenCount\": 19,\n    \"totalTokenCount\": 352,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 333\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"lU3qarP-GpHsxN8Po-Hu6QU\"\n}\n"
             }
         }
     ]
