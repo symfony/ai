@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-11-03T21:13:45Z
+
+@chr-hertel do you have a Bedrock key to re-record `examples/bedrock/messages-toolcall-mantle.php`? The second cache breakpoint changes its request, and the replay job stays red without it.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-10T23:18:31Z
+
+Currently my AWS subscription also doesn't work with Anthropic models on Mantle. Let's replace for now.
