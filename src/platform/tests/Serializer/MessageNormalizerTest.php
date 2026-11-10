@@ -107,6 +107,7 @@ final class MessageNormalizerTest extends TestCase
             new ComputerCall(['type' => 'click', 'x' => 1, 'y' => 2], 'call_2', [['id' => 'sc_1', 'code' => 'malicious', 'message' => 'Careful']], 'cu_1', 'completed'),
             new LocalShellCall(['ls', '-la'], 'call_3', 'lsh_1', 'completed'),
         )];
+        yield 'failed tool call' => [(new ToolCallMessage($toolCall, new Text('Unavailable')))->withIsError(true)];
         yield 'tool call' => [new ToolCallMessage($toolCall, new Text('Sunny'))];
         yield 'multimodal tool call' => [new ToolCallMessage($toolCall, new Text('Chart'), Image::fromDataUrl('data:image/png;base64,aW1hZ2U='))];
     }

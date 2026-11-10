@@ -129,7 +129,7 @@ final class Runner
 
             $messages = $messages->with($this->toAssistantMessage($result, $assistantMessage, $result->getMetadata()->all()));
             foreach ($toolResults as $i => $toolResult) {
-                $messages = $messages->with(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult)));
+                $messages = $messages->with(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult))->withIsError($toolResult->isError()));
 
                 if (null !== $toolResult->getSources()) {
                     $sources = $sources->merge($toolResult->getSources());

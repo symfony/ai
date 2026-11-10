@@ -19,6 +19,20 @@ use Symfony\AI\Platform\Result\ToolCall;
 
 final class ToolResultTest extends TestCase
 {
+    public function testErrorStatusPreservesPayloadAndSources()
+    {
+        $toolCall = new ToolCall('123', 'my_tool');
+        $sources = new SourceCollection();
+        $payload = ['message' => 'Unavailable'];
+        $this->assertFalse((new ToolResult($toolCall, $payload))->isError());
+
+        $result = new ToolResult($toolCall, $payload, $sources, isError: true);
+
+        $this->assertTrue($result->isError());
+        $this->assertSame($payload, $result->getResult());
+        $this->assertSame($sources, $result->getSources());
+    }
+
     public function testGetToolCall()
     {
         $toolCall = new ToolCall('123', 'my_tool', ['arg' => 'value']);

@@ -64,6 +64,7 @@ use Symfony\Component\Uid\Uuid;
  *     content: string,
  *     parts: list<NormalizedPart>,
  *     toolCall: array<string, mixed>|null,
+ *     isError?: bool,
  *     metadata: array<string, mixed>,
  *     addedAt: int,
  *     ...<string, mixed>
@@ -111,7 +112,9 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
 
         $ignored = $context[AbstractNormalizer::IGNORED_ATTRIBUTES] ?? [];
 
-        return array_diff_key([
+        $toolStatus = $data instanceof ToolCallMessage ? ['isError' => $data->isError()] : [];
+
+        return array_diff_key($toolStatus + [
             $context['identifier'] ?? 'id' => $data->getId()->toRfc4122(),
             'type' => $data::class,
             'content' => $content,
@@ -143,7 +146,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             SystemMessage::class => new SystemMessage($parts[0] ?? $data['content'] ?? ''),
             UserMessage::class => new UserMessage(...$parts),
             AssistantMessage::class => new AssistantMessage(...([] !== $parts ? $parts : $this->denormalizeLegacyAssistantParts($data))),
-            ToolCallMessage::class => $this->denormalizeToolCallMessage($data, $parts),
+            ToolCallMessage::class => $this->denormalizeToolCallMessage($data, $parts)->withIsError($data['isError'] ?? false),
             default => throw new InvalidArgumentException(\sprintf('Unknown message type "%s".', $data['type'])),
         };
 

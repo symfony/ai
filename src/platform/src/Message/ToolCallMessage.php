@@ -30,12 +30,27 @@ final class ToolCallMessage implements MessageInterface
      */
     private readonly array $content;
 
+    private bool $isError = false;
+
     public function __construct(
         private readonly ToolCall $toolCall,
         ContentInterface ...$content,
     ) {
         $this->id = Uuid::v7();
         $this->content = $content;
+    }
+
+    public function isError(): bool
+    {
+        return $this->isError;
+    }
+
+    public function withIsError(bool $isError): self
+    {
+        $clone = clone $this;
+        $clone->isError = $isError;
+
+        return $clone;
     }
 
     public function getRole(): Role

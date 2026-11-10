@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `ToolCallMessage::isError()` and `withIsError()`, preserving the status through message serialization
  * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call
  * Stream the string answers of `Test\MockPlatformFactory` word by word when the invocation has the `stream` option
  * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
