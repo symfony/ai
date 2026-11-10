@@ -17,6 +17,7 @@ CHANGELOG
  * Add an optional `$messages` argument to `Update\Result`, for agents providing the messages of their execution
  * [BC BREAK] The agent no longer changes the given `MessageBag`: input processors replace it with `Input::setMessageBag()`, and the tool loop runs on its own copy
  * [BC BREAK] Remove the `excludeToolMessages` argument of `Agent`, tool messages never reach the caller's `MessageBag`
+ * Add the reserved `$_toolCallId` tool parameter to receive the current call ID without exposing it to the model
  * Add a `$toolResultConverter` argument to `Agent` to customize how tool results are converted for the model
  * Add tool effect hints to `AsTool` and the tool factories
 
