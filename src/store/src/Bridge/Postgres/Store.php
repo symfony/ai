@@ -313,7 +313,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $tsqueryExpression = '('.implode(' || ', $tsqueryParts).')'; // OR operator in PostgreSQL
-        $tsvectorExpression = \sprintf("to_tsvector('%s', metadata->>'_text')", $this->lang);
+        $tsvectorExpression = \sprintf("to_tsvector('%s', COALESCE(metadata->>'_text', ''))", $this->lang);
 
         // Documents sharing no keyword still rank by their vector distance, unless the query is keywords only
         $whereClauses = 0.0 === $query->getSemanticRatio() ? [\sprintf('%s @@ %s', $tsvectorExpression, $tsqueryExpression)] : [];
