@@ -1,0 +1,10 @@
+---------------------------------------------------------------------------
+
+by EdouardCourty at 2026-11-10T13:26:14Z
+
+> Looks good. Two small things:
+>
+> * Remove the stray `)` in the info text of `max_body_bytes` in `config/options.php`.
+> * Add a controller test with a small limit and an oversized body that expects a 413. Right now no test fails if the controller stops passing the value to the transport.
+
+Done!
