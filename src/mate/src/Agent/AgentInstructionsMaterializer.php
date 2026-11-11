@@ -22,7 +22,7 @@ use Symfony\AI\Mate\Discovery\ComposerExtensionDiscovery;
  * @phpstan-type MaterializationResult array{
  *     instructions_file_updated: bool,
  *     agents_file_updated: bool,
- *     claude_file_updated: bool,
+ *     claude_file_updated: bool|null,
  * }
  *
  * @author Johannes Wachter <johannes@sulu.io>
@@ -104,14 +104,15 @@ final class AgentInstructionsMaterializer
         return $this->rootDir.'/AGENTS.md';
     }
 
-    private function getClaudeFilePath(): string
+    private function getClaudeFilePath(): ?string
     {
-        $nestedPath = $this->rootDir.'/.claude/CLAUDE.md';
-        if (!file_exists($this->rootDir.'/CLAUDE.md') && file_exists($nestedPath)) {
-            return $nestedPath;
+        foreach ([$this->rootDir.'/CLAUDE.md', $this->rootDir.'/.claude/CLAUDE.md'] as $path) {
+            if (file_exists($path)) {
+                return $path;
+            }
         }
 
-        return $this->rootDir.'/CLAUDE.md';
+        return null;
     }
 
     private function writeInstructionsFile(string $instructions): bool
@@ -186,26 +187,17 @@ final class AgentInstructionsMaterializer
     }
 
     /**
-     * Claude Code only reads `CLAUDE.md`, so the AGENTS.md instructions stay invisible to it
-     * unless that file imports them.
+     * Claude Code falls back to `AGENTS.md` only while no `CLAUDE.md` exists, so an existing
+     * one has to import it. Returns null when there is none to maintain.
      */
-    private function writeClaudeFile(): bool
+    private function writeClaudeFile(): ?bool
     {
         $path = $this->getClaudeFilePath();
-        $importBlock = $this->buildClaudeImportBlock($path);
-
-        if (!file_exists($path)) {
-            $written = @file_put_contents($path, $this->normalizeContent($this->buildClaudeFile($importBlock)));
-            if (false === $written) {
-                $this->logger->warning('Failed to create CLAUDE.md file', [
-                    'path' => $path,
-                ]);
-
-                return false;
-            }
-
-            return true;
+        if (null === $path) {
+            return null;
         }
+
+        $importBlock = $this->buildClaudeImportBlock($path);
 
         $content = @file_get_contents($path);
         if (false === $content) {
@@ -251,17 +243,6 @@ final class AgentInstructionsMaterializer
         }
 
         return true;
-    }
-
-    private function buildClaudeFile(string $importBlock): string
-    {
-        return implode("\n", [
-            '# CLAUDE.md',
-            '',
-            'This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.',
-            '',
-            $importBlock,
-        ]);
     }
 
     private function buildClaudeImportBlock(string $claudeFilePath): string
