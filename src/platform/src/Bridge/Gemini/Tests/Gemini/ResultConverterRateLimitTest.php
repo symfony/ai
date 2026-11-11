@@ -41,4 +41,36 @@ final class ResultConverterRateLimitTest extends TestCase
             throw $e;
         }
     }
+
+    public function testRateLimitExceededReadsTheRetryDelayGeminiSends()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse(json_encode([
+                'error' => [
+                    'code' => 429,
+                    'message' => 'You exceeded your current quota, please check your plan and billing details.',
+                    'status' => 'RESOURCE_EXHAUSTED',
+                    'details' => [
+                        [
+                            '@type' => 'type.googleapis.com/google.rpc.QuotaFailure',
+                            'violations' => [['quotaMetric' => 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId' => 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaValue' => '15']],
+                        ],
+                        ['@type' => 'type.googleapis.com/google.rpc.Help', 'links' => [['description' => 'Learn more about Gemini API quotas', 'url' => 'https://ai.google.dev/gemini-api/docs/rate-limits']]],
+                        ['@type' => 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay' => '20s'],
+                    ],
+                ],
+            ]), [
+                'http_code' => 429,
+            ]),
+        ]);
+
+        $httpResponse = $httpClient->request('POST', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent');
+
+        try {
+            (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame(20, $e->getRetryAfter());
+        }
+    }
 }

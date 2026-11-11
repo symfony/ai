@@ -31,9 +31,10 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * (OpenAI, Gemini, Perplexity) and the flat top-level `message` shape
  * (Mistral, Cerebras, Cohere) are supported.
  *
- * The `Retry-After` header lookup on 429 is best-effort: providers that
- * expose retry hints through other mechanisms (e.g. Cerebras via
- * `x-ratelimit-reset-*`, Gemini via `error.details[].retryDelay`) are not
+ * On 429, the retry time comes from the `Retry-After` header, or else from the
+ * `google.rpc.RetryInfo` detail of the error body (`error.details[].retryDelay`),
+ * which Gemini sends instead of a header. Providers that expose retry hints
+ * through other mechanisms (e.g. Cerebras via `x-ratelimit-reset-*`) are not
  * parsed here and will yield a null `getRetryAfter()`.
  *
  * @author Pascal CESCON <pascal.cescon@gmail.com>
@@ -80,10 +81,38 @@ trait HttpStatusErrorHandlingTrait
     {
         $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
 
-        if (null === $retryAfter || !ctype_digit($retryAfter)) {
+        if (null !== $retryAfter && ctype_digit($retryAfter)) {
+            return (int) $retryAfter;
+        }
+
+        return $this->extractRetryInfoDelay($response);
+    }
+
+    /**
+     * Google APIs such as Gemini send no Retry-After header, but a google.rpc.RetryInfo
+     * detail in the error, e.g. {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "34.4s"}.
+     */
+    private function extractRetryInfoDelay(ResponseInterface $response): ?int
+    {
+        try {
+            $data = $response->toArray(false);
+        } catch (DecodingExceptionInterface) {
             return null;
         }
 
-        return (int) $retryAfter;
+        foreach ($data['error']['details'] ?? [] as $detail) {
+            if (!\is_array($detail) || 'type.googleapis.com/google.rpc.RetryInfo' !== ($detail['@type'] ?? null)) {
+                continue;
+            }
+
+            $retryDelay = $detail['retryDelay'] ?? null;
+
+            // a protobuf Duration: seconds with an optional fraction, rounded up as the least time to wait
+            if (\is_string($retryDelay) && preg_match('/^(\d+(?:\.\d+)?)s$/', $retryDelay, $matches)) {
+                return (int) ceil((float) $matches[1]);
+            }
+        }
+
+        return null;
     }
 }
