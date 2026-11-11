@@ -256,8 +256,8 @@ final class Execution implements ExecutionInterface
 
     public function getMetadata(): Metadata
     {
-        if ($this->streamed) {
-            // populated while the deltas are consumed, mirroring a StreamResult
+        if ($this->streamed || (null === $this->result && (null !== $this->error || $this->canceled))) {
+            // the rounds completed so far, as a failed or canceled execution has no result to read them from
             return $this->metadata;
         }
 
@@ -323,11 +323,15 @@ final class Execution implements ExecutionInterface
                     break;
                 }
 
+                if ($update instanceof Progress && Progress::STAGE_MODEL_RESULT === $update->getStage() && $update->getPayload() instanceof ResultInterface) {
+                    $this->metadata->merge($update->getPayload()->getMetadata());
+                }
+
                 if ($update instanceof Result) {
-                    // the final result carries the metadata aggregated over all rounds, e.g. token usage
+                    // replaces the sum of the rounds, as the final result already carries it
                     $this->result = $update->getResult();
                     $this->resultUpdate = $update;
-                    $this->metadata->merge($update->getResult()->getMetadata());
+                    $this->metadata->set($update->getResult()->getMetadata()->all());
 
                     foreach ($this->resultCallbacks as $callback) {
                         $callback($update);

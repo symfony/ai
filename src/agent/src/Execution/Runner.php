@@ -111,6 +111,9 @@ final class Runner
                 return;
             }
 
+            // cloned, as the metadata of the last round is replaced by the aggregate below
+            yield new Progress(Progress::STAGE_MODEL_RESULT, 'Model responded.', clone $result);
+
             $toolCallResult = $this->extractToolCallResult($result);
             if (null === $toolCallResult || null === $this->toolExecutor) {
                 break;

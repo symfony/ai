@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `Progress::STAGE_MODEL_RESULT`, reporting the result of each model round, and keep the metadata of the completed rounds in `Execution::getMetadata()` of a failed or canceled execution
  * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation

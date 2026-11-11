@@ -997,7 +997,55 @@ final class RunnerTest extends TestCase
             $updates,
         );
 
-        $this->assertSame(['model_request', 'tool_call', 'model_request', 'result'], $stages);
+        $this->assertSame(['model_request', 'model_result', 'tool_call', 'model_request', 'model_result', 'result'], $stages);
+    }
+
+    public function testItReportsTheResultOfEachRoundWithItsOwnMetadata()
+    {
+        $toolCall = new ToolCall('call_1', 'tool', []);
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, 'Tool responded'));
+
+        $round = new ToolCallResult([$toolCall]);
+        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+        $final = new TextResult('Final');
+        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
+
+        $rounds = array_values(array_filter(
+            $updates,
+            static fn (UpdateInterface $update): bool => $update instanceof Progress && Progress::STAGE_MODEL_RESULT === $update->getStage(),
+        ));
+
+        $this->assertCount(2, $rounds);
+        $this->assertSame(10, $rounds[0]->getPayload()->getMetadata()->get('token_usage')->getTotalTokens());
+        $this->assertSame(5, $rounds[1]->getPayload()->getMetadata()->get('token_usage')->getTotalTokens());
+        $last = $updates[array_key_last($updates)];
+        $this->assertInstanceOf(ResultUpdate::class, $last);
+        $this->assertSame(15, $last->getResult()->getMetadata()->get('token_usage')->getTotalTokens());
+    }
+
+    public function testItReportsTheMetadataOfAStreamedRoundAfterTheStreamWasDrained()
+    {
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+
+        $stream = new StreamResult((static function () {
+            yield new TextDelta('Hello');
+        })());
+        $stream->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 7));
+
+        $updates = $this->collectUpdates($this->createRunner($this->platform($stream), $toolbox), new MessageBag());
+
+        $stages = array_map(
+            static fn (UpdateInterface $update): string => $update instanceof Progress ? $update->getStage() : $update->getType()->value,
+            $updates,
+        );
+
+        $this->assertSame(['model_request', 'delta', 'model_result', 'result'], $stages);
+        $this->assertInstanceOf(Progress::class, $updates[2]);
+        $this->assertSame(7, $updates[2]->getPayload()->getMetadata()->get('token_usage')->getTotalTokens());
     }
 
     public function testItYieldsEveryStreamedDeltaAsAProgressUpdate()
