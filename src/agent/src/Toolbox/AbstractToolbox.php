@@ -48,7 +48,7 @@ abstract class AbstractToolbox implements ToolboxInterface
         if ($event->isDenied()) {
             $this->logger->debug(\sprintf('Tool "%s" denied: %s', $toolCall->getName(), $event->getDenialReason()));
 
-            return new ToolResult($toolCall, $event->getDenialReason() ?? 'Tool execution denied.');
+            return new ToolResult($toolCall, $event->getDenialReason() ?? 'Tool execution denied.', isError: true);
         }
 
         if ($event->hasResult()) {
