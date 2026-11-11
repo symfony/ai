@@ -106,6 +106,11 @@ final class AgentInstructionsMaterializer
 
     private function getClaudeFilePath(): string
     {
+        $nestedPath = $this->rootDir.'/.claude/CLAUDE.md';
+        if (!file_exists($this->rootDir.'/CLAUDE.md') && file_exists($nestedPath)) {
+            return $nestedPath;
+        }
+
         return $this->rootDir.'/CLAUDE.md';
     }
 
@@ -187,9 +192,10 @@ final class AgentInstructionsMaterializer
     private function writeClaudeFile(): bool
     {
         $path = $this->getClaudeFilePath();
+        $importBlock = $this->buildClaudeImportBlock($path);
 
         if (!file_exists($path)) {
-            $written = @file_put_contents($path, $this->normalizeContent($this->buildClaudeFile()));
+            $written = @file_put_contents($path, $this->normalizeContent($this->buildClaudeFile($importBlock)));
             if (false === $written) {
                 $this->logger->warning('Failed to create CLAUDE.md file', [
                     'path' => $path,
@@ -209,8 +215,6 @@ final class AgentInstructionsMaterializer
 
             return false;
         }
-
-        $importBlock = $this->buildClaudeImportBlock();
 
         // Without the markers, any existing `AGENTS.md` reference counts as the user's own
         // import and is left alone.
@@ -249,22 +253,22 @@ final class AgentInstructionsMaterializer
         return true;
     }
 
-    private function buildClaudeFile(): string
+    private function buildClaudeFile(string $importBlock): string
     {
         return implode("\n", [
             '# CLAUDE.md',
             '',
             'This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.',
             '',
-            $this->buildClaudeImportBlock(),
+            $importBlock,
         ]);
     }
 
-    private function buildClaudeImportBlock(): string
+    private function buildClaudeImportBlock(string $claudeFilePath): string
     {
         return implode("\n", [
             self::CLAUDE_START_MARKER,
-            '@AGENTS.md',
+            \dirname($claudeFilePath) === $this->rootDir ? '@AGENTS.md' : '@../AGENTS.md',
             self::CLAUDE_END_MARKER,
         ]);
     }

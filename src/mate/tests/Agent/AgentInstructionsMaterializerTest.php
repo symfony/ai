@@ -156,6 +156,48 @@ MD
         $this->assertSame($existing, file_get_contents($this->tempDir.'/CLAUDE.md'));
     }
 
+    public function testMaterializeUpdatesNestedClaudeFileInsteadOfCreatingRootFile()
+    {
+        mkdir($this->tempDir.'/.claude');
+        file_put_contents($this->tempDir.'/.claude/CLAUDE.md', "# CLAUDE.md\n\nKeep this line.\n");
+
+        $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertTrue($result['claude_file_updated']);
+        $this->assertFileDoesNotExist($this->tempDir.'/CLAUDE.md');
+
+        $claude = file_get_contents($this->tempDir.'/.claude/CLAUDE.md');
+        $this->assertIsString($claude);
+        $this->assertStringContainsString('Keep this line.', $claude);
+        $this->assertStringContainsString('@../AGENTS.md', $claude);
+        $this->assertSame(1, substr_count($claude, AgentInstructionsMaterializer::CLAUDE_START_MARKER));
+    }
+
+    public function testMaterializeIsIdempotentForNestedClaudeFile()
+    {
+        mkdir($this->tempDir.'/.claude');
+        file_put_contents($this->tempDir.'/.claude/CLAUDE.md', "# CLAUDE.md\n");
+        $materializer = $this->createMaterializer();
+
+        $materializer->synchronizeFromCurrentInstructionsFile();
+        $afterFirstRun = file_get_contents($this->tempDir.'/.claude/CLAUDE.md');
+        $materializer->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertSame($afterFirstRun, file_get_contents($this->tempDir.'/.claude/CLAUDE.md'));
+    }
+
+    public function testMaterializePrefersRootClaudeFileOverNestedOne()
+    {
+        mkdir($this->tempDir.'/.claude');
+        file_put_contents($this->tempDir.'/.claude/CLAUDE.md', "# Nested\n");
+        file_put_contents($this->tempDir.'/CLAUDE.md', "# Root\n");
+
+        $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
+
+        $this->assertStringContainsString('@AGENTS.md', (string) file_get_contents($this->tempDir.'/CLAUDE.md'));
+        $this->assertSame("# Nested\n", file_get_contents($this->tempDir.'/.claude/CLAUDE.md'));
+    }
+
     public function testMaterializeIsIdempotentForClaudeFile()
     {
         $materializer = $this->createMaterializer();
