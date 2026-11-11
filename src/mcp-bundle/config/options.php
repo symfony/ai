@@ -124,6 +124,7 @@ return static function (DefinitionConfigurator $configurator): void {
                             ->addDefaultsIfNotSet()
                             ->children()
                                 ->stringNode('path')->defaultNull()->info('HTTP endpoint path. Defaults to "/mcp/<name>".')->end()
+                                ->integerNode('max_body_bytes')->defaultNull()->min(1)->info('Maximum HTTP request body size in bytes, larger requests are answered with a 413. Leave unset to use the SDK default value.')->end()
                                 ->variableNode('allowed_hosts')
                                     ->info('DNS rebinding protection hosts (without port). Leave unset to keep the SDK default (localhost only), set an array of hostnames to expose a public MCP server, or false to disable the protection entirely.')
                                     ->defaultNull()

@@ -415,6 +415,7 @@ final class McpBundle extends AbstractBundle
                 new Reference('mcp.psr17_factory'),
                 new Reference(\sprintf('mcp.server.%s.middleware_factory', $name)),
                 new Reference('logger'),
+                $server['http']['max_body_bytes'],
             ])
             ->setPublic(true)
             ->addTag('controller.service_arguments')

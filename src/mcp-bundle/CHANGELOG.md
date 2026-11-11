@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add `servers.<name>.http.max_body_bytes` to configure the maximum HTTP request body size
+
 0.15
 ----
 
