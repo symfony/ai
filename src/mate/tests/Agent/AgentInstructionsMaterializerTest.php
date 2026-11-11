@@ -116,18 +116,13 @@ MD
         $this->assertSame(1, substr_count($agents, AgentInstructionsMaterializer::AGENTS_END_MARKER));
     }
 
-    public function testMaterializeCreatesClaudeFileImportingAgentsFile()
+    public function testMaterializeDoesNotCreateClaudeFile()
     {
         $result = $this->createMaterializer()->synchronizeFromCurrentInstructionsFile();
 
-        $this->assertTrue($result['claude_file_updated']);
-        $this->assertFileExists($this->tempDir.'/CLAUDE.md');
-
-        $claude = file_get_contents($this->tempDir.'/CLAUDE.md');
-        $this->assertIsString($claude);
-        $this->assertStringContainsString('@AGENTS.md', $claude);
-        $this->assertStringContainsString(AgentInstructionsMaterializer::CLAUDE_START_MARKER, $claude);
-        $this->assertStringContainsString(AgentInstructionsMaterializer::CLAUDE_END_MARKER, $claude);
+        $this->assertNull($result['claude_file_updated']);
+        $this->assertFileDoesNotExist($this->tempDir.'/CLAUDE.md');
+        $this->assertFileDoesNotExist($this->tempDir.'/.claude/CLAUDE.md');
     }
 
     public function testMaterializeAppendsImportBlockToUnrelatedClaudeFile()
@@ -200,6 +195,7 @@ MD
 
     public function testMaterializeIsIdempotentForClaudeFile()
     {
+        file_put_contents($this->tempDir.'/CLAUDE.md', "# CLAUDE.md\n");
         $materializer = $this->createMaterializer();
 
         $materializer->synchronizeFromCurrentInstructionsFile();

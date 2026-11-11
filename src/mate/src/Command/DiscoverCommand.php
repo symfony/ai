@@ -265,7 +265,7 @@ class DiscoverCommand extends Command
     }
 
     /**
-     * @param array{instructions_file_updated: bool, agents_file_updated: bool, claude_file_updated: bool} $materializationResult
+     * @param array{instructions_file_updated: bool, agents_file_updated: bool, claude_file_updated: bool|null} $materializationResult
      */
     private function displayInstructionsStatus(SymfonyStyle $io, array $materializationResult): void
     {
@@ -281,9 +281,9 @@ class DiscoverCommand extends Command
             $io->warning('Failed to update AGENTS.md managed instructions block.');
         }
 
-        if ($materializationResult['claude_file_updated']) {
+        if (true === $materializationResult['claude_file_updated']) {
             $io->text('Updated <info>CLAUDE.md</info> to import AGENTS.md.');
-        } else {
+        } elseif (false === $materializationResult['claude_file_updated']) {
             $io->warning('Failed to update CLAUDE.md to import AGENTS.md.');
         }
     }

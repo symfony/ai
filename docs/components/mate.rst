@@ -53,8 +53,7 @@ details. The command then creates:
 * ``mate/extensions.php``, the list of extensions that ``mate discover`` fills
 * ``mate/.env`` and ``mate/.gitignore``
 * ``mate/src/`` for your own tools
-* ``mate/AGENT_INSTRUCTIONS.md``, a managed block in ``AGENTS.md``, and a ``CLAUDE.md`` that
-  imports ``AGENTS.md`` so Claude Code picks the instructions up
+* ``mate/AGENT_INSTRUCTIONS.md`` and a managed block in ``AGENTS.md``
 
 It also adds this to your ``composer.json``:
 
