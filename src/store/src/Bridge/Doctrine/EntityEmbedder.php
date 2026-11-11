@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Bridge\Doctrine;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Vector\VectorInterface;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\AI\Store\Document\VectorizerInterface;
@@ -91,7 +92,7 @@ final class EntityEmbedder
 
             foreach (array_chunk($contents, $this->chunkSize, true) as $chunk) {
                 /** @var list<VectorInterface> $chunkVectors */
-                $chunkVectors = $this->vectorizer->vectorize(array_values($chunk));
+                $chunkVectors = $this->vectorizer->vectorize(array_values($chunk), [PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_DOCUMENT]);
 
                 foreach (array_keys($chunk) as $position => $i) {
                     $vectors[$classEntities[$i]] = $chunkVectors[$position];

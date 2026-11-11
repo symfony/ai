@@ -13,6 +13,7 @@ namespace Symfony\AI\Store;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\Event\PostQueryEvent;
@@ -125,11 +126,11 @@ final class Retriever implements RetrieverInterface
         if ($this->store->supports(HybridQuery::class)) {
             $this->logger->debug('Store supports hybrid queries, using HybridQuery with semantic ratio', ['semanticRatio' => $options['semanticRatio'] ?? 0.5]);
 
-            return new HybridQuery($this->vectorizer->vectorize($query), explode(' ', $query), $options['semanticRatio'] ?? 0.5);
+            return new HybridQuery($this->vectorizer->vectorize($query, [PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_QUERY]), explode(' ', $query), $options['semanticRatio'] ?? 0.5);
         }
 
         $this->logger->debug('Store supports vector queries, using VectorQuery');
 
-        return new VectorQuery($this->vectorizer->vectorize($query));
+        return new VectorQuery($this->vectorizer->vectorize($query, [PlatformOptions::INPUT_TYPE => PlatformOptions::INPUT_TYPE_QUERY]));
     }
 }

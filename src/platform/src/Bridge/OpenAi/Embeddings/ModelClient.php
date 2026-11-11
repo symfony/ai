@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\AbstractModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -40,7 +41,7 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
     {
         return new RawHttpResult($this->httpClient->request('POST', self::getBaseUrl($this->region).'/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
-            'json' => array_merge($options, [
+            'json' => array_merge(array_diff_key($options, [PlatformOptions::INPUT_TYPE => true]), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ]),

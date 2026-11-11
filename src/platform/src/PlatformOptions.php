@@ -20,6 +20,14 @@ final class PlatformOptions
 {
     public const MAX_OUTPUT_TOKENS = 'max_output_tokens';
 
+    /**
+     * Whether an embeddings request embeds a search query or a document, see the INPUT_TYPE_* values.
+     */
+    public const INPUT_TYPE = 'embedding_input_type';
+
+    public const INPUT_TYPE_QUERY = 'query';
+    public const INPUT_TYPE_DOCUMENT = 'document';
+
     private function __construct()
     {
     }
