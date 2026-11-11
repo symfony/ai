@@ -607,6 +607,40 @@ class ResultConverterTest extends TestCase
         yield 'server error' => [503, '{"error":{"message":{"detail":[{"msg":"x"}]}}}', ServerException::class, 'Server error (HTTP 503).'];
     }
 
+    public function testThrowsRateLimitExceededExceptionWithRetryAfterHeader()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = (new MockHttpClient(new MockResponse('{"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile`","type":"tokens"}}', [
+            'http_code' => 429,
+            'response_headers' => ['retry-after' => '7'],
+        ])))->request('POST', 'https://api.example.com/v1/chat/completions');
+
+        $exception = null;
+        try {
+            $converter->convert(new RawHttpResult($httpResponse));
+        } catch (RateLimitExceededException $e) {
+            $exception = $e;
+        }
+
+        $this->assertNotNull($exception);
+        $this->assertSame(7, $exception->getRetryAfter());
+    }
+
+    public function testThrowsRateLimitExceededExceptionWithoutRetryAfterHeader()
+    {
+        $converter = new ResultConverter();
+
+        $exception = null;
+        try {
+            $converter->convert(new RawHttpResult($this->createResponse('{"error":{"message":"Rate limit reached"}}', 429)));
+        } catch (RateLimitExceededException $e) {
+            $exception = $e;
+        }
+
+        $this->assertNotNull($exception);
+        $this->assertNull($exception->getRetryAfter());
+    }
+
     public function testThrowsExceedContextSizeExceptionOnATopLevelErrorCode()
     {
         $converter = new ResultConverter();

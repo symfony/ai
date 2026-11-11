@@ -70,9 +70,10 @@ class ResultConverter implements ResultConverterInterface
         }
 
         if (429 === $response->getStatusCode()) {
+            $retryAfter = $response->getHeaders(false)['retry-after'][0] ?? null;
             $error = json_decode($response->getContent(false), true);
             $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
-            throw new RateLimitExceededException(null, \is_string($errorMessage) ? $errorMessage : null);
+            throw new RateLimitExceededException(null !== $retryAfter ? (int) $retryAfter : null, \is_string($errorMessage) ? $errorMessage : null);
         }
 
         if (($code = $response->getStatusCode()) >= 500) {
