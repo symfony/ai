@@ -338,6 +338,31 @@ final class RunnerTest extends TestCase
         $this->assertCount(1, $messageBag);
     }
 
+    public function testToolWithoutResultStillGetsItsAnswer()
+    {
+        $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
+        $toolbox = $this->createMock(ToolboxInterface::class);
+        $toolbox
+            ->expects($this->once())
+            ->method('execute')
+            ->willReturn(new ToolResult($toolCall, null));
+
+        $toolMessages = [];
+        $results = [new ToolCallResult([$toolCall]), new TextResult('Final response')];
+        $platform = MockPlatformFactory::createPlatform(static function ($model, array $input) use (&$toolMessages, &$results): ResultInterface {
+            $toolMessages = array_values(array_filter($input['messages'], static fn (array $message): bool => 'tool' === $message['role']));
+
+            return array_shift($results);
+        });
+
+        $result = $this->drive($this->createRunner($platform, $toolbox), new MessageBag(Message::ofUser('Hello')));
+
+        $this->assertSame('Final response', $result->getContent());
+        $this->assertCount(1, $toolMessages);
+        $this->assertSame('id1', $toolMessages[0]['tool_call_id']);
+        $this->assertSame('', $toolMessages[0]['content']);
+    }
+
     public function testMultiPartResultContainingAToolCallGetsExecuted()
     {
         $toolCall = new ToolCall('id1', 'tool1', ['arg1' => 'value1']);
