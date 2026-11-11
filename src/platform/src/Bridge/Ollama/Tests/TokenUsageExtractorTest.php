@@ -48,7 +48,27 @@ final class TokenUsageExtractorTest extends TestCase
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertSame(10, $tokenUsage->getCompletionTokens());
+        $this->assertNull($tokenUsage->getCachedTokens());
         $this->assertSame('foo', $tokenUsage->getModel());
+    }
+
+    public function testItExtractsCachedPromptTokens()
+    {
+        $extractor = new TokenUsageExtractor();
+        $result = new InMemoryRawResult([
+            'model' => 'foo',
+            'response' => 'Hello World!',
+            'done' => true,
+            'prompt_eval_count' => 40,
+            'prompt_eval_cached_count' => 32,
+            'eval_count' => 10,
+        ]);
+
+        $tokenUsage = $extractor->extract($result);
+
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(40, $tokenUsage->getPromptTokens());
+        $this->assertSame(32, $tokenUsage->getCachedTokens());
     }
 
     public function testItExtractsTokenUsageFromStreamResult()
