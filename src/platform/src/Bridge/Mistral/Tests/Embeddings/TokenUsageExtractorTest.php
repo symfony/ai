@@ -44,8 +44,8 @@ final class TokenUsageExtractorTest extends TestCase
         $tokenUsage = $extractor->extract($result);
 
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
-        $this->assertSame(1000, $tokenUsage->getRemainingTokensMinute());
-        $this->assertSame(1000000, $tokenUsage->getRemainingTokensMonth());
+        $this->assertSame(970, $tokenUsage->getRemainingTokensMinute());
+        $this->assertSame(999970, $tokenUsage->getRemainingTokensMonth());
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertSame(10, $tokenUsage->getTotalTokens());
@@ -64,8 +64,8 @@ final class TokenUsageExtractorTest extends TestCase
         $tokenUsage = $extractor->extract($result);
 
         $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
-        $this->assertSame(1000, $tokenUsage->getRemainingTokensMinute());
-        $this->assertSame(1000000, $tokenUsage->getRemainingTokensMonth());
+        $this->assertSame(970, $tokenUsage->getRemainingTokensMinute());
+        $this->assertSame(999970, $tokenUsage->getRemainingTokensMonth());
         $this->assertSame(10, $tokenUsage->getPromptTokens());
         $this->assertNull($tokenUsage->getCompletionTokens());
         $this->assertNull($tokenUsage->getTotalTokens());
@@ -77,7 +77,9 @@ final class TokenUsageExtractorTest extends TestCase
         $response = $this->createStub(ResponseInterface::class);
         $response->method('getHeaders')->willReturn([
             'x-ratelimit-limit-tokens-minute' => ['1000'],
+            'x-ratelimit-remaining-tokens-minute' => ['970'],
             'x-ratelimit-limit-tokens-month' => ['1000000'],
+            'x-ratelimit-remaining-tokens-month' => ['999970'],
         ]);
 
         return $response;
