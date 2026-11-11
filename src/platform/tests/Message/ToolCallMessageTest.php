@@ -25,6 +25,21 @@ final class ToolCallMessageTest extends TestCase
 {
     use UuidAssertionTrait;
 
+    public function testErrorStatusCanBeChangedWithoutChangingContent()
+    {
+        $message = new ToolCallMessage(new ToolCall('foo', 'bar'), new Text('Unavailable'));
+        $id = $message->getId();
+        $content = $message->getContent();
+        $this->assertFalse($message->isError());
+        $message->setIsError(true);
+
+        $this->assertTrue($message->isError());
+        $this->assertSame($id, $message->getId());
+        $this->assertSame($content, $message->getContent());
+        $message->setIsError(false);
+        $this->assertFalse($message->isError());
+    }
+
     public function testConstructionIsPossible()
     {
         $toolCall = new ToolCall('foo', 'bar');

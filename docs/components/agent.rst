@@ -907,6 +907,13 @@ For another result, like an array with an error code, throw an exception that im
 ``getToolCallResult()`` method returns the result of the tool call. Any other exception gives the LLM a
 generic error message, which doesn't expose the details of the error.
 
+``FaultTolerantToolbox`` marks failed executions with ``ToolResult::isError()`` without
+changing their result payload. Calls rejected by a ``ToolCallRequested`` listener are
+also marked as errors. The status remains available on the corresponding
+``ToolCallMessage::isError()``, including after serialization with ``MessageNormalizer``.
+Use ``ToolCallMessage::setIsError()`` to change the error status without changing
+its content.
+
 .. _agent-tool-sources:
 
 Tool Sources

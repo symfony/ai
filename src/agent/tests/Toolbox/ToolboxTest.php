@@ -373,6 +373,7 @@ final class ToolboxTest extends TestCase
 
         $this->assertIsString($result->getResult());
         $this->assertSame('You shall not pass!', $result->getResult());
+        $this->assertTrue($result->isError());
     }
 
     public function testToolCallResult()
