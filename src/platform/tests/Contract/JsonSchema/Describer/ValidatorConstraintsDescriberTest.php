@@ -106,7 +106,13 @@ final class ValidatorConstraintsDescriberTest extends TestCase
         yield 'Numeric range' => ['numberRange', null, ['multipleOf' => 3, 'exclusiveMinimum' => 10, 'maximum' => 100]];
         yield 'Positive' => ['positiveNumber', null, ['exclusiveMinimum' => 0]];
         yield 'Range constraint' => ['rangedNumber', null, ['minimum' => 5, 'maximum' => 15]];
-        yield 'Regex string' => ['regexString', null, ['pattern' => '[a-z]+']];
+        yield 'Regex string' => ['regexString', null, ['pattern' => '^[a-z]+$']];
+        yield 'Regex anchored at the start only' => ['regexAnchoredAtStart', null, ['pattern' => '^\d{3}']];
+        yield 'Regex with an escaped delimiter' => ['regexEscapedDelimiter', null, ['pattern' => '^\d+/\d+$']];
+        yield 'Regex with modifier' => ['regexWithModifier', ['type' => 'string'], ['type' => 'string']];
+        yield 'Regex with HTML pattern' => ['regexWithHtmlPattern', null, ['pattern' => '^(?:[A-Z]+|[a-z]+)$']];
+        yield 'Regex with an empty HTML pattern' => ['regexWithoutHtmlPattern', ['type' => 'string'], ['type' => 'string']];
+        yield 'Regex match=false' => ['regexNotMatching', ['type' => 'string'], ['type' => 'string']];
         yield 'Time pattern' => ['time', null, ['pattern' => '^([01]\d|2[0-3]):[0-5]\d$']];
         yield 'Timezone' => ['timezone', null, ['description' => 'Timezone in "Region/City" format.']];
         yield 'Type constraint narrows schema type' => ['typedByConstraint', ['type' => ['string', 'null', 'integer']], ['type' => ['string', 'null']]];
