@@ -37,7 +37,7 @@ final class Retriever implements RetrieverInterface
     }
 
     /**
-     * @param array{semanticRatio?: float, platform_options?: array<string, mixed>}&array<string, mixed> $options Store options; `platform_options` is forwarded to the vectorizer instead
+     * @param array<string, mixed> $options Store options; `platform_options` is forwarded to the vectorizer instead
      *
      * @return iterable<VectorDocumentInterface>
      */
@@ -49,9 +49,8 @@ final class Retriever implements RetrieverInterface
             [$query, $options] = $this->dispatchPreQuery($query, $options);
         }
 
-        // Configures the query embedding, not the store query, so it must not reach the store:
-        // bridges like MongoDB merge the options they get straight into their query payload.
         $platformOptions = $options['platform_options'] ?? [];
+        // Stores such as MongoDB merge their options into the query payload.
         unset($options['platform_options']);
 
         $queryObject = $this->createQuery($query, $options, $platformOptions);
@@ -61,6 +60,10 @@ final class Retriever implements RetrieverInterface
         $documents = $this->store->query($queryObject, $options);
 
         if (null !== $this->eventDispatcher) {
+            if ([] !== $platformOptions) {
+                $options['platform_options'] = $platformOptions;
+            }
+
             $documents = $this->dispatchPostQuery($query, $documents, $options);
         }
 

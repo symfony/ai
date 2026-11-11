@@ -506,6 +506,34 @@ final class RetrieverTest extends TestCase
         $this->assertSame('test query', $postRetrievalEvent->getQuery());
     }
 
+    public function testRetrievePassesPlatformOptionsToPostQueryEvent()
+    {
+        $store = new TestStore();
+        $store->add([new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Test Document']))]);
+
+        $vectorizer = new Vectorizer(
+            PlatformTestHandler::createPlatform(new VectorResult([new Vector([0.2, 0.3, 0.4])])),
+            'text-embedding-3-small'
+        );
+
+        $postQueryEvent = null;
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$postQueryEvent) {
+                if ($event instanceof PostQueryEvent) {
+                    $postQueryEvent = $event;
+                }
+
+                return $event;
+            });
+
+        $retriever = new Retriever($store, $vectorizer, $dispatcher);
+        iterator_to_array($retriever->retrieve('test query', ['platform_options' => ['input_type' => 'search_query']]));
+
+        $this->assertInstanceOf(PostQueryEvent::class, $postQueryEvent);
+        $this->assertSame(['platform_options' => ['input_type' => 'search_query']], $postQueryEvent->getOptions());
+    }
+
     public function testRetrieveWithEventDispatcherReturnsModifiedDocuments()
     {
         $document = new VectorDocument(
