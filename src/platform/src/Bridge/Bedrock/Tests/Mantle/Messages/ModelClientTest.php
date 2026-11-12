@@ -128,6 +128,21 @@ final class ModelClientTest extends TestCase
         yield 'explicit max_tokens wins' => [['max_tokens' => 2000, 'max_output_tokens' => 500], 2000];
     }
 
+    public function testItSendsNoToolsAndNoToolChoiceWhenNoToolIsAllowed()
+    {
+        $responseCallback = function (string $method, string $url, array $requestOptions): HttpResponse {
+            $body = json_decode($requestOptions['body'], true, flags: \JSON_THROW_ON_ERROR);
+
+            $this->assertArrayNotHasKey('tools', $body);
+            $this->assertArrayNotHasKey('tool_choice', $body);
+
+            return new MockResponse();
+        };
+
+        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key');
+        $modelClient->request(new Claude('anthropic.claude-haiku-4-5'), ['messages' => []], ['tools' => []]);
+    }
+
     public function testItRejectsStructuredOutput()
     {
         $modelClient = new ModelClient(new MockHttpClient(), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key');
