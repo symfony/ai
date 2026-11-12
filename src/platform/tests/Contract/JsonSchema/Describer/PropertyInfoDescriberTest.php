@@ -38,6 +38,16 @@ final class PropertyInfoDescriberTest extends TestCase
         $this->assertInstanceOf(\ReflectionParameter::class, $actualProperties[3]->getReflector());
     }
 
+    public function testNullExtractorsFallBackToTheDefaults()
+    {
+        $describer = new PropertyInfoDescriber(null, null, null, null);
+        $schema = null;
+
+        $actualProperties = iterator_to_array($describer->describeObject(new ObjectSubject(ListItemName::class, new \ReflectionClass(ListItemName::class)), $schema));
+
+        $this->assertCount(4, $actualProperties);
+    }
+
     /**
      * @param array<string, mixed>|null $expectedSchema
      */
