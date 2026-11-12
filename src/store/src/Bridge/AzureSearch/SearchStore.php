@@ -221,12 +221,22 @@ final class SearchStore implements StoreInterface
      */
     private function convertToVectorDocument(array $data): VectorDocumentInterface
     {
+        $score = $data['@search.score'] ?? null;
+
+        // add() writes the metadata next to the id and the vector, and a hit also carries @search.* annotations
+        $metadata = array_filter(
+            $data,
+            fn (int|string $key): bool => 'id' !== $key && $this->vectorFieldName !== $key && !str_starts_with((string) $key, '@search.'),
+            \ARRAY_FILTER_USE_KEY,
+        );
+
         return new VectorDocument(
             id: $data['id'],
             vector: !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
                 ? new NullVector()
                 : new Vector($data[$this->vectorFieldName]),
-            metadata: new Metadata($data),
+            metadata: new Metadata($metadata),
+            score: \is_int($score) || \is_float($score) ? (float) $score : null,
         );
     }
 }
