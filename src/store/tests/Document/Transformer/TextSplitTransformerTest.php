@@ -107,6 +107,19 @@ final class TextSplitTransformerTest extends TestCase
         $this->assertSame(substr($this->getLongText(), 1375, 150), $chunks[11]->getContent());
     }
 
+    public function testSplitStopsWhenAChunkReachesTheEndOfTheText()
+    {
+        $document = new TextDocument(Uuid::v4(), $this->getLongText());
+
+        $chunks = iterator_to_array($this->transformer->transform([$document], [
+            TextSplitTransformer::OPTION_OVERLAP => 300,
+        ]));
+
+        $this->assertCount(2, $chunks);
+        $this->assertSame(substr($this->getLongText(), 0, 1000), $chunks[0]->getContent());
+        $this->assertSame(substr($this->getLongText(), 700, 800), $chunks[1]->getContent());
+    }
+
     public function testSplitWithZeroOverlap()
     {
         $document = new TextDocument(Uuid::v4(), $this->getLongText());

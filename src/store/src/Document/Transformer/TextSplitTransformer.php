@@ -76,6 +76,10 @@ final class TextSplitTransformer implements TransformerInterface
                     Metadata::KEY_TEXT => $chunkText,
                 ]));
 
+                if ($end === $length) {
+                    break;
+                }
+
                 $start += ($chunkSize - $overlap);
             }
         }
