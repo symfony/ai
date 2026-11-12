@@ -1,32 +1,55 @@
-- Title: So You Received a Security Report. Now What?
-- Publication date: August 19, 2026
-- Short summary: A practical, step-by-step guide for PHP project maintainers from the PHP Foundation Ecosystem Security Team on handling vulnerability reports. It stresses coordinated disclosure (keep reports private), quick acknowledgement, careful triage, safe reproduction in isolated environments, privately preparing fixes (temporary private forks), writing and publishing a proper GitHub Security Advisory (with correct Composer/package metadata), coordinating releases (merge → tag → publish → notify FriendsOfPHP), and post-release wrap-up. The post also covers Composer’s advisory enforcement, ways to improve project security posture (SECURITY.md, private reporting, CI hardening, MFA, workflow hygiene), and how to get help from the Ecosystem Security Team.
+Title: Designed Once, Usable Everywhere: An Investment in PHP’s Standard Library
+Publication date: Nov 03, 2026
+
+Short summary:
+The post argues for small, carefully designed additions to PHP's standard library to reduce duplicated, incompatible userland solutions. It highlights PHP 8.6 additions such as a SortDirection enum and a Time\Duration class, explains how these types unify APIs (with examples for sorting and timeouts), and describes planned follow-ups (e.g., Time\Instant / Time\Clock). The author also discusses the importance of careful RFC design, long-term maintenance, and invites the community to test, adopt, contribute to, or fund this work.
 
 +-------------------------------------------------------+----------------- Tool Sources --------------------------------------------------------------------------+
 | Name (Reference)                                      | Content                                                                                                 |
 +-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| The PHP Foundation: "New on the PHP Foundation blo... | New on the PHP Foundation blog: We’re highlighting Manychat, a Silver sponsor helping us move PHP ...   |
-| https://phpc.social/@thephpf/114494155624781671       |                                                                                                         |
-+-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| Best PHP Blogs 2026: Top Sites for Developers         | Senior developers and architects: Prioritize Stitcher.io for PHP version adoption data and language ... |
-| https://draft.dev/learn/php-blogs                     |                                                                                                         |
-+-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| The PHP Foundation Launches an Ecosystem Security ... | For the full announcement and more on what the team is planning, read the post on The PHP Foundation... |
-| https://laravel-news.com/the-php-foundation-launch... |                                                                                                         |
-+-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| Meet Manychat: A PHP Foundation Sponsor Sharing Th... | banner text stub The PHP Foundation Who we are What we do News Talks Contact php.net Sponsor The PHP... |
-| https://thephp.foundation/blog/2025/05/09/manychat... |                                                                                                         |
-+-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| News — The PHP Foundation — Supporting, Advanc...     | banner text stub The PHP Foundation Who we are What we do News Talks Contact php.net Sponsor The PHP... |
+| News — The PHP Foundation — Supporting, Advanc...     | This is post #15, where we highlight and celebrate the improvements made to PHP... Published on Jun ... |
 | https://thephp.foundation/blog/                       |                                                                                                         |
 +-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| So You Received a Security Report. Now What? — T...   | If the report came from the PHP Foundation Ecosystem Security Team, <strong>it has already been thro... |
-| https://thephp.foundation/blog/2026/08/19/so-you-r... |                                                                                                         |
+| Today's PHP Security Release, and How We're Streng... | <strong>The PHP Foundation got the PHP project into the Patch the Planet program, as part of which s... |
+| https://thephp.foundation/blog/2026/10/21/todays-p... |                                                                                                         |
 +-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| The PHP Podcast 2026.08.20 | PHP Architect            | Now what?” is <strong>a jump-around reference for application developers rather than a front-to-ba...   |
-| https://www.phparch.com/podcast/the-php-podcast-20... |                                                                                                         |
+| How the PHP Security Team Handles Your Reports —...   | PHP runs a large share of the web, so keeping it secure and staying responsive matters far beyond th... |
+| https://thephp.foundation/blog/2026/10/14/how-the-... |                                                                                                         |
 +-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
-| So You Received a Security Report. Now What? — T...   | banner text stub The PHP Foundation Who we are What we do News Talks Contact php.net Sponsor The PHP... |
-| https://thephp.foundation/blog/2026/08/19/so-you-r... |                                                                                                         |
+| The PHP Foundation (@thephpf@phpc.social) - PHP Co... | The PHP Foundation&lt;p&gt;In our latest blog post, <strong>Alex Daubois shares how the PHP Security... |
+| https://phpc.social/@thephpf                          |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Tag Archive — The PHP Foundation — Supporting,...     | <strong>The PHP Foundation is excited to announce the addition of Brent Roose from JetBrains to the ... |
+| https://thephp.foundation/blog/tag/news/              |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| The PHP Foundation (@thephpf.bsky.social) — Blue...   | TYPO3 has become a Silver Sponsor of The PHP Foundation. ... In our latest blog post, <strong>Founda... |
+| https://bsky.app/profile/thephpf.bsky.social          |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Designed Once, Usable Everywhere: An Investment in... | The PHP Foundation funds developers, like my co-author Derick, to do this kind of work and it is a l... |
+| https://thephp.foundation/blog/2026/11/03/stdlib-i... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| The PHP Foundation (@ThePHPF) on X                    | The PHP security team is giving advance notice: <strong>Upcoming security release Wed, Oct 21st 2026... |
+| https://x.com/ThePHPF                                 |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| The PHP Foundation — The PHP Foundation — Supp...     | If you&#x27;ve ever sent a security report to PHP and then refreshed the advisory page every morning... |
+| https://thephp.foundation/                            |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Quarterly Progress Report - Q2 2026 — The PHP Fo...   | <strong>A report of Foundation contractor activities in Q2 of 2026</strong>.                            |
+| https://thephp.foundation/blog/2026/07/21/quarterl... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| News — The PHP Foundation — Supporting, Advanc...     | The PHP Foundation Who we are What we do Get Involved News Contact php.net Sponsor The PHP Foundatio... |
+| https://thephp.foundation/blog/                       |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Designed Once, Usable Everywhere: An Investment in... | After the Random extension in PHP 8.2, the new DOM API in PHP 8.4 and the URI extension in PHP 8.5, ... |
+| https://thephp.foundation/blog/2026/11/03/stdlib-i... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| News — The PHP Foundation — Supporting, Advanc...     | <strong>Thanks to investment from the Sovereign Tech Agency (STA),</strong> a German government back... |
+| https://thephp.foundation/blog/                       |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| The PHP Foundation — The PHP Foundation — Supp...     | <strong>The PHP Foundation is a collective of people and organizations relying on the PHP language</... |
+| https://thephp.foundation/                            |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Designed Once, Usable Everywhere: An Investment in... | The PHP Foundation Who we are What we do Get Involved News Contact php.net Sponsor The PHP Foundatio... |
+| https://thephp.foundation/blog/2026/11/03/stdlib-i... |                                                                                                         |
 +-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
 +-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
