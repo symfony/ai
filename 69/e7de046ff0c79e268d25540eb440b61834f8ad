@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by skybleak333 at 2026-11-12T18:32:26Z
+
+Thanks, done in ff621cb5: the docblock now says the header is read first and the `RetryInfo` detail otherwise, with Cerebras as the example of what isn't parsed. The new test covers a 429 with an error but no details, and one whose only detail is a `QuotaFailure`; both still give a null retry time.
