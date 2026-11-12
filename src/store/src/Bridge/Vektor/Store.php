@@ -47,8 +47,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
-        Config::setDataDir($this->storagePath.'/vektor');
-        Config::setDimensions($this->dimensions);
+        $this->configure();
 
         if ($this->filesystem->exists($this->storagePath.'/vektor')) {
             return;
@@ -60,6 +59,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function drop(array $options = []): void
     {
         if ($options['optimize'] ?? false) {
+            $this->configure();
             $optimizer = new Optimizer();
             $optimizer->run();
 
@@ -79,6 +79,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
+        $this->configure();
         $indexer = new Indexer();
 
         foreach ($documents as $document) {
@@ -96,6 +97,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $ids = [$ids];
         }
 
+        $this->configure();
         $indexer = new Indexer();
 
         foreach ($ids as $id) {
@@ -122,6 +124,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        $this->configure();
         $searcher = new Searcher();
 
         $results = $searcher->search($query->getVector()->getData(), $options['k'] ?? 10, true, true);
@@ -140,7 +143,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
     {
         // Vektor has no count operation, but the vector file only yields the entries
         // that are not soft-deleted, so scanning it gives the exact document count
+        $this->configure();
+
         return iterator_count((new VectorFile())->scan());
+    }
+
+    /**
+     * Vektor reads its data directory and dimensions from static configuration. Setting them before
+     * every operation keeps the store working in processes that never called setup(), such as a web
+     * request, and next to another store.
+     */
+    private function configure(): void
+    {
+        Config::setDataDir($this->storagePath.'/vektor');
+        Config::setDimensions($this->dimensions);
     }
 
     /**
