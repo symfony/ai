@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Test\Replay\CassetteHttpClient;
 use Symfony\AI\Platform\Test\Replay\HttpCassette;
+use Symfony\AI\Platform\TokenUsage\TokenUsage;
 
 /**
  * Drives the real Mistral bridge pipeline (Contract, ModelClient, Llm\ResultConverter) against
@@ -42,6 +43,20 @@ final class ResultConverterCassetteTest extends TestCase
             $result->asText(),
         );
         $this->assertTrue($result->getResult()->getMetadata()->get('finish_reason')->is(FinishReasonCase::STOP));
+    }
+
+    public function testReplaysTokenUsageThroughRealConverter()
+    {
+        $result = $this->replay('text_response.json', 'Hello');
+
+        $tokenUsage = $result->getResult()->getMetadata()->get('token_usage');
+
+        $this->assertInstanceOf(TokenUsage::class, $tokenUsage);
+        $this->assertSame(4, $tokenUsage->getPromptTokens());
+        $this->assertSame(36, $tokenUsage->getCompletionTokens());
+        $this->assertSame(40, $tokenUsage->getTotalTokens());
+        // x-ratelimit-limit-tokens-minute is 400000, the request cost 40 tokens
+        $this->assertSame(399960, $tokenUsage->getRemainingTokensMinute());
     }
 
     public function testReplaysTruncatedTextResponseThroughRealConverter()
