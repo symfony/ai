@@ -48,7 +48,7 @@ final class StoreFactoryTest extends TestCase
         $store = StoreFactory::create('my_database', 'my_collection', 'http://127.0.0.1:19530/', httpClient: $httpClient);
         $store->drop();
 
-        $this->assertSame('http://127.0.0.1:19530/v2/vectordb/databases/drop', $requestedUrl);
+        $this->assertSame('http://127.0.0.1:19530/v2/vectordb/collections/drop', $requestedUrl);
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
@@ -64,7 +64,7 @@ final class StoreFactoryTest extends TestCase
         $store = StoreFactory::create('my_database', 'my_collection', 'https://example.com/milvus', httpClient: $httpClient);
         $store->drop();
 
-        $this->assertSame('https://example.com/milvus/v2/vectordb/databases/drop', $requestedUrl);
+        $this->assertSame('https://example.com/milvus/v2/vectordb/collections/drop', $requestedUrl);
     }
 
     public function testStoreSendsApiKeyAsBearerToken()
