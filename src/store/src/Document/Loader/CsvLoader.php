@@ -129,7 +129,7 @@ final class CsvLoader implements LoaderInterface
         }
 
         if (\count($row) !== \count($headers)) {
-            $row = array_pad($row, \count($headers), '');
+            $row = \array_slice(array_pad($row, \count($headers), ''), 0, \count($headers));
         }
 
         return array_combine($headers, $row);

@@ -171,6 +171,23 @@ final class CsvLoaderTest extends TestCase
         $this->assertSame('Multi-word content with "quotes" inside', $doc8->getContent());
     }
 
+    public function testRowsWithMoreCellsThanTheHeaderAreLoaded()
+    {
+        $file = tempnam(sys_get_temp_dir(), 'csv');
+        file_put_contents($file, "content,title\nFirst row,One,\nSecond row,Two\n");
+
+        try {
+            $documents = iterator_to_array((new CsvLoader(metadataColumns: ['title']))->load($file));
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertCount(2, $documents);
+        $this->assertSame('First row', $documents[0]->getContent());
+        $this->assertSame('One', $documents[0]->getMetadata()['title']);
+        $this->assertSame('Second row', $documents[1]->getContent());
+    }
+
     public function testRowIndexInMetadata()
     {
         $loader = new CsvLoader(idColumn: 'id');
