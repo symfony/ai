@@ -75,7 +75,7 @@ final class RstLoader implements LoaderInterface
      */
     private function splitIntoSections(string $content, string $source, int $depth): iterable
     {
-        $lines = explode(\PHP_EOL, $content);
+        $lines = preg_split('/\R/', $content);
         $count = \count($lines);
 
         $currentTitle = '';
@@ -89,7 +89,7 @@ final class RstLoader implements LoaderInterface
             if ($this->isHeading($line, $nextLine)) {
                 if ($i > $sectionStartIndex) {
                     $sectionLines = \array_slice($lines, $sectionStartIndex, $i - $sectionStartIndex);
-                    $sectionText = implode(\PHP_EOL, $sectionLines);
+                    $sectionText = implode("\n", $sectionLines);
                     if ('' !== trim($sectionText)) {
                         yield from $this->yieldSection($sectionText, $currentTitle, $source, $depth);
                     }
@@ -107,7 +107,7 @@ final class RstLoader implements LoaderInterface
 
         if ($sectionStartIndex < $count) {
             $sectionLines = \array_slice($lines, $sectionStartIndex);
-            $sectionText = implode(\PHP_EOL, $sectionLines);
+            $sectionText = implode("\n", $sectionLines);
             if ('' !== trim($sectionText)) {
                 yield from $this->yieldSection($sectionText, $currentTitle, $source, $depth);
             }
