@@ -63,9 +63,10 @@
         "psr/log": "^3.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/event-dispatcher": "^7.3|^8.0",
+        "symfony/json-schema": "^8.2",
         "symfony/polyfill-php85": "^1.33",
         "symfony/property-access": "^7.3|^8.0",
-        "symfony/property-info": "^7.3|^8.0",
+        "symfony/property-info": "^7.4.6|^8.0.6",
         "symfony/serializer": "^7.3|^8.0",
         "symfony/type-info": "^7.3|^8.0",
         "symfony/uid": "^7.3|^8.0"

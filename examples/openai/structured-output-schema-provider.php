@@ -11,12 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory as SchemaFactory;
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
 use Symfony\AI\Platform\Message\Message;
@@ -54,15 +49,11 @@ final class IssueQuery
     }
 }
 
-$schemaFactory = new SchemaFactory(new Describer([
-    new SerializerDescriber(),
-    new TypeInfoDescriber(),
-    new MethodDescriber(),
-    new PropertyInfoDescriber(),
-    new SchemaAttributeDescriber([
+$schemaFactory = new SchemaFactory([
+    new SchemaAttributeEnricher([
         CategoryProvider::class => new CategoryProvider(['bug', 'feature', 'docs', 'chore']),
     ]),
-]));
+]);
 
 $dispatcher = new EventDispatcher();
 $dispatcher->addSubscriber(new PlatformSubscriber(new ResponseFormatFactory($schemaFactory)));

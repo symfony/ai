@@ -449,13 +449,13 @@ final class AiBundle extends AbstractBundle
         }
 
         if (ContainerBuilder::willBeAvailable('mcp/sdk', McpSchema::class, ['symfony/ai-bundle'])) {
-            $builder->getDefinition('ai.platform.json_schema.describer.schema_attribute')->clearTag('ai.platform.json_schema.describer');
+            $builder->getDefinition('ai.platform.json_schema.enricher.schema_attribute')->clearTag('ai.platform.json_schema.enricher');
         } else {
-            $builder->removeDefinition('ai.platform.json_schema.describer.mcp_schema');
+            $builder->removeDefinition('ai.platform.json_schema.enricher.mcp_schema');
         }
 
         if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
-            $builder->removeDefinition('ai.platform.json_schema.describer.validator');
+            $builder->removeDefinition('ai.platform.json_schema.enricher.validator');
         }
     }
 

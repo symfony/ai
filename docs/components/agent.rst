@@ -741,21 +741,18 @@ Validator constraints, ``#[Schema]`` attributes, and runtime ``#[Schema(provider
 DTO properties continue to apply.
 
 The default tool factories and AI Bundle configure
-:class:`Symfony\\AI\\Agent\\Toolbox\\MapToolArgumentsDescriber` automatically. When injecting a
-custom JSON Schema factory, wrap its object describer to support mapped arguments::
+:class:`Symfony\\AI\\Agent\\Toolbox\\MapToolArgumentsSchemaFactory` automatically. When injecting a
+custom JSON Schema factory, decorate it to support mapped arguments::
 
-    use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
+    use Symfony\AI\Agent\Toolbox\MapToolArgumentsSchemaFactory;
     use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
-    use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
     use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 
-    $objectDescriber = new Describer(); // Or your own describer configuration.
-    $factory = new Factory(new MapToolArgumentsDescriber($objectDescriber));
+    $factory = new MapToolArgumentsSchemaFactory(new Factory()); // Or your own factory configuration.
     $tools = new MemoryToolFactory($factory);
 
-Wrap the complete object describer rather than adding this decorator to its list of describers.
-It replaces the attributed method subject with the DTO class subject before schema generation,
-preserving the describer context and leaving unmarked subjects unchanged.
+The decorator describes a method with ``#[MapToolArguments]`` by the properties of the DTO class and
+passes every other method on to the decorated factory.
 
 Naming conversion follows the Serializer instance passed to
 :class:`Symfony\\AI\\Agent\\Toolbox\\ToolCallArgumentResolver`. The default resolver does not enable

@@ -17,9 +17,8 @@ use Psr\Log\NullLogger;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\Tests\Fixture\JsonSchema\CategoryProvider;
 use Symfony\AI\AiBundle\Tests\Fixture\JsonSchema\ProductDto;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Provider\SchemaProviderInterface;
-use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -38,14 +37,14 @@ final class SchemaProviderWiringTest extends TestCase
         );
     }
 
-    public function testSchemaAttributeDescriberReceivesTaggedIterator()
+    public function testSchemaAttributeEnricherReceivesTaggedIterator()
     {
         $container = $this->buildContainer();
 
-        $this->assertTrue($container->hasDefinition('ai.platform.json_schema.describer.schema_attribute'));
+        $this->assertTrue($container->hasDefinition('ai.platform.json_schema.enricher.schema_attribute'));
 
-        $definition = $container->getDefinition('ai.platform.json_schema.describer.schema_attribute');
-        $this->assertSame(SchemaAttributeDescriber::class, $definition->getClass());
+        $definition = $container->getDefinition('ai.platform.json_schema.enricher.schema_attribute');
+        $this->assertSame(SchemaAttributeEnricher::class, $definition->getClass());
 
         $argument = $definition->getArgument(0);
         $this->assertInstanceOf(TaggedIteratorArgument::class, $argument);
@@ -57,7 +56,7 @@ final class SchemaProviderWiringTest extends TestCase
      * End-to-end "just drop it in" check: a developer registers a SchemaProviderInterface
      * implementation as an ordinary autoconfigured service (id == FQCN, no manual tag) and
      * references it with #[Schema(provider: TheProvider::class)]. After a full container
-     * compile, the describer must resolve that provider by its FQCN and merge its fragment.
+     * compile, the enricher must resolve that provider by its FQCN and merge its fragment.
      */
     public function testDroppedInProviderIsResolvedByFqcnAndMergesItsFragment()
     {
@@ -67,18 +66,14 @@ final class SchemaProviderWiringTest extends TestCase
             ->setAutoconfigured(true)
             ->setArgument(0, ['electronics', 'books', 'toys']);
 
-        $container->getDefinition('ai.platform.json_schema.describer.schema_attribute')->setPublic(true);
+        $container->getDefinition('ai.platform.json_schema.enricher.schema_attribute')->setPublic(true);
         $container->compile();
 
-        $describer = $container->get('ai.platform.json_schema.describer.schema_attribute');
-        $this->assertInstanceOf(SchemaAttributeDescriber::class, $describer);
+        $enricher = $container->get('ai.platform.json_schema.enricher.schema_attribute');
+        $this->assertInstanceOf(SchemaAttributeEnricher::class, $enricher);
 
         // ProductDto::$category carries #[Schema(provider: CategoryProvider::class)].
-        $schema = ['type' => 'string'];
-        $describer->describeProperty(
-            new PropertySubject('category', new \ReflectionProperty(ProductDto::class, 'category')),
-            $schema,
-        );
+        $schema = $enricher->apply(new \ReflectionProperty(ProductDto::class, 'category'), ['type' => 'string']);
 
         $this->assertSame(['type' => 'string', 'enum' => ['electronics', 'books', 'toys']], $schema);
     }

@@ -12,12 +12,7 @@
 namespace Symfony\AI\Platform\Tests\Contract\JsonSchema;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyInfoDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SerializerDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\TypeInfoDescriber;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ColorProvider;
@@ -33,19 +28,13 @@ final class SchemaProviderFactoryIntegrationTest extends TestCase
 
     protected function setUp(): void
     {
-        $describer = new Describer([
-            new SerializerDescriber(),
-            new TypeInfoDescriber(),
-            new MethodDescriber(),
-            new PropertyInfoDescriber(),
-            new SchemaAttributeDescriber([
+        $this->factory = new Factory([
+            new SchemaAttributeEnricher([
                 StatusProvider::class => new StatusProvider(['active', 'archived']),
                 ColorProvider::class => new ColorProvider(['red', 'blue']),
                 ContextAwareProvider::class => new ContextAwareProvider(),
             ]),
         ]);
-
-        $this->factory = new Factory($describer);
     }
 
     public function testBuildParametersAppliesProviderOnToolMethodSignature()

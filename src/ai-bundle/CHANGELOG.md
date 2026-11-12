@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * [BC BREAK] Replace the `ai.platform.json_schema.describer` tag and its `ai.platform.json_schema.describer.*` services with the `ai.platform.json_schema.enricher`, `ai.platform.json_schema.class_resolver` and `ai.platform.json_schema.definition_processor` tags; `ai.toolbox.json_schema.describer` is removed
  * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
  * [BC BREAK] Replace the `client` option of the `pinecone` store by the required `api_key` and the `http_client` options
  * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`

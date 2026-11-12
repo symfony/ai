@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleBackedEnum;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MetadataDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListOfPolymorphicTypesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\SchemaAttributeValuesDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
@@ -340,6 +341,14 @@ final class FactoryTest extends TestCase
         $this->assertSame($expected, $actual);
         $this->assertSame($expected['type'], $actual['type']);
         $this->assertSame($expected['required'], $actual['required']);
+    }
+
+    public function testBuildPropertiesForMapOfMixedValues()
+    {
+        $actual = $this->factory->buildProperties(MetadataDto::class);
+
+        $this->assertSame(['type' => 'object'], $actual['properties']['metadata']);
+        $this->assertSame('{"type":"object"}', json_encode($actual['properties']['metadata']));
     }
 
     public function testBuildPropertiesForUnionTypeDto()
