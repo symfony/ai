@@ -29,10 +29,11 @@ Branch on the symptom.
 **Errored (5xx / exception):** read `exception` first.
 `data.class`, `message` (secrets scrubbed), `file`, `line`, and `trace` (top 10 frames) are the fix. If `has_exception` is false on an error response, the failure is upstream: check `request` for the status and `logger` for what was logged.
 
-**Slow but succeeded:** skip `exception`, go to `time`, then `db`, then `memory`.
+**Slow but succeeded:** skip `exception`, go to `time`, then `db`, then `http_client`, then `memory`.
 - `time`: `duration_ms` is total. `events` are sorted slowest first with a `category` (e.g. `doctrine`, `template`, `controller`) that tells you which subsystem ate the time. That category picks the next collector.
 - `db`: `query_count` plus `summary.duplicate_query_count`. `queries` are grouped by identical SQL, sorted by `total_time_ms`. An N+1 shows as one grouped entry with a high `count` (same statement fired in a loop), or a high `duplicate_query_count`. One slow statement shows as a high `avg_time_ms`. `sample_params` shows what was bound. Grouped list caps at 50 (`queries_truncated`).
 - `memory`: `usage_percent` against the limit. Only relevant when the request is heavy or OOMs.
+- `http_client`: when `time` points at the app waiting rather than computing, this lists the outbound calls, slowest first: `client`, `method`, `url`, `http_code`, `total_time_ms`, `failed`, `error`, `redirect_count`. `summary` has `request_count`, `total_time_ms`, `failed_count` and the `slowest` call. A `failed` call has `http_code` 0 (timeout, DNS, refused), 400+, or an `error`. Headers and bodies are never shown, URL secrets are masked as `***`. Lists cap at 50 (`calls_truncated`).
 
 **Wrong output / bad input:** read `request`.
 `summary` has `method`, `path`, `route`, `status_code`, `content_type`. `data` has the sanitized bags (`request_query`, `request_request`, `request_headers`, `session_attributes`). Sensitive values, the raw body, and the curl command are redacted or omitted by design, so do not expect to read a password back.
