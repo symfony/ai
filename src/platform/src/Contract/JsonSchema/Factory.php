@@ -113,7 +113,7 @@ final class Factory implements SchemaFactoryInterface
             classDiscriminatorResolver: new ClassDiscriminatorFromClassMetadata($classMetadataFactory),
             typeResolver: $typeResolver,
         );
-        $this->config = new Configuration(new Dialect('#/$defs/', NullSyntax::Union), allowExtraAttributes: false, direction: Direction::Input);
+        $this->config = new Configuration(new Dialect('#/$defs/', NullSyntax::Union, supportsConst: false), allowExtraAttributes: false, direction: Direction::Input);
     }
 
     public function buildParameters(string $className, string $methodName, array $context = []): ?array
