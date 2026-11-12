@@ -209,15 +209,15 @@ return static function (ContainerConfigurator $container): void {
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.property_info', PropertyInfoDescriber::class)
             ->args([
-                service('property_info')->ignoreOnInvalid(),
-                service('property_info')->ignoreOnInvalid(),
-                service('property_info.reflection_extractor')->ignoreOnInvalid(),
-                service('property_info')->ignoreOnInvalid(),
+                service('property_info')->nullOnInvalid(),
+                service('property_info')->nullOnInvalid(),
+                service('property_info.reflection_extractor')->nullOnInvalid(),
+                service('property_info')->nullOnInvalid(),
             ])
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.serializer', SerializerDescriber::class)
             ->args([
-                service('serializer.mapping.class_metadata_factory')->ignoreOnInvalid(),
+                service('serializer.mapping.class_metadata_factory')->nullOnInvalid(),
             ])
             ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer.validator', ValidatorConstraintsDescriber::class)

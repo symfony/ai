@@ -33,18 +33,24 @@ use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
  */
 final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyDescriberInterface
 {
+    private readonly PropertyListExtractorInterface $propertyListExtractor;
+    private readonly PropertyAccessExtractorInterface&PropertyInitializableExtractorInterface $propertyInfo;
+    private readonly PropertyWriteInfoExtractorInterface&PropertyReadInfoExtractorInterface $propertyReadWriteInfo;
     private readonly PropertyDescriptionExtractorInterface $propertyDescriptionExtractor;
 
     /**
      * @param list<string> $serializerGroups
      */
     public function __construct(
-        private readonly PropertyListExtractorInterface $propertyListExtractor = new SerializerExtractor(new ClassMetadataFactory(new AttributeLoader())),
-        private readonly PropertyAccessExtractorInterface&PropertyInitializableExtractorInterface $propertyInfo = new ReflectionExtractor(),
-        private readonly PropertyWriteInfoExtractorInterface&PropertyReadInfoExtractorInterface $propertyReadWriteInfo = new ReflectionExtractor(),
+        ?PropertyListExtractorInterface $propertyListExtractor = null,
+        (PropertyAccessExtractorInterface&PropertyInitializableExtractorInterface)|null $propertyInfo = null,
+        (PropertyWriteInfoExtractorInterface&PropertyReadInfoExtractorInterface)|null $propertyReadWriteInfo = null,
         ?PropertyDescriptionExtractorInterface $propertyDescriptionExtractor = null,
         private readonly array $serializerGroups = ['*'],
     ) {
+        $this->propertyListExtractor = $propertyListExtractor ?? new SerializerExtractor(new ClassMetadataFactory(new AttributeLoader()));
+        $this->propertyInfo = $propertyInfo ?? new ReflectionExtractor();
+        $this->propertyReadWriteInfo = $propertyReadWriteInfo ?? new ReflectionExtractor();
         $this->propertyDescriptionExtractor = $propertyDescriptionExtractor ?? new PropertyInfoExtractor([], [], [new PhpDocExtractor()], [], [new ReflectionExtractor()]);
     }
 
