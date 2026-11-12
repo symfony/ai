@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Mate\Bridge\Monolog\Tests\Service;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogParser;
 
@@ -40,6 +41,35 @@ final class LogParserTest extends TestCase
         $this->assertSame('Database connection failed', $entry->getMessage());
         $this->assertSame(['exception' => 'PDOException'], $entry->getContext());
         $this->assertSame(['retry' => 3], $entry->getExtra());
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    #[DataProvider('linesWithEscapedQuotes')]
+    public function testParseLineFormatWithEscapedQuotesInContext(string $line, array $context)
+    {
+        $entry = $this->parser->parse($line);
+
+        $this->assertNotNull($entry);
+        $this->assertSame('Request failed', $entry->getMessage());
+        $this->assertSame($context, $entry->getContext());
+        $this->assertSame(['request_id' => 'abc'], $entry->getExtra());
+    }
+
+    /**
+     * @return iterable<string, array{string, array<string, mixed>}>
+     */
+    public static function linesWithEscapedQuotes(): iterable
+    {
+        yield 'odd number of escaped quotes' => [
+            '[2024-01-15 10:30:45] app.ERROR: Request failed {"size":"12\\" pipe"} {"request_id":"abc"}',
+            ['size' => '12" pipe'],
+        ];
+        yield 'escaped backslash before an escaped quote' => [
+            '[2024-01-15 10:30:45] app.ERROR: Request failed {"path":"C:\\\\\\"tmp"} {"request_id":"abc"}',
+            ['path' => 'C:\\"tmp'],
+        ];
     }
 
     public function testParseLineFormatWithoutContext()
