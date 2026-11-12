@@ -39,9 +39,11 @@ final class StoreFactoryTest extends TestCase
     {
         $requestedUrl = null;
         $requestedQuery = null;
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$requestedQuery): JsonMockResponse {
+        $requestedAuthorization = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$requestedQuery, &$requestedAuthorization): JsonMockResponse {
             $requestedUrl = $url;
             $requestedQuery = $options['query'];
+            $requestedAuthorization = $options['normalized_headers']['authorization'][0] ?? null;
 
             return new JsonMockResponse(['data' => [['cnt' => '3']]]);
         });
@@ -49,7 +51,14 @@ final class StoreFactoryTest extends TestCase
         $store = StoreFactory::create('my_db', 'my_table', 'http://symfony:secret@127.0.0.1:8123', $httpClient);
 
         $this->assertSame(3, $store->count());
-        $this->assertStringStartsWith('http://symfony:secret@127.0.0.1:8123/?', $requestedUrl);
+
+        // Since symfony/symfony#68120, HttpClient sends the user info of a URL as an Authorization header and removes it from the URL
+        if (null === $requestedAuthorization) {
+            $this->assertStringStartsWith('http://symfony:secret@127.0.0.1:8123/?', $requestedUrl);
+        } else {
+            $this->assertStringStartsWith('http://127.0.0.1:8123/?', $requestedUrl);
+            $this->assertSame('Authorization: Basic '.base64_encode('symfony:secret'), $requestedAuthorization);
+        }
         $this->assertSame('my_db', $requestedQuery['database']);
         $this->assertSame('SELECT count() AS cnt FROM my_table', $requestedQuery['query']);
         $this->assertSame(1, $httpClient->getRequestsCount());
