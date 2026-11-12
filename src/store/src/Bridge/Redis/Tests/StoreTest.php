@@ -17,6 +17,7 @@ use Symfony\AI\Store\Bridge\Redis\Metric;
 use Symfony\AI\Store\Bridge\Redis\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
@@ -199,6 +200,44 @@ final class StoreTest extends TestCase
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxScore' => 0.8]));
 
         $this->assertCount(0, $results); // Should be filtered out due to maxScore
+    }
+
+    public function testQueryReturnsAllResults()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->willReturn([
+                3,
+                'vector:first',
+                [
+                    '$.id', 'first',
+                    '$.metadata', json_encode(['title' => 'First']),
+                    '$.embedding', json_encode([0.1, 0.2, 0.3]),
+                    'vector_score', '0.1',
+                ],
+                'vector:second',
+                [
+                    '$.id', 'second',
+                    '$.metadata', json_encode(['title' => 'Second']),
+                    '$.embedding', json_encode([0.2, 0.2, 0.3]),
+                    'vector_score', '0.2',
+                ],
+                'vector:third',
+                [
+                    '$.id', 'third',
+                    '$.metadata', json_encode(['title' => 'Third']),
+                    '$.embedding', json_encode([0.3, 0.2, 0.3]),
+                    'vector_score', '0.3',
+                ],
+            ]);
+
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+
+        $this->assertSame(['first', 'second', 'third'], array_map(static fn (VectorDocumentInterface $document) => $document->getId(), $results));
+        $this->assertSame([0.1, 0.2, 0.3], array_map(static fn (VectorDocumentInterface $document) => $document->getScore(), $results));
     }
 
     public function testQueryWithCustomLimit()
