@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by skybleak333 at 2026-11-11T20:59:20Z
+
+Thanks! Added `testQueryReturnsAsManyDocumentsAsTheLimit` to `IntegrationTest`: 8 documents, `limit` 8, all 8 must come back (without the fix it gets 4). It uses its own index and key prefix, so it stays out of the shared store of the parent test case. Also updated the comment.
