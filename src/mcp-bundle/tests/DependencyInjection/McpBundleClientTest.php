@@ -133,6 +133,17 @@ final class McpBundleClientTest extends TestCase
         $this->assertSame('app.psr18', (string) $container->getDefinition('mcp.client.research.server.github.transport')->getArgument(2));
     }
 
+    public function testClientAndServerNamesKeepTheirHyphens()
+    {
+        $container = $this->buildContainer($this->config([
+            'my-client' => ['servers' => ['my-server' => ['transport' => 'http', 'url' => 'https://example.com/mcp']]],
+            'other_client' => ['servers' => ['other_server' => ['transport' => 'http', 'url' => 'https://example.com/mcp']]],
+        ]));
+
+        $this->assertTrue($container->hasDefinition('mcp.client.my-client.server.my-server'));
+        $this->assertTrue($container->hasDefinition('mcp.client.other_client.server.other_server'));
+    }
+
     public function testClientInfoDefaultsToTheConfigurationKey()
     {
         $container = $this->buildContainer($this->config([
