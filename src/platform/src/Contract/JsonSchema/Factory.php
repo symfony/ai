@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema;
 
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ParameterSchemaEnricherInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\RequiredPropertyEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
 use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher;
@@ -20,6 +21,7 @@ use Symfony\Component\JsonSchema\Configuration;
 use Symfony\Component\JsonSchema\DefinitionPolicy\ShortNameDefinitionPolicy;
 use Symfony\Component\JsonSchema\DefinitionProcessor\DefinitionProcessorInterface;
 use Symfony\Component\JsonSchema\Dialect;
+use Symfony\Component\JsonSchema\DialectKeywords;
 use Symfony\Component\JsonSchema\Direction;
 use Symfony\Component\JsonSchema\NullSyntax;
 use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchemaEnricherInterface;
@@ -78,7 +80,10 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class Factory implements SchemaFactoryInterface
 {
     private readonly SchemaGenerator $generator;
-    private readonly ?SchemaAttributeEnricher $schemaAttributeEnricher;
+    /**
+     * @var list<ParameterSchemaEnricherInterface>
+     */
+    private readonly array $parameterSchemaEnrichers;
     private readonly Configuration $config;
 
     /**
@@ -97,7 +102,7 @@ final class Factory implements SchemaFactoryInterface
         $classMetadataFactory ??= new ClassMetadataFactory(new AttributeLoader());
 
         $propertySchemaEnrichers = null === $propertySchemaEnrichers ? self::getDefaultEnrichers() : iterator_to_array($propertySchemaEnrichers, false);
-        $this->schemaAttributeEnricher = array_find($propertySchemaEnrichers, static fn (PropertySchemaEnricherInterface $enricher): bool => $enricher instanceof SchemaAttributeEnricher);
+        $this->parameterSchemaEnrichers = array_values(array_filter($propertySchemaEnrichers, static fn (PropertySchemaEnricherInterface $enricher): bool => $enricher instanceof ParameterSchemaEnricherInterface));
 
         $this->generator = new SchemaGenerator(
             $propertyInfoExtractor ?? self::createPropertyInfoExtractor($classMetadataFactory),
@@ -115,7 +120,7 @@ final class Factory implements SchemaFactoryInterface
     {
         $parameters = (new \ReflectionMethod($className, $methodName))->getParameters();
         $schema = $this->generator->generateForParameters($parameters, $this->createConfiguration($context))->flatten();
-        $root = self::normalize($schema->getRoot());
+        $root = $schema->getRoot();
 
         if (!isset($root['properties'])) {
             return null;
@@ -126,12 +131,15 @@ final class Factory implements SchemaFactoryInterface
                 continue;
             }
 
-            $property = $root['properties'][$parameter->name];
+            $property = (array) $root['properties'][$parameter->name];
             unset($property['default']);
-            $root['properties'][$parameter->name] = $this->schemaAttributeEnricher?->apply($parameter, $property) ?? $property;
+            foreach ($this->parameterSchemaEnrichers as $enricher) {
+                $property = $enricher->enrichParameter($parameter, $property);
+            }
+            $root['properties'][$parameter->name] = $property;
         }
 
-        return self::withDefinitions(['type' => 'object', 'properties' => $root['properties'], 'required' => $root['required'] ?? [], 'additionalProperties' => false], $schema);
+        return self::withDefinitions(self::normalize(['type' => 'object', 'properties' => $root['properties'], 'required' => $root['required'] ?? [], 'additionalProperties' => false]), $schema);
     }
 
     public function buildProperties(string $className, array $context = []): ?array
@@ -201,7 +209,8 @@ final class Factory implements SchemaFactoryInterface
     }
 
     /**
-     * Unwraps the empty schemas into arrays and drops the empty items and additionalProperties schemas, which allow any value.
+     * Unwraps the empty schemas into arrays, drops the empty items and additionalProperties schemas, which allow any value,
+     * and adds null to the enum of nullable schemas.
      *
      * @param array<string, mixed>|\ArrayObject<string, mixed> $schema
      *
@@ -210,6 +219,10 @@ final class Factory implements SchemaFactoryInterface
     private static function normalize(array|\ArrayObject $schema): array
     {
         $schema = (array) $schema;
+
+        if (isset($schema['enum']) && DialectKeywords::allowsNull($schema) && !\in_array(null, $schema['enum'], true)) {
+            $schema['enum'][] = null;
+        }
 
         foreach ($schema as $keyword => $value) {
             if ($value instanceof \ArrayObject) {

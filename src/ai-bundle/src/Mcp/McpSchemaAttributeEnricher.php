@@ -12,36 +12,40 @@
 namespace Symfony\AI\AiBundle\Mcp;
 
 use Mcp\Capability\Attribute\Schema;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyDescriberInterface;
-use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
-use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\ParameterSchemaEnricherInterface;
+use Symfony\AI\Platform\Contract\JsonSchema\Enricher\SchemaAttributeEnricher;
+use Symfony\Component\JsonSchema\Configuration;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchema;
+use Symfony\Component\JsonSchema\PropertySchemaEnricher\PropertySchemaEnricherInterface;
+use Symfony\Component\JsonSchema\SchemaDocument;
 
 /**
  * @author Andrey Bolonin <andreybolonin1989@gmail.com>
  *
  * @internal
  */
-final class McpSchemaAttributeDescriber implements PropertyDescriberInterface
+final class McpSchemaAttributeEnricher implements PropertySchemaEnricherInterface, ParameterSchemaEnricherInterface
 {
     public function __construct(
-        private readonly SchemaAttributeDescriber $schemaAttributeDescriber = new SchemaAttributeDescriber(),
+        private readonly SchemaAttributeEnricher $schemaAttributeEnricher = new SchemaAttributeEnricher(),
     ) {
     }
 
-    public function describeProperty(PropertySubject $subject, ?array &$schema): void
+    public function enrich(PropertySchema $property, Configuration $config, SchemaDocument $document): PropertySchema
     {
-        $attributes = [];
-        if ($subject->getReflector() instanceof \ReflectionParameter) {
-            $attributes = $subject->getAttributes(Schema::class);
-        }
-        if ([] === $attributes) {
-            $this->schemaAttributeDescriber->describeProperty($subject, $schema);
+        return $this->schemaAttributeEnricher->enrich($property, $config, $document);
+    }
 
-            return;
+    public function enrichParameter(\ReflectionParameter $parameter, array $schema): array
+    {
+        $attributes = $parameter->getAttributes(Schema::class);
+        if ([] === $attributes) {
+            return $this->schemaAttributeEnricher->enrichParameter($parameter, $schema);
         }
 
         $mcpSchema = [];
         foreach ($attributes as $attribute) {
+            $attribute = $attribute->newInstance();
             $mcpSchema = array_replace($mcpSchema, $attribute->definition ?? $attribute->toArray());
         }
 
@@ -62,9 +66,6 @@ final class McpSchemaAttributeDescriber implements PropertyDescriberInterface
             $mcpSchema['type'] = $schema['type'];
         }
 
-        $platformSchema = null;
-        $this->schemaAttributeDescriber->describeProperty($subject, $platformSchema);
-
-        $schema = array_replace($schema ?? [], $mcpSchema, $platformSchema ?? []);
+        return array_replace($schema, $mcpSchema, $this->schemaAttributeEnricher->apply($parameter, []));
     }
 }

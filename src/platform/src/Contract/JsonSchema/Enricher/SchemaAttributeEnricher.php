@@ -27,7 +27,7 @@ use Symfony\Component\PropertyInfo\PropertyWriteInfo;
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final class SchemaAttributeEnricher implements PropertySchemaEnricherInterface
+final class SchemaAttributeEnricher implements PropertySchemaEnricherInterface, ParameterSchemaEnricherInterface
 {
     /**
      * @var array<string, SchemaProviderInterface>
@@ -54,6 +54,11 @@ final class SchemaAttributeEnricher implements PropertySchemaEnricherInterface
         }
 
         return $property;
+    }
+
+    public function enrichParameter(\ReflectionParameter $parameter, array $schema): array
+    {
+        return $this->apply($parameter, $schema);
     }
 
     /**

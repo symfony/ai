@@ -34,8 +34,8 @@ final class McpSchemaWiringTest extends TestCase
     public function testMcpConstraintsReachAgentToolSchema()
     {
         $container = $this->buildContainer();
-        $this->assertArrayHasKey('ai.platform.json_schema.describer', $container->getDefinition('ai.platform.json_schema.describer.mcp_schema')->getTags());
-        $this->assertArrayNotHasKey('ai.platform.json_schema.describer', $container->getDefinition('ai.platform.json_schema.describer.schema_attribute')->getTags());
+        $this->assertArrayHasKey('ai.platform.json_schema.enricher', $container->getDefinition('ai.platform.json_schema.enricher.mcp_schema')->getTags());
+        $this->assertArrayNotHasKey('ai.platform.json_schema.enricher', $container->getDefinition('ai.platform.json_schema.enricher.schema_attribute')->getTags());
         $container->getDefinition('ai.tool_factory')->setPublic(true);
         $container->compile();
         $factory = $container->get('ai.tool_factory');
@@ -137,8 +137,8 @@ final class McpSchemaWiringTest extends TestCase
         $this->assertFalse(class_exists('Mcp\\Capability\\Attribute\\Schema'));
         $container = $this->buildContainer();
 
-        $this->assertFalse($container->hasDefinition('ai.platform.json_schema.describer.mcp_schema'));
-        $this->assertArrayHasKey('ai.platform.json_schema.describer', $container->getDefinition('ai.platform.json_schema.describer.schema_attribute')->getTags());
+        $this->assertFalse($container->hasDefinition('ai.platform.json_schema.enricher.mcp_schema'));
+        $this->assertArrayHasKey('ai.platform.json_schema.enricher', $container->getDefinition('ai.platform.json_schema.enricher.schema_attribute')->getTags());
         $container->getDefinition('ai.platform.json_schema_factory')->setPublic(true);
         $container->compile();
         $this->assertInstanceOf(Factory::class, $container->get('ai.platform.json_schema_factory'));
