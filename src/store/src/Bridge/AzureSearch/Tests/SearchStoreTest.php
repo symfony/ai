@@ -150,8 +150,11 @@ final class SearchStoreTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $results[1]);
         $this->assertEquals($uuid1, $results[0]->getId());
         $this->assertEquals($uuid2, $results[1]->getId());
-        $this->assertSame('First Document', $results[0]->getMetadata()['title']);
-        $this->assertSame('Second Document', $results[1]->getMetadata()['title']);
+        $this->assertSame(['title' => 'First Document'], $results[0]->getMetadata()->getArrayCopy());
+        $this->assertSame(['title' => 'Second Document'], $results[1]->getMetadata()->getArrayCopy());
+        $this->assertSame([0.1, 0.2, 0.3], $results[0]->getVector()->getData());
+        $this->assertSame(0.95, $results[0]->getScore());
+        $this->assertSame(0.85, $results[1]->getScore());
     }
 
     public function testCountReturnsDocumentCount()
