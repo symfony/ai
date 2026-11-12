@@ -295,6 +295,80 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         }
     }
 
+    #[DataProvider('retryInfoDelays')]
+    public function testReadsTheRetryDelayOfAGoogleRetryInfoDetail(string $retryDelay, int $expected)
+    {
+        $response = $this->response(json_encode([
+            'error' => [
+                'code' => 429,
+                'message' => 'You exceeded your current quota, please check your plan and billing details.',
+                'status' => 'RESOURCE_EXHAUSTED',
+                'details' => [
+                    ['@type' => 'type.googleapis.com/google.rpc.QuotaFailure', 'violations' => [['quotaId' => 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier']]],
+                    ['@type' => 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay' => $retryDelay],
+                ],
+            ],
+        ]), 429);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame($expected, $e->getRetryAfter());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function retryInfoDelays(): iterable
+    {
+        yield 'whole seconds' => ['41s', 41];
+        yield 'fraction rounded up' => ['34.4s', 35];
+        yield 'below a second' => ['0.25s', 1];
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('bodiesWithoutRetryInfo')]
+    public function testHasNoRetryTimeWithoutRetryInfoDetail(array $body)
+    {
+        $response = $this->response(json_encode($body), 429);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertNull($e->getRetryAfter());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>}>
+     */
+    public static function bodiesWithoutRetryInfo(): iterable
+    {
+        yield 'error without details' => [['error' => ['message' => 'Rate limit reached for requests', 'type' => 'requests']]];
+        yield 'details of another type' => [['error' => ['code' => 429, 'message' => 'Quota exceeded.', 'details' => [
+            ['@type' => 'type.googleapis.com/google.rpc.QuotaFailure', 'violations' => [['quotaMetric' => 'generativelanguage.googleapis.com/generate_content_free_tier_requests']]],
+        ]]]];
+    }
+
+    public function testPrefersTheRetryAfterHeaderOverARetryInfoDetail()
+    {
+        $response = $this->response(json_encode([
+            'error' => ['details' => [['@type' => 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay' => '41s']]],
+        ]), 429, ['retry-after' => '7']);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame(7, $e->getRetryAfter());
+        }
+    }
+
     /**
      * @param array<string, string> $headers
      */
