@@ -74,7 +74,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                         'fieldName' => '_metadata',
                         'dataType' => 'VarChar',
                         'elementTypeParams' => [
-                            'max_length' => '512',
+                            // the metadata holds the text of the document, the most Milvus allows (in bytes)
+                            'max_length' => '65535',
                         ],
                     ],
                     [
