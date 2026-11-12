@@ -12,21 +12,16 @@
 namespace Symfony\AI\Platform\Contract\JsonSchema;
 
 /**
+ * Builds the schema of the properties of a class, e.g. the structured output of the model.
+ *
  * @phpstan-import-type JsonSchema from Factory
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-interface SchemaFactoryInterface
+interface PropertiesSchemaFactoryInterface
 {
     /**
-     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]`
-     *
-     * @return JsonSchema|null
-     */
-    public function buildParameters(string $className, string $methodName, array $context = []): ?array;
-
-    /**
-     * @param array<string, mixed> $context Describer context, e.g. `['serializer_groups' => ['write']]`
+     * @param array<string, mixed> $context e.g. `['serializer_groups' => ['write']]`
      *
      * @return JsonSchema|null
      */

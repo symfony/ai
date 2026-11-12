@@ -12,17 +12,18 @@
 namespace Symfony\AI\Agent\Toolbox;
 
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
-use Symfony\AI\Platform\Contract\JsonSchema\SchemaFactoryInterface;
+use Symfony\AI\Platform\Contract\JsonSchema\ParametersSchemaFactoryInterface;
+use Symfony\AI\Platform\Contract\JsonSchema\PropertiesSchemaFactoryInterface;
 
 /**
  * Describes the parameters of a tool with #[MapToolArguments] by the properties of the mapped class.
  *
  * @author Illia Vasylevskyi <ineersa@gmail.com>
  */
-final class MapToolArgumentsSchemaFactory implements SchemaFactoryInterface
+final class MapToolArgumentsSchemaFactory implements ParametersSchemaFactoryInterface
 {
     public function __construct(
-        private readonly SchemaFactoryInterface $inner = new Factory(),
+        private readonly ParametersSchemaFactoryInterface&PropertiesSchemaFactoryInterface $inner = new Factory(),
     ) {
     }
 
@@ -33,10 +34,5 @@ final class MapToolArgumentsSchemaFactory implements SchemaFactoryInterface
         }
 
         return $this->inner->buildParameters($className, $methodName, $context);
-    }
-
-    public function buildProperties(string $className, array $context = []): ?array
-    {
-        return $this->inner->buildProperties($className, $context);
     }
 }

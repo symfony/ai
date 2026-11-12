@@ -5,7 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Build `Contract\JsonSchema\Factory` on the `symfony/json-schema` component; the `Contract\JsonSchema\Describer` and `Contract\JsonSchema\Subject` namespaces are removed in favor of the component's property schema enrichers, class schema resolvers and definition processors
- * Add `Contract\JsonSchema\SchemaFactoryInterface`, implemented by `Contract\JsonSchema\Factory`
+ * Add `Contract\JsonSchema\ParametersSchemaFactoryInterface`, describing the arguments of a tool, and `Contract\JsonSchema\PropertiesSchemaFactoryInterface`, describing a structured output class, both implemented by `Contract\JsonSchema\Factory`; `ResponseFormatFactory` accepts any `PropertiesSchemaFactoryInterface`
  * Add `Contract\JsonSchema\Enricher\SchemaAttributeEnricher` and `Contract\JsonSchema\Enricher\ValidatorConstraintsEnricher`, replacing `SchemaAttributeDescriber` and `ValidatorConstraintsDescriber`
  * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call
  * Stream the string answers of `Test\MockPlatformFactory` word by word when the invocation has the `stream` option

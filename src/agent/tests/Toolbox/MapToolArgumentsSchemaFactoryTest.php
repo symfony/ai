@@ -16,14 +16,15 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\MappedRecipe;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithMappedArguments;
 use Symfony\AI\Agent\Toolbox\MapToolArgumentsSchemaFactory;
-use Symfony\AI\Platform\Contract\JsonSchema\SchemaFactoryInterface;
+use Symfony\AI\Platform\Contract\JsonSchema\ParametersSchemaFactoryInterface;
+use Symfony\AI\Platform\Contract\JsonSchema\PropertiesSchemaFactoryInterface;
 
 final class MapToolArgumentsSchemaFactoryTest extends TestCase
 {
     public function testMappedMethodIsDescribedByTheMappedClass()
     {
         $schema = ['type' => 'object', 'properties' => ['custom' => ['type' => 'string']]];
-        $inner = $this->createMock(SchemaFactoryInterface::class);
+        $inner = $this->createMockForIntersectionOfInterfaces([ParametersSchemaFactoryInterface::class, PropertiesSchemaFactoryInterface::class]);
         $inner->expects($this->once())->method('buildProperties')->with(MappedRecipe::class, ['serializer_groups' => ['write']])->willReturn($schema);
         $inner->expects($this->never())->method('buildParameters');
 
@@ -35,7 +36,7 @@ final class MapToolArgumentsSchemaFactoryTest extends TestCase
     public function testUnmappedMethodIsPassedThrough()
     {
         $schema = ['type' => 'object', 'properties' => ['text' => ['type' => 'string']]];
-        $inner = $this->createMock(SchemaFactoryInterface::class);
+        $inner = $this->createMockForIntersectionOfInterfaces([ParametersSchemaFactoryInterface::class, PropertiesSchemaFactoryInterface::class]);
         $inner->expects($this->once())->method('buildParameters')->with(ToolRequiredParams::class, 'bar', [])->willReturn($schema);
 
         $factory = new MapToolArgumentsSchemaFactory($inner);

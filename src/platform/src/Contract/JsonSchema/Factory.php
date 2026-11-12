@@ -77,7 +77,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * @author Christopher Hertel <mail@christopher-hertel.de>
  * @author Oskar Stark <oskarstark@googlemail.com>
  */
-final class Factory implements SchemaFactoryInterface
+final class Factory implements ParametersSchemaFactoryInterface, PropertiesSchemaFactoryInterface
 {
     private readonly SchemaGenerator $generator;
     /**
