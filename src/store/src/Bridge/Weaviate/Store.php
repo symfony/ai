@@ -58,12 +58,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
-        $this->request('POST', 'v1/batch/objects', [
+        $result = $this->request('POST', 'v1/batch/objects', [
             'fields' => [
                 'ALL',
             ],
             'objects' => array_map($this->convertToIndexableArray(...), $documents),
         ]);
+
+        $this->assertBatchSucceeded($result);
     }
 
     public function remove(string|array $ids, array $options = []): void
@@ -197,6 +199,30 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         return $response->toArray();
+    }
+
+    /**
+     * A batch request is answered with 200 even when individual objects failed.
+     *
+     * @param array<mixed> $result
+     */
+    private function assertBatchSucceeded(array $result): void
+    {
+        $failures = array_values(array_filter($result, static fn (mixed $object): bool => \is_array($object) && 'FAILED' === ($object['result']['status'] ?? null)));
+
+        if ([] === $failures) {
+            return;
+        }
+
+        $message = \sprintf('Failed to add %d of %d object(s) to the "%s" collection', \count($failures), \count($result), $this->collection);
+
+        $id = $failures[0]['id'] ?? null;
+        $error = $failures[0]['result']['errors']['error'][0]['message'] ?? null;
+        if (\is_string($error)) {
+            $message .= \sprintf(', first error for object "%s": %s', \is_string($id) ? $id : '', $error);
+        }
+
+        throw new RuntimeException($message.'.');
     }
 
     /**
