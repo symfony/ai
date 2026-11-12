@@ -81,7 +81,10 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
             }
 
             if ($part instanceof Text) {
-                $blocks[] = ['type' => 'text', 'text' => $part->getText()];
+                // Anthropic rejects a text block that is empty or only whitespace, and such a block says nothing
+                if ('' !== trim($part->getText())) {
+                    $blocks[] = ['type' => 'text', 'text' => $part->getText()];
+                }
                 continue;
             }
 
