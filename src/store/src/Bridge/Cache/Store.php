@@ -149,7 +149,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->cache->clear();
+        $this->cache->deleteItem($this->cacheKey);
     }
 
     public function count(): int
