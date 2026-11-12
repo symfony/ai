@@ -360,6 +360,23 @@ final class OllamaResultConverterTest extends TestCase
         iterator_to_array($result->getContent());
     }
 
+    public function testConvertStreamingResponseWithCachedPromptTokens()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+            yield ['model' => 'llama3.2', 'created_at' => '2026-11-11T21:00:00.000000Z', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => true,
+                'done_reason' => 'stop', 'prompt_eval_count' => 42, 'prompt_eval_cached_count' => 36, 'eval_count' => 17];
+        })());
+
+        $result = $converter->convert($rawResult, options: ['stream' => true]);
+
+        $tokenUsages = array_values(array_filter(iterator_to_array($result->getContent(), false), static fn ($chunk) => $chunk instanceof TokenUsageInterface));
+
+        $this->assertCount(1, $tokenUsages);
+        $this->assertSame(42, $tokenUsages[0]->getPromptTokens());
+        $this->assertSame(36, $tokenUsages[0]->getCachedTokens());
+    }
+
     /**
      * @return iterable<array<string, mixed>>
      */
