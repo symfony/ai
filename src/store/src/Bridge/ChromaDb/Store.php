@@ -222,16 +222,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{where?: array<string, string>, whereDocument?: array<string, mixed>, include?: array<string>, limit?: positive-int} $options
      *
-     * @return list<string>|null
+     * @return list<string>
      */
-    private function buildInclude(array $options): ?array
+    private function buildInclude(array $options): array
     {
-        $include = $options['include'] ?? [];
-        if ([] === $include) {
-            return null;
-        }
-
-        return array_values(array_unique(array_merge(['embeddings', 'metadatas', 'distances'], $include)));
+        // add() keeps the text of a document as the Chroma document, which a query only returns when asked for
+        return array_values(array_unique(array_merge(['embeddings', 'metadatas', 'distances', 'documents'], $options['include'] ?? [])));
     }
 
     /**
