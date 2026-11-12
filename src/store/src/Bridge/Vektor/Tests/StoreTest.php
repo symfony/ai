@@ -122,6 +122,22 @@ final class StoreTest extends TestCase
         $store->drop();
     }
 
+    public function testStoresKeepTheirOwnDirectoryAndDimensions()
+    {
+        $first = new Store(sys_get_temp_dir().'/vektor-first', 3);
+        $second = new Store(sys_get_temp_dir().'/vektor-second', 4);
+        $first->setup();
+        $second->setup();
+
+        $first->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+
+        $this->assertCount(1, $first);
+        $this->assertCount(0, $second);
+
+        $first->drop();
+        $second->drop();
+    }
+
     public function testCountReturnsDocumentCount()
     {
         $store = new Store(sys_get_temp_dir(), 3);
