@@ -1,10 +1,11 @@
 CHANGELOG
 =========
 
-0.16
-----
+1.0
+---
 
  * Read compressed rotations (`*.log.gz`) in `monolog-search`, `monolog-context-search` and `monolog-list-files`, after the plain files and up to 256 MB each, and name any that could not be read in full under `skipped_files`; `monolog-tail` still reads the newest plain file only
+ * Add a "Hand back to the profiler" section to the `symfony-log-investigation` skill, so the profiler is reached once an incident narrows to one request
 
 0.14
 ----
