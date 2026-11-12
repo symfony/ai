@@ -121,7 +121,7 @@ Drop the Store
 
 ::
 
-    // Drop the index and bucket
+    // Drop the index, the bucket stays as other stores may use it
     $store->drop();
 
 Features

@@ -250,15 +250,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        // Delete index first
+        // The bucket can hold the indexes of other stores, setup() only creates it when missing
         $this->client->deleteIndex([
             'vectorBucketName' => $this->vectorBucketName,
             'indexName' => $this->indexName,
-        ]);
-
-        // Then delete the bucket
-        $this->client->deleteVectorBucket([
-            'vectorBucketName' => $this->vectorBucketName,
         ]);
     }
 
