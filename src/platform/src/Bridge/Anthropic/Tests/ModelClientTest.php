@@ -240,6 +240,21 @@ class ModelClientTest extends TestCase
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
+    public function testNoToolsAndNoToolChoiceWhenNoToolIsAllowed()
+    {
+        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
+            $body = json_decode($options['body'], true);
+            $this->assertArrayNotHasKey('tools', $body);
+            $this->assertArrayNotHasKey('tool_choice', $body);
+
+            return new JsonMockResponse('{"success": true}');
+        });
+
+        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
+
+        $this->modelClient->request($this->model, ['message' => 'test'], ['tools' => []]);
+    }
+
     public function testToolChoiceFromCallerIsPreserved()
     {
         $this->httpClient = new MockHttpClient(function ($method, $url, $options) {

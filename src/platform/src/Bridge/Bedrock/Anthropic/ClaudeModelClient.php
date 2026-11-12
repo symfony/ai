@@ -86,6 +86,11 @@ final class ClaudeModelClient implements ModelClientInterface
             unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
+        // An empty tools option allows no tool, and Anthropic refuses a tool_choice without tools
+        if ([] === ($options['tools'] ?? null)) {
+            unset($options['tools']);
+        }
+
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];
         }
