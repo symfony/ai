@@ -15,6 +15,8 @@ namespace Symfony\AI\Platform\Contract\JsonSchema\Enricher;
  * Refines the schema of a tool parameter, as the component's property schema enrichers only see class properties.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ *
+ * @internal
  */
 interface ParameterSchemaEnricherInterface
 {
