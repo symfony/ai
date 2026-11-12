@@ -39,6 +39,7 @@
         "symfony/form": "^8.1",
         "symfony/framework-bundle": "^8.1",
         "symfony/http-client": "^8.1",
+        "symfony/json-schema": "^8.2",
         "symfony/mailer": "^8.1",
         "symfony/mcp-bundle": "^1.0",
         "symfony/mercure-bundle": "^0.6.1",
