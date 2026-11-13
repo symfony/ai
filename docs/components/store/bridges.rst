@@ -667,7 +667,7 @@ Vector storage using `Pinecone`_.
     $store = new Store(HttpClient::create(), 'your-api-key', 'my-index', namespace: 'default', topK: 3);
 
 The store looks up the host of the index through the Pinecone control plane. To skip the lookup,
-or to use Pinecone Local, pass the ``indexHost`` and ``controlPlaneUrl`` arguments.
+pass the ``indexHost`` argument.
 
 .. code-block:: yaml
 
