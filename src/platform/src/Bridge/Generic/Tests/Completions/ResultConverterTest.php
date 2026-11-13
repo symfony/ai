@@ -785,6 +785,40 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['city' => 'Beijing'], $completed[0]->getArguments());
     }
 
+    public function testStreamingToolInputDeltasIncludeTheArgumentsOfTheStartChunk()
+    {
+        // llama.cpp sends the first part of the arguments, the opening "{", in the chunk that also
+        // carries the id and the name of the tool call.
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['id' => 'call_1', 'type' => 'function', 'index' => 0, 'function' => ['name' => 'get_weather', 'arguments' => '{']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '"city":']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '"Paris"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $toolInputDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolInputDelta));
+        $this->assertSame('{"city":"Paris"}', implode('', array_map(static fn (ToolInputDelta $d) => $d->getPartialJson(), $toolInputDeltas)));
+        foreach ($toolInputDeltas as $delta) {
+            $this->assertSame('call_1', $delta->getId());
+            $this->assertSame('get_weather', $delta->getName());
+        }
+    }
+
     public function testStreamingParallelToolCallsWithProviderIndexOnSingleElementChunks()
     {
         // OpenAI-compatible streams often send one tool_calls[] entry per chunk; the real slot is
@@ -1032,11 +1066,13 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(3, $chunks);
+        $this->assertCount(4, $chunks);
         $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
-        $this->assertInstanceOf(ToolCallComplete::class, $chunks[1]);
-        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
-        $this->assertSame(FinishReasonCase::TOOL_CALL, $chunks[2]->getValue()->getCase());
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[1]);
+        $this->assertSame('{}', $chunks[1]->getPartialJson());
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[2]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[3]);
+        $this->assertSame(FinishReasonCase::TOOL_CALL, $chunks[3]->getValue()->getCase());
     }
 
     public function testStreamingCompletesToolCallsWithStopFinishReason()
@@ -1052,19 +1088,21 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(3, $chunks);
+        $this->assertCount(4, $chunks);
         $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
-        $this->assertInstanceOf(ToolCallComplete::class, $chunks[1]);
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[1]);
+        $this->assertSame('{"city":"Berlin"}', $chunks[1]->getPartialJson());
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[2]);
 
-        $completed = $chunks[1]->getToolCalls();
+        $completed = $chunks[2]->getToolCalls();
         $this->assertCount(1, $completed);
         $this->assertSame('call_1', $completed[0]->getId());
         $this->assertSame('get_weather', $completed[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $completed[0]->getArguments());
 
-        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
-        $this->assertSame(FinishReasonCase::STOP, $chunks[2]->getValue()->getCase());
-        $this->assertSame('stop', $chunks[2]->getValue()->getRaw());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[3]);
+        $this->assertSame(FinishReasonCase::STOP, $chunks[3]->getValue()->getCase());
+        $this->assertSame('stop', $chunks[3]->getValue()->getRaw());
     }
 
     public function testStreamingCompletesToolCallsOnceWhenTheFinishReasonIsRepeated()

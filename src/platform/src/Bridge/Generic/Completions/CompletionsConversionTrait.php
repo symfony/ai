@@ -227,10 +227,19 @@ trait CompletionsConversionTrait
         foreach ($data['choices'][0]['delta']['tool_calls'] ?? [] as $i => $toolCall) {
             $index = $toolCall['index'] ?? $i;
 
+            $id = $toolCalls[$index]['id'] ?? '';
+            $name = $toolCalls[$index]['function']['name'] ?? '';
+
             if (isset($toolCall['id']) && '' !== $toolCall['id']) {
-                yield new ToolCallStart($toolCall['id'], $toolCall['function']['name']);
-            } elseif (isset($toolCall['function']['arguments'])) {
-                yield new ToolInputDelta($toolCalls[$index]['id'] ?? '', $toolCalls[$index]['function']['name'] ?? '', $toolCall['function']['arguments']);
+                $id = $toolCall['id'];
+                $name = $toolCall['function']['name'];
+                yield new ToolCallStart($id, $name);
+            }
+
+            // The chunk that starts a call may already carry the first part of its arguments
+            // (llama.cpp sends the opening "{" there): it is a delta as well.
+            if (isset($toolCall['function']['arguments']) && '' !== $toolCall['function']['arguments']) {
+                yield new ToolInputDelta($id, $name, $toolCall['function']['arguments']);
             }
         }
     }
