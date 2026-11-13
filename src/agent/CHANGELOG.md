@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add optional `Toolbox\AmpToolExecutor` to run tool calls concurrently with Amp and Revolt
  * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
  * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
  * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation

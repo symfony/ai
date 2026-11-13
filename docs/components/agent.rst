@@ -1040,7 +1040,7 @@ argument of the :class:`Symfony\\AI\\Agent\\Agent`::
 
     $agent = new Agent($platform, $model, toolbox: $toolbox, toolExecutor: $toolExecutor);
 
-Two executors are provided out of the box:
+Three executors are available:
 
 :class:`Symfony\\AI\\Agent\\Toolbox\\SequentialToolExecutor`
     Executes tool calls one after another in a simple loop. This is the default.
@@ -1052,6 +1052,34 @@ Two executors are provided out of the box:
     instead of one after another. Results are returned in the same order as the tool calls,
     regardless of the order in which the fibers terminate. This is cooperative multitasking, not
     OS-level parallelism: a tool that never suspends still runs to completion in one go.
+
+:class:`Symfony\\AI\\Agent\\Toolbox\\AmpToolExecutor`
+    Executes tool calls concurrently using Amp tasks. Amp and its Revolt event loop own scheduling
+    and resume tools only when their awaited operations are ready. Progress updates and results
+    retain the input tool-call order, even when calls complete in a different order.
+
+The Amp executor requires the optional ``amphp/amp`` package:
+
+.. code-block:: terminal
+
+    $ composer require amphp/amp:^3
+
+Select it explicitly instead of the fiber executor::
+
+    use Symfony\AI\Agent\Toolbox\AmpToolExecutor;
+
+    $toolExecutor = new AmpToolExecutor($toolbox);
+    $agent = new Agent($platform, $model, toolbox: $toolbox, toolExecutor: $toolExecutor);
+
+Tools used with this executor must yield through Amp-compatible operations, such as
+``Amp\delay()`` or ``Amp\Future::await()``, or an HTTP client integrated with Amp. The executor
+also works inside an existing Amp task; do not start or stop a separate event loop around it.
+Bare ``Fiber::suspend()`` calls, including those made by ``SuspendableTrait``, belong to the
+round-robin fiber executor and are not interchangeable with Amp-managed waits. Synchronous
+HTTP requests, PDO queries, file operations and CPU-bound work still block the whole process;
+wrapping them in an Amp task does not make them non-blocking. If a toolbox call throws, the
+executor waits for all already-started tool calls to settle before propagating the first
+observed exception to the caller. Sibling calls are not cancelled.
 
 You can implement your own executor by implementing
 :class:`Symfony\\AI\\Agent\\Toolbox\\ToolExecutorInterface`::
