@@ -4,6 +4,8 @@
     "license": "MIT",
     "type": "project",
     "require": {
+        "amphp/amp": "^3.0@stable",
+        "amphp/http-client": "^5.3.2",
         "async-aws/sso": "^1.0",
         "async-aws/sso-oidc": "^1.0",
         "doctrine/orm": "^3.4",

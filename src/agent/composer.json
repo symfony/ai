@@ -39,6 +39,7 @@
         "symfony/uid": "^7.3|^8.0"
     },
     "require-dev": {
+        "amphp/amp": "^3.0@stable",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
@@ -54,6 +55,9 @@
     },
     "conflict": {
         "phpstan/phpstan": "2.2.x-dev || 2.3.x-dev"
+    },
+    "suggest": {
+        "amphp/amp": "Required to use AmpToolExecutor (^3.0)."
     },
     "minimum-stability": "dev",
     "autoload": {
