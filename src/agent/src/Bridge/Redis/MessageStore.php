@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Bridge\Redis;
 
 use Symfony\AI\Agent\Exception\ConflictException;
+use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\MessageStore\ConflictDetector;
 use Symfony\AI\Agent\MessageStore\ManagedMessageStoreInterface;
 use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
@@ -62,9 +63,19 @@ final class MessageStore implements ManagedMessageStoreInterface, MessageStoreIn
 
     public function load(AbstractUid&TimeBasedUidInterface $id): MessageBag
     {
-        $payload = $this->redis->get($this->key($id));
+        $key = $this->key($id);
+
+        $this->redis->clearLastError();
+        $payload = $this->redis->get($key);
 
         if (!\is_string($payload)) {
+            // phpredis reports error replies like WRONGTYPE as false, the same as a missing key
+            $error = $this->redis->getLastError();
+
+            if (null !== $error) {
+                throw new RuntimeException(\sprintf('Failed to load the conversation "%s" from Redis: "%s".', $key, $error));
+            }
+
             return MessageBag::forId($id);
         }
 
@@ -77,18 +88,20 @@ final class MessageStore implements ManagedMessageStoreInterface, MessageStoreIn
         $payload = $this->serializer->serialize($messages, 'json');
 
         $this->redis->watch($key);
+        $watching = true;
 
         try {
             ConflictDetector::assertContinues($this->load($messages->getId()), $messages);
-        } catch (ConflictException $exception) {
-            $this->redis->unwatch();
 
-            throw $exception;
+            $watching = false;
+            $result = $this->redis->multi()
+                ->set($key, $payload)
+                ->exec();
+        } finally {
+            if ($watching) {
+                $this->redis->unwatch();
+            }
         }
-
-        $result = $this->redis->multi()
-            ->set($key, $payload)
-            ->exec();
 
         if (!\is_array($result)) {
             throw ConflictException::forMessages($messages);
