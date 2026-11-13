@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Mcp;
 
-use Mcp\Capability\Attribute\Schema;
+use Mcp\Server\Capability\Attribute\Schema;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyDescriberInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Describer\SchemaAttributeDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;

@@ -346,6 +346,17 @@ Chat
    ], [new JsonEncoder()]));
    ```
 
+MCP Bundle
+----------
+
+ * The bundle and `symfony/ai-mcp-tool` require `mcp/sdk` 0.10. It contains BC breaks that reach code written against
+   the SDK directly, see its [changelog](https://github.com/modelcontextprotocol/php-sdk/blob/v0.10.0/CHANGELOG.md).
+
+ * A handshake-era session only serves the user that opened it, identified by `getUserIdentifier()` of the authenticated
+   user or by the `mcp.principal` request attribute. The server answers other users, and sessions opened before the
+   upgrade, with HTTP `404`, and clients have to open a new session. The authenticated user takes precedence over the
+   principal of an SDK access token.
+
 Platform
 --------
 

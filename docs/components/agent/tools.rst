@@ -184,7 +184,7 @@ it offers, and each reaches the model prefixed with the server name, e.g. ``file
 
 Reach the server through a toolset and hand it to the toolbox::
 
-    use Mcp\Client;
+    use Mcp\Client\Client;
     use Mcp\Client\Transport\StdioTransport;
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\Bridge\Mcp\ClientToolset;

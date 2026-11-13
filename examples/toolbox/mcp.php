@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-use Mcp\Client;
+use Mcp\Client\Client;
 use Mcp\Client\Transport\StdioTransport;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Bridge\Mcp\ClientToolset;

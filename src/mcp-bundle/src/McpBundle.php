@@ -11,14 +11,8 @@
 
 namespace Symfony\AI\McpBundle;
 
-use Mcp\Capability\Attribute\McpPrompt;
-use Mcp\Capability\Attribute\McpResource;
-use Mcp\Capability\Attribute\McpResourceTemplate;
-use Mcp\Capability\Attribute\McpTool;
-use Mcp\Capability\Registry;
-use Mcp\Capability\Registry\Loader\LoaderInterface;
-use Mcp\Client as McpSdkClient;
 use Mcp\Client\Builder as McpSdkClientBuilder;
+use Mcp\Client\Client as McpSdkClient;
 use Mcp\Client\Handler\Notification\LoggingNotificationHandler;
 use Mcp\Client\Handler\Request\ElicitationRequestHandler;
 use Mcp\Client\Handler\Request\ListRootsRequestHandler;
@@ -29,10 +23,16 @@ use Mcp\Schema\ClientCapabilities;
 use Mcp\Schema\Enum\CacheScope;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\Icon;
-use Mcp\Server;
 use Mcp\Server\Builder;
+use Mcp\Server\Capability\Attribute\McpPrompt;
+use Mcp\Server\Capability\Attribute\McpResource;
+use Mcp\Server\Capability\Attribute\McpResourceTemplate;
+use Mcp\Server\Capability\Attribute\McpTool;
+use Mcp\Server\Capability\Registry;
+use Mcp\Server\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
+use Mcp\Server\Server;
 use Mcp\Server\Session\FileSessionLock;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
@@ -359,7 +359,6 @@ final class McpBundle extends AbstractBundle
     {
         $registryId = \sprintf('mcp.server.%s.registry', $name);
         $builderId = \sprintf('mcp.server.%s.builder', $name);
-        $sessionId = $this->configureSessionStore($name, $server['session'], $container);
 
         $container->register($registryId, Registry::class)
             ->setArguments([$this->registryDispatcher($name, $server['subscriptions']), new Reference('logger')])
@@ -378,13 +377,17 @@ final class McpBundle extends AbstractBundle
             ->addMethodCall('setInstructions', [$server['instructions']])
             ->addMethodCall('setEventDispatcher', [new Reference('event_dispatcher')])
             ->addMethodCall('setRegistry', [new Reference($registryId)])
-            ->addMethodCall('setSession', [new Reference($sessionId)])
             ->addMethodCall('addRequestHandlers', [new TaggedIteratorArgument('mcp.request_handler')])
             ->addMethodCall('addNotificationHandlers', [new TaggedIteratorArgument('mcp.notification_handler')])
             ->addMethodCall('addLoaders', [new TaggedIteratorArgument('mcp.loader')])
             ->addMethodCall('setLogger', [new Reference('logger')])
             ->addTag('mcp.server.builder', ['server' => $name])
             ->addTag('monolog.logger', ['channel' => 'mcp']);
+
+        if ('none' !== $server['session']['store']) {
+            $container->getDefinition($builderId)
+                ->addMethodCall('setSession', [new Reference($this->configureSessionStore($name, $server['session'], $container))]);
+        }
 
         if ($server['session']['lock']['enabled']) {
             $container->getDefinition($builderId)
@@ -416,6 +419,7 @@ final class McpBundle extends AbstractBundle
                 new Reference(\sprintf('mcp.server.%s.middleware_factory', $name)),
                 new Reference('logger'),
                 $server['http']['max_body_bytes'],
+                new Reference('security.token_storage', ContainerBuilder::NULL_ON_INVALID_REFERENCE),
             ])
             ->setPublic(true)
             ->addTag('controller.service_arguments')

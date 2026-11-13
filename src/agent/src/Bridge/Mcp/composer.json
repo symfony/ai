@@ -23,7 +23,7 @@
     ],
     "require": {
         "php": ">=8.2",
-        "mcp/sdk": "^0.9",
+        "mcp/sdk": "^0.10",
         "symfony/ai-agent": "^1.0",
         "symfony/clock": "^7.3|^8.0",
         "symfony/service-contracts": "^2.5|^3"

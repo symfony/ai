@@ -11,17 +11,17 @@
 
 namespace Symfony\AI\McpBundle\Tests\DependencyInjection;
 
-use Mcp\Capability\Attribute\McpPrompt;
-use Mcp\Capability\Attribute\McpResource;
-use Mcp\Capability\Attribute\McpResourceTemplate;
-use Mcp\Capability\Attribute\McpTool;
-use Mcp\Capability\Registry;
-use Mcp\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Schema\Icon;
-use Mcp\Server;
+use Mcp\Server\Capability\Attribute\McpPrompt;
+use Mcp\Server\Capability\Attribute\McpResource;
+use Mcp\Server\Capability\Attribute\McpResourceTemplate;
+use Mcp\Server\Capability\Attribute\McpTool;
+use Mcp\Server\Capability\Registry;
+use Mcp\Server\Capability\Registry\Loader\LoaderInterface;
 use Mcp\Server\Handler\Notification\NotificationHandlerInterface;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Protocol;
+use Mcp\Server\Server;
 use Mcp\Server\Session\FileSessionLock;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Session\InMemorySessionStore;
@@ -581,6 +581,43 @@ class McpBundleTest extends TestCase
         $this->expectExceptionMessage('any other store needs a LockFactory service');
 
         $this->buildContainer($this->config(['default' => ['session' => ['store' => 'cache', 'lock' => true]]]));
+    }
+
+    public function testNoneStoreLeavesTheServerWithoutSessions()
+    {
+        $container = $this->buildContainer($this->config(['default' => ['session' => ['store' => 'none']]]));
+
+        $this->assertSame([], $this->callsNamed($container, 'setSession'));
+        $this->assertFalse($container->hasDefinition('mcp.server.default.session.store'));
+    }
+
+    public function testServersWithoutSessionsDoNotShareStorage()
+    {
+        $container = $this->buildContainer($this->config([
+            'public' => ['http' => ['path' => '/mcp'], 'session' => ['store' => 'none']],
+            'editors' => ['http' => ['path' => '/mcp/editors'], 'session' => ['store' => 'none']],
+        ]));
+
+        $this->assertTrue($container->hasDefinition('mcp.server.public.controller'));
+        $this->assertTrue($container->hasDefinition('mcp.server.editors.controller'));
+    }
+
+    public function testSessionLockIsRejectedWithoutSessions()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The session lock has no effect when "session.store" is "none".');
+
+        $this->buildContainer($this->config(['default' => ['session' => ['store' => 'none', 'lock' => true]]]));
+    }
+
+    public function testControllerReceivesTheTokenStorageWhenSecurityIsInstalled()
+    {
+        $container = $this->buildContainer($this->config(['default' => []]));
+
+        $tokenStorage = $container->getDefinition('mcp.server.default.controller')->getArgument(8);
+        $this->assertInstanceOf(Reference::class, $tokenStorage);
+        $this->assertSame('security.token_storage', (string) $tokenStorage);
+        $this->assertSame(ContainerBuilder::NULL_ON_INVALID_REFERENCE, $tokenStorage->getInvalidBehavior());
     }
 
     public function testNoDiscoveryMethodCallOnBuilder()

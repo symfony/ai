@@ -11,15 +11,15 @@
 
 namespace Symfony\AI\McpBundle\Tests\Command;
 
-use Mcp\Capability\Registry;
-use Mcp\Client;
+use Mcp\Client\Client;
 use Mcp\Schema\Prompt;
 use Mcp\Schema\PromptArgument;
 use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Tool;
-use Mcp\Server;
 use Mcp\Server\Builder;
+use Mcp\Server\Capability\Registry;
+use Mcp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Client\McpClient;
 use Symfony\AI\McpBundle\Client\McpClientInterface;

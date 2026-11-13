@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\AiBundle\Tests\Fixture\Tool;
 
-use Mcp\Capability\Attribute\Schema as McpSchema;
+use Mcp\Server\Capability\Attribute\Schema as McpSchema;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\AiBundle\Tests\Fixture\JsonSchema\CategoryProvider;
 use Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema;

@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\Command;
 
-use Mcp\Server;
+use Mcp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Command\McpCommand;
 use Symfony\AI\McpBundle\Exception\RuntimeException;
@@ -46,7 +46,7 @@ final class McpCommandTest extends TestCase
     {
         $tester = $this->createTester(['editors', 'public']);
 
-        // Mcp\Server is final, so the locator reports which server was picked instead of running it —
+        // Mcp\Server\Server is final, so the locator reports which server was picked instead of running it —
         // running would hand STDIN and STDOUT to a real transport.
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('resolved server "editors"');

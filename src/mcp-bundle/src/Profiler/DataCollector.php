@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\McpBundle\Profiler;
 
-use Mcp\Capability\RegistryInterface;
 use Mcp\Server\Builder;
+use Mcp\Server\Capability\RegistryInterface;
 use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector;
 use Symfony\Component\HttpFoundation\Request;
