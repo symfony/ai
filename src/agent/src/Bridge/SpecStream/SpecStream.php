@@ -21,7 +21,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * Tool integration of specstream.ai.
  *
- * @see https://specstream.ai/
+ * @see https://specstream.ai/docs/api
+ *
+ * @author Tarek Etman <support@specstream.ai>
  */
 #[AsTool('specstream_search', description: 'Search the live web and return an answer when there is one, with matching pages and their snippets', method: 'search')]
 #[AsTool('specstream_extract', description: 'Read the main text of web pages or documents from their URLs', method: 'extract')]

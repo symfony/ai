@@ -10,9 +10,9 @@ recorded as a source.
 SpecStream Documentation
 ------------------------
 
- * [Search API](https://specstream.ai/search-api)
- * [Extract API](https://specstream.ai/extract-api)
- * [Benchmarks](https://specstream.ai/benchmarks)
+ * [API reference](https://specstream.ai/docs/api)
+ * [Search API](https://specstream.ai/docs/search-api)
+ * [Extract API](https://specstream.ai/docs/extract-api)
 
 Resources
 ---------
