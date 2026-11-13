@@ -313,12 +313,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $tsqueryExpression = '('.implode(' || ', $tsqueryParts).')'; // OR operator in PostgreSQL
-        $tsvectorExpression = \sprintf("to_tsvector('%s', metadata->>'_text')", $this->lang);
+        $tsvectorExpression = \sprintf("to_tsvector('%s', COALESCE(metadata->>'_text', ''))", $this->lang);
 
-        $where = \sprintf('WHERE %s @@ %s', $tsvectorExpression, $tsqueryExpression);
+        // Documents sharing no keyword still rank by their vector distance, unless the query is keywords only
+        $whereClauses = 0.0 === $query->getSemanticRatio() ? [\sprintf('%s @@ %s', $tsvectorExpression, $tsqueryExpression)] : [];
 
         if (isset($options['maxScore'])) {
-            $where .= \sprintf(' AND ((:semantic_ratio * (1 - ("%s" %s :embedding))) + (:keyword_ratio * ts_rank(%s, %s))) >= :maxScore',
+            $whereClauses[] = \sprintf('((:semantic_ratio * (1 - ("%s" %s :embedding))) + (:keyword_ratio * ts_rank(%s, %s))) >= :maxScore',
                 $this->vectorFieldName,
                 $this->metric->getComparisonSign(),
                 $tsvectorExpression,
@@ -326,6 +327,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
             );
             $params['maxScore'] = $options['maxScore'];
         }
+
+        $where = [] !== $whereClauses ? 'WHERE '.implode(' AND ', $whereClauses) : '';
 
         $sql = \sprintf(<<<SQL
             SELECT id, "%s" AS embedding, metadata,

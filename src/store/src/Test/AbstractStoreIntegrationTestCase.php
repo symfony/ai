@@ -34,6 +34,7 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     private const DOCUMENT_ID_1 = '367e550e-6c92-4f12-8a6b-3f3f1d5e8c9a';
     private const DOCUMENT_ID_2 = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
     private const DOCUMENT_ID_3 = '123e4567-e89b-12d3-a456-426614174000';
+    private const DOCUMENT_ID_WITHOUT_TEXT = '9a1f0c2e-7b3d-4e5a-8c6f-2d4b6a8c0e1f';
 
     private static ?StoreInterface $store = null;
 
@@ -166,6 +167,65 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     }
 
     #[Depends('testAddDocuments')]
+    public function testQueryDocumentsWithHybridQueryFindsVectorMatchesSharingNoKeyword()
+    {
+        if (!self::$store->supports(HybridQuery::class)) {
+            $this->addToAssertionCount(1);
+
+            return;
+        }
+
+        // Vector [0,0,1] matches document 3, while no document mentions "cooking recipes"
+        $results = self::$store->query(new HybridQuery(new Vector([0.0, 0.0, 1.0]), 'cooking recipes', 0.5));
+
+        $foundIds = [];
+        foreach ($results as $result) {
+            $foundIds[] = $result->getId();
+        }
+
+        $this->assertSame(self::DOCUMENT_ID_3, $foundIds[0] ?? null, 'HybridQuery should rank document 3 first by its vector alone');
+    }
+
+    #[Depends('testAddDocuments')]
+    public function testQueryDocumentsWithHybridQueryRanksDocumentsWithoutTextByTheirVector()
+    {
+        if (!self::$store->supports(HybridQuery::class)) {
+            $this->addToAssertionCount(1);
+
+            return;
+        }
+
+        // Closer to vector [0,0,1] than documents 1 and 2, but not as close as document 3
+        self::$store->add(new VectorDocument(
+            self::DOCUMENT_ID_WITHOUT_TEXT,
+            new Vector([0.0, 0.6, 0.8]),
+            new Metadata(['name' => 'document without text'])
+        ));
+
+        $this->waitForIndexing();
+
+        try {
+            $results = self::$store->query(new HybridQuery(new Vector([0.0, 0.0, 1.0]), 'cooking recipes', 0.5));
+
+            $foundIds = [];
+            foreach ($results as $result) {
+                $foundIds[] = $result->getId();
+            }
+        } finally {
+            // the other tests expect the store to hold the documents of testAddDocuments() only
+            self::$store->remove(self::DOCUMENT_ID_WITHOUT_TEXT);
+
+            $this->waitForIndexing();
+        }
+
+        $this->assertSame(
+            [self::DOCUMENT_ID_3, self::DOCUMENT_ID_WITHOUT_TEXT],
+            \array_slice($foundIds, 0, 2),
+            'HybridQuery should rank a document without text by its vector, behind document 3 and ahead of documents 1 and 2'
+        );
+    }
+
+    #[Depends('testAddDocuments')]
     public function testCountDocumentsAfterInsert()
     {
         $this->assertCount(3, self::$store);
@@ -174,6 +234,8 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     #[Depends('testQueryDocuments')]
     #[Depends('testQueryDocumentsWithTextQuery')]
     #[Depends('testQueryDocumentsWithHybridQuery')]
+    #[Depends('testQueryDocumentsWithHybridQueryFindsVectorMatchesSharingNoKeyword')]
+    #[Depends('testQueryDocumentsWithHybridQueryRanksDocumentsWithoutTextByTheirVector')]
     #[Depends('testCountDocumentsAfterInsert')]
     public function testRemoveDocuments()
     {
