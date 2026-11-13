@@ -787,8 +787,7 @@ class ResultConverterTest extends TestCase
 
     public function testStreamingToolInputDeltasIncludeTheArgumentsOfTheStartChunk()
     {
-        // llama.cpp sends the first part of the arguments, the opening "{", in the chunk that also
-        // carries the id and the name of the tool call.
+        // llama.cpp sends the opening "{" in the chunk that carries the id and the name
         $converter = new ResultConverter();
 
         $events = [
