@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\Exception\CancellationException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Update\Progress;
@@ -193,18 +194,20 @@ final class Execution implements ExecutionInterface
     /**
      * Cancels the execution and its active HTTP response.
      */
-    public function cancel(): void
+    public function cancel(?string $reason = null): void
     {
         if ($this->canceled || $this->finished || null !== $this->result) {
             return;
         }
 
         $this->canceled = true;
-        $this->cancellation->request();
+        $this->cancellation->request($reason);
     }
 
     /**
      * Drives the execution to completion and returns the final result.
+     *
+     * @throws CancellationException when the execution was canceled
      */
     public function getResult(): ResultInterface
     {
@@ -213,7 +216,7 @@ final class Execution implements ExecutionInterface
         }
 
         if ($this->consumed && $this->canceled) {
-            throw new RuntimeException('The agent execution was canceled.');
+            throw new CancellationException($this->cancellation->getReason());
         }
 
         foreach ($this->consume() as $update) {
@@ -223,7 +226,7 @@ final class Execution implements ExecutionInterface
         }
 
         if ($this->canceled) {
-            throw new RuntimeException('The agent execution was canceled.');
+            throw new CancellationException($this->cancellation->getReason());
         }
 
         throw new RuntimeException('The agent execution finished without producing a result.');

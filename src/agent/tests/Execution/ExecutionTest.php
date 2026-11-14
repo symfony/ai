@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Tests\Execution;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Exception\CancellationException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
@@ -215,6 +216,65 @@ final class ExecutionTest extends TestCase
         $this->expectExceptionMessage('The agent execution was canceled.');
 
         $execution->getResult();
+    }
+
+    public function testCancellationWithoutReason()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel();
+
+        $exception = $this->catchCancellation($execution);
+        $this->assertSame('The agent execution was canceled.', $exception->getMessage());
+        $this->assertFalse($exception->hasReason());
+        $this->assertNull($exception->getReason());
+    }
+
+    public function testCancellationReasonBeforeConsumption()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel('User pressed stop.');
+        $this->assertSame(ExecutionStatus::Cancelled, $execution->getStatus());
+
+        $exception = $this->catchCancellation($execution);
+        $this->assertSame('The agent execution was canceled.', $exception->getMessage());
+        $this->assertTrue($exception->hasReason());
+        $this->assertSame('User pressed stop.', $exception->getReason());
+    }
+
+    public function testRepeatedCancellationPreservesTheFirstReason()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $execution->cancel('First reason');
+        $execution->cancel('Second reason');
+
+        $this->assertSame('First reason', $this->catchCancellation($execution)->getReason());
+    }
+
+    public function testCancellationReasonDuringStreaming()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('First'));
+            yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Second'));
+            yield new ResultUpdate(new TextResult('FirstSecond'));
+        }, streamed: true);
+
+        $deltas = [];
+        foreach ($execution->asTextStream() as $delta) {
+            $deltas[] = $delta->getText();
+            $execution->cancel('Time budget reached');
+        }
+
+        $this->assertSame(['First'], $deltas);
+        $this->assertSame('Time budget reached', $this->catchCancellation($execution)->getReason());
     }
 
     public function testCancellationStopsAnActiveStreamWithoutProducingAResult()
@@ -607,5 +667,16 @@ final class ExecutionTest extends TestCase
         $this->expectException(LogicException::class);
 
         $execution->asStream()->current();
+    }
+
+    private function catchCancellation(Execution $execution): CancellationException
+    {
+        try {
+            $execution->getResult();
+        } catch (CancellationException $exception) {
+            return $exception;
+        }
+
+        $this->fail('Expected the execution to be canceled.');
     }
 }

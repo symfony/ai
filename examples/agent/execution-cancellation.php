@@ -10,7 +10,7 @@
  */
 
 use Symfony\AI\Agent\Agent;
-use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Exception\CancellationException;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -32,7 +32,7 @@ $execution = $agent->call($messages, ['stream' => true]);
 
 // Enable async signal handling and register a signal handler for SIGINT (Ctrl+C)
 pcntl_async_signals(true);
-pcntl_signal(\SIGINT, static fn () => $execution->cancel());
+pcntl_signal(\SIGINT, static fn () => $execution->cancel('Interrupted by the user'));
 
 $characters = 0;
 foreach ($execution->asTextStream() as $delta) {
@@ -40,7 +40,7 @@ foreach ($execution->asTextStream() as $delta) {
 
     // Cancel the execution if the total number of characters exceeds 200
     if (($characters += strlen($delta->getText())) > 200) {
-        $execution->cancel();
+        $execution->cancel('Character limit exceeded');
     }
 }
 
@@ -48,6 +48,6 @@ echo \PHP_EOL.\PHP_EOL.'>> Canceled after '.$characters.' characters.'.\PHP_EOL;
 
 try {
     $execution->getResult();
-} catch (RuntimeException $e) {
-    echo '>> '.$e->getMessage().\PHP_EOL;
+} catch (CancellationException $e) {
+    echo '>> '.$e->getMessage().($e->hasReason() ? ' Reason: '.$e->getReason() : '').\PHP_EOL;
 }
